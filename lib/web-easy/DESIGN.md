@@ -146,6 +146,7 @@ Planned target:
   - `spinner`
   - `button`
   - `input`
+  - `textarea`
   - `checkbox`
   - `choice`
   - `slider`
@@ -198,6 +199,7 @@ Implemented now:
   - `spinner`
   - `button`
   - `input`
+  - `textarea`
   - `checkbox`
   - `choice`
   - `slider`
@@ -231,6 +233,7 @@ Current compatibility notes:
   - `button`: optional leading/trailing icon args.
   - `menu-item`: optional leading/trailing icon args.
   - `input`: optional attrs list (for example `placeholder`, `autocomplete`).
+  - `textarea`: optional `rows` (default `3`) and optional attrs list.
   - `card`: optional variant symbol/list (`compact`, `flat`, `headerless`).
   - `choice`/`dropdown`: option rows now support scalar, pair, or 2-element list forms; labels can differ from ids.
 - New theme token API:
@@ -372,7 +375,8 @@ Remaining Step 2 planning items:
 3. Controls
    - `text` -> text node/span/div.
    - `button` -> `<button>`.
-   - `input` -> `<input>`/`<textarea>` depending on style.
+   - `input` -> `<input>`.
+   - `textarea` -> `<textarea>`.
    - `choice` -> `<select>` (or custom listbox when needed).
    - `checkbox` -> `<input type="checkbox">`.
    - `slider` -> `<input type="range">`.
@@ -633,7 +637,7 @@ Current browser backend element mapping (as implemented today):
 |---|---|---|
 | `window`, `vpanel`, `hpanel`, `button-group`, `button-toolbar`, `card`, `navigation-bar` | `div`/`nav` | `vpanel`/`hpanel` use flex layout styles; grouped controls use inline-flex/flex rows; `card` is sectioned with header/body/footer child nodes; `navigation-bar` uses `role="navigation"`. |
 | `collapse` | `div` | Visibility container using `is-open` class and `aria-hidden` state. |
-| `accordion` | `div` + `button` + `div` | Section widget composed as accordion root/section/trigger/collapse regions. |
+| `accordion` | `div` + `button` + `div` | Section widget composed as accordion root/section/trigger/collapse regions; panel region uses stable class hook `.we-accordion-content`. |
 | `dialog`, `modal` | `dialog` + panel `div` | `data-we-widget` distinguishes `dialog` vs `modal`; both expose `role="dialog"` + `aria-modal` + observable `open` state, and panel uses `aria-describedby` when first child is descriptive text. |
 | `group` | `fieldset` + `legend` | Group title is rendered as a real `legend` child. |
 | `text` | `span` | Plain inline text node wrapper. |
@@ -642,7 +646,8 @@ Current browser backend element mapping (as implemented today):
 | `badge` | `span` | Compact inline severity marker with class-based variants. |
 | `toast` | `div` + optional `button` + optional title node | Non-modal notification anchored to viewport; supports level variants plus optional title and dismissibility. |
 | `button` | `button` | Native clickable button. |
-| `input` | `input` | Text input; supports Enter callback wiring. |
+| `input` | `input` | Single-line text input; supports Enter callback wiring. |
+| `textarea` | `textarea` | Multi-line text input with configurable `rows` and attrs. |
 | `checkbox` | `input[type=checkbox]` | Boolean toggle control. |
 | `choice`, `radios` | `select` | `radios` currently rendered as select in browser backend. |
 | `slider` | `input[type=range]` | Numeric range input. |
@@ -704,7 +709,7 @@ Recommended targeting order:
 Current default classes:
 
 - Core controls:
-  - `.we-button`, `.we-input`, `.we-checkbox`, `.we-choice`, `.we-slider`, `.we-progress`, `.we-radios`, `.we-image`
+  - `.we-button`, `.we-input`, `.we-textarea`, `.we-checkbox`, `.we-choice`, `.we-slider`, `.we-progress`, `.we-radios`, `.we-image`
 - Table:
   - `.we-table`
   - density variants: `.we-density-normal`, `.we-density-compact`
@@ -729,6 +734,9 @@ Default theme tokens (CSS custom properties):
   - `--we-border`, `--we-border-menu`, `--we-border-muted`, `--we-border-soft`, `--we-border-hover`, `--we-border-strong`, `--we-fg`, `--we-fg-muted`
 - Progress variants:
   - `--we-progress-success`, `--we-progress-warn`, `--we-progress-error`
+- Heading typography:
+  - `--we-heading-fg`, `--we-display-heading-fg`, `--we-heading-subtitle-fg`, `--we-lead-fg`
+  - `--we-heading-space-compact`, `--we-heading-space-normal`, `--we-heading-space-loose`
 - Menu/tab/input extras:
   - `--we-menu-item-hover-bg`, `--we-menu-item-hover-fg`, `--we-tab-active-border`, `--we-input-placeholder`
 - Spacing/gaps:
@@ -738,16 +746,38 @@ Stable styling contract (current baseline):
 
 | Surface | Stable `data-we-widget` hooks | Stable classes | Primary token hooks |
 |---|---|---|---|
-| Buttons/inputs/select | `button`, `input`, `choice`, `checkbox` | `.we-button`, `.we-input`, `.we-choice`, `.we-checkbox` | `--we-bg`, `--we-bg-hover`, `--we-border-soft`, `--we-focus`, `--we-fg`, `--we-input-placeholder` |
+| Buttons/inputs/select | `button`, `input`, `textarea`, `choice`, `checkbox` | `.we-button`, `.we-input`, `.we-textarea`, `.we-choice`, `.we-checkbox` | `--we-bg`, `--we-bg-hover`, `--we-border-soft`, `--we-focus`, `--we-fg`, `--we-input-placeholder` |
 | Range/progress | `slider`, `progress` | `.we-slider`, `.we-progress`, `.we-progress-info`, `.we-progress-success`, `.we-progress-warn`, `.we-progress-error` | `--we-fg`, `--we-focus`, `--we-progress-success`, `--we-progress-warn`, `--we-progress-error` |
 | Alert/badge/spinner | `alert`, `badge`, `spinner` | `.we-alert`, `.we-alert-*`, `.we-badge`, `.we-badge-*`, `.we-spinner`, `.we-spinner-icon`, `.we-spinner-label` | `--we-bg-subtle`, `--we-border-soft`, `--we-fg`, `--we-border-strong` |
-| Toast/collapse/accordion | `toast`, `collapse`, `accordion`, `accordion-trigger` | `.we-toast`, `.we-toast-*`, `.we-collapse`, `.is-open`, `.we-accordion`, `.we-accordion-trigger` | `--we-bg`, `--we-bg-subtle`, `--we-bg-selected`, `--we-bg-hover`, `--we-border-soft`, `--we-focus`, `--we-shadow` |
+| Toast/collapse/accordion | `toast`, `collapse`, `accordion`, `accordion-trigger` | `.we-toast`, `.we-toast-*`, `.we-collapse`, `.is-open`, `.we-accordion`, `.we-accordion-trigger`, `.we-accordion-content` | `--we-bg`, `--we-bg-subtle`, `--we-bg-selected`, `--we-bg-hover`, `--we-border-soft`, `--we-focus`, `--we-shadow` |
 | Pagination/breadcrumb/list-group | `pagination`, `page-button`, `breadcrumb`, `breadcrumb-item`, `list-group`, `list-group-item` | `.we-pagination`, `.we-page-btn`, `.we-breadcrumb`, `.we-breadcrumb-item`, `.we-list-group`, `.we-list-group-item`, `.is-current` | `--we-bg`, `--we-bg-selected`, `--we-bg-hover`, `--we-border-soft`, `--we-fg`, `--we-fg-muted`, `--we-focus` |
+| Headings/lead | `heading`, `display-heading`, `heading-with-subtitle`, `display-heading-with-subtitle`, `heading-title`, `heading-subtitle`, `lead` | `.we-heading`, `.we-display-heading`, `.we-heading-with-subtitle`, `.we-display-heading-with-subtitle`, `*-align-left/center/right`, `*-space-compact/normal/loose`, `.we-heading-subtitle`, `.we-lead` | `--we-heading-fg`, `--we-display-heading-fg`, `--we-heading-subtitle-fg`, `--we-lead-fg`, `--we-heading-space-compact/normal/loose` |
 | Card/navigation | `card`, `card-header`, `card-body`, `card-footer`, `navigation-bar` | `.we-card`, `.we-card-header`, `.we-card-body`, `.we-card-footer`, `.we-navigation-bar` | `--we-bg`, `--we-bg-subtle`, `--we-border-soft`, `--we-border-menu`, `--we-fg` |
 | Table | `table`, `table-row`, `table-header-cell`, `table-data-cell` | `.we-table`, `.we-table-header-cell`, `.we-table-data-cell`, `.we-density-normal`, `.we-density-compact`, `.we-align-left`, `.we-align-center`, `.we-align-right` | `--we-border-muted`, `--we-border-soft`, `--we-fg` |
 | Tabs | `tab-panel`, `tab-list`, `tab-button`, `tab-content` | `.we-tab-panel`, `.we-tab-list`, `.we-tab-btn`, `.we-tab-content`, `.is-selected`, `.is-disabled` | `--we-bg`, `--we-bg-selected`, `--we-bg-disabled`, `--we-border-muted`, `--we-border-strong`, `--we-focus`, `--we-tab-active-border` |
 | Dialog | `dialog`, `dialog-panel` | `.we-dialog`, `.we-dialog-panel`, `.is-open` | `--we-overlay`, `--we-bg`, `--we-border`, `--we-shadow`, `--we-focus` |
 | Menu | `menu-bar`, `menu`, `menu-label`, `menu-popup`, `menu-item` | `.we-menu-bar`, `.we-menu`, `.we-menu-label`, `.we-menu-popup`, `.we-menu-item`, `.is-open` | `--we-bg-subtle`, `--we-bg`, `--we-bg-hover`, `--we-border-menu`, `--we-border`, `--we-border-soft`, `--we-focus`, `--we-fg`, `--we-menu-item-hover-bg`, `--we-menu-item-hover-fg` |
+
+Heading API mapping:
+
+- `heading level content [align] [spacing]`
+  - element: `h1..h6` (normalized from `level`)
+  - widget/class: `data-we-widget="heading"`, `.we-heading`, `.we-heading-N`, `.we-heading-align-*`, `.we-heading-space-*`
+- `display-heading level content [align] [spacing]`
+  - element: `h1..h6`
+  - widget/class: `data-we-widget="display-heading"`, `.we-display-heading`, `.we-display-heading-N`, `.we-display-heading-align-*`, `.we-display-heading-space-*`
+- `heading-with-subtitle level title subtitle [align] [spacing]`
+  - element: `h1..h6` root with `span` title + `small` subtitle
+  - widget/class: `data-we-widget="heading-with-subtitle"`, plus `heading-title`, `heading-subtitle`
+- `display-heading-with-subtitle level title subtitle [align] [spacing]`
+  - element: `h1..h6` root with `span` title + `small` subtitle
+  - widget/class: `data-we-widget="display-heading-with-subtitle"`, plus `heading-title`, `heading-subtitle`
+
+Rationale:
+
+- keeps semantic heading tags stable for accessibility/SEO while exposing display-scale styling as classes/tokens.
+- align/spacing variants avoid ad hoc wrapper CSS in app code and keep typography choices in component API.
+- subtitle variants reuse the same child widget hooks (`heading-title`, `heading-subtitle`) for consistent theming/tests.
 
 Contract enforcement status:
 
@@ -755,12 +785,12 @@ Contract enforcement status:
 - Automated parity contract page: `smoke/test-browser-parity-style-hook-contract.html`.
 - Included in `smoke/test-browser-contract-dashboard.html` and headless contract CI path.
 - Theme token contract page: `smoke/test-browser-theme-token-contract.html`.
-  - verifies token definition presence and runtime token override effects across menu/card/pagination/breadcrumb.
+  - verifies token definition presence and runtime token override effects across menu/card/pagination/breadcrumb/headings.
 
 `data-we-widget` examples:
 
 - containers: `window`, `vpanel`, `hpanel`, `group`, `list-view`, `if-view`, `cond-view`, `case-view`, `observable-view`, `collapse`, `spacer`
-- controls: `text`, `button`, `input`, `checkbox`, `choice`, `slider`, `progress`, `radios`, `image`
+- controls: `text`, `button`, `input`, `textarea`, `checkbox`, `choice`, `slider`, `progress`, `radios`, `image`
   - complex widgets:
   - alert/badge/spinner: `alert`, `badge`, `spinner`
   - toast/collapse: `toast`, `collapse`
@@ -770,7 +800,7 @@ Contract enforcement status:
   - dialog: `dialog`, `dialog-panel`
   - table: `table`, `table-row`, `table-header-cell`, `table-data-cell`
   - tabs: `tab-panel`, `tab-list`, `tab-content`, `tab-button`
-  - accordion: `accordion`, `accordion-section`, `accordion-trigger`, `collapse`
+  - accordion: `accordion`, `accordion-section`, `accordion-trigger`, `collapse` (with `.we-accordion-content` panel class)
 
 ## Contract Taxonomy
 
@@ -801,6 +831,7 @@ Contract pages in `lib/web-easy/smoke/` are grouped by behavioral domain:
    - explicit decode/alignment contracts:
      - `test-browser-choice-decode-contract.html`
      - `test-browser-table-align-contract.html`
+     - `test-browser-headings-style-contract.html`
 5. Parity contracts:
    - all core contract families have parity mirrors under `test-browser-parity-...-contract.html`
 
@@ -863,6 +894,31 @@ Execution model:
 5. Revisit CSS strategy (inline vs stylesheet/classes):
    - continue consolidating defaults into shared class-based styles where possible.
    - keep inline style usage only for dynamic geometry values that cannot be represented via classes.
+
+## Component Backlog (Remembered List)
+
+Requested detour backlog for future component work:
+
+1. `heading-group` component.
+2. Heading size presets (`sm/md/lg`) via tokens.
+3. `text-muted` view.
+4. `text-emphasis` view.
+5. Heading anchor links (auto id + optional glyph).
+6. `code-inline` text component.
+7. `code-block` component with monospace defaults.
+8. `kbd` component for keyboard hints.
+9. `description-list` component (`<dl>` mapping).
+10. `stat` component (label + value + help).
+11. `empty-state` component (title/body/actions).
+12. `skeleton-list` helper component (loading placeholders).
+13. `avatar` component (image/initials/icon fallback).
+14. `chip`/`pill` component with removable option.
+15. `tag-input` primitive (chips + input).
+16. `form-row` layout primitive (label/control/help/error).
+17. `help-text` + `field-error` components.
+18. `switch` component (separate from checkbox).
+19. `textarea` component with auto-grow option.
+20. `select-labeled` component with explicit label/value rows (not raw tuples).
 
 ## Phase 2 Component Roadmap
 

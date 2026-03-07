@@ -120,7 +120,7 @@
        .we-popover-panel.is-open{display:flex;}\
        .we-popover-panel:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.14)),var(--we-focus-tint,rgba(10,102,194,.14)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}")
     (define control-style-text ; CSS defaults for controls and table density classes.
-      ":root{--we-focus:#0a66c2;--we-focus-tint:rgba(10,102,194,.20);--we-fg:#111;--we-bg:#fff;--we-bg-subtle:#f3f3f3;--we-bg-selected:#ececec;--we-bg-disabled:#f3f3f3;--we-bg-hover:#e8e8e8;--we-border:#888;--we-border-menu:#aaa;--we-border-muted:#999;--we-border-soft:#bbb;--we-border-hover:#c0c0c0;--we-border-strong:#333;--we-fg-muted:#777;--we-overlay:rgba(0,0,0,0.45);--we-shadow:rgba(0,0,0,.28);--we-progress-success:#3a9147;--we-progress-warn:#b57c1c;--we-progress-error:#b24545;--we-menu-item-hover-bg:var(--we-bg-hover,#e8e8e8);--we-menu-item-hover-fg:var(--we-fg,#111);--we-tab-active-border:var(--we-bg-selected,#ececec);--we-input-placeholder:var(--we-fg-muted,#777);--we-space-xs:2px;--we-space-sm:4px;--we-space-md:8px;--we-space-lg:10px;--we-gap:4px;--we-gap-tab:6px;}\
+      ":root{--we-focus:#0a66c2;--we-focus-tint:rgba(10,102,194,.20);--we-fg:#111;--we-bg:#fff;--we-bg-subtle:#f3f3f3;--we-bg-selected:#ececec;--we-bg-disabled:#f3f3f3;--we-bg-hover:#e8e8e8;--we-border:#888;--we-border-menu:#aaa;--we-border-muted:#999;--we-border-soft:#bbb;--we-border-hover:#c0c0c0;--we-border-strong:#333;--we-fg-muted:#777;--we-overlay:rgba(0,0,0,0.45);--we-shadow:rgba(0,0,0,.28);--we-progress-success:#3a9147;--we-progress-warn:#b57c1c;--we-progress-error:#b24545;--we-heading-fg:var(--we-fg,#111);--we-display-heading-fg:var(--we-heading-fg,var(--we-fg,#111));--we-heading-subtitle-fg:var(--we-fg-muted,#777);--we-lead-fg:var(--we-fg-muted,#777);--we-heading-space-compact:0;--we-heading-space-normal:0 0 var(--we-space-xs,2px) 0;--we-heading-space-loose:0 0 var(--we-space-sm,4px) 0;--we-menu-item-hover-bg:var(--we-bg-hover,#e8e8e8);--we-menu-item-hover-fg:var(--we-fg,#111);--we-tab-active-border:var(--we-bg-selected,#ececec);--we-input-placeholder:var(--we-fg-muted,#777);--we-space-xs:2px;--we-space-sm:4px;--we-space-md:8px;--we-space-lg:10px;--we-gap:4px;--we-gap-tab:6px;}\
        .we-vpanel,.we-group,.we-if-view,.we-cond-view,.we-case-view,.we-observable-view,.we-list-view,.we-stack{display:flex;flex-direction:column;gap:var(--we-gap,4px);}\
        .we-container{width:min(1200px,calc(100vw - 28px));max-width:1200px;margin:0 auto;}\
        .we-grid{display:grid;grid-template-columns:var(--we-grid-columns,repeat(auto-fit,minmax(320px,1fr)));gap:12px;align-items:stretch;}\
@@ -172,9 +172,10 @@
        .we-button-group>.we-button:last-child{border-right:0;}\
        .we-button{align-self:flex-start;width:auto;}\
        .we-button:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.20)),var(--we-focus-tint,rgba(10,102,194,.20)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
-       .we-input{align-self:stretch;width:100%;box-sizing:border-box;}\
+       .we-input,.we-textarea{align-self:stretch;width:100%;box-sizing:border-box;}\
        .we-input::placeholder{color:var(--we-input-placeholder,var(--we-fg-muted,#777));}\
-       .we-input:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.14)),var(--we-focus-tint,rgba(10,102,194,.14)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
+       .we-textarea::placeholder{color:var(--we-input-placeholder,var(--we-fg-muted,#777));}\
+       .we-input:focus-visible,.we-textarea:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.14)),var(--we-focus-tint,rgba(10,102,194,.14)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
        .we-checkbox,.we-choice,.we-slider,.we-progress,.we-radios,.we-image{align-self:flex-start;}\
        .we-pagination{display:flex;flex-wrap:wrap;align-items:center;gap:var(--we-space-xs,2px);align-self:flex-start;}\
        .we-page-btn{min-width:30px;padding:2px 8px;border:1px solid var(--we-border-soft,#bbb);border-radius:4px;background:var(--we-bg,#fff);color:var(--we-fg,#111);}\
@@ -194,6 +195,60 @@
        .we-list-group-item:hover{background:var(--we-bg-hover,#e8e8e8);}\
        .we-list-group-item:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.20)),var(--we-focus-tint,rgba(10,102,194,.20)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
        .we-list-group-item.is-current{background:var(--we-bg-selected,#ececec);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px;}\
+       .we-heading{margin:0;line-height:1.2;font-weight:700;color:var(--we-heading-fg,var(--we-fg,#111));}\
+       .we-heading-1{font-size:2em;}\
+       .we-heading-2{font-size:1.5em;}\
+       .we-heading-3{font-size:1.17em;}\
+       .we-heading-4{font-size:1em;}\
+       .we-heading-5{font-size:0.83em;}\
+       .we-heading-6{font-size:0.67em;}\
+       .we-heading-align-left{text-align:left;}\
+       .we-heading-align-center{text-align:center;}\
+       .we-heading-align-right{text-align:right;}\
+       .we-heading-space-compact{margin:var(--we-heading-space-compact,0);}\
+       .we-heading-space-normal{margin:var(--we-heading-space-normal,0 0 var(--we-space-xs,2px) 0);}\
+       .we-heading-space-loose{margin:var(--we-heading-space-loose,0 0 var(--we-space-sm,4px) 0);}\
+       .we-display-heading{margin:0;line-height:1.1;font-weight:700;color:var(--we-display-heading-fg,var(--we-heading-fg,var(--we-fg,#111)));}\
+       .we-display-heading-1{font-size:3.2em;}\
+       .we-display-heading-2{font-size:2.8em;}\
+       .we-display-heading-3{font-size:2.4em;}\
+       .we-display-heading-4{font-size:2em;}\
+       .we-display-heading-5{font-size:1.7em;}\
+       .we-display-heading-6{font-size:1.4em;}\
+       .we-display-heading-align-left{text-align:left;}\
+       .we-display-heading-align-center{text-align:center;}\
+       .we-display-heading-align-right{text-align:right;}\
+       .we-display-heading-space-compact{margin:var(--we-heading-space-compact,0);}\
+       .we-display-heading-space-normal{margin:var(--we-heading-space-normal,0 0 var(--we-space-xs,2px) 0);}\
+       .we-display-heading-space-loose{margin:var(--we-heading-space-loose,0 0 var(--we-space-sm,4px) 0);}\
+       .we-heading-with-subtitle{display:flex;flex-direction:column;gap:2px;margin:0;line-height:1.2;font-weight:700;color:var(--we-heading-fg,var(--we-fg,#111));}\
+       .we-heading-with-subtitle-1{font-size:2em;}\
+       .we-heading-with-subtitle-2{font-size:1.5em;}\
+       .we-heading-with-subtitle-3{font-size:1.17em;}\
+       .we-heading-with-subtitle-4{font-size:1em;}\
+       .we-heading-with-subtitle-5{font-size:0.83em;}\
+       .we-heading-with-subtitle-6{font-size:0.67em;}\
+       .we-heading-with-subtitle-align-left{text-align:left;}\
+       .we-heading-with-subtitle-align-center{text-align:center;}\
+       .we-heading-with-subtitle-align-right{text-align:right;}\
+       .we-heading-with-subtitle-space-compact{margin:var(--we-heading-space-compact,0);}\
+       .we-heading-with-subtitle-space-normal{margin:var(--we-heading-space-normal,0 0 var(--we-space-xs,2px) 0);}\
+       .we-heading-with-subtitle-space-loose{margin:var(--we-heading-space-loose,0 0 var(--we-space-sm,4px) 0);}\
+       .we-display-heading-with-subtitle{display:flex;flex-direction:column;gap:2px;margin:0;line-height:1.1;font-weight:700;color:var(--we-display-heading-fg,var(--we-heading-fg,var(--we-fg,#111)));}\
+       .we-display-heading-with-subtitle-1{font-size:3.2em;}\
+       .we-display-heading-with-subtitle-2{font-size:2.8em;}\
+       .we-display-heading-with-subtitle-3{font-size:2.4em;}\
+       .we-display-heading-with-subtitle-4{font-size:2em;}\
+       .we-display-heading-with-subtitle-5{font-size:1.7em;}\
+       .we-display-heading-with-subtitle-6{font-size:1.4em;}\
+       .we-display-heading-with-subtitle-align-left{text-align:left;}\
+       .we-display-heading-with-subtitle-align-center{text-align:center;}\
+       .we-display-heading-with-subtitle-align-right{text-align:right;}\
+       .we-display-heading-with-subtitle-space-compact{margin:var(--we-heading-space-compact,0);}\
+       .we-display-heading-with-subtitle-space-normal{margin:var(--we-heading-space-normal,0 0 var(--we-space-xs,2px) 0);}\
+       .we-display-heading-with-subtitle-space-loose{margin:var(--we-heading-space-loose,0 0 var(--we-space-sm,4px) 0);}\
+       .we-heading-subtitle{font-weight:400;font-size:0.7em;color:var(--we-heading-subtitle-fg,var(--we-fg-muted,#777));}\
+       .we-lead{margin:0;font-size:1.15em;line-height:1.45;color:var(--we-lead-fg,var(--we-fg-muted,#555));}\
        .we-choice:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.14)),var(--we-focus-tint,rgba(10,102,194,.14)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
        .we-progress-info{}\
        .we-progress-success{accent-color:var(--we-progress-success,#3a9147);}\
@@ -445,10 +500,33 @@
 
     ;; class-value->list : any/c -> list?
     ;;   Convert class value to list of class-name strings.
+    (define (class-string->list value)
+      (define n (string-length value))
+      (let loop ([i 0]
+                 [start #f]
+                 [acc '()])
+        (cond
+          [(= i n)
+           (if start
+               (reverse (cons (substring value start i) acc))
+               (reverse acc))]
+          [else
+           (define ch (string-ref value i))
+           (if (or (char=? ch #\space)
+                   (char=? ch #\tab)
+                   (char=? ch #\newline)
+                   (char=? ch #\return))
+               (if start
+                   (loop (add1 i) #f (cons (substring value start i) acc))
+                   (loop (add1 i) #f acc))
+               (if start
+                   (loop (add1 i) start acc)
+                   (loop (add1 i) i acc)))])))
+
     (define (class-value->list value)
       (cond
         [(string? value)
-         (list value)]
+         (class-string->list value)]
         [(symbol? value)
          (list (symbol->string value))]
         [(list? value)
@@ -491,7 +569,24 @@
     ;; merge-class-values : list? list? -> string?
     ;;   Build final class string by concatenating base and extra class tokens.
     (define (merge-class-values base-classes extra-classes)
-      (define all-classes (append base-classes extra-classes))
+      (define (member-string? xs needle)
+        (cond
+          [(null? xs) #f]
+          [(string=? (car xs) needle) #t]
+          [else (member-string? (cdr xs) needle)]))
+      (define (dedupe-classes classes)
+        (let loop ([remaining classes]
+                   [seen '()]
+                   [acc '()])
+          (cond
+            [(null? remaining) (reverse acc)]
+            [(member-string? seen (car remaining))
+             (loop (cdr remaining) seen acc)]
+            [else
+             (loop (cdr remaining)
+                   (cons (car remaining) seen)
+                   (cons (car remaining) acc))])))
+      (define all-classes (dedupe-classes (append base-classes extra-classes)))
       (if (null? all-classes)
           ""
           (let loop ([remaining all-classes]
@@ -981,6 +1076,46 @@
             [(horizontal vertical) orientation]
             [else                  'horizontal])
           'horizontal))
+
+    ;; normalize-heading-level : any/c -> number?
+    ;;   Normalize heading level to integer in the closed interval 1..6.
+    (define (normalize-heading-level level)
+      (cond
+        [(and (number? level)
+              (integer? level)
+              (>= level 1)
+              (<= level 6))
+         level]
+        [else
+         1]))
+
+    ;; normalize-heading-align : any/c -> symbol?
+    ;;   Normalize heading text alignment style to left/center/right.
+    (define (normalize-heading-align align)
+      (if (symbol? align)
+          (case align
+            [(left center right) align]
+            [else                'left])
+          'left))
+
+    ;; normalize-heading-spacing : any/c -> symbol?
+    ;;   Normalize heading spacing style to compact/normal/loose.
+    (define (normalize-heading-spacing spacing)
+      (if (symbol? spacing)
+          (case spacing
+            [(compact normal loose) spacing]
+            [else                   'normal])
+          'normal))
+
+    ;; heading-align-class : string? symbol? -> string?
+    ;;   Build alignment class token for heading class prefix.
+    (define (heading-align-class prefix align)
+      (string-append prefix "-align-" (symbol->string (normalize-heading-align align))))
+
+    ;; heading-spacing-class : string? symbol? -> string?
+    ;;   Build spacing class token for heading class prefix.
+    (define (heading-spacing-class prefix spacing)
+      (string-append prefix "-space-" (symbol->string (normalize-heading-spacing spacing))))
 
     ;; density-class : symbol? -> string?
     ;;   Return CSS class for table density variants.
@@ -1544,6 +1679,344 @@
            [else
            (set-dom-node-text! node (value->text raw))])
          node]
+        [(heading)
+         (define raw-level (alist-ref (view-props v) 'level 'render))
+         (define raw-value (alist-ref (view-props v) 'value 'render))
+         (define raw-align-pair (assq 'align (view-props v)))
+         (define raw-align (if raw-align-pair (cdr raw-align-pair) 'left))
+         (define raw-spacing-pair (assq 'spacing (view-props v)))
+         (define raw-spacing (if raw-spacing-pair (cdr raw-spacing-pair) 'normal))
+         (define level
+           (normalize-heading-level (maybe-observable-value raw-level)))
+         (define align (normalize-heading-align (maybe-observable-value raw-align)))
+         (define spacing (normalize-heading-spacing (maybe-observable-value raw-spacing)))
+         (define node
+           (dom-node (string->symbol (string-append "h" (number->string level)))
+                     (list (cons 'data-we-widget "heading")
+                           (cons 'class (string-append "we-heading we-heading-" (number->string level)
+                                                       " " (heading-align-class "we-heading" align)
+                                                       " " (heading-spacing-class "we-heading" spacing))))
+                     '()
+                     ""
+                     #f
+                     #f))
+         (define (set-text! value0)
+           (set-dom-node-text! node (value->text value0)))
+         (define (set-heading-style! level0 align0 spacing0)
+           (define normalized-level (normalize-heading-level level0))
+           (define normalized-align (normalize-heading-align align0))
+           (define normalized-spacing (normalize-heading-spacing spacing0))
+           (set-dom-node-tag! node (string->symbol (string-append "h" (number->string normalized-level))))
+           (set-dom-node-attrs!
+            node
+            (list (cons 'data-we-widget "heading")
+                  (cons 'class (string-append "we-heading we-heading-" (number->string normalized-level)
+                                              " " (heading-align-class "we-heading" normalized-align)
+                                              " " (heading-spacing-class "we-heading" normalized-spacing))))))
+         (when (obs? raw-level)
+           (define (level-listener updated)
+             (set-heading-style! updated
+                                 (maybe-observable-value raw-align)
+                                 (maybe-observable-value raw-spacing)))
+           (obs-observe! raw-level level-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-level level-listener))))
+         (when (obs? raw-align)
+           (define (align-listener updated)
+             (set-heading-style! (maybe-observable-value raw-level)
+                                 updated
+                                 (maybe-observable-value raw-spacing)))
+           (obs-observe! raw-align align-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-align align-listener))))
+         (when (obs? raw-spacing)
+           (define (spacing-listener updated)
+             (set-heading-style! (maybe-observable-value raw-level)
+                                 (maybe-observable-value raw-align)
+                                 updated))
+           (obs-observe! raw-spacing spacing-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-spacing spacing-listener))))
+         (cond
+           [(obs? raw-value)
+            (set-text! (obs-peek raw-value))
+            (define (value-listener updated)
+              (set-text! updated))
+            (obs-observe! raw-value value-listener)
+            (register-cleanup! (lambda () (obs-unobserve! raw-value value-listener)))]
+           [else
+            (set-text! raw-value)])
+         node]
+        [(display-heading)
+         (define raw-level (alist-ref (view-props v) 'level 'render))
+         (define raw-value (alist-ref (view-props v) 'value 'render))
+         (define raw-align-pair (assq 'align (view-props v)))
+         (define raw-align (if raw-align-pair (cdr raw-align-pair) 'left))
+         (define raw-spacing-pair (assq 'spacing (view-props v)))
+         (define raw-spacing (if raw-spacing-pair (cdr raw-spacing-pair) 'normal))
+         (define level
+           (normalize-heading-level (maybe-observable-value raw-level)))
+         (define align (normalize-heading-align (maybe-observable-value raw-align)))
+         (define spacing (normalize-heading-spacing (maybe-observable-value raw-spacing)))
+         (define node
+           (dom-node (string->symbol (string-append "h" (number->string level)))
+                     (list (cons 'data-we-widget "display-heading")
+                           (cons 'class (string-append "we-display-heading we-display-heading-" (number->string level)
+                                                       " " (heading-align-class "we-display-heading" align)
+                                                       " " (heading-spacing-class "we-display-heading" spacing))))
+                     '()
+                     ""
+                     #f
+                     #f))
+         (define (set-text! value0)
+           (set-dom-node-text! node (value->text value0)))
+         (define (set-heading-style! level0 align0 spacing0)
+           (define normalized-level (normalize-heading-level level0))
+           (define normalized-align (normalize-heading-align align0))
+           (define normalized-spacing (normalize-heading-spacing spacing0))
+           (set-dom-node-tag! node (string->symbol (string-append "h" (number->string normalized-level))))
+           (set-dom-node-attrs!
+            node
+            (list (cons 'data-we-widget "display-heading")
+                  (cons 'class (string-append "we-display-heading we-display-heading-" (number->string normalized-level)
+                                              " " (heading-align-class "we-display-heading" normalized-align)
+                                              " " (heading-spacing-class "we-display-heading" normalized-spacing))))))
+         (when (obs? raw-level)
+           (define (level-listener updated)
+             (set-heading-style! updated
+                                 (maybe-observable-value raw-align)
+                                 (maybe-observable-value raw-spacing)))
+           (obs-observe! raw-level level-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-level level-listener))))
+         (when (obs? raw-align)
+           (define (align-listener updated)
+             (set-heading-style! (maybe-observable-value raw-level)
+                                 updated
+                                 (maybe-observable-value raw-spacing)))
+           (obs-observe! raw-align align-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-align align-listener))))
+         (when (obs? raw-spacing)
+           (define (spacing-listener updated)
+             (set-heading-style! (maybe-observable-value raw-level)
+                                 (maybe-observable-value raw-align)
+                                 updated))
+           (obs-observe! raw-spacing spacing-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-spacing spacing-listener))))
+         (cond
+           [(obs? raw-value)
+            (set-text! (obs-peek raw-value))
+            (define (value-listener updated)
+              (set-text! updated))
+            (obs-observe! raw-value value-listener)
+            (register-cleanup! (lambda () (obs-unobserve! raw-value value-listener)))]
+           [else
+            (set-text! raw-value)])
+         node]
+        [(heading-with-subtitle)
+         (define raw-level (alist-ref (view-props v) 'level 'render))
+         (define raw-value (alist-ref (view-props v) 'value 'render))
+         (define raw-subtitle (alist-ref (view-props v) 'subtitle 'render))
+         (define raw-align-pair (assq 'align (view-props v)))
+         (define raw-align (if raw-align-pair (cdr raw-align-pair) 'left))
+         (define raw-spacing-pair (assq 'spacing (view-props v)))
+         (define raw-spacing (if raw-spacing-pair (cdr raw-spacing-pair) 'normal))
+         (define level
+           (normalize-heading-level (maybe-observable-value raw-level)))
+         (define align (normalize-heading-align (maybe-observable-value raw-align)))
+         (define spacing (normalize-heading-spacing (maybe-observable-value raw-spacing)))
+         (define title-node
+           (dom-node 'span
+                     (list (cons 'data-we-widget "heading-title")
+                           (cons 'class "we-heading-title"))
+                     '()
+                     ""
+                     #f
+                     #f))
+         (define subtitle-node
+           (dom-node 'small
+                     (list (cons 'data-we-widget "heading-subtitle")
+                           (cons 'class "we-heading-subtitle"))
+                     '()
+                     ""
+                     #f
+                     #f))
+         (define node
+           (dom-node (string->symbol (string-append "h" (number->string level)))
+                     (list (cons 'data-we-widget "heading-with-subtitle")
+                           (cons 'class (string-append "we-heading-with-subtitle we-heading-with-subtitle-" (number->string level)
+                                                       " " (heading-align-class "we-heading-with-subtitle" align)
+                                                       " " (heading-spacing-class "we-heading-with-subtitle" spacing))))
+                     '()
+                     #f
+                     #f
+                     #f))
+         (backend-replace-children! node (list title-node subtitle-node))
+         (define (set-heading-style! level0 align0 spacing0)
+           (define normalized-level (normalize-heading-level level0))
+           (define normalized-align (normalize-heading-align align0))
+           (define normalized-spacing (normalize-heading-spacing spacing0))
+           (set-dom-node-tag! node (string->symbol (string-append "h" (number->string normalized-level))))
+           (set-dom-node-attrs!
+            node
+            (list (cons 'data-we-widget "heading-with-subtitle")
+                  (cons 'class (string-append "we-heading-with-subtitle we-heading-with-subtitle-" (number->string normalized-level)
+                                              " " (heading-align-class "we-heading-with-subtitle" normalized-align)
+                                              " " (heading-spacing-class "we-heading-with-subtitle" normalized-spacing))))))
+         (define (set-title! value0)
+           (set-dom-node-text! title-node (value->text value0)))
+         (define (set-subtitle! value0)
+           (set-dom-node-text! subtitle-node (value->text value0)))
+         (when (obs? raw-level)
+           (define (level-listener updated)
+             (set-heading-style! updated
+                                 (maybe-observable-value raw-align)
+                                 (maybe-observable-value raw-spacing)))
+           (obs-observe! raw-level level-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-level level-listener))))
+         (when (obs? raw-align)
+           (define (align-listener updated)
+             (set-heading-style! (maybe-observable-value raw-level)
+                                 updated
+                                 (maybe-observable-value raw-spacing)))
+           (obs-observe! raw-align align-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-align align-listener))))
+         (when (obs? raw-spacing)
+           (define (spacing-listener updated)
+             (set-heading-style! (maybe-observable-value raw-level)
+                                 (maybe-observable-value raw-align)
+                                 updated))
+           (obs-observe! raw-spacing spacing-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-spacing spacing-listener))))
+         (cond
+           [(obs? raw-value)
+            (set-title! (obs-peek raw-value))
+            (define (value-listener updated)
+              (set-title! updated))
+            (obs-observe! raw-value value-listener)
+            (register-cleanup! (lambda () (obs-unobserve! raw-value value-listener)))]
+           [else
+            (set-title! raw-value)])
+         (cond
+           [(obs? raw-subtitle)
+            (set-subtitle! (obs-peek raw-subtitle))
+            (define (subtitle-listener updated)
+              (set-subtitle! updated))
+            (obs-observe! raw-subtitle subtitle-listener)
+            (register-cleanup! (lambda () (obs-unobserve! raw-subtitle subtitle-listener)))]
+           [else
+            (set-subtitle! raw-subtitle)])
+         node]
+        [(display-heading-with-subtitle)
+         (define raw-level (alist-ref (view-props v) 'level 'render))
+         (define raw-value (alist-ref (view-props v) 'value 'render))
+         (define raw-subtitle (alist-ref (view-props v) 'subtitle 'render))
+         (define raw-align-pair (assq 'align (view-props v)))
+         (define raw-align (if raw-align-pair (cdr raw-align-pair) 'left))
+         (define raw-spacing-pair (assq 'spacing (view-props v)))
+         (define raw-spacing (if raw-spacing-pair (cdr raw-spacing-pair) 'normal))
+         (define level
+           (normalize-heading-level (maybe-observable-value raw-level)))
+         (define align (normalize-heading-align (maybe-observable-value raw-align)))
+         (define spacing (normalize-heading-spacing (maybe-observable-value raw-spacing)))
+         (define title-node
+           (dom-node 'span
+                     (list (cons 'data-we-widget "heading-title")
+                           (cons 'class "we-heading-title"))
+                     '()
+                     ""
+                     #f
+                     #f))
+         (define subtitle-node
+           (dom-node 'small
+                     (list (cons 'data-we-widget "heading-subtitle")
+                           (cons 'class "we-heading-subtitle"))
+                     '()
+                     ""
+                     #f
+                     #f))
+         (define node
+           (dom-node (string->symbol (string-append "h" (number->string level)))
+                     (list (cons 'data-we-widget "display-heading-with-subtitle")
+                           (cons 'class (string-append "we-display-heading-with-subtitle we-display-heading-with-subtitle-" (number->string level)
+                                                       " " (heading-align-class "we-display-heading-with-subtitle" align)
+                                                       " " (heading-spacing-class "we-display-heading-with-subtitle" spacing))))
+                     '()
+                     #f
+                     #f
+                     #f))
+         (backend-replace-children! node (list title-node subtitle-node))
+         (define (set-heading-style! level0 align0 spacing0)
+           (define normalized-level (normalize-heading-level level0))
+           (define normalized-align (normalize-heading-align align0))
+           (define normalized-spacing (normalize-heading-spacing spacing0))
+           (set-dom-node-tag! node (string->symbol (string-append "h" (number->string normalized-level))))
+           (set-dom-node-attrs!
+            node
+            (list (cons 'data-we-widget "display-heading-with-subtitle")
+                  (cons 'class (string-append "we-display-heading-with-subtitle we-display-heading-with-subtitle-" (number->string normalized-level)
+                                              " " (heading-align-class "we-display-heading-with-subtitle" normalized-align)
+                                              " " (heading-spacing-class "we-display-heading-with-subtitle" normalized-spacing))))))
+         (define (set-title! value0)
+           (set-dom-node-text! title-node (value->text value0)))
+         (define (set-subtitle! value0)
+           (set-dom-node-text! subtitle-node (value->text value0)))
+         (when (obs? raw-level)
+           (define (level-listener updated)
+             (set-heading-style! updated
+                                 (maybe-observable-value raw-align)
+                                 (maybe-observable-value raw-spacing)))
+           (obs-observe! raw-level level-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-level level-listener))))
+         (when (obs? raw-align)
+           (define (align-listener updated)
+             (set-heading-style! (maybe-observable-value raw-level)
+                                 updated
+                                 (maybe-observable-value raw-spacing)))
+           (obs-observe! raw-align align-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-align align-listener))))
+         (when (obs? raw-spacing)
+           (define (spacing-listener updated)
+             (set-heading-style! (maybe-observable-value raw-level)
+                                 (maybe-observable-value raw-align)
+                                 updated))
+           (obs-observe! raw-spacing spacing-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-spacing spacing-listener))))
+         (cond
+           [(obs? raw-value)
+            (set-title! (obs-peek raw-value))
+            (define (value-listener updated)
+              (set-title! updated))
+            (obs-observe! raw-value value-listener)
+            (register-cleanup! (lambda () (obs-unobserve! raw-value value-listener)))]
+           [else
+            (set-title! raw-value)])
+         (cond
+           [(obs? raw-subtitle)
+            (set-subtitle! (obs-peek raw-subtitle))
+            (define (subtitle-listener updated)
+              (set-subtitle! updated))
+            (obs-observe! raw-subtitle subtitle-listener)
+            (register-cleanup! (lambda () (obs-unobserve! raw-subtitle subtitle-listener)))]
+           [else
+            (set-subtitle! raw-subtitle)])
+         node]
+        [(lead)
+         (define raw-value (alist-ref (view-props v) 'value 'render))
+         (define node
+           (dom-node 'p
+                     (list (cons 'data-we-widget "lead")
+                           (cons 'class "we-lead"))
+                     '()
+                     ""
+                     #f
+                     #f))
+         (cond
+           [(obs? raw-value)
+            (set-dom-node-text! node (value->text (obs-peek raw-value)))
+            (define (value-listener updated)
+              (set-dom-node-text! node (value->text updated)))
+            (obs-observe! raw-value value-listener)
+            (register-cleanup! (lambda () (obs-unobserve! raw-value value-listener)))]
+           [else
+            (set-dom-node-text! node (value->text raw-value))])
+         node]
         [(button)
          (define label  (alist-ref (view-props v) 'label  'render))
          (define action (alist-ref (view-props v) 'action 'render))
@@ -1759,6 +2232,65 @@
             (register-cleanup! (lambda () (obs-unobserve! raw-value listener)))]
            [else
             (set-input-value! raw-value)])
+         node]
+        [(textarea)
+         (define raw-value (alist-ref (view-props v) 'value 'render))
+         (define action    (alist-ref (view-props v) 'action 'render))
+         (define raw-rows  (alist-ref (view-props v) 'rows 'render))
+         (define textarea-attrs/raw (alist-ref (view-props v) 'attrs 'render))
+         (define textarea-attrs
+           (if (list? textarea-attrs/raw)
+               textarea-attrs/raw
+               '()))
+         (define rows-value
+           (if (number? raw-rows)
+               raw-rows
+               3))
+         (define node (dom-node 'textarea
+                                (list (cons 'value "")
+                                      (cons 'rows rows-value)
+                                      (cons 'data-we-widget "textarea")
+                                      (cons 'class "we-textarea"))
+                                '()
+                                #f
+                                #f
+                                #f))
+         (set-dom-node-on-change! node (lambda (new-value) (action new-value)))
+         (define (with-textarea-extra-attrs attrs)
+           (let loop ([remaining textarea-attrs]
+                      [acc attrs])
+             (cond
+               [(null? remaining) acc]
+               [(and (list? (car remaining))
+                     (= (length (car remaining)) 2)
+                     (symbol? (car (car remaining))))
+                (loop (cdr remaining)
+                      (attr-set acc
+                                (car (car remaining))
+                                (cadr (car remaining))))]
+               [(and (pair? (car remaining))
+                     (symbol? (caar remaining)))
+                (loop (cdr remaining)
+                      (attr-set acc (caar remaining) (cdar remaining)))]
+               [else
+                (loop (cdr remaining) acc)])))
+         (define (set-textarea-value! value)
+           (set-dom-node-attrs!
+            node
+            (with-textarea-extra-attrs
+             (list (cons 'value (value->text value))
+                   (cons 'rows rows-value)
+                   (cons 'data-we-widget "textarea")
+                   (cons 'class "we-textarea")))))
+         (cond
+           [(obs? raw-value)
+            (set-textarea-value! (obs-peek raw-value))
+            (define (listener updated)
+              (set-textarea-value! updated))
+            (obs-observe! raw-value listener)
+            (register-cleanup! (lambda () (obs-unobserve! raw-value listener)))]
+           [else
+            (set-textarea-value! raw-value)])
          node]
         [(checkbox)
          (define raw-value (alist-ref (view-props v) 'value  'render))
@@ -2415,9 +2947,11 @@
            (define open? (not (not open-value)))
            (set-dom-node-attrs!
             node
-            (list (cons 'data-we-widget "collapse")
-                  (cons 'class (if open? "we-collapse is-open" "we-collapse"))
-                  (cons 'aria-hidden (if open? "false" "true")))))
+            (merge-root-extra-attrs
+             v
+             (list (cons 'data-we-widget "collapse")
+                   (cons 'class (if open? "we-collapse is-open" "we-collapse"))
+                   (cons 'aria-hidden (if open? "false" "true"))))))
          (cond
            [(obs? raw-open)
             (set-open! (obs-peek raw-open))
@@ -2561,11 +3095,14 @@
                         (equal? current-id section-id)))
                   (equal? raw-selected section-id)))
             (define collapse-node
-              (build-node (collapse collapse-open section-view) register-cleanup!))
+              (build-node (with-class "we-accordion-content"
+                            (collapse collapse-open section-view))
+                          register-cleanup!))
             (set-dom-node-attrs!
              collapse-node
-             (append (dom-node-attrs collapse-node)
-                     (list (cons 'id panel-id))))
+             (attr-set (dom-node-attrs collapse-node)
+                       'id
+                       panel-id))
             (when (obs? raw-selected)
               (set-dom-node-on-click!
                trigger-node

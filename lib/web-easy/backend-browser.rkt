@@ -401,12 +401,21 @@
         [(group) "fieldset"]
         [(legend) "legend"]
         [(span) "span"]
+        [(small) "small"]
+        [(p) "p"]
+        [(h1) "h1"]
+        [(h2) "h2"]
+        [(h3) "h3"]
+        [(h4) "h4"]
+        [(h5) "h5"]
+        [(h6) "h6"]
         [(text) "span"]
         [(menu-item) "button"]
         [(button) "button"]
         [(a) "a"]
         [(hr) "hr"]
         [(input) "input"]
+        [(textarea) "textarea"]
         [(checkbox) "input"]
         [(choice radios select) "select"]
         [(slider) "input"]
@@ -1024,7 +1033,8 @@
           (define callback (dom-node-record-on-change n))
           (when callback
             (callback (node-change-value n))))))
-      (when (eq? tag 'input)
+      (when (or (eq? tag 'input)
+                (eq? tag 'textarea))
         (js-add-event-listener!
          native
          "input"

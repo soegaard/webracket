@@ -30,6 +30,23 @@
 ;;   spinner        Build a loading spinner view.
 ;;   placeholder    Build a placeholder/skeleton view.
 ;;   text           Build a text label view.
+;;   heading        Build a semantic heading view (h1..h6).
+;;   h1             Build a semantic level-1 heading view.
+;;   h2             Build a semantic level-2 heading view.
+;;   h3             Build a semantic level-3 heading view.
+;;   h4             Build a semantic level-4 heading view.
+;;   h5             Build a semantic level-5 heading view.
+;;   h6             Build a semantic level-6 heading view.
+;;   display-heading  Build a semantic heading view with display style variant.
+;;   display-1      Build a semantic display level-1 heading view.
+;;   display-2      Build a semantic display level-2 heading view.
+;;   display-3      Build a semantic display level-3 heading view.
+;;   display-4      Build a semantic display level-4 heading view.
+;;   display-5      Build a semantic display level-5 heading view.
+;;   display-6      Build a semantic display level-6 heading view.
+;;   heading-with-subtitle  Build a semantic heading view with muted subtitle text.
+;;   display-heading-with-subtitle  Build a semantic display heading view with muted subtitle text.
+;;   lead           Build a lead paragraph view.
 ;;   button         Build a button view with click action.
 ;;   link           Build a link view with href.
 ;;   button-group   Build a grouped button container view.
@@ -37,6 +54,7 @@
 ;;   toolbar        Build a generic horizontal toolbar container.
 ;;   toolbar-group  Build a grouped toolbar section container.
 ;;   input          Build an input view with change action and optional Enter action.
+;;   textarea       Build a textarea view with change action and optional attrs.
 ;;   checkbox       Build a checkbox view with toggle action.
 ;;   choice         Build a single-choice select view.
 ;;   slider         Build a numeric slider view.
@@ -95,6 +113,23 @@
    spinner
    placeholder
    text
+   heading
+   h1
+   h2
+   h3
+   h4
+   h5
+   h6
+   display-heading
+   display-1
+   display-2
+   display-3
+   display-4
+   display-5
+   display-6
+   heading-with-subtitle
+   display-heading-with-subtitle
+   lead
    button
    link
    button-group
@@ -102,6 +137,7 @@
    toolbar
    toolbar-group
    input
+   textarea
    checkbox
    choice
    slider
@@ -154,6 +190,11 @@
     (define kind/spinner   'spinner)   ; Loading spinner view.
     (define kind/placeholder 'placeholder) ; Placeholder/skeleton view.
     (define kind/text      'text)      ; Text label view.
+    (define kind/heading   'heading)   ; Semantic heading text view.
+    (define kind/display-heading 'display-heading) ; Semantic heading with display style.
+    (define kind/heading-with-subtitle 'heading-with-subtitle) ; Semantic heading with muted subtitle.
+    (define kind/display-heading-with-subtitle 'display-heading-with-subtitle) ; Display heading with muted subtitle.
+    (define kind/lead      'lead)      ; Lead paragraph text view.
     (define kind/button    'button)    ; Clickable action view.
     (define kind/link      'link)      ; Link view.
     (define kind/button-group 'button-group) ; Grouped button container view.
@@ -161,6 +202,7 @@
     (define kind/toolbar   'toolbar)   ; Generic horizontal toolbar container.
     (define kind/toolbar-group 'toolbar-group) ; Grouped toolbar section container.
     (define kind/input     'input)     ; Text input view.
+    (define kind/textarea  'textarea)  ; Multi-line text input view.
     (define kind/checkbox  'checkbox)  ; Checkbox input view.
     (define kind/choice    'choice)    ; Single select input view.
     (define kind/slider    'slider)    ; Numeric slider input view.
@@ -474,6 +516,119 @@
     (define (text s)
       (view kind/text (list (cons 'value s)) '()))
 
+    ;; heading : (or/c number? observable?) (or/c string? observable?) [symbol?] [symbol?] -> view?
+    ;;   Construct a semantic heading view with level normalized to 1..6 and optional align/spacing style variants.
+    ;;   Optional parameter align defaults to 'left.
+    ;;   Optional parameter spacing defaults to 'normal.
+    (define (heading level content [align 'left] [spacing 'normal])
+      (view kind/heading (list (cons 'level level)
+                               (cons 'value content)
+                               (cons 'align align)
+                               (cons 'spacing spacing))
+            '()))
+
+    ;; h1 : (or/c string? observable?) -> view?
+    ;;   Construct a semantic level-1 heading view.
+    (define (h1 content)
+      (heading 1 content))
+
+    ;; h2 : (or/c string? observable?) -> view?
+    ;;   Construct a semantic level-2 heading view.
+    (define (h2 content)
+      (heading 2 content))
+
+    ;; h3 : (or/c string? observable?) -> view?
+    ;;   Construct a semantic level-3 heading view.
+    (define (h3 content)
+      (heading 3 content))
+
+    ;; h4 : (or/c string? observable?) -> view?
+    ;;   Construct a semantic level-4 heading view.
+    (define (h4 content)
+      (heading 4 content))
+
+    ;; h5 : (or/c string? observable?) -> view?
+    ;;   Construct a semantic level-5 heading view.
+    (define (h5 content)
+      (heading 5 content))
+
+    ;; h6 : (or/c string? observable?) -> view?
+    ;;   Construct a semantic level-6 heading view.
+    (define (h6 content)
+      (heading 6 content))
+
+    ;; display-heading : (or/c number? observable?) (or/c string? observable?) [symbol?] [symbol?] -> view?
+    ;;   Construct a semantic heading view with display style, level normalized to 1..6, and optional align/spacing style variants.
+    ;;   Optional parameter align defaults to 'left.
+    ;;   Optional parameter spacing defaults to 'normal.
+    (define (display-heading level content [align 'left] [spacing 'normal])
+      (view kind/display-heading (list (cons 'level level)
+                                       (cons 'value content)
+                                       (cons 'align align)
+                                       (cons 'spacing spacing))
+            '()))
+
+    ;; display-1 : (or/c string? observable?) -> view?
+    ;;   Construct a semantic display level-1 heading view.
+    (define (display-1 content)
+      (display-heading 1 content))
+
+    ;; display-2 : (or/c string? observable?) -> view?
+    ;;   Construct a semantic display level-2 heading view.
+    (define (display-2 content)
+      (display-heading 2 content))
+
+    ;; display-3 : (or/c string? observable?) -> view?
+    ;;   Construct a semantic display level-3 heading view.
+    (define (display-3 content)
+      (display-heading 3 content))
+
+    ;; display-4 : (or/c string? observable?) -> view?
+    ;;   Construct a semantic display level-4 heading view.
+    (define (display-4 content)
+      (display-heading 4 content))
+
+    ;; display-5 : (or/c string? observable?) -> view?
+    ;;   Construct a semantic display level-5 heading view.
+    (define (display-5 content)
+      (display-heading 5 content))
+
+    ;; display-6 : (or/c string? observable?) -> view?
+    ;;   Construct a semantic display level-6 heading view.
+    (define (display-6 content)
+      (display-heading 6 content))
+
+    ;; heading-with-subtitle : (or/c number? observable?) (or/c string? observable?) (or/c string? observable?) [symbol?] [symbol?] -> view?
+    ;;   Construct a semantic heading view with muted subtitle text and optional align/spacing style variants.
+    ;;   Optional parameter align defaults to 'left.
+    ;;   Optional parameter spacing defaults to 'normal.
+    (define (heading-with-subtitle level content subtitle [align 'left] [spacing 'normal])
+      (view kind/heading-with-subtitle
+            (list (cons 'level level)
+                  (cons 'value content)
+                  (cons 'subtitle subtitle)
+                  (cons 'align align)
+                  (cons 'spacing spacing))
+            '()))
+
+    ;; display-heading-with-subtitle : (or/c number? observable?) (or/c string? observable?) (or/c string? observable?) [symbol?] [symbol?] -> view?
+    ;;   Construct a semantic display heading view with muted subtitle text and optional align/spacing style variants.
+    ;;   Optional parameter align defaults to 'left.
+    ;;   Optional parameter spacing defaults to 'normal.
+    (define (display-heading-with-subtitle level content subtitle [align 'left] [spacing 'normal])
+      (view kind/display-heading-with-subtitle
+            (list (cons 'level level)
+                  (cons 'value content)
+                  (cons 'subtitle subtitle)
+                  (cons 'align align)
+                  (cons 'spacing spacing))
+            '()))
+
+    ;; lead : (or/c string? observable?) -> view?
+    ;;   Construct a lead paragraph view from static or observable value.
+    (define (lead content)
+      (view kind/lead (list (cons 'value content)) '()))
+
     ;; button : (or/c string? observable?) (-> any/c) [any/c] [any/c] -> view?
     ;;   Construct a button view with optional leading/trailing icon labels.
     ;;   Optional parameter leading-icon defaults to #f.
@@ -525,6 +680,17 @@
                              (cons 'action action)
                              (cons 'on-enter on-enter)
                              (cons 'attrs attrs))
+            '()))
+
+    ;; textarea : (or/c string? observable?) (-> any/c any/c) [number?] [list?] -> view?
+    ;;   Construct a textarea view with current value, change action, optional rows, and attrs.
+    ;;   Optional parameter rows defaults to 3.
+    ;;   Optional parameter attrs defaults to '().
+    (define (textarea value action [rows 3] [attrs '()])
+      (view kind/textarea (list (cons 'value value)
+                                (cons 'action action)
+                                (cons 'rows rows)
+                                (cons 'attrs attrs))
             '()))
 
     ;; checkbox : (or/c boolean? observable?) (-> any/c any/c) -> view?
@@ -852,6 +1018,23 @@
             spinner
             placeholder
             text
+            heading
+            h1
+            h2
+            h3
+            h4
+            h5
+            h6
+            display-heading
+            display-1
+            display-2
+            display-3
+            display-4
+            display-5
+            display-6
+            heading-with-subtitle
+            display-heading-with-subtitle
+            lead
             button
             link
             button-group
@@ -859,6 +1042,7 @@
             toolbar
             toolbar-group
             input
+            textarea
             checkbox
             choice
             slider

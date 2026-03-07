@@ -125,6 +125,148 @@
 (dom-node-click! plus-node)
 (check-equal (dom-node-text label-node) "2" "text after two clicks")
 
+;; heading/display-heading/lead render semantic tags, classes, style variants, and observable updates
+(define @heading-level   (@ 2))
+(define @heading-text    (@ "Title"))
+(define @display-text    (@ "Display"))
+(define @lead-text       (@ "Lead body"))
+(define @heading-align   (@ 'left))
+(define @heading-spacing (@ 'normal))
+(define r-heading
+  (render
+   (window
+    (vpanel
+     (heading @heading-level @heading-text @heading-align @heading-spacing)
+     (display-heading @heading-level @display-text @heading-align @heading-spacing)
+     (lead @lead-text)))))
+(define heading-panel       (node-child (renderer-root r-heading) 0))
+(define heading-node        (node-child heading-panel 0))
+(define display-heading-node (node-child heading-panel 1))
+(define lead-node           (node-child heading-panel 2))
+(check-equal (node-attr heading-node 'data-we-widget) "heading" "heading data-we-widget attr")
+(check-equal (node-attr heading-node 'class)
+             "we-heading we-heading-2 we-heading-align-left we-heading-space-normal"
+             "heading class level 2 + default style variants")
+(check-equal (dom-node-tag heading-node) 'h2 "heading tag level 2")
+(check-equal (dom-node-text heading-node) "Title" "heading initial text")
+(check-equal (node-attr display-heading-node 'data-we-widget) "display-heading" "display-heading data-we-widget attr")
+(check-equal (node-attr display-heading-node 'class)
+             "we-display-heading we-display-heading-2 we-display-heading-align-left we-display-heading-space-normal"
+             "display-heading class level 2 + default style variants")
+(check-equal (dom-node-tag display-heading-node) 'h2 "display-heading tag level 2")
+(check-equal (dom-node-text display-heading-node) "Display" "display-heading initial text")
+(check-equal (node-attr lead-node 'data-we-widget) "lead" "lead data-we-widget attr")
+(check-equal (node-attr lead-node 'class) "we-lead" "lead class")
+(check-equal (dom-node-tag lead-node) 'p "lead tag paragraph")
+(check-equal (dom-node-text lead-node) "Lead body" "lead initial text")
+(:= @heading-level 4)
+(:= @heading-text "Updated Title")
+(:= @display-text "Updated Display")
+(:= @lead-text "Updated Lead")
+(check-equal (node-attr heading-node 'class)
+             "we-heading we-heading-4 we-heading-align-left we-heading-space-normal"
+             "heading class level 4 + default style variants")
+(check-equal (dom-node-tag heading-node) 'h4 "heading tag level 4")
+(check-equal (dom-node-text heading-node) "Updated Title" "heading updated text")
+(check-equal (node-attr display-heading-node 'class)
+             "we-display-heading we-display-heading-4 we-display-heading-align-left we-display-heading-space-normal"
+             "display-heading class level 4 + default style variants")
+(check-equal (dom-node-tag display-heading-node) 'h4 "display-heading tag level 4")
+(check-equal (dom-node-text display-heading-node) "Updated Display" "display-heading updated text")
+(check-equal (dom-node-text lead-node) "Updated Lead" "lead updated text")
+(:= @heading-align 'center)
+(:= @heading-spacing 'loose)
+(check-equal (node-attr heading-node 'class)
+             "we-heading we-heading-4 we-heading-align-center we-heading-space-loose"
+             "heading class reflects updated style variants")
+(check-equal (node-attr display-heading-node 'class)
+             "we-display-heading we-display-heading-4 we-display-heading-align-center we-display-heading-space-loose"
+             "display-heading class reflects updated style variants")
+
+;; h1..h6 and display-1..display-6 wrappers map to fixed heading levels
+(define r-heading-wrappers
+  (render
+   (window
+    (vpanel
+     (h1 "h1")
+     (h2 "h2")
+     (h3 "h3")
+     (h4 "h4")
+     (h5 "h5")
+     (h6 "h6")
+     (display-1 "d1")
+     (display-2 "d2")
+     (display-3 "d3")
+     (display-4 "d4")
+     (display-5 "d5")
+     (display-6 "d6")))))
+(define heading-wrappers-panel (node-child (renderer-root r-heading-wrappers) 0))
+(check-equal (dom-node-tag (node-child heading-wrappers-panel 0)) 'h1 "h1 wrapper tag")
+(check-equal (dom-node-tag (node-child heading-wrappers-panel 1)) 'h2 "h2 wrapper tag")
+(check-equal (dom-node-tag (node-child heading-wrappers-panel 2)) 'h3 "h3 wrapper tag")
+(check-equal (dom-node-tag (node-child heading-wrappers-panel 3)) 'h4 "h4 wrapper tag")
+(check-equal (dom-node-tag (node-child heading-wrappers-panel 4)) 'h5 "h5 wrapper tag")
+(check-equal (dom-node-tag (node-child heading-wrappers-panel 5)) 'h6 "h6 wrapper tag")
+(check-equal (node-attr (node-child heading-wrappers-panel 6) 'class)
+             "we-display-heading we-display-heading-1 we-display-heading-align-left we-display-heading-space-normal"
+             "display-1 wrapper class")
+(check-equal (node-attr (node-child heading-wrappers-panel 11) 'class)
+             "we-display-heading we-display-heading-6 we-display-heading-align-left we-display-heading-space-normal"
+             "display-6 wrapper class")
+
+;; heading-with-subtitle renders semantic heading plus muted subtitle and updates observables
+(define @subtitle-level (@ 3))
+(define @subtitle-title (@ "Release Notes"))
+(define @subtitle-text (@ "Updated 2026-03-06"))
+(define @subtitle-align (@ 'left))
+(define @subtitle-spacing (@ 'normal))
+(define r-heading-subtitle
+  (render
+   (window
+    (vpanel
+     (heading-with-subtitle @subtitle-level @subtitle-title @subtitle-text @subtitle-align @subtitle-spacing)
+     (display-heading-with-subtitle @subtitle-level @subtitle-title @subtitle-text @subtitle-align @subtitle-spacing)))))
+(define heading-subtitle-panel (node-child (renderer-root r-heading-subtitle) 0))
+(define heading-subtitle-node (node-child heading-subtitle-panel 0))
+(define heading-title-node (node-child heading-subtitle-node 0))
+(define heading-subtitle-text-node (node-child heading-subtitle-node 1))
+(define display-heading-subtitle-node (node-child heading-subtitle-panel 1))
+(define display-heading-title-node (node-child display-heading-subtitle-node 0))
+(define display-heading-subtitle-text-node (node-child display-heading-subtitle-node 1))
+(check-equal (node-attr heading-subtitle-node 'data-we-widget) "heading-with-subtitle" "heading-with-subtitle data-we-widget attr")
+(check-equal (node-attr heading-subtitle-node 'class)
+             "we-heading-with-subtitle we-heading-with-subtitle-3 we-heading-with-subtitle-align-left we-heading-with-subtitle-space-normal"
+             "heading-with-subtitle initial class")
+(check-equal (dom-node-tag heading-subtitle-node) 'h3 "heading-with-subtitle initial tag")
+(check-equal (node-attr heading-title-node 'data-we-widget) "heading-title" "heading title node widget")
+(check-equal (node-attr heading-subtitle-text-node 'data-we-widget) "heading-subtitle" "heading subtitle node widget")
+(check-equal (dom-node-text heading-title-node) "Release Notes" "heading-with-subtitle initial title text")
+(check-equal (dom-node-text heading-subtitle-text-node) "Updated 2026-03-06" "heading-with-subtitle initial subtitle text")
+(check-equal (node-attr display-heading-subtitle-node 'data-we-widget) "display-heading-with-subtitle" "display-heading-with-subtitle data-we-widget attr")
+(check-equal (node-attr display-heading-subtitle-node 'class)
+             "we-display-heading-with-subtitle we-display-heading-with-subtitle-3 we-display-heading-with-subtitle-align-left we-display-heading-with-subtitle-space-normal"
+             "display-heading-with-subtitle initial class")
+(check-equal (dom-node-tag display-heading-subtitle-node) 'h3 "display-heading-with-subtitle initial tag")
+(check-equal (dom-node-text display-heading-title-node) "Release Notes" "display-heading-with-subtitle initial title text")
+(check-equal (dom-node-text display-heading-subtitle-text-node) "Updated 2026-03-06" "display-heading-with-subtitle initial subtitle text")
+(:= @subtitle-level 5)
+(:= @subtitle-title "Patch Notes")
+(:= @subtitle-text "Updated 2026-03-07")
+(:= @subtitle-align 'center)
+(:= @subtitle-spacing 'loose)
+(check-equal (node-attr heading-subtitle-node 'class)
+             "we-heading-with-subtitle we-heading-with-subtitle-5 we-heading-with-subtitle-align-center we-heading-with-subtitle-space-loose"
+             "heading-with-subtitle updated class")
+(check-equal (dom-node-tag heading-subtitle-node) 'h5 "heading-with-subtitle updated tag")
+(check-equal (dom-node-text heading-title-node) "Patch Notes" "heading-with-subtitle updated title text")
+(check-equal (dom-node-text heading-subtitle-text-node) "Updated 2026-03-07" "heading-with-subtitle updated subtitle text")
+(check-equal (node-attr display-heading-subtitle-node 'class)
+             "we-display-heading-with-subtitle we-display-heading-with-subtitle-5 we-display-heading-with-subtitle-align-center we-display-heading-with-subtitle-space-loose"
+             "display-heading-with-subtitle updated class")
+(check-equal (dom-node-tag display-heading-subtitle-node) 'h5 "display-heading-with-subtitle updated tag")
+(check-equal (dom-node-text display-heading-title-node) "Patch Notes" "display-heading-with-subtitle updated title text")
+(check-equal (dom-node-text display-heading-subtitle-text-node) "Updated 2026-03-07" "display-heading-with-subtitle updated subtitle text")
+
 ;; λ<~ can be used directly as a button action
 (define @count-lambda (@ 0))
 (define r-lambda
@@ -657,15 +799,15 @@
 (define accordion-collapse-1 (node-child accordion-section-1 1))
 (check-equal (node-attr accordion-root 'data-we-widget) "accordion" "accordion root data-we-widget attr")
 (check-equal (node-attr accordion-button-0 'data-we-widget) "accordion-trigger" "accordion first header widget tag")
-(check-equal (node-attr accordion-collapse-0 'class) "we-collapse is-open" "accordion first section initially open")
-(check-equal (node-attr accordion-collapse-1 'class) "we-collapse" "accordion second section initially closed")
+(check-equal (node-attr accordion-collapse-0 'class) "we-collapse is-open we-accordion-content" "accordion first section initially open")
+(check-equal (node-attr accordion-collapse-1 'class) "we-collapse we-accordion-content" "accordion second section initially closed")
 (dom-node-click! accordion-button-1)
 (check-equal (obs-peek @accordion-selected) 'details "accordion click selects details")
-(check-equal (node-attr accordion-collapse-0 'class) "we-collapse" "accordion first section closes after switching")
-(check-equal (node-attr accordion-collapse-1 'class) "we-collapse is-open" "accordion second section opens after switching")
+(check-equal (node-attr accordion-collapse-0 'class) "we-collapse we-accordion-content" "accordion first section closes after switching")
+(check-equal (node-attr accordion-collapse-1 'class) "we-collapse is-open we-accordion-content" "accordion second section opens after switching")
 (dom-node-click! accordion-button-1)
 (check-equal (obs-peek @accordion-selected) #f "accordion click on selected section clears selection")
-(check-equal (node-attr accordion-collapse-1 'class) "we-collapse" "accordion selected section closes on second click")
+(check-equal (node-attr accordion-collapse-1 'class) "we-collapse we-accordion-content" "accordion selected section closes on second click")
 (dom-node-keydown! accordion-button-0 "ArrowDown")
 (check-equal (obs-peek @accordion-selected) 'details "accordion ArrowDown moves to next section")
 (dom-node-keydown! accordion-button-1 "ArrowUp")
@@ -1562,6 +1704,26 @@
 (define input-node-attrs (node-child (node-child (renderer-root r25-input) 0) 0))
 (check-equal (node-attr input-node-attrs 'placeholder) "Your name" "input placeholder attr")
 (check-equal (node-attr input-node-attrs 'autocomplete) "name" "input autocomplete attr")
+
+;; textarea supports rows + attrs and updates value on change
+(define @notes (@ "line 1"))
+(define r25-textarea
+  (render
+   (window
+    (vpanel
+     (textarea @notes
+               (lambda (v) (:= @notes v))
+               4
+               '((placeholder "Notes")
+                 (spellcheck "true")))))))
+(define textarea-node (node-child (node-child (renderer-root r25-textarea) 0) 0))
+(check-equal (node-attr textarea-node 'data-we-widget) "textarea" "textarea data-we-widget attr")
+(check-equal (node-attr textarea-node 'class) "we-textarea" "textarea class")
+(check-equal (node-attr textarea-node 'rows) 4 "textarea rows attr")
+(check-equal (node-attr textarea-node 'placeholder) "Notes" "textarea placeholder attr")
+(check-equal (node-attr textarea-node 'spellcheck) "true" "textarea spellcheck attr")
+(dom-node-change! textarea-node "line 2")
+(check-equal (obs-peek @notes) "line 2" "textarea change updates observable")
 
 ;; choice supports (id label) entries and decodes change selection back to id.
 (define @role-selected (@ 'admin))
