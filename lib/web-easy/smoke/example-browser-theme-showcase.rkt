@@ -64,29 +64,38 @@
 
 ;; theme-css-path : any/c -> string?
 ;;   Map theme id to relative stylesheet path from generated showcase page.
-(define (theme-css-path theme)
+(define (theme-css-path/general theme)
   (case (normalize-theme-id theme)
     [(light) "../theme-external-light.css"]
     [(dark)  "../theme-external-dark.css"]
     [else    "../theme-external-solar.css"]))
 
-;; install-theme-link! : -> any/c
-;;   Create and attach external theme <link> to document head.
-(define (install-theme-link!)
+;; theme-css-path/showcase : any/c -> string?
+;;   Map theme id to showcase page stylesheet path.
+(define (theme-css-path/showcase theme)
+  (case (normalize-theme-id theme)
+    [(light) "../theme-showcase-light.css"]
+    [(dark)  "../theme-showcase-dark.css"]
+    [else    "../theme-showcase-solar.css"]))
+
+;; install-theme-link! : string? -> any/c
+;;   Create and attach a stylesheet <link> with the given id.
+(define (install-theme-link! link-id)
   (define doc (js-var "document"))
   (define head (js-ref/extern doc "head"))
   (define link (js-create-element "link"))
-  (js-set-attribute! link "id" "we-theme-external-css")
+  (js-set-attribute! link "id" link-id)
   (js-set-attribute! link "rel" "stylesheet")
   (js-append-child! head link)
   link)
 
-;; apply-theme! : any/c symbol? -> void?
-;;   Update html class and external stylesheet href for theme id.
-(define (apply-theme! link theme)
+;; apply-theme! : any/c any/c any/c -> void?
+;;   Update html class and stylesheet hrefs for theme id.
+(define (apply-theme! general-link showcase-link theme)
   (define html-node (js-ref/extern (js-document-body) "parentElement"))
   (js-set-attribute! html-node "class" (theme-class-name theme))
-  (js-set-attribute! link "href" (theme-css-path theme))
+  (js-set-attribute! general-link  "href" (theme-css-path/general theme))
+  (js-set-attribute! showcase-link "href" (theme-css-path/showcase theme))
   (void))
 
 ;; set-progress-variant! : symbol? -> void?
@@ -288,9 +297,11 @@
                         @off-side
                         (text "Offcanvas panel with extra context."))))))))))))
       ))
-(define theme-link-node (install-theme-link!))
-(apply-theme! theme-link-node (obs-peek @theme))
+(define theme-general-link-node  (install-theme-link! "we-theme-external-css"))
+(define theme-showcase-link-node (install-theme-link! "we-theme-showcase-css"))
+
+(apply-theme! theme-general-link-node theme-showcase-link-node (obs-peek @theme))
 (obs-observe! @theme (lambda (next-theme)
-                       (apply-theme! theme-link-node next-theme)))
+                       (apply-theme! theme-general-link-node theme-showcase-link-node next-theme)))
 
 (mount-renderer! app-renderer)

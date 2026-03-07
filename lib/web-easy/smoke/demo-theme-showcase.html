@@ -382,7 +382,8 @@
 
     .we-accordion-content.is-open { display: block; }
   </style>
-  <link id="theme-link" rel="stylesheet" href="./theme-external-solar.css">
+  <link id="theme-link-general" rel="stylesheet" href="./theme-external-solar.css">
+  <link id="theme-link-showcase" rel="stylesheet" href="./theme-showcase-solar.css">
 </head>
 <body>
   <header class="topbar">
@@ -546,18 +547,25 @@
   <script>
     (function () {
       const themeSelect = document.getElementById("theme-select");
-      const themeLink = document.getElementById("theme-link");
+      const themeLinkGeneral = document.getElementById("theme-link-general");
+      const themeLinkShowcase = document.getElementById("theme-link-showcase");
       const root = document.documentElement;
-      const themeHref = {
+      const themeHrefGeneral = {
         solar: "./theme-external-solar.css",
         light: "./theme-external-light.css",
         dark: "./theme-external-dark.css"
+      };
+      const themeHrefShowcase = {
+        solar: "./theme-showcase-solar.css",
+        light: "./theme-showcase-light.css",
+        dark: "./theme-showcase-dark.css"
       };
 
       function applyTheme(name) {
         root.classList.remove("we-theme-light", "we-theme-dark", "we-theme-solar");
         root.classList.add("we-theme-" + name);
-        themeLink.href = themeHref[name];
+        themeLinkGeneral.href = themeHrefGeneral[name];
+        themeLinkShowcase.href = themeHrefShowcase[name];
       }
 
       themeSelect.addEventListener("change", function (evt) {

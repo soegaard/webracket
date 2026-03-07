@@ -1,0 +1,184 @@
+/*
+ * Web Easy dark theme showcase-page layout overrides.
+ *
+ * This file is page-specific (topbar, hero, grid cards) and is meant to be
+ * loaded together with theme-external-dark.css.
+ */
+
+/* -------------------------------------------------------------------------- */
+/* 8) Theme Showcase Page Layout (for generated/example-browser-theme-showcase) */
+/* -------------------------------------------------------------------------- */
+html.we-theme-dark .showcase-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 14px 14px 14px;
+  gap: 14px;
+}
+
+/* Sticky topbar card to mimic the demo page header feel. */
+html.we-theme-dark .showcase-topbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  /* Full-bleed trick: break out of centered shell to viewport width. */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  border-bottom: 1px solid var(--we-border-soft);
+}
+
+/* Remove card framing so topbar reads as a full-width header band. */
+html.we-theme-dark .showcase-topbar.we-card {
+  border-left: none;
+  border-right: none;
+  border-top: none;
+  border-bottom: none;
+  border-radius: 0;
+}
+
+html.we-theme-dark .showcase-topbar .we-card-body {
+  background: #1d2129;
+  gap: 0;
+  padding: 12px 14px;
+}
+
+html.we-theme-dark .showcase-topbar-inner.we-inline {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  /* Wrap keeps controls usable on narrow screens. */
+  flex-wrap: wrap;
+}
+
+html.we-theme-dark .showcase-brand.we-stack {
+  gap: 3px;
+}
+
+html.we-theme-dark .showcase-brand-title {
+  font-size: 17px;
+  letter-spacing: 0.02em;
+}
+
+html.we-theme-dark .showcase-brand-subtitle {
+  font-size: 12px;
+  color: #97a4bd;
+}
+
+html.we-theme-dark .showcase-topbar-controls.we-stack {
+  align-items: stretch;
+  gap: 8px;
+  justify-content: flex-start;
+}
+
+html.we-theme-dark .showcase-controls-download-row.we-toolbar {
+  align-items: center;
+  gap: 8px;
+  /* Allow buttons to wrap instead of shrinking text to unreadable sizes. */
+  flex-wrap: wrap;
+}
+
+html.we-theme-dark .showcase-controls-label {
+  font-weight: 600;
+}
+
+html.we-theme-dark .showcase-theme-choice.we-choice {
+  min-width: 170px;
+  width: 170px;
+}
+
+html.we-theme-dark .showcase-topbar-controls .we-choice,
+html.we-theme-dark .showcase-link-button.we-button,
+html.we-theme-dark .showcase-link-button.we-link {
+  border-radius: 6px;
+  padding: 5px 10px;
+}
+
+html.we-theme-dark .showcase-link-button.we-button,
+html.we-theme-dark .showcase-link-button.we-link {
+  background: var(--we-bg);
+  border-color: var(--we-border);
+  color: var(--we-fg);
+  text-decoration: none;
+}
+
+html.we-theme-dark .showcase-link-button.we-button:hover,
+html.we-theme-dark .showcase-link-button.we-link:hover {
+  background: var(--we-bg-hover);
+  border-color: var(--we-border-hover);
+  color: var(--we-fg);
+}
+
+/* Hero card under the topbar. */
+html.we-theme-dark .showcase-hero {
+  /* Full-bleed section with centered card inside (matches demo structure). */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  margin-top: 16px;
+}
+
+html.we-theme-dark .showcase-hero.we-card {
+  border-radius: 10px;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+html.we-theme-dark .showcase-hero .we-card-header {
+  background: #1d2129;
+  border-bottom-color: #1d2129;
+  color: #d7e2f7;
+  font-size: 23px;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+html.we-theme-dark .showcase-hero .we-card-body {
+  background: #13161c;
+  color: #a3b0c6;
+  line-height: 1.45;
+  width: 100%;
+  padding-top: 8px;
+  padding-bottom: 14px;
+}
+
+html.we-theme-dark .showcase-hero-title {
+  font-size: 23px;
+  color: #d7e2f7;
+}
+
+html.we-theme-dark .showcase-hero-lead {
+  color: #97a4bd;
+  line-height: 1.5;
+}
+
+/* Grid rows: wrap cards as viewport changes, similar to demo cards grid. */
+html.we-theme-dark .showcase-grid-row.we-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 12px;
+}
+
+html.we-theme-dark .showcase-grid-row .showcase-card.we-card {
+  min-width: 0;
+}
+
+html.we-theme-dark .showcase-card .we-card-header {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 0.78rem;
+}
+
+html.we-theme-dark .showcase-card .we-card-body {
+  gap: 8px;
+}
+
+/* Keep grouped button rows visually compact and aligned. */
+html.we-theme-dark .showcase-button-row.we-inline {
+  gap: 6px;
+  align-items: center;
+  flex-wrap: wrap;
+}
