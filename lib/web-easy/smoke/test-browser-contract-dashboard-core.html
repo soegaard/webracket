@@ -105,6 +105,8 @@
       "test-browser-modal-close-reason-contract.html",
       "test-browser-close-button-contract.html",
       "test-browser-placeholder-contract.html",
+      "test-browser-headings-contract.html",
+      "test-browser-headings-style-contract.html",
       "test-browser-carousel-contract.html",
       "test-browser-carousel-wrap-contract.html",
       "test-browser-carousel-keyboard-contract.html",
@@ -115,6 +117,7 @@
       "test-browser-tooltip-contract.html",
       "test-browser-menu-single-open-contract.html",
       "test-browser-menu-roving-focus-contract.html",
+      "test-browser-menu-stress-contract.html",
       "test-browser-menu-close-reason-contract.html",
       "test-browser-dialog-close-reason-contract.html",
       "test-browser-tab-close-style-contract.html",
@@ -176,6 +179,28 @@
       tbody.appendChild(tr);
     }
 
+    async function teardownFrame(frame) {
+      try {
+        await new Promise((resolve) => {
+          let done = false;
+          const finish = () => {
+            if (done) return;
+            done = true;
+            resolve();
+          };
+          const timer = setTimeout(finish, 1000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            finish();
+          }, { once: true });
+          frame.src = "about:blank";
+        });
+      } catch (_err) {
+      } finally {
+        frame.remove();
+      }
+    }
+
     async function runOne(page, timeoutMs) {
       const frame = document.createElement("iframe");
       frame.style.position = "absolute";
@@ -198,7 +223,7 @@
             if (text.startsWith("PASS")) {
               const offenders = window.smokeDashboardGuard.findForbiddenAttrTokensRecursively(doc, page);
               if (offenders.length > 0) {
-                frame.remove();
+                await teardownFrame(frame);
                 const samples = offenders.slice(0, 4).join("; ");
                 return {
                   page,
@@ -209,7 +234,7 @@
               }
               const styleOffenders = window.smokeDashboardGuard.findInlineStyleAttrsOnWidgetsRecursively(doc, page);
               if (styleOffenders.length > 0) {
-                frame.remove();
+                await teardownFrame(frame);
                 const samples = styleOffenders.slice(0, 4).join("; ");
                 return {
                   page,
@@ -218,11 +243,11 @@
                   durationMs: Date.now() - start
                 };
               }
-              frame.remove();
+              await teardownFrame(frame);
               return { page, ok: true, message: text, durationMs: Date.now() - start };
             }
             if (text.startsWith("FAIL")) {
-              frame.remove();
+              await teardownFrame(frame);
               return { page, ok: false, message: text, durationMs: Date.now() - start };
             }
           }
@@ -230,7 +255,7 @@
         await sleep(50);
       }
 
-      frame.remove();
+      await teardownFrame(frame);
       return {
         page,
         ok: false,
@@ -241,9 +266,13 @@
 
     (async function runAll() {
       const results = [];
+      window.__smokeCurrentPage = "";
+      window.__smokeLastCompletedPage = "";
       for (const page of tests) {
+        window.__smokeCurrentPage = page;
         const timeoutMs = timeoutByPage[page] || 15000;
         const result = await runOne(page, timeoutMs);
+        window.__smokeLastCompletedPage = page;
         results.push(result);
         appendRow(page, result.ok ? "PASS" : "FAIL", result.message, result.durationMs);
         if (!result.ok) {
@@ -260,6 +289,7 @@
       } else {
         setSummary("FAIL\n" + passed + "/" + total + " contract tests passed", "fail");
       }
+      // Keep last page markers for external runner diagnostics.
     })();
   </script>
 </body>

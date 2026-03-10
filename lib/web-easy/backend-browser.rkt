@@ -259,10 +259,8 @@
       ;; same-dom-node? : any/c any/c -> boolean?
       ;;   Compare external DOM nodes by JS identity semantics.
       (define (same-dom-node? a b)
-        (and a
-             b
-             (not (extern-nullish? a))
-             (not (extern-nullish? b))
+        (and (extern-present? a)
+             (extern-present? b)
              (extern-bool-true?
               (js-send/extern/nullish
                a
@@ -289,7 +287,8 @@
                           (if (>= i count)
                               -1
                               (let ([candidate (nodelist-item items i)])
-                                (if (and candidate (same-dom-node? candidate active))
+                                (if (and (extern-present? candidate)
+                                         (same-dom-node? candidate active))
                                     i
                                     (loop (add1 i))))))]
                        [target-index
@@ -299,7 +298,7 @@
                                 (modulo (+ current-index (- count 1)) count)
                                 (modulo (+ current-index 1) count)))]
                        [target (nodelist-item items target-index)])
-                  (if target
+                  (if (extern-present? target)
                       (js-send target "focus" (vector))
                       (js-send dialog-native "focus" (vector))))))))
 
@@ -400,6 +399,7 @@
         [(style) "style"]
         [(group) "fieldset"]
         [(legend) "legend"]
+        [(label) "label"]
         [(span) "span"]
         [(small) "small"]
         [(p) "p"]
@@ -547,6 +547,16 @@
     (define (carousel-node? n)
       (string=? (widget-value n) "carousel"))
 
+    ;; hover-change-node? : dom-node-record? -> boolean?
+    ;;   Check whether n should receive synthetic mouseenter/mouseleave change payloads.
+    (define (hover-change-node? n)
+      (define widget (widget-value n))
+      (or (string=? widget "menu-label")
+          (string=? widget "menu-item")
+          (string=? widget "toast")
+          (string=? widget "tooltip")
+          (string=? widget "tooltip-trigger")))
+
     ;; string->int/default : string? integer? -> integer?
     ;;   Parse s as integer and return default-value on failure.
     (define (string->int/default s default-value)
@@ -573,6 +583,12 @@
       (define s (js-value->string v))
       (or (string=? s "null")
           (string=? s "undefined")))
+
+    ;; extern-present? : any/c -> boolean?
+    ;;   Check whether external value is present and not nullish.
+    (define (extern-present? v)
+      (and v
+           (not (extern-nullish? v))))
 
     ;; extern-bool-true? : any/c -> boolean?
     ;;   Interpret external value as boolean true/false by string conversion.
@@ -626,30 +642,30 @@
     ;;   Focus first menu item in popup for label-native.
     (define (focus-first-menu-item! label-native)
       (define popup-native (js-ref/extern label-native "nextElementSibling"))
-      (when popup-native
+      (when (extern-present? popup-native)
         (define first-item
           (js-send/extern/nullish
            popup-native
            "querySelector"
            (vector ".we-menu-item[role='menuitem']")))
-        (when first-item
+        (when (extern-present? first-item)
           (js-send first-item "focus" (vector)))))
 
     ;; focus-last-menu-item! : any/c -> void?
     ;;   Focus last menu item in popup for label-native.
     (define (focus-last-menu-item! label-native)
       (define popup-native (js-ref/extern label-native "nextElementSibling"))
-      (when popup-native
+      (when (extern-present? popup-native)
         (define item-list
           (js-send/extern/nullish
            popup-native
            "querySelectorAll"
            (vector ".we-menu-item[role='menuitem']")))
-        (when item-list
+        (when (extern-present? item-list)
           (define len (nodelist-length item-list))
           (when (> len 0)
             (define last-item (nodelist-item item-list (- len 1)))
-            (when last-item
+            (when (extern-present? last-item)
               (js-send last-item "focus" (vector)))))))
 
     ;; sibling-menu-native : any/c symbol? -> any/c
@@ -699,15 +715,15 @@
     ;;   Open sibling menu from label-native in direction dir and focus sibling label.
     (define (switch-menu-from-label! label-native dir)
       (define from-menu (js-ref/extern label-native "parentElement"))
-      (when from-menu
+      (when (extern-present? from-menu)
         (define to-menu (sibling-menu-native from-menu dir))
-        (when to-menu
+        (when (extern-present? to-menu)
           (define to-label
             (js-send/extern/nullish
              to-menu
              "querySelector"
              (vector ".we-menu-label[role='button']")))
-          (when to-label
+          (when (extern-present? to-label)
             (js-send to-label "click" (vector))
             (js-send to-label "focus" (vector))))))
 
@@ -715,9 +731,9 @@
     ;;   Open and focus first/last top-level menu label for label-native.
     (define (focus-edge-menu-label! label-native edge)
       (define from-menu (js-ref/extern label-native "parentElement"))
-      (when from-menu
+      (when (extern-present? from-menu)
         (define bar-native (js-ref/extern from-menu "parentElement"))
-        (when bar-native
+        (when (extern-present? bar-native)
           (define target-label
             (case edge
               [(first)
@@ -739,7 +755,7 @@
                      #f))]
               [else
                #f]))
-          (when target-label
+          (when (extern-present? target-label)
             (js-send target-label "click" (vector))
             (js-send target-label "focus" (vector))))))
 
@@ -747,75 +763,85 @@
     ;;   Open sibling menu from item-native in direction dir and focus sibling label.
     (define (switch-menu-from-item! item-native dir)
       (define popup-native (js-ref/extern item-native "parentElement"))
-      (when popup-native
+      (when (extern-present? popup-native)
         (define from-menu (js-ref/extern popup-native "parentElement"))
-        (when from-menu
+        (when (extern-present? from-menu)
           (define to-menu (sibling-menu-native from-menu dir))
-          (when to-menu
+          (when (extern-present? to-menu)
             (define to-label
               (js-send/extern/nullish
                to-menu
                "querySelector"
                (vector ".we-menu-label[role='button']")))
-            (when to-label
+            (when (extern-present? to-label)
               (js-send to-label "click" (vector))
               (js-send to-label "focus" (vector)))))))
 
     ;; focus-next-menu-item! : any/c -> void?
-    ;;   Move focus to next item in same popup, wrapping to first from last.
+    ;;   Move focus to next item in same popup, clamping at the last item.
     (define (focus-next-menu-item! item-native)
-      (define next-item (js-ref/extern item-native "nextElementSibling"))
-      (if next-item
-          (js-send next-item "focus" (vector))
-          (let ([popup-native (js-ref/extern item-native "parentElement")])
-            (if popup-native
-                (let ([first-item
-                       (js-send/extern/nullish
-                        popup-native
-                        "querySelector"
-                        (vector ".we-menu-item[role='menuitem']"))])
-                  (if first-item
-                      (js-send first-item "focus" (vector))
+      (define popup-native (js-ref/extern item-native "parentElement"))
+      (if (extern-present? popup-native)
+          (let ([item-list
+                 (js-send/extern/nullish
+                  popup-native
+                  "querySelectorAll"
+                  (vector ".we-menu-item[role='menuitem']"))])
+            (if (extern-present? item-list)
+                (let* ([idx (nodelist-index-of-node item-list item-native)]
+                       [len (nodelist-length item-list)]
+                       [next-idx (cond
+                                   [(or (< idx 0) (= len 0))
+                                    0]
+                                   [else
+                                    (min (add1 idx) (- len 1))])]
+                       [next-item (nodelist-item item-list next-idx)])
+                  (if (extern-present? next-item)
+                      (js-send next-item "focus" (vector))
                       (js-send item-native "focus" (vector))))
-                (js-send item-native "focus" (vector))))))
+                (js-send item-native "focus" (vector))))
+          (js-send item-native "focus" (vector))))
 
     ;; focus-prev-menu-item! : any/c -> void?
-    ;;   Move focus to previous item in same popup, wrapping to last from first.
+    ;;   Move focus to previous item in same popup, clamping at the first item.
     (define (focus-prev-menu-item! item-native)
-      (define prev-item (js-ref/extern item-native "previousElementSibling"))
-      (if prev-item
-          (js-send prev-item "focus" (vector))
-          (let ([popup-native (js-ref/extern item-native "parentElement")])
-            (if popup-native
-                (let ([item-list
-                       (js-send/extern/nullish
-                        popup-native
-                        "querySelectorAll"
-                        (vector ".we-menu-item[role='menuitem']"))])
-                  (if item-list
-                      (let ([len (nodelist-length item-list)])
-                        (if (> len 0)
-                            (let ([last-item (nodelist-item item-list (- len 1))])
-                              (if last-item
-                                  (js-send last-item "focus" (vector))
-                                  (js-send item-native "focus" (vector))))
-                            (js-send item-native "focus" (vector))))
+      (define popup-native (js-ref/extern item-native "parentElement"))
+      (if (extern-present? popup-native)
+          (let ([item-list
+                 (js-send/extern/nullish
+                  popup-native
+                  "querySelectorAll"
+                  (vector ".we-menu-item[role='menuitem']"))])
+            (if (extern-present? item-list)
+                (let* ([idx (nodelist-index-of-node item-list item-native)]
+                       [len (nodelist-length item-list)]
+                       [prev-idx (cond
+                                   [(= len 0)
+                                    0]
+                                   [(< idx 0)
+                                    0]
+                                   [else
+                                    (max (sub1 idx) 0)])]
+                       [prev-item (nodelist-item item-list prev-idx)])
+                  (if (extern-present? prev-item)
+                      (js-send prev-item "focus" (vector))
                       (js-send item-native "focus" (vector))))
-                (js-send item-native "focus" (vector))))))
+                (js-send item-native "focus" (vector))))
+          (js-send item-native "focus" (vector))))
 
     ;; focus-own-menu-label! : any/c -> void?
     ;;   Focus top-level menu label for item-native.
     (define (focus-own-menu-label! item-native)
       (define popup-native (js-ref/extern item-native "parentElement"))
-      (when popup-native
+      (when (extern-present? popup-native)
         (define menu-native (js-ref/extern popup-native "parentElement"))
-        (when menu-native
+        (when (extern-present? menu-native)
           (define label-native
             (js-send/extern/nullish
              menu-native
              "querySelector"
              (vector ".we-menu-label[role='button']")))
-          (when label-native
+          (when (extern-present? label-native)
             (js-send label-native "focus" (vector))))))
 
     ;; menu-typeahead-key? : string? -> boolean?
@@ -847,8 +873,8 @@
     ;; extern-node-same? : any/c any/c -> boolean?
     ;;   Check whether a and b refer to the same DOM node.
     (define (extern-node-same? a b)
-      (and a
-           b
+      (and (extern-present? a)
+           (extern-present? b)
            (extern-bool-true?
             (js-send/extern/nullish a "isSameNode" (vector b)))))
 
@@ -928,13 +954,13 @@
       (when (not (string=? expanded "true"))
         (js-send label-native "click" (vector)))
       (define popup-native (js-ref/extern label-native "nextElementSibling"))
-      (if popup-native
+      (if (extern-present? popup-native)
           (let ([item-list
                  (js-send/extern/nullish
                   popup-native
                   "querySelectorAll"
                   (vector ".we-menu-item[role='menuitem']"))])
-            (if item-list
+            (if (extern-present? item-list)
                 (focus-matching-menu-item-from-list!
                  item-list
                  0
@@ -946,13 +972,13 @@
     ;;   Focus next matching item in same popup for key/query, wrapping in menu order.
     (define (focus-matching-menu-item-from-item! item-native key evt)
       (define popup-native (js-ref/extern item-native "parentElement"))
-      (if popup-native
+      (if (extern-present? popup-native)
           (let ([item-list
                  (js-send/extern/nullish
                   popup-native
                   "querySelectorAll"
                   (vector ".we-menu-item[role='menuitem']"))])
-            (if item-list
+            (if (extern-present? item-list)
                 (let* ([idx (nodelist-index-of-node item-list item-native)]
                        [len (nodelist-length item-list)]
                        [start (if (and (>= idx 0) (> len 0))
@@ -969,13 +995,13 @@
     ;;   Focus selected tab button in the same tablist as native.
     (define (focus-selected-sibling-tab! native)
       (define parent (js-ref/extern native "parentElement"))
-      (when parent
+      (when (extern-present? parent)
         (define selected
           (js-send/extern/nullish
            parent
            "querySelector"
            (vector "button[aria-selected='true']")))
-        (when selected
+        (when (extern-present? selected)
           (js-send selected "focus" (vector)))))
 
     ;; focus-scrollspy-item! : any/c integer? -> void?
@@ -1013,6 +1039,16 @@
     (define (dom-node tag attrs children text on-click on-change)
       (define native (js-create-element (tag->element-name tag)))
       (define n (dom-node-record tag attrs children text on-click on-change native))
+      ;; invoke-click-callback! : any/c -> void?
+      ;;   Invoke callback when present.
+      (define (invoke-click-callback! callback)
+        (when callback
+          (callback)))
+      ;; invoke-change-callback! : any/c any/c -> void?
+      ;;   Invoke callback with payload when present.
+      (define (invoke-change-callback! callback payload)
+        (when callback
+          (callback payload)))
       (install-default-node-shape! n)
       (apply-attributes! n '() attrs)
       (when text
@@ -1023,16 +1059,14 @@
        (procedure->external
         (lambda (_evt)
           (define callback (dom-node-record-on-click n))
-          (when callback
-            (callback)))))
+          (invoke-click-callback! callback))))
       (js-add-event-listener!
        native
        "change"
        (procedure->external
         (lambda (_evt)
           (define callback (dom-node-record-on-change n))
-          (when callback
-            (callback (node-change-value n))))))
+          (invoke-change-callback! callback (node-change-value n)))))
       (when (or (eq? tag 'input)
                 (eq? tag 'textarea))
         (js-add-event-listener!
@@ -1041,8 +1075,7 @@
          (procedure->external
           (lambda (_evt)
             (define callback (dom-node-record-on-change n))
-            (when callback
-              (callback (node-change-value n)))))))
+            (invoke-change-callback! callback (node-change-value n))))))
       (js-add-event-listener!
        native
        "keydown"
@@ -1067,144 +1100,151 @@
           (when (and callback (tab-key-node? n))
             (when (nav-key? key)
               (js-send evt "preventDefault" (vector)))
-            (callback key)
+            (invoke-change-callback! callback key)
             (when (nav-key? key)
               (focus-selected-sibling-tab! native)))
           (when (menu-label-node? n)
             (case (string->symbol key)
-              [(ArrowDown)
-               (when callback
-                 (callback "ArrowDown"))
-               (js-send evt "preventDefault" (vector))
-               (focus-first-menu-item! native)]
-              [(ArrowUp)
-               (when callback
-                 (callback "ArrowUp"))
-               (js-send evt "preventDefault" (vector))
-               (focus-last-menu-item! native)]
-              [(ArrowRight)
-               (js-send evt "preventDefault" (vector))
-               (switch-menu-from-label! native 'next)]
-              [(ArrowLeft)
-               (js-send evt "preventDefault" (vector))
-               (switch-menu-from-label! native 'prev)]
-              [(Home)
-               (js-send evt "preventDefault" (vector))
-               (focus-edge-menu-label! native 'first)]
-              [(End)
-               (js-send evt "preventDefault" (vector))
-               (focus-edge-menu-label! native 'last)]
-              [(Tab)
-               (when callback
-                 (callback "focusout"))]
-              [else
-               (when (menu-typeahead-key? key)
-                 (when (focus-matching-menu-item-from-label! native key evt)
-                   (js-send evt "preventDefault" (vector))))]))
+                [(ArrowDown)
+                 (invoke-change-callback! callback "ArrowDown")
+                 (js-send evt "preventDefault" (vector))
+                 (focus-first-menu-item! native)]
+                [(ArrowUp)
+                 (invoke-change-callback! callback "ArrowUp")
+                 (js-send evt "preventDefault" (vector))
+                 (focus-last-menu-item! native)]
+                [(ArrowRight)
+                 (js-send evt "preventDefault" (vector))
+                 (switch-menu-from-label! native 'next)]
+                [(ArrowLeft)
+                 (js-send evt "preventDefault" (vector))
+                 (switch-menu-from-label! native 'prev)]
+                [(Home)
+                 (js-send evt "preventDefault" (vector))
+                 (focus-edge-menu-label! native 'first)]
+                [(End)
+                 (js-send evt "preventDefault" (vector))
+                 (focus-edge-menu-label! native 'last)]
+                [(Tab)
+                 (invoke-change-callback! callback "focusout")]
+                [else
+                 (when (menu-typeahead-key? key)
+                   (when (focus-matching-menu-item-from-label! native key evt)
+                     (js-send evt "preventDefault" (vector))))]))
           (when (menu-item-node? n)
             (case (string->symbol key)
-              [(ArrowDown)
-               (js-send evt "preventDefault" (vector))
-               (focus-next-menu-item! native)]
-              [(ArrowUp)
-               (js-send evt "preventDefault" (vector))
-               (focus-prev-menu-item! native)]
-              [(ArrowRight)
-               (js-send evt "preventDefault" (vector))
-               (switch-menu-from-item! native 'next)]
-              [(ArrowLeft)
-               (js-send evt "preventDefault" (vector))
-               (switch-menu-from-item! native 'prev)]
-              [(Tab)
-               (when callback
-                 (callback "focusout"))]
-              [(Escape)
-               (when callback
-                 (callback "Escape"))
-               (focus-own-menu-label! native)]
-              [else
-               (when (menu-typeahead-key? key)
-                 (when (focus-matching-menu-item-from-item! native key evt)
-                   (js-send evt "preventDefault" (vector))))]))
+                [(ArrowDown)
+                 (js-send evt "preventDefault" (vector))
+                 (focus-next-menu-item! native)]
+                [(ArrowUp)
+                 (js-send evt "preventDefault" (vector))
+                 (focus-prev-menu-item! native)]
+                [(ArrowRight)
+                 (js-send evt "preventDefault" (vector))
+                 (switch-menu-from-item! native 'next)]
+                [(ArrowLeft)
+                 (js-send evt "preventDefault" (vector))
+                 (switch-menu-from-item! native 'prev)]
+                [(Tab)
+                 (invoke-change-callback! callback "focusout")]
+                [(Escape)
+                 (invoke-change-callback! callback "Escape")
+                 (focus-own-menu-label! native)]
+                [else
+                 (when (menu-typeahead-key? key)
+                   (when (focus-matching-menu-item-from-item! native key evt)
+                     (js-send evt "preventDefault" (vector))))]))
           (when (scrollspy-item-node? n)
             (case (string->symbol key)
-              [(ArrowRight ArrowDown)
-               (js-send evt "preventDefault" (vector))
-               (focus-scrollspy-step! native 1)]
-              [(ArrowLeft ArrowUp)
-               (js-send evt "preventDefault" (vector))
-               (focus-scrollspy-step! native -1)]
-              [(Home)
-               (js-send evt "preventDefault" (vector))
-               (focus-scrollspy-item! native 0)]
-              [(End)
-               (js-send evt "preventDefault" (vector))
-               (define parent* (js-ref/extern native "parentElement"))
-               (when (and parent* (not (extern-nullish? parent*)))
-                 (define items
-                   (js-send/extern/nullish parent* "querySelectorAll" (vector scrollspy-item-selector)))
-                 (when (and items (not (extern-nullish? items)))
-                   (define len (nodelist-length items))
-                   (when (> len 0)
-                     (focus-scrollspy-item! native (- len 1)))))]
-              [else
-               (void)]))
+                [(ArrowRight ArrowDown)
+                 (js-send evt "preventDefault" (vector))
+                 (focus-scrollspy-step! native 1)]
+                [(ArrowLeft ArrowUp)
+                 (js-send evt "preventDefault" (vector))
+                 (focus-scrollspy-step! native -1)]
+                [(Home)
+                 (js-send evt "preventDefault" (vector))
+                 (focus-scrollspy-item! native 0)]
+                [(End)
+                 (js-send evt "preventDefault" (vector))
+                 (define parent* (js-ref/extern native "parentElement"))
+                 (when (and parent* (not (extern-nullish? parent*)))
+                   (define items
+                     (js-send/extern/nullish parent* "querySelectorAll" (vector scrollspy-item-selector)))
+                   (when (and items (not (extern-nullish? items)))
+                     (define len (nodelist-length items))
+                     (when (> len 0)
+                       (focus-scrollspy-item! native (- len 1)))))]
+                [else
+                 (void)]))
           (when (carousel-node? n)
             (case (string->symbol key)
-              [(ArrowLeft ArrowRight Home End)
-               (js-send evt "preventDefault" (vector))
-               (when callback
-                 (callback key))]
-              [else
-               (void)]))
+                [(ArrowLeft ArrowRight Home End)
+                 (js-send evt "preventDefault" (vector))
+                 (invoke-change-callback! callback key)]
+                [else
+                 (void)]))
           (when (and callback (role-button-node? n))
-            (callback key))
+            (invoke-change-callback! callback key))
           (when (and (role-dialog-node? n) (string=? key "Tab"))
             (js-send evt "preventDefault" (vector))
             (define shift? (extern-bool-true? (js-ref/extern evt "shiftKey")))
             (when (dialog-open-attr? (dom-node-record-attrs n))
               (focus-cycled-dialog-target! native shift?)))
           (when (and callback (role-dialog-node? n))
-            (callback key)))))
+            (invoke-change-callback! callback key)))))
       (js-add-event-listener!
        native
        "mouseenter"
        (procedure->external
         (lambda (_evt)
-          (define callback (dom-node-record-on-change n))
-          (when callback
-            (callback "mouseenter")))))
+          (with-handlers ([(lambda (_e) #t)
+                           (lambda (_e)
+                             ;; Ignore teardown-time mouseenter bridge exceptions.
+                             (void))])
+            (define callback (dom-node-record-on-change n))
+            (when (and callback (hover-change-node? n))
+              (invoke-change-callback! callback "mouseenter"))))))
       (js-add-event-listener!
        native
        "mouseleave"
        (procedure->external
         (lambda (_evt)
-          (define callback (dom-node-record-on-change n))
-          (when callback
-            (callback "mouseleave")))))
+          (with-handlers ([(lambda (_e) #t)
+                           (lambda (_e)
+                             ;; Ignore teardown-time mouseleave bridge exceptions.
+                             (void))])
+            (define callback (dom-node-record-on-change n))
+            (when (and callback (hover-change-node? n))
+              (invoke-change-callback! callback "mouseleave"))))))
       (js-add-event-listener!
        native
        "focusout"
        (procedure->external
         (lambda (evt)
-          (define callback (dom-node-record-on-change n))
-          (define menu-container (focusout-menu-container n native))
-          (when (and callback menu-container)
-            (define related* (js-ref/extern evt "relatedTarget"))
-            (define related
-              (if (or (not related*)
-                      (extern-nullish? related*))
-                  #f
-                  related*))
-            (define still-inside?
-              (and related
-                   (extern-bool-true?
-                    (js-send/extern/nullish
-                     menu-container
-                     "contains"
-                     (vector related)))))
-            (unless still-inside?
-              (callback "focusout"))))))
+          (with-handlers ([(lambda (_e) #t)
+                           (lambda (_e)
+                             ;; During iframe unload, relatedTarget/contains may become invalid.
+                             ;; Ignore teardown-time focusout bridge exceptions.
+                             (void))])
+            (define callback (dom-node-record-on-change n))
+            (define menu-container (focusout-menu-container n native))
+            (when (and callback menu-container)
+              (define related* (js-ref/extern evt "relatedTarget"))
+              (define related
+                (if (or (not related*)
+                        (extern-nullish? related*))
+                    #f
+                    related*))
+              (define still-inside?
+                (and related
+                     (extern-bool-true?
+                      (js-send/extern/nullish
+                       menu-container
+                       "contains"
+                       (vector related)))))
+              (unless still-inside?
+                (invoke-change-callback! callback "focusout")))))))
       n)
 
     ;; dom-node? : any/c -> boolean?
@@ -1324,6 +1364,10 @@
     ;;   Register IntersectionObserver (fallback scroll listener) on container in browser backend.
     (define (backend-scrollspy-observe-scroll! container callback register-cleanup!)
       (define native (dom-node-record-native container))
+      ;; invoke-scrollspy-callback! : string? -> void?
+      ;;   Invoke callback.
+      (define (invoke-scrollspy-callback! source)
+        (callback))
       (when (and native (not (extern-nullish? native)))
         ;; Clear previously registered observer/listener before rebinding sections.
         (define old-observer* (native-mapping-ref scrollspy-observers native))
@@ -1347,7 +1391,7 @@
             (let* ([io-callback
                     (procedure->external
                      (lambda (_entries _observer)
-                       (callback)))]
+                       (invoke-scrollspy-callback! "io-observer")))]
                    [observer
                     (js-send/extern/nullish
                      reflect*
@@ -1363,7 +1407,7 @@
                   (let ([listener
                          (procedure->external
                           (lambda (_evt)
-                            (callback)))])
+                            (invoke-scrollspy-callback! "scroll-fallback/no-observer")))])
                     (set! scrollspy-listeners
                           (native-mapping-set scrollspy-listeners native listener))
                     (js-send native "addEventListener" (vector "scroll" listener)))
@@ -1373,7 +1417,7 @@
                     (let ([listener
                            (procedure->external
                             (lambda (_evt)
-                              (callback)))])
+                              (invoke-scrollspy-callback! "scroll-with-observer")))])
                       (set! scrollspy-listeners
                             (native-mapping-set scrollspy-listeners native listener))
                       (js-send native "addEventListener" (vector "scroll" listener)))
@@ -1385,11 +1429,11 @@
                           (when (and section-native (not (extern-nullish? section-native)))
                             (js-send observer "observe" (vector section-native)))
                           (loop (add1 i)))))
-                    (callback))))
+                    (invoke-scrollspy-callback! "io-initial-sync"))))
             (let ([listener
                    (procedure->external
                     (lambda (_evt)
-                      (callback)))])
+                      (invoke-scrollspy-callback! "scroll-fallback/no-io")))])
               (set! scrollspy-listeners
                     (native-mapping-set scrollspy-listeners native listener))
               (js-send native "addEventListener" (vector "scroll" listener))))

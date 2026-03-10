@@ -117,6 +117,19 @@
 (check-equal (node-attr panel 'class) "we-vpanel" "vpanel base class")
 (check-equal (node-attr label-node 'data-we-widget) "text" "text data-we-widget attr")
 (check-equal (dom-node-tag root-style-node) 'style "window includes shared style node")
+(define injected-style-text (dom-node-text root-style-node))
+(check-equal (if (regexp-match? #rx"background:" injected-style-text) #t #f)
+             #f
+             "shared style omits visual background rules")
+(check-equal (if (regexp-match? #rx"color:" injected-style-text) #t #f)
+             #f
+             "shared style omits visual color rules")
+(check-equal (if (regexp-match? #rx"border:" injected-style-text) #t #f)
+             #f
+             "shared style omits visual border rules")
+(check-equal (if (regexp-match? #rx"padding:" injected-style-text) #t #f)
+             #f
+             "shared style omits visual padding rules")
 (check-equal (dom-node-text label-node) "0" "initial text")
 (check-equal (node-attr plus-node 'data-we-widget) "button" "button data-we-widget attr")
 (check-equal (node-attr plus-node 'class) "we-button" "button base class")
@@ -182,6 +195,41 @@
 (check-equal (node-attr display-heading-node 'class)
              "we-display-heading we-display-heading-4 we-display-heading-align-center we-display-heading-space-loose"
              "display-heading class reflects updated style variants")
+
+;; blockquote renders semantic structure and optional attribution
+(define @quote-text (@ "Quote body"))
+(define @quote-attrib (@ "Attribution line"))
+(define r-blockquote
+  (render
+   (window
+    (vpanel
+     (blockquote @quote-text @quote-attrib)
+     (blockquote "No attribution")))))
+(define blockquote-panel (node-child (renderer-root r-blockquote) 0))
+(define blockquote-node (node-child blockquote-panel 0))
+(define blockquote-quote-node (node-child blockquote-node 0))
+(define blockquote-text-node (node-child blockquote-quote-node 0))
+(define blockquote-attrib-node (node-child blockquote-node 1))
+(define blockquote-no-attrib-node (node-child blockquote-panel 1))
+(check-equal (node-attr blockquote-node 'data-we-widget) "blockquote" "blockquote data-we-widget attr")
+(check-equal (node-attr blockquote-node 'class) "we-blockquote" "blockquote class")
+(check-equal (dom-node-tag blockquote-node) 'figure "blockquote tag figure")
+(check-equal (node-attr blockquote-quote-node 'data-we-widget) "blockquote-quote" "blockquote quote widget attr")
+(check-equal (dom-node-tag blockquote-quote-node) 'blockquote "blockquote quote tag")
+(check-equal (node-attr blockquote-text-node 'data-we-widget) "blockquote-text" "blockquote text widget attr")
+(check-equal (dom-node-tag blockquote-text-node) 'p "blockquote text tag")
+(check-equal (dom-node-text blockquote-text-node) "Quote body" "blockquote initial text")
+(check-equal (node-attr blockquote-attrib-node 'data-we-widget) "blockquote-attrib" "blockquote attribution widget attr")
+(check-equal (dom-node-tag blockquote-attrib-node) 'figcaption "blockquote attribution tag")
+(check-equal (dom-node-text blockquote-attrib-node) "Attribution line" "blockquote initial attribution")
+(check-equal (length (dom-node-children blockquote-no-attrib-node)) 1 "blockquote without attribution has only quote child")
+(:= @quote-text "Updated quote body")
+(:= @quote-attrib #f)
+(check-equal (dom-node-text blockquote-text-node) "Updated quote body" "blockquote quote observable update")
+(check-equal (length (dom-node-children blockquote-node)) 1 "blockquote removes attribution when set to #f")
+(:= @quote-attrib "Attribution restored")
+(check-equal (length (dom-node-children blockquote-node)) 2 "blockquote restores attribution when non-#f")
+(check-equal (dom-node-text (node-child blockquote-node 1)) "Attribution restored" "blockquote attribution observable update")
 
 ;; h1..h6 and display-1..display-6 wrappers map to fixed heading levels
 (define r-heading-wrappers
@@ -336,6 +384,17 @@
 (check-equal (node-attr navigation-bar-node 'data-we-widget) "navigation-bar" "navigation-bar data-we-widget attr")
 (check-equal (node-attr navigation-bar-node 'class) "we-navigation-bar" "navigation-bar base class")
 (check-equal (node-attr navigation-bar-node 'role) 'navigation "navigation-bar role attr")
+(check-equal
+ (let loop ([children (dom-node-children navigation-bar-node)])
+   (cond
+     [(null? children) #f]
+     [else
+      (define child (car children))
+      (if (equal? (node-attr child 'data-we-widget) "navigation-bar-toggle")
+          #t
+          (loop (cdr children)))]))
+ #f
+ "navigation-bar default has no toggle")
 
 ;; navigation-bar supports orientation + collapsed state with toggle expansion
 (define r-navigation-bar-collapsed
@@ -539,6 +598,40 @@
 (check-equal (node-attr alert-node 'aria-live) "assertive" "alert warn aria-live")
 (check-equal (dom-node-text alert-node) "Disk almost full" "alert text after update")
 
+;; alert-rich renders title/body/link and updates classes/children from observables
+(define @alert-rich-body      (@ "Your plan is active."))
+(define @alert-rich-title     (@ "Well done!"))
+(define @alert-rich-link-text (@ "See details"))
+(define @alert-rich-link-href (@ "/account"))
+(define @alert-rich-level     (@ 'warning))
+(define r-alert-rich
+  (render
+   (window
+    (vpanel
+     (alert-rich @alert-rich-body
+                 @alert-rich-title
+                 @alert-rich-link-text
+                 @alert-rich-link-href
+                 @alert-rich-level)))))
+(define alert-rich-node (node-child (node-child (renderer-root r-alert-rich) 0) 0))
+(define alert-rich-title-node (node-child alert-rich-node 0))
+(define alert-rich-body-node (node-child alert-rich-node 1))
+(define alert-rich-link-node (node-child alert-rich-node 2))
+(check-equal (node-attr alert-rich-node 'class) "we-alert we-alert-warn" "alert-rich warning class")
+(check-equal (node-attr alert-rich-node 'aria-live) "assertive" "alert-rich warning aria-live")
+(check-equal (node-attr alert-rich-title-node 'class) "we-alert-title" "alert-rich title class")
+(check-equal (dom-node-text alert-rich-title-node) "Well done!" "alert-rich title text")
+(check-equal (node-attr alert-rich-body-node 'class) "we-alert-body" "alert-rich body class")
+(check-equal (dom-node-text alert-rich-body-node) "Your plan is active." "alert-rich body text")
+(check-equal (node-attr alert-rich-link-node 'class) "we-alert-link" "alert-rich link class")
+(check-equal (node-attr alert-rich-link-node 'href) "/account" "alert-rich link href")
+(check-equal (dom-node-text alert-rich-link-node) "See details" "alert-rich link text")
+(:= @alert-rich-level 'info)
+(:= @alert-rich-title #f)
+(:= @alert-rich-link-text #f)
+(check-equal (node-attr alert-rich-node 'class) "we-alert we-alert-info" "alert-rich info class")
+(check-equal (length (dom-node-children alert-rich-node)) 1 "alert-rich hides optional title/link")
+
 ;; badge renders level classes and updates text from observables
 (define @badge-text (@ "beta"))
 (define @badge-level (@ 'info))
@@ -555,6 +648,10 @@
 (:= @badge-level 'success)
 (check-equal (node-attr badge-node 'class) "we-badge we-badge-success" "badge success class")
 (check-equal (dom-node-text badge-node) "stable" "badge text after update")
+(:= @badge-level 'danger)
+(check-equal (node-attr badge-node 'class) "we-badge we-badge-danger" "badge danger class")
+(:= @badge-level 'warn)
+(check-equal (node-attr badge-node 'class) "we-badge we-badge-warn" "badge legacy warn alias class")
 
 ;; spinner renders icon/label and updates observable label text
 (define @spinner-label (@ "Loading..."))
@@ -1218,6 +1315,81 @@
 (check-equal (node-attr table-node-compact 'density) 'compact "table compact density attr")
 (check-equal (node-attr table-node-compact 'class) "we-table we-density-compact" "table compact density class")
 
+;; table supports caption and variant options
+(define r14bv
+  (render
+   (window
+    (vpanel
+     (table '(("service" left) ("status" center))
+            '(("api" "ok") ("db" "warn"))
+            'normal
+            '((caption . "Status table")
+              (variants . (striped hover borderless sm))))))))
+(define table-node-variants (node-child (node-child (renderer-root r14bv) 0) 0))
+(define table-caption-node (node-child table-node-variants 0))
+(check-equal (node-attr table-node-variants 'variants)
+             '(striped hover borderless sm)
+             "table variants attr")
+(check-equal (node-attr table-node-variants 'caption)
+             "Status table"
+             "table caption attr")
+(check-equal (node-attr table-node-variants 'class)
+             "we-table we-density-normal we-table-striped we-table-hover we-table-borderless we-table-sm"
+             "table variants class")
+(check-equal (node-attr table-caption-node 'data-we-widget)
+             "table-caption"
+             "table caption data-we-widget attr")
+(check-equal (dom-node-text table-caption-node)
+             "Status table"
+             "table caption text")
+
+;; table supports per-row row-variants list in options
+(define r14bvr
+  (render
+   (window
+    (vpanel
+     (table '(state value)
+            '(("ok" 1) ("warn" 2) ("fail" 3))
+            'normal
+            '((row-variants . (success warning danger))))))))
+(define table-node-row-variants (node-child (node-child (renderer-root r14bvr) 0) 0))
+(check-equal (node-attr table-node-row-variants 'row-variants)
+             '(success warning danger)
+             "table row-variants attr")
+(check-equal (node-attr (node-child table-node-row-variants 1) 'class)
+             "we-table-row-success"
+             "table row-variant success class")
+(check-equal (node-attr (node-child table-node-row-variants 2) 'class)
+             "we-table-row-warning"
+             "table row-variant warning class")
+(check-equal (node-attr (node-child table-node-row-variants 3) 'class)
+             "we-table-row-danger"
+             "table row-variant danger class")
+
+;; table supports row-header-column option for semantic row headers
+(define r14bvh
+  (render
+   (window
+    (vpanel
+     (table '(type value)
+            '(("alpha" 1) ("beta" 2))
+            'normal
+            '((row-header-column . 0)))))))
+(define table-node-row-header (node-child (node-child (renderer-root r14bvh) 0) 0))
+(define table-row-header-cell (node-child (node-child table-node-row-header 1) 0))
+(check-equal (node-attr table-node-row-header 'row-header-column)
+             0
+             "table row-header-column attr")
+(check-equal (dom-node-tag table-row-header-cell)
+             'th
+             "table row-header cell tag")
+(check-equal (node-attr table-row-header-cell 'scope)
+             "row"
+             "table row-header scope attr")
+(check-equal (node-attr table-row-header-cell 'data-we-widget)
+             "table-row-header-cell"
+             "table row-header data-we-widget attr")
+
 ;; table supports per-column alignment in column specs: (list label align)
 (define r14c
   (render
@@ -1514,6 +1686,12 @@
 (check-equal (obs-peek @menu-clicks) 3 "menu-item action still works after second label updates")
 (dom-node-keydown! menu-label-node " ")
 (check-equal (node-attr menu-label-node 'aria-expanded) "true" "menu stays open on Space toggle open")
+(dom-node-keydown! menu-item-node "ArrowDown")
+(check-equal (obs-peek @menu-clicks) 3 "menu-item ArrowDown does not trigger action")
+(check-equal (node-attr menu-label-node 'aria-expanded) "true" "menu remains open after menu-item ArrowDown")
+(dom-node-keydown! menu-item-node "ArrowUp")
+(check-equal (obs-peek @menu-clicks) 3 "menu-item ArrowUp does not trigger action")
+(check-equal (node-attr menu-label-node 'aria-expanded) "true" "menu remains open after menu-item ArrowUp")
 (dom-node-keydown! menu-item-node "Enter")
 (check-equal (obs-peek @menu-clicks) 4 "menu-item Enter key invokes action")
 (dom-node-keydown! menu-item-node " ")

@@ -2,12 +2,20 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+
+if [ "${SMOKE_SKIP_WRAPPER_ARITY_CHECK:-0}" != "1" ]; then
+  echo "[pre] wrapper arity scan"
+  racket "$ROOT_DIR/tools/check-wrapper-arity.rkt" "$SCRIPT_DIR"
+else
+  echo "[pre] wrapper arity scan skipped (SMOKE_SKIP_WRAPPER_ARITY_CHECK=1)"
+fi
 
 labels=(
-  "smoke-all capsules (smoke/input/checkbox/list/branch/destroy/controls/progress/width/theme-vars/theme-dialog-vars/theme-menu-vars/theme-token-contract/menu-keys/menu-full/dropdown/link/toolbar/divider/choice-labeled/choice-decode/dropdown-labeled/button-icons/menu-icons/card-variants/theme-token-api/navigation-bar/navigation-bar-advanced/group/layout-primitives/button-group/button-toolbar/card/alert/badge/spinner/pagination/breadcrumb/list-group/toast/toast-timing/collapse/accordion/offcanvas/close-button/placeholder/carousel/carousel-advanced/scrollspy/scrollspy-docs/tooltip/popover/dialog/modal/dialog-no-desc/table-align/operators/tab-panel/tab-panel-disabled/tab-panel-dynamic)"
+  "smoke-all capsules (smoke/input/checkbox/list/branch/destroy/controls/progress/width/theme-vars/theme-dialog-vars/theme-menu-vars/theme-token-contract/menu-keys/menu-full/dropdown/link/toolbar/divider/choice-labeled/choice-decode/dropdown-labeled/button-icons/menu-icons/card-variants/theme-token-api/navigation-bar/navigation-bar-advanced/group/layout-primitives/button-group/button-toolbar/card/alert/badge/spinner/pagination/breadcrumb/list-group/toast/toast-timing/collapse/accordion/offcanvas/close-button/placeholder/headings/hero/carousel/carousel-advanced/scrollspy/scrollspy-docs/tooltip/popover/dialog/modal/dialog-no-desc/table-align/operators/tab-panel/tab-panel-disabled/tab-panel-dynamic)"
   "visual-check"
   "theme-showcase"
-  "parity-all capsules (hello/counter/dynamic-list/counters/button-group/button-toolbar/card/alert/badge/spinner/pagination/breadcrumb/list-group/toast/toast-timing/collapse/accordion/offcanvas/close-button/placeholder/carousel/carousel-advanced/scrollspy/scrollspy-docs/tabs/tabs-disabled/tabs-dynamic/profile/settings/progress/table/theme-vars/theme-dialog-vars/theme-menu-vars/menu-keys/menu-full/dropdown/choice-decode/navigation-bar/navigation-bar-advanced/tooltip/popover/dialog/modal/dialog-no-desc/table-align/list/todo/incident/release/workspace)"
+  "parity-all capsules (hello/counter/dynamic-list/counters/button-group/button-toolbar/card/alert/badge/spinner/pagination/breadcrumb/list-group/toast/toast-timing/collapse/accordion/offcanvas/close-button/placeholder/headings/hero/carousel/carousel-advanced/scrollspy/scrollspy-docs/tabs/tabs-disabled/tabs-dynamic/profile/settings/progress/table/theme-vars/theme-dialog-vars/theme-menu-vars/menu-keys/menu-full/dropdown/choice-decode/navigation-bar/navigation-bar-advanced/tooltip/popover/dialog/modal/dialog-no-desc/table-align/list/todo/incident/release/workspace)"
 )
 
 cmds=(
@@ -93,6 +101,10 @@ echo "  http://localhost:8000/test-browser-close-button.html"
 echo "  http://localhost:8000/test-browser-close-button-contract.html"
 echo "  http://localhost:8000/test-browser-placeholder.html"
 echo "  http://localhost:8000/test-browser-placeholder-contract.html"
+echo "  http://localhost:8000/test-browser-headings.html"
+echo "  http://localhost:8000/test-browser-headings-contract.html"
+echo "  http://localhost:8000/test-browser-headings-style-contract.html"
+echo "  http://localhost:8000/test-browser-hero.html"
 echo "  http://localhost:8000/test-browser-carousel.html"
 echo "  http://localhost:8000/test-browser-carousel-contract.html"
 echo "  http://localhost:8000/test-browser-carousel-wrap-contract.html"
@@ -145,6 +157,7 @@ echo "  http://localhost:8000/test-browser-card-variants-contract.html"
 echo "  http://localhost:8000/test-browser-theme-token-api-contract.html"
 echo "  http://localhost:8000/test-browser-menu-single-open-contract.html"
 echo "  http://localhost:8000/test-browser-menu-roving-focus-contract.html"
+echo "  http://localhost:8000/test-browser-menu-stress-contract.html"
 echo "  http://localhost:8000/test-browser-menu-close-reason-contract.html"
 echo "  http://localhost:8000/test-browser-dialog-close-reason-contract.html"
 echo "  http://localhost:8000/test-browser-tab-close-style-contract.html"
@@ -216,6 +229,10 @@ echo "  http://localhost:8000/test-browser-parity-close-button.html"
 echo "  http://localhost:8000/test-browser-parity-close-button-contract.html"
 echo "  http://localhost:8000/test-browser-parity-placeholder.html"
 echo "  http://localhost:8000/test-browser-parity-placeholder-contract.html"
+echo "  http://localhost:8000/test-browser-parity-headings.html"
+echo "  http://localhost:8000/test-browser-parity-headings-contract.html"
+echo "  http://localhost:8000/test-browser-parity-headings-style-contract.html"
+echo "  http://localhost:8000/test-browser-parity-hero.html"
 echo "  http://localhost:8000/test-browser-parity-carousel.html"
 echo "  http://localhost:8000/test-browser-parity-carousel-contract.html"
 echo "  http://localhost:8000/test-browser-parity-carousel-wrap-contract.html"

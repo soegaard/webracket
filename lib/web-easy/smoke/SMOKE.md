@@ -29,6 +29,7 @@ Use `headless.sh` from `lib/web-easy/smoke`:
 ./headless.sh timings
 ./headless.sh guard
 ./headless.sh theme
+./headless.sh theme-visual
 ./headless.sh single <compile-script> <test-page>
 ```
 
@@ -69,11 +70,64 @@ Fast local headless gate (contract + theme + guard, skips full dashboard run):
 | Theme token API contract page (single) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-theme-token-api-contract.html` |
 | Layout primitives smoke page (single) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-layout-primitives.html` |
 | Theme-only dashboard headless | `./headless.sh theme` |
+| Theme visual-diff lane (separate from contracts) | `./headless.sh theme-visual` |
 | Demo-vs-generated showcase diff | `./check-theme-showcase-diff.sh` |
+| Refresh contract timing baseline | `./refresh-contract-timing-baseline.sh` |
+| Solar Forms-only screenshot+computed diff | `./check-solar-forms-diff.sh` |
+| Solar post-cards diff gate (`containers/cards/accordions/dialogs`) | `./check-solar-post-cards.sh` |
+| Solar list-group contract (computed style) | `node ./check-solar-list-group-contract.mjs` |
+| Solar list-group zoom/DPR contract | `node ./check-solar-listgroup-zoom-contract.mjs` |
+| Solar overlays contract (accordions/dialogs) | `node ./check-solar-overlays-contract.mjs` |
+| Solar accordion parity (computed + screenshot) | `./check-solar-accordion-parity.sh` |
+| Solar navbar parity sweep (all variants) | `./check-solar-navbar-parity.sh` |
+| Solar table computed contract | `node ./check-solar-table-computed.mjs` |
+| Solar progress computed contract | `node ./check-solar-progress-computed.mjs` |
+| Solar forms plaintext scope contract | `./check-solar-forms-plaintext-contract.sh` |
+| Solar full parity sweep | `./check-solar-parity-sweep.sh` |
+| Solar full workflow (compile + contracts + accordion parity + post-cards diff) | `./check-solar-workflow.sh` |
+| Navbar Bootswatch-vs-generated style diff | `node ./compare-navbars.cjs primary` |
+| Buttons Bootswatch-vs-generated style diff | `node ./compare-buttons.cjs solid Primary` |
+| Buttons parity sweep (`solid/disabled/outline/sizes`) | `for r in solid disabled outline sizes; do node ./compare-buttons.cjs $r; done` |
+| Navbar parity sweep (`primary/dark/light/subtle`) | `for v in primary dark light subtle; do node ./compare-navbars.cjs $v; done` |
 | Compile smoke artifacts only | `./smoke.sh check` |
 | Run headless timing snapshot | `./headless.sh timings` |
 | Serve local smoke pages | `./smoke.sh open` |
 | Guard self-test only | `./headless.sh guard` |
+
+## Post-Cards Quick Commands
+
+- `./check-solar-post-cards.sh`
+- `./check-solar-accordion-parity.sh`
+- `./check-solar-navbar-parity.sh`
+- `./check-solar-forms-plaintext-contract.sh`
+- `./check-solar-parity-sweep.sh`
+- `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-theme-showcase-compile.sh test-browser-solar2-postcards-contract.html`
+- `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-theme-showcase-compile.sh test-browser-solar2-dialogs-contract.html`
+
+Accordion screenshot diff now includes strict preflight guards:
+- expected theme class present (`we-theme-solar2` by default)
+- expected stylesheet hrefs present (`theme-solar-2.css`, `theme-showcase-solar2.css` by default)
+- required selectors visible on generated and reference pages
+- metadata artifact written to:
+  - `generated/solar-accordion-diff/accordion-metadata.json`
+  - optional run-stamped artifact directory: set `SOLAR_RUNSTAMP=YYYYMMDD-HHMMSS`
+
+## Stale CSS / Screenshot Debug Playbook
+
+When screenshot/computed output does not match what you see manually:
+
+1. Run in sequence (never parallel):
+   - `./run-browser-solar-showcase-compile.sh`
+   - then the diff/contract script.
+2. Confirm generated page is on expected theme:
+   - `document.documentElement.className` should include `we-theme-solar2`.
+3. Confirm stylesheet links:
+   - `#we-theme-external-css` should include `theme-solar-2.css`
+   - `#we-theme-showcase-css` should include `theme-showcase-solar2.css`
+4. Use preflight metadata:
+   - `generated/solar-accordion-diff/accordion-metadata.json`
+   - verify `themeClass`, `stylesheets`, `selectorVisible`.
+5. Hard refresh page (`Cmd+Shift+R`) if browser still shows old CSS.
 | Deep keyboard contract (scrollspy, core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-scrollspy-keyboard-deep.html` |
 | Deep keyboard contract (scrollspy, parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-scrollspy-keyboard-deep.html` |
 | Deep keyboard contract (dropdown, core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-dropdown-keyboard-deep.html` |
@@ -131,6 +185,9 @@ Fast local headless gate (contract + theme + guard, skips full dashboard run):
 - `make smoke-list`
 - `make smoke-commands`
 - `make smoke-one SINGLE_COMPILE=... SINGLE_PAGE=...`
+- `make smoke-compare-navbars`
+- `make smoke-compare-buttons`
+- `make smoke-compare-all`
 
 ## Local Utility Wrapper (`smoke.sh`)
 
@@ -157,6 +214,9 @@ Available utility commands:
 
 ## Compile Architecture
 
+- `check-smoke.sh` runs a preflight wrapper-arity scan before compile:
+  - `racket ../../../tools/check-wrapper-arity.rkt lib/web-easy/smoke`
+  - set `SMOKE_SKIP_WRAPPER_ARITY_CHECK=1` to skip temporarily.
 - Generated browser artifacts are written to `smoke/generated/`.
 - Core smoke pages compile via `example-browser-smoke-all.rkt` selected by `?test=...`.
 - Parity pages compile via `example-browser-parity-all.rkt` selected by `?test=...`.
@@ -180,6 +240,34 @@ Fastest iteration path for one failing page:
 For lean CI parity with local behavior:
 
 - `SMOKE_SKIP_COMPILE=1 ./headless.sh ci-fast`
+
+Full no-compile baseline (local):
+
+1. `SMOKE_SKIP_COMPILE=1 ./headless.sh contract`
+2. `SMOKE_SKIP_COMPILE=1 ./headless.sh smoke`
+3. `SMOKE_SKIP_COMPILE=1 ./headless.sh parity`
+4. `SMOKE_SKIP_COMPILE=1 ./headless.sh theme`
+
+Compare policy:
+
+- Contracts are the release gate.
+- Compare scripts (`compare-buttons.cjs`, `compare-navbars.cjs`) are advisory drift detectors.
+- Target is strict zero-delta (`report.length = 0`) for tracked rows/variants unless a documented exception exists in this file.
+
+Failure triage order:
+
+1. `contract` dashboard failures first.
+2. `smoke` dashboard failures next.
+3. `parity` dashboard failures next.
+4. `theme` dashboard failures next.
+5. compare-script deltas last (visual tuning pass).
+
+## Dashboard Flake Policy
+
+- Contract dashboards are behavior gates. Visual-diff checks run in the separate `theme-visual` lane.
+- The Playwright guard ignores only bare `pageerror: unreachable` teardown events seen during iframe unload.
+- Console `error` events and explicit page `FAIL` statuses still fail the run.
+- If a page is flaky in dashboard mode but stable in `check-single-headless.sh`, treat it as harness/teardown first; isolate before changing component behavior.
 
 ## Layout Recipes Demo
 
@@ -236,6 +324,11 @@ Smoke pages:
 - `test-browser-theme-token-contract.html`
 - `test-browser-theme-token-api-contract.html`
 - `test-browser-theme-external-css-contract.html`
+- `test-browser-solar2-navbar-variants-contract.html`
+- `test-browser-parity-solar2-navbar-variants-contract.html`
+- `test-browser-solar2-button-disabled-contract.html`
+- `test-browser-solar2-button-row-display-contract.html`
+- `test-browser-solar2-indicators-contract.html`
 - `test-browser-parity-theme-vars.html`
 - `test-browser-parity-theme-dialog-vars.html`
 - `test-browser-parity-theme-menu-vars.html`
@@ -244,9 +337,55 @@ Smoke pages:
 All are part of the standard dashboard/headless runs (`check-all.sh --headless`, `headless.sh smoke`, `headless.sh parity`).
 Theme-only fast gate:
 
+## Solar Forms Visual Checklist
+
+- Left column should visually read like `Legend` fieldset with consistent `mt-4` spacing rhythm.
+- Static email row should align label/value in one row (`Email` + `email@example.com`).
+- Disabled select/input should be clearly muted versus enabled controls.
+- Multiple select should be visibly taller than single select.
+- Textarea should match Bootswatch-like interior spacing and line-height.
+- File input should align in height with nearby controls.
+- Valid and invalid inputs should show both border color and feedback text.
+- Range controls should have Solar-like track/thumb contrast and disabled muted state.
+- Input addon rows (`$ ... .00` and `... + Button`) should have joined borders and equal heights.
+- Floating label demo should present distinct label text and field spacing.
+
+## Solar 2 Polish Metrics (2026-03-09)
+
+Commands run:
+
+- `SMOKE_BASE_URL=http://localhost:8000 ./check-solar-sections-diff.sh`
+- `node /tmp/solar-computed-compare-2.mjs`
+- `node /tmp/solar-cards-compare.mjs`
+
+Artifacts:
+
+- before snapshots:
+  - `generated/solar-polish-metrics/before-progress-containers.json`
+  - `generated/solar-polish-metrics/before-cards.json`
+- after snapshots:
+  - `generated/solar-polish-metrics/after-progress-containers.json`
+  - `generated/solar-polish-metrics/after-cards.json`
+- section-diff report:
+  - `generated/solar-section-diff/report.json`
+
+Selected before/after computed metrics:
+
+| Metric | Before | After |
+| --- | --- | --- |
+| Progress h3 color | rgb(147, 161, 161) | rgb(131, 148, 150) |
+| Progress bar text color | rgb(147, 161, 161) | rgb(131, 148, 150) |
+| Containers h2 color | rgb(147, 161, 161) | rgb(131, 148, 150) |
+| Containers list color | rgb(147, 161, 161) | rgb(131, 148, 150) |
+| Cards h2 color | rgb(147, 161, 161) | rgb(131, 148, 150) |
+| Cards sample card color | rgb(147, 161, 161) | rgb(131, 148, 150) |
+| Cards sample body background | rgba(0, 0, 0, 0) | rgba(0, 0, 0, 0) |
+| Cards sample subtitle color | rgba(131, 148, 150, 0.75) | rgba(131, 148, 150, 0.75) |
+
 - `./headless.sh theme` runs `test-browser-theme-contract-dashboard.html`
 - Manual external CSS theming example:
-  - `test-browser-theme-external-css.html`
+- `test-browser-theme-external-css.html`
+  - `test-browser-listgroup-clipping-debug.html` (manual clipping debugger with zoom control)
   - editable stylesheets: `theme-external-light.css`, `theme-external-dark.css`, `theme-external-solar.css`
   - gallery covers workspace/menu/tabs/dialog/controls/width/profile/list pages
 

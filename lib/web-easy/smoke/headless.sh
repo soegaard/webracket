@@ -19,6 +19,8 @@ Modes:
   deep                     Run deep keyboard contract pages only
   style                    Run style-hook contract pages only
   theme                    Run theme-only dashboard headless
+  theme-visual             Run theme visual-diff lane (separate from contracts)
+  solar-token              Run Solar showcase token parity checks
   dashboards               Run contract dashboard and full smoke dashboard
   ci-fast                  Run lean CI path (smoke dashboard + key core contracts)
   ci                       Run dashboards + theme dashboard and guard self-test
@@ -36,6 +38,8 @@ Examples:
   ./headless.sh deep
   ./headless.sh style
   ./headless.sh theme
+  ./headless.sh theme-visual
+  ./headless.sh solar-token
   ./headless.sh dashboards
   ./headless.sh ci-fast
   ./headless.sh ci
@@ -58,6 +62,8 @@ contract	Run contract-only dashboard headless
 deep	Run deep keyboard contract pages only
 style	Run style-hook contract pages only
 theme	Run theme-only dashboard headless
+theme-visual	Run theme visual-diff lane (separate from contracts)
+solar-token	Run Solar showcase token parity checks
 dashboards	Run contract dashboard and full smoke dashboard
 ci-fast	Run lean CI path (smoke dashboard + key core contracts)
 ci	Run dashboards + theme dashboard and guard self-test
@@ -165,6 +171,14 @@ case "$1" in
   theme)
     shift
     exec "$SCRIPT_DIR/check-theme-headless.sh" "$@"
+    ;;
+  theme-visual)
+    shift
+    exec "$SCRIPT_DIR/check-theme-visual-headless.sh" "$@"
+    ;;
+  solar-token)
+    shift
+    exec "$SCRIPT_DIR/check-solar-token-parity.sh" "$@"
     ;;
   dashboards)
     shift
