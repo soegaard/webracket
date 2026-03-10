@@ -98,6 +98,11 @@
       [else    "../theme-showcase-solar.css"]))
   path)
 
+;; theme-css-path/core : -> string?
+;;   Path to shared web-easy structural core stylesheet.
+(define (theme-css-path/core)
+  "../web-easy-core.css")
+
 ;; normalize-tab-style-id : any/c -> symbol?
 ;;   Normalize tab style id for root class switching.
 (define (normalize-tab-style-id v)
@@ -140,17 +145,19 @@
   (js-append-child! head link)
   link)
 
-;; apply-theme! : any/c any/c any/c any/c -> void?
+;; apply-theme! : any/c any/c any/c any/c any/c -> void?
 ;;   Update html class and stylesheet hrefs for theme and tab style.
-(define (apply-theme! general-link showcase-link theme tab-style)
+(define (apply-theme! core-link general-link showcase-link theme tab-style)
   (define html-node (js-ref/extern (js-document-body) "parentElement"))
   (define class-name
     (string-append (theme-class-name theme)
                    " "
                    (tab-style-class-name tab-style)))
+  (define core-path (theme-css-path/core))
   (define general-path (theme-css-path/general theme))
   (define showcase-path (theme-css-path/showcase theme))
   (js-set-attribute! html-node "class" class-name)
+  (js-set-attribute! core-link "href" core-path)
   (js-set-attribute! general-link  "href" general-path)
   (js-set-attribute! showcase-link "href" showcase-path)
   (void))
@@ -407,15 +414,16 @@
                                  @off-side
                                  (text "Offcanvas panel with extra context."))))))))))))
    ))
+(define theme-core-link-node     (install-theme-link! "we-theme-core-css"))
 (define theme-general-link-node  (install-theme-link! "we-theme-external-css"))
 (define theme-showcase-link-node (install-theme-link! "we-theme-showcase-css"))
 
-(apply-theme! theme-general-link-node theme-showcase-link-node (obs-peek @theme) (obs-peek @tab-style))
+(apply-theme! theme-core-link-node theme-general-link-node theme-showcase-link-node (obs-peek @theme) (obs-peek @tab-style))
 (apply-showcase-css-enabled! theme-showcase-link-node (obs-peek @showcase-css-enabled?))
 (obs-observe! @theme (lambda (next-theme)
-                       (apply-theme! theme-general-link-node theme-showcase-link-node next-theme (obs-peek @tab-style))))
+                       (apply-theme! theme-core-link-node theme-general-link-node theme-showcase-link-node next-theme (obs-peek @tab-style))))
 (obs-observe! @tab-style (lambda (next-style)
-                           (apply-theme! theme-general-link-node theme-showcase-link-node (obs-peek @theme) next-style)))
+                           (apply-theme! theme-core-link-node theme-general-link-node theme-showcase-link-node (obs-peek @theme) next-style)))
 (obs-observe! @showcase-css-enabled?
               (lambda (enabled?)
                 (apply-showcase-css-enabled! theme-showcase-link-node enabled?)))

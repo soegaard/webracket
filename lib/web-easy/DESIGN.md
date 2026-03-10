@@ -1044,8 +1044,16 @@ Remaining follow-up:
 
 Migration note:
 - Renderer-injected CSS is structural-only.
+- Shared widget mechanics can live in a core external stylesheet (`smoke/web-easy-core.css`), loaded before theme stylesheets.
 - Visual defaults must come from external theme stylesheets (for example `theme-external-*.css` / `theme-solar-2.css`).
+- Page-specific showcase polish remains in showcase stylesheets (for example `theme-showcase-*.css`).
 - Legacy visual CSS constants are retained in source as migration reference and are not injected.
+
+Core vs Theme rule (strict):
+- Core layer (`web-easy-core.css`): structure/behavior only (`display`, layout direction, open/close mechanics, positioning anchors).
+- Theme layer (`theme-external-*.css`, `theme-solar-2.css`): visuals only (colors, borders, typography, shadows, spacing polish).
+- Showcase layer (`theme-showcase-*.css`): page-specific layout/polish only.
+- Load order must be: core -> theme -> showcase (if present).
 
 ## Behavior Contract Update (2026-03-06)
 

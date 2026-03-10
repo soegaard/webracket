@@ -25,6 +25,9 @@
     function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
     function frameDocFrom(frame) { return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document); }
     function assertTrue(v, label) { if (!v) throw new Error(label + ": expected true, got false"); }
+    function linkIndex(doc, id) {
+      return Array.from(doc.querySelectorAll("link")).findIndex((el) => el.id === id);
+    }
 
     async function waitForUI(frame, timeoutMs) {
       const start = Date.now();
@@ -74,6 +77,16 @@
         assertTrue(!!ui.table, "table widget present");
 
         await waitForThemeTokens(ui.frameDoc, 10000);
+
+        const coreIdx = linkIndex(ui.frameDoc, "we-theme-core-css");
+        const extIdx = linkIndex(ui.frameDoc, "we-theme-external-css");
+        const showcaseIdx = linkIndex(ui.frameDoc, "we-theme-showcase-css");
+        assertTrue(coreIdx >= 0, "core link exists");
+        assertTrue(extIdx >= 0, "external theme link exists");
+        assertTrue(coreIdx < extIdx, "core link is before external theme link");
+        if (showcaseIdx >= 0) {
+          assertTrue(extIdx < showcaseIdx, "external theme link is before showcase link");
+        }
 
         // Graceful iframe teardown: blank before dashboard removes iframe node.
         await new Promise((resolve, reject) => {

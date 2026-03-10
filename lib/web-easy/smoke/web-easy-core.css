@@ -1,0 +1,30 @@
+/*
+ * web-easy core CSS layer
+ * Structural behavior only (layout/open-close mechanics), no theme colors.
+ */
+
+/* Menus: base popup mechanics shared by all themes. */
+.we-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.we-menu-popup {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 4px);
+  display: none;
+  flex-direction: column;
+  z-index: 1000;
+}
+
+.we-menu-popup.is-open {
+  display: flex;
+}
+
+/* Tabs: base layout behavior shared by all themes. */
+.we-tab-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}

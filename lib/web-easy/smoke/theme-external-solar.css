@@ -260,11 +260,6 @@ html.we-theme-solar .we-menu-bar {
   box-sizing: border-box;
 }
 
-html.we-theme-solar .we-menu {
-  position: relative;
-  display: inline-block;
-}
-
 html.we-theme-solar .we-menu-label {
   padding: 5px 9px;
   border: 1px solid var(--we-border);
@@ -287,24 +282,14 @@ html.we-theme-solar .we-menu-label[aria-expanded='true'] {
 }
 
 html.we-theme-solar .we-menu-popup {
-  position: absolute;
   top: calc(100% + 4px);
-  left: 0;
   min-width: 150px;
-  display: none;
-  flex-direction: column;
   gap: 4px;
   padding: 4px;
   border: 1px solid var(--we-border-menu);
   border-radius: 6px;
   background: var(--we-bg);
   box-shadow: 0 8px 22px rgba(0, 0, 0, 0.38);
-  /* One layer below the open label to avoid border fighting at the seam. */
-  z-index: 1000;
-}
-
-html.we-theme-solar .we-menu-popup.is-open {
-  display: flex;
 }
 
 html.we-theme-solar .we-menu-item {

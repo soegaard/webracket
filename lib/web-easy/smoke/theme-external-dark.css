@@ -97,30 +97,15 @@ html.we-theme-dark .we-menu-bar {
   box-sizing: border-box;
 }
 
-html.we-theme-dark .we-menu {
-  position: relative;
-  display: inline-block;
-}
-
 html.we-theme-dark .we-menu-popup {
-  position: absolute;
   top: calc(100% + 2px);
-  left: 0;
   min-width: 150px;
-  display: none;
-  flex-direction: column;
   gap: 0;
   padding: 2px;
   background: #161d28;
   border-color: #5e6a84;
   border-radius: 4px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
-  /* Popup stays below the open title so borders/underline do not conflict. */
-  z-index: 1000;
-}
-
-html.we-theme-dark .we-menu-popup.is-open {
-  display: flex;
 }
 
 html.we-theme-dark .we-menu-label {
@@ -371,12 +356,6 @@ html.we-theme-dark .we-toast-close {
 /* 6) Tabs (tab-strip look, not button-row look)                               */
 /* -------------------------------------------------------------------------- */
 /* These rules make tabs look connected to the content panel. */
-html.we-theme-dark .we-tab-panel {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-}
-
 html.we-theme-dark .we-tab-list {
   display: flex;
   gap: 0;
@@ -422,6 +401,14 @@ html.we-theme-dark .we-tab-content {
   border-radius: 0 8px 8px 8px;
   background: #13161c;
   padding: 10px;
+}
+
+/* Dialog surface colors are theme-owned, so theme switching updates overlays. */
+html.we-theme-dark .we-dialog-panel {
+  border-color: #7383a1;
+  background: #1a1f29;
+  color: var(--we-fg);
+  box-shadow: 0 12px 28px var(--we-shadow);
 }
 
 html.we-theme-dark .we-tab-btn:focus-visible {

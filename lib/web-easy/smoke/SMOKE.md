@@ -122,6 +122,7 @@ When screenshot/computed output does not match what you see manually:
 2. Confirm generated page is on expected theme:
    - `document.documentElement.className` should include `we-theme-solar2`.
 3. Confirm stylesheet links:
+   - `#we-theme-core-css` should include `web-easy-core.css`
    - `#we-theme-external-css` should include `theme-solar-2.css`
    - `#we-theme-showcase-css` should include `theme-showcase-solar2.css`
 4. Use preflight metadata:
@@ -172,6 +173,7 @@ When screenshot/computed output does not match what you see manually:
 | Navigation-bar orientation contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-navigation-bar-orientation-contract.html` |
 | Navigation-bar collapsed contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-navigation-bar-collapsed-contract.html` |
 | Navigation-bar toggle a11y contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-navigation-bar-toggle-a11y-contract.html` |
+| Theme external-css contract (core-before-theme order) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-theme-external-css-contract.html` |
 | Theme showcase contract | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-theme-showcase-compile.sh test-browser-theme-showcase-contract.html` |
 
 ## Make Targets

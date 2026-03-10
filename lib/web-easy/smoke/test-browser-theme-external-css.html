@@ -223,6 +223,8 @@
   </main>
 
   <script>
+    const CORE_CSS = "../web-easy-core.css";
+
     const THEMES = {
       light: "../theme-external-light.css",
       dark: "../theme-external-dark.css",
@@ -258,11 +260,24 @@
       return link;
     }
 
+    function ensureCoreLink(frameDoc) {
+      let link = frameDoc.getElementById("we-theme-core-css");
+      if (!link) {
+        link = frameDoc.createElement("link");
+        link.id = "we-theme-core-css";
+        link.rel = "stylesheet";
+        frameDoc.head.appendChild(link);
+      }
+      return link;
+    }
+
     function applyThemeToFrame(frame, name) {
       const frameDoc = frameDocFrom(frame);
       if (!frameDoc) return;
       frameDoc.documentElement.classList.remove("we-theme-light", "we-theme-dark", "we-theme-solar");
       frameDoc.documentElement.classList.add("we-theme-" + name);
+      const coreLink = ensureCoreLink(frameDoc);
+      coreLink.href = CORE_CSS;
       const link = ensureThemeLink(frameDoc);
       link.href = THEMES[name];
     }

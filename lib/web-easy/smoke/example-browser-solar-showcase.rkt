@@ -86,6 +86,11 @@
     [(solar2) "../theme-showcase-solar2.css"]
     [else     "../theme-showcase-light.css"]))
 
+;; theme-css-path/core : -> string?
+;;   Path to shared web-easy structural core stylesheet.
+(define (theme-css-path/core)
+  "../web-easy-core.css")
+
 ;; install-theme-link! : string? -> any/c
 ;;   Create and attach a stylesheet <link> with the given id.
 (define (install-theme-link! link-id)
@@ -97,15 +102,16 @@
   (js-append-child! head link)
   link)
 
-;; apply-theme! : any/c any/c any/c -> void?
+;; apply-theme! : any/c any/c any/c any/c -> void?
 ;;   Update html class and stylesheet hrefs for the selected theme.
-(define (apply-theme! general-link showcase-link theme)
+(define (apply-theme! core-link general-link showcase-link theme)
   ;; Cache-bust external CSS so browser refresh always picks up latest local edits.
   (define cache-token "20260310b")
   (define (with-cache-bust path)
     (~a path "?v=" cache-token))
   (define html-node (js-ref/extern (js-document-body) "parentElement"))
   (js-set-attribute! html-node     "class" (theme-class-name theme))
+  (js-set-attribute! core-link     "href"  (theme-css-path/core))
   (js-set-attribute! general-link  "href"  (with-cache-bust (theme-css-path/general theme)))
   (js-set-attribute! showcase-link "href"  (with-cache-bust (theme-css-path/showcase theme)))
   (void))
@@ -1238,14 +1244,15 @@
 
            )))))))
 
+(define theme-core-link-node     (install-theme-link! "we-theme-core-css"))
 (define theme-general-link-node  (install-theme-link! "we-theme-external-css"))
 (define theme-showcase-link-node (install-theme-link! "we-theme-showcase-css"))
 
-(apply-theme! theme-general-link-node theme-showcase-link-node (obs-peek @theme))
+(apply-theme! theme-core-link-node theme-general-link-node theme-showcase-link-node (obs-peek @theme))
 (apply-geometry-mode! (obs-peek @geometry-mode))
 (obs-observe! @theme
               (lambda (next-theme)
-                (apply-theme! theme-general-link-node theme-showcase-link-node next-theme)))
+                (apply-theme! theme-core-link-node theme-general-link-node theme-showcase-link-node next-theme)))
 (obs-observe! @geometry-mode
               (lambda (next-mode)
                 (apply-geometry-mode! next-mode)))
