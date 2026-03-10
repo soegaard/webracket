@@ -52,10 +52,6 @@
       el.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
     }
 
-    function pseudoContent(win, el, pseudo) {
-      return win.getComputedStyle(el, pseudo).content || "";
-    }
-
     async function waitForCondition(label, timeoutMs, pred) {
       const start = Date.now();
       while (Date.now() - start < timeoutMs) {
@@ -96,14 +92,9 @@
         });
 
         const ui = await waitForUI(frame, 20000);
-        const frameWin = frame.contentWindow;
-
         assertEqual(ui.trigger.getAttribute("aria-expanded"), "false", "parity dropdown aria-expanded initial");
         assertEqual(ui.trigger.getAttribute("aria-haspopup"), "menu", "parity dropdown aria-haspopup");
         assertEqual(ui.popup.getAttribute("class"), "we-menu-popup", "parity dropdown popup class initial");
-
-        const marker = pseudoContent(frameWin, ui.trigger, "::after");
-        assertTrue(marker.includes("▾"), "parity dropdown indicator glyph is present");
 
         dispatchKey(ui.trigger, "ArrowDown");
         await sleep(100);

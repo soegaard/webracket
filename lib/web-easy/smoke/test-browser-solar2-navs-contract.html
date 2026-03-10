@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy solar2 navs contract</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status { white-space: pre-wrap; padding: 8px; border: 1px solid #999; margin-bottom: 12px; }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #app-frame { width: 100%; height: 760px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <div id="status">Running solar2 navs contract...</div>
+  <iframe id="app-frame" src="./generated/example-browser-solar-showcase.html" title="solar2 navs contract"></iframe>
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+
+    function assertTrue(v, label) {
+      if (!v) throw new Error(label + ": expected true, got false");
+    }
+
+    function assertEqual(got, want, label) {
+      if (got !== want) throw new Error(label + ": expected " + JSON.stringify(want) + ", got " + JSON.stringify(got));
+    }
+
+    function normalizeLabel(s) {
+      return (s || "").replace(/\u200B/g, "").trim();
+    }
+
+    function headingByText(doc, level, label) {
+      return Array.from(doc.querySelectorAll(".we-heading.level-" + level + ", h" + level))
+        .find((el) => normalizeLabel(el.textContent) === label) || null;
+    }
+
+    function firstAfter(root, selector) {
+      if (!root) return null;
+      let cur = root.nextElementSibling;
+      while (cur) {
+        if (cur.matches(selector)) return cur;
+        const nested = cur.querySelector(selector);
+        if (nested) return nested;
+        cur = cur.nextElementSibling;
+      }
+      return null;
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const doc = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+        if (doc && doc.querySelector("#solar2-navs-section")) return doc;
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for solar2 navs section");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => { clearTimeout(timer); resolve(); }, { once: true });
+        });
+
+        const doc = await waitForUI(frame, 20000);
+        const navsRoot = doc.querySelector("#solar2-navs-section");
+        assertTrue(!!navsRoot, "navs section present");
+
+        const underlineHeading = headingByText(navsRoot, 2, "Underline");
+        assertTrue(!!underlineHeading, "underline heading present");
+        const underlinePanel = firstAfter(underlineHeading, ".we-tab-panel");
+        assertTrue(!!underlinePanel, "underline tab panel present");
+
+        const uTabs = Array.from(underlinePanel.querySelectorAll('button[role="tab"]'));
+        assertEqual(uTabs.length, 4, "underline tab count");
+        const uLabels = uTabs.map((el) => normalizeLabel(el.textContent));
+        assertEqual(uLabels.join(","), "Active,Link,Link,Disabled", "underline labels");
+
+        const selectedLabel = () => {
+          const sel = underlinePanel.querySelector('button[role="tab"][aria-selected="true"]');
+          return sel ? normalizeLabel(sel.textContent) : "";
+        };
+        assertEqual(selectedLabel(), "Active", "underline initial selected");
+
+        const linkTab = uTabs[1];
+        linkTab.click();
+        await sleep(60);
+        assertEqual(selectedLabel(), "Link", "underline click selects Link");
+        await sleep(60);
+        assertEqual(selectedLabel(), "Link", "underline selection persists");
+
+        const disabledTab = uTabs[3];
+        assertEqual(disabledTab.getAttribute("aria-disabled"), "true", "underline disabled aria");
+        disabledTab.click();
+        await sleep(60);
+        assertEqual(selectedLabel(), "Link", "disabled click does not change selection");
+
+        const crumbsHeading = headingByText(navsRoot, 2, "Breadcrumbs");
+        assertTrue(!!crumbsHeading, "breadcrumbs heading present");
+        const crumbsStack = firstAfter(crumbsHeading, ".we-stack");
+        const seps = crumbsStack ? Array.from(crumbsStack.querySelectorAll(".we-breadcrumb-sep")) : [];
+        assertTrue(seps.length >= 3, "breadcrumb separators present");
+        assertTrue(seps.every((el) => (el.textContent || "").trim() === "/"), "breadcrumb separators are slash");
+
+        const pagHeading = headingByText(navsRoot, 2, "Pagination");
+        assertTrue(!!pagHeading, "pagination heading present");
+        const pagStack = firstAfter(pagHeading, ".we-stack");
+        const pagRows = pagStack ? Array.from(pagStack.querySelectorAll(".we-pagination")) : [];
+        assertEqual(pagRows.length, 3, "pagination row count");
+
+        const rowWidths = pagRows.map((row) => row.getBoundingClientRect().width);
+        assertTrue(rowWidths[1] > rowWidths[0], "pagination lg row wider than default");
+        assertTrue(rowWidths[2] < rowWidths[0], "pagination sm row narrower than default");
+
+        setStatus(
+          "PASS\n" +
+          "underline: interactive + disabled OK\n" +
+          "breadcrumbs: separators OK\n" +
+          "pagination: default/lg/sm width ordering OK",
+          "pass"
+        );
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

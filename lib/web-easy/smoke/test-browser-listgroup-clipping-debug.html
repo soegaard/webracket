@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy list-group clipping debug</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 900px;
+      border: 1px solid #999;
+    }
+    .controls {
+      margin: 8px 0 12px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running list-group clipping debug...</div>
+  <div class="controls">
+    <label for="zoom">Zoom</label>
+    <select id="zoom">
+      <option value="1">100%</option>
+      <option value="1.25">125%</option>
+      <option value="1.5">150%</option>
+    </select>
+    <button id="apply">Apply zoom</button>
+  </div>
+  <iframe id="app-frame" src="./generated/example-browser-solar-showcase.html" title="solar showcase"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function collectMetrics(frameDoc) {
+      const rows = Array.from(frameDoc.querySelectorAll(".showcase-list-group-row"));
+      const reports = rows.slice(0, 8).map((row, i) => {
+        const badge = row.querySelector(".we-badge");
+        if (!badge) return { i, ok: false, reason: "missing badge" };
+        const rr = row.getBoundingClientRect();
+        const br = badge.getBoundingClientRect();
+        const clipped = br.top < rr.top || br.bottom > rr.bottom;
+        return {
+          i,
+          ok: !clipped,
+          clipped,
+          rowHeight: rr.height,
+          badgeHeight: br.height,
+          rowTop: rr.top,
+          rowBottom: rr.bottom,
+          badgeTop: br.top,
+          badgeBottom: br.bottom
+        };
+      });
+      return reports;
+    }
+
+    function applyZoom(frameDoc, factor) {
+      if (!frameDoc || !frameDoc.body) return;
+      frameDoc.body.style.zoom = String(factor);
+    }
+
+    async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        const zoom = document.getElementById("zoom");
+        const applyBtn = document.getElementById("apply");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const refresh = () => {
+          const frameDoc = frameDocFrom(frame);
+          applyZoom(frameDoc, zoom.value);
+          const reports = collectMetrics(frameDoc);
+          const failed = reports.filter((r) => r.ok === false);
+          if (failed.length === 0) {
+            setStatus("PASS\nNo clipping detected in sampled list-group rows.\n" + JSON.stringify(reports, null, 2), "pass");
+          } else {
+            setStatus("FAIL\nClipping detected.\n" + JSON.stringify(failed, null, 2), "fail");
+          }
+        };
+
+        applyBtn.addEventListener("click", refresh);
+        refresh();
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    }
+
+    run();
+  </script>
+</body>
+</html>
+

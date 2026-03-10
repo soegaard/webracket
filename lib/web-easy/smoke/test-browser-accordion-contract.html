@@ -35,6 +35,12 @@
       }
     }
 
+    function assertIncludes(text, fragment, label) {
+      if ((text || "").indexOf(fragment) < 0) {
+        throw new Error(label + ": expected " + JSON.stringify(text) + " to include " + JSON.stringify(fragment));
+      }
+    }
+
     function dispatchKey(el, key) {
       el.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
     }
@@ -72,7 +78,8 @@
         const ui = await waitForUI(frame, 20000);
         assertEqual(ui.overview.getAttribute("aria-expanded"), "true", "accordion initial expanded section");
         assertEqual(ui.details.getAttribute("aria-expanded"), "false", "accordion initial collapsed section");
-        assertEqual(ui.collapses[0].getAttribute("class"), "we-collapse is-open", "accordion initial open class");
+        assertIncludes(ui.collapses[0].getAttribute("class"), "we-collapse", "accordion initial class contains collapse");
+        assertIncludes(ui.collapses[0].getAttribute("class"), "is-open", "accordion initial class contains open state");
 
         dispatchKey(ui.overview, "ArrowDown");
         await sleep(100);

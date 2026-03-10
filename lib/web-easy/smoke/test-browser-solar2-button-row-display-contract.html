@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy solar2 button row display contract</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status { white-space: pre-wrap; padding: 8px; border: 1px solid #999; margin-bottom: 12px; }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #app-frame { width: 100%; height: 320px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <div id="status">Running solar2 button row display contract...</div>
+  <iframe id="app-frame" src="./generated/example-browser-solar-showcase.html" title="solar2 button row display contract"></iframe>
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+    function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+    function assertEqual(got, want, label) {
+      if (got !== want) throw new Error(label + ": expected " + JSON.stringify(want) + ", got " + JSON.stringify(got));
+    }
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const doc = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+        if (doc) {
+          const row = doc.querySelector(".we-button-row");
+          const button = row && (row.querySelector("button.we-button") || row.querySelector("button"));
+          if (row && button) return { row, button };
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for button row");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => { clearTimeout(timer); resolve(); }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        const rowDisplay = getComputedStyle(ui.row).display;
+        const buttonDisplay = getComputedStyle(ui.button).display;
+        assertEqual(rowDisplay, "block", "button row display");
+        assertEqual(buttonDisplay, "inline-block", "button display within row");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out unloading iframe")), 5000);
+          frame.addEventListener("load", () => { clearTimeout(timer); resolve(); }, { once: true });
+          frame.src = "about:blank";
+        });
+        setStatus("PASS\nbutton row and button display semantics", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

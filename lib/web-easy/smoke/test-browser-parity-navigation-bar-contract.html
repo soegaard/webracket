@@ -88,6 +88,9 @@
 
         const ui = await waitForUI(frame, 20000);
         assertEqual(ui.bar.getAttribute("role"), "navigation", "parity navigation-bar role");
+        if (frameDocFrom(frame).querySelector("[data-we-widget='navigation-bar-toggle']")) {
+          throw new Error("parity navigation-bar default has no toggle button");
+        }
         assertEqual(ui.text.textContent.trim(), "parity-nav:overview", "parity navigation-bar initial text");
 
         ui.settings.click();

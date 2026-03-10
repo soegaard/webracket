@@ -399,6 +399,8 @@
           <option value="light">Light</option>
           <option value="dark">Dark</option>
         </select>
+        <button id="toggle-showcase-css" type="button">Toggle Showcase CSS</button>
+        <span id="showcase-css-status">Showcase CSS: on</span>
         <a href="./theme-external-solar.css" download>Download Solar CSS</a>
         <a href="./theme-external-light.css" download>Download Light CSS</a>
         <a href="./theme-external-dark.css" download>Download Dark CSS</a>
@@ -549,7 +551,10 @@
       const themeSelect = document.getElementById("theme-select");
       const themeLinkGeneral = document.getElementById("theme-link-general");
       const themeLinkShowcase = document.getElementById("theme-link-showcase");
+      const toggleShowcaseCssButton = document.getElementById("toggle-showcase-css");
+      const showcaseCssStatus = document.getElementById("showcase-css-status");
       const root = document.documentElement;
+      let showcaseCssEnabled = true;
       const themeHrefGeneral = {
         solar: "./theme-external-solar.css",
         light: "./theme-external-light.css",
@@ -568,8 +573,18 @@
         themeLinkShowcase.href = themeHrefShowcase[name];
       }
 
+      function applyShowcaseCssEnabled(enabled) {
+        showcaseCssEnabled = enabled;
+        themeLinkShowcase.media = enabled ? "all" : "not all";
+        showcaseCssStatus.textContent = enabled ? "Showcase CSS: on" : "Showcase CSS: off";
+      }
+
       themeSelect.addEventListener("change", function (evt) {
         applyTheme(evt.target.value);
+      });
+
+      toggleShowcaseCssButton.addEventListener("click", function () {
+        applyShowcaseCssEnabled(!showcaseCssEnabled);
       });
 
       document.addEventListener("click", function (evt) {
@@ -614,6 +629,7 @@
       });
 
       applyTheme("solar");
+      applyShowcaseCssEnabled(true);
     })();
   </script>
 </body>

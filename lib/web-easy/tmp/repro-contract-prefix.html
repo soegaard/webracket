@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy contract prefix repro</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status { white-space: pre-wrap; padding: 8px; border: 1px solid #999; margin-bottom: 12px; }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+  </style>
+</head>
+<body>
+  <div id="status">Running contract prefix repro...</div>
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+    function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+    function qp(name) { return new URLSearchParams(location.search).get(name); }
+
+    const uncaught = [];
+    window.addEventListener("error", (evt) => {
+      uncaught.push(String(evt.error && evt.error.message ? evt.error.message : evt.message || "unknown error"));
+    });
+    window.addEventListener("unhandledrejection", (evt) => {
+      const reason = evt && evt.reason ? evt.reason : "unknown rejection";
+      uncaught.push(String(reason && reason.message ? reason.message : reason));
+    });
+
+    async function teardownFrame(frame) {
+      try {
+        await new Promise((resolve) => {
+          let done = false;
+          const finish = () => {
+            if (done) return;
+            done = true;
+            resolve();
+          };
+          const timer = setTimeout(finish, 1000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            finish();
+          }, { once: true });
+          frame.src = "about:blank";
+        });
+      } catch (_err) {
+      } finally {
+        frame.remove();
+      }
+    }
+
+    async function runOne(page, timeoutMs) {
+      const frame = document.createElement("iframe");
+      frame.style.position = "absolute";
+      frame.style.left = "-10000px";
+      frame.style.top = "0";
+      frame.style.width = "900px";
+      frame.style.height = "700px";
+      frame.style.border = "0";
+      frame.src = page;
+      document.body.appendChild(frame);
+
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const doc = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+        if (doc) {
+          const status = doc.getElementById("status");
+          if (status) {
+            const text = (status.textContent || "").trim();
+            if (text.startsWith("PASS") || text.startsWith("FAIL")) {
+              await teardownFrame(frame);
+              return { ok: text.startsWith("PASS"), message: text };
+            }
+          }
+        }
+        await sleep(40);
+      }
+      await teardownFrame(frame);
+      return { ok: false, message: "FAIL\nTimed out waiting for status" };
+    }
+
+    async function loadCoreTestList() {
+      const html = await fetch("/smoke/test-browser-contract-dashboard-core.html").then((r) => r.text());
+      const all = Array.from(html.matchAll(/test-browser-[a-z0-9-]+\.html/g)).map((x) => x[0]);
+      const out = [];
+      const seen = new Set();
+      let i = 0;
+      while (i < all.length) {
+        const p = all[i];
+        if (!seen.has(p)) {
+          seen.add(p);
+          out.push(p);
+        }
+        i = i + 1;
+      }
+      if (out.length === 0) throw new Error("Could not parse core test list");
+      return out;
+    }
+
+    (async function run() {
+      try {
+        const all = await loadCoreTestList();
+        const nRaw = qp("n");
+        const n = nRaw ? Math.max(1, Math.min(all.length, Number(nRaw))) : all.length;
+        const tests = all.slice(0, n);
+        let i = 0;
+        while (i < tests.length) {
+          const res = await runOne("../smoke/" + tests[i], 45000);
+          if (!res.ok) {
+            throw new Error("Subtest failed for " + tests[i] + ": " + res.message);
+          }
+          i = i + 1;
+        }
+        await sleep(500);
+        if (uncaught.length > 0) {
+          throw new Error("Uncaught errors: " + uncaught.join(" | "));
+        }
+        setStatus("PASS\nprefix n=" + n + " completed without uncaught callback errors", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

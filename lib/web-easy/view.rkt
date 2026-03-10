@@ -24,6 +24,7 @@
 ;;   inline         Build a horizontal inline layout container view.
 ;;   group          Build a labeled container view.
 ;;   alert          Build an inline status alert view.
+;;   alert-rich     Build a rich alert view with title/body/link parts.
 ;;   toast          Build a non-modal toast notification view.
 ;;   close-button   Build a standardized close button view.
 ;;   badge          Build a compact inline badge view.
@@ -47,6 +48,7 @@
 ;;   heading-with-subtitle  Build a semantic heading view with muted subtitle text.
 ;;   display-heading-with-subtitle  Build a semantic display heading view with muted subtitle text.
 ;;   lead           Build a lead paragraph view.
+;;   blockquote     Build a semantic blockquote with optional attribution.
 ;;   button         Build a button view with click action.
 ;;   link           Build a link view with href.
 ;;   button-group   Build a grouped button container view.
@@ -74,7 +76,7 @@
 ;;   observable-view  Build a dynamic view from observable value.
 ;;   spacer         Build an empty layout spacer view.
 ;;   divider        Build a horizontal or vertical divider view.
-;;   table          Build a minimal table view.
+;;   table          Build a table view with optional caption and variants.
 ;;   list-view      Build a keyed dynamic list view.
 ;;   radios         Build a radio-choice view.
 ;;   image          Build an image view from source.
@@ -107,6 +109,7 @@
    inline
    group
    alert
+   alert-rich
    toast
    close-button
    badge
@@ -130,6 +133,7 @@
    heading-with-subtitle
    display-heading-with-subtitle
    lead
+   blockquote
    button
    link
    button-group
@@ -184,6 +188,7 @@
     (define kind/inline    'inline)    ; Horizontal inline layout container view.
     (define kind/group     'group)     ; Labeled container view.
     (define kind/alert     'alert)     ; Inline status alert view.
+    (define kind/alert-rich 'alert-rich) ; Rich alert view with title/body/link parts.
     (define kind/toast     'toast)     ; Non-modal toast notification view.
     (define kind/close-button 'close-button) ; Standardized close button view.
     (define kind/badge     'badge)     ; Compact inline badge view.
@@ -195,6 +200,7 @@
     (define kind/heading-with-subtitle 'heading-with-subtitle) ; Semantic heading with muted subtitle.
     (define kind/display-heading-with-subtitle 'display-heading-with-subtitle) ; Display heading with muted subtitle.
     (define kind/lead      'lead)      ; Lead paragraph text view.
+    (define kind/blockquote 'blockquote) ; Semantic blockquote view with optional attribution.
     (define kind/button    'button)    ; Clickable action view.
     (define kind/link      'link)      ; Link view.
     (define kind/button-group 'button-group) ; Grouped button container view.
@@ -461,6 +467,18 @@
                              (cons 'level level))
             '()))
 
+    ;; alert-rich : (or/c string? observable?) (or/c string? observable? false/c) (or/c string? observable? false/c) (or/c string? observable? false/c) [(or/c symbol? observable?)] -> view?
+    ;;   Construct a rich alert with required body and optional title/link text/link href.
+    ;;   Optional parameter level defaults to 'info.
+    (define (alert-rich body title link-text link-href [level 'info])
+      (view kind/alert-rich
+            (list (cons 'body body)
+                  (cons 'title title)
+                  (cons 'link-text link-text)
+                  (cons 'link-href link-href)
+                  (cons 'level level))
+            '()))
+
     ;; toast : (or/c boolean? observable?) (-> any/c) (or/c string? observable?) [(or/c symbol? observable?)] [(or/c string? observable? false/c)] [(or/c boolean? observable?)] [number?] [boolean?] -> view?
     ;;   Construct a non-modal toast with open flag, close action, message, optional title/dismiss control, optional auto-hide duration, and pause-on-hover.
     ;;   Optional parameter level defaults to 'info.
@@ -628,6 +646,14 @@
     ;;   Construct a lead paragraph view from static or observable value.
     (define (lead content)
       (view kind/lead (list (cons 'value content)) '()))
+
+    ;; blockquote : (or/c string? observable?) [(or/c string? observable? false/c)] -> view?
+    ;;   Construct a semantic blockquote with optional attribution footer.
+    ;;   Optional parameter attribution defaults to #f.
+    (define (blockquote content [attribution #f])
+      (view kind/blockquote (list (cons 'value content)
+                                  (cons 'attribution attribution))
+            '()))
 
     ;; button : (or/c string? observable?) (-> any/c) [any/c] [any/c] -> view?
     ;;   Construct a button view with optional leading/trailing icon labels.
@@ -842,14 +868,21 @@
     (define (divider [orientation 'horizontal])
       (view kind/divider (list (cons 'orientation orientation)) '()))
 
-    ;; table : list? (or/c list? observable?) [symbol?] -> view?
-    ;;   Construct a minimal table view with columns/rows and optional spacing density.
+    ;; table : list? (or/c list? observable?) [symbol?] [list?] -> view?
+    ;;   Construct a table view with columns/rows, optional spacing density, and optional options alist.
     ;;   Column entries can be plain labels or (list label align) where align is left/center/right.
     ;;   Optional parameter density defaults to 'normal.
-    (define (table columns rows [density 'normal])
+    ;;   Optional parameter options defaults to '() with supported keys:
+    ;;     caption  -> string/observable caption text shown above header.
+    ;;     variants -> symbol or list of symbols: striped/hover/borderless/sm.
+    ;;     row-variants -> list of symbols per data row:
+    ;;                     active/primary/secondary/success/danger/warning/info/light/dark.
+    ;;     row-header-column -> non-negative column index rendered as <th scope=\"row\"> in data rows.
+    (define (table columns rows [density 'normal] [options '()])
       (view kind/table (list (cons 'columns columns)
                              (cons 'rows rows)
-                             (cons 'density density))
+                             (cons 'density density)
+                             (cons 'options options))
             '()))
 
     ;; radios : list? (or/c any/c observable?) (-> any/c any/c) -> view?
@@ -939,11 +972,11 @@
     ;;   Construct a navigation bar with optional orientation/collapsed/expand props and children.
     ;;   Optional parameter orientation defaults to 'horizontal.
     ;;   Optional parameter collapsed? defaults to #f.
-    ;;   Optional parameter expand defaults to 'always.
+    ;;   Optional parameter expand defaults to 'never.
     (define (navigation-bar . args)
       (define orientation 'horizontal)
       (define collapsed? #f)
-      (define expand 'always)
+      (define expand 'never)
       (define children args)
       (when (and (pair? children)
                  (or (symbol? (car children))
@@ -1012,6 +1045,7 @@
             inline
             group
             alert
+            alert-rich
             toast
             close-button
             badge
@@ -1035,6 +1069,7 @@
             heading-with-subtitle
             display-heading-with-subtitle
             lead
+            blockquote
             button
             link
             button-group

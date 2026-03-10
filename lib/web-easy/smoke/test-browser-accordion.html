@@ -55,6 +55,18 @@
       }
     }
 
+    function assertHasClass(node, klass, label) {
+      if (!node.classList.contains(klass)) {
+        throw new Error(label + ": expected class " + JSON.stringify(klass) + ", got " + JSON.stringify(node.getAttribute("class")));
+      }
+    }
+
+    function assertLacksClass(node, klass, label) {
+      if (node.classList.contains(klass)) {
+        throw new Error(label + ": expected class " + JSON.stringify(klass) + " to be absent, got " + JSON.stringify(node.getAttribute("class")));
+      }
+    }
+
     async function waitForUI(frame, timeoutMs) {
       const start = Date.now();
       while (Date.now() - start < timeoutMs) {
@@ -89,14 +101,14 @@
         const ui = await waitForUI(frame, 20000);
         const firstCollapse = ui.collapses[0];
         const secondCollapse = ui.collapses[1];
-        assertEqual(firstCollapse.getAttribute("class"), "we-collapse is-open", "first section initially open");
-        assertEqual(secondCollapse.getAttribute("class"), "we-collapse", "second section initially closed");
+        assertHasClass(firstCollapse, "is-open", "first section initially open");
+        assertLacksClass(secondCollapse, "is-open", "second section initially closed");
 
         ui.details.click();
         await sleep(100);
 
-        assertEqual(firstCollapse.getAttribute("class"), "we-collapse", "first section closes after switch");
-        assertEqual(secondCollapse.getAttribute("class"), "we-collapse is-open", "second section opens after switch");
+        assertLacksClass(firstCollapse, "is-open", "first section closes after switch");
+        assertHasClass(secondCollapse, "is-open", "second section opens after switch");
 
         ui.details.dispatchEvent(new KeyboardEvent("keydown", { key: "Home", bubbles: true }));
         await sleep(100);

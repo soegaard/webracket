@@ -290,6 +290,13 @@ html.we-theme-light .we-button-ghost:hover {
   border-color: #6f86aa;
 }
 
+/* Pagination links should look like buttons, not underlined text links. */
+html.we-theme-light .we-page-btn,
+html.we-theme-light .we-page-btn:hover,
+html.we-theme-light .we-page-btn:focus-visible {
+  text-decoration: none;
+}
+
 html.we-theme-light select,
 html.we-theme-light .we-choice {
   background: #ffffff;
@@ -381,33 +388,32 @@ html.we-theme-light .we-tab-list {
   gap: 0;
   align-items: flex-end;
   border-bottom: 1px solid #9aa9c3;
-  padding: 0 2px;
+  padding: 0 8px;
   margin: 0;
 }
 
 html.we-theme-light .we-tab-btn {
   min-width: 88px;
-  padding: 4px 10px;
+  padding: 5px 11px;
   border: 1px solid #9aa9c3;
-  border-radius: 6px 6px 0 0;
-  border-bottom-color: #9aa9c3;
-  background: #f3f6fb;
+  border-radius: 8px 8px 0 0;
+  border-bottom: none;
+  background: #eef3fb;
   color: var(--we-fg);
-  margin: 0;
+  margin: 0 0 -1px 0;
+  position: relative;
 }
 
 html.we-theme-light .we-tab-btn + .we-tab-btn {
-  margin-left: 2px;
+  margin-left: -1px;
 }
 
 html.we-theme-light .we-tab-btn.is-selected {
   border-color: #5b749d;
-  /* Match the content panel color to visually merge tab + panel. */
-  border-bottom-color: #ffffff;
+  /* Active tab sits in front and merges into the content panel. */
+  border-bottom: 1px solid #ffffff;
   background: #ffffff;
   font-weight: bold;
-  /* Keep selected tab border above neighboring tabs for a clean seam. */
-  position: relative;
   z-index: 1;
 }
 
@@ -419,9 +425,9 @@ html.we-theme-light .we-tab-btn.is-disabled {
 
 html.we-theme-light .we-tab-content {
   border: 1px solid #9aa9c3;
-  border-top: none;
+  border-radius: 0 8px 8px 8px;
   background: #ffffff;
-  padding: 8px;
+  padding: 10px;
 }
 
 html.we-theme-light .we-tab-btn:focus-visible {

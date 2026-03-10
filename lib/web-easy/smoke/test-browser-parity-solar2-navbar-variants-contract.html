@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy parity solar2 navbar variants contract</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status { white-space: pre-wrap; padding: 8px; border: 1px solid #999; margin-bottom: 12px; }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #app-frame { width: 100%; height: 320px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <div id="status">Running parity solar2 navbar variant contract...</div>
+  <iframe id="app-frame" src="./generated/example-browser-solar-showcase.html" title="parity solar2 navbar contract"></iframe>
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+
+    function assertEqual(got, want, label) {
+      if (got !== want) throw new Error(label + ": expected " + JSON.stringify(want) + ", got " + JSON.stringify(got));
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const doc = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+        if (doc) {
+          const root = doc.querySelector(".showcase-main");
+          if (root) return doc;
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for parity solar2 showcase UI");
+    }
+
+    async function waitForThemeApplied(doc, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const nav = navFor(doc, "primary");
+        const link = doc.getElementById("we-theme-external-css");
+        if (nav && link) {
+          const bg = getComputedStyle(nav).backgroundColor;
+          const href = (link.getAttribute("href") || "");
+          if (href.indexOf("theme-solar-2.css") !== -1 && bg !== "rgba(0, 0, 0, 0)") return;
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for parity solar2 theme application");
+    }
+
+    function navFor(doc, variant) {
+      const all = Array.from(doc.querySelectorAll(".showcase-main .we-navigation-bar"));
+      const marker = "we-variant-" + variant;
+      return all.find((n) => n.classList.contains(marker) || (n.closest("." + marker) !== null)) || null;
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => { clearTimeout(timer); resolve(); }, { once: true });
+        });
+
+        const doc = await waitForUI(frame, 20000);
+        await waitForThemeApplied(doc, 20000);
+        const primaryNav = navFor(doc, "primary");
+        const lightNav = navFor(doc, "light");
+        const primaryLabel = primaryNav && primaryNav.querySelector("[data-we-widget='menu-label']");
+        const lightLabel = lightNav && lightNav.querySelector("[data-we-widget='menu-label']");
+        const darkNav = navFor(doc, "dark");
+        const subtleNav = navFor(doc, "subtle");
+
+        if (!primaryLabel || !lightLabel || !darkNav || !subtleNav) {
+          throw new Error("Expected parity navbar/menu-label nodes");
+        }
+
+        const colorPrimary = getComputedStyle(primaryLabel).color;
+        const colorLight = getComputedStyle(lightLabel).color;
+        const bgDark = getComputedStyle(darkNav).backgroundColor;
+        const bgSubtle = getComputedStyle(subtleNav).backgroundColor;
+
+        assertEqual(colorPrimary, "rgba(255, 255, 255, 0.55)", "primary/dark menu-label alpha color");
+        assertEqual(colorLight, "rgba(0, 0, 0, 0.65)", "light/subtle menu-label alpha color");
+        assertEqual(bgDark, "rgb(7, 54, 66)", "dark navbar background");
+        assertEqual(bgSubtle, "rgb(253, 246, 227)", "subtle navbar background");
+
+        setStatus("PASS\nparity solar2 navbar/menu-label invariants", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

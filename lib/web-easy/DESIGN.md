@@ -356,6 +356,34 @@ Remaining Step 2 planning items:
 | Toasts | `toast` | Y | Y | Y | Y |
 | Tooltips | `tooltip` | Y | Y | Y | P |
 
+### Bootswatch Solar Page Parity Gaps (Current)
+
+The Solar showcase page also demonstrates form/layout patterns that are not yet
+first-class `web-easy` components (they are currently done via composition or CSS):
+
+| Pattern on Solar page | Current web-easy status | Gap type |
+|---|---|---|
+| Input group/addons (prepend/append text or buttons) | composition only | missing first-class component |
+| Floating labels | CSS pattern only | missing first-class component |
+| Validation feedback pattern (`valid/invalid` + feedback text) | composition only | missing first-class component |
+| File input pattern | plain file input styling only | missing first-class component |
+| Switch-style checkbox variant | checkbox + CSS only | missing first-class component |
+| List-group badge clipping in some browser/font combinations | under active polish | pending CSS baseline/line-box normalization |
+
+Priority targets to add first:
+
+1. `input-group` (high leverage; common in form-heavy pages).
+2. `floating-label-field` (common modern form affordance).
+3. Validation helpers (`field-state`/`field-feedback`) for consistent UX and testability.
+
+Rationale:
+
+- These are recurring page-building patterns, not one-off demo visuals.
+- Making them first-class reduces CSS boilerplate and improves portability across themes.
+- They can be tested as semantic components rather than ad-hoc class combinations.
+- Cross-browser list-group badge rendering should be validated by computed-style contracts
+  in addition to screenshot diff (to catch line-box clipping regressions early).
+
 ## Phase 2 API
 
 - Menus as web-appropriate components (`menu-bar`, `menu`, `menu-item`, popup menus).
@@ -400,14 +428,23 @@ usable defaults out of the box.
 Rules:
 
 1. Renderer emits semantic classes/attributes, not visual inline styles.
-2. Shared defaults live in stylesheet text (or a default stylesheet asset), not in
-   per-node style strings.
-3. Runtime state is expressed through classes (for example `.is-open`,
+2. Renderer-injected CSS is structural only (layout/visibility/focus plumbing), not
+   visual theme skinning.
+3. Shared visual defaults live in theme stylesheets, not in per-node style strings.
+4. Runtime state is expressed through classes (for example `.is-open`,
    `.is-selected`, `.is-disabled`) and ARIA attributes.
-4. Dynamic one-off geometry values may use inline style only when they cannot be
+5. Dynamic one-off geometry values may use inline style only when they cannot be
    represented as stable classes/tokens.
-5. Selectors intended for user theming are part of the public contract and should be
+6. Selectors intended for user theming are part of the public contract and should be
    treated as stable.
+
+Current migration note:
+
+- `renderer.rkt` now injects structural base CSS only.
+- Visual component defaults are kept in external theme files (for example
+  `smoke/theme-external-*.css`, `smoke/theme-solar-2.css`).
+- When later exact-match sections fully override earlier theme blocks, prune the dead
+  earlier blocks to keep the stylesheet readable.
 
 `data-we-widget` role:
 
@@ -487,6 +524,8 @@ Current `web-easy` test workflows:
    - `cd lib/web-easy/smoke && ./check-smoke.sh`
 4. Headless smoke orchestration:
    - `cd lib/web-easy/smoke && ./headless.sh ci`
+   - Solar-focused loop:
+     - `cd lib/web-easy/smoke && ./check-solar-workflow.sh`
 5. Fast local headless gate (no compile):
    - `make smoke-headless-lite`
 
@@ -662,6 +701,31 @@ Current browser backend element mapping (as implemented today):
 | `dropdown` | `div` + `menu` composite | Single-trigger popup menu using same behavior as `menu`/`menu-item`. |
 | `tooltip` | `div` + trigger child + `span` bubble | Hover/focus tooltip with `aria-describedby` from trigger to bubble id. |
 | `popover` | `div` + `button` trigger + `div` panel | Click-toggle detail panel with `aria-expanded`/`aria-hidden` and Escape close. |
+
+### `navigation-bar` API (`expand`)
+
+- Signature shape: `(navigation-bar [orientation] [collapsed?] [expand] child ...)`
+- Defaults:
+  - `orientation`: `'horizontal`
+  - `collapsed?`: `#f`
+  - `expand`: `'never` (default has no built-in toggle button)
+- Expand modes:
+  - `'never`: render items only (no toggle)
+  - `'always`: render toggle button (`data-we-widget="navigation-bar-toggle"`) and collapsed-state behavior
+
+Examples:
+
+```racket
+;; Default (no toggle button)
+(navigation-bar
+ (button "home" (lambda () (void)))
+ (button "docs" (lambda () (void))))
+
+;; Explicit toggle/collapse behavior
+(navigation-bar 'vertical #t 'always
+ (button "one" (lambda () (void)))
+ (button "two" (lambda () (void))))
+```
 | `menu-bar` | `nav` (`role="menubar"`, `aria-orientation="horizontal"`) | Top-level menu label row. |
 | `menu` | `div` (`role="menu"`, popup `id`) | Popup menu container linked from label via `aria-controls`. |
 | `menu-item` | `button type="button"` (`role="menuitem"`) | Action entry with keyboard activation (`Enter`/`Space`). |
@@ -841,6 +905,9 @@ Execution model:
   - `test-browser-contract-dashboard-core.html`
   - `test-browser-contract-dashboard-parity.html`
 - `check-contract-headless.mjs` runs both dashboards and aggregates pass/fail + timing.
+- Release gate policy:
+  - contract dashboards are normative pass/fail gates.
+  - visual compare scripts (`compare-buttons.cjs`, `compare-navbars.cjs`) are advisory drift detectors for theme tuning, not hard blockers by themselves.
 
 ## Baseline Changelog
 
@@ -958,12 +1025,13 @@ Notes:
 Current status:
 
 1. `renderer.rkt` no longer emits inline visual style attributes for core controls, menu, dialog, tab-panel, or table density/cell spacing.
-2. Default visual behavior is provided through injected stylesheet rules (`control-style-text`, `menu-style-text`, `dialog-style-text`, `tab-panel-style-text`).
+2. Injected renderer stylesheet is now structural-only (layout/positioning/show-hide mechanics), not visual theme styling.
 3. Stable CSS/test targeting is now available through `data-we-widget` markers across container, control, and sub-widget nodes (for example menu popup/label, dialog panel, table rows/cells, tab list/content/buttons).
 
 Rationale:
 
-- Keeps rendering output themeable via stylesheet-only overrides.
+- Keeps rendering output fully theme-driven via external stylesheet overrides.
+- Avoids baseline visual defaults interfering with user-provided themes (for example Bootstrap-inspired styles).
 - Reduces renderer-side style duplication and attr churn during updates.
 - Improves test/tool resilience by targeting widget identity (`data-we-widget`) instead of brittle DOM shape assumptions.
 
@@ -973,6 +1041,11 @@ Remaining follow-up:
 2. Expand and document the public theme/class contract (which classes are stable API vs internal).
 3. Completed: close-button icon glyph is CSS-token-driven via `--we-close-glyph` and contract-tested in core/parity close-button pages.
 4. Deep keyboard contracts for dropdown/scrollspy are now part of contract dashboard gating (core + parity).
+
+Migration note:
+- Renderer-injected CSS is structural-only.
+- Visual defaults must come from external theme stylesheets (for example `theme-external-*.css` / `theme-solar-2.css`).
+- Legacy visual CSS constants are retained in source as migration reference and are not injected.
 
 ## Behavior Contract Update (2026-03-06)
 
@@ -986,9 +1059,10 @@ Recent contract expansion focuses on optional-argument behavior and close-reason
    - `autoplay? #t` progression
    - no-wrap autoplay stop-at-end.
 4. `navigation-bar` contracts now cover:
+   - default rendering has no collapse toggle (`expand` defaults to `'never`)
    - orientation class toggling (`is-vertical`)
    - collapsed state class (`is-collapsed`)
-   - toggle `aria-expanded` transitions.
+   - toggle `aria-expanded` transitions when `expand` is explicitly enabled (for example `'always`).
 5. `toast` contracts now cover:
    - timer-based auto-hide (`duration-ms`)
    - hover pause/resume (`pause-on-hover?`).

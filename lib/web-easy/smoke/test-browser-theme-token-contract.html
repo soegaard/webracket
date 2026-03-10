@@ -222,6 +222,45 @@
       assertTrue(after !== before, "close-button icon color changed after token override");
     }
 
+    async function checkHeadingTokens(frame, timeoutMs) {
+      const doc = await loadCase(
+        frame,
+        "./generated/example-browser-smoke-all.html?test=headings",
+        (d) => d.querySelector("[data-we-widget='heading-with-subtitle']"),
+        timeoutMs
+      );
+      const heading = Array.from(doc.querySelectorAll("[data-we-widget='heading']"))
+        .find((n) => (n.textContent || "").trim() === "Smoke Heading");
+      const display = doc.querySelector("[data-we-widget='display-heading']");
+      const subtitle = doc.querySelector("[data-we-widget='heading-subtitle']");
+      const lead = doc.querySelector("[data-we-widget='lead']");
+
+      const beforeHeading = normalizedCssColor(getComputedStyle(heading).color);
+      const beforeDisplay = normalizedCssColor(getComputedStyle(display).color);
+      const beforeSubtitle = normalizedCssColor(getComputedStyle(subtitle).color);
+      const beforeLead = normalizedCssColor(getComputedStyle(lead).color);
+
+      doc.documentElement.style.setProperty("--we-heading-fg", "rgb(90, 40, 180)");
+      doc.documentElement.style.setProperty("--we-display-heading-fg", "rgb(15, 110, 185)");
+      doc.documentElement.style.setProperty("--we-heading-subtitle-fg", "rgb(120, 120, 120)");
+      doc.documentElement.style.setProperty("--we-lead-fg", "rgb(80, 96, 112)");
+      await sleep(80);
+
+      const afterHeading = normalizedCssColor(getComputedStyle(heading).color);
+      const afterDisplay = normalizedCssColor(getComputedStyle(display).color);
+      const afterSubtitle = normalizedCssColor(getComputedStyle(subtitle).color);
+      const afterLead = normalizedCssColor(getComputedStyle(lead).color);
+
+      assertTrue(afterHeading === "rgb(90,40,180)", "heading color updates from --we-heading-fg");
+      assertTrue(afterHeading !== beforeHeading, "heading color changed after token override");
+      assertTrue(afterDisplay === "rgb(15,110,185)", "display heading color updates from --we-display-heading-fg");
+      assertTrue(afterDisplay !== beforeDisplay, "display heading color changed after token override");
+      assertTrue(afterSubtitle === "rgb(120,120,120)", "subtitle color updates from --we-heading-subtitle-fg");
+      assertTrue(afterSubtitle !== beforeSubtitle, "subtitle color changed after token override");
+      assertTrue(afterLead === "rgb(80,96,112)", "lead color updates from --we-lead-fg");
+      assertTrue(afterLead !== beforeLead, "lead color changed after token override");
+    }
+
     (async function run() {
       try {
         const frame = document.getElementById("app-frame");
@@ -245,7 +284,14 @@
           "--we-overlay",
           "--we-progress-success",
           "--we-progress-warn",
-          "--we-progress-error"
+          "--we-progress-error",
+          "--we-heading-fg",
+          "--we-display-heading-fg",
+          "--we-heading-subtitle-fg",
+          "--we-lead-fg",
+          "--we-heading-space-compact",
+          "--we-heading-space-normal",
+          "--we-heading-space-loose"
         ];
         for (const token of requiredTokens) {
           assertTokenDefined(rootStyle, token);
@@ -259,9 +305,10 @@
         await checkScrollspySelectedToken(frame, timeoutMs);
         await checkScrollspyThemeHooks(frame, timeoutMs);
         await checkCloseButtonIconToken(frame, timeoutMs);
+        await checkHeadingTokens(frame, timeoutMs);
 
         setStatus(
-          "PASS\nrequired --we-* tokens are defined; overrides affect menu/card/pagination/breadcrumb/offcanvas/scrollspy/close-icon",
+          "PASS\nrequired --we-* tokens are defined; overrides affect menu/card/pagination/breadcrumb/offcanvas/scrollspy/close-icon/headings/heading-spacing",
           "pass"
         );
       } catch (err) {

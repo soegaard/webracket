@@ -92,6 +92,7 @@ html.we-theme-solar .we-input {
   background: var(--we-field-bg);
   border: 1px solid var(--we-border);
   color: var(--we-fg);
+  min-height: 32px;
   border-radius: 5px;
   padding: 6px 8px;
 }
@@ -176,11 +177,20 @@ html.we-theme-solar .we-button-ghost:hover {
   color: var(--we-fg);
 }
 
+/* Pagination links should look like buttons, not underlined text links. */
+html.we-theme-solar .we-page-btn,
+html.we-theme-solar .we-page-btn:hover,
+html.we-theme-solar .we-page-btn:focus-visible {
+  text-decoration: none;
+}
+
 html.we-theme-solar select,
 html.we-theme-solar .we-choice {
   background: var(--we-field-bg);
   border: 1px solid var(--we-border);
   color: var(--we-fg);
+  -webkit-text-fill-color: var(--we-fg);
+  min-height: 32px;
   border-radius: 5px;
   padding: 6px 30px 6px 8px;
   line-height: 1.2;
@@ -196,6 +206,17 @@ html.we-theme-solar .we-choice {
   background-repeat: no-repeat;
 }
 
+/* Keep selected value readable on hover/focus (some browsers dim select text). */
+html.we-theme-solar select:hover,
+html.we-theme-solar .we-choice:hover,
+html.we-theme-solar select:focus,
+html.we-theme-solar .we-choice:focus,
+html.we-theme-solar select:focus-visible,
+html.we-theme-solar .we-choice:focus-visible {
+  color: var(--we-fg);
+  -webkit-text-fill-color: var(--we-fg);
+}
+
 html.we-theme-solar select option {
   background: var(--we-field-bg);
   color: var(--we-fg);
@@ -203,6 +224,25 @@ html.we-theme-solar select option {
 
 html.we-theme-solar .we-close-button-icon::before {
   content: var(--we-close-glyph);
+}
+
+/* -------------------------------------------------------------------------- */
+/* 2b) Layout spacing primitives                                               */
+/* -------------------------------------------------------------------------- */
+/* Keep spacing defaults in the theme so pages don't need local spacing hacks. */
+html.we-theme-solar .we-grid {
+  gap: 12px;
+}
+
+html.we-theme-solar .we-card-body {
+  padding: 10px;
+  gap: 8px;
+}
+
+html.we-theme-solar .we-inline,
+html.we-theme-solar .we-toolbar,
+html.we-theme-solar .we-toolbar-group {
+  gap: 6px;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -303,20 +343,28 @@ html.we-theme-solar .we-menu-item:focus-visible {
 html.we-theme-solar .we-tab-list,
 html.we-theme-solar .tab-row {
   display: flex;
-  gap: 4px;
-  align-items: center;
+  gap: 0;
+  align-items: flex-end;
   border-bottom: 1px solid var(--we-border-soft);
-  background: var(--we-bg-subtle);
-  padding: 6px;
+  background: transparent;
+  padding: 0 8px;
 }
 
 html.we-theme-solar .we-tab-btn,
 html.we-theme-solar .tab-btn {
-  background: var(--we-bg);
+  background: #0b3743;
   border: 1px solid var(--we-border);
-  border-radius: 4px;
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
   color: var(--we-fg);
-  padding: 5px 9px;
+  padding: 5px 11px;
+  margin: 0 0 -1px 0;
+  position: relative;
+}
+
+html.we-theme-solar .we-tab-btn + .we-tab-btn,
+html.we-theme-solar .tab-btn + .tab-btn {
+  margin-left: -1px;
 }
 
 html.we-theme-solar .we-tab-btn:hover,
@@ -329,7 +377,356 @@ html.we-theme-solar .we-tab-btn[aria-selected='true'],
 html.we-theme-solar .tab-btn[aria-selected='true'] {
   background: var(--we-bg-selected);
   border-color: var(--we-border-strong);
+  border-bottom: 1px solid #073642;
   color: var(--we-fg);
+  z-index: 1;
+}
+
+html.we-theme-solar .we-tab-content,
+html.we-theme-solar .tab-panel {
+  border: 1px solid var(--we-border-soft);
+  border-radius: 0 8px 8px 8px;
+  background: #073642;
+  padding: 10px;
+}
+
+/* Tab style variants (switchable via root class we-tab-style-*). */
+html.we-theme-solar.we-tab-style-joined .we-tab-list,
+html.we-theme-solar.we-tab-style-joined .tab-row {
+  gap: 0;
+  border-bottom: 1px solid var(--we-border-soft);
+  padding: 0 8px;
+  background: transparent;
+}
+
+html.we-theme-solar.we-tab-style-joined .we-tab-btn,
+html.we-theme-solar.we-tab-style-joined .tab-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+  border-radius: 8px 8px 0 0;
+  color: var(--we-fg-muted);
+  padding: 5px 11px;
+  margin: 0 0 -1px 0;
+  position: relative;
+}
+
+html.we-theme-solar.we-tab-style-joined .we-tab-btn + .we-tab-btn,
+html.we-theme-solar.we-tab-style-joined .tab-btn + .tab-btn {
+  margin-left: -1px;
+}
+
+html.we-theme-solar.we-tab-style-joined .we-tab-btn[aria-selected='true'],
+html.we-theme-solar.we-tab-style-joined .tab-btn[aria-selected='true'] {
+  background: #073642;
+  border-color: var(--we-border-strong);
+  border-bottom-color: #073642;
+  color: var(--we-fg);
+  z-index: 2;
+}
+
+html.we-theme-solar.we-tab-style-joined .we-tab-content,
+html.we-theme-solar.we-tab-style-joined .tab-panel {
+  border: 1px solid var(--we-border-soft);
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+  background: #073642;
+}
+
+html.we-theme-solar.we-tab-style-pills .we-tab-list,
+html.we-theme-solar.we-tab-style-pills .tab-row {
+  gap: 10px;
+  border-bottom: none;
+  padding: 2px 0 0 0;
+}
+
+html.we-theme-solar.we-tab-style-pills .we-tab-btn,
+html.we-theme-solar.we-tab-style-pills .tab-btn {
+  border: 2px solid var(--we-border-soft);
+  border-radius: 999px;
+  border-bottom: 2px solid var(--we-border-soft);
+  margin: 0;
+  background: transparent;
+  padding: 3px 14px;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+html.we-theme-solar.we-tab-style-pills .we-tab-btn + .we-tab-btn,
+html.we-theme-solar.we-tab-style-pills .tab-btn + .tab-btn {
+  margin-left: 0;
+}
+
+html.we-theme-solar.we-tab-style-pills .we-tab-btn[aria-selected='true'],
+html.we-theme-solar.we-tab-style-pills .tab-btn[aria-selected='true'] {
+  border-color: var(--we-border-strong);
+  background: rgba(181, 137, 0, 0.2);
+  color: #e4d4a2;
+}
+
+html.we-theme-solar.we-tab-style-pills .we-tab-content,
+html.we-theme-solar.we-tab-style-pills .tab-panel {
+  border: none;
+  border-radius: 10px;
+  margin-top: 12px;
+  background: rgba(7, 54, 66, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(78, 129, 140, 0.35);
+}
+
+html.we-theme-solar.we-tab-style-underline .we-tab-list,
+html.we-theme-solar.we-tab-style-underline .tab-row {
+  gap: 14px;
+  padding: 0 2px;
+  border-bottom: 2px solid rgba(78, 129, 140, 0.45);
+}
+
+html.we-theme-solar.we-tab-style-underline .we-tab-btn,
+html.we-theme-solar.we-tab-style-underline .tab-btn {
+  border: none;
+  border-radius: 0;
+  margin: 0;
+  background: transparent;
+  padding: 3px 0 8px 0;
+  color: var(--we-fg-muted);
+  font-size: 14px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+html.we-theme-solar.we-tab-style-underline .we-tab-btn + .we-tab-btn,
+html.we-theme-solar.we-tab-style-underline .tab-btn + .tab-btn {
+  margin-left: 0;
+}
+
+html.we-theme-solar.we-tab-style-underline .we-tab-btn[aria-selected='true'],
+html.we-theme-solar.we-tab-style-underline .tab-btn[aria-selected='true'] {
+  border-bottom: 3px solid var(--we-border-strong);
+  color: #e4d4a2;
+  font-weight: 700;
+}
+
+html.we-theme-solar.we-tab-style-underline .we-tab-content,
+html.we-theme-solar.we-tab-style-underline .tab-panel {
+  border: none;
+  border-top: 1px dashed rgba(78, 129, 140, 0.45);
+  border-radius: 0;
+  padding: 12px 2px 6px 2px;
+  background: transparent;
+}
+
+html.we-theme-solar.we-tab-style-soft .we-tab-list,
+html.we-theme-solar.we-tab-style-soft .tab-row {
+  gap: 2px;
+  border-bottom: none;
+  padding: 3px;
+  background: rgba(7, 54, 66, 0.6);
+  border: 1px solid rgba(78, 129, 140, 0.4);
+  border-radius: 10px;
+}
+
+html.we-theme-solar.we-tab-style-soft .we-tab-btn,
+html.we-theme-solar.we-tab-style-soft .tab-btn {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  border-bottom: 1px solid transparent;
+  margin: 0;
+  background: transparent;
+  padding: 5px 10px;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+
+html.we-theme-solar.we-tab-style-soft .we-tab-btn + .we-tab-btn,
+html.we-theme-solar.we-tab-style-soft .tab-btn + .tab-btn {
+  margin-left: 0;
+}
+
+html.we-theme-solar.we-tab-style-soft .we-tab-btn[aria-selected='true'],
+html.we-theme-solar.we-tab-style-soft .tab-btn[aria-selected='true'] {
+  border-color: rgba(181, 137, 0, 0.45);
+  background: rgba(181, 137, 0, 0.2);
+  color: #e4d4a2;
+}
+
+html.we-theme-solar.we-tab-style-soft .we-tab-content,
+html.we-theme-solar.we-tab-style-soft .tab-panel {
+  border: 1px solid rgba(78, 129, 140, 0.35);
+  border-radius: 8px;
+  margin-top: 8px;
+  background: rgba(7, 54, 66, 0.45);
+}
+
+html.we-theme-solar.we-tab-style-rail .we-tab-list,
+html.we-theme-solar.we-tab-style-rail .tab-row {
+  gap: 0;
+  padding: 0;
+  border-bottom: 3px solid rgba(78, 129, 140, 0.45);
+}
+
+html.we-theme-solar.we-tab-style-rail .we-tab-btn,
+html.we-theme-solar.we-tab-style-rail .tab-btn {
+  border: none;
+  border-radius: 0;
+  margin: 0;
+  padding: 6px 12px 8px 12px;
+  background: transparent;
+  color: var(--we-fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+html.we-theme-solar.we-tab-style-rail .we-tab-btn[aria-selected='true'],
+html.we-theme-solar.we-tab-style-rail .tab-btn[aria-selected='true'] {
+  color: #e4d4a2;
+  background: rgba(181, 137, 0, 0.12);
+  box-shadow: inset 0 -3px 0 0 var(--we-border-strong);
+}
+
+html.we-theme-solar.we-tab-style-rail .we-tab-content,
+html.we-theme-solar.we-tab-style-rail .tab-panel {
+  border: none;
+  border-radius: 0;
+  margin-top: 8px;
+  padding: 10px 0;
+  background: transparent;
+}
+
+html.we-theme-solar.we-tab-style-cards .we-tab-list,
+html.we-theme-solar.we-tab-style-cards .tab-row {
+  gap: 10px;
+  border-bottom: none;
+  padding: 0;
+}
+
+html.we-theme-solar.we-tab-style-cards .we-tab-btn,
+html.we-theme-solar.we-tab-style-cards .tab-btn {
+  border: 1px solid rgba(78, 129, 140, 0.45);
+  border-radius: 8px;
+  border-bottom: 1px solid rgba(78, 129, 140, 0.45);
+  margin: 0;
+  padding: 7px 12px;
+  background: rgba(7, 54, 66, 0.35);
+}
+
+html.we-theme-solar.we-tab-style-cards .we-tab-btn[aria-selected='true'],
+html.we-theme-solar.we-tab-style-cards .tab-btn[aria-selected='true'] {
+  border-color: var(--we-border-strong);
+  background: rgba(181, 137, 0, 0.22);
+  color: #e4d4a2;
+  transform: translateY(-1px);
+}
+
+html.we-theme-solar.we-tab-style-cards .we-tab-content,
+html.we-theme-solar.we-tab-style-cards .tab-panel {
+  border: 1px solid rgba(78, 129, 140, 0.45);
+  border-radius: 10px;
+  margin-top: 12px;
+  background: rgba(7, 54, 66, 0.55);
+}
+
+html.we-theme-solar.we-tab-style-mono .we-tab-list,
+html.we-theme-solar.we-tab-style-mono .tab-row {
+  gap: 0;
+  border: 1px solid var(--we-border-soft);
+  border-radius: 0;
+  padding: 0;
+}
+
+html.we-theme-solar.we-tab-style-mono .we-tab-btn,
+html.we-theme-solar.we-tab-style-mono .tab-btn {
+  border: none;
+  border-right: 1px solid var(--we-border-soft);
+  border-radius: 0;
+  margin: 0;
+  padding: 6px 10px;
+  background: #073642;
+  color: #9fb0b0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 12px;
+}
+
+html.we-theme-solar.we-tab-style-mono .we-tab-btn:last-child,
+html.we-theme-solar.we-tab-style-mono .tab-btn:last-child {
+  border-right: none;
+}
+
+html.we-theme-solar.we-tab-style-mono .we-tab-btn[aria-selected='true'],
+html.we-theme-solar.we-tab-style-mono .tab-btn[aria-selected='true'] {
+  background: #0f3f4d;
+  color: #e4d4a2;
+}
+
+html.we-theme-solar.we-tab-style-mono .we-tab-content,
+html.we-theme-solar.we-tab-style-mono .tab-panel {
+  border: 1px solid var(--we-border-soft);
+  border-top: none;
+  border-radius: 0;
+  background: #073642;
+}
+
+html.we-theme-solar.we-tab-style-signal .we-tab-list,
+html.we-theme-solar.we-tab-style-signal .tab-row {
+  gap: 8px;
+  border-bottom: none;
+  padding: 0;
+}
+
+html.we-theme-solar.we-tab-style-signal .we-tab-btn,
+html.we-theme-solar.we-tab-style-signal .tab-btn {
+  border: 1px solid transparent;
+  border-radius: 3px;
+  border-bottom: 1px solid transparent;
+  margin: 0;
+  padding: 6px 10px;
+  background: transparent;
+  color: var(--we-fg-muted);
+}
+
+html.we-theme-solar.we-tab-style-signal .we-tab-btn[aria-selected='true'],
+html.we-theme-solar.we-tab-style-signal .tab-btn[aria-selected='true'] {
+  border-color: rgba(181, 137, 0, 0.35);
+  background: rgba(181, 137, 0, 0.16);
+  color: #e4d4a2;
+  box-shadow: 0 0 0 1px rgba(181, 137, 0, 0.24);
+}
+
+html.we-theme-solar.we-tab-style-signal .we-tab-content,
+html.we-theme-solar.we-tab-style-signal .tab-panel {
+  border: 1px dashed rgba(78, 129, 140, 0.55);
+  border-radius: 6px;
+  margin-top: 10px;
+  background: rgba(7, 54, 66, 0.35);
+}
+
+html.we-theme-solar.we-tab-style-notch .we-tab-list,
+html.we-theme-solar.we-tab-style-notch .tab-row {
+  gap: 0;
+  border-bottom: 1px solid rgba(78, 129, 140, 0.55);
+  padding: 0 6px;
+}
+
+html.we-theme-solar.we-tab-style-notch .we-tab-btn,
+html.we-theme-solar.we-tab-style-notch .tab-btn {
+  border: 1px solid rgba(78, 129, 140, 0.55);
+  border-bottom: none;
+  border-radius: 10px 10px 0 0;
+  margin: 0 4px -1px 0;
+  padding: 5px 10px;
+  background: linear-gradient(#0b3743, #0a3340);
+}
+
+html.we-theme-solar.we-tab-style-notch .we-tab-btn[aria-selected='true'],
+html.we-theme-solar.we-tab-style-notch .tab-btn[aria-selected='true'] {
+  border-color: var(--we-border-strong);
+  background: linear-gradient(#0f4451, #0c3d49);
+  color: #f0e2b8;
+}
+
+html.we-theme-solar.we-tab-style-notch .we-tab-content,
+html.we-theme-solar.we-tab-style-notch .tab-panel {
+  border: 1px solid rgba(78, 129, 140, 0.55);
+  border-radius: 0 10px 10px 10px;
+  background: #073642;
 }
 
 html.we-theme-solar .we-tab-btn:focus-visible,
@@ -370,6 +767,7 @@ html.we-theme-solar .we-table th,
 html.we-theme-solar .we-table td {
   border: 1px solid var(--we-border-soft);
   padding: 6px 8px;
+  line-height: 1.2;
   text-align: left;
 }
 
@@ -429,10 +827,22 @@ html.we-theme-solar .we-toast-close {
 
 html.we-theme-solar progress {
   accent-color: var(--we-progress-success);
+  height: 7px;
+}
+
+html.we-theme-solar .we-pagination {
+  gap: 6px;
+}
+
+html.we-theme-solar .we-page-btn {
+  min-height: 31px;
+  padding: 5px 9px;
 }
 
 html.we-theme-solar .we-list-group-item {
   border: 0;
+  /* Keep item corners square so only horizontal separators are visible inside. */
+  border-radius: 0;
   padding: 8px;
   border-bottom: 1px solid var(--we-border-soft);
   background: var(--we-bg);
@@ -481,6 +891,7 @@ html.we-theme-solar .we-breadcrumb {
   flex-wrap: wrap;
   align-items: center;
   gap: 6px;
+  font-size: 13px;
   padding: 0;
   margin: 0;
   list-style: none;
@@ -521,6 +932,10 @@ html.we-theme-solar .we-spinner {
   animation: none;
 }
 
+html.we-theme-solar .we-spinner-label {
+  color: var(--we-fg-muted);
+}
+
 html.we-theme-solar .we-spinner-icon {
   width: 16px;
   height: 16px;
@@ -538,10 +953,27 @@ html.we-theme-solar .we-spinner-icon {
 /* -------------------------------------------------------------------------- */
 /* 7) Accordion                                                                 */
 /* -------------------------------------------------------------------------- */
-html.we-theme-solar .we-accordion-item {
+html.we-theme-solar .we-accordion {
+  border: none;
+  border-radius: 0;
+  overflow: visible;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+html.we-theme-solar .we-accordion-item,
+html.we-theme-solar .we-accordion-section {
   border: 1px solid #2f6671;
   border-radius: 6px;
   overflow: hidden;
+  background: #073642;
+}
+
+html.we-theme-solar .we-accordion-item + .we-accordion-item,
+html.we-theme-solar .we-accordion-section + .we-accordion-section {
+  margin-top: 0;
 }
 
 html.we-theme-solar .we-accordion-trigger {
@@ -552,6 +984,7 @@ html.we-theme-solar .we-accordion-trigger {
   padding: 8px 9px;
   border: none;
   border-bottom: 1px solid #2f6671;
+  border-radius: 6px;
   background: linear-gradient(#0a3a46, #083540);
   color: #b8c9c9;
   text-align: left;
@@ -567,7 +1000,8 @@ html.we-theme-solar .we-accordion-trigger::after {
 html.we-theme-solar .we-accordion-trigger.is-open {
   background: linear-gradient(#0f4451, #0a3d49);
   color: #e2d9b6;
-  border-bottom-color: #3a7480;
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
 }
 
 html.we-theme-solar .we-accordion-trigger.is-open::after {
@@ -578,6 +1012,11 @@ html.we-theme-solar .we-accordion-content {
   background: #073642;
   color: var(--we-fg);
   padding: 8px 9px;
+}
+
+html.we-theme-solar .we-accordion-trigger.is-open + .we-accordion-content {
+  /* Draw divider on content instead of trigger to avoid corner seam artifacts. */
+  border-top: 1px solid #3a7480;
 }
 
 html.we-theme-solar .we-accordion-content > *:first-child {

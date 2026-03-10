@@ -67,10 +67,12 @@
     (define tooltip-counter       0)          ; Monotonic counter for tooltip ids.
     (define popover-panel-counter 0)          ; Monotonic counter for popover panel ids.
     (define dialog-body-counter   0)          ; Monotonic counter for dialog body ids.
+    (define radio-group-counter   0)          ; Monotonic counter for radio group names.
     (define active-menu-close     #f)         ; Thunk closing currently open popup menu.
 
-    ;; Style constants
-    (define tab-panel-style-text ; CSS for class-based tab styles.
+    ;; Legacy visual style constants (kept for reference during migration).
+    ;; These are intentionally not injected by renderer. Visual styling is theme-owned.
+    (define legacy-visual-tab-panel-style-text ; CSS for class-based tab styles.
       ".we-tab-panel{display:flex;flex-direction:column;align-items:stretch;}\
        .we-tab-list{display:flex;gap:0;align-items:flex-end;border-bottom:1px solid var(--we-border-muted,#999);padding:0 var(--we-space-xs,2px);margin:0;}\
        .we-tab-btn{min-width:88px;padding:var(--we-space-sm,4px) var(--we-space-md,10px);border:1px solid var(--we-border-muted,#999);border-bottom-color:var(--we-border-muted,#999);border-radius:6px 6px 0 0;background:var(--we-bg-subtle,#f3f3f3);font-weight:normal;margin:0;}\
@@ -79,7 +81,7 @@
        .we-tab-btn.is-disabled{border-color:var(--we-border-soft,#bbb);background:var(--we-bg-disabled,#f3f3f3);color:var(--we-fg-muted,#777);opacity:.7;}\
        .we-tab-btn:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.20)),var(--we-focus-tint,rgba(10,102,194,.20)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
        .we-tab-content{border:1px solid var(--we-border-muted,#999);border-top:none;background:var(--we-bg,#fff);padding:var(--we-space-md,8px);}") 
-    (define accordion-style-text ; CSS for accordion trigger and section visuals.
+    (define legacy-visual-accordion-style-text ; CSS for accordion trigger and section visuals.
       ".we-accordion{display:flex;flex-direction:column;gap:var(--we-space-xs,2px);align-self:stretch;}\
        .we-accordion-section{border:1px solid var(--we-border-muted,#999);border-radius:6px;background:var(--we-bg,#fff);}\
        .we-accordion-trigger{width:100%;display:flex;align-items:center;justify-content:space-between;text-align:left;padding:var(--we-space-sm,4px) var(--we-space-md,8px);border:none;border-radius:6px;background:var(--we-bg-subtle,#f3f3f3);color:var(--we-fg,#111);font-weight:600;cursor:pointer;}\
@@ -88,12 +90,12 @@
        .we-accordion-trigger.is-open{background:var(--we-bg-selected,#ececec);border-bottom:1px solid var(--we-border-soft,#bbb);border-radius:6px 6px 0 0;}\
        .we-accordion-trigger.is-open::after{transform:rotate(90deg);color:var(--we-border-strong,#333);}\
        .we-accordion-trigger:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.20)),var(--we-focus-tint,rgba(10,102,194,.20)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}")
-    (define dialog-style-text ; CSS for dialog overlay and panel.
+    (define legacy-visual-dialog-style-text ; CSS for dialog overlay and panel.
       ".we-dialog,.we-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:var(--we-overlay,rgba(0,0,0,0.45));z-index:2000;}\
        .we-dialog.is-open,.we-modal.is-open{display:flex;}\
        .we-dialog-panel{min-width:280px;max-width:520px;background:var(--we-bg,#fff);border:1px solid var(--we-border,#888);border-radius:8px;padding:14px;box-shadow:0 8px 22px var(--we-shadow,rgba(0,0,0,.28));}\
        .we-dialog-panel:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.14)),var(--we-focus-tint,rgba(10,102,194,.14)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:2px;}") 
-    (define menu-style-text      ; CSS for popup menu keyboard focus visibility and layout.
+    (define legacy-visual-menu-style-text      ; CSS for popup menu keyboard focus visibility and layout.
       ".we-menu-item:focus,.we-menu-item:focus-visible{outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;background-color:var(--we-focus-tint,rgba(10,102,194,.20));position:relative;z-index:1;}\
        .we-menu-label:focus,.we-menu-label:focus-visible{outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;background:var(--we-focus-tint,rgba(10,102,194,.20));color:var(--we-fg,#111);border-color:var(--we-border-soft,#bbb);}\
        .we-menu-bar{display:flex;flex-wrap:wrap;gap:var(--we-space-xs,2px);align-items:center;padding:var(--we-space-xs,2px) var(--we-space-sm,4px);border:1px solid var(--we-border-menu,#aaa);border-radius:4px;background:var(--we-bg-subtle,#f3f3f3);box-sizing:border-box;}\
@@ -107,7 +109,7 @@
        .we-menu-popup.is-open{display:flex;}\
        .we-menu-item{display:block;width:100%;text-align:left;padding:var(--we-space-xs,2px) var(--we-space-md,8px);background:var(--we-bg,#fff);color:var(--we-fg,#111);border:none;border-radius:3px;}\
        .we-menu-item:hover{background:var(--we-menu-item-hover-bg,var(--we-bg-hover,#e8e8e8));color:var(--we-menu-item-hover-fg,var(--we-fg,#111));}") 
-    (define tooltip-popover-style-text ; CSS for tooltip and popover trigger/panel visuals.
+    (define legacy-visual-tooltip-popover-style-text ; CSS for tooltip and popover trigger/panel visuals.
       ".we-tooltip{display:inline-flex;align-self:flex-start;position:relative;}\
        .we-tooltip-trigger{display:inline-flex;}\
        .we-tooltip-bubble{position:absolute;left:50%;bottom:calc(100% + var(--we-space-xs,2px));transform:translate(-50%,2px);display:block;padding:var(--we-space-xs,2px) var(--we-space-md,8px);border:1px solid var(--we-border,#888);border-radius:4px;background:var(--we-bg,#fff);color:var(--we-fg,#111);white-space:nowrap;pointer-events:none;opacity:0;z-index:1200;box-shadow:0 4px 10px var(--we-shadow,rgba(0,0,0,.18));transition:opacity .14s ease,transform .14s ease;}\
@@ -119,14 +121,18 @@
        .we-popover-panel{position:absolute;left:0;top:calc(100% + var(--we-space-xs,2px));min-width:220px;display:none;flex-direction:column;gap:var(--we-gap,4px);padding:var(--we-space-md,8px);border:1px solid var(--we-border,#888);border-radius:8px;background:var(--we-bg,#fff);color:var(--we-fg,#111);z-index:1200;box-shadow:0 8px 22px var(--we-shadow,rgba(0,0,0,.28));}\
        .we-popover-panel.is-open{display:flex;}\
        .we-popover-panel:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.14)),var(--we-focus-tint,rgba(10,102,194,.14)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}")
-    (define control-style-text ; CSS defaults for controls and table density classes.
+    (define legacy-visual-control-style-text ; CSS defaults for controls and table density classes.
       ":root{--we-focus:#0a66c2;--we-focus-tint:rgba(10,102,194,.20);--we-fg:#111;--we-bg:#fff;--we-bg-subtle:#f3f3f3;--we-bg-selected:#ececec;--we-bg-disabled:#f3f3f3;--we-bg-hover:#e8e8e8;--we-border:#888;--we-border-menu:#aaa;--we-border-muted:#999;--we-border-soft:#bbb;--we-border-hover:#c0c0c0;--we-border-strong:#333;--we-fg-muted:#777;--we-overlay:rgba(0,0,0,0.45);--we-shadow:rgba(0,0,0,.28);--we-progress-success:#3a9147;--we-progress-warn:#b57c1c;--we-progress-error:#b24545;--we-heading-fg:var(--we-fg,#111);--we-display-heading-fg:var(--we-heading-fg,var(--we-fg,#111));--we-heading-subtitle-fg:var(--we-fg-muted,#777);--we-lead-fg:var(--we-fg-muted,#777);--we-heading-space-compact:0;--we-heading-space-normal:0 0 var(--we-space-xs,2px) 0;--we-heading-space-loose:0 0 var(--we-space-sm,4px) 0;--we-menu-item-hover-bg:var(--we-bg-hover,#e8e8e8);--we-menu-item-hover-fg:var(--we-fg,#111);--we-tab-active-border:var(--we-bg-selected,#ececec);--we-input-placeholder:var(--we-fg-muted,#777);--we-space-xs:2px;--we-space-sm:4px;--we-space-md:8px;--we-space-lg:10px;--we-gap:4px;--we-gap-tab:6px;}\
-       .we-vpanel,.we-group,.we-if-view,.we-cond-view,.we-case-view,.we-observable-view,.we-list-view,.we-stack{display:flex;flex-direction:column;gap:var(--we-gap,4px);}\
+       .we-vpanel,.we-group,.we-if-view,.we-cond-view,.we-case-view,.we-observable-view,.we-list-view{display:flex;flex-direction:column;gap:var(--we-gap,4px);}\
+       .we-stack{display:flex;flex-direction:column;gap:var(--we-stack-gap,var(--we-gap,4px));}\
        .we-container{width:min(1200px,calc(100vw - 28px));max-width:1200px;margin:0 auto;}\
        .we-grid{display:grid;grid-template-columns:var(--we-grid-columns,repeat(auto-fit,minmax(320px,1fr)));gap:12px;align-items:stretch;}\
        .we-inline{display:flex;flex-direction:row;align-items:center;gap:var(--we-gap,4px);flex-wrap:wrap;}\
        .we-spacer{display:block;flex:1 1 auto;min-width:0;min-height:0;}\
        .we-alert{align-self:stretch;padding:var(--we-space-sm,4px) var(--we-space-md,8px);border:1px solid var(--we-border-soft,#bbb);border-radius:4px;background:var(--we-bg-subtle,#f3f3f3);color:var(--we-fg,#111);}\
+       .we-alert-title{display:block;font-weight:700;margin:0 0 var(--we-space-xs,2px) 0;}\
+       .we-alert-body{display:block;}\
+       .we-alert-link{display:inline-block;margin-top:var(--we-space-xs,2px);}\
        .we-alert-info{border-color:var(--we-border-soft,#bbb);background:var(--we-bg-subtle,#f3f3f3);}\
        .we-alert-success{border-color:#6a9b73;background:#e8f4e8;}\
        .we-alert-warn{border-color:#b79256;background:#fff4df;}\
@@ -151,7 +157,13 @@
        .we-toast-close:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.20)),var(--we-focus-tint,rgba(10,102,194,.20)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
        .we-badge{display:inline-block;align-self:flex-start;padding:1px 8px;border:1px solid var(--we-border-soft,#bbb);border-radius:999px;background:var(--we-bg-subtle,#f3f3f3);color:var(--we-fg,#111);font-size:.85em;font-weight:600;line-height:1.4;}\
        .we-badge-info{border-color:var(--we-border-soft,#bbb);background:var(--we-bg-subtle,#f3f3f3);}\
+       .we-badge-primary{border-color:var(--we-border-strong,#333);background:var(--we-bg-selected,#ececec);}\
+       .we-badge-secondary{border-color:var(--we-border-soft,#bbb);background:var(--we-bg-subtle,#f3f3f3);}\
        .we-badge-success{border-color:#6a9b73;background:#e8f4e8;}\
+       .we-badge-warning{border-color:#b79256;background:#fff4df;}\
+       .we-badge-danger{border-color:#b25a5a;background:#fdeaea;}\
+       .we-badge-light{border-color:var(--we-border-soft,#bbb);background:var(--we-bg,#fff);}\
+       .we-badge-dark{border-color:var(--we-border-strong,#333);background:var(--we-border-strong,#333);color:var(--we-bg,#fff);}\
        .we-badge-warn{border-color:#b79256;background:#fff4df;}\
        .we-badge-error{border-color:#b25a5a;background:#fdeaea;}\
        .we-spinner{display:inline-flex;align-items:center;gap:var(--we-space-sm,4px);align-self:flex-start;color:var(--we-fg,#111);}\
@@ -249,6 +261,11 @@
        .we-display-heading-with-subtitle-space-loose{margin:var(--we-heading-space-loose,0 0 var(--we-space-sm,4px) 0);}\
        .we-heading-subtitle{font-weight:400;font-size:0.7em;color:var(--we-heading-subtitle-fg,var(--we-fg-muted,#777));}\
        .we-lead{margin:0;font-size:1.15em;line-height:1.45;color:var(--we-lead-fg,var(--we-fg-muted,#555));}\
+       .we-blockquote{margin:0 0 var(--we-space-md,8px) 0;}\
+       .we-blockquote-quote{margin:0 0 var(--we-space-sm,4px) 0;font-size:1.25em;line-height:1.35;}\
+       .we-blockquote-text{margin:0;}\
+       .we-blockquote-attrib{margin:0;font-size:0.875em;color:var(--we-fg-muted,#777);}\
+       .we-blockquote-attrib::before{content:\"— \";}\
        .we-choice:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.14)),var(--we-focus-tint,rgba(10,102,194,.14)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
        .we-progress-info{}\
        .we-progress-success{accent-color:var(--we-progress-success,#3a9147);}\
@@ -295,7 +312,7 @@
        .we-table-header-cell.we-align-left,.we-table-data-cell.we-align-left{text-align:left;}\
        .we-table-header-cell.we-align-center,.we-table-data-cell.we-align-center{text-align:center;}\
        .we-table-header-cell.we-align-right,.we-table-data-cell.we-align-right{text-align:right;}")
-    (define component-extra-style-text ; Additional CSS for newer layout/content primitives.
+    (define legacy-visual-component-extra-style-text ; Additional CSS for newer layout/content primitives.
       ".we-link{display:inline-flex;align-items:center;align-self:flex-start;gap:var(--we-space-xs,2px);color:var(--we-fg,#111);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:1px;}\
        .we-link:hover{color:var(--we-fg,#111);background:var(--we-bg-hover,#e8e8e8);}\
        .we-link:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.20)),var(--we-focus-tint,rgba(10,102,194,.20)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
@@ -312,14 +329,57 @@
        .we-card-compact .we-card-footer{padding:2px 6px;}\
        .we-card-flat{border:none;border-radius:0;background:transparent;}\
        .we-card-flat .we-card-header,.we-card-flat .we-card-footer{background:transparent;}")
+    ;; Structural base only:
+    ;; - includes layout, positioning, and open/closed mechanics required for behavior.
+    ;; - excludes visual theme concerns (colors, borders, padding, shadows, typography).
+    (define structural-base-style-text ; Minimal structural CSS injected once per window root.
+      ".we-vpanel,.we-group,.we-if-view,.we-cond-view,.we-case-view,.we-observable-view,.we-list-view{display:flex;flex-direction:column;gap:var(--we-gap,4px);}\
+       .we-stack{display:flex;flex-direction:column;gap:var(--we-stack-gap,var(--we-gap,4px));}\
+       .we-hpanel{display:flex;flex-direction:row;align-items:center;gap:var(--we-gap,4px);}\
+       .we-container{width:min(1200px,calc(100vw - 28px));max-width:1200px;margin:0 auto;}\
+       .we-grid{display:grid;grid-template-columns:var(--we-grid-columns,repeat(auto-fit,minmax(320px,1fr)));gap:12px;align-items:stretch;}\
+       .we-inline{display:flex;flex-direction:row;align-items:center;gap:var(--we-gap,4px);flex-wrap:wrap;}\
+       .we-spacer{display:block;flex:1 1 auto;min-width:0;min-height:0;}\
+       .we-toolbar{display:flex;flex-wrap:wrap;align-items:center;align-self:stretch;gap:var(--we-space-sm,4px);}\
+       .we-toolbar-group{display:inline-flex;flex-wrap:wrap;align-items:center;align-self:flex-start;gap:var(--we-space-xs,2px);}\
+       .we-button-toolbar{display:flex;flex-wrap:wrap;align-items:center;align-self:flex-start;gap:var(--we-space-sm,4px);}\
+       .we-button-group{display:inline-flex;flex-wrap:wrap;align-items:center;align-self:flex-start;}\
+       .we-button-group>.we-button{margin:0;}\
+       .we-tab-panel{display:flex;flex-direction:column;align-items:stretch;}\
+       .we-menu{position:relative;display:inline-block;}\
+       .we-menu-bar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--we-space-xs,2px);}\
+       .we-menu-popup{position:absolute;top:calc(100% + var(--we-space-xs,2px));left:0;min-width:150px;display:none;flex-direction:column;z-index:1000;}\
+       .we-menu-popup.is-open{display:flex;}\
+       .we-navigation-bar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--we-space-sm,4px);align-self:stretch;}\
+       .we-navigation-bar.is-vertical{flex-direction:column;align-items:stretch;}\
+       .we-navigation-bar-toggle{display:inline-flex;align-self:flex-start;}\
+       .we-navigation-bar-items{display:flex;flex-wrap:wrap;align-items:center;gap:var(--we-space-sm,4px);flex:1 1 auto;}\
+       .we-navigation-bar.is-collapsed .we-navigation-bar-items{display:none;}\
+       .we-navigation-bar.is-expanded .we-navigation-bar-items{display:flex;}\
+       .we-table-header-cell.we-align-left,.we-table-data-cell.we-align-left{text-align:left;}\
+       .we-table-header-cell.we-align-center,.we-table-data-cell.we-align-center{text-align:center;}\
+       .we-table-header-cell.we-align-right,.we-table-data-cell.we-align-right{text-align:right;}\
+       .we-dialog,.we-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:2000;}\
+       .we-dialog.is-open,.we-modal.is-open{display:flex;}\
+       .we-popover{display:inline-flex;align-self:flex-start;position:relative;z-index:1201;}\
+       .we-popover-trigger{align-self:flex-start;position:relative;z-index:1201;}\
+       .we-popover-backdrop{position:fixed;inset:0;display:none;z-index:1190;}\
+       .we-popover-backdrop.is-open{display:block;}\
+       .we-popover-panel{position:absolute;left:0;top:calc(100% + var(--we-space-xs,2px));display:none;z-index:1200;}\
+       .we-popover-panel.is-open{display:flex;}\
+       .we-tooltip{display:inline-flex;align-self:flex-start;position:relative;}\
+       .we-tooltip-bubble{position:absolute;left:50%;bottom:calc(100% + var(--we-space-xs,2px));display:none;z-index:1200;}\
+       .we-tooltip:hover .we-tooltip-bubble,.we-tooltip:focus-within .we-tooltip-bubble,.we-tooltip.is-open .we-tooltip-bubble{display:block;}\
+       .we-collapse{display:none;align-self:stretch;}\
+       .we-collapse.is-open{display:block;}\
+       .we-offcanvas{position:fixed;inset:0;display:none;z-index:2100;}\
+       .we-offcanvas.is-open{display:block;}\
+       .we-offcanvas-backdrop{position:absolute;inset:0;}\
+       .we-offcanvas-panel{position:absolute;top:0;bottom:0;overflow:auto;}\
+       .we-offcanvas-panel.is-end{right:0;}\
+       .we-offcanvas-panel.is-start{left:0;}")
     (define shared-style-text ; Shared stylesheet injected once per window root.
-      (string-append control-style-text
-                     tab-panel-style-text
-                     accordion-style-text
-                     dialog-style-text
-                     menu-style-text
-                     tooltip-popover-style-text
-                     component-extra-style-text))
+      structural-base-style-text)
     (define backend-set-dom-node-attrs! set-dom-node-attrs!) ; Backend attr setter (unwrapped).
 
     ;; renderer? : any/c -> boolean?
@@ -673,6 +733,12 @@
       (set! dialog-body-counter (add1 dialog-body-counter))
       (string-append "dialog-body-" (number->string dialog-body-counter)))
 
+    ;; next-radio-group-name : -> string?
+    ;;   Allocate a unique name string for radio input grouping.
+    (define (next-radio-group-name)
+      (set! radio-group-counter (add1 radio-group-counter))
+      (string-append "radio-group-" (number->string radio-group-counter)))
+
     ;; normalize-tab-entry : any/c -> list?
     ;;   Normalize tab entry to (list id view disabled?) supporting pair or list forms.
     (define (normalize-tab-entry tab)
@@ -784,8 +850,10 @@
     (define (normalize-alert-level level)
       (if (symbol? level)
           (case level
+            [(warning)                'warn]
+            [(danger)                 'error]
             [(info success warn error) level]
-            [else                     'info])
+            [else                      'info])
           'info))
 
     ;; alert-level-class : symbol? -> string?
@@ -822,14 +890,29 @@
         [(error)   "we-progress-error"]
         [else      "we-progress-info"]))
 
+    ;; normalize-badge-level : any/c -> symbol?
+    ;;   Normalize badge level to supported variants and legacy aliases.
+    (define (normalize-badge-level level)
+      (if (symbol? level)
+          (case level
+            [(primary secondary success info warning danger light dark warn error) level]
+            [else                                                             'info])
+          'info))
+
     ;; badge-level-class : symbol? -> string?
     ;;   Return CSS class suffix for badge level.
     (define (badge-level-class level)
       (case level
-        [(success) "we-badge-success"]
-        [(warn)    "we-badge-warn"]
-        [(error)   "we-badge-error"]
-        [else      "we-badge-info"]))
+        [(primary)   "we-badge-primary"]
+        [(secondary) "we-badge-secondary"]
+        [(success)   "we-badge-success"]
+        [(warning)   "we-badge-warning"]
+        [(danger)    "we-badge-danger"]
+        [(light)     "we-badge-light"]
+        [(dark)      "we-badge-dark"]
+        [(warn)      "we-badge-warn"]
+        [(error)     "we-badge-error"]
+        [else        "we-badge-info"]))
 
     ;; normalize-page-count : any/c -> number?
     ;;   Normalize page-count to a positive integer.
@@ -958,6 +1041,24 @@
       (map (lambda (row)
              (cons (choice-entry-id row)
                    (choice-entry-label row)))
+           rows))
+
+    ;; radio-entry-disabled? : any/c -> boolean?
+    ;;   Extract optional disabled flag from (list id label disabled?) radio row.
+    (define (radio-entry-disabled? entry)
+      (cond
+        [(and (list? entry) (pair? entry) (pair? (cdr entry)) (pair? (cddr entry)))
+         (not (not (caddr entry)))]
+        [else
+         #f]))
+
+    ;; normalized-radio-entries : list? -> list?
+    ;;   Convert radio rows into (list id label disabled?) entries.
+    (define (normalized-radio-entries rows)
+      (map (lambda (row)
+             (list (choice-entry-id row)
+                   (choice-entry-label row)
+                   (radio-entry-disabled? row)))
            rows))
 
     ;; option-pairs->value-choices : list? -> list?
@@ -1124,6 +1225,74 @@
         [(compact) "we-density-compact"]
         [else      "we-density-normal"]))
 
+    ;; normalize-table-variants : any/c -> list?
+    ;;   Normalize variant value to accepted table variant symbols.
+    (define (normalize-table-variants raw)
+      (define (allowed-variant? v)
+        (and (symbol? v)
+             (case v
+               [(striped hover borderless sm) #t]
+               [else #f])))
+      (define (loop xs)
+        (cond
+          [(null? xs) '()]
+          [(allowed-variant? (car xs))
+           (cons (car xs) (loop (cdr xs)))]
+          [else
+           (loop (cdr xs))]))
+      (cond
+        [(allowed-variant? raw)
+         (list raw)]
+        [(list? raw)
+         (loop raw)]
+        [else
+         '()]))
+
+    ;; table-variant-class : list? -> string?
+    ;;   Build CSS class fragment for table variants.
+    (define (table-variant-class variants)
+      (define striped?    (contains-equal? variants 'striped))
+      (define hover?      (contains-equal? variants 'hover))
+      (define borderless? (contains-equal? variants 'borderless))
+      (define small?      (contains-equal? variants 'sm))
+      (string-append
+       (if striped? " we-table-striped" "")
+       (if hover? " we-table-hover" "")
+       (if borderless? " we-table-borderless" "")
+       (if small? " we-table-sm" "")))
+
+    ;; normalize-table-row-variant : any/c -> symbol?
+    ;;   Normalize table row variant to accepted symbols or #f.
+    (define (normalize-table-row-variant raw)
+      (if (symbol? raw)
+          (case raw
+            [(active primary secondary success danger warning info light dark) raw]
+            [else #f])
+          #f))
+
+    ;; normalize-table-row-variants : any/c -> list?
+    ;;   Normalize row-variants option to a list aligned with data rows.
+    (define (normalize-table-row-variants raw)
+      (cond
+        [(list? raw)
+         (map normalize-table-row-variant raw)]
+        [else
+         '()]))
+
+    ;; normalize-table-row-header-column : any/c -> any/c
+    ;;   Normalize row-header-column to non-negative integer index or #f.
+    (define (normalize-table-row-header-column raw)
+      (cond
+        [(and (number? raw) (exact-integer? raw) (>= raw 0)) raw]
+        [else #f]))
+
+    ;; table-row-variant-class : any/c -> string?
+    ;;   Return CSS class for a normalized table row variant.
+    (define (table-row-variant-class variant)
+      (if variant
+          (string-append "we-table-row-" (symbol->string variant))
+          ""))
+
     ;; normalize-card-variants : any/c -> list?
     ;;   Normalize variant value to accepted card variant symbols.
     (define (normalize-card-variants raw)
@@ -1169,19 +1338,35 @@
                 #f
                 #f))
 
-    ;; render-table-rows! : dom-node? list? list? symbol? -> void?
-    ;;   Replace table rows with a header row and data rows rendered as table cells.
-    (define (render-table-rows! table-node columns rows density)
+    ;; render-table-rows! : dom-node? list? list? symbol? any/c list? any/c -> void?
+    ;;   Replace table rows with optional caption, a header row, and data rows.
+    (define (render-table-rows! table-node columns rows density caption row-variants row-header-column)
       (define normalized-rows (ensure-list rows 'table "rows"))
       (define normalized-columns (map normalize-table-column columns))
+      (define normalized-caption
+        (let ([value (maybe-observable-value caption)])
+          (if (eq? value #f)
+              #f
+              (value->text value))))
       (define (align-class align)
         (case align
           [(center) "we-align-center"]
           [(right)  "we-align-right"]
           [else     "we-align-left"]))
+      (define caption-row
+        (if normalized-caption
+            (list (dom-node 'caption
+                            (list (cons 'data-we-widget "table-caption")
+                                  (cons 'class "we-table-caption"))
+                            '()
+                            normalized-caption
+                            #f
+                            #f))
+            '()))
       (define (header-cell column-spec)
         (define density-css (density-class density))
-        (define align-css (align-class (list-ref column-spec 1)))
+        (define align (list-ref column-spec 1))
+        (define align-css (align-class align))
         (dom-node 'th
                   (list (cons 'data-we-widget "table-header-cell")
                         (cons 'class (string-append "we-table-header-cell " density-css " " align-css)))
@@ -1191,17 +1376,27 @@
                   #f))
       (define (data-cell index cell-value)
         (define density-css (density-class density))
-        (define align-css
+        (define align
           (if (< index (length normalized-columns))
-              (align-class (list-ref (list-ref normalized-columns index) 1))
-              "we-align-left"))
-        (dom-node 'td
-                  (list (cons 'data-we-widget "table-data-cell")
-                        (cons 'class (string-append "we-table-data-cell " density-css " " align-css)))
-                  '()
-                  (value->text cell-value)
-                  #f
-                  #f))
+              (list-ref (list-ref normalized-columns index) 1)
+              'left))
+        (define align-css (align-class align))
+        (if (and row-header-column (= index row-header-column))
+            (dom-node 'th
+                      (list (cons 'data-we-widget "table-row-header-cell")
+                            (cons 'scope "row")
+                            (cons 'class (string-append "we-table-data-cell " density-css " " align-css)))
+                      '()
+                      (value->text cell-value)
+                      #f
+                      #f)
+            (dom-node 'td
+                      (list (cons 'data-we-widget "table-data-cell")
+                            (cons 'class (string-append "we-table-data-cell " density-css " " align-css)))
+                      '()
+                      (value->text cell-value)
+                      #f
+                      #f)))
       (define (row-values row)
         (if (list? row)
             row
@@ -1210,8 +1405,18 @@
         (define row-node (dom-node 'tr (list (cons 'data-we-widget "table-row")) '() #f #f #f))
         (backend-replace-children! row-node (map build-cell cell-values))
         row-node)
-      (define (build-data-row row)
-        (define row-node (dom-node 'tr (list (cons 'data-we-widget "table-row")) '() #f #f #f))
+      (define (build-data-row row index)
+        (define row-variant
+          (if (< index (length row-variants))
+              (list-ref row-variants index)
+              #f))
+        (define variant-css (table-row-variant-class row-variant))
+        (define row-attrs
+          (if (equal? variant-css "")
+              (list (cons 'data-we-widget "table-row"))
+              (list (cons 'data-we-widget "table-row")
+                    (cons 'class variant-css))))
+        (define row-node (dom-node 'tr row-attrs '() #f #f #f))
         (define cells
           (let loop ([rest (row-values row)]
                      [index 0])
@@ -1226,8 +1431,13 @@
             '()
             (list (build-row normalized-columns header-cell))))
       (define data-rows
-        (map build-data-row normalized-rows))
-      (backend-replace-children! table-node (append header-row data-rows)))
+        (let loop ([rest normalized-rows]
+                   [index 0])
+          (if (null? rest)
+              '()
+              (cons (build-data-row (car rest) index)
+                    (loop (cdr rest) (add1 index))))))
+      (backend-replace-children! table-node (append caption-row header-row data-rows)))
 
     ;; build-node : view? (-> (-> void?) void?) -> dom-node?
     ;;   Build a dom-node tree from v and register lifecycle cleanups.
@@ -1351,7 +1561,13 @@
                                 #f
                                 #f
                                 #f))
-         (define legend-node (dom-node 'legend '() '() "" #f #f))
+         (define legend-node (dom-node 'legend
+                                       (list (cons 'data-we-widget "group-legend")
+                                             (cons 'class "we-group-legend"))
+                                       '()
+                                       ""
+                                       #f
+                                       #f))
          (define (set-label! label-value)
            (set-dom-node-text! legend-node (value->text label-value)))
          (cond
@@ -1402,6 +1618,110 @@
            (obs-observe! raw-level level-listener)
            (register-cleanup! (lambda () (obs-unobserve! raw-level level-listener))))
          (render-alert!)
+         node]
+        [(alert-rich)
+         (define raw-body      (alist-ref (view-props v) 'body 'render))
+         (define raw-title     (alist-ref (view-props v) 'title 'render))
+         (define raw-link-text (alist-ref (view-props v) 'link-text 'render))
+         (define raw-link-href (alist-ref (view-props v) 'link-href 'render))
+         (define raw-level     (alist-ref (view-props v) 'level 'render))
+         (define node (dom-node 'div
+                                (list (cons attr/role 'status)
+                                      (cons 'data-we-widget "alert")
+                                      (cons 'class "we-alert we-alert-info")
+                                      (cons 'aria-live "polite"))
+                                '()
+                                #f
+                                #f
+                                #f))
+         (define title-node
+           (dom-node 'strong
+                     (list (cons 'data-we-widget "alert-title")
+                           (cons 'class "we-alert-title"))
+                     '()
+                     ""
+                     #f
+                     #f))
+         (define body-node
+           (dom-node 'span
+                     (list (cons 'data-we-widget "alert-body")
+                           (cons 'class "we-alert-body"))
+                     '()
+                     ""
+                     #f
+                     #f))
+         (define link-node
+           (dom-node 'a
+                     (list (cons 'data-we-widget "alert-link")
+                           (cons 'class "we-alert-link")
+                           (cons 'href "#"))
+                     '()
+                     ""
+                     #f
+                     #f))
+         ;; non-empty-text? : any/c -> boolean?
+         ;;   Return #t when value is neither #f nor the empty string.
+         (define (non-empty-text? value)
+           (and (not (eq? value #f))
+                (not (string=? (value->text value) ""))))
+         (define (render-alert-rich!)
+           (define level (normalize-alert-level (maybe-observable-value raw-level)))
+           (define role (alert-level-role level))
+           (define live (if (eq? role 'alert) "assertive" "polite"))
+           (define title-value (maybe-observable-value raw-title))
+           (define body-value (maybe-observable-value raw-body))
+           (define link-text-value (maybe-observable-value raw-link-text))
+           (define link-href-value (maybe-observable-value raw-link-href))
+           (set-dom-node-attrs!
+            node
+            (list (cons attr/role role)
+                  (cons 'data-we-widget "alert")
+                  (cons 'class (string-append "we-alert " (alert-level-class level)))
+                  (cons 'aria-live live)))
+           (set-dom-node-text! title-node (value->text title-value))
+           (set-dom-node-text! body-node (value->text body-value))
+           (set-dom-node-text! link-node (value->text link-text-value))
+           (set-dom-node-attrs!
+            link-node
+            (list (cons 'data-we-widget "alert-link")
+                  (cons 'class "we-alert-link")
+                  (cons 'href (if (non-empty-text? link-href-value)
+                                  (value->text link-href-value)
+                                  "#"))))
+           (backend-replace-children!
+            node
+            (append (if (non-empty-text? title-value) (list title-node) '())
+                    (list body-node)
+                    (if (and (non-empty-text? link-text-value)
+                             (non-empty-text? link-href-value))
+                        (list link-node)
+                        '()))))
+         (when (obs? raw-body)
+           (define (body-listener _updated)
+             (render-alert-rich!))
+           (obs-observe! raw-body body-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-body body-listener))))
+         (when (obs? raw-title)
+           (define (title-listener _updated)
+             (render-alert-rich!))
+           (obs-observe! raw-title title-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-title title-listener))))
+         (when (obs? raw-link-text)
+           (define (link-text-listener _updated)
+             (render-alert-rich!))
+           (obs-observe! raw-link-text link-text-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-link-text link-text-listener))))
+         (when (obs? raw-link-href)
+           (define (link-href-listener _updated)
+             (render-alert-rich!))
+           (obs-observe! raw-link-href link-href-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-link-href link-href-listener))))
+         (when (obs? raw-level)
+           (define (level-listener _updated)
+             (render-alert-rich!))
+           (obs-observe! raw-level level-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-level level-listener))))
+         (render-alert-rich!)
          node]
         [(toast)
          (define raw-open  (alist-ref (view-props v) 'open 'render))
@@ -1566,7 +1886,7 @@
                                 #f
                                 #f))
          (define (render-badge!)
-           (define level (normalize-alert-level (maybe-observable-value raw-level)))
+           (define level (normalize-badge-level (maybe-observable-value raw-level)))
            (set-dom-node-attrs!
             node
             (list (cons 'data-we-widget "badge")
@@ -2016,6 +2336,63 @@
             (register-cleanup! (lambda () (obs-unobserve! raw-value value-listener)))]
            [else
             (set-dom-node-text! node (value->text raw-value))])
+         node]
+        [(blockquote)
+         (define raw-value (alist-ref (view-props v) 'value 'render))
+         (define raw-attribution (alist-ref (view-props v) 'attribution #f))
+         (define node
+           (dom-node 'figure
+                     (list (cons 'data-we-widget "blockquote")
+                           (cons 'class "we-blockquote"))
+                     '()
+                     #f
+                     #f
+                     #f))
+         (define quote-text-node
+           (dom-node 'p
+                     (list (cons 'data-we-widget "blockquote-text")
+                           (cons 'class "we-blockquote-text"))
+                     '()
+                     ""
+                     #f
+                     #f))
+         (define quote-node
+           (dom-node 'blockquote
+                     (list (cons 'data-we-widget "blockquote-quote")
+                           (cons 'class "we-blockquote-quote"))
+                     '()
+                     #f
+                     #f
+                     #f))
+         (backend-append-child! quote-node quote-text-node)
+         (define attrib-node
+           (dom-node 'figcaption
+                     (list (cons 'data-we-widget "blockquote-attrib")
+                           (cons 'class "we-blockquote-attrib"))
+                     '()
+                     ""
+                     #f
+                     #f))
+         (define (render-blockquote!)
+           (define value0 (maybe-observable-value raw-value))
+           (define attrib0 (maybe-observable-value raw-attribution))
+           (set-dom-node-text! quote-text-node (value->text value0))
+           (if (eq? attrib0 #f)
+               (backend-replace-children! node (list quote-node))
+               (begin
+                 (set-dom-node-text! attrib-node (value->text attrib0))
+                 (backend-replace-children! node (list quote-node attrib-node)))))
+         (when (obs? raw-value)
+           (define (value-listener _updated)
+             (render-blockquote!))
+           (obs-observe! raw-value value-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-value value-listener))))
+         (when (obs? raw-attribution)
+           (define (attribution-listener _updated)
+             (render-blockquote!))
+           (obs-observe! raw-attribution attribution-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-attribution attribution-listener))))
+         (render-blockquote!)
          node]
         [(button)
          (define label  (alist-ref (view-props v) 'label  'render))
@@ -3406,52 +3783,161 @@
          (define columns (ensure-list (alist-ref (view-props v) 'columns 'render)
                                       'table
                                       "columns"))
-         (define raw-rows    (alist-ref (view-props v) 'rows    'render))
-         (define raw-density (alist-ref (view-props v) 'density 'render))
-         (define density     (normalize-table-density (maybe-observable-value raw-density)))
-         (define density-css (density-class density))
+         (define raw-rows     (alist-ref (view-props v) 'rows    'render))
+         (define raw-density  (alist-ref (view-props v) 'density 'render))
+         (define raw-options  (alist-ref (view-props v) 'options 'render))
+         (define options      (if (list? raw-options) raw-options '()))
+         (define raw-caption
+           (let ([p (assq 'caption options)])
+             (if p (cdr p) #f)))
+         (define raw-variants
+           (let ([p (assq 'variants options)])
+             (if p (cdr p) '())))
+         (define raw-row-variants
+           (let ([p (assq 'row-variants options)])
+             (if p (cdr p) '())))
+         (define raw-row-header-column
+           (let ([p (assq 'row-header-column options)])
+             (if p (cdr p) #f)))
+         (define variants     (normalize-table-variants (maybe-observable-value raw-variants)))
+         (define row-variants (normalize-table-row-variants (maybe-observable-value raw-row-variants)))
+         (define row-header-column
+           (normalize-table-row-header-column (maybe-observable-value raw-row-header-column)))
+         (define density      (normalize-table-density (maybe-observable-value raw-density)))
+         (define density-css  (density-class density))
+         (define variant-css  (table-variant-class variants))
          (define node (dom-node 'table
-                                (list (cons 'columns columns)
-                                      (cons 'data-we-widget "table")
+                                (list (cons 'data-we-widget "table")
                                       (cons 'density density)
-                                      (cons 'class (string-append "we-table " density-css)))
+                                      (cons 'class (string-append "we-table " density-css variant-css)))
                                 '()
                                 #f
                                 #f
                                 #f))
          (cond
            [(obs? raw-rows)
-            (render-table-rows! node columns (obs-peek raw-rows) density)
+            (render-table-rows! node columns (obs-peek raw-rows) density raw-caption row-variants row-header-column)
             (define (listener updated)
-              (render-table-rows! node columns updated density))
+              (render-table-rows! node columns updated density raw-caption row-variants row-header-column))
             (obs-observe! raw-rows listener)
             (register-cleanup! (lambda () (obs-unobserve! raw-rows listener)))]
            [else
-            (render-table-rows! node columns raw-rows density)])
+            (render-table-rows! node columns raw-rows density raw-caption row-variants row-header-column)])
          node]
         [(radios)
-         (define choices      (ensure-list (alist-ref (view-props v) 'choices 'render)
+         (define rows         (ensure-list (alist-ref (view-props v) 'choices 'render)
                                            'radios
                                            "choices"))
+         (define radio-entries (normalized-radio-entries rows))
+         (define option-pairs
+           (map (lambda (entry)
+                  (cons (car entry) (cadr entry)))
+                radio-entries))
          (define raw-selected (alist-ref (view-props v) 'selected 'render))
          (define action       (alist-ref (view-props v) 'action   'render))
-         (define node (dom-node 'radios
-                                (list (cons 'choices choices)
-                                      (cons 'data-we-widget "radios")
-                                      (cons 'class "we-radios")
-                                      (cons 'selected #f))
+         (define group-name   (next-radio-group-name))
+         (define node
+           (dom-node 'div
+                     (list (cons 'data-we-widget "radios")
+                           (cons 'class "we-radios"))
+                     '()
+                     #f
+                     #f
+                     #f))
+         ;; Constants for radio DOM nodes.
+         (define radio-inputs '()) ; Per-option triples: (input-node encoded-id disabled?).
+         ;; rebuild-radio-children! : -> void?
+         ;;   Recreate radio input rows from option pairs and wire change callbacks.
+         (define (rebuild-radio-children!)
+           (set! radio-inputs '())
+           (define children
+             (map (lambda (entry)
+                    (define id-value     (list-ref entry 0))
+                    (define label-value  (list-ref entry 1))
+                    (define disabled?    (list-ref entry 2))
+                    (define encoded-id (value->text id-value))
+                    (define input-node
+                      (dom-node 'input
+                                (append (list (cons 'type "radio")
+                                              (cons 'name group-name)
+                                              (cons 'value encoded-id)
+                                              (cons 'checked #f)
+                                              (cons 'class "we-radio-input"))
+                                        (if disabled?
+                                            (list (cons 'disabled #t))
+                                            '()))
+                                '()
+                                #f
+                                #f
+                                (lambda (raw-value)
+                                  (action (decode-option-selection option-pairs raw-value)))))
+                    (define label-node
+                      (dom-node 'span
+                                (list (cons 'data-we-widget "text")
+                                      (cons 'class "we-text"))
+                                '()
+                                (value->text label-value)
+                                #f
+                                #f))
+                    (set! radio-inputs
+                          (append radio-inputs (list (list input-node encoded-id disabled?))))
+                    (define option-node
+                      (dom-node 'label
+                                (list (cons 'data-we-widget "radio-option")
+                                      (cons 'class "we-radio-option"))
                                 '()
                                 #f
                                 #f
                                 #f))
-         (set-dom-node-on-change! node (lambda (new-selected) (action new-selected)))
+                    (backend-append-child! option-node input-node)
+                    (backend-append-child! option-node label-node)
+                    option-node)
+                  radio-entries))
+           (backend-replace-children! node children))
+         ;; set-selected! : any/c -> void?
+         ;;   Mark the matching radio input checked by comparing encoded ids.
          (define (set-selected! selected)
-           (set-dom-node-attrs!
-            node
-            (list (cons 'choices  choices)
-                  (cons 'data-we-widget "radios")
-                  (cons 'class    "we-radios")
-                  (cons 'selected selected))))
+           (define selected-text (value->text selected))
+           (define matched? #f)
+           (for-each
+            (lambda (triple)
+              (define input-node (list-ref triple 0))
+              (define input-value (list-ref triple 1))
+              (define disabled?   (list-ref triple 2))
+              (define checked?
+                (and (not disabled?)
+                     (string=? input-value selected-text)))
+              (when checked?
+                (set! matched? #t))
+              (set-dom-node-attrs!
+               input-node
+               (append (list (cons 'type "radio")
+                             (cons 'name group-name)
+                             (cons 'value input-value)
+                             (cons 'checked checked?)
+                             (cons 'class "we-radio-input"))
+                       (if disabled?
+                           (list (cons 'disabled #t))
+                           '()))))
+            radio-inputs)
+           (when (not matched?)
+             (let loop ([remaining radio-inputs])
+               (unless (null? remaining)
+                 (define triple     (car remaining))
+                 (define input-node (list-ref triple 0))
+                 (define input-value (list-ref triple 1))
+                 (define disabled?   (list-ref triple 2))
+                 (if disabled?
+                     (loop (cdr remaining))
+                     (set-dom-node-attrs!
+                      input-node
+                      (list (cons 'type "radio")
+                            (cons 'name group-name)
+                            (cons 'value input-value)
+                            (cons 'checked #t)
+                            (cons 'class "we-radio-input")))))))
+           (void))
+         (rebuild-radio-children!)
          (cond
            [(obs? raw-selected)
             (set-selected! (obs-peek raw-selected))
@@ -4119,6 +4605,7 @@
         [(navigation-bar)
          (define raw-orientation (alist-ref (view-props v) 'orientation 'render))
          (define raw-collapsed? (alist-ref (view-props v) 'collapsed? 'render))
+         (define raw-expand (alist-ref (view-props v) 'expand 'render))
          (define node (dom-node 'nav
                                 (list (cons attr/role 'navigation)
                                       (cons 'data-we-widget "navigation-bar")
@@ -4127,17 +4614,23 @@
                                 #f
                                 #f
                                 #f))
+         (define show-toggle?
+           (case (maybe-observable-value raw-expand)
+             [(always) #t]
+             [else     #f]))
          (define toggle-node
-           (dom-node 'button
-                     (list (cons attr/role 'button)
-                           (cons 'data-we-widget "navigation-bar-toggle")
-                           (cons 'class "we-button we-navigation-bar-toggle")
-                           (cons 'aria-expanded "false")
-                           (cons 'aria-label "Toggle navigation"))
-                     '()
-                     "Menu"
-                     #f
-                     #f))
+           (if show-toggle?
+               (dom-node 'button
+                         (list (cons attr/role 'button)
+                               (cons 'data-we-widget "navigation-bar-toggle")
+                               (cons 'class "we-button we-navigation-bar-toggle")
+                               (cons 'aria-expanded "false")
+                               (cons 'aria-label "Toggle navigation"))
+                         '()
+                         "Menu"
+                         #f
+                         #f)
+               #f))
          (define items-node
            (dom-node 'div
                      (list (cons 'data-we-widget "navigation-bar-items")
@@ -4162,24 +4655,27 @@
             (list (cons attr/role 'navigation)
                   (cons 'data-we-widget "navigation-bar")
                   (cons 'class base-class)))
-           (set-dom-node-attrs!
+           (when toggle-node
+             (set-dom-node-attrs!
+              toggle-node
+              (list (cons attr/role 'button)
+                    (cons 'data-we-widget "navigation-bar-toggle")
+                    (cons 'class "we-button we-navigation-bar-toggle")
+                    (cons 'aria-expanded (if nav-collapsed? "false" "true"))
+                    (cons 'aria-label "Toggle navigation")))))
+         (when toggle-node
+           (set-dom-node-on-click!
             toggle-node
-            (list (cons attr/role 'button)
-                  (cons 'data-we-widget "navigation-bar-toggle")
-                  (cons 'class "we-button we-navigation-bar-toggle")
-                  (cons 'aria-expanded (if nav-collapsed? "false" "true"))
-                  (cons 'aria-label "Toggle navigation"))))
-         (set-dom-node-on-click!
-          toggle-node
-          (lambda ()
-            (define next-collapsed? (not nav-collapsed?))
-            (cond
-              [(obs? raw-collapsed?) (:= raw-collapsed? next-collapsed?)]
-              [else                  (set-collapsed! next-collapsed?)])))
+            (lambda ()
+              (define next-collapsed? (not nav-collapsed?))
+              (cond
+                [(obs? raw-collapsed?) (:= raw-collapsed? next-collapsed?)]
+                [else                  (set-collapsed! next-collapsed?)]))))
          (for-each (lambda (child)
                      (backend-append-child! items-node (build-node child register-cleanup!)))
                    (view-children v))
-         (backend-append-child! node toggle-node)
+         (when toggle-node
+           (backend-append-child! node toggle-node))
          (backend-append-child! node items-node)
          (when (obs? raw-orientation)
            (define (orientation-listener _updated)

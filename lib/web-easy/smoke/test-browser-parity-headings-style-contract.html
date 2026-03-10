@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy parity headings style contract smoke test</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status { white-space: pre-wrap; padding: 8px; border: 1px solid #999; margin-bottom: 12px; }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #app-frame { width: 100%; height: 320px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <div id="status">Running parity headings style contract assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-parity-all.html?test=parity-headings"></iframe>
+  <script src="./smoke-harness.js"></script>
+  <script>
+    (async function run() {
+      const H = window.SmokeHarness;
+      try {
+        const frame = document.getElementById("app-frame");
+        const doc = await H.loadCase(
+          frame,
+          "./generated/example-browser-parity-all.html?test=parity-headings",
+          (d) => !!d.querySelector("[data-we-widget='display-heading-with-subtitle']"),
+          20000
+        );
+        const clickByText = (txt) => {
+          const btn = Array.from(doc.querySelectorAll("button")).find((b) => (b.textContent || "").trim() === txt);
+          btn.click();
+        };
+        const heading = () => Array.from(doc.querySelectorAll("[data-we-widget='heading']"))
+          .find((n) => (n.textContent || "").trim() === "Parity Heading");
+        const headingWithSubtitle = () => doc.querySelector("[data-we-widget='heading-with-subtitle']");
+        const display = () => doc.querySelector("[data-we-widget='display-heading']");
+        const displayWithSubtitle = () => doc.querySelector("[data-we-widget='display-heading-with-subtitle']");
+
+        clickByText("center");
+        clickByText("space-loose");
+        await H.sleep(80);
+
+        H.assertTrue((heading().getAttribute("class") || "").includes("we-heading-align-center"), "parity heading align updates");
+        H.assertTrue((heading().getAttribute("class") || "").includes("we-heading-space-loose"), "parity heading spacing updates");
+        H.assertTrue((headingWithSubtitle().getAttribute("class") || "").includes("we-heading-with-subtitle-align-center"), "parity heading-with-subtitle align updates");
+        H.assertTrue((headingWithSubtitle().getAttribute("class") || "").includes("we-heading-with-subtitle-space-loose"), "parity heading-with-subtitle spacing updates");
+        H.assertTrue((display().getAttribute("class") || "").includes("we-display-heading-align-center"), "parity display heading align updates");
+        H.assertTrue((display().getAttribute("class") || "").includes("we-display-heading-space-loose"), "parity display heading spacing updates");
+        H.assertTrue((displayWithSubtitle().getAttribute("class") || "").includes("we-display-heading-with-subtitle-align-center"), "parity display heading with subtitle align updates");
+        H.assertTrue((displayWithSubtitle().getAttribute("class") || "").includes("we-display-heading-with-subtitle-space-loose"), "parity display heading with subtitle spacing updates");
+
+        H.setStatus("PASS\nparity headings style contract", "pass");
+      } catch (err) {
+        console.error(err);
+        window.SmokeHarness.setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

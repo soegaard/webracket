@@ -1,0 +1,39 @@
+/*
+ * Solar 2 showcase-only scaffolding styles.
+ * Keep only page layout/container geometry here.
+ */
+
+html.we-theme-solar2 .showcase-main {
+  --we-stack-gap: 12px;
+  max-width: none;
+  width: calc(100% - 16px);
+  margin: 0 8px;
+}
+
+html.we-theme-solar2[data-showcase-geometry='exact'] .showcase-main,
+html.we-theme-solar2[data-showcase-geometry='exact'] .showcase-shell.we-container {
+  max-width: 1296px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Bootswatch pattern: consecutive showcase components get uniform vertical gap. */
+html.we-theme-solar2 .showcase-component + .showcase-component {
+  margin-top: 1rem;
+}
+
+html.we-theme-solar2 .showcase-shell.we-container {
+  max-width: none;
+  width: calc(100% - 16px);
+  margin: 0 8px;
+}
+
+html.we-theme-solar2[data-showcase-geometry='exact'] .showcase-shell.we-container {
+  max-width: 1296px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+html.we-theme-solar2 .showcase-hero {
+  margin-bottom: 18px;
+}

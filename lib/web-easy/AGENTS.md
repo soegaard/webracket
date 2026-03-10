@@ -38,3 +38,4 @@ Coding guidelines for Racket/WebRacket code in `lib/web-easy`.
     - prefer `(with-class "name" ...)` over
       `(with-class` newline `"name" ...`.
 27. For component calls where the first argument is a short title/label string (for example `card`, `group`, `menu`, `button`), keep that first string argument on the same line as the callee.
+28. Theme-level typography and component styling rules must be defined in the theme stylesheet (general scope), not only in showcase/page-specific selectors; showcase CSS should only contain page-layout scaffolding.

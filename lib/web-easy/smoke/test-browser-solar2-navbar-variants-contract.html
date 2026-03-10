@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy solar2 navbar variants contract</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status { white-space: pre-wrap; padding: 8px; border: 1px solid #999; margin-bottom: 12px; }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #app-frame { width: 100%; height: 320px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <div id="status">Running solar2 navbar variant contract...</div>
+  <iframe id="app-frame" src="./generated/example-browser-solar-showcase.html" title="solar2 navbar contract"></iframe>
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+
+    function assertEqual(got, want, label) {
+      if (got !== want) throw new Error(label + ": expected " + JSON.stringify(want) + ", got " + JSON.stringify(got));
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const doc = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+        if (doc) {
+          const root = doc.querySelector(".showcase-main");
+          if (root) return doc;
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for solar2 showcase UI");
+    }
+
+    async function waitForThemeApplied(doc, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const nav = navFor(doc, "primary");
+        const link = doc.getElementById("we-theme-external-css");
+        if (nav && link) {
+          const bg = getComputedStyle(nav).backgroundColor;
+          const href = (link.getAttribute("href") || "");
+          if (href.indexOf("theme-solar-2.css") !== -1 && bg !== "rgba(0, 0, 0, 0)") return;
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for solar2 theme application");
+    }
+
+    function navFor(doc, variant) {
+      const all = Array.from(doc.querySelectorAll(".showcase-main .we-navigation-bar"));
+      const marker = "we-variant-" + variant;
+      return all.find((n) => n.classList.contains(marker) || (n.closest("." + marker) !== null)) || null;
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => { clearTimeout(timer); resolve(); }, { once: true });
+        });
+
+        const doc = await waitForUI(frame, 20000);
+        await waitForThemeApplied(doc, 20000);
+        const html = doc.documentElement;
+        assertEqual(html.classList.contains("we-theme-solar2"), true, "solar2 class present on html");
+
+        const primaryNav = navFor(doc, "primary");
+        const darkNav = navFor(doc, "dark");
+        const lightNav = navFor(doc, "light");
+        const subtleNav = navFor(doc, "subtle");
+
+        if (!primaryNav || !darkNav || !lightNav || !subtleNav) {
+          throw new Error("Expected all four navbar variants");
+        }
+
+        const cPrimary = getComputedStyle(primaryNav).backgroundColor;
+        const cDark = getComputedStyle(darkNav).backgroundColor;
+        const cLight = getComputedStyle(lightNav).backgroundColor;
+        const cSubtle = getComputedStyle(subtleNav).backgroundColor;
+
+        assertEqual(cPrimary, "rgb(181, 137, 0)", "primary navbar background");
+        assertEqual(cDark, "rgb(7, 54, 66)", "dark navbar background");
+        assertEqual(cLight, "rgb(253, 246, 227)", "light navbar background");
+        assertEqual(cSubtle, "rgb(253, 246, 227)", "subtle navbar background");
+
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out unloading iframe")), 5000);
+          frame.addEventListener("load", () => { clearTimeout(timer); resolve(); }, { once: true });
+          frame.src = "about:blank";
+        });
+
+        setStatus("PASS\nsolar2 navbar variant backgrounds", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

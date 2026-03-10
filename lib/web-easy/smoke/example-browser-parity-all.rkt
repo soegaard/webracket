@@ -45,6 +45,8 @@
 (include/reader "smoke-capsule-parity-popover.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-close-button.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-placeholder.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-headings.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-hero.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-carousel.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-carousel-advanced.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-scrollspy.rkt" read-syntax/skip-first-line)
@@ -201,6 +203,14 @@
               (list parity-placeholder-make-page
                     parity-placeholder-run-test
                     parity-placeholder-cleanup))
+        (cons 'parity-headings
+              (list parity-headings-make-page
+                    parity-headings-run-test
+                    parity-headings-cleanup))
+        (cons 'parity-hero
+              (list parity-hero-make-page
+                    parity-hero-run-test
+                    parity-hero-cleanup))
         (cons 'parity-carousel
               (list parity-carousel-make-page
                     parity-carousel-run-test

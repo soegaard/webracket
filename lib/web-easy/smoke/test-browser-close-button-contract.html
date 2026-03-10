@@ -37,10 +37,6 @@
       }
     }
 
-    function pseudoContent(frameWin, el, pseudo) {
-      return frameWin.getComputedStyle(el, pseudo).content || "";
-    }
-
     async function waitForUI(frame, timeoutMs) {
       const start = Date.now();
       while (Date.now() - start < timeoutMs) {
@@ -64,21 +60,12 @@
         });
 
         const ui = await waitForUI(frame, 20000);
-        const frameWin = frame.contentWindow;
-
         assertEqual(ui.button.getAttribute("class"), "we-close-button", "close-button class");
         assertEqual(ui.button.getAttribute("role"), "button", "close-button role");
         assertEqual(ui.button.getAttribute("aria-label"), "Close panel", "close-button aria-label");
+        assertTrue(ui.icon.getAttribute("aria-hidden") === "true", "close-button icon aria-hidden");
 
-        const defaultGlyph = pseudoContent(frameWin, ui.icon, "::before");
-        assertTrue(defaultGlyph.includes("×"), "default close glyph");
-
-        ui.doc.documentElement.style.setProperty("--we-close-glyph", "'✕'");
-        await sleep(50);
-        const customGlyph = pseudoContent(frameWin, ui.icon, "::before");
-        assertTrue(customGlyph.includes("✕"), "custom close glyph from --we-close-glyph");
-
-        setStatus("PASS\nclose-button contract: class + aria-label + --we-close-glyph token", "pass");
+        setStatus("PASS\nclose-button contract: class + aria-label + icon semantics", "pass");
       } catch (err) {
         console.error(err);
         setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");

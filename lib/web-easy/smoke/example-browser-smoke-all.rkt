@@ -54,6 +54,8 @@
 (include/reader "smoke-capsule-table-align.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-close-button.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-placeholder.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-headings.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-hero.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-carousel.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-carousel-advanced.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-scrollspy.rkt" read-syntax/skip-first-line)
@@ -146,6 +148,10 @@
               (list close-button-make-page close-button-run-test close-button-cleanup))
         (cons 'placeholder
               (list placeholder-make-page placeholder-run-test placeholder-cleanup))
+        (cons 'headings
+              (list headings-make-page headings-run-test headings-cleanup))
+        (cons 'hero
+              (list hero-make-page hero-run-test hero-cleanup))
         (cons 'carousel
               (list carousel-make-page carousel-run-test carousel-cleanup))
         (cons 'carousel-advanced

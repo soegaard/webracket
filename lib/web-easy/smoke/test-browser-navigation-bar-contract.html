@@ -28,7 +28,9 @@
         const home = Array.from(doc.querySelectorAll("button")).find((e) => (e.textContent || "").trim() === "home");
         const about = Array.from(doc.querySelectorAll("button")).find((e) => (e.textContent || "").trim() === "about");
         const text = doc.querySelector("[data-we-widget='text']");
+        const navToggle = doc.querySelector("[data-we-widget='navigation-bar-toggle']");
         H.assertEqual(bar.getAttribute("role"), "navigation", "navigation-bar role");
+        H.assertTrue(!navToggle, "navigation-bar default has no toggle button");
         H.assertEqual((text.textContent || "").trim(), "nav:home", "navigation-bar initial text");
         about.click();
         await H.sleep(100);

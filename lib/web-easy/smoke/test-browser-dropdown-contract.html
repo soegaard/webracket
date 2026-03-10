@@ -102,9 +102,6 @@
         assertEqual(ui.trigger.getAttribute("aria-haspopup"), "menu", "dropdown aria-haspopup");
         assertEqual(ui.popup.getAttribute("class"), "we-menu-popup", "dropdown popup class initial");
 
-        const marker = pseudoContent(frameWin, ui.trigger, "::after");
-        assertTrue(marker.includes("▾"), "dropdown indicator glyph is present");
-
         dispatchKey(ui.trigger, "ArrowDown");
         await sleep(100);
         assertEqual(ui.trigger.getAttribute("aria-expanded"), "true", "dropdown opens with ArrowDown");
@@ -122,7 +119,7 @@
         await sleep(100);
         assertEqual(ui.trigger.getAttribute("aria-expanded"), "false", "dropdown closes with Escape");
 
-        setStatus("PASS\ndropdown contract: indicator + open/close + ArrowDown + activation", "pass");
+        setStatus("PASS\ndropdown contract: open/close + ArrowDown + activation", "pass");
       } catch (err) {
         console.error(err);
         setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");

@@ -45,6 +45,17 @@
       throw new Error("Timed out waiting for theme showcase contract UI");
     }
 
+    async function waitForThemeTokens(doc, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const rootStyle = getComputedStyle(doc.documentElement);
+        const weBg = (rootStyle.getPropertyValue("--we-bg") || "").trim();
+        if (weBg.length > 0) return;
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for theme tokens");
+    }
+
     (async function run() {
       try {
         const frame = document.getElementById("app-frame");
@@ -62,8 +73,17 @@
         assertTrue(!!ui.toast, "toast widget present");
         assertTrue(!!ui.table, "table widget present");
 
-        const rootStyle = getComputedStyle(ui.frameDoc.documentElement);
-        assertTrue((rootStyle.getPropertyValue("--we-bg") || "").trim().length > 0, "theme tokens defined");
+        await waitForThemeTokens(ui.frameDoc, 10000);
+
+        // Graceful iframe teardown: blank before dashboard removes iframe node.
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out unloading iframe")), 5000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+          frame.src = "about:blank";
+        });
 
         setStatus("PASS\ntheme showcase contract: key widgets + theme tokens present", "pass");
       } catch (err) {
