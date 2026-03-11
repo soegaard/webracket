@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy theme core-link contract test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running theme core-link contract assertions...</div>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function getLinkIndex(doc, id) {
+      return Array.from(doc.querySelectorAll("link")).findIndex((el) => el.id === id);
+    }
+
+    function hasThemeLinks(doc) {
+      return getLinkIndex(doc, "we-theme-external-css") >= 0 || getLinkIndex(doc, "we-theme-showcase-css") >= 0;
+    }
+
+    function assertThemeLinkOrder(doc, label) {
+      const coreIdx = getLinkIndex(doc, "we-theme-core-css");
+      const extIdx = getLinkIndex(doc, "we-theme-external-css");
+      const showIdx = getLinkIndex(doc, "we-theme-showcase-css");
+      if (extIdx >= 0 || showIdx >= 0) {
+        assertTrue(coreIdx >= 0, label + " core link exists when theme links exist");
+      }
+      if (extIdx >= 0) {
+        assertTrue(coreIdx < extIdx, label + " core before external");
+      }
+      if (showIdx >= 0) {
+        assertTrue(coreIdx < showIdx, label + " core before showcase");
+      }
+      if (extIdx >= 0 && showIdx >= 0) {
+        assertTrue(extIdx < showIdx, label + " external before showcase");
+      }
+    }
+
+    async function waitForStatusIfPresent(doc, timeoutMs, label) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const status = doc.getElementById("status");
+        if (!status) return;
+        const text = (status.textContent || "").trim();
+        if (text.startsWith("PASS")) return;
+        if (text.startsWith("FAIL")) throw new Error(label + " nested page reported FAIL: " + text);
+        await sleep(50);
+      }
+      throw new Error(label + " timed out waiting for nested PASS/FAIL");
+    }
+
+    async function validateDocAndNestedFrames(doc, label, timeoutMs) {
+      if (hasThemeLinks(doc)) {
+        assertThemeLinkOrder(doc, label);
+      }
+
+      const frames = Array.from(doc.querySelectorAll("iframe"));
+      for (let i = 0; i < frames.length; i += 1) {
+        const frame = frames[i];
+        const childLabel = label + " iframe[" + i + "]";
+        const start = Date.now();
+        let childDoc = frameDocFrom(frame);
+        while (!childDoc && (Date.now() - start < timeoutMs)) {
+          await sleep(50);
+          childDoc = frameDocFrom(frame);
+        }
+        assertTrue(!!childDoc, childLabel + " loaded");
+        await waitForStatusIfPresent(childDoc, timeoutMs, childLabel);
+        await validateDocAndNestedFrames(childDoc, childLabel, timeoutMs);
+      }
+    }
+
+    async function runPage(page) {
+      const frame = document.createElement("iframe");
+      frame.style.position = "absolute";
+      frame.style.left = "-10000px";
+      frame.style.top = "0";
+      frame.style.width = "1200px";
+      frame.style.height = "900px";
+      frame.style.border = "0";
+      frame.src = page;
+      document.body.appendChild(frame);
+
+      try {
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error(page + " timed out loading")), 30000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+        const doc = frameDocFrom(frame);
+        assertTrue(!!doc, page + " top-level document available");
+        await waitForStatusIfPresent(doc, 30000, page);
+        await validateDocAndNestedFrames(doc, page, 30000);
+      } finally {
+        frame.remove();
+      }
+    }
+
+    (async function run() {
+      try {
+        const pages = [
+          "test-browser-theme-external-css-contract.html",
+          "test-browser-theme-showcase-contract.html"
+        ];
+        for (const page of pages) {
+          await runPage(page);
+        }
+        setStatus("PASS\ntheme core-link contract: all theme iframes include core css and correct load order", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

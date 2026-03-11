@@ -11,6 +11,7 @@ make smoke-commands
 make smoke-headless-lite
 make smoke-style
 make smoke-ci
+make smoke-theme-core
 ```
 
 Use `headless.sh` from `lib/web-easy/smoke`:
@@ -60,6 +61,7 @@ Fast local headless gate (contract + theme + guard, skips full dashboard run):
 | Refresh command inventory | `make smoke-commands` |
 | Fast pre-push gate (skip compile) | `make smoke-headless-lite` |
 | Full local CI gate | `make smoke-ci` |
+| Focused theme-core lane | `make smoke-theme-core` |
 | Headless preflight only | `make smoke-verify` |
 | One-page headless test | `make smoke-one SINGLE_COMPILE=... SINGLE_PAGE=...` |
 | Style-hook contracts only | `./headless.sh style` |
@@ -125,6 +127,7 @@ When screenshot/computed output does not match what you see manually:
    - `#we-theme-core-css` should include `web-easy-core.css`
    - `#we-theme-external-css` should include `theme-solar-2.css`
    - `#we-theme-showcase-css` should include `theme-showcase-solar2.css`
+   - theme token/vars contract pages inject `theme-contract-vars.css` intentionally for deterministic token plumbing checks
 4. Use preflight metadata:
    - `generated/solar-accordion-diff/accordion-metadata.json`
    - verify `themeClass`, `stylesheets`, `selectorVisible`.
@@ -174,6 +177,7 @@ When screenshot/computed output does not match what you see manually:
 | Navigation-bar collapsed contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-navigation-bar-collapsed-contract.html` |
 | Navigation-bar toggle a11y contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-navigation-bar-toggle-a11y-contract.html` |
 | Theme external-css contract (core-before-theme order) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-theme-external-css-contract.html` |
+| Theme core-link recursive contract | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-theme-core-link-contract.html` |
 | Theme showcase contract | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-theme-showcase-compile.sh test-browser-theme-showcase-contract.html` |
 
 ## Make Targets
@@ -181,6 +185,7 @@ When screenshot/computed output does not match what you see manually:
 - `make smoke-ci`
 - `make smoke-headless-lite`
 - `make smoke-style`
+- `make smoke-theme-core`
 - `make smoke-verify`
 - `make smoke-quick`
 - `make smoke-release`

@@ -1,0 +1,108 @@
+/*
+ * Theme contract stylesheet.
+ * Purpose: provide deterministic token-driven widget rules for theme token/vars
+ * contract pages, independent of showcase-specific visual themes.
+ */
+
+:root {
+  --we-focus: #0a66c2;
+  --we-focus-tint: rgba(10, 102, 194, 0.20);
+  --we-fg: #111111;
+  --we-bg: #ffffff;
+  --we-bg-subtle: #f3f3f3;
+  --we-bg-selected: #ececec;
+  --we-bg-disabled: #f3f3f3;
+  --we-bg-hover: #e8e8e8;
+  --we-border: #888888;
+  --we-border-menu: #aaaaaa;
+  --we-border-muted: #999999;
+  --we-border-soft: #bbbbbb;
+  --we-border-hover: #c0c0c0;
+  --we-border-strong: #333333;
+  --we-fg-muted: #777777;
+  --we-overlay: rgba(0, 0, 0, 0.45);
+  --we-shadow: rgba(0, 0, 0, 0.28);
+  --we-progress-success: #3a9147;
+  --we-progress-warn: #b57c1c;
+  --we-progress-error: #b24545;
+  --we-heading-fg: var(--we-fg, #111111);
+  --we-display-heading-fg: var(--we-heading-fg, var(--we-fg, #111111));
+  --we-heading-subtitle-fg: var(--we-fg-muted, #777777);
+  --we-lead-fg: var(--we-fg-muted, #777777);
+  --we-heading-space-compact: 0;
+  --we-heading-space-normal: 0 0 2px 0;
+  --we-heading-space-loose: 0 0 4px 0;
+}
+
+.we-tab-btn[aria-selected='true'],
+.tab-btn[aria-selected='true'] {
+  background: var(--we-bg-selected, #ececec);
+  border-color: var(--we-border-strong, #333333);
+}
+
+.we-dialog {
+  background: var(--we-overlay, rgba(0, 0, 0, 0.45));
+}
+
+.we-dialog-panel {
+  border-color: var(--we-border, #888888);
+}
+
+.we-menu-bar {
+  background: var(--we-bg-subtle, #f3f3f3);
+  border-color: var(--we-border-menu, #aaaaaa);
+}
+
+.we-card-header {
+  background: var(--we-bg-subtle, #f3f3f3);
+}
+
+.we-page-btn.is-current {
+  background: var(--we-bg-selected, #ececec);
+}
+
+.we-breadcrumb-sep {
+  color: var(--we-fg-muted, #777777);
+}
+
+.we-offcanvas-panel {
+  background: var(--we-bg, #ffffff);
+}
+
+.we-scrollspy-item.is-current,
+.we-scrollspy-item[aria-current='true'],
+.we-scrollspy-item[aria-current='page'] {
+  background: var(--we-bg-selected, #ececec) !important;
+}
+
+[data-we-widget='close-button-icon'] {
+  color: var(--we-fg, #111111);
+}
+
+.we-progress-success {
+  accent-color: var(--we-progress-success, #3a9147);
+}
+
+.we-progress-warn {
+  accent-color: var(--we-progress-warn, #b57c1c);
+}
+
+.we-progress-error {
+  accent-color: var(--we-progress-error, #b24545);
+}
+
+[data-we-widget='heading'] {
+  color: var(--we-heading-fg, var(--we-fg, #111111));
+}
+
+[data-we-widget='display-heading'] {
+  color: var(--we-display-heading-fg, var(--we-heading-fg, var(--we-fg, #111111)));
+}
+
+[data-we-widget='heading-subtitle'] {
+  color: var(--we-heading-subtitle-fg, var(--we-fg-muted, #777777));
+}
+
+[data-we-widget='lead'] {
+  color: var(--we-lead-fg, var(--we-fg-muted, #777777));
+}

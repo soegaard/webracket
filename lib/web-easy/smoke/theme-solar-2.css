@@ -13,6 +13,9 @@
 
 @import url("https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@400;600;700&display=swap");
 
+/* ========================================================================== */
+/* Block A: Tokens                                                             */
+/* ========================================================================== */
 /* -------------------------------------------------------------------------- */
 /* 1) Token Mapping: Bootstrap-like -> web-easy                               */
 /* -------------------------------------------------------------------------- */
@@ -92,6 +95,9 @@ html.we-theme-solar2 {
   --we-radius-lg: var(--bs-border-radius-lg, 0.5rem);
 }
 
+/* ========================================================================== */
+/* Block B: Widgets (general theme rules)                                     */
+/* ========================================================================== */
 /* -------------------------------------------------------------------------- */
 /* 2) Core Components: controls + navigation bar                              */
 /* -------------------------------------------------------------------------- */
@@ -339,6 +345,9 @@ html.we-theme-solar2 .we-list-group-item.is-active {
   color:      var(--we-fg);
 }
 
+/* ========================================================================== */
+/* Block C: Showcase layout/polish (page-specific helpers)                    */
+/* ========================================================================== */
 /* List-group rows often host label + badge content. Keep the row compact and aligned. */
 html.we-theme-solar2 .showcase-list-group-panel.we-stack {
   --we-stack-gap: 0;
@@ -2288,14 +2297,6 @@ html.we-theme-solar2 .showcase-forms-right {
 }
 
 html.we-theme-solar2 .we-form-row {
-  margin-top: 0;
-}
-
-html.we-theme-solar2 .we-form-row + .we-form-row {
-  margin-top: 0;
-}
-
-html.we-theme-solar2 .we-form-row:first-child {
   margin-top: 0;
 }
 

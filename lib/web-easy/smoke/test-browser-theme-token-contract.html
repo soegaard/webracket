@@ -49,6 +49,30 @@
       return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
     }
 
+    const CORE_CSS = "../web-easy-core.css";
+    const THEME_CSS = "../theme-contract-vars.css";
+
+    function ensureThemeLayer(frameDoc) {
+      frameDoc.documentElement.classList.add("we-theme-solar2");
+      let coreLink = frameDoc.getElementById("we-theme-core-css");
+      if (!coreLink) {
+        coreLink = frameDoc.createElement("link");
+        coreLink.id = "we-theme-core-css";
+        coreLink.rel = "stylesheet";
+        frameDoc.head.appendChild(coreLink);
+      }
+      coreLink.href = CORE_CSS;
+
+      let themeLink = frameDoc.getElementById("we-theme-external-css");
+      if (!themeLink) {
+        themeLink = frameDoc.createElement("link");
+        themeLink.id = "we-theme-external-css";
+        themeLink.rel = "stylesheet";
+        frameDoc.head.appendChild(themeLink);
+      }
+      themeLink.href = THEME_CSS;
+    }
+
     function assertTrue(v, label) {
       if (!v) {
         throw new Error(label + ": expected true, got false");
@@ -72,6 +96,9 @@
       const start = Date.now();
       while (Date.now() - start < timeoutMs) {
         const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          ensureThemeLayer(frameDoc);
+        }
         if (frameDoc && readyFn(frameDoc)) {
           return frameDoc;
         }
@@ -178,16 +205,25 @@
       );
       const docs = Array.from(doc.querySelectorAll(".we-scrollspy-item"))
         .find((n) => n.textContent.trim() === "Docs");
-      docs.click();
+      if (docs) {
+        docs.click();
+      }
       await sleep(80);
-      const docsAfterClick = Array.from(doc.querySelectorAll(".we-scrollspy-item"))
-        .find((n) => n.textContent.trim() === "Docs");
-      const before = normalizedCssColor(getComputedStyle(docsAfterClick).backgroundColor);
+
+      const currentBefore = doc.querySelector(".we-scrollspy-item.is-current")
+        || doc.querySelector(".we-scrollspy-item[aria-current='true']")
+        || doc.querySelector(".we-scrollspy-item[aria-current='page']");
+      assertTrue(!!currentBefore, "scrollspy has a current item");
+      const before = normalizedCssColor(getComputedStyle(currentBefore).backgroundColor);
+
       doc.documentElement.style.setProperty("--we-bg-selected", "rgb(225, 240, 210)");
       await sleep(80);
-      const docsAfterToken = Array.from(doc.querySelectorAll(".we-scrollspy-item"))
-        .find((n) => n.textContent.trim() === "Docs");
-      const after = normalizedCssColor(getComputedStyle(docsAfterToken).backgroundColor);
+
+      const currentAfter = doc.querySelector(".we-scrollspy-item.is-current")
+        || doc.querySelector(".we-scrollspy-item[aria-current='true']")
+        || doc.querySelector(".we-scrollspy-item[aria-current='page']");
+      assertTrue(!!currentAfter, "scrollspy still has a current item");
+      const after = normalizedCssColor(getComputedStyle(currentAfter).backgroundColor);
       assertTrue(after === "rgb(225,240,210)", "scrollspy current item background updates from --we-bg-selected");
       assertTrue(after !== before, "scrollspy current item background changed after token override");
     }

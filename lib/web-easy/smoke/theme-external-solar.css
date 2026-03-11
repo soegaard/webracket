@@ -276,9 +276,6 @@ html.we-theme-solar .we-menu-label:hover {
 html.we-theme-solar .we-menu-label[aria-expanded='true'] {
   background: var(--we-bg-selected);
   border-color: var(--we-border-soft);
-  /* Keep open menu label visually above popup seam. */
-  position: relative;
-  z-index: 1001;
 }
 
 html.we-theme-solar .we-menu-popup {
@@ -293,9 +290,6 @@ html.we-theme-solar .we-menu-popup {
 }
 
 html.we-theme-solar .we-menu-item {
-  display: block;
-  width: 100%;
-  text-align: left;
   padding: 5px 9px;
   border: 1px solid var(--we-border);
   border-radius: 4px;
@@ -312,7 +306,6 @@ html.we-theme-solar .we-menu-label:focus-visible,
 html.we-theme-solar .we-menu-item:focus-visible {
   outline: 1px solid var(--we-focus);
   /* Keep ring snug; no extra halo outside menu geometry. */
-  outline-offset: 0;
   background-color: var(--we-focus-tint);
 }
 
@@ -327,12 +320,15 @@ html.we-theme-solar .we-menu-item:focus-visible {
 /* -------------------------------------------------------------------------- */
 html.we-theme-solar .we-tab-list,
 html.we-theme-solar .tab-row {
-  display: flex;
   gap: 0;
-  align-items: flex-end;
   border-bottom: 1px solid var(--we-border-soft);
   background: transparent;
   padding: 0 8px;
+}
+
+html.we-theme-solar .tab-row {
+  display: flex;
+  align-items: flex-end;
 }
 
 html.we-theme-solar .we-tab-btn,

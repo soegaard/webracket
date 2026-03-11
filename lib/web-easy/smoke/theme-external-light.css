@@ -122,9 +122,6 @@ html.we-theme-light .we-menu-label[aria-expanded='true'] {
   background: var(--we-bg-selected);
   color: var(--we-fg);
   border-color: var(--we-border-soft);
-  /* Keep open menu title above popup border so the join looks clean. */
-  position: relative;
-  z-index: 1001;
 }
 
 html.we-theme-light .we-menu-popup {
@@ -139,9 +136,6 @@ html.we-theme-light .we-menu-popup {
 }
 
 html.we-theme-light .we-menu-item {
-  display: block;
-  width: 100%;
-  text-align: left;
   padding: 2px 8px;
   background: var(--we-bg);
   color: var(--we-fg);
@@ -157,7 +151,6 @@ html.we-theme-light .we-menu-item:hover {
 html.we-theme-light .we-menu-label:focus-visible,
 html.we-theme-light .we-menu-item:focus-visible {
   /* Keep ring tight to widget edges so menu geometry stays stable. */
-  outline-offset: 0;
 }
 
 html.we-theme-light .we-menu-label:focus-visible {
@@ -363,9 +356,7 @@ html.we-theme-light .we-toast-close {
 /* -------------------------------------------------------------------------- */
 /* These rules make tabs look connected to the content panel. */
 html.we-theme-light .we-tab-list {
-  display: flex;
   gap: 0;
-  align-items: flex-end;
   border-bottom: 1px solid #9aa9c3;
   padding: 0 8px;
   margin: 0;

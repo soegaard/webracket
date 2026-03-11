@@ -49,6 +49,30 @@
       return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
     }
 
+    const CORE_CSS = "../web-easy-core.css";
+    const THEME_CSS = "../theme-contract-vars.css";
+
+    function ensureThemeLayer(frameDoc) {
+      frameDoc.documentElement.classList.add("we-theme-solar2");
+      let coreLink = frameDoc.getElementById("we-theme-core-css");
+      if (!coreLink) {
+        coreLink = frameDoc.createElement("link");
+        coreLink.id = "we-theme-core-css";
+        coreLink.rel = "stylesheet";
+        frameDoc.head.appendChild(coreLink);
+      }
+      coreLink.href = CORE_CSS;
+
+      let themeLink = frameDoc.getElementById("we-theme-external-css");
+      if (!themeLink) {
+        themeLink = frameDoc.createElement("link");
+        themeLink.id = "we-theme-external-css";
+        themeLink.rel = "stylesheet";
+        frameDoc.head.appendChild(themeLink);
+      }
+      themeLink.href = THEME_CSS;
+    }
+
     function assertTrue(v, label) {
       if (!v) {
         throw new Error(label + ": expected true, got false");
@@ -63,6 +87,9 @@
       const start = Date.now();
       while (Date.now() - start < timeoutMs) {
         const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          ensureThemeLayer(frameDoc);
+        }
         if (frameDoc) {
           const progress = frameDoc.querySelector("progress");
           const warnBtn = Array.from(frameDoc.querySelectorAll("button"))

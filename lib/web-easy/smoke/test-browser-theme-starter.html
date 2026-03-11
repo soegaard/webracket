@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy theme starter (core + theme only)</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: #f6f7f8;
+      color: #1f2730;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #fff;
+      border-bottom: 1px solid #d7dee4;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .topbar strong {
+      font-size: 14px;
+    }
+
+    .topbar select,
+    .topbar a {
+      font: inherit;
+      font-size: 13px;
+      border-radius: 6px;
+      border: 1px solid #aab8c5;
+      background: #fff;
+      color: #20303b;
+      text-decoration: none;
+      padding: 5px 10px;
+    }
+
+    .topbar a {
+      display: inline-block;
+    }
+
+    .content {
+      padding: 14px;
+    }
+
+    .note {
+      margin: 0 0 12px 0;
+      padding: 10px 12px;
+      border: 1px solid #c8d0d7;
+      border-radius: 8px;
+      background: #fff;
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    iframe {
+      width: 100%;
+      height: 720px;
+      border: 1px solid #c8d0d7;
+      border-radius: 8px;
+      background: #fff;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <strong>Theme starter</strong>
+    <select id="theme-select" aria-label="Choose theme">
+      <option value="solar">Solar</option>
+      <option value="light">Light</option>
+      <option value="dark">Dark</option>
+    </select>
+    <span id="current">current=solar</span>
+    <a href="./web-easy-core.css" download>Download Core CSS</a>
+    <a href="./theme-external-solar.css" download>Download Solar CSS</a>
+    <a href="./theme-external-light.css" download>Download Light CSS</a>
+    <a href="./theme-external-dark.css" download>Download Dark CSS</a>
+  </header>
+
+  <main class="content">
+    <p class="note">
+      This page intentionally applies only two layers inside the app iframe:
+      <code>web-easy-core.css</code> then <code>theme-external-*.css</code>.
+      No showcase stylesheet is loaded.
+    </p>
+    <iframe id="app-frame" src="./generated/example-browser-parity-all.html?test=parity-workspace" title="theme starter workspace"></iframe>
+  </main>
+
+  <script>
+    const CORE_CSS = "../web-easy-core.css";
+    const THEMES = {
+      light: "../theme-external-light.css",
+      dark: "../theme-external-dark.css",
+      solar: "../theme-external-solar.css"
+    };
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function ensureLink(frameDoc, id) {
+      let link = frameDoc.getElementById(id);
+      if (!link) {
+        link = frameDoc.createElement("link");
+        link.id = id;
+        link.rel = "stylesheet";
+        frameDoc.head.appendChild(link);
+      }
+      return link;
+    }
+
+    function applyTheme(name) {
+      const frame = document.getElementById("app-frame");
+      const frameDoc = frameDocFrom(frame);
+      if (!frameDoc) return;
+      frameDoc.documentElement.classList.remove("we-theme-light", "we-theme-dark", "we-theme-solar");
+      frameDoc.documentElement.classList.add("we-theme-" + name);
+      const coreLink = ensureLink(frameDoc, "we-theme-core-css");
+      coreLink.href = CORE_CSS;
+      const themeLink = ensureLink(frameDoc, "we-theme-external-css");
+      themeLink.href = THEMES[name];
+      document.getElementById("theme-select").value = name;
+      document.getElementById("current").textContent = "current=" + name;
+    }
+
+    const frame = document.getElementById("app-frame");
+    frame.addEventListener("load", () => applyTheme(document.getElementById("theme-select").value));
+    document.getElementById("theme-select").addEventListener("change", (e) => applyTheme(e.target.value));
+    window.addEventListener("load", () => applyTheme("solar"));
+  </script>
+</body>
+</html>

@@ -28,3 +28,26 @@
   flex-direction: column;
   align-items: stretch;
 }
+
+.we-tab-list {
+  display: flex;
+  align-items: flex-end;
+}
+
+/* Menus: item layout behavior; visual skinning remains in themes. */
+.we-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+}
+
+/* Keep expanded menu labels above the popup seam. */
+.we-menu-label[aria-expanded='true'] {
+  position: relative;
+  z-index: 1001;
+}
+
+.we-menu-label:focus-visible,
+.we-menu-item:focus-visible {
+  outline-offset: 0;
+}
