@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy parity core structure contract test</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status { white-space: pre-wrap; padding: 8px; border: 1px solid #999; margin-bottom: 12px; }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #app-frame { width: 100%; height: 320px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <div id="status">Running parity core-structure contract assertions...</div>
+  <iframe id="app-frame" src="about:blank" title="web-easy parity core structure contract app"></iframe>
+  <script>
+    function setStatus(text, cls) {
+      const node = document.getElementById("status");
+      node.textContent = text;
+      node.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function assertEqual(got, expected, label) {
+      if (got !== expected) {
+        throw new Error(label + ": expected " + JSON.stringify(expected) + ", got " + JSON.stringify(got));
+      }
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    async function loadCase(frame, url, timeoutMs) {
+      await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error("Timed out loading iframe: " + url)), timeoutMs);
+        frame.addEventListener("load", () => {
+          clearTimeout(timer);
+          resolve();
+        }, { once: true });
+        frame.src = url;
+      });
+    }
+
+    async function waitForCollapseUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const doc = frameDocFrom(frame);
+        if (doc) {
+          const collapse = doc.querySelector(".we-collapse");
+          const toggle = Array.from(doc.querySelectorAll("button"))
+            .find((b) => (b.textContent || "").trim() === "toggle");
+          if (collapse && toggle) {
+            return { doc, collapse, toggle };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for parity collapse UI");
+    }
+
+    async function waitForTabUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const doc = frameDocFrom(frame);
+        if (doc) {
+          const tabList = doc.querySelector(".we-tab-list");
+          const tabPanel = doc.querySelector(".we-tab-panel");
+          if (tabList && tabPanel) {
+            return { doc, tabList, tabPanel };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for parity tabs UI");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+
+        await loadCase(frame, "./generated/example-browser-parity-all.html?test=parity-collapse", 20000);
+        const collapseUI = await waitForCollapseUI(frame, 20000);
+        assertEqual(collapseUI.collapse.getAttribute("class"), "we-collapse", "collapse class (closed)");
+        assertEqual(collapseUI.collapse.getAttribute("aria-hidden"), "true", "collapse aria-hidden (closed)");
+        collapseUI.toggle.click();
+        await sleep(140);
+        assertEqual(collapseUI.collapse.getAttribute("class"), "we-collapse is-open", "collapse class (open)");
+        assertEqual(collapseUI.collapse.getAttribute("aria-hidden"), "false", "collapse aria-hidden (open)");
+
+        await loadCase(frame, "./generated/example-browser-parity-all.html?test=parity-tabs", 20000);
+        const tabUI = await waitForTabUI(frame, 20000);
+        assertTrue(tabUI.doc.querySelectorAll(".we-tab-btn").length >= 3, "tab buttons present");
+        assertEqual(tabUI.doc.querySelectorAll(".we-tab-btn[aria-selected='true']").length, 1, "single selected tab header");
+
+        const coreCss = await (await fetch("./web-easy-core.css")).text();
+        assertTrue(coreCss.includes(".we-collapse"), "core css has collapse rule");
+        assertTrue(coreCss.includes("grid-template-rows: 0fr"), "core css has collapse closed mechanics");
+        assertTrue(coreCss.includes(".we-tab-list"), "core css has tab-list rule");
+        assertTrue(coreCss.includes("flex-wrap: wrap"), "core css has tab-list wrap mechanics");
+
+        setStatus("PASS\nparity core-structure: collapse+tabs mechanics and parity wiring verified", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

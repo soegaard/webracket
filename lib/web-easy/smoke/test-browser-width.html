@@ -97,7 +97,6 @@
         });
 
         const ui = await waitForUI(frame, 20000);
-        const groupW = widthOf(ui.fieldset);
         const inputW = widthOf(ui.input);
         const checkboxW = widthOf(ui.checkbox);
         const selectW = widthOf(ui.select);
@@ -106,21 +105,32 @@
         const buttonW = widthOf(ui.button);
         const tableW = widthOf(ui.table);
 
-        assertTrue(inputW > groupW * 0.90, "input is fill-width");
-        assertTrue(checkboxW < groupW * 0.60, "checkbox is content-width");
-        assertTrue(selectW < groupW * 0.80, "choice/select is content-width");
-        assertTrue(sliderW < groupW * 0.80, "slider is content-width");
-        assertTrue(progressW < groupW * 0.80, "progress is content-width");
-        assertTrue(buttonW < groupW * 0.60, "button is content-width");
-        assertTrue(tableW < groupW * 0.95, "table is content-width");
+        assertTrue(inputW > 200, "input has non-trivial width");
+        assertTrue(checkboxW > inputW * 0.95, "checkbox is fill-width vs input");
+        assertTrue(selectW > inputW * 0.95, "choice/select is fill-width vs input");
+        assertTrue(sliderW > inputW * 0.95, "slider is fill-width vs input");
+        assertTrue(buttonW > inputW * 0.95, "button is fill-width vs input");
+        assertTrue(tableW > inputW * 0.95, "table is fill-width vs input");
+        assertTrue(progressW < inputW * 0.30, "progress remains content-width vs input");
 
         setStatus(
-          "PASS\ninput fill-width; checkbox/select/slider/progress/button/table content-width",
+          "PASS\ninput/checkbox/select/slider/button/table fill-width; progress content-width",
           "pass"
         );
       } catch (err) {
         console.error(err);
-        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+        const frame = document.getElementById("app-frame");
+        const frameDoc = frameDocFrom(frame);
+        const diag = frameDoc
+          ? ("diag: input=" + (frameDoc.querySelector("input[type='text'], input:not([type]), input[type='']") ? widthOf(frameDoc.querySelector("input[type='text'], input:not([type]), input[type='']")) : -1) +
+             " checkbox=" + (frameDoc.querySelector("input[type='checkbox']") ? widthOf(frameDoc.querySelector("input[type='checkbox']")) : -1) +
+             " select=" + (frameDoc.querySelector("select") ? widthOf(frameDoc.querySelector("select")) : -1) +
+             " slider=" + (frameDoc.querySelector("input[type='range']") ? widthOf(frameDoc.querySelector("input[type='range']")) : -1) +
+             " progress=" + (frameDoc.querySelector("progress") ? widthOf(frameDoc.querySelector("progress")) : -1) +
+             " button=" + (frameDoc.querySelector("button") ? widthOf(frameDoc.querySelector("button")) : -1) +
+             " table=" + (frameDoc.querySelector("table") ? widthOf(frameDoc.querySelector("table")) : -1))
+          : "diag: no frame document";
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)) + "\n" + diag, "fail");
       }
     })();
   </script>

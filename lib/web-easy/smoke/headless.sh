@@ -16,6 +16,7 @@ Modes:
   smoke                    Run full smoke dashboard headless
   parity                   Run parity-only dashboard headless
   contract                 Run contract-only dashboard headless
+  core-structure           Run focused core-structure contracts (smoke+parity)
   deep                     Run deep keyboard contract pages only
   style                    Run style-hook contract pages only
   theme                    Run theme-only dashboard headless
@@ -35,6 +36,7 @@ Examples:
   ./headless.sh smoke
   ./headless.sh parity
   ./headless.sh contract
+  ./headless.sh core-structure
   ./headless.sh deep
   ./headless.sh style
   ./headless.sh theme
@@ -59,6 +61,7 @@ doctor	Check headless prerequisites
 smoke	Run full smoke dashboard headless
 parity	Run parity-only dashboard headless
 contract	Run contract-only dashboard headless
+core-structure	Run focused core-structure contracts (smoke+parity)
 deep	Run deep keyboard contract pages only
 style	Run style-hook contract pages only
 theme	Run theme-only dashboard headless
@@ -156,6 +159,21 @@ case "$1" in
   contract)
     shift
     exec "$SCRIPT_DIR/check-contract-headless.sh" "$@"
+    ;;
+  core-structure)
+    shift
+    if [ "${SMOKE_SKIP_COMPILE:-0}" = "1" ]; then
+      "$SCRIPT_DIR/check-single-headless.sh" run-browser-smoke-all-compile.sh test-browser-menu-core-structure-contract.html
+    else
+      "$SCRIPT_DIR/check-smoke.sh"
+      SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-smoke-all-compile.sh test-browser-menu-core-structure-contract.html
+    fi
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-smoke-all-compile.sh test-browser-collapse-core-structure-contract.html
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-smoke-all-compile.sh test-browser-tab-core-structure-contract.html
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-parity-all-compile.sh test-browser-parity-menu-core-structure-contract.html
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-parity-all-compile.sh test-browser-parity-collapse-core-structure-contract.html
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-parity-all-compile.sh test-browser-parity-tab-core-structure-contract.html
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-parity-all-compile.sh test-browser-parity-core-structure-contract.html
     ;;
   deep)
     shift

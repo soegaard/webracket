@@ -77,16 +77,16 @@
         const frameDoc = frameDocFrom(frame);
         if (frameDoc) {
           const fieldset = frameDoc.querySelector("fieldset");
-          const select = frameDoc.querySelector("select");
+          const radios = frameDoc.querySelectorAll("input[type='radio']");
           const image = frameDoc.querySelector("img");
           const text = bodyText(frameDoc);
           if (fieldset &&
-              select &&
+              radios.length >= 3 &&
               image &&
               menuItemByText(frameDoc, "Reset") &&
               text.includes("mode:photo") &&
               text.includes("status:ready")) {
-            return { frameDoc, fieldset, select, image };
+            return { frameDoc, fieldset, radios, image };
           }
         }
         await sleep(25);
@@ -110,16 +110,17 @@
         assertTrue(fieldsetLegendText(ui.fieldset) === "Profile: Alice", "initial group legend");
         assertTrue(text.includes("img:avatar-photo.png"), "initial image text");
 
-        if (ui.select.options && ui.select.options.length >= 3) {
-          ui.select.selectedIndex = 2;
-        } else {
-          ui.select.value = "icon";
+        const iconRadio = Array.from(ui.radios)
+          .find((radio) => (radio.value || "") === "icon");
+        if (!iconRadio) {
+          throw new Error("icon radio not found");
         }
-        ui.select.dispatchEvent(new Event("input", { bubbles: true }));
-        ui.select.dispatchEvent(new Event("change", { bubbles: true }));
+        iconRadio.click();
+        iconRadio.dispatchEvent(new Event("input", { bubbles: true }));
+        iconRadio.dispatchEvent(new Event("change", { bubbles: true }));
         await sleep(100);
         text = bodyText(ui.frameDoc);
-        assertTrue(text.includes("mode:icon"), "radios/select changed mode to icon");
+        assertTrue(text.includes("mode:icon"), "radios changed mode to icon");
         assertTrue(text.includes("img:avatar-icon.png"), "image preview updated for icon");
 
         menuItemByText(ui.frameDoc, "Rename Bob").click();
@@ -131,8 +132,13 @@
         await sleep(100);
         assertTrue(bodyText(ui.frameDoc).includes("status:saved"), "status after save preset");
 
-        ui.select.value = "initials";
-        ui.select.dispatchEvent(new Event("change", { bubbles: true }));
+        const initialsRadio = Array.from(ui.radios)
+          .find((radio) => (radio.value || "") === "initials");
+        if (!initialsRadio) {
+          throw new Error("initials radio not found");
+        }
+        initialsRadio.click();
+        initialsRadio.dispatchEvent(new Event("change", { bubbles: true }));
         await sleep(100);
         assertTrue(bodyText(ui.frameDoc).includes("mode:initials"), "mode changed to initials before load");
 
@@ -157,7 +163,7 @@
         const frame = document.getElementById("app-frame");
         const frameDoc = frameDocFrom(frame);
         const diag = frameDoc
-          ? ("diag: selects=" + frameDoc.querySelectorAll("select").length +
+          ? ("diag: radios=" + frameDoc.querySelectorAll("input[type='radio']").length +
              " imgs=" + frameDoc.querySelectorAll("img").length +
              " body=" + JSON.stringify(bodyText(frameDoc)))
           : "diag: no frame document";
