@@ -207,6 +207,7 @@ case "$1" in
     SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-smoke-all-compile.sh test-browser-tooltip-contract.html
     SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-smoke-all-compile.sh test-browser-toast-behavior-contract.html
     SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-smoke-all-compile.sh test-browser-menu-typeahead-contract.html
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-parity-all-compile.sh test-browser-parity-menu-core-structure-contract.html
     ;;
   ci)
     shift

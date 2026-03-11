@@ -27,7 +27,7 @@ const thresholds = {
   indicators: 0.40,
   cards:      0.22,
   accordions: 0.22,
-  dialogs:    0.20
+  dialogs:    0.19
 };
 
 const rmseFor = (section) => {

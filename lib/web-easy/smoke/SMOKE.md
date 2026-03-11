@@ -86,6 +86,11 @@ Fast local headless gate (contract + theme + guard, skips full dashboard run):
 | Solar2 list-group browser contract page (dashboard-ready) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-solar-showcase-compile.sh test-browser-solar2-list-group-contract.html` |
 | Parity Solar2 list-group browser contract page | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-solar-showcase-compile.sh test-browser-parity-solar2-list-group-contract.html` |
 | Menu core-structure contract page | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-menu-core-structure-contract.html` |
+| Parity menu core-structure contract page | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-menu-core-structure-contract.html` |
+| Collapse core-structure contract page | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-collapse-core-structure-contract.html` |
+| Parity collapse core-structure contract page | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-collapse-core-structure-contract.html` |
+| Tab core-structure contract page | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-tab-core-structure-contract.html` |
+| Parity tab core-structure contract page | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-tab-core-structure-contract.html` |
 | Solar section parity report + threshold gate | `./check-solar-section-parity.sh` |
 | Solar overlays contract (accordions/dialogs) | `node ./check-solar-overlays-contract.mjs` |
 | Solar accordion parity (computed + screenshot) | `./check-solar-accordion-parity.sh` |
@@ -264,6 +269,8 @@ Fastest iteration path for one failing page:
 For lean CI parity with local behavior:
 
 - `SMOKE_SKIP_COMPILE=1 ./headless.sh ci-fast`
+- `ci-fast` now includes direct parity guard:
+  - `test-browser-parity-menu-core-structure-contract.html`
 - optional visual RMSE gate used in CI-fast notes:
   - `SMOKE_SKIP_COMPILE=1 SOLAR_SECTIONS_GATE_ONLY=1 ./check-solar-section-parity.sh`
 
@@ -328,6 +335,10 @@ Failure triage order:
   - `test-browser-menu-icons-contract.html`
   - `test-browser-menu-core-structure-contract.html`
   - `test-browser-parity-menu-core-structure-contract.html`
+  - `test-browser-collapse-core-structure-contract.html`
+  - `test-browser-parity-collapse-core-structure-contract.html`
+  - `test-browser-tab-core-structure-contract.html`
+  - `test-browser-parity-tab-core-structure-contract.html`
   - `test-browser-card-variants-contract.html`
   - `test-browser-theme-token-api-contract.html`
 - `check-smoke.sh` compiles:

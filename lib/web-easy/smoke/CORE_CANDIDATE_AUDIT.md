@@ -62,6 +62,8 @@ Scope: remaining duplicated selectors across:
    - themes: transition durations/easing and panel skin
 8. `.we-tab-list` now carries shared row mechanics in core (`display/flex-wrap/align-items`);
    Solar2 section override keeps only section-specific visual spacing/seam values.
+9. `.we-menu` structural mechanics remain core-owned (`position: relative; display: inline-block`);
+   theme files now contain only contextual visual/density adjustments (for example navbar-specific margins).
 
 ## Concrete Menu Split Plan
 
