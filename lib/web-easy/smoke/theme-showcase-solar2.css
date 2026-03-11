@@ -17,11 +17,6 @@ html.we-theme-solar2[data-showcase-geometry='exact'] .showcase-shell.we-containe
   margin: 0 auto;
 }
 
-/* Bootswatch pattern: consecutive showcase components get uniform vertical gap. */
-html.we-theme-solar2 .showcase-component + .showcase-component {
-  margin-top: 1rem;
-}
-
 html.we-theme-solar2 .showcase-shell.we-container {
   max-width: none;
   width: calc(100% - 16px);

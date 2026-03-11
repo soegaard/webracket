@@ -1055,6 +1055,10 @@ Core vs Theme rule (strict):
 - Showcase layer (`theme-showcase-*.css`): page-specific layout/polish only.
 - Load order must be: core -> theme -> showcase (if present).
 
+Core utility note:
+- `we-flow` is now part of the structural core layer (`.we-flow > * + *`) for uniform sibling spacing.
+- Use `with-class "we-flow"` in pages/examples instead of page-specific adjacent-sibling spacing selectors when the intent is generic vertical rhythm.
+
 ## Theme Contract Test Architecture
 
 Theme contracts use a dedicated runtime testing layer to keep token plumbing checks stable:
@@ -1065,6 +1069,9 @@ Theme contracts use a dedicated runtime testing layer to keep token plumbing che
 2. `theme-contract-vars.css` is intentionally deterministic and token-forwarding; it is not a user-facing visual theme.
 3. User-facing visual themes (`theme-external-*.css`, `theme-solar-2.css`) are validated by separate theme/external/showcase contracts and visual diff lanes.
 4. Shared test helper (`smoke/theme-contract-helper.js`) centralizes iframe theme injection and basic utilities to reduce drift across contract pages.
+5. Solar section parity can be run and summarized per section with:
+   - `smoke/check-solar-section-parity.sh`
+   - this captures section screenshots/metrics and prints per-section RMSE via `check-solar-polish-summary.mjs`.
 
 Rationale:
 

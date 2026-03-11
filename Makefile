@@ -4,7 +4,7 @@ SMOKE_DIR := lib/web-easy/smoke
 SINGLE_COMPILE ?= run-browser-parity-profile-compile.sh
 SINGLE_PAGE ?= test-browser-parity-profile.html
 
-.PHONY: help smoke-ci smoke-headless-lite smoke-style smoke-theme smoke-theme-contracts smoke-theme-core smoke-theme-visual smoke-verify smoke-quick smoke-release smoke-one smoke-list smoke-commands smoke-compare-navbars smoke-compare-buttons smoke-compare-all smoke-solar-parity
+.PHONY: help smoke-ci smoke-headless-lite smoke-style smoke-theme smoke-theme-contracts smoke-theme-core smoke-theme-visual smoke-verify smoke-quick smoke-release smoke-one smoke-list smoke-commands smoke-compare-navbars smoke-compare-buttons smoke-compare-all smoke-solar-parity smoke-solar-sections
 
 help:
 	@echo "Available targets:"
@@ -26,6 +26,7 @@ help:
 	@echo "  smoke-compare-buttons Run Bootswatch-vs-solar2 button compare sweep."
 	@echo "  smoke-compare-all     Run both compare sweeps."
 	@echo "  smoke-solar-parity    Run full Solar2 parity sweep (accordion/navbar/forms/tables/list/progress)."
+	@echo "  smoke-solar-sections  Run per-section Solar2 parity report (with RMSE per section)."
 
 smoke-ci:
 	cd $(SMOKE_DIR) && ./headless.sh ci
@@ -95,6 +96,7 @@ smoke-list:
 	@echo "smoke-compare-buttons"
 	@echo "smoke-compare-all"
 	@echo "smoke-solar-parity"
+	@echo "smoke-solar-sections"
 
 smoke-commands:
 	cd $(SMOKE_DIR) && ./gen-commands.sh
@@ -112,3 +114,6 @@ smoke-compare-all: smoke-compare-buttons smoke-compare-navbars
 
 smoke-solar-parity:
 	cd $(SMOKE_DIR) && ./check-solar-parity-sweep.sh
+
+smoke-solar-sections:
+	cd $(SMOKE_DIR) && ./check-solar-section-parity.sh

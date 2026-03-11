@@ -51,6 +51,7 @@ Scope: remaining duplicated selectors across:
 1. `.we-accordion` container mechanics (`display/flex-direction`) moved to core.
 2. `.we-accordion-trigger` mechanics (`width/display/align-items/justify-content/text-align`) moved to core.
 3. `.we-accordion-trigger::after` shared mechanics (`display`, `margin-left`, `transition-property`, `transition-timing-function`) moved to core.
+4. `.we-flow > * + *` vertical rhythm helper moved to core; Solar2 showcase now uses `we-flow` instead of page-only sibling-spacing selectors.
 
 ## Safe Next Extraction Candidates
 

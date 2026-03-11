@@ -364,14 +364,16 @@
            (with-id "solar2-navbars"
              (with-class "showcase-section-title"
               (heading 1 "Navbars")))
-           (with-class "showcase-component we-variant-primary"
-             (navbar-demo @selected-1 @query-1))
-           (with-class "showcase-component we-variant-dark"
-             (navbar-demo @selected-2 @query-2))
-           (with-class "showcase-component we-variant-light"
-             (navbar-demo @selected-3 @query-3))
-           (with-class "showcase-component we-variant-subtle"
-             (navbar-demo @selected-4 @query-4))
+           (with-class "we-flow"
+             (stack
+              (with-class "we-variant-primary"
+                (navbar-demo @selected-1 @query-1))
+              (with-class "we-variant-dark"
+                (navbar-demo @selected-2 @query-2))
+              (with-class "we-variant-light"
+                (navbar-demo @selected-3 @query-3))
+              (with-class "we-variant-subtle"
+                (navbar-demo @selected-4 @query-4))))
 
            ;; Buttons
            (with-id "solar2-buttons"
@@ -439,85 +441,82 @@
            (with-class "showcase-typography-grid"
              (grid
               3
-              (with-class "showcase-component"
-                (vpanel
-                 (heading 1 "Heading 1")
-                 (heading 2 "Heading 2")
-                 (heading 3 "Heading 3")
-                 (heading 4 "Heading 4")
-                 (heading 5 "Heading 5")
-                 (heading 6 "Heading 6")
-                 (heading-with-subtitle 3 "Heading" "with faded secondary text")
-                 (with-class "showcase-typography-lead"
-                   (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor."))))
-              (with-class "showcase-component"
-                (vpanel
-                 (heading 2 "Example body text")
-                 (inline
-                  (text "Nullam quis risus eget ")
-                  (link "urna mollis ornare" "#")
-                  (text " vel eu leo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus."))
-                 (with-class "showcase-fine-print"
-                   (text "This line of text is meant to be treated as fine print."))
-                 (inline
-                  (text "The following is ")
-                  (with-class "showcase-text-strong"
-                    (text "rendered as bold text"))
-                  (text "."))
-                 (inline
-                  (text "The following is ")
-                  (with-class "showcase-text-emphasis"
-                    (text "rendered as italicized text"))
-                  (text "."))
-                 (inline
-                  (text "An abbreviation of the word attribute is ")
-                  (with-attrs '((title "attribute"))
-                    (with-class "showcase-abbr"
-                      (text "attr")))
-                  (text "."))))
-              (with-class "showcase-component"
-                (vpanel
-                 (heading 2 "Emphasis classes")
-                 (with-class "showcase-text-primary"
-                   (text "text-primary"))
-                 (with-class "showcase-text-primary-emphasis"
-                   (text "text-primary-emphasis"))
-                 (with-class "showcase-text-secondary"
-                   (text "text-secondary"))
-                 (with-class "showcase-text-secondary-emphasis"
-                   (text "text-secondary-emphasis"))
-                 (with-class "showcase-text-success"
-                   (text "text-success"))
-                 (with-class "showcase-text-success-emphasis"
-                   (text "text-success-emphasis"))
-                 (with-class "showcase-text-danger"
-                   (text "text-danger"))
-                 (with-class "showcase-text-danger-emphasis"
-                   (text "text-danger-emphasis"))
-                 (with-class "showcase-text-warning"
-                   (text "text-warning"))
-                 (with-class "showcase-text-warning-emphasis"
-                   (text "text-warning-emphasis"))
-                 (with-class "showcase-text-info"
-                   (text "text-info"))
-                 (with-class "showcase-text-info-emphasis"
-                   (text "text-info-emphasis"))
-                 (with-class "showcase-text-light"
-                   (text "text-light"))
-                 (with-class "showcase-text-light-emphasis"
-                   (text "text-light-emphasis"))
-                 (with-class "showcase-text-dark"
-                   (text "text-dark"))
-                 (with-class "showcase-text-dark-emphasis"
-                   (text "text-dark-emphasis"))
-                 (with-class "showcase-text-body"
-                   (text "text-body"))
-                 (with-class "showcase-text-body-emphasis"
-                   (text "text-body-emphasis"))
-                 (with-class "showcase-text-body-secondary"
-                   (text "text-body-secondary"))
-                 (with-class "showcase-text-tertiary"
-                   (text "text-body-tertiary"))))))
+              (vpanel
+               (heading 1 "Heading 1")
+               (heading 2 "Heading 2")
+               (heading 3 "Heading 3")
+               (heading 4 "Heading 4")
+               (heading 5 "Heading 5")
+               (heading 6 "Heading 6")
+               (heading-with-subtitle 3 "Heading" "with faded secondary text")
+               (with-class "showcase-typography-lead"
+                 (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor.")))
+              (vpanel
+               (heading 2 "Example body text")
+               (inline
+                (text "Nullam quis risus eget ")
+                (link "urna mollis ornare" "#")
+                (text " vel eu leo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus."))
+               (with-class "showcase-fine-print"
+                 (text "This line of text is meant to be treated as fine print."))
+               (inline
+                (text "The following is ")
+                (with-class "showcase-text-strong"
+                  (text "rendered as bold text"))
+                (text "."))
+               (inline
+                (text "The following is ")
+                (with-class "showcase-text-emphasis"
+                  (text "rendered as italicized text"))
+                (text "."))
+               (inline
+                (text "An abbreviation of the word attribute is ")
+                (with-attrs '((title "attribute"))
+                  (with-class "showcase-abbr"
+                    (text "attr")))
+                (text ".")))
+              (vpanel
+               (heading 2 "Emphasis classes")
+               (with-class "showcase-text-primary"
+                 (text "text-primary"))
+               (with-class "showcase-text-primary-emphasis"
+                 (text "text-primary-emphasis"))
+               (with-class "showcase-text-secondary"
+                 (text "text-secondary"))
+               (with-class "showcase-text-secondary-emphasis"
+                 (text "text-secondary-emphasis"))
+               (with-class "showcase-text-success"
+                 (text "text-success"))
+               (with-class "showcase-text-success-emphasis"
+                 (text "text-success-emphasis"))
+               (with-class "showcase-text-danger"
+                 (text "text-danger"))
+               (with-class "showcase-text-danger-emphasis"
+                 (text "text-danger-emphasis"))
+               (with-class "showcase-text-warning"
+                 (text "text-warning"))
+               (with-class "showcase-text-warning-emphasis"
+                 (text "text-warning-emphasis"))
+               (with-class "showcase-text-info"
+                 (text "text-info"))
+               (with-class "showcase-text-info-emphasis"
+                 (text "text-info-emphasis"))
+               (with-class "showcase-text-light"
+                 (text "text-light"))
+               (with-class "showcase-text-light-emphasis"
+                 (text "text-light-emphasis"))
+               (with-class "showcase-text-dark"
+                 (text "text-dark"))
+               (with-class "showcase-text-dark-emphasis"
+                 (text "text-dark-emphasis"))
+               (with-class "showcase-text-body"
+                 (text "text-body"))
+               (with-class "showcase-text-body-emphasis"
+                 (text "text-body-emphasis"))
+               (with-class "showcase-text-body-secondary"
+                 (text "text-body-secondary"))
+               (with-class "showcase-text-tertiary"
+                 (text "text-body-tertiary")))))
            (heading 2 "Blockquotes")
            (with-class "showcase-typography-grid"
              (grid

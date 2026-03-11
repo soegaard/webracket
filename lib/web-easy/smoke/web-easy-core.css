@@ -71,3 +71,8 @@
 .we-menu-item:focus-visible {
   outline-offset: 0;
 }
+
+/* Flow utility: uniform vertical spacing between sibling blocks. */
+.we-flow > * + * {
+  margin-top: var(--we-flow-gap, 1rem);
+}
