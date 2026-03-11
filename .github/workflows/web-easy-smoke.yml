@@ -123,7 +123,7 @@ jobs:
             SMOKE_TIMEOUT_MS=600000 SMOKE_WARN_MS=2000 SMOKE_SKIP_COMPILE=1 ./headless.sh ci
             echo "nightly deep CI gate passed"
           else
-            echo "[4/4] PR/push lean headless CI (smoke + key contracts)"
+            echo "[4/4] PR/push lean headless CI (smoke + key contracts; optional visual gate: make smoke-solar-sections-gate)"
             SMOKE_TIMEOUT_MS=300000 SMOKE_WARN_MS=2000 SMOKE_SKIP_COMPILE=1 ./headless.sh ci-fast
             echo "lean CI gate passed"
           fi

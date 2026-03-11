@@ -264,6 +264,8 @@ Fastest iteration path for one failing page:
 For lean CI parity with local behavior:
 
 - `SMOKE_SKIP_COMPILE=1 ./headless.sh ci-fast`
+- optional visual RMSE gate used in CI-fast notes:
+  - `SMOKE_SKIP_COMPILE=1 SOLAR_SECTIONS_GATE_ONLY=1 ./check-solar-section-parity.sh`
 
 Full no-compile baseline (local):
 
@@ -324,6 +326,8 @@ Failure triage order:
   - `test-browser-dropdown-labeled-contract.html`
   - `test-browser-button-icons-contract.html`
   - `test-browser-menu-icons-contract.html`
+  - `test-browser-menu-core-structure-contract.html`
+  - `test-browser-parity-menu-core-structure-contract.html`
   - `test-browser-card-variants-contract.html`
   - `test-browser-theme-token-api-contract.html`
 - `check-smoke.sh` compiles:
@@ -519,6 +523,7 @@ Headless timing behavior:
   - runs `./headless.sh verify`
   - runs compile path + `./headless.sh ci` (`SMOKE_SKIP_COMPILE=1`)
   - `ci` mode runs contract dashboard + theme dashboard + full smoke dashboard + guard
+  - PR/push lean lane runs `./headless.sh ci-fast` (smoke + key contracts); optional visual extension is `make smoke-solar-sections-gate`
   - publishes headless timing artifacts
 
 ## Contract Reference

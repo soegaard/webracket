@@ -774,68 +774,70 @@
            (with-class "we-section-break-xl"
              (with-id "solar2-navs-section"
                (stack
-              (section-heading "solar2-navs" "Navs")
-              (grid
-               2
-               (stack
-                (heading 2 "Tabs")
-                (tab-panel
-                 @tab
-                 (list (cons "Home"
-                             (text "Raw denim you probably haven't heard of them jean shorts Austin. Nesciunt tofu stumptown aliqua, retro synth master cleanse. Mustache cliche tempor, williamsburg carles vegan helvetica. Reprehenderit butcher retro keffiyeh dreamcatcher synth. Cosby sweater eu banh mi, qui irure terry richardson ex squid. Aliquip placeat salvia cillum iphone. Seitan aliquip quis cardigan american apparel, butcher voluptate nisi qui."))
-                       (cons "Profile"
-                             (text "Food truck fixie locavore, accusamus mcsweeney's marfa nulla single-origin coffee squid. Exercitation +1 labore velit, blog sartorial PBR leggings next level wes anderson artisan four loko farm-to-table craft beer twee. Qui photo booth letterpress, commodo enim craft beer mlkshk aliquip jean shorts ullamco ad vinyl cillum PBR. Homo nostrud organic, assumenda labore aesthetic magna delectus mollit."))
-                       (cons "Disabled"
-                             (text "Etsy mixtape wayfarers, ethical wes anderson tofu before they sold out mcsweeney's organic lomo retro fanny pack lo-fi farm-to-table readymade. Messenger bag gentrify pitchfork tattooed craft beer, iphone skateboard locavore carles etsy salvia banksy hoodie helvetica. DIY synth PBR banksy irony. Leggings gentrify squid 8-bit cred pitchfork."))
-                       (cons "Dropdown ▾"
-                             (text "Trust fund seitan letterpress, keytar raw denim keffiyeh etsy art party before they sold out master cleanse gluten-free squid scenester freegan cosby sweater. Fanny pack portland seitan DIY, art party locavore wolf cliche high life echo park Austin. Cred vinyl keffiyeh DIY salvia PBR, banh mi before they sold out farm-to-table VHS viral locavore cosby sweater.")))))
-               (stack
-                (heading 2 "Pills")
-                (with-class "we-tab-style-pills"
-                  (tab-panel
-                   @pill
-                   (list (cons "Active"   (text "Active pill content."))
-                         (cons "Dropdown ▾" (text "Dropdown pill content."))
-                         (cons "Link"     (text "Link pill content."))
-                         (cons "Disabled" (text "Disabled pill content.")))))
-                (with-class "we-tab-style-pills we-nav-pills-vertical"
-                  (tab-panel
-                   @pill-vertical
-                   (list (cons "Active"   (text "Active vertical pill content."))
-                         (cons "Dropdown ▾" (text "Dropdown vertical content."))
-                         (cons "Link"     (text "Link vertical content."))
-                         (cons "Disabled" (text "Disabled vertical content.")))))))
-              (grid
-               2
-               (stack
-                (heading 2 "Breadcrumbs")
-                (breadcrumb '((home "Home"))
-                            @crumb-1
-                            (lambda (v) (:= @crumb-1 v)))
-                (breadcrumb '((home "Home")
-                              (library "Library"))
-                            @crumb-2
-                            (lambda (v) (:= @crumb-2 v)))
-                (breadcrumb '((home "Home")
-                              (library "Library")
-                              (data "Data"))
-                            @crumb-3
-                            (lambda (v) (:= @crumb-3 v))))
-               (stack
-                (heading 2 "Pagination")
-                (pagination 5 @page (lambda (v) (:= @page v)))
-                (with-class "we-pagination-lg"
-                  (pagination 5 @page (lambda (v) (:= @page v))))
-                (with-class "we-pagination-sm"
-                  (pagination 5 @page (lambda (v) (:= @page v))))))
-              (heading 2 "Underline")
-              (with-class "we-tab-style-underline"
-               (tab-panel
-                 @underline-tab
-                 (list (cons "Active"   (text "Underline active content."))
-                       (cons "Link"     (text "Underline link content."))
-                       (cons "Link​"    (text "Underline link two content."))
-                       (list "Disabled" (text "Underline disabled content.") #t)))))))
+                (section-heading "solar2-navs" "Navs")
+                (grid
+                 2
+                 (with-class "we-stack-gap-1"
+                  (stack
+                   (heading 2 "Tabs")
+                   (tab-panel
+                    @tab
+                    (list (cons "Home"
+                                (text "Raw denim you probably haven't heard of them jean shorts Austin. Nesciunt tofu stumptown aliqua, retro synth master cleanse. Mustache cliche tempor, williamsburg carles vegan helvetica. Reprehenderit butcher retro keffiyeh dreamcatcher synth. Cosby sweater eu banh mi, qui irure terry richardson ex squid. Aliquip placeat salvia cillum iphone. Seitan aliquip quis cardigan american apparel, butcher voluptate nisi qui."))
+                          (cons "Profile"
+                                (text "Food truck fixie locavore, accusamus mcsweeney's marfa nulla single-origin coffee squid. Exercitation +1 labore velit, blog sartorial PBR leggings next level wes anderson artisan four loko farm-to-table craft beer twee. Qui photo booth letterpress, commodo enim craft beer mlkshk aliquip jean shorts ullamco ad vinyl cillum PBR. Homo nostrud organic, assumenda labore aesthetic magna delectus mollit."))
+                          (cons "Disabled"
+                                (text "Etsy mixtape wayfarers, ethical wes anderson tofu before they sold out mcsweeney's organic lomo retro fanny pack lo-fi farm-to-table readymade. Messenger bag gentrify pitchfork tattooed craft beer, iphone skateboard locavore carles etsy salvia banksy hoodie helvetica. DIY synth PBR banksy irony. Leggings gentrify squid 8-bit cred pitchfork."))
+                          (cons "Dropdown ▾"
+                                (text "Trust fund seitan letterpress, keytar raw denim keffiyeh etsy art party before they sold out master cleanse gluten-free squid scenester freegan cosby sweater. Fanny pack portland seitan DIY, art party locavore wolf cliche high life echo park Austin. Cred vinyl keffiyeh DIY salvia PBR, banh mi before they sold out farm-to-table VHS viral locavore cosby sweater."))))))
+                 (with-class "we-stack-gap-1"
+                  (stack
+                   (heading 2 "Pills")
+                   (with-class "we-tab-style-pills"
+                    (tab-panel
+                     @pill
+                     (list (cons "Active"     (text "Active pill content."))
+                           (cons "Dropdown ▾" (text "Dropdown pill content."))
+                           (cons "Link"       (text "Link pill content."))
+                           (cons "Disabled"   (text "Disabled pill content.")))))
+                   (with-class "we-tab-style-pills we-nav-pills-vertical"
+                    (tab-panel
+                     @pill-vertical
+                     (list (cons "Active"     (text "Active vertical pill content."))
+                           (cons "Dropdown ▾" (text "Dropdown vertical content."))
+                           (cons "Link"       (text "Link vertical content."))
+                           (cons "Disabled"   (text "Disabled vertical content."))))))))
+                (grid
+                 2
+                 (stack
+                  (heading 2 "Breadcrumbs")
+                  (breadcrumb '((home "Home"))
+                              @crumb-1
+                              (lambda (v) (:= @crumb-1 v)))
+                  (breadcrumb '((home "Home")
+                                (library "Library"))
+                              @crumb-2
+                              (lambda (v) (:= @crumb-2 v)))
+                  (breadcrumb '((home "Home")
+                                (library "Library")
+                                (data "Data"))
+                              @crumb-3
+                              (lambda (v) (:= @crumb-3 v))))
+                 (stack
+                  (heading 2 "Pagination")
+                  (pagination 5 @page (lambda (v) (:= @page v)))
+                  (with-class "we-pagination-lg"
+                   (pagination 5 @page (lambda (v) (:= @page v))))
+                  (with-class "we-pagination-sm"
+                   (pagination 5 @page (lambda (v) (:= @page v))))))
+                (heading 2 "Underline")
+                (with-class "we-tab-style-underline"
+                 (tab-panel
+                  @underline-tab
+                  (list (cons "Active"   (text "Underline active content."))
+                        (cons "Link"     (text "Underline link content."))
+                        (cons "Link​"    (text "Underline link two content."))
+                        (list "Disabled" (text "Underline disabled content.") #t)))))))
 
            ;; Indicators
            (with-class "we-section-break-xl"

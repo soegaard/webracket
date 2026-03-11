@@ -39,7 +39,28 @@
 
 .we-tab-list {
   display: flex;
+  flex-wrap: wrap;
   align-items: flex-end;
+}
+
+.we-collapse {
+  display:            grid;
+  grid-template-rows: 0fr;
+  opacity:            0;
+  visibility:         hidden;
+  overflow:           hidden;
+  align-self:         stretch;
+}
+
+.we-collapse > * {
+  min-height: 0;
+  overflow:   hidden;
+}
+
+.we-collapse.is-open {
+  grid-template-rows: 1fr;
+  opacity:            1;
+  visibility:         visible;
 }
 
 .we-accordion {

@@ -3611,15 +3611,7 @@ html.we-theme-solar2 #solar2-navs-section {
   --we-nav-link-disabled-color: var(--bs-secondary-color, rgba(131, 148, 150, 0.75));
 }
 
-html.we-theme-solar2 #solar2-navs-section .we-heading.level-2 {
-  margin-top:    0;
-  margin-bottom: 0.5rem;
-}
-
 html.we-theme-solar2 #solar2-navs-section .we-tab-list {
-  display:       flex;
-  flex-wrap:     wrap;
-  align-items:   flex-end;
   margin-bottom: 0;
   gap:           0;
 }
