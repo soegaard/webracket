@@ -6,240 +6,336 @@
 ;;; web-easy define/key
 ;;;
 
-;; Define-like macro for functions that accept optional keyword-style arguments.
+;; Define-like macro for functions that accept positional and keyword-style arguments.
 ;;
 ;; Exports:
-;;   define/key   Define a function with required positional args and optional keyword args.
+;;   define/key   Define a function with required/optional positional args,
+;;                optional rest arg, and required/optional keyword args.
 
 ;; syntax-list : syntax? symbol? -> (listof syntax?)
 ;;   Convert stx to a proper syntax list or raise a syntax error.
 (define-for-syntax (syntax-list stx who)
-  (let ([xs (syntax->list stx)])
-    (unless xs
-      (raise-syntax-error who "expected a proper list" stx))
-    xs))
+  (define xs (syntax->list stx))
+  (unless xs
+    (raise-syntax-error who "expected a proper list" stx))
+  xs)
 
-;; parse-keyword-spec : syntax? syntax? symbol? -> (values syntax? syntax?)
-;;   Parse one keyword clause body `[id default-expr]`.
-(define-for-syntax (parse-keyword-spec spec-stx keyword-stx who)
-  (let* ([spec-list (syntax-list spec-stx who)]
-         [id-stx    (and (pair? spec-list) (car spec-list))])
-    (unless (= (length spec-list) 2)
-      (raise-syntax-error
-       who
-       "expected keyword clause shape `#:kw [id default-expr]`"
-       spec-stx
-       keyword-stx))
-    (unless (identifier? id-stx)
-      (raise-syntax-error
-       who
-       "expected identifier in keyword clause"
-       spec-stx
-       id-stx))
-    (values (car spec-list) (cadr spec-list))))
+;; split-formals-list : syntax? symbol? -> (values (listof syntax?) (or/c #f syntax?))
+;;   Split possibly dotted formals into element list and optional rest-id.
+(define-for-syntax (split-formals-list formals-stx who)
+  (let loop ([cur formals-stx] [acc '()])
+    (syntax-case cur ()
+      [()
+       (values (reverse acc) #f)]
+      [(a . d)
+       (if (identifier? #'d)
+           (values (reverse (cons #'a acc)) #'d)
+           (loop #'d (cons #'a acc)))]
+      [_
+       (raise-syntax-error who "expected a list of formals" formals-stx)])))
 
-;; parse-formals : syntax? symbol? -> (values syntax? (listof syntax?) (listof keyword?) (listof syntax?) (listof syntax?))
-;;   Parse `(name req ... #:kw [kw-id default] ...)`.
+;; parse-opt-positional : syntax? symbol? -> (values syntax? syntax?)
+;;   Parse optional positional clause `[id default-expr]`.
+(define-for-syntax (parse-opt-positional clause-stx who)
+  (define xs (syntax-list clause-stx who))
+  (unless (= (length xs) 2)
+    (raise-syntax-error who "expected optional positional clause `[id default-expr]`" clause-stx))
+  (unless (identifier? (car xs))
+    (raise-syntax-error who "expected identifier in optional positional clause" clause-stx (car xs)))
+  (values (car xs) (cadr xs)))
+
+;; parse-keyword-clause : syntax? syntax? symbol? -> (values syntax? boolean? (or/c #f syntax?))
+;;   Parse keyword clause body: `id` (required) or `[id default]` (optional).
+(define-for-syntax (parse-keyword-clause clause-stx kw-stx who)
+  (cond
+    [(identifier? clause-stx)
+     (values clause-stx #t #f)]
+    [else
+     (define xs (syntax-list clause-stx who))
+     (unless (= (length xs) 2)
+       (raise-syntax-error
+        who
+        "expected keyword clause shape `#:kw id` or `#:kw [id default-expr]`"
+        clause-stx
+        kw-stx))
+     (unless (identifier? (car xs))
+       (raise-syntax-error
+        who
+        "expected identifier in keyword clause"
+        clause-stx
+        (car xs)))
+     (values (car xs) #f (cadr xs))]))
+
+;; parse-formals : syntax? symbol? ->
+;;   (values syntax? (listof syntax?) (listof syntax?) (listof syntax?)
+;;           (or/c #f syntax?)
+;;           (listof keyword?) (listof syntax?) (listof boolean?)
+;;           (listof (or/c #f syntax?)))
+;;   Parse `(name formals ...)` for define/key.
 (define-for-syntax (parse-formals formals-stx who)
-  (let* ([formals-list (syntax-list formals-stx who)])
-    (unless (pair? formals-list)
+  (let-values ([(parts maybe-rest-id)
+                (split-formals-list formals-stx who)])
+    (unless (pair? parts)
       (raise-syntax-error who "expected `(name ...)`" formals-stx))
-    (let ([name-stx (car formals-list)])
-      (unless (identifier? name-stx)
-        (raise-syntax-error who "expected function name identifier" formals-stx name-stx))
-      (let loop ([xs (cdr formals-list)]
-                 [seen-keyword? #f]
-                 [req-ids '()]
-                 [kw-datums '()]
-                 [kw-ids '()]
-                 [kw-default-exprs '()])
-        (cond
-          [(null? xs)
-           (values name-stx
-                   (reverse req-ids)
-                   (reverse kw-datums)
-                   (reverse kw-ids)
-                   (reverse kw-default-exprs))]
-          [else
-           (let* ([hd (car xs)]
-                  [hd-datum (syntax-e hd)])
-             (cond
-               [(keyword? hd-datum)
-                (unless (pair? (cdr xs))
+    (define name-stx (car parts))
+    (unless (identifier? name-stx)
+      (raise-syntax-error who "expected function name identifier" formals-stx name-stx))
+
+    (let loop ([xs (cdr parts)]
+               [seen-opt-pos? #f]
+               [seen-keyword? #f]
+               [req-ids '()]
+               [opt-ids '()]
+               [opt-defaults '()]
+               [kw-datums '()]
+               [kw-ids '()]
+               [kw-required? '()]
+               [kw-defaults '()])
+      (cond
+        ((null? xs)
+         (values name-stx
+                 (reverse req-ids)
+                 (reverse opt-ids)
+                 (reverse opt-defaults)
+                 maybe-rest-id
+                 (reverse kw-datums)
+                 (reverse kw-ids)
+                 (reverse kw-required?)
+                 (reverse kw-defaults)))
+        (else
+         (let* ([hd (car xs)]
+                [hd-datum (syntax-e hd)])
+           (cond
+             ((keyword? hd-datum)
+              (unless (pair? (cdr xs))
+                (raise-syntax-error who "missing keyword clause after keyword" formals-stx hd))
+              (when (ormap (lambda (k) (eq? k hd-datum)) kw-datums)
+                (raise-syntax-error who "duplicate keyword in define/key header" formals-stx hd))
+              (let-values ([(kw-id req? kw-default)
+                            (parse-keyword-clause (cadr xs) hd who)])
+                (loop (cddr xs)
+                      seen-opt-pos?
+                      #t
+                      req-ids
+                      opt-ids
+                      opt-defaults
+                      (cons hd-datum kw-datums)
+                      (cons kw-id kw-ids)
+                      (cons req? kw-required?)
+                      (cons kw-default kw-defaults))))
+             (seen-keyword?
+              (raise-syntax-error
+               who
+               "positional formals must appear before keyword clauses"
+               formals-stx
+               hd))
+             ((identifier? hd)
+              (if seen-opt-pos?
                   (raise-syntax-error
                    who
-                   "missing keyword clause after keyword"
+                   "required positional argument cannot appear after optional positional argument"
                    formals-stx
-                   hd))
-                (when (ormap (lambda (k) (eq? k hd-datum)) kw-datums)
-                  (raise-syntax-error
-                   who
-                   "duplicate keyword in define/key header"
-                   formals-stx
-                   hd))
-                (let-values ([(kw-id kw-default-expr)
-                              (parse-keyword-spec (cadr xs) hd who)])
-                  (loop (cddr xs)
-                        #t
-                        req-ids
-                        (cons hd-datum kw-datums)
-                        (cons kw-id kw-ids)
-                        (cons kw-default-expr kw-default-exprs)))]
-               [else
-                (when seen-keyword?
-                  (raise-syntax-error
-                   who
-                   "required positional arguments must appear before keyword clauses"
-                   formals-stx
-                   hd))
-                (unless (identifier? hd)
-                  (raise-syntax-error
-                   who
-                   "expected positional argument identifier or keyword"
-                   formals-stx
-                   hd))
+                   hd)
+                  (loop (cdr xs)
+                        #f
+                        #f
+                        (cons hd req-ids)
+                        opt-ids
+                        opt-defaults
+                        kw-datums
+                        kw-ids
+                        kw-required?
+                        kw-defaults)))
+             (else
+              (let-values ([(opt-id opt-default)
+                            (parse-opt-positional hd who)])
                 (loop (cdr xs)
+                      #t
                       #f
-                      (cons hd req-ids)
+                      req-ids
+                      (cons opt-id opt-ids)
+                      (cons opt-default opt-defaults)
                       kw-datums
                       kw-ids
-                      kw-default-exprs)]))])))))
+                      kw-required?
+                      kw-defaults))))))))))
 
-;; split-required : (listof syntax?) natural syntax? symbol? -> (values (listof syntax?) (listof syntax?))
-;;   Split args into required positional prefix and trailing args.
-(define-for-syntax (split-required args n use-stx who)
-  (let loop ([xs args] [remaining n] [acc '()])
-    (cond
-      [(zero? remaining)
-       (values (reverse acc) xs)]
-      [(null? xs)
-       (raise-syntax-error who "wrong number of positional arguments" use-stx)]
-      [else
-       (loop (cdr xs) (sub1 remaining) (cons (car xs) acc))])))
+;; kw-token->expr : syntax? -> syntax?
+;;   Convert keyword token syntax to quoted keyword expression.
+(define-for-syntax (kw-token->expr kw-stx)
+  (datum->syntax kw-stx (list 'quote (syntax-e kw-stx)) kw-stx kw-stx))
 
-;; last-stx : (listof syntax?) -> syntax?
-;;   Return the last syntax object in xs.
-(define-for-syntax (last-stx xs)
-  (if (null? (cdr xs))
-      (car xs)
-      (last-stx (cdr xs))))
+;; rewrite-call-args : syntax? symbol? -> (listof syntax?)
+;;   Rewrite call arguments so keyword tokens become quoted keyword values.
+(define-for-syntax (rewrite-call-args args-stx who)
+  (map (lambda (a)
+         (if (keyword? (syntax-e a))
+             (kw-token->expr a)
+             a))
+       (syntax-list args-stx who)))
 
-;; keyword-index : keyword? (listof keyword?) -> (or/c false? natural)
-;;   Return zero-based index of kw in allowed, or #f when missing.
-(define-for-syntax (keyword-index kw allowed)
-  (let loop ([kws allowed] [i 0])
-    (cond
-      [(null? kws) #f]
-      [(eq? kw (car kws)) i]
-      [else (loop (cdr kws) (add1 i))])))
-
-;; build-keyword-bindings : (vectorof (or/c false? syntax?)) (listof syntax?) (listof syntax?) -> (listof syntax?)
-;;   Build `let*` bindings for keyword temp variables.
-(define-for-syntax (build-keyword-bindings provided-values keyword-tmps kw-default-exprs)
-  (let loop ([i 0]
-             [tmp keyword-tmps]
-             [defaults kw-default-exprs]
-             [acc '()])
-    (cond
-      [(null? tmp)
-       (reverse acc)]
-      [else
-       (let* ([provided (vector-ref provided-values i)]
-              [rhs (if provided provided (car defaults))])
-         (loop (add1 i)
-               (cdr tmp)
-               (cdr defaults)
-               (cons #`[#,(car tmp) #,rhs] acc)))])))
-
-;; expand-define/key-use : symbol? syntax? natural (listof keyword?) (listof syntax?) (listof syntax?) syntax? -> syntax?
-;;   Expand one call use of a function defined with `define/key`.
-(define-for-syntax (expand-define/key-use who use-stx req-count allowed kw-id-stxes kw-default-exprs core-stx)
-  (let* ([all-args (syntax-list (syntax-case use-stx () [(_ arg ...) #'(arg ...)]) who)])
-    (let-values ([(positional-args trailing-args)
-                  (split-required all-args req-count use-stx who)])
-      (unless (even? (length trailing-args))
-        (raise-syntax-error
-         who
-         "expected keyword/value pairs after positional arguments"
-         use-stx
-         (last-stx trailing-args)))
-      (let* ([provided-values (make-vector (length allowed) #f)]
-             [seen? (make-vector (length allowed) #f)])
-        (let parse-pairs ([xs trailing-args])
-          (unless (null? xs)
-            (let* ([kw-stx (car xs)]
-                   [val-stx (cadr xs)]
-                   [kw-datum (syntax-e kw-stx)]
-                   [idx (and (keyword? kw-datum)
-                             (keyword-index kw-datum allowed))])
-              (unless (keyword? kw-datum)
-                (raise-syntax-error who "expected keyword" use-stx kw-stx))
-              (unless idx
-                (raise-syntax-error who "unknown keyword" use-stx kw-stx))
-              (when (vector-ref seen? idx)
-                (raise-syntax-error who "duplicate keyword argument" use-stx kw-stx))
-              (vector-set! seen? idx #t)
-              (vector-set! provided-values idx val-stx)
-              (parse-pairs (cddr xs)))))
-        (let* ([positional-tmps (generate-temporaries positional-args)]
-               [keyword-tmps (generate-temporaries kw-id-stxes)]
-               [keyword-bindings (build-keyword-bindings
-                                  provided-values
-                                  keyword-tmps
-                                  kw-default-exprs)])
-          (with-syntax ([(pos-tmp ...) positional-tmps]
-                        [(kw-tmp ...) keyword-tmps]
-                        [(pos-arg ...) positional-args]
-                        [(kw-binding ...) keyword-bindings]
-                        [core core-stx])
-            #`(let* ([pos-tmp pos-arg] ...
-                     kw-binding ...)
-                (core pos-tmp ... kw-tmp ...))))))))
-
-;; define/key : (define/key (name req ... #:kw [kw-id default] ...) body ...+) -> definition
-;;   Define a function with optional keyword-style arguments and call-site rewriting.
+;; define/key : (define/key (name formals ...) body ...+) -> definition
+;;   Define a function with positional and keyword-style formals.
 (define-syntax (define/key stx)
-  (let ([who 'define/key])
-    (syntax-case stx ()
-      [(_ formals body0 body ...)
-       (let-values ([(name-stx req-ids kw-datums kw-ids kw-default-exprs)
-                     (parse-formals #'formals who)])
-         (let* ([core+proc-ids (generate-temporaries (list name-stx name-stx))]
-                [core-id (car core+proc-ids)]
-                [proc-id (cadr core+proc-ids)]
-                [req-count (length req-ids)])
-           (with-syntax ([name name-stx]
-                         [name-sym (datum->syntax stx (syntax-e name-stx))]
-                         [core core-id]
-                         [proc proc-id]
-                         [(req ...) req-ids]
-                         [(kw-id ...) kw-ids]
-                         [req-count-datum req-count]
-                         [allowed-keywords (datum->syntax stx kw-datums)]
-                         [kw-default-exprs-stx #`(#,@kw-default-exprs)])
-             #`(begin
-                 (define (core req ... kw-id ...)
-                   body0
-                   body ...)
+  (define who 'define/key)
+  (syntax-case stx ()
+    [(_ formals body0 body ...)
+     (let-values ([(name-stx req-ids opt-ids opt-defaults rest-id-stx
+                             kw-datums kw-ids kw-required? kw-defaults)
+                   (parse-formals #'formals who)])
+       (define proc-id (car (generate-temporaries (list name-stx))))
+       (define req-count (length req-ids))
+       (define opt-count (length opt-ids))
 
-                 (define (proc req ...)
-                   (core req ... #,@kw-default-exprs))
+       (define req-bindings
+         (let loop ([i 0] [ids req-ids] [acc '()])
+           (if (null? ids)
+               (reverse acc)
+               (loop (add1 i)
+                     (cdr ids)
+                     (cons #`[#,(car ids) (list-ref pos-values #,i)] acc)))))
 
-                 (define-syntax (name use-stx)
-                   (syntax-case use-stx ()
-                     [id
-                      (identifier? #'id)
-                      #'proc]
-                     [(_ . call-args)
-                      (expand-define/key-use
-                       'name-sym
-                       use-stx
-                       req-count-datum
-                       (syntax->datum #'allowed-keywords)
-                       (syntax->list #'(kw-id ...))
-                       (syntax->list #'kw-default-exprs-stx)
-                       #'core)]
-                     [_
-                      (raise-syntax-error 'name-sym "bad use of define/key function" use-stx)]))))))]
-      [_
-       (raise-syntax-error who "expected `(define/key (name ...) body ...+)`" stx)])))
+       (define opt-bindings
+         (let loop ([j 0] [ids opt-ids] [defs opt-defaults] [acc '()])
+           (if (null? ids)
+               (reverse acc)
+               (let ([idx (+ req-count j)])
+                 (loop (add1 j)
+                       (cdr ids)
+                       (cdr defs)
+                       (cons #`[#,(car ids)
+                                (if (< #,idx pos-count)
+                                    (list-ref pos-values #,idx)
+                                    #,(car defs))]
+                             acc))))))
+
+       (define rest-binding
+         (if rest-id-stx
+             (list #`[#,rest-id-stx (drop-at-most pos-values #,(+ req-count opt-count))])
+             '()))
+
+       (define kw-bindings
+         (let loop ([i 0] [ids kw-ids] [req? kw-required?] [defs kw-defaults] [acc '()])
+           (if (null? ids)
+               (reverse acc)
+               (let ([provided #`(vector-ref provided-kw-values #,i)])
+                 (loop (add1 i)
+                       (cdr ids)
+                       (cdr req?)
+                       (cdr defs)
+                       (cons #`[#,(car ids)
+                                #,(if (car req?)
+                                      #`(if (vector-ref seen-kw? #,i)
+                                            #,provided
+                                            (error 'name-sym "missing required keyword argument ~a" '#,(list-ref kw-datums i)))
+                                      #`(if (vector-ref seen-kw? #,i)
+                                            #,provided
+                                            #,(car defs)))]
+                             acc))))))
+
+       (define required-kw-runtime-checks
+         (let loop ([i 0] [req? kw-required?] [acc '()])
+           (cond
+             [(null? req?) (reverse acc)]
+             [(car req?)
+              (loop (add1 i)
+                    (cdr req?)
+                    (cons #`(unless (vector-ref seen-kw? #,i)
+                              (error 'name-sym "missing required keyword argument ~a" '#,(list-ref kw-datums i)))
+                          acc))]
+             [else
+              (loop (add1 i) (cdr req?) acc)])))
+
+       (with-syntax ([name name-stx]
+                     [name-sym (datum->syntax stx (syntax-e name-stx))]
+                     [proc proc-id]
+                     [req-count-datum req-count]
+                     [max-no-rest (+ req-count opt-count)]
+                     [has-rest? (if rest-id-stx #'#t #'#f)]
+                     [(req-bind ...) req-bindings]
+                     [(opt-bind ...) opt-bindings]
+                     [(rest-bind ...) rest-binding]
+                     [(kw-bind ...) kw-bindings]
+                     [(need-kw-check ...) required-kw-runtime-checks]
+                     [kw-count (length kw-datums)]
+                     [kw-datums-quoted (datum->syntax stx kw-datums)])
+         #`(begin
+             (define (proc . all-args)
+               (define (split-positional+keyword xs)
+                 (let loop ([rest xs] [pos '()])
+                   (cond
+                     [(null? rest)
+                      (values (reverse pos) '())]
+                     [(keyword? (car rest))
+                      (values (reverse pos) rest)]
+                     [else
+                      (loop (cdr rest) (cons (car rest) pos))])))
+
+             (define (keyword-index kw allowed)
+               (let loop ([kws allowed] [i 0])
+                 (cond
+                   [(null? kws) #f]
+                   [(eq? kw (car kws)) i]
+                   [else (loop (cdr kws) (add1 i))])))
+
+               (define (drop-at-most xs n)
+                 (let loop ([ys xs] [k n])
+                   (cond
+                     [(zero? k) ys]
+                     [(null? ys) '()]
+                     [else (loop (cdr ys) (sub1 k))])))
+
+               (define-values (pos-values kw-tail)
+                 (split-positional+keyword all-args))
+               (define pos-count (length pos-values))
+
+               (when (< pos-count req-count-datum)
+                 (error 'name-sym "wrong number of positional arguments"))
+               (when (and (not has-rest?)
+                          (> pos-count max-no-rest))
+                 (error 'name-sym "wrong number of positional arguments"))
+               (when (odd? (length kw-tail))
+                 (error 'name-sym "expected keyword/value pairs after positional arguments"))
+
+               (define provided-kw-values (make-vector kw-count #f))
+               (define seen-kw?           (make-vector kw-count #f))
+
+               (let parse-tail ([xs kw-tail])
+                 (unless (null? xs)
+                   (define kw (car xs))
+                   (define v  (cadr xs))
+                   (unless (keyword? kw)
+                     (error 'name-sym "expected keyword" kw))
+                   (define idx (keyword-index kw 'kw-datums-quoted))
+                   (unless idx
+                     (error 'name-sym "unknown keyword" kw))
+                   (when (vector-ref seen-kw? idx)
+                     (error 'name-sym "duplicate keyword argument" kw))
+                   (vector-set! seen-kw? idx #t)
+                   (vector-set! provided-kw-values idx v)
+                   (parse-tail (cddr xs))))
+
+               need-kw-check ...
+
+               (let* (req-bind ...
+                      opt-bind ...
+                      rest-bind ...
+                      kw-bind ...)
+                 body0
+                 body ...))
+
+             (define-syntax (name use-stx)
+               (syntax-case use-stx ()
+                 [id
+                  (identifier? #'id)
+                  #'proc]
+                 [(_ . args)
+                  (datum->syntax use-stx
+                                 (cons #'proc
+                                       (rewrite-call-args #'args 'name-sym))
+                                 use-stx
+                                 use-stx)]
+                 [_
+                  (raise-syntax-error 'name-sym "bad use of define/key function" use-stx)])))))]
+    [_
+     (raise-syntax-error who "expected `(define/key (name ...) body ...+)`" stx)]))

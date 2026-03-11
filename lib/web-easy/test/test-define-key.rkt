@@ -29,6 +29,30 @@
 (define f foo)
 (check-equal (f 3) 42 "first-class procedure value")
 
+;; Required keyword argument (no default).
+(define/key (needs-k x #:k k)
+  (+ x k))
+(check-equal (needs-k 4 #:k 9) 13 "required keyword argument")
+
+;; Positional optional arguments.
+(define/key (opt-pos x [y 10] [z (+ y 1)])
+  (+ x y z))
+(check-equal (opt-pos 1) 22 "optional positional defaults")
+(check-equal (opt-pos 1 2) 6 "optional positional one provided")
+(check-equal (opt-pos 1 2 3) 6 "optional positional all provided")
+
+;; Rest arguments.
+(define/key (resty x . r)
+  (list x r))
+(check-equal (resty 1) '(1 ()) "rest no extras")
+(check-equal (resty 1 2 3) '(1 (2 3)) "rest collects extras")
+
+;; Mixed positional optional + rest + keyword forms.
+(define/key (mixed a [b 10] #:k [k 1] #:req req . r)
+  (list a b r k req))
+(check-equal (mixed 5 #:req 9) '(5 10 () 1 9) "mixed defaults")
+(check-equal (mixed 5 6 7 8 #:k 2 #:req 9) '(5 6 (7 8) 2 9) "mixed full call")
+
 ;; Single evaluation checks.
 (define eval-count 0)
 (define (tick v)

@@ -7,6 +7,7 @@ files=(
   "define-key-negative/unknown-keyword.rkt"
   "define-key-negative/duplicate-keyword.rkt"
   "define-key-negative/missing-keyword-value.rkt"
+  "define-key-negative/missing-required-keyword.rkt"
   "define-key-negative/wrong-positional-arity.rkt"
 )
 
