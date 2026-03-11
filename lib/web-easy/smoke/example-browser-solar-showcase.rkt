@@ -11,7 +11,6 @@
 ;; Constants for page state.
 (define @theme        (@ 'solar2))
 (define @theme-status (@ "solar2"))
-(define @geometry-mode (@ 'exact))
 (define @selected-1   (@ 'home))
 (define @selected-2   (@ 'home))
 (define @selected-3   (@ 'home))
@@ -114,17 +113,6 @@
   (js-set-attribute! core-link     "href"  (theme-css-path/core))
   (js-set-attribute! general-link  "href"  (with-cache-bust (theme-css-path/general theme)))
   (js-set-attribute! showcase-link "href"  (with-cache-bust (theme-css-path/showcase theme)))
-  (void))
-
-;; apply-geometry-mode! : any/c -> void?
-;;   Set html data attribute for showcase geometry mode.
-(define (apply-geometry-mode! mode)
-  (define html-node (js-ref/extern (js-document-body) "parentElement"))
-  (define value
-    (case mode
-      [(exact) "exact"]
-      [else    "comfortable"]))
-  (js-set-attribute! html-node "data-showcase-geometry" value)
   (void))
 
 ;; nav-item-button : observable? symbol? string? -> view?
@@ -325,33 +313,25 @@
         (with-id "theme-showcase-hero"
           (with-class "showcase-topbar"
             (card #f #f
-             (with-class "showcase-topbar-inner"
-               (inline
-                (with-class "showcase-brand"
-                  (stack
-                   (with-class "showcase-brand-title"
-                     (text "web-easy"))
-                   (with-class "showcase-brand-subtitle"
-                     (text "Solar showcase"))))
-                (spacer)
-                (with-class "showcase-topbar-controls"
-                  (stack
-                   (with-class "showcase-controls-label"
-                     (text "Theme"))
-                   (with-class "showcase-theme-choice"
-                     (choice '((solar2 "Solar 2") (solar "Solar") (light "Light") (dark "Dark"))
-                             @theme
-                             (lambda (next-theme)
-                               (:= @theme (normalize-theme-id next-theme))
-                               (:= @theme-status (~a next-theme))))
-                   )
-                   (with-class "showcase-controls-label"
-                     (text "Geometry"))
-                   (with-class "showcase-theme-choice"
-                     (choice '((comfortable "Comfortable") (exact "Exact"))
-                             @geometry-mode
-                             (lambda (next-mode)
-                               (:= @geometry-mode next-mode))))))))))))
+              (with-class "showcase-topbar-inner"
+                (inline
+                 (with-class "showcase-brand"
+                   (stack
+                    (with-class "showcase-brand-title"
+                      (text "web-easy"))
+                    (with-class "showcase-brand-subtitle"
+                      (text "Solar showcase"))))
+                 (spacer)
+                 (with-class "showcase-topbar-controls"
+                   (stack
+                    (with-class "showcase-controls-label"
+                      (text "Theme"))
+                    (with-class "showcase-theme-choice"
+                      (choice '((solar2 "Solar 2") (solar "Solar") (light "Light") (dark "Dark"))
+                              @theme
+                              (lambda (next-theme)
+                                (:= @theme (normalize-theme-id next-theme))
+                                (:= @theme-status (~a next-theme))))))))))))
         ;;;
         ;;; Hero
         ;;;
@@ -1216,19 +1196,15 @@
                   '(("A" "1") ("B" "2") ("C" "3"))
                   'compact
                   '((variants . (sm))
-                    (caption . "Small table")))))))
+                    (caption . "Small table"))))))))
 
 (define theme-core-link-node     (install-theme-link! "we-theme-core-css"))
 (define theme-general-link-node  (install-theme-link! "we-theme-external-css"))
 (define theme-showcase-link-node (install-theme-link! "we-theme-showcase-css"))
 
 (apply-theme! theme-core-link-node theme-general-link-node theme-showcase-link-node (obs-peek @theme))
-(apply-geometry-mode! (obs-peek @geometry-mode))
 (obs-observe! @theme
               (lambda (next-theme)
                 (apply-theme! theme-core-link-node theme-general-link-node theme-showcase-link-node next-theme)))
-(obs-observe! @geometry-mode
-              (lambda (next-mode)
-                (apply-geometry-mode! next-mode)))
 
 (mount-renderer! app-renderer)

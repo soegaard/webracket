@@ -188,7 +188,7 @@ html.we-theme-solar2 select,
 html.we-theme-solar2 textarea {
   background:    var(--we-bg);
   color:         var(--we-fg);
-  border:        1px solid var(--we-border);
+  border:        0;
   border-radius: var(--we-radius-sm);
   padding:       6px 8px;
 }
@@ -200,7 +200,7 @@ html.we-theme-solar2 .we-navigation-bar {
   align-items:   center;
   gap:           4px;
   padding:       4px 8px;
-  border:        1px solid var(--we-border-soft);
+  border:        0;
   border-radius: var(--we-radius);
   background:    var(--we-bg-subtle);
 }
