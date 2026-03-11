@@ -983,6 +983,35 @@ html.we-theme-solar2 :is(.showcase-card-bg-dark, .showcase-card-border-dark) {
   --we-showcase-card-border: #214f5c;
 }
 
+/* Showcase cards: Bootswatch examples constrain cards and use variant-specific chrome. */
+html.we-theme-solar2 .we-card[class*="showcase-card-bg-"],
+html.we-theme-solar2 .we-card[class*="showcase-card-border-"],
+html.we-theme-solar2 [class*="showcase-card-bg-"] .we-card,
+html.we-theme-solar2 [class*="showcase-card-border-"] .we-card {
+  max-width: 20rem;
+  margin-bottom: 1rem;
+}
+
+html.we-theme-solar2 [class*="showcase-card-bg-"] .we-card-header {
+  background: rgba(7, 54, 66, 0.25);
+}
+
+html.we-theme-solar2 [class*="showcase-card-bg-"].we-card,
+html.we-theme-solar2 [class*="showcase-card-bg-"] .we-card {
+  background:    var(--we-showcase-card-bg);
+  border-color: rgba(0, 43, 54, 0.95);
+  color:        var(--we-showcase-card-fg, var(--we-light-emphasis));
+}
+
+html.we-theme-solar2 [class*="showcase-card-bg-"] :is(.we-card-header, .we-card-body) {
+  color: var(--we-showcase-card-fg, var(--we-light-emphasis));
+}
+
+html.we-theme-solar2 [class*="showcase-card-border-"].we-card,
+html.we-theme-solar2 [class*="showcase-card-border-"] .we-card {
+  border-color: var(--we-showcase-card-border);
+}
+
 /* Navs section: Bootstrap Solar parity for tabs/pills/breadcrumb/pagination/underline. */
 html.we-theme-solar2 #solar2-navs-section {
   --we-nav-link-color:          var(--bs-link-color, var(--we-success));
