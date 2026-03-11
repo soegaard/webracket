@@ -280,9 +280,32 @@ Current compatibility notes:
 
 Rationale:
 
-- Positional optional args avoid keyword support assumptions that may not hold in current WebRacket.
+- Native keyword-call syntax is still constrained in WebRacket, so keyword-capable APIs use
+  syntax-layer helpers (`define/key` and `call/key`) instead of relying on direct runtime
+  keyword argument support.
 - Alists avoid dependence on hash APIs that are not consistently available in the current dialect/runtime.
 - The in-memory DOM model lets us validate reactive semantics and lifecycle behavior before binding to browser DOM FFI details.
+
+## define/key Formal Grammar
+
+`lib/web-easy/define.rkt` provides `define/key` and `call/key` for keyword-capable function definitions and calls.
+
+Supported `define/key` header grammar:
+
+- `(define/key (name req ... [opt default] ... . rest #:kw req-id #:kw2 [opt-id default2] ...) body ...+)`
+- Required positional args (`req`) must appear first.
+- Optional positional args (`[opt default]`) follow required positional args.
+- Rest arg (`. rest`) is optional and appears before keyword clauses.
+- Keyword clauses are either required (`#:kw req-id`) or optional (`#:kw [opt-id default]`).
+
+Call forms:
+
+- Direct call to macro-bound name: `(name arg ... #:kw v ...)`
+- First-class/aliased/higher-order call via helper macro: `(call/key f arg ... #:kw v ...)`
+
+Limitations:
+
+- Keyword tokens are consumed by macro expansion. For non-macro callees, use `call/key` instead of raw `(f ... #:kw ...)`.
 
 ## Layout Primitives
 
@@ -1058,6 +1081,7 @@ Core vs Theme rule (strict):
 Core utility note:
 - `we-flow` is now part of the structural core layer (`.we-flow > * + *`) for uniform sibling spacing.
 - Use `with-class "we-flow"` in pages/examples instead of page-specific adjacent-sibling spacing selectors when the intent is generic vertical rhythm.
+- `we-menu-bar` shared row mechanics (`display/flex-wrap/align-items`) are now in core; theme styles keep only menu-bar visual density and skin.
 
 ## Theme Contract Test Architecture
 
@@ -1072,6 +1096,7 @@ Theme contracts use a dedicated runtime testing layer to keep token plumbing che
 5. Solar section parity can be run and summarized per section with:
    - `smoke/check-solar-section-parity.sh`
    - this captures section screenshots/metrics and prints per-section RMSE via `check-solar-polish-summary.mjs`.
+6. Solar2 list-group clipping/alignment now has a browser contract page (`smoke/test-browser-solar2-list-group-contract.html`) included in the core contract dashboard lane.
 
 Rationale:
 

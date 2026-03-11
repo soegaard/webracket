@@ -249,10 +249,7 @@ html.we-theme-solar .we-toolbar-group {
 /* 3) Menus                                                                     */
 /* -------------------------------------------------------------------------- */
 html.we-theme-solar .we-menu-bar {
-  display: flex;
-  flex-wrap: wrap;
   gap: 6px;
-  align-items: center;
   padding: 5px;
   border: 1px solid var(--we-border-menu);
   border-radius: 5px;

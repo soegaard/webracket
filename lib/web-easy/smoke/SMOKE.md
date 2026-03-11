@@ -82,7 +82,8 @@ Fast local headless gate (contract + theme + guard, skips full dashboard run):
 | Solar post-cards diff gate (`containers/cards/accordions/dialogs`) | `./check-solar-post-cards.sh` |
 | Solar list-group contract (computed style) | `node ./check-solar-list-group-contract.mjs` |
 | Solar list-group zoom/DPR contract | `node ./check-solar-listgroup-zoom-contract.mjs` |
-| Solar section parity report (per-section RMSE) | `./check-solar-section-parity.sh` |
+| Solar2 list-group browser contract page (dashboard-ready) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-solar-showcase-compile.sh test-browser-solar2-list-group-contract.html` |
+| Solar section parity report + threshold gate | `./check-solar-section-parity.sh` |
 | Solar overlays contract (accordions/dialogs) | `node ./check-solar-overlays-contract.mjs` |
 | Solar accordion parity (computed + screenshot) | `./check-solar-accordion-parity.sh` |
 | Solar navbar parity sweep (all variants) | `./check-solar-navbar-parity.sh` |

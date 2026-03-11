@@ -86,10 +86,7 @@ html.we-theme-dark body {
 /* -------------------------------------------------------------------------- */
 /* Menus are a bar of labels with popup lists, not a row of chip buttons. */
 html.we-theme-dark .we-menu-bar {
-  display: flex;
-  flex-wrap: wrap;
   gap: 2px;
-  align-items: center;
   padding: 2px 4px;
   border: 1px solid #4f5b72;
   border-radius: 4px;

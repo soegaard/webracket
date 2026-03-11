@@ -252,7 +252,8 @@
          entries))
   (define group-view
     (with-class "showcase-list-group-panel"
-      (apply stack rows)))
+      (with-class "we-stack-gap-0"
+        (apply stack rows))))
   (if extra-class
       (with-class (string-append "we-list-group " extra-class)
         group-view)
@@ -266,35 +267,37 @@
   (with-class (if active?
                   "we-list-group-item showcase-rich-list-item is-active"
                   "we-list-group-item showcase-rich-list-item")
-    (stack
-     (inline
-      (with-class "showcase-rich-list-heading"
-        (text heading))
-      (spacer)
-      (with-class "showcase-rich-list-meta"
-        (text meta)))
-     (with-class "showcase-rich-list-body"
-       (text body))
-     (with-class "showcase-rich-list-footnote"
-       (text footnote)))))
+    (with-class "we-stack-gap-1"
+      (stack
+       (inline
+        (with-class "showcase-rich-list-heading"
+          (text heading))
+        (spacer)
+        (with-class "showcase-rich-list-meta"
+          (text meta)))
+       (with-class "showcase-rich-list-body"
+         (text body))
+       (with-class "showcase-rich-list-footnote"
+         (text footnote))))))
 
 ;; showcase-rich-list-group : -> view?
 ;;   Build the rich list-group sample used in the Containers section.
 (define (showcase-rich-list-group)
   (with-class "we-list-group showcase-rich-list-group"
     (with-class "showcase-list-group-panel"
-      (stack
-       (showcase-rich-list-item
-        "List group item heading"
-        "3 days ago"
-        "Donec id elit non mi porta gravida at eget metus. Maecenas sed diam eget risus varius blandit."
-        "Donec id elit non mi porta."
-        #t)
-       (showcase-rich-list-item
-        "List group item heading"
-        "3 days ago"
-        "Donec id elit non mi porta gravida at eget metus. Maecenas sed diam eget risus varius blandit."
-        "Donec id elit non mi porta.")))))
+      (with-class "we-stack-gap-0"
+        (stack
+         (showcase-rich-list-item
+          "List group item heading"
+          "3 days ago"
+          "Donec id elit non mi porta gravida at eget metus. Maecenas sed diam eget risus varius blandit."
+          "Donec id elit non mi porta."
+          #t)
+         (showcase-rich-list-item
+          "List group item heading"
+          "3 days ago"
+          "Donec id elit non mi porta gravida at eget metus. Maecenas sed diam eget risus varius blandit."
+          "Donec id elit non mi porta."))))))
 
 ;; showcase-accordion-body : string? string? -> view?
 ;;   Build accordion panel text with lead sentence plus full reference-style copy.
@@ -304,6 +307,13 @@
      (text lead))
    (with-class "showcase-accordion-copy"
      (text copy))))
+
+;; section-heading : string? string? -> view?
+;;   Build a standardized top-level showcase section heading.
+(define (section-heading section-id title)
+  (with-id section-id
+    (with-class "showcase-section-title"
+      (heading 1 title))))
 
 (define app-renderer
   (render
@@ -361,9 +371,7 @@
         (with-class "showcase-main"
           (stack
            ;; Navbars
-           (with-id "solar2-navbars"
-             (with-class "showcase-section-title"
-              (heading 1 "Navbars")))
+           (section-heading "solar2-navbars" "Navbars")
            (with-class "we-flow"
              (stack
               (with-class "we-variant-primary"
@@ -376,9 +384,7 @@
                 (navbar-demo @selected-4 @query-4))))
 
            ;; Buttons
-           (with-id "solar2-buttons"
-             (with-class "showcase-section-title"
-              (heading 1 "Buttons")))
+           (section-heading "solar2-buttons" "Buttons")
            (with-class "we-button-row"
              (inline
               (showcase-button "Primary"   "we-btn-primary"   #f)
@@ -435,9 +441,7 @@
              (showcase-button "Block button" "we-btn-primary" #f))
 
            ;; Typography
-           (with-id "solar2-typography"
-             (with-class "showcase-section-title"
-              (heading 1 "Typography")))
+           (section-heading "solar2-typography" "Typography")
            (with-class "showcase-typography-grid"
              (grid
               3
@@ -541,9 +545,7 @@
              (text "(define app\n  (render\n   (window\n    (vpanel (text \"A\") (text \"B\")))))"))
 
            ;; Tables
-           (with-id "solar2-tables"
-             (with-class "showcase-section-title"
-              (heading 1 "Tables")))
+           (section-heading "solar2-tables" "Tables")
            (table '("Type" "Column heading" "Column heading" "Column heading")
                   '(("Active"    "Column content" "Column content" "Column content")
                     ("Default"   "Column content" "Column content" "Column content")
@@ -561,9 +563,7 @@
                     (row-header-column . 0)))
 
            ;; Forms
-           (with-id "solar2-forms"
-             (with-class "showcase-section-title"
-              (heading 1 "Forms")))
+           (section-heading "solar2-forms" "Forms")
            (with-class "showcase-forms-grid"
              (grid
               2
@@ -773,9 +773,7 @@
            ;; Navs
            (with-id "solar2-navs-section"
              (stack
-              (with-id "solar2-navs"
-                (with-class "showcase-section-title"
-                 (heading 1 "Navs")))
+              (section-heading "solar2-navs" "Navs")
               (grid
                2
                (stack
@@ -841,9 +839,7 @@
            ;; Indicators
            (with-id "solar2-indicators-section"
              (stack
-              (with-id "solar2-indicators"
-                (with-class "showcase-section-title"
-                 (heading 1 "Indicators")))
+              (section-heading "solar2-indicators" "Indicators")
               (heading 2 "Alerts")
               (with-class "showcase-alert-heading showcase-alert-major"
                 (alert-rich
@@ -917,9 +913,7 @@
            ;; Progress
            (with-id "solar2-progress-section"
              (stack
-              (with-id "solar2-progress"
-                (with-class "showcase-section-title"
-                 (heading 1 "Progress")))
+              (section-heading "solar2-progress" "Progress")
               (heading 3 "Basic")
               (progress-track
                (progress-fill 25 'default))
@@ -943,9 +937,7 @@
               (progress-track (progress-fill 75 'default #t #t))))
 
            ;; Containers
-           (with-id "solar2-containers"
-             (with-class "showcase-section-title"
-              (heading 1 "Containers")))
+           (section-heading "solar2-containers" "Containers")
            (heading 2 "List groups")
            (grid
             3
@@ -972,9 +964,7 @@
              (showcase-rich-list-group)))
 
            ;; Cards
-           (with-id "solar2-cards"
-             (with-class "showcase-section-title"
-              (heading 1 "Cards")))
+           (section-heading "solar2-cards" "Cards")
            (heading 2 "Cards")
            (with-id "solar2-cards-body"
             (grid
@@ -1077,9 +1067,7 @@
                       (link "Another link" "#")))))))
 
            ;; Accordions
-           (with-id "solar2-accordions"
-             (with-class "showcase-section-title"
-              (heading 1 "Accordions")))
+           (section-heading "solar2-accordions" "Accordions")
            (with-id "solar2-accordions-body"
             (with-class "showcase-accordion-wrap"
              (accordion
@@ -1102,9 +1090,7 @@
                       "It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the .accordion-body, though the transition does limit overflow."))))))
 
            ;; Dialogs
-           (with-id "solar2-dialogs"
-             (with-class "showcase-section-title"
-              (heading 1 "Dialogs")))
+           (section-heading "solar2-dialogs" "Dialogs")
            (with-id "solar2-dialogs-body"
             (with-class "showcase-dialogs-grid"
              (grid
@@ -1207,9 +1193,7 @@
              (text @button-log))
 
            ;; Appendix
-           (with-id "solar2-appendix"
-             (with-class "showcase-section-title"
-              (heading 1 "Appendix: Table Variants")))
+           (section-heading "solar2-appendix" "Appendix: Table Variants")
            (table '("Name" "Status" "ETA")
                   @table-rows
                   'compact

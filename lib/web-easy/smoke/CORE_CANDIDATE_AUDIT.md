@@ -16,7 +16,7 @@ Scope: remaining duplicated selectors across:
 
 | Selector | Seen In | Classification | Why | Recommendation |
 | --- | --- | --- | --- | --- |
-| `.we-menu-bar` | light/dark/solar | mixed | contains flex/align + visual skin | keep in themes for now; split into `layout` + `skin` if we want deeper core extraction |
+| `.we-menu-bar` | light/dark/solar/solar2 | mixed | all themes share row mechanics plus per-theme skin values | first safe slice completed: shared mechanics moved to core; keep skin in themes |
 | `.we-menu-popup` | light/dark/solar | mixed | anchor/size mechanics + border/bg/shadow | keep mixed now; possible future split (`top/min-width/gap` decision needed) |
 | `.we-menu-label` | light/dark/solar | mixed | interactive element sizing + visual style | keep in themes |
 | `.we-menu-label:hover` | light/dark/solar | visual | hover color/border skin | keep in themes |
@@ -52,6 +52,23 @@ Scope: remaining duplicated selectors across:
 2. `.we-accordion-trigger` mechanics (`width/display/align-items/justify-content/text-align`) moved to core.
 3. `.we-accordion-trigger::after` shared mechanics (`display`, `margin-left`, `transition-property`, `transition-timing-function`) moved to core.
 4. `.we-flow > * + *` vertical rhythm helper moved to core; Solar2 showcase now uses `we-flow` instead of page-only sibling-spacing selectors.
+5. `.we-menu-bar` shared row mechanics (`display/flex-wrap/align-items`) moved to core; theme files now own only visual density/skin values for menu bars.
+
+## Concrete Menu Split Plan
+
+Goal: split structural menu mechanics from visual skin without changing behavior.
+
+1. Extracted now (safe):
+   - `.we-menu-bar` row mechanics in core:
+     - `display`, `flex-wrap`, `align-items`
+2. Keep in themes (visual density/skin):
+   - `.we-menu-bar` `gap`, `padding`, `border`, `border-radius`, `background`
+3. Next candidate (pending decision):
+   - `.we-menu-popup` anchor/flow mechanics:
+     - candidate structural fields: `top`, `min-width`, `gap`
+   - blocked on policy choice: whether popup offset/width is global behavior or theme density.
+4. Guardrail:
+   - any future extraction must preserve dashboard contracts and Solar parity RMSE thresholds.
 
 ## Safe Next Extraction Candidates
 
