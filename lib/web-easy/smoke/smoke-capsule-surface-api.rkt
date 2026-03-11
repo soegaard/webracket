@@ -91,6 +91,7 @@
                        'lg
                        (list (cons 'title "Dialog title")
                              (cons 'description "Dialog description")
+                             (cons 'show-close? #t)
                              (cons 'footer (button "dialog-footer-action" (lambda () (void)))))
                        (vpanel
                         (text "dialog-lg")
@@ -100,6 +101,7 @@
                       'sm
                       (list (cons 'title "Modal title")
                             (cons 'description "Modal description")
+                            (cons 'show-close? #t)
                             (cons 'footer (button "modal-footer-action" (lambda () (void)))))
                       (vpanel
                        (text "modal-sm")

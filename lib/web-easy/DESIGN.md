@@ -288,7 +288,7 @@ Rationale:
 
 ## define/key Formal Grammar
 
-`lib/web-easy/define.rkt` provides `define/key` and `call/key` for keyword-capable function definitions and calls.
+`libs/define.rkt` provides `define/key` and `call/key` for keyword-capable function definitions and calls.
 
 Supported `define/key` header grammar:
 
@@ -835,15 +835,35 @@ Stable styling contract (current baseline):
 |---|---|---|---|
 | Buttons/inputs/select | `button`, `input`, `textarea`, `choice`, `checkbox` | `.we-button`, `.we-input`, `.we-textarea`, `.we-choice`, `.we-checkbox` | `--we-bg`, `--we-bg-hover`, `--we-border-soft`, `--we-focus`, `--we-fg`, `--we-input-placeholder` |
 | Range/progress | `slider`, `progress` | `.we-slider`, `.we-progress`, `.we-progress-info`, `.we-progress-success`, `.we-progress-warn`, `.we-progress-error` | `--we-fg`, `--we-focus`, `--we-progress-success`, `--we-progress-warn`, `--we-progress-error` |
-| Alert/badge/spinner | `alert`, `badge`, `spinner` | `.we-alert`, `.we-alert-*`, `.we-badge`, `.we-badge-*`, `.we-spinner`, `.we-spinner-icon`, `.we-spinner-label` | `--we-bg-subtle`, `--we-border-soft`, `--we-fg`, `--we-border-strong` |
+| Alert/badge/spinner | `alert`, `alert-title`, `alert-body`, `alert-link`, `alert-dismiss`, `badge`, `spinner` | `.we-alert`, `.we-alert-*`, `.we-alert-title`, `.we-alert-body`, `.we-alert-link`, `.we-alert-dismiss`, `.we-badge`, `.we-badge-*`, `.we-spinner`, `.we-spinner-icon`, `.we-spinner-label` | `--we-bg-subtle`, `--we-border-soft`, `--we-fg`, `--we-border-strong` |
 | Toast/collapse/accordion | `toast`, `collapse`, `accordion`, `accordion-trigger` | `.we-toast`, `.we-toast-*`, `.we-collapse`, `.is-open`, `.we-accordion`, `.we-accordion-trigger`, `.we-accordion-content` | `--we-bg`, `--we-bg-subtle`, `--we-bg-selected`, `--we-bg-hover`, `--we-border-soft`, `--we-focus`, `--we-shadow` |
 | Pagination/breadcrumb/list-group | `pagination`, `page-button`, `breadcrumb`, `breadcrumb-item`, `list-group`, `list-group-item` | `.we-pagination`, `.we-page-btn`, `.we-breadcrumb`, `.we-breadcrumb-item`, `.we-list-group`, `.we-list-group-item`, `.is-current` | `--we-bg`, `--we-bg-selected`, `--we-bg-hover`, `--we-border-soft`, `--we-fg`, `--we-fg-muted`, `--we-focus` |
 | Headings/lead | `heading`, `display-heading`, `heading-with-subtitle`, `display-heading-with-subtitle`, `heading-title`, `heading-subtitle`, `lead` | `.we-heading`, `.we-display-heading`, `.we-heading-with-subtitle`, `.we-display-heading-with-subtitle`, `*-align-left/center/right`, `*-space-compact/normal/loose`, `.we-heading-subtitle`, `.we-lead` | `--we-heading-fg`, `--we-display-heading-fg`, `--we-heading-subtitle-fg`, `--we-lead-fg`, `--we-heading-space-compact/normal/loose` |
-| Card/navigation | `card`, `card-header`, `card-body`, `card-footer`, `navigation-bar` | `.we-card`, `.we-card-header`, `.we-card-body`, `.we-card-footer`, `.we-navigation-bar` | `--we-bg`, `--we-bg-subtle`, `--we-border-soft`, `--we-border-menu`, `--we-fg` |
+| Card/navigation | `card`, `card-header`, `card-subtitle`, `card-media`, `card-body`, `card-actions`, `card-footer`, `navigation-bar` | `.we-card`, `.we-card-header`, `.we-card-subtitle`, `.we-card-media`, `.we-card-body`, `.we-card-actions`, `.we-card-footer`, `.we-navigation-bar` | `--we-bg`, `--we-bg-subtle`, `--we-border-soft`, `--we-border-menu`, `--we-fg` |
 | Table | `table`, `table-row`, `table-header-cell`, `table-data-cell` | `.we-table`, `.we-table-header-cell`, `.we-table-data-cell`, `.we-density-normal`, `.we-density-compact`, `.we-align-left`, `.we-align-center`, `.we-align-right` | `--we-border-muted`, `--we-border-soft`, `--we-fg` |
 | Tabs | `tab-panel`, `tab-list`, `tab-button`, `tab-content` | `.we-tab-panel`, `.we-tab-list`, `.we-tab-btn`, `.we-tab-content`, `.is-selected`, `.is-disabled` | `--we-bg`, `--we-bg-selected`, `--we-bg-disabled`, `--we-border-muted`, `--we-border-strong`, `--we-focus`, `--we-tab-active-border` |
-| Dialog | `dialog`, `dialog-panel` | `.we-dialog`, `.we-dialog-panel`, `.is-open` | `--we-overlay`, `--we-bg`, `--we-border`, `--we-shadow`, `--we-focus` |
+| Dialog | `dialog`, `dialog-panel`, `dialog-header`, `dialog-title`, `dialog-close`, `dialog-body`, `dialog-description`, `dialog-footer`, `modal`, `modal-panel`, `modal-header`, `modal-title`, `modal-close`, `modal-body`, `modal-description`, `modal-footer` | `.we-dialog`, `.we-dialog-panel`, `.we-dialog-*`, `.we-modal`, `.we-modal-panel`, `.we-modal-*`, `.is-open` | `--we-overlay`, `--we-bg`, `--we-border`, `--we-shadow`, `--we-focus` |
 | Menu | `menu-bar`, `menu`, `menu-label`, `menu-popup`, `menu-item` | `.we-menu-bar`, `.we-menu`, `.we-menu-label`, `.we-menu-popup`, `.we-menu-item`, `.is-open` | `--we-bg-subtle`, `--we-bg`, `--we-bg-hover`, `--we-border-menu`, `--we-border`, `--we-border-soft`, `--we-focus`, `--we-fg`, `--we-menu-item-hover-bg`, `--we-menu-item-hover-fg` |
+
+Structured options for richer composition:
+
+- `alert-rich body title link-text link-href [level] [options]`
+  - options:
+    - `dismiss-action` -> procedure used by `alert-dismiss`.
+    - `dismiss-label` -> aria-label for dismiss affordance.
+- `card [title] [footer] [variants] [options] child ...`
+  - options:
+    - `subtitle` -> `card-subtitle`.
+    - `media` -> `card-media`.
+    - `actions` -> list rendered in `card-actions`.
+- `dialog open on-close [size] [options] child ...`
+- `modal open on-close [size] [options] child ...`
+  - options:
+    - `title` -> `*-title` inside `*-header`.
+    - `description` -> `*-description` inside `*-body` (also used for `aria-describedby`).
+    - `footer` -> `*-footer` content (text or view).
+    - `show-close?` -> include `*-close` button (default `#f`).
+    - `close-label` -> aria-label for close button.
 
 Heading API mapping:
 
@@ -879,12 +899,12 @@ Contract enforcement status:
 - containers: `window`, `vpanel`, `hpanel`, `group`, `list-view`, `if-view`, `cond-view`, `case-view`, `observable-view`, `collapse`, `spacer`
 - controls: `text`, `button`, `input`, `textarea`, `checkbox`, `choice`, `slider`, `progress`, `radios`, `image`
   - complex widgets:
-  - alert/badge/spinner: `alert`, `badge`, `spinner`
+  - alert/badge/spinner: `alert`, `alert-title`, `alert-body`, `alert-link`, `alert-dismiss`, `badge`, `spinner`
   - toast/collapse: `toast`, `collapse`
   - pagination/breadcrumb/list-group: `pagination`, `page-button`, `breadcrumb`, `breadcrumb-item`, `breadcrumb-sep`, `list-group`, `list-group-item`
-  - card/navigation: `card`, `card-header`, `card-body`, `card-footer`, `navigation-bar`
+  - card/navigation: `card`, `card-header`, `card-subtitle`, `card-media`, `card-body`, `card-actions`, `card-footer`, `navigation-bar`
   - menu: `menu-bar`, `menu`, `menu-label`, `menu-popup`, `menu-item`
-  - dialog: `dialog`, `dialog-panel`
+  - dialog/modal: `dialog`, `dialog-panel`, `dialog-header`, `dialog-title`, `dialog-close`, `dialog-body`, `dialog-description`, `dialog-footer`, `modal`, `modal-panel`, `modal-header`, `modal-title`, `modal-close`, `modal-body`, `modal-description`, `modal-footer`
   - table: `table`, `table-row`, `table-header-cell`, `table-data-cell`
   - tabs: `tab-panel`, `tab-list`, `tab-content`, `tab-button`
   - accordion: `accordion`, `accordion-section`, `accordion-trigger`, `collapse` (with `.we-accordion-content` panel class)

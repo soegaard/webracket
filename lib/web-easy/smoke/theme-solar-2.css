@@ -324,22 +324,10 @@ html.we-theme-solar2 .we-navigation-bar.is-expanded .we-navigation-bar-items {
 /* Alerts and badges: general Solar semantics (used beyond showcase pages). */
 html.we-theme-solar2 .we-alert {
   position:      relative;
-  padding:       1rem 2.8rem 1rem 1rem;
+  padding:       1rem;
   border:        1px solid transparent;
   border-radius: var(--we-radius);
   line-height:   1.5;
-}
-
-html.we-theme-solar2 .we-alert::after {
-  content:     "×";
-  position:    absolute;
-  top:         0.65rem;
-  right:       0.95rem;
-  font-size:   2rem;
-  line-height: 1;
-  font-weight: 300;
-  opacity:     0.75;
-  color:       currentColor;
 }
 
 html.we-theme-solar2 .we-alert .we-alert-title {
@@ -352,6 +340,34 @@ html.we-theme-solar2 .we-alert .we-alert-link {
   text-decoration:          underline;
   text-decoration-thickness: 1px;
   text-underline-offset:    0.1em;
+}
+
+html.we-theme-solar2 .we-alert .we-alert-dismiss {
+  position:       absolute;
+  top:            0.5rem;
+  right:          0.5rem;
+  display:        inline-flex;
+  align-items:    center;
+  justify-content: center;
+  width:          1.9rem;
+  height:         1.9rem;
+  border:         0;
+  border-radius:  var(--we-radius-sm);
+  background:     transparent;
+  color:          currentColor;
+  opacity:        0.8;
+  font-size:      1.55rem;
+  line-height:    1;
+  cursor:         pointer;
+}
+
+html.we-theme-solar2 .we-alert:has(.we-alert-dismiss) {
+  padding-right: 2.8rem;
+}
+
+html.we-theme-solar2 .we-alert .we-alert-dismiss:hover {
+  opacity: 1;
+  background: color-mix(in srgb, #000 8%, transparent);
 }
 
 html.we-theme-solar2 .we-alert-info    { --we-alert-tone: var(--we-info); }
@@ -832,6 +848,44 @@ html.we-theme-solar2 .we-card-body {
   background: transparent;
   color:      var(--we-fg);
   padding:    1rem;
+}
+
+html.we-theme-solar2 .we-card-subtitle {
+  display:     block;
+  margin:      -0.35rem 1rem 0.5rem 1rem;
+  color:       var(--we-fg-muted);
+  font-size:   0.95rem;
+  line-height: 1.35;
+}
+
+html.we-theme-solar2 .we-card-media {
+  display:      block;
+  border-bottom: 1px solid rgba(0, 43, 54, 0.95);
+  background:   color-mix(in srgb, var(--we-bg-subtle) 35%, transparent);
+}
+
+html.we-theme-solar2 .we-card-media .we-image {
+  display:   block;
+  max-width: 100%;
+  height:    auto;
+}
+
+html.we-theme-solar2 .we-card-media .we-text,
+html.we-theme-solar2 .we-card-media .we-card-media-text {
+  display:   block;
+  padding:   0.75rem 1rem;
+  color:     var(--we-fg-muted);
+  font-size: 0.95rem;
+}
+
+html.we-theme-solar2 .we-card-actions {
+  display:      flex;
+  flex-wrap:    wrap;
+  gap:          0.5rem;
+  align-items:  center;
+  padding:      0.75rem 1rem;
+  border-top:   1px solid rgba(0, 43, 54, 0.95);
+  background:   color-mix(in srgb, var(--we-bg-subtle) 22%, transparent);
 }
 
 html.we-theme-solar2 .we-list-group {
@@ -1626,9 +1680,58 @@ html.we-theme-solar2 .we-card-footer {
 /* Dialog/modal panel rhythm and depth. */
 html.we-theme-solar2 .we-dialog-panel,
 html.we-theme-solar2 .we-modal-panel {
-  padding: 1rem;
+  padding: 0;
   border-radius: 0.45rem;
   box-shadow: 0 0.75rem 32px rgba(0, 0, 0, 0.42);
+}
+
+html.we-theme-solar2 :is(.we-dialog-header, .we-modal-header) {
+  display:         flex;
+  align-items:     center;
+  justify-content: space-between;
+  gap:             0.75rem;
+  padding:         0.9rem 1rem;
+  border-bottom:   1px solid var(--we-border);
+  background:      color-mix(in srgb, var(--we-bg-subtle) 32%, transparent);
+}
+
+html.we-theme-solar2 :is(.we-dialog-title, .we-modal-title) {
+  margin:      0;
+  color:       var(--we-light-emphasis);
+  font-size:   1.1rem;
+  font-weight: 600;
+}
+
+html.we-theme-solar2 :is(.we-dialog-body, .we-modal-body) {
+  padding: 1rem;
+}
+
+html.we-theme-solar2 :is(.we-dialog-description, .we-modal-description) {
+  margin:        0 0 0.75rem 0;
+  color:         var(--we-fg-muted);
+  line-height:   1.45;
+}
+
+html.we-theme-solar2 :is(.we-dialog-footer, .we-modal-footer) {
+  display:       flex;
+  flex-wrap:     wrap;
+  gap:           0.5rem;
+  align-items:   center;
+  padding:       0.85rem 1rem;
+  border-top:    1px solid var(--we-border);
+  background:    color-mix(in srgb, var(--we-bg-subtle) 18%, transparent);
+}
+
+html.we-theme-solar2 :is(.we-dialog-close, .we-modal-close) {
+  border:        0;
+  background:    transparent;
+  color:         var(--we-fg-muted);
+  opacity:       0.9;
+}
+
+html.we-theme-solar2 :is(.we-dialog-close, .we-modal-close):hover {
+  color:      var(--we-fg);
+  background: color-mix(in srgb, var(--we-bg-hover) 60%, transparent);
 }
 
 html.we-theme-solar2 .we-table.we-table-borderless th,
