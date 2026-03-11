@@ -467,16 +467,32 @@
                              (cons 'level level))
             '()))
 
-    ;; alert-rich : (or/c string? observable?) (or/c string? observable? false/c) (or/c string? observable? false/c) (or/c string? observable? false/c) [(or/c symbol? observable?)] -> view?
+    ;; options-alist? : any/c -> boolean?
+    ;;   Check whether value is an options alist with symbol keys.
+    (define (options-alist? value)
+      (and (list? value)
+           (let loop ([rest value])
+             (cond
+               [(null? rest) #t]
+               [(and (pair? (car rest))
+                     (symbol? (caar rest)))
+                (loop (cdr rest))]
+               [else #f]))))
+
+    ;; alert-rich : (or/c string? observable?) (or/c string? observable? false/c) (or/c string? observable? false/c) (or/c string? observable? false/c) [(or/c symbol? observable?)] [list?] -> view?
     ;;   Construct a rich alert with required body and optional title/link text/link href.
     ;;   Optional parameter level defaults to 'info.
-    (define (alert-rich body title link-text link-href [level 'info])
+    ;;   Optional parameter options defaults to '() and accepts:
+    ;;     dismiss-action -> procedure to dismiss the alert.
+    ;;     dismiss-label  -> string/observable label for dismiss affordance.
+    (define (alert-rich body title link-text link-href [level 'info] [options '()])
       (view kind/alert-rich
             (list (cons 'body body)
                   (cons 'title title)
                   (cons 'link-text link-text)
                   (cons 'link-href link-href)
-                  (cons 'level level))
+                  (cons 'level level)
+                  (cons 'options options))
             '()))
 
     ;; toast : (or/c boolean? observable?) (-> any/c) (or/c string? observable?) [(or/c symbol? observable?)] [(or/c string? observable? false/c)] [(or/c boolean? observable?)] [number?] [boolean?] -> view?
@@ -804,11 +820,13 @@
                                  (cons 'else else-view))
             '()))
 
-    ;; tab-panel : (or/c any/c observable?) (listof (cons any/c view?)) -> view?
-    ;;   Construct a selected-tab branch view keyed by tab id.
-    (define (tab-panel selected tabs)
+    ;; tab-panel : (or/c any/c observable?) (listof (cons any/c view?)) [any/c] -> view?
+    ;;   Construct a selected-tab branch view keyed by tab id, with optional style variants.
+    ;;   Optional parameter variants defaults to 'default.
+    (define (tab-panel selected tabs [variants 'default])
       (view kind/tab-panel (list (cons 'selected selected)
-                                 (cons 'tabs tabs))
+                                 (cons 'tabs tabs)
+                                 (cons 'variants variants))
             '()))
 
     ;; collapse : (or/c boolean? observable?) view? -> view?
@@ -833,18 +851,58 @@
                                  (cons 'side side))
             children))
 
-    ;; dialog : (or/c boolean? observable?) (-> any/c) view? ... -> view?
+    ;; dialog : (or/c boolean? observable?) (-> any/c) [symbol?] [list?] view? ... -> view?
     ;;   Construct a modal dialog that is visible when open is true and closes via on-close.
-    (define (dialog open on-close . children)
+    ;;   Optional parameter size defaults to 'md.
+    ;;   Optional parameter options defaults to '() and accepts:
+    ;;     title       -> string/observable title text.
+    ;;     description -> string/observable description text.
+    ;;     footer      -> string/observable or view content.
+    ;;     show-close? -> boolean toggle for top-right close button (default #f).
+    ;;     close-label -> string/observable aria-label for close button.
+    (define (dialog open on-close . args)
+      (define has-size?
+        (and (pair? args)
+             (symbol? (car args))
+             (memq (car args) '(sm md lg xl))))
+      (define size      (if has-size? (car args) 'md))
+      (define rest/args (if has-size? (cdr args) args))
+      (define has-options?
+        (and (pair? rest/args)
+             (options-alist? (car rest/args))))
+      (define options  (if has-options? (car rest/args) '()))
+      (define children (if has-options? (cdr rest/args) rest/args))
       (view kind/dialog (list (cons 'open open)
-                              (cons 'on-close on-close))
+                              (cons 'on-close on-close)
+                              (cons 'size size)
+                              (cons 'options options))
             children))
 
-    ;; modal : (or/c boolean? observable?) (-> any/c) view? ... -> view?
+    ;; modal : (or/c boolean? observable?) (-> any/c) [symbol?] [list?] view? ... -> view?
     ;;   Construct a modal container that mirrors dialog behavior.
-    (define (modal open on-close . children)
+    ;;   Optional parameter size defaults to 'md.
+    ;;   Optional parameter options defaults to '() and accepts:
+    ;;     title       -> string/observable title text.
+    ;;     description -> string/observable description text.
+    ;;     footer      -> string/observable or view content.
+    ;;     show-close? -> boolean toggle for top-right close button (default #f).
+    ;;     close-label -> string/observable aria-label for close button.
+    (define (modal open on-close . args)
+      (define has-size?
+        (and (pair? args)
+             (symbol? (car args))
+             (memq (car args) '(sm md lg xl))))
+      (define size      (if has-size? (car args) 'md))
+      (define rest/args (if has-size? (cdr args) args))
+      (define has-options?
+        (and (pair? rest/args)
+             (options-alist? (car rest/args))))
+      (define options  (if has-options? (car rest/args) '()))
+      (define children (if has-options? (cdr rest/args) rest/args))
       (view kind/modal (list (cons 'open open)
-                             (cons 'on-close on-close))
+                             (cons 'on-close on-close)
+                             (cons 'size size)
+                             (cons 'options options))
             children))
 
     ;; observable-view : (or/c any/c observable?) (-> any/c view?) [(-> any/c any/c boolean?)] -> view?
@@ -903,12 +961,14 @@
                              (cons 'height height))
             '()))
 
-    ;; dropdown : (or/c string? observable?) list? (-> any/c any/c) -> view?
+    ;; dropdown : (or/c string? observable?) list? (-> any/c any/c) [symbol?] -> view?
     ;;   Construct a dropdown menu from a label and entry rows: (list id label).
-    (define (dropdown label entries action)
+    ;;   Optional parameter placement defaults to 'down.
+    (define (dropdown label entries action [placement 'down])
       (view kind/dropdown (list (cons 'label label)
                                 (cons 'entries entries)
-                                (cons 'action action))
+                                (cons 'action action)
+                                (cons 'placement placement))
             '()))
 
     ;; carousel : list? (or/c number? observable?) (-> any/c any/c) [boolean?] [boolean?] -> view?
@@ -931,22 +991,42 @@
                                  (cons 'action action))
             '()))
 
-    ;; tooltip : (or/c string? observable?) view? -> view?
-    ;;   Construct a tooltip wrapper with message and trigger child view.
-    (define (tooltip message child)
-      (view kind/tooltip (list (cons 'message message))
+    ;; tooltip : (or/c string? observable?) view? [symbol?] -> view?
+    ;;   Construct a tooltip wrapper with message, trigger child view, and optional placement.
+    ;;   Optional parameter placement defaults to 'top.
+    (define (tooltip message child [placement 'top])
+      (view kind/tooltip (list (cons 'message message)
+                               (cons 'placement placement))
             (list child)))
 
-    ;; popover : (or/c string? observable?) view? ... -> view?
-    ;;   Construct a click-toggle popover with trigger label and body children.
-    (define (popover label . children)
-      (view kind/popover (list (cons 'label label))
+    ;; popover : (or/c string? observable?) [symbol?] view? ... -> view?
+    ;;   Construct a click-toggle popover with trigger label, optional placement, and body children.
+    ;;   Optional parameter placement defaults to 'bottom.
+    (define (popover label . args)
+      (define placement
+        (if (and (pair? args)
+                 (symbol? (car args))
+                 (memq (car args) '(top right bottom left)))
+            (car args)
+            'bottom))
+      (define children
+        (if (and (pair? args)
+                 (symbol? (car args))
+                 (memq (car args) '(top right bottom left)))
+            (cdr args)
+            args))
+      (view kind/popover (list (cons 'label label)
+                               (cons 'placement placement))
             children))
 
-    ;; card : [(or/c string? observable? false/c)] [(or/c string? observable? false/c)] any/c ... -> view?
+    ;; card : [(or/c string? observable? false/c)] [(or/c string? observable? false/c)] [any/c] [list?] any/c ... -> view?
     ;;   Construct a card with optional title/footer, optional variant(s), and body children.
     ;;   Optional parameter title defaults to #f.
     ;;   Optional parameter footer defaults to #f.
+    ;;   Optional parameter options defaults to '() and accepts:
+    ;;     subtitle -> string/observable subtitle rendered under title.
+    ;;     media    -> view content rendered before body.
+    ;;     actions  -> list of view values rendered in a card action row.
     (define (card [title #f] [footer #f] . args)
       (define (all-symbols? xs)
         (cond
@@ -962,10 +1042,16 @@
       (define variants (if has-variant?
                            (car args)
                            'default))
-      (define children (if has-variant? (cdr args) args))
+      (define rest/args (if has-variant? (cdr args) args))
+      (define has-options?
+        (and (pair? rest/args)
+             (options-alist? (car rest/args))))
+      (define options  (if has-options? (car rest/args) '()))
+      (define children (if has-options? (cdr rest/args) rest/args))
       (view kind/card (list (cons 'title title)
                             (cons 'footer footer)
-                            (cons 'variants variants))
+                            (cons 'variants variants)
+                            (cons 'options options))
             children))
 
     ;; navigation-bar : [(or/c symbol? observable?)] [(or/c boolean? observable?)] [symbol?] view? ... -> view?

@@ -632,6 +632,26 @@
 (check-equal (node-attr alert-rich-node 'class) "we-alert we-alert-info" "alert-rich info class")
 (check-equal (length (dom-node-children alert-rich-node)) 1 "alert-rich hides optional title/link")
 
+;; alert-rich supports dismiss action and dismiss label via options alist
+(define @alert-rich-dismissed (@ #f))
+(define r-alert-rich-dismiss
+  (render
+   (window
+    (vpanel
+     (alert-rich "Disk almost full"
+                 "Warning"
+                 "Details"
+                 "/alerts"
+                 'warning
+                 (list (cons 'dismiss-action (lambda () (:= @alert-rich-dismissed #t)))
+                       (cons 'dismiss-label "Close warning")))))))
+(define alert-rich-dismiss-node (node-child (node-child (renderer-root r-alert-rich-dismiss) 0) 0))
+(define alert-rich-dismiss-button (node-child alert-rich-dismiss-node 3))
+(check-equal (node-attr alert-rich-dismiss-button 'data-we-widget) "alert-dismiss" "alert-rich dismiss widget")
+(check-equal (node-attr alert-rich-dismiss-button 'aria-label) "Close warning" "alert-rich dismiss aria-label")
+(dom-node-click! alert-rich-dismiss-button)
+(check-equal (obs-peek @alert-rich-dismissed) #t "alert-rich dismiss action called")
+
 ;; badge renders level classes and updates text from observables
 (define @badge-text (@ "beta"))
 (define @badge-level (@ 'info))
@@ -757,6 +777,41 @@
 (:= @modal-open #t)
 (check-equal (node-attr modal-node 'class) "we-modal is-open" "modal open class")
 (check-equal (node-attr modal-node 'aria-hidden) "false" "modal visible aria")
+
+(define r-modal-lg
+  (render
+   (window
+    (vpanel
+     (modal #t
+            (lambda () (void))
+            'lg
+            (text "Modal body large"))))))
+(define modal-lg-node (node-child (node-child (renderer-root r-modal-lg) 0) 0))
+(define modal-lg-panel-node (node-child modal-lg-node 0))
+(check-equal (node-attr modal-lg-panel-node 'class) "we-dialog-panel we-dialog-size-lg" "modal lg panel class")
+
+;; modal supports structured options: title/description/footer/close
+(define r-modal-structured
+  (render
+   (window
+    (vpanel
+     (modal #t
+            (lambda () (void))
+            'md
+            (list (cons 'title "Modal title")
+                  (cons 'description "Modal description")
+                  (cons 'footer "Modal footer")
+                  (cons 'show-close? #t))
+            (text "Modal body"))))))
+(define modal-structured-node (node-child (node-child (renderer-root r-modal-structured) 0) 0))
+(define modal-structured-panel (node-child modal-structured-node 0))
+(define modal-structured-header (node-child modal-structured-panel 0))
+(define modal-structured-body (node-child modal-structured-panel 1))
+(define modal-structured-footer (node-child modal-structured-panel 2))
+(check-equal (node-attr modal-structured-header 'data-we-widget) "modal-header" "modal structured header widget")
+(check-equal (node-attr modal-structured-body 'data-we-widget) "modal-body" "modal structured body widget")
+(check-equal (node-attr modal-structured-footer 'data-we-widget) "modal-footer" "modal structured footer widget")
+(check-equal (node-attr (node-child modal-structured-header 1) 'data-we-widget) "modal-close" "modal structured close widget")
 
 ;; pagination renders page buttons and updates current page on click
 (define @page (@ 2))
@@ -951,7 +1006,7 @@
 (check-equal (node-attr dialog-node 'data-we-widget) "dialog" "dialog data-we-widget attr")
 (check-equal (node-attr dialog-panel-node 'data-we-widget) "dialog-panel" "dialog panel data-we-widget attr")
 (check-equal (node-attr dialog-node 'class) "we-dialog" "dialog initial class")
-(check-equal (node-attr dialog-panel-node 'class) "we-dialog-panel" "dialog panel class")
+(check-equal (node-attr dialog-panel-node 'class) "we-dialog-panel we-dialog-size-md" "dialog panel class")
 (check-equal (node-attr dialog-panel-node 'aria-describedby)
              (node-attr dialog-first-text 'id)
              "dialog panel aria-describedby points at first text child id")
@@ -966,6 +1021,41 @@
 (check-equal (node-attr dialog-node 'class) "we-dialog" "dialog class after Escape close")
 (check-equal (node-attr dialog-node 'aria-hidden) "true" "dialog hidden after Escape")
 (check-equal (dom-node-text dialog-status-node) "dialog-status:esc-close" "dialog status after Escape close")
+
+(define r-dialog-sm
+  (render
+   (window
+    (vpanel
+     (dialog #t
+             (lambda () (void))
+             'sm
+             (text "Small dialog"))))))
+(define dialog-sm-node (node-child (node-child (renderer-root r-dialog-sm) 0) 0))
+(define dialog-sm-panel-node (node-child dialog-sm-node 0))
+(check-equal (node-attr dialog-sm-panel-node 'class) "we-dialog-panel we-dialog-size-sm" "dialog sm panel class")
+
+;; dialog supports structured options: title/description/footer/close
+(define r-dialog-structured
+  (render
+   (window
+    (vpanel
+     (dialog #t
+             (lambda () (void))
+             'md
+             (list (cons 'title "Dialog title")
+                   (cons 'description "Dialog description")
+                   (cons 'footer "Dialog footer")
+                   (cons 'show-close? #t))
+             (text "Dialog body"))))))
+(define dialog-structured-node (node-child (node-child (renderer-root r-dialog-structured) 0) 0))
+(define dialog-structured-panel (node-child dialog-structured-node 0))
+(define dialog-structured-header (node-child dialog-structured-panel 0))
+(define dialog-structured-body (node-child dialog-structured-panel 1))
+(define dialog-structured-footer (node-child dialog-structured-panel 2))
+(check-equal (node-attr dialog-structured-header 'data-we-widget) "dialog-header" "dialog structured header widget")
+(check-equal (node-attr dialog-structured-body 'data-we-widget) "dialog-body" "dialog structured body widget")
+(check-equal (node-attr dialog-structured-footer 'data-we-widget) "dialog-footer" "dialog structured footer widget")
+(check-equal (node-attr (node-child dialog-structured-header 1) 'data-we-widget) "dialog-close" "dialog structured close widget")
 
 ;; renderer-destroy stops future updates
 (define @count2 (@ 0))
@@ -1529,6 +1619,17 @@
 (:= @dropdown-label "More")
 (check-equal (dom-node-text dropdown-label-node) "More" "dropdown label observable update")
 
+(define r19c-up
+  (render
+   (window
+    (vpanel
+     (dropdown "More"
+               '((open "Open"))
+               (lambda (_id) (void))
+               'up)))))
+(define dropdown-up-node (node-child (node-child (renderer-root r19c-up) 0) 0))
+(check-equal (node-attr dropdown-up-node 'class) "we-dropdown we-dropdown-up" "dropdown up placement class")
+
 ;; tooltip wraps trigger content and tracks observable message text
 (define @tooltip-message (@ "Click to run"))
 (define r19tooltip
@@ -1542,7 +1643,7 @@
 (define tooltip-child-node (node-child tooltip-trigger-node 0))
 (define tooltip-bubble-node (node-child tooltip-node 1))
 (check-equal (node-attr tooltip-node 'data-we-widget) "tooltip" "tooltip data-we-widget attr")
-(check-equal (node-attr tooltip-node 'class) "we-tooltip" "tooltip base class")
+(check-equal (node-attr tooltip-node 'class) "we-tooltip we-tooltip-top" "tooltip base class")
 (check-equal (node-attr tooltip-trigger-node 'data-we-widget) "tooltip-trigger" "tooltip trigger data-we-widget attr")
 (check-equal (node-attr tooltip-bubble-node 'data-we-widget) "tooltip-bubble" "tooltip bubble data-we-widget attr")
 (check-equal (node-attr tooltip-bubble-node 'role) 'tooltip "tooltip bubble role attr")
@@ -1567,7 +1668,7 @@
 (define popover-backdrop-node (node-child popover-node 1))
 (define popover-panel-node (node-child popover-node 2))
 (check-equal (node-attr popover-node 'data-we-widget) "popover" "popover data-we-widget attr")
-(check-equal (node-attr popover-node 'class) "we-popover" "popover base class")
+(check-equal (node-attr popover-node 'class) "we-popover we-popover-bottom" "popover base class")
 (check-equal (node-attr popover-trigger-node 'data-we-widget) "popover-trigger" "popover trigger data-we-widget attr")
 (check-equal (node-attr popover-backdrop-node 'data-we-widget) "popover-backdrop" "popover backdrop data-we-widget attr")
 (check-equal (node-attr popover-panel-node 'data-we-widget) "popover-panel" "popover panel data-we-widget attr")
@@ -1588,6 +1689,25 @@
 (check-equal (node-attr popover-panel-node 'aria-hidden) "true" "popover panel hidden after Escape")
 (:= @popover-label "More")
 (check-equal (dom-node-text popover-trigger-node) "More" "popover trigger observable label update")
+
+;; tooltip/popover placement classes
+(define r19tooltip-left
+  (render
+   (window
+    (vpanel
+     (tooltip "left-tip"
+              (button "left" (lambda () (void)))
+              'left)))))
+(define tooltip-left-node (node-child (node-child (renderer-root r19tooltip-left) 0) 0))
+(check-equal (node-attr tooltip-left-node 'class) "we-tooltip we-tooltip-left" "tooltip left placement class")
+
+(define r19popover-right
+  (render
+   (window
+    (vpanel
+     (popover "Actions" 'right (text "body"))))))
+(define popover-right-node (node-child (node-child (renderer-root r19popover-right) 0) 0))
+(check-equal (node-attr popover-right-node 'class) "we-popover we-popover-right" "popover right placement class")
 
 ;; card renders optional header/footer and body children
 (define @card-title (@ "Profile"))
@@ -1618,6 +1738,27 @@
 (define card-footer-node-after (node-child card-node 2))
 (check-equal (dom-node-text card-header-node-after) "Account" "card header observable update")
 (check-equal (dom-node-text card-footer-node-after) "saved" "card footer observable update")
+
+;; card supports options for subtitle/media/actions structure
+(define r19d-options
+  (render
+   (window
+    (vpanel
+     (card "Title"
+           "Footer"
+           (list (cons 'subtitle "Subtitle")
+                 (cons 'media (text "media"))
+                 (cons 'actions (list (button "save" (lambda () (void)))
+                                      (button "cancel" (lambda () (void)))))
+                 )
+           (text "body"))))))
+(define card-options-node (node-child (node-child (renderer-root r19d-options) 0) 0))
+(define card-options-subtitle (node-child card-options-node 1))
+(define card-options-media (node-child card-options-node 2))
+(define card-options-actions (node-child card-options-node 4))
+(check-equal (node-attr card-options-subtitle 'data-we-widget) "card-subtitle" "card subtitle widget")
+(check-equal (node-attr card-options-media 'data-we-widget) "card-media" "card media widget")
+(check-equal (node-attr card-options-actions 'data-we-widget) "card-actions" "card actions widget")
 
 ;; menu-bar/menu/menu-item render and menu-item action
 (define @menu-label (@ "File"))
@@ -1727,6 +1868,7 @@
 (check-equal (dom-node-tag tab-panel-node) 'tab-panel "tab-panel node tag")
 (check-equal (node-attr tab-panel-node 'selected) 'info "tab-panel initial selected tab")
 (check-equal (node-attr tab-panel-node 'data-we-widget) "tab-panel" "tab-panel data-we-widget attr")
+(check-equal (node-attr tab-panel-node 'class) "we-tab-panel we-tab-style-default" "tab-panel default variant class")
 (check-equal (dom-node-tag tab-buttons-node) 'div "tab-panel header node tag")
 (check-equal (length (dom-node-children tab-panel-node)) 2 "tab-panel has only tablist and tabpanel children")
 (check-equal (node-attr tab-buttons-node 'data-we-widget) "tab-list" "tab-list data-we-widget attr")
@@ -1758,6 +1900,19 @@
 (check-equal (dom-node-text (node-child tab-content-node 0)) "Info tab" "tab-panel unmatched fallback to first tab")
 (check-equal (node-attr tab-button-0 'aria-selected) #f "tab-panel unmatched value clears selected header attr")
 (check-equal (node-attr tab-button-0 'class) "we-tab-btn" "tab-panel unmatched value clears selected class")
+
+(define r21-underline
+  (render
+   (window
+    (vpanel
+     (tab-panel (@ 'a)
+                (list (cons 'a (text "A"))
+                      (cons 'b (text "B")))
+                'underline)))))
+(define tab-panel-underline-node (node-child (node-child (renderer-root r21-underline) 0) 0))
+(check-equal (node-attr tab-panel-underline-node 'class)
+             "we-tab-panel we-tab-style-underline"
+             "tab-panel underline variant class")
 
 ;; tab-panel supports disabled tabs and keyboard navigation skips disabled entries
 (define @tab-disabled (@ 'left))

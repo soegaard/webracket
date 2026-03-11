@@ -94,6 +94,10 @@
       ".we-dialog,.we-modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;background:var(--we-overlay,rgba(0,0,0,0.45));z-index:2000;}\
        .we-dialog.is-open,.we-modal.is-open{display:flex;}\
        .we-dialog-panel{min-width:280px;max-width:520px;background:var(--we-bg,#fff);border:1px solid var(--we-border,#888);border-radius:8px;padding:14px;box-shadow:0 8px 22px var(--we-shadow,rgba(0,0,0,.28));}\
+       .we-dialog-panel.we-dialog-size-sm{max-width:360px;}\
+       .we-dialog-panel.we-dialog-size-md{max-width:520px;}\
+       .we-dialog-panel.we-dialog-size-lg{max-width:720px;}\
+       .we-dialog-panel.we-dialog-size-xl{max-width:960px;}\
        .we-dialog-panel:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.14)),var(--we-focus-tint,rgba(10,102,194,.14)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:2px;}") 
     (define legacy-visual-menu-style-text      ; CSS for popup menu keyboard focus visibility and layout.
       ".we-menu-item:focus,.we-menu-item:focus-visible{outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;background-color:var(--we-focus-tint,rgba(10,102,194,.20));position:relative;z-index:1;}\
@@ -106,19 +110,30 @@
        .we-dropdown .we-menu-label::after{content:'▾';display:inline-block;margin-left:var(--we-space-xs,2px);color:var(--we-fg-muted,#777);transition:transform .16s ease,color .16s ease;}\
        .we-dropdown .we-menu-label[aria-expanded='true']::after{transform:rotate(180deg);color:var(--we-fg,#111);}\
        .we-menu-popup{position:absolute;top:calc(100% + var(--we-space-xs,2px));left:0;min-width:150px;display:none;flex-direction:column;gap:0;padding:var(--we-space-xs,2px);border:1px solid var(--we-border,#888);border-radius:4px;background:var(--we-bg,#fff);z-index:1000;box-shadow:0 4px 10px var(--we-shadow,rgba(0,0,0,.18));}\
+       .we-dropdown.we-dropdown-up .we-menu-popup{top:auto;bottom:calc(100% + var(--we-space-xs,2px));left:0;right:auto;}\
+       .we-dropdown.we-dropdown-start .we-menu-popup{top:0;left:auto;right:calc(100% + var(--we-space-xs,2px));bottom:auto;}\
+       .we-dropdown.we-dropdown-end .we-menu-popup{top:0;left:calc(100% + var(--we-space-xs,2px));right:auto;bottom:auto;}\
        .we-menu-popup.is-open{display:flex;}\
        .we-menu-item{display:block;width:100%;text-align:left;padding:var(--we-space-xs,2px) var(--we-space-md,8px);background:var(--we-bg,#fff);color:var(--we-fg,#111);border:none;border-radius:3px;}\
        .we-menu-item:hover{background:var(--we-menu-item-hover-bg,var(--we-bg-hover,#e8e8e8));color:var(--we-menu-item-hover-fg,var(--we-fg,#111));}") 
     (define legacy-visual-tooltip-popover-style-text ; CSS for tooltip and popover trigger/panel visuals.
       ".we-tooltip{display:inline-flex;align-self:flex-start;position:relative;}\
        .we-tooltip-trigger{display:inline-flex;}\
-       .we-tooltip-bubble{position:absolute;left:50%;bottom:calc(100% + var(--we-space-xs,2px));transform:translate(-50%,2px);display:block;padding:var(--we-space-xs,2px) var(--we-space-md,8px);border:1px solid var(--we-border,#888);border-radius:4px;background:var(--we-bg,#fff);color:var(--we-fg,#111);white-space:nowrap;pointer-events:none;opacity:0;z-index:1200;box-shadow:0 4px 10px var(--we-shadow,rgba(0,0,0,.18));transition:opacity .14s ease,transform .14s ease;}\
-       .we-tooltip:hover .we-tooltip-bubble,.we-tooltip:focus-within .we-tooltip-bubble,.we-tooltip.is-open .we-tooltip-bubble{opacity:1;transform:translate(-50%,0);}\
+       .we-tooltip-bubble{position:absolute;left:50%;bottom:calc(100% + var(--we-space-xs,2px));transform:translate(-50%,0);display:block;padding:var(--we-space-xs,2px) var(--we-space-md,8px);border:1px solid var(--we-border,#888);border-radius:4px;background:var(--we-bg,#fff);color:var(--we-fg,#111);white-space:nowrap;pointer-events:none;opacity:0;z-index:1200;box-shadow:0 4px 10px var(--we-shadow,rgba(0,0,0,.18));transition:opacity .14s ease;}\
+       .we-tooltip.we-tooltip-left .we-tooltip-bubble{left:auto;right:calc(100% + var(--we-space-xs,2px));top:50%;bottom:auto;transform:translateY(-50%);}\
+       .we-tooltip.we-tooltip-right .we-tooltip-bubble{left:calc(100% + var(--we-space-xs,2px));right:auto;top:50%;bottom:auto;transform:translateY(-50%);}\
+       .we-tooltip.we-tooltip-bottom .we-tooltip-bubble{left:50%;right:auto;top:calc(100% + var(--we-space-xs,2px));bottom:auto;transform:translate(-50%,0);}\
+       .we-tooltip.we-tooltip-top .we-tooltip-bubble{left:50%;right:auto;top:auto;bottom:calc(100% + var(--we-space-xs,2px));transform:translate(-50%,0);}\
+       .we-tooltip:hover .we-tooltip-bubble,.we-tooltip:focus-within .we-tooltip-bubble,.we-tooltip.is-open .we-tooltip-bubble{opacity:1;}\
        .we-popover{display:inline-flex;align-self:flex-start;position:relative;z-index:1201;}\
        .we-popover-trigger{align-self:flex-start;position:relative;z-index:1201;}\
        .we-popover-backdrop{position:fixed;inset:0;display:none;background:transparent;z-index:1190;}\
        .we-popover-backdrop.is-open{display:block;}\
        .we-popover-panel{position:absolute;left:0;top:calc(100% + var(--we-space-xs,2px));min-width:220px;display:none;flex-direction:column;gap:var(--we-gap,4px);padding:var(--we-space-md,8px);border:1px solid var(--we-border,#888);border-radius:8px;background:var(--we-bg,#fff);color:var(--we-fg,#111);z-index:1200;box-shadow:0 8px 22px var(--we-shadow,rgba(0,0,0,.28));}\
+       .we-popover.we-popover-left .we-popover-panel{left:auto;right:calc(100% + var(--we-space-xs,2px));top:50%;transform:translateY(-50%);}\
+       .we-popover.we-popover-right .we-popover-panel{left:calc(100% + var(--we-space-xs,2px));right:auto;top:50%;transform:translateY(-50%);}\
+       .we-popover.we-popover-top .we-popover-panel{left:50%;right:auto;top:auto;bottom:calc(100% + var(--we-space-xs,2px));transform:translateX(-50%);}\
+       .we-popover.we-popover-bottom .we-popover-panel{left:50%;right:auto;top:calc(100% + var(--we-space-xs,2px));bottom:auto;transform:translateX(-50%);}\
        .we-popover-panel.is-open{display:flex;}\
        .we-popover-panel:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.14)),var(--we-focus-tint,rgba(10,102,194,.14)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}")
     (define legacy-visual-control-style-text ; CSS defaults for controls and table density classes.
@@ -349,6 +364,9 @@
        .we-menu{position:relative;display:inline-block;}\
        .we-menu-bar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--we-space-xs,2px);}\
        .we-menu-popup{position:absolute;top:calc(100% + var(--we-space-xs,2px));left:0;min-width:150px;display:none;flex-direction:column;z-index:1000;}\
+       .we-dropdown.we-dropdown-up .we-menu-popup{top:auto;bottom:calc(100% + var(--we-space-xs,2px));left:0;right:auto;}\
+       .we-dropdown.we-dropdown-start .we-menu-popup{top:0;left:auto;right:calc(100% + var(--we-space-xs,2px));bottom:auto;}\
+       .we-dropdown.we-dropdown-end .we-menu-popup{top:0;left:calc(100% + var(--we-space-xs,2px));right:auto;bottom:auto;}\
        .we-menu-popup.is-open{display:flex;}\
        .we-navigation-bar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--we-space-sm,4px);align-self:stretch;}\
        .we-navigation-bar.is-vertical{flex-direction:column;align-items:stretch;}\
@@ -366,9 +384,17 @@
        .we-popover-backdrop{position:fixed;inset:0;display:none;z-index:1190;}\
        .we-popover-backdrop.is-open{display:block;}\
        .we-popover-panel{position:absolute;left:0;top:calc(100% + var(--we-space-xs,2px));display:none;z-index:1200;}\
+       .we-popover.we-popover-left .we-popover-panel{left:auto;right:calc(100% + var(--we-space-xs,2px));top:50%;transform:translateY(-50%);}\
+       .we-popover.we-popover-right .we-popover-panel{left:calc(100% + var(--we-space-xs,2px));right:auto;top:50%;transform:translateY(-50%);}\
+       .we-popover.we-popover-top .we-popover-panel{left:50%;right:auto;top:auto;bottom:calc(100% + var(--we-space-xs,2px));transform:translateX(-50%);}\
+       .we-popover.we-popover-bottom .we-popover-panel{left:50%;right:auto;top:calc(100% + var(--we-space-xs,2px));bottom:auto;transform:translateX(-50%);}\
        .we-popover-panel.is-open{display:flex;}\
        .we-tooltip{display:inline-flex;align-self:flex-start;position:relative;}\
        .we-tooltip-bubble{position:absolute;left:50%;bottom:calc(100% + var(--we-space-xs,2px));display:none;z-index:1200;}\
+       .we-tooltip.we-tooltip-left .we-tooltip-bubble{left:auto;right:calc(100% + var(--we-space-xs,2px));top:50%;bottom:auto;transform:translateY(-50%);}\
+       .we-tooltip.we-tooltip-right .we-tooltip-bubble{left:calc(100% + var(--we-space-xs,2px));right:auto;top:50%;bottom:auto;transform:translateY(-50%);}\
+       .we-tooltip.we-tooltip-top .we-tooltip-bubble{left:50%;right:auto;top:auto;bottom:calc(100% + var(--we-space-xs,2px));transform:translateX(-50%);}\
+       .we-tooltip.we-tooltip-bottom .we-tooltip-bubble{left:50%;right:auto;top:calc(100% + var(--we-space-xs,2px));bottom:auto;transform:translateX(-50%);}\
        .we-tooltip:hover .we-tooltip-bubble,.we-tooltip:focus-within .we-tooltip-bubble,.we-tooltip.is-open .we-tooltip-bubble{display:block;}\
        .we-collapse{display:none;align-self:stretch;}\
        .we-collapse.is-open{display:block;}\
@@ -727,6 +753,46 @@
       (set! popover-panel-counter (add1 popover-panel-counter))
       (string-append "popover-panel-" (number->string popover-panel-counter)))
 
+    ;; normalize-overlay-placement : any/c symbol? -> symbol?
+    ;;   Normalize tooltip/popover placement symbols, falling back to default-placement.
+    (define (normalize-overlay-placement raw-placement default-placement)
+      (define p (if (obs? raw-placement) (obs-peek raw-placement) raw-placement))
+      (if (memq p '(top right bottom left))
+          p
+          default-placement))
+
+    ;; normalize-dropdown-placement : any/c -> symbol?
+    ;;   Normalize dropdown placement to one of down/up/start/end.
+    (define (normalize-dropdown-placement raw-placement)
+      (define p (if (obs? raw-placement) (obs-peek raw-placement) raw-placement))
+      (if (memq p '(down up start end))
+          p
+          'down))
+
+    ;; normalize-dialog-size : any/c -> symbol?
+    ;;   Normalize dialog/modal size to one of sm/md/lg/xl.
+    (define (normalize-dialog-size raw-size)
+      (define s (if (obs? raw-size) (obs-peek raw-size) raw-size))
+      (if (memq s '(sm md lg xl))
+          s
+          'md))
+
+    ;; normalize-tab-variants : any/c -> list?
+    ;;   Normalize tab variants to a list of symbols.
+    (define (normalize-tab-variants raw-variants)
+      (define v (if (obs? raw-variants) (obs-peek raw-variants) raw-variants))
+      (cond
+        [(symbol? v) (list v)]
+        [(list? v)
+         (let loop ([xs v] [acc '()])
+           (cond
+             [(null? xs) (reverse acc)]
+             [else
+              (define x (car xs))
+              (loop (cdr xs)
+                    (if (symbol? x) (cons x acc) acc))]))]
+        [else '(default)]))
+
     ;; next-dialog-body-id : -> string?
     ;;   Allocate a unique id string for dialog descriptive text.
     (define (next-dialog-body-id)
@@ -795,6 +861,14 @@
     ;;   Read observable content when v is observable, otherwise return v.
     (define (maybe-observable-value v)
       (if (obs? v) (obs-peek v) v))
+
+    ;; options-ref : any/c symbol? any/c -> any/c
+    ;;   Read option key from options alist, returning default when missing.
+    (define (options-ref options key default)
+      (if (list? options)
+          (let ([p (assq key options)])
+            (if p (cdr p) default))
+          default))
 
     ;; normalize-table-density : any/c -> symbol?
     ;;   Normalize density to 'normal or 'compact.
@@ -1625,6 +1699,9 @@
          (define raw-link-text (alist-ref (view-props v) 'link-text 'render))
          (define raw-link-href (alist-ref (view-props v) 'link-href 'render))
          (define raw-level     (alist-ref (view-props v) 'level 'render))
+         (define options       (alist-ref (view-props v) 'options 'render))
+         (define raw-dismiss-action (options-ref options 'dismiss-action #f))
+         (define raw-dismiss-label  (options-ref options 'dismiss-label "Dismiss"))
          (define node (dom-node 'div
                                 (list (cons attr/role 'status)
                                       (cons 'data-we-widget "alert")
@@ -1659,6 +1736,16 @@
                      ""
                      #f
                      #f))
+         (define dismiss-node
+           (dom-node 'button
+                     (list (cons attr/role 'button)
+                           (cons 'data-we-widget "alert-dismiss")
+                           (cons 'class "we-alert-dismiss")
+                           (cons 'aria-label "Dismiss"))
+                     '()
+                     "×"
+                     #f
+                     #f))
          ;; non-empty-text? : any/c -> boolean?
          ;;   Return #t when value is neither #f nor the empty string.
          (define (non-empty-text? value)
@@ -1672,6 +1759,8 @@
            (define body-value (maybe-observable-value raw-body))
            (define link-text-value (maybe-observable-value raw-link-text))
            (define link-href-value (maybe-observable-value raw-link-href))
+           (define dismiss-label-value (maybe-observable-value raw-dismiss-label))
+           (define dismiss-action (maybe-observable-value raw-dismiss-action))
            (set-dom-node-attrs!
             node
             (list (cons attr/role role)
@@ -1688,6 +1777,17 @@
                   (cons 'href (if (non-empty-text? link-href-value)
                                   (value->text link-href-value)
                                   "#"))))
+           (set-dom-node-attrs!
+            dismiss-node
+            (list (cons attr/role 'button)
+                  (cons 'data-we-widget "alert-dismiss")
+                  (cons 'class "we-alert-dismiss")
+                  (cons 'aria-label (value->text dismiss-label-value))))
+           (set-dom-node-on-click!
+            dismiss-node
+            (if (procedure? dismiss-action)
+                (lambda () (dismiss-action))
+                #f))
            (backend-replace-children!
             node
             (append (if (non-empty-text? title-value) (list title-node) '())
@@ -1695,7 +1795,8 @@
                     (if (and (non-empty-text? link-text-value)
                              (non-empty-text? link-href-value))
                         (list link-node)
-                        '()))))
+                        '())
+                    (if (procedure? dismiss-action) (list dismiss-node) '()))))
          (when (obs? raw-body)
            (define (body-listener _updated)
              (render-alert-rich!))
@@ -1721,6 +1822,16 @@
              (render-alert-rich!))
            (obs-observe! raw-level level-listener)
            (register-cleanup! (lambda () (obs-unobserve! raw-level level-listener))))
+         (when (obs? raw-dismiss-action)
+           (define (dismiss-action-listener _updated)
+             (render-alert-rich!))
+           (obs-observe! raw-dismiss-action dismiss-action-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-dismiss-action dismiss-action-listener))))
+         (when (obs? raw-dismiss-label)
+           (define (dismiss-label-listener _updated)
+             (render-alert-rich!))
+           (obs-observe! raw-dismiss-label dismiss-label-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-dismiss-label dismiss-label-listener))))
          (render-alert-rich!)
          node]
         [(toast)
@@ -3113,6 +3224,24 @@
          node]
         [(tab-panel)
          (define raw-selected (alist-ref (view-props v) 'selected 'render))
+         (define raw-variants (alist-ref (view-props v) 'variants 'render))
+         (define tab-variants (normalize-tab-variants raw-variants))
+         (define tab-variant-class
+           (let loop ([rest tab-variants] [acc ""])
+             (cond
+               [(null? rest) acc]
+               [else
+                (define variant-class
+                  (if (eq? (car rest) 'default)
+                      "we-tab-style-default"
+                      (string-append "we-tab-style-" (symbol->string (car rest)))))
+                (loop (cdr rest)
+                      (if (string=? acc "")
+                          variant-class
+                          (string-append acc " " variant-class)))])))
+         (define tab-panel-class
+           (string-append "we-tab-panel"
+                          (if (string=? tab-variant-class "") "" (string-append " " tab-variant-class))))
          (define tabs/raw     (ensure-list (alist-ref (view-props v) 'tabs 'render)
                                            'tab-panel
                                            "tabs"))
@@ -3120,7 +3249,7 @@
          (define panel-id     (next-tab-panel-id))
          (define node (dom-node 'tab-panel (list (cons 'selected #f)
                                                  (cons 'data-we-widget "tab-panel")
-                                                 (cons 'class    "we-tab-panel"))
+                                                 (cons 'class    tab-panel-class))
                                '()
                                #f
                                #f
@@ -3198,7 +3327,7 @@
                   (cons 'class "we-tab-content")))
            (set-dom-node-attrs! node (list (cons 'selected selected)
                                            (cons 'data-we-widget "tab-panel")
-                                           (cons 'class "we-tab-panel")))
+                                           (cons 'class tab-panel-class)))
            (set! selected-value selected)
            (for-each (lambda (entry)
                        (define tab-id (list-ref entry 0))
@@ -3585,6 +3714,16 @@
         [(dialog)
          (define raw-open  (alist-ref (view-props v) 'open 'render))
          (define on-close  (alist-ref (view-props v) 'on-close 'render))
+         (define panel-size
+           (normalize-dialog-size (alist-ref (view-props v) 'size 'render)))
+         (define options        (alist-ref (view-props v) 'options 'render))
+         (define raw-title      (options-ref options 'title #f))
+         (define raw-description (options-ref options 'description #f))
+         (define raw-footer     (options-ref options 'footer #f))
+         (define raw-show-close? (options-ref options 'show-close? #f))
+         (define raw-close-label (options-ref options 'close-label "Close dialog"))
+         (define panel-class
+           (string-append "we-dialog-panel we-dialog-size-" (symbol->string panel-size)))
          (define node (dom-node 'dialog
                                 (list (cons attr/role 'dialog)
                                       (cons 'data-we-widget "dialog")
@@ -3597,23 +3736,139 @@
                                 #f
                                 #f))
          (define panel-node (dom-node 'div
-                                      (list (cons 'class "we-dialog-panel")
+                                      (list (cons 'class panel-class)
                                             (cons 'data-we-widget "dialog-panel")
                                             (cons 'tabindex -1))
                                       '()
                                       #f
                                       #f
                                       #f))
+         (define header-node (dom-node 'div
+                                       (list (cons 'data-we-widget "dialog-header")
+                                             (cons 'class "we-dialog-header"))
+                                       '()
+                                       #f
+                                       #f
+                                       #f))
+         (define title-node (dom-node 'h2
+                                      (list (cons 'data-we-widget "dialog-title")
+                                            (cons 'class "we-dialog-title"))
+                                      '()
+                                      ""
+                                      #f
+                                      #f))
+         (define close-node (dom-node 'button
+                                      (list (cons attr/role 'button)
+                                            (cons 'data-we-widget "dialog-close")
+                                            (cons 'class "we-close-button we-dialog-close")
+                                            (cons 'aria-label "Close dialog"))
+                                      '()
+                                      "×"
+                                      #f
+                                      #f))
+         (define body-node (dom-node 'div
+                                     (list (cons 'data-we-widget "dialog-body")
+                                           (cons 'class "we-dialog-body"))
+                                     '()
+                                     #f
+                                     #f
+                                     #f))
+         (define description-node (dom-node 'p
+                                            (list (cons 'data-we-widget "dialog-description")
+                                                  (cons 'class "we-dialog-description"))
+                                            '()
+                                            ""
+                                            #f
+                                            #f))
+         (define footer-node (dom-node 'div
+                                       (list (cons 'data-we-widget "dialog-footer")
+                                             (cons 'class "we-dialog-footer"))
+                                       '()
+                                       #f
+                                       #f
+                                       #f))
          (define dialog-desc-id #f)
+         (define body-content-nodes '())
+         (define (rebuild-dialog-structure!)
+           (set! dialog-desc-id #f)
+           (define title-value       (maybe-observable-value raw-title))
+           (define description-value (maybe-observable-value raw-description))
+           (define footer-value      (maybe-observable-value raw-footer))
+           (define show-close?       (not (eq? (maybe-observable-value raw-show-close?) #f)))
+           (define close-label-value (maybe-observable-value raw-close-label))
+           (when (and (eq? description-value #f)
+                      (pair? body-content-nodes))
+             (let ([first-body-child (car body-content-nodes)])
+               (when (equal? (alist-ref (dom-node-attrs first-body-child) 'data-we-widget #f) "text")
+                 (set! dialog-desc-id (next-dialog-body-id))
+                 (set-dom-node-attrs!
+                  first-body-child
+                  (attr-set (dom-node-attrs first-body-child) 'id dialog-desc-id)))))
+           (define header-children
+             (append (if (eq? title-value #f)
+                         '()
+                         (begin
+                           (set-dom-node-text! title-node (value->text title-value))
+                           (list title-node)))
+                     (if show-close?
+                         (begin
+                           (set-dom-node-attrs!
+                            close-node
+                            (list (cons attr/role 'button)
+                                  (cons 'data-we-widget "dialog-close")
+                                  (cons 'class "we-close-button we-dialog-close")
+                                  (cons 'aria-label (value->text close-label-value))))
+                           (set-dom-node-on-click!
+                            close-node
+                            (if (procedure? on-close)
+                                (lambda () (on-close))
+                                #f))
+                           (list close-node))
+                         '())))
+           (define body-children
+             (append (if (eq? description-value #f)
+                         '()
+                         (begin
+                           (set! dialog-desc-id (next-dialog-body-id))
+                           (set-dom-node-text! description-node (value->text description-value))
+                           (set-dom-node-attrs!
+                            description-node
+                            (list (cons 'id dialog-desc-id)
+                                  (cons 'data-we-widget "dialog-description")
+                                  (cons 'class "we-dialog-description")))
+                           (list description-node)))
+                     body-content-nodes))
+           (define footer-children
+             (cond
+               [(eq? footer-value #f)
+                '()]
+               [(view? footer-value)
+                (list (build-node footer-value register-cleanup!))]
+               [else
+                (list (dom-node 'span
+                                (list (cons 'data-we-widget "dialog-footer-text")
+                                      (cons 'class "we-dialog-footer-text"))
+                                '()
+                                (value->text footer-value)
+                                #f
+                                #f))]))
+           (backend-replace-children! header-node header-children)
+           (backend-replace-children! body-node body-children)
+           (backend-replace-children! footer-node footer-children)
+           (backend-replace-children!
+            panel-node
+            (append (if (null? header-children) '() (list header-node))
+                    (list body-node)
+                    (if (null? footer-children) '() (list footer-node)))))
          (define (set-open! open?)
            (define open-value (not (eq? open? #f)))
            (define panel-attrs/base
-             (list (cons 'class "we-dialog-panel")
+             (list (cons 'class panel-class)
                    (cons 'data-we-widget "dialog-panel")
                    (cons 'tabindex -1)))
            (define panel-attrs
              (if dialog-desc-id
-                 (append panel-attrs/base (list (cons 'aria-describedby dialog-desc-id)))
+                (append panel-attrs/base (list (cons 'aria-describedby dialog-desc-id)))
                  panel-attrs/base))
            (set-dom-node-attrs!
             node
@@ -3631,19 +3886,40 @@
             (lambda (key)
               (when (string=? key "Escape")
                 (on-close)))))
-         (backend-append-child! node panel-node)
          (for-each (lambda (child)
-                     (backend-append-child! panel-node (build-node child register-cleanup!)))
+                     (backend-append-child! body-node (build-node child register-cleanup!)))
                    (view-children v))
-         ;; If first child is text, wire it as aria-describedby for the dialog panel.
-         (define panel-children (dom-node-children panel-node))
-         (when (pair? panel-children)
-           (define first-child (car panel-children))
-           (when (equal? (alist-ref (dom-node-attrs first-child) 'data-we-widget #f) "text")
-             (set! dialog-desc-id (next-dialog-body-id))
-             (set-dom-node-attrs!
-              first-child
-              (attr-set (dom-node-attrs first-child) 'id dialog-desc-id))))
+         (set! body-content-nodes (dom-node-children body-node))
+         (backend-append-child! node panel-node)
+         (rebuild-dialog-structure!)
+         (when (obs? raw-title)
+           (define (title-listener _updated)
+             (rebuild-dialog-structure!)
+             (set-open! (maybe-observable-value raw-open)))
+           (obs-observe! raw-title title-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-title title-listener))))
+         (when (obs? raw-description)
+           (define (description-listener _updated)
+             (rebuild-dialog-structure!)
+             (set-open! (maybe-observable-value raw-open)))
+           (obs-observe! raw-description description-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-description description-listener))))
+         (when (obs? raw-footer)
+           (define (footer-listener _updated)
+             (rebuild-dialog-structure!)
+             (set-open! (maybe-observable-value raw-open)))
+           (obs-observe! raw-footer footer-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-footer footer-listener))))
+         (when (obs? raw-show-close?)
+           (define (show-close-listener _updated)
+             (rebuild-dialog-structure!))
+           (obs-observe! raw-show-close? show-close-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-show-close? show-close-listener))))
+         (when (obs? raw-close-label)
+           (define (close-label-listener _updated)
+             (rebuild-dialog-structure!))
+           (obs-observe! raw-close-label close-label-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-close-label close-label-listener))))
          (cond
            [(obs? raw-open)
             (set-open! (obs-peek raw-open))
@@ -3657,6 +3933,16 @@
         [(modal)
          (define raw-open  (alist-ref (view-props v) 'open 'render))
          (define on-close  (alist-ref (view-props v) 'on-close 'render))
+         (define panel-size
+           (normalize-dialog-size (alist-ref (view-props v) 'size 'render)))
+         (define options        (alist-ref (view-props v) 'options 'render))
+         (define raw-title      (options-ref options 'title #f))
+         (define raw-description (options-ref options 'description #f))
+         (define raw-footer     (options-ref options 'footer #f))
+         (define raw-show-close? (options-ref options 'show-close? #f))
+         (define raw-close-label (options-ref options 'close-label "Close modal"))
+         (define panel-class
+           (string-append "we-dialog-panel we-dialog-size-" (symbol->string panel-size)))
          (define node (dom-node 'dialog
                                 (list (cons attr/role 'dialog)
                                       (cons 'data-we-widget "modal")
@@ -3669,18 +3955,134 @@
                                 #f
                                 #f))
          (define panel-node (dom-node 'div
-                                      (list (cons 'class "we-dialog-panel")
+                                      (list (cons 'class panel-class)
                                             (cons 'data-we-widget "modal-panel")
                                             (cons 'tabindex -1))
                                       '()
                                       #f
                                       #f
                                       #f))
+         (define header-node (dom-node 'div
+                                       (list (cons 'data-we-widget "modal-header")
+                                             (cons 'class "we-modal-header"))
+                                       '()
+                                       #f
+                                       #f
+                                       #f))
+         (define title-node (dom-node 'h2
+                                      (list (cons 'data-we-widget "modal-title")
+                                            (cons 'class "we-modal-title"))
+                                      '()
+                                      ""
+                                      #f
+                                      #f))
+         (define close-node (dom-node 'button
+                                      (list (cons attr/role 'button)
+                                            (cons 'data-we-widget "modal-close")
+                                            (cons 'class "we-close-button we-modal-close")
+                                            (cons 'aria-label "Close modal"))
+                                      '()
+                                      "×"
+                                      #f
+                                      #f))
+         (define body-node (dom-node 'div
+                                     (list (cons 'data-we-widget "modal-body")
+                                           (cons 'class "we-modal-body"))
+                                     '()
+                                     #f
+                                     #f
+                                     #f))
+         (define description-node (dom-node 'p
+                                            (list (cons 'data-we-widget "modal-description")
+                                                  (cons 'class "we-modal-description"))
+                                            '()
+                                            ""
+                                            #f
+                                            #f))
+         (define footer-node (dom-node 'div
+                                       (list (cons 'data-we-widget "modal-footer")
+                                             (cons 'class "we-modal-footer"))
+                                       '()
+                                       #f
+                                       #f
+                                       #f))
          (define modal-desc-id #f)
+         (define body-content-nodes '())
+         (define (rebuild-modal-structure!)
+           (set! modal-desc-id #f)
+           (define title-value       (maybe-observable-value raw-title))
+           (define description-value (maybe-observable-value raw-description))
+           (define footer-value      (maybe-observable-value raw-footer))
+           (define show-close?       (not (eq? (maybe-observable-value raw-show-close?) #f)))
+           (define close-label-value (maybe-observable-value raw-close-label))
+           (when (and (eq? description-value #f)
+                      (pair? body-content-nodes))
+             (let ([first-body-child (car body-content-nodes)])
+               (when (equal? (alist-ref (dom-node-attrs first-body-child) 'data-we-widget #f) "text")
+                 (set! modal-desc-id (next-dialog-body-id))
+                 (set-dom-node-attrs!
+                  first-body-child
+                  (attr-set (dom-node-attrs first-body-child) 'id modal-desc-id)))))
+           (define header-children
+             (append (if (eq? title-value #f)
+                         '()
+                         (begin
+                           (set-dom-node-text! title-node (value->text title-value))
+                           (list title-node)))
+                     (if show-close?
+                         (begin
+                           (set-dom-node-attrs!
+                            close-node
+                            (list (cons attr/role 'button)
+                                  (cons 'data-we-widget "modal-close")
+                                  (cons 'class "we-close-button we-modal-close")
+                                  (cons 'aria-label (value->text close-label-value))))
+                           (set-dom-node-on-click!
+                            close-node
+                            (if (procedure? on-close)
+                                (lambda () (on-close))
+                                #f))
+                           (list close-node))
+                         '())))
+           (define body-children
+             (append (if (eq? description-value #f)
+                         '()
+                         (begin
+                           (set! modal-desc-id (next-dialog-body-id))
+                           (set-dom-node-text! description-node (value->text description-value))
+                           (set-dom-node-attrs!
+                            description-node
+                            (list (cons 'id modal-desc-id)
+                                  (cons 'data-we-widget "modal-description")
+                                  (cons 'class "we-modal-description")))
+                           (list description-node)))
+                     body-content-nodes))
+           (define footer-children
+             (cond
+               [(eq? footer-value #f)
+                '()]
+               [(view? footer-value)
+                (list (build-node footer-value register-cleanup!))]
+               [else
+                (list (dom-node 'span
+                                (list (cons 'data-we-widget "modal-footer-text")
+                                      (cons 'class "we-modal-footer-text"))
+                                '()
+                                (value->text footer-value)
+                                #f
+                                #f))]))
+           (backend-replace-children! header-node header-children)
+           (backend-replace-children! body-node body-children)
+           (backend-replace-children! footer-node footer-children)
+           (backend-replace-children!
+            panel-node
+            (append (if (null? header-children) '() (list header-node))
+                    (list body-node)
+                    (if (null? footer-children) '() (list footer-node)))))
          (define (set-open! open?)
            (define open-value (not (eq? open? #f)))
            (define panel-attrs/base
-             (list (cons 'class "we-dialog-panel")
+             (list (cons 'class panel-class)
                    (cons 'data-we-widget "modal-panel")
                    (cons 'tabindex -1)))
            (define panel-attrs
@@ -3703,19 +4105,40 @@
             (lambda (key)
               (when (string=? key "Escape")
                 (on-close)))))
-         (backend-append-child! node panel-node)
          (for-each (lambda (child)
-                     (backend-append-child! panel-node (build-node child register-cleanup!)))
+                     (backend-append-child! body-node (build-node child register-cleanup!)))
                    (view-children v))
-         ;; If first child is text, wire it as aria-describedby for the modal panel.
-         (define panel-children (dom-node-children panel-node))
-         (when (pair? panel-children)
-           (define first-child (car panel-children))
-           (when (equal? (alist-ref (dom-node-attrs first-child) 'data-we-widget #f) "text")
-             (set! modal-desc-id (next-dialog-body-id))
-             (set-dom-node-attrs!
-              first-child
-              (attr-set (dom-node-attrs first-child) 'id modal-desc-id))))
+         (set! body-content-nodes (dom-node-children body-node))
+         (backend-append-child! node panel-node)
+         (rebuild-modal-structure!)
+         (when (obs? raw-title)
+           (define (title-listener _updated)
+             (rebuild-modal-structure!)
+             (set-open! (maybe-observable-value raw-open)))
+           (obs-observe! raw-title title-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-title title-listener))))
+         (when (obs? raw-description)
+           (define (description-listener _updated)
+             (rebuild-modal-structure!)
+             (set-open! (maybe-observable-value raw-open)))
+           (obs-observe! raw-description description-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-description description-listener))))
+         (when (obs? raw-footer)
+           (define (footer-listener _updated)
+             (rebuild-modal-structure!)
+             (set-open! (maybe-observable-value raw-open)))
+           (obs-observe! raw-footer footer-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-footer footer-listener))))
+         (when (obs? raw-show-close?)
+           (define (show-close-listener _updated)
+             (rebuild-modal-structure!))
+           (obs-observe! raw-show-close? show-close-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-show-close? show-close-listener))))
+         (when (obs? raw-close-label)
+           (define (close-label-listener _updated)
+             (rebuild-modal-structure!))
+           (obs-observe! raw-close-label close-label-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-close-label close-label-listener))))
          (cond
            [(obs? raw-open)
             (set-open! (obs-peek raw-open))
@@ -3999,11 +4422,19 @@
          (define rows      (ensure-list (alist-ref (view-props v) 'entries 'render)
                                         'dropdown
                                         "entries"))
+         (define placement
+           (normalize-dropdown-placement
+            (alist-ref (view-props v) 'placement 'render)))
+         (define dropdown-class
+           (string-append "we-dropdown"
+                          (if (eq? placement 'down)
+                              ""
+                              (string-append " we-dropdown-" (symbol->string placement)))))
          (define option-pairs (normalized-option-pairs rows))
          (define action    (alist-ref (view-props v) 'action 'render))
          (define node (dom-node 'div
                                 (list (cons 'data-we-widget "dropdown")
-                                      (cons 'class "we-dropdown"))
+                                      (cons 'class dropdown-class))
                                 '()
                                 #f
                                 #f
@@ -4350,6 +4781,12 @@
          node]
         [(tooltip)
          (define raw-message (alist-ref (view-props v) 'message 'render))
+         (define tooltip-placement
+           (normalize-overlay-placement
+            (alist-ref (view-props v) 'placement 'render)
+            'top))
+         (define tooltip-base-class
+           (string-append "we-tooltip we-tooltip-" (symbol->string tooltip-placement)))
          (define child-view
            (if (null? (view-children v))
                (spacer)
@@ -4357,7 +4794,7 @@
          (define bubble-id (next-tooltip-id))
          (define node (dom-node 'div
                                 (list (cons 'data-we-widget "tooltip")
-                                      (cons 'class "we-tooltip"))
+                                      (cons 'class tooltip-base-class))
                                 '()
                                 #f
                                 #f
@@ -4388,7 +4825,9 @@
            (set-dom-node-attrs!
             node
             (list (cons 'data-we-widget "tooltip")
-                  (cons 'class (if tooltip-open? "we-tooltip is-open" "we-tooltip"))))
+                  (cons 'class (if tooltip-open?
+                                   (string-append tooltip-base-class " is-open")
+                                   tooltip-base-class))))
            (set-dom-node-attrs!
             bubble-node
             (list (cons attr/role 'tooltip)
@@ -4439,11 +4878,17 @@
          node]
         [(popover)
          (define raw-label (alist-ref (view-props v) 'label 'render))
+         (define popover-placement
+           (normalize-overlay-placement
+            (alist-ref (view-props v) 'placement 'render)
+            'bottom))
+         (define popover-class
+           (string-append "we-popover we-popover-" (symbol->string popover-placement)))
          (define panel-id (next-popover-panel-id))
          (define open? #f)
          (define node (dom-node 'div
                                 (list (cons 'data-we-widget "popover")
-                                      (cons 'class "we-popover"))
+                                      (cons 'class popover-class))
                                 '()
                                 #f
                                 #f
@@ -4539,6 +4984,10 @@
          (define raw-title  (alist-ref (view-props v) 'title  'render))
          (define raw-footer (alist-ref (view-props v) 'footer 'render))
          (define raw-variants (alist-ref (view-props v) 'variants 'render))
+         (define options      (alist-ref (view-props v) 'options 'render))
+         (define raw-subtitle (options-ref options 'subtitle #f))
+         (define raw-media    (options-ref options 'media #f))
+         (define raw-actions  (options-ref options 'actions '()))
          (define variants (normalize-card-variants raw-variants))
          (define node (dom-node 'div
                                 (list (cons attr/role 'group)
@@ -4555,13 +5004,31 @@
                                      #f
                                      #f
                                      #f))
+         (define media-node (dom-node 'div
+                                      (list (cons 'data-we-widget "card-media")
+                                            (cons 'class "we-card-media"))
+                                      '()
+                                      #f
+                                      #f
+                                      #f))
+         (define actions-node (dom-node 'div
+                                        (list (cons 'data-we-widget "card-actions")
+                                              (cons 'class "we-card-actions"))
+                                        '()
+                                        #f
+                                        #f
+                                        #f))
          (define title-node #f)
+         (define subtitle-node #f)
          (define footer-node #f)
          ;; refresh-card-structure! : -> void?
-         ;;   Rebuild card children from current title/footer values and body node.
+         ;;   Rebuild card children from current title/footer/options values and body node.
          (define (refresh-card-structure!)
-           (define title-value  (maybe-observable-value raw-title))
-           (define footer-value (maybe-observable-value raw-footer))
+           (define title-value    (maybe-observable-value raw-title))
+           (define subtitle-value (maybe-observable-value raw-subtitle))
+           (define footer-value   (maybe-observable-value raw-footer))
+           (define media-value    (maybe-observable-value raw-media))
+           (define actions-value  (maybe-observable-value raw-actions))
            (define headerless?  (contains-equal? variants 'headerless))
            (set! title-node
                  (if (or headerless? (eq? title-value #f))
@@ -4571,6 +5038,16 @@
                                      (cons 'class "we-card-header"))
                                '()
                                (value->text title-value)
+                               #f
+                               #f)))
+           (set! subtitle-node
+                 (if (or headerless? (eq? subtitle-value #f))
+                     #f
+                     (dom-node 'small
+                               (list (cons 'data-we-widget "card-subtitle")
+                                     (cons 'class "we-card-subtitle"))
+                               '()
+                               (value->text subtitle-value)
                                #f
                                #f)))
            (set! footer-node
@@ -4583,8 +5060,43 @@
                                (value->text footer-value)
                                #f
                                #f)))
-           (define nodes (append (if title-node (list title-node) '())
+           (define header-nodes
+             (append (if title-node (list title-node) '())
+                     (if subtitle-node (list subtitle-node) '())))
+           (define media-children
+             (cond
+               [(eq? media-value #f)
+                '()]
+               [(view? media-value)
+                (list (build-node media-value register-cleanup!))]
+               [else
+                (list (dom-node 'span
+                                (list (cons 'data-we-widget "card-media-text")
+                                      (cons 'class "we-card-media-text"))
+                                '()
+                                (value->text media-value)
+                                #f
+                                #f))]))
+           (define action-items
+             (if (list? actions-value) actions-value '()))
+           (define action-children
+             (map (lambda (entry)
+                    (if (view? entry)
+                        (build-node entry register-cleanup!)
+                        (dom-node 'span
+                                  (list (cons 'data-we-widget "card-action-text")
+                                        (cons 'class "we-card-action-text"))
+                                  '()
+                                  (value->text entry)
+                                  #f
+                                  #f)))
+                  action-items))
+           (backend-replace-children! media-node media-children)
+           (backend-replace-children! actions-node action-children)
+           (define nodes (append header-nodes
+                                 (if (null? media-children) '() (list media-node))
                                  (list body-node)
+                                 (if (null? action-children) '() (list actions-node))
                                  (if footer-node (list footer-node) '())))
            (backend-replace-children! node nodes))
          (for-each (lambda (child)
@@ -4600,6 +5112,21 @@
              (refresh-card-structure!))
            (obs-observe! raw-footer footer-listener)
            (register-cleanup! (lambda () (obs-unobserve! raw-footer footer-listener))))
+         (when (obs? raw-subtitle)
+           (define (subtitle-listener _updated)
+             (refresh-card-structure!))
+           (obs-observe! raw-subtitle subtitle-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-subtitle subtitle-listener))))
+         (when (obs? raw-media)
+           (define (media-listener _updated)
+             (refresh-card-structure!))
+           (obs-observe! raw-media media-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-media media-listener))))
+         (when (obs? raw-actions)
+           (define (actions-listener _updated)
+             (refresh-card-structure!))
+           (obs-observe! raw-actions actions-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-actions actions-listener))))
          (refresh-card-structure!)
          node]
         [(navigation-bar)

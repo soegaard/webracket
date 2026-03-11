@@ -23,6 +23,7 @@
       (define @dialog-open (@ #f))
       (define @modal-open  (@ #f))
       (define @tab         (@ 'alpha))
+      (define @alert-open? (@ #t))
 
       ;; open-dialog! : -> void?
       ;;   Open the large dialog test fixture.
@@ -44,6 +45,11 @@
       (define (close-modal!)
         (:= @modal-open #f))
 
+      ;; dismiss-alert! : -> void?
+      ;;   Hide the alert-rich dismiss action marker.
+      (define (dismiss-alert!)
+        (:= @alert-open? #f))
+
       (set! surface-api-renderer
             (render
              (window
@@ -57,6 +63,21 @@
                (popover "popover-left"
                         'left
                         (text "popover body"))
+               (if-view @alert-open?
+                        (alert-rich "Server warning"
+                                    "Warning"
+                                    "Details"
+                                    "/alerts"
+                                    'warning
+                                    (list (cons 'dismiss-action dismiss-alert!)
+                                          (cons 'dismiss-label "Close warning")))
+                        (text "alert-closed"))
+               (card "card-title"
+                     "card-footer"
+                     (list (cons 'subtitle "card-subtitle")
+                           (cons 'media (text "card-media"))
+                           (cons 'actions (list (button "card-action" (lambda () (void))))))
+                     (text "card-body"))
                (dropdown "dropdown-end"
                          '((open "Open") (close "Close"))
                          (lambda (_id) (void))
@@ -68,12 +89,18 @@
                (dialog @dialog-open
                        close-dialog!
                        'lg
+                       (list (cons 'title "Dialog title")
+                             (cons 'description "Dialog description")
+                             (cons 'footer (button "dialog-footer-action" (lambda () (void)))))
                        (vpanel
                         (text "dialog-lg")
                         (button "close-dialog" close-dialog!)))
                (modal @modal-open
                       close-modal!
                       'sm
+                      (list (cons 'title "Modal title")
+                            (cons 'description "Modal description")
+                            (cons 'footer (button "modal-footer-action" (lambda () (void)))))
                       (vpanel
                        (text "modal-sm")
                        (button "close-modal" close-modal!)))))))

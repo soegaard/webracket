@@ -33,7 +33,9 @@
             return !!d.querySelector(".we-tooltip.we-tooltip-right")
               && !!d.querySelector(".we-popover.we-popover-left")
               && !!d.querySelector(".we-dropdown.we-dropdown-end")
-              && !!d.querySelector(".we-tab-panel.we-tab-style-joined");
+              && !!d.querySelector(".we-tab-panel.we-tab-style-joined")
+              && !!d.querySelector("[data-we-widget='alert-dismiss']")
+              && !!d.querySelector("[data-we-widget='card-subtitle']");
           },
           20000
         );
@@ -45,6 +47,10 @@
         H.assertTrue(!!doc.querySelector(".we-popover.we-popover-left"), "popover placement class left");
         H.assertTrue(!!doc.querySelector(".we-dropdown.we-dropdown-end"), "dropdown placement class end");
         H.assertTrue(!!doc.querySelector(".we-tab-panel.we-tab-style-joined"), "tab-panel variant class joined");
+        H.assertTrue(!!doc.querySelector("[data-we-widget='alert-dismiss']"), "alert dismiss affordance exists");
+        H.assertTrue(!!doc.querySelector("[data-we-widget='card-media']"), "card media region exists");
+        H.assertTrue(!!doc.querySelector("[data-we-widget='card-actions']"), "card actions region exists");
+        H.assertTrue(!!doc.querySelector("[data-we-widget='card-subtitle']"), "card subtitle region exists");
 
         const openDialog = Array.from(doc.querySelectorAll("button")).find(function (b) {
           return (b.textContent || "").trim() === "open-dialog-lg";
@@ -56,6 +62,10 @@
           !!doc.querySelector(".we-dialog-panel.we-dialog-size-lg"),
           "dialog panel has lg size class"
         );
+        H.assertTrue(!!doc.querySelector("[data-we-widget='dialog-header']"), "dialog header region exists");
+        H.assertTrue(!!doc.querySelector("[data-we-widget='dialog-body']"), "dialog body region exists");
+        H.assertTrue(!!doc.querySelector("[data-we-widget='dialog-footer']"), "dialog footer region exists");
+        H.assertTrue(!!doc.querySelector("[data-we-widget='dialog-close']"), "dialog close button exists");
 
         const closeDialog = Array.from(doc.querySelectorAll("button")).find(function (b) {
           return (b.textContent || "").trim() === "close-dialog";
@@ -74,9 +84,13 @@
           !!doc.querySelector(".we-modal .we-dialog-panel.we-dialog-size-sm"),
           "modal panel has sm size class"
         );
+        H.assertTrue(!!doc.querySelector("[data-we-widget='modal-header']"), "modal header region exists");
+        H.assertTrue(!!doc.querySelector("[data-we-widget='modal-body']"), "modal body region exists");
+        H.assertTrue(!!doc.querySelector("[data-we-widget='modal-footer']"), "modal footer region exists");
+        H.assertTrue(!!doc.querySelector("[data-we-widget='modal-close']"), "modal close button exists");
 
         H.setStatus(
-          "PASS\nsurface-api contract: tooltip/popover/dropdown placement + dialog/modal size + tab variants",
+          "PASS\nsurface-api contract: placement + card/alert structure + dialog/modal regions",
           "pass"
         );
       } catch (err) {
