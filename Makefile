@@ -48,6 +48,7 @@ smoke-theme-contracts:
 	cd $(SMOKE_DIR) && SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-theme-external-css-contract.html
 	cd $(SMOKE_DIR) && SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-theme-core-link-contract.html
 	cd $(SMOKE_DIR) && SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-theme-starter-contract.html
+	cd $(SMOKE_DIR) && SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-theme-helper-api-contract.html
 	cd $(SMOKE_DIR) && SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-theme-contract-vars-contract.html
 	cd $(SMOKE_DIR) && SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-theme-showcase-compile.sh test-browser-theme-showcase-contract.html
 

@@ -48,6 +48,8 @@
 }
 
 .we-accordion-trigger::after {
+  display: inline-block;
+  margin-left: 8px;
   transition-property: transform, color;
   transition-timing-function: ease;
 }

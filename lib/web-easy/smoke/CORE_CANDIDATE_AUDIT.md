@@ -40,29 +40,33 @@ Scope: remaining duplicated selectors across:
 | `.we-tab-content` | light/dark/solar | visual | panel skin | keep in themes |
 | `.we-alert` / success/warn/error | light/dark/solar | visual | semantic color skins | keep in themes |
 | `.we-toast` / success/warn/error/close | light/dark/solar | visual | toast skins | keep in themes |
-| `.we-accordion` | light/dark/solar | mixed | layout stack + spacing + some skin context | possible split later (`display/flex-direction` candidate), low priority |
+| `.we-accordion` | light/dark/solar | mixed | layout stack + spacing + some skin context | `display/flex-direction` extracted to core; keep theme `gap` and skin |
 | `.we-accordion-section` | light/dark/solar | visual | panel borders/background | keep in themes |
-| `.we-accordion-trigger` | light/dark/solar | mixed | structural button layout + visual styling | split candidate later if needed |
-| `.we-accordion-trigger::after` | light/dark/solar | mixed | indicator behavior + color | keep in themes |
+| `.we-accordion-trigger` | light/dark/solar | mixed | structural button layout + visual styling | structural subset extracted to core; keep visual skin in themes |
+| `.we-accordion-trigger::after` | light/dark/solar | mixed | indicator behavior + color | transition-property/timing + display/margin extracted to core; keep color/content/duration in themes |
 | `.we-accordion-trigger.is-open` / `::after` | light/dark/solar | visual | open-state visual styling | keep in themes |
+
+## Completed Extractions
+
+1. `.we-accordion` container mechanics (`display/flex-direction`) moved to core.
+2. `.we-accordion-trigger` mechanics (`width/display/align-items/justify-content/text-align`) moved to core.
+3. `.we-accordion-trigger::after` shared mechanics (`display`, `margin-left`, `transition-property`, `transition-timing-function`) moved to core.
 
 ## Safe Next Extraction Candidates
 
-These are the only low-risk remaining candidates that are plausibly structural:
+These are the low-risk remaining candidates that are plausibly structural:
 
-1. `.we-accordion { display:flex; flex-direction:column; }`  
-   - Keep `gap` in themes (visual density), move only container mechanics to core.
-
-2. `.we-accordion-trigger` structural subset  
-   - Candidate properties: `width:100%`, `display:flex`, `align-items:center`, `justify-content:space-between`, `text-align:left`.
-   - Keep padding/colors/border/radius/font in themes.
-
-3. Optional utility for menu item clipping fix  
+1. Optional utility for menu item clipping fix  
    - Could add core helper class for raised focus layering if we want to remove repeated `position:relative; z-index:1` from theme focus blocks.
+
+2. Potential `we-menu-bar` partial split  
+   - Only if we decide `display/flex-wrap/align-items` are truly global behavior and not theme density decisions.
+
+3. Potential `we-menu-popup` partial split  
+   - Only after deciding whether `top/gap/min-width` belong to structure or theme visual density.
 
 ## What Not To Extract Now
 
 - Anything driven by color or border semantics (`--we-*` token outputs).
 - Tab seam/join details (`margin-left:-1px`, active border-bottom tricks) because they are visual-style dependent.
 - Menu popup offsets (`top`, `gap`, `min-width`) until we decide whether they are part of visual density or global behavior.
-

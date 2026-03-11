@@ -181,9 +181,11 @@ When screenshot/computed output does not match what you see manually:
 | Theme external-css contract (core-before-theme order) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-theme-external-css-contract.html` |
 | Theme core-link recursive contract | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-theme-core-link-contract.html` |
 | Theme starter contract | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-theme-starter-contract.html` |
+| Theme helper API contract | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-theme-helper-api-contract.html` |
 | Theme contract-vars stylesheet contract | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-theme-contract-vars-contract.html` |
 | Theme showcase contract | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-theme-showcase-compile.sh test-browser-theme-showcase-contract.html` |
 | Theme contract helper lint | `./check-theme-contract-helper.sh` |
+| Theme contracts CI-friendly script | `./check-theme-contracts-headless.sh` |
 
 ## Make Targets
 

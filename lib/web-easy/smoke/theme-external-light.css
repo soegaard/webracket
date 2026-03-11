@@ -447,8 +447,6 @@ html.we-theme-light .we-accordion-trigger {
 /* Right-side indicator (Bootstrap-like) points to collapsed content. */
 html.we-theme-light .we-accordion-trigger::after {
   content: "▸";
-  display: inline-block;
-  margin-left: 8px;
   color: #5b749d;
   transform: rotate(0deg);
   transition-duration: 0.18s;

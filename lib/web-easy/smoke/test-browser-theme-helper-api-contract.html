@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy theme helper API contract test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running theme helper API contract assertions...</div>
+
+  <script src="./theme-contract-helper.js"></script>
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    (async function run() {
+      try {
+        const helper = window.themeContractHelper;
+        assertTrue(!!helper, "themeContractHelper exists");
+        assertTrue(typeof helper.assertTrue === "function", "assertTrue function exists");
+        assertTrue(typeof helper.sleep === "function", "sleep function exists");
+        assertTrue(typeof helper.frameDocFrom === "function", "frameDocFrom function exists");
+        assertTrue(typeof helper.normalizedCssColor === "function", "normalizedCssColor function exists");
+        assertTrue(typeof helper.ensureThemeLayer === "function", "ensureThemeLayer function exists");
+
+        const iframe = document.createElement("iframe");
+        iframe.style.position = "absolute";
+        iframe.style.left = "-10000px";
+        iframe.style.width = "10px";
+        iframe.style.height = "10px";
+        document.body.appendChild(iframe);
+        iframe.src = "about:blank";
+        let doc = null;
+        for (let i = 0; i < 100; i += 1) {
+          doc = helper.frameDocFrom(iframe);
+          if (doc) break;
+          await helper.sleep(20);
+        }
+        assertTrue(!!doc, "frameDocFrom returns document");
+        helper.ensureThemeLayer(doc, {
+          themeClass: "we-theme-solar2",
+          coreHref: "../web-easy-core.css",
+          themeHref: "../theme-contract-vars.css"
+        });
+        const coreLink = doc.getElementById("we-theme-core-css");
+        const extLink = doc.getElementById("we-theme-external-css");
+        assertTrue(!!coreLink, "ensureThemeLayer creates core link");
+        assertTrue(!!extLink, "ensureThemeLayer creates external link");
+        assertTrue((coreLink.getAttribute("href") || "").includes("web-easy-core.css"), "core href set");
+        assertTrue((extLink.getAttribute("href") || "").includes("theme-contract-vars.css"), "theme href set");
+
+        const color = helper.normalizedCssColor("RGB(10, 20, 30)");
+        assertTrue(color === "rgb(10,20,30)", "normalizedCssColor normalizes spacing and case");
+
+        iframe.remove();
+        setStatus("PASS\ntheme-contract-helper.js API contract verified", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>
