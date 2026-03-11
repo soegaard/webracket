@@ -23,6 +23,7 @@ Use `headless.sh` from `lib/web-easy/smoke`:
 ./headless.sh doctor
 ./headless.sh contract
 ./headless.sh core-structure
+./headless.sh core-structure-ci
 ./headless.sh style
 ./headless.sh smoke
 ./headless.sh parity
@@ -71,6 +72,7 @@ Fast local headless gate (contract + theme + guard, skips full dashboard run):
 | One-page headless test | `make smoke-one SINGLE_COMPILE=... SINGLE_PAGE=...` |
 | Style-hook contracts only | `./headless.sh style` |
 | Core-structure contracts only (smoke+parity) | `./headless.sh core-structure` |
+| Core-structure aggregate contracts only (fast lane) | `./headless.sh core-structure-ci` |
 | Deep keyboard contracts only | `./headless.sh deep` |
 | Style-hook contracts only (direct script) | `./check-style-headless.sh` |
 | Theme token smoke page (single) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-theme-token-contract.html` |
@@ -90,6 +92,7 @@ Fast local headless gate (contract + theme + guard, skips full dashboard run):
 | Menu core-structure contract page | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-menu-core-structure-contract.html` |
 | Parity menu core-structure contract page | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-menu-core-structure-contract.html` |
 | Parity core-structure summary contract page | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-core-structure-contract.html` |
+| Core-structure summary contract page | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-core-structure-contract.html` |
 | Collapse core-structure contract page | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-collapse-core-structure-contract.html` |
 | Parity collapse core-structure contract page | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-collapse-core-structure-contract.html` |
 | Tab core-structure contract page | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-tab-core-structure-contract.html` |
@@ -257,6 +260,11 @@ Available utility commands:
   - `test-browser-contract-dashboard-core.html`
   - `test-browser-contract-dashboard-parity.html`
   - wrapper: `test-browser-contract-dashboard.html`
+- Contract layering (from fastest signal to full behavior):
+  - `core-structure` pages (`test-browser-core-structure-contract.html`, `test-browser-parity-core-structure-contract.html`)
+  - individual contract pages
+  - smoke/parity behavior pages
+  - theme/style pages
 
 ## Single-Page Debug Loop
 

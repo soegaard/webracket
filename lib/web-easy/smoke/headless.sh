@@ -17,6 +17,7 @@ Modes:
   parity                   Run parity-only dashboard headless
   contract                 Run contract-only dashboard headless
   core-structure           Run focused core-structure contracts (smoke+parity)
+  core-structure-ci        Run aggregate core-structure contracts only (fast lane)
   deep                     Run deep keyboard contract pages only
   style                    Run style-hook contract pages only
   theme                    Run theme-only dashboard headless
@@ -37,6 +38,7 @@ Examples:
   ./headless.sh parity
   ./headless.sh contract
   ./headless.sh core-structure
+  ./headless.sh core-structure-ci
   ./headless.sh deep
   ./headless.sh style
   ./headless.sh theme
@@ -62,6 +64,7 @@ smoke	Run full smoke dashboard headless
 parity	Run parity-only dashboard headless
 contract	Run contract-only dashboard headless
 core-structure	Run focused core-structure contracts (smoke+parity)
+core-structure-ci	Run aggregate core-structure contracts only (fast lane)
 deep	Run deep keyboard contract pages only
 style	Run style-hook contract pages only
 theme	Run theme-only dashboard headless
@@ -170,9 +173,20 @@ case "$1" in
     fi
     SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-smoke-all-compile.sh test-browser-collapse-core-structure-contract.html
     SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-smoke-all-compile.sh test-browser-tab-core-structure-contract.html
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-smoke-all-compile.sh test-browser-core-structure-contract.html
     SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-parity-all-compile.sh test-browser-parity-menu-core-structure-contract.html
     SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-parity-all-compile.sh test-browser-parity-collapse-core-structure-contract.html
     SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-parity-all-compile.sh test-browser-parity-tab-core-structure-contract.html
+    SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-parity-all-compile.sh test-browser-parity-core-structure-contract.html
+    ;;
+  core-structure-ci)
+    shift
+    if [ "${SMOKE_SKIP_COMPILE:-0}" = "1" ]; then
+      "$SCRIPT_DIR/check-single-headless.sh" run-browser-smoke-all-compile.sh test-browser-core-structure-contract.html
+    else
+      "$SCRIPT_DIR/check-smoke.sh"
+      SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-smoke-all-compile.sh test-browser-core-structure-contract.html
+    fi
     SMOKE_SKIP_COMPILE=1 "$SCRIPT_DIR/check-single-headless.sh" run-browser-parity-all-compile.sh test-browser-parity-core-structure-contract.html
     ;;
   deep)
@@ -240,6 +254,7 @@ case "$1" in
     parity_file="/tmp/web-easy-parity-timings.tsv"
     theme_file="/tmp/web-easy-theme-timings.tsv"
     style_file="/tmp/web-easy-style-timings.tsv"
+    core_structure_file="/tmp/web-easy-core-structure-timings.tsv"
     all_file="/tmp/web-easy-all-timings.tsv"
     rm -f "$all_file"
 
@@ -248,10 +263,11 @@ case "$1" in
     SMOKE_SKIP_COMPILE=1 SMOKE_TIMING_OUT="$parity_file" "$SCRIPT_DIR/check-parity-headless.sh" "$@"
     SMOKE_SKIP_COMPILE=1 SMOKE_TIMING_OUT="$theme_file" "$SCRIPT_DIR/check-theme-headless.sh" "$@"
     SMOKE_SKIP_COMPILE=1 SMOKE_TIMING_OUT="$style_file" "$SCRIPT_DIR/check-style-headless.sh" "$@"
+    SMOKE_SKIP_COMPILE=1 SMOKE_TIMING_OUT="$core_structure_file" "$SCRIPT_DIR/headless.sh" core-structure-ci "$@"
 
     {
       echo -e "suite\tpage\tduration_ms"
-      for suite in contract smoke parity theme style; do
+      for suite in contract smoke parity theme style core_structure; do
         file_var="${suite}_file"
         file_path="${!file_var}"
         if [ -f "$file_path" ]; then

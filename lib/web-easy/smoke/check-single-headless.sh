@@ -68,7 +68,17 @@ trap 'kill "$SERVER_PID" >/dev/null 2>&1 || true' EXIT
 
 sleep 1
 
+start_ms="$(node -e 'console.log(Date.now())')"
 SMOKE_BASE_URL="$BASE_URL" \
 SMOKE_TEST_PAGE="$TEST_PAGE" \
 SMOKE_NODE_MODULES="$LOCAL_TOOLS_DIR/node_modules" \
 node "$SCRIPT_DIR/check-single-headless.mjs"
+end_ms="$(node -e 'console.log(Date.now())')"
+
+if [ -n "${SMOKE_TIMING_OUT:-}" ]; then
+  duration_ms="$((end_ms - start_ms))"
+  if [ ! -f "$SMOKE_TIMING_OUT" ]; then
+    printf 'page\tduration_ms\n' >"$SMOKE_TIMING_OUT"
+  fi
+  printf '%s\t%s\n' "$TEST_PAGE" "$duration_ms" >>"$SMOKE_TIMING_OUT"
+fi
