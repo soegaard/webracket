@@ -836,12 +836,15 @@ html.we-theme-solar2 .we-card {
   border-radius: var(--we-radius);
   background:    rgba(238, 232, 213, 0.125);
   overflow:      hidden;
+  align-self:    flex-start;
 }
 
 html.we-theme-solar2 .we-card-header {
   background:    rgba(7, 54, 66, 0.25);
   border-bottom: 1px solid rgba(0, 43, 54, 0.95);
   color:         var(--we-fg);
+  padding:       0.5rem 1rem;
+  font-weight:   600;
 }
 
 html.we-theme-solar2 .we-card-body {
@@ -886,6 +889,67 @@ html.we-theme-solar2 .we-card-actions {
   padding:      0.75rem 1rem;
   border-top:   1px solid rgba(0, 43, 54, 0.95);
   background:   color-mix(in srgb, var(--we-bg-subtle) 22%, transparent);
+}
+
+/* Card tones: first-class component hooks used by the Solar showcase and apps. */
+html.we-theme-solar2 .we-card-tone-primary {
+  --we-card-tone-bg:     var(--we-primary);
+  --we-card-tone-border: var(--we-primary);
+}
+
+html.we-theme-solar2 .we-card-tone-secondary {
+  --we-card-tone-bg:     var(--we-secondary);
+  --we-card-tone-border: var(--bs-secondary, var(--we-secondary));
+}
+
+html.we-theme-solar2 .we-card-tone-success {
+  --we-card-tone-bg:     var(--we-success);
+  --we-card-tone-border: var(--bs-success, var(--we-success));
+}
+
+html.we-theme-solar2 .we-card-tone-danger {
+  --we-card-tone-bg:     var(--we-danger);
+  --we-card-tone-border: var(--bs-danger, var(--we-danger));
+}
+
+html.we-theme-solar2 .we-card-tone-warning {
+  --we-card-tone-bg:     var(--we-warning);
+  --we-card-tone-border: var(--bs-warning, var(--we-warning));
+}
+
+html.we-theme-solar2 .we-card-tone-info {
+  --we-card-tone-bg:     var(--we-info);
+  --we-card-tone-border: var(--bs-info, var(--we-info));
+}
+
+html.we-theme-solar2 .we-card-tone-light {
+  --we-card-tone-bg:     #fdf6e3;
+  --we-card-tone-border: #9fb3b8;
+  --we-card-tone-fg:     var(--we-bg-subtle);
+}
+
+html.we-theme-solar2 .we-card-tone-dark {
+  --we-card-tone-bg:     var(--we-bg-subtle);
+  --we-card-tone-border: #214f5c;
+}
+
+html.we-theme-solar2 .we-card.we-card-tone-fill {
+  background:    var(--we-card-tone-bg, rgba(238, 232, 213, 0.125));
+  border-color:  rgba(0, 43, 54, 0.95);
+  color:         var(--we-card-tone-fg, #fff);
+}
+
+html.we-theme-solar2 .we-card.we-card-tone-fill :is(.we-card-header, .we-card-body, .we-card-footer, .we-card-subtitle, .we-card-media-text, .we-card-action-text) {
+  color: var(--we-card-tone-fg, #fff);
+}
+
+html.we-theme-solar2 .we-card.we-card-tone-fill .we-card-header {
+  background:  rgba(7, 54, 66, 0.25);
+  font-weight: 400;
+}
+
+html.we-theme-solar2 .we-card.we-card-tone-outline {
+  border-color: var(--we-card-tone-border, rgba(0, 43, 54, 0.95));
 }
 
 html.we-theme-solar2 .we-list-group {
@@ -1794,17 +1858,6 @@ html.we-theme-solar2 .we-tab-style-underline .we-tab.is-active {
   color: var(--we-fg);
 }
 
-/* Card spacing polish. */
-html.we-theme-solar2 .we-card-header {
-  padding: 0.5rem 1rem;
-  font-weight: 600;
-}
-
-/* Cards should not auto-stretch unless explicitly requested by layout wrappers. */
-html.we-theme-solar2 .we-card {
-  align-self: flex-start;
-}
-
 html.we-theme-solar2 .we-card-footer {
   padding: 0.5rem 1rem;
 }
@@ -1864,6 +1917,28 @@ html.we-theme-solar2 :is(.we-dialog-close, .we-modal-close) {
 html.we-theme-solar2 :is(.we-dialog-close, .we-modal-close):hover {
   color:      var(--we-fg);
   background: color-mix(in srgb, var(--we-bg-hover) 60%, transparent);
+}
+
+/* Popover region hooks: header/body/footer are now first-class renderer nodes. */
+html.we-theme-solar2 .we-popover-header {
+  padding:       0.6rem 0.8rem;
+  border-bottom: 1px solid var(--we-border);
+  color:         var(--we-light-emphasis);
+  font-weight:   600;
+}
+
+html.we-theme-solar2 .we-popover-body {
+  display:   flex;
+  flex-direction: column;
+  gap:       0.35rem;
+  padding:   0.7rem 0.8rem;
+}
+
+html.we-theme-solar2 .we-popover-footer {
+  padding:    0.55rem 0.8rem;
+  border-top: 1px solid var(--we-border);
+  color:      var(--we-fg-muted);
+  font-size:  0.92rem;
 }
 
 html.we-theme-solar2 .we-table.we-table-borderless th,

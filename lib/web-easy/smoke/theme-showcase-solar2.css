@@ -715,80 +715,13 @@ html.we-theme-solar2 #solar2-containers + .we-heading-2 + .we-grid > :nth-child(
   border-top-width: 0;
 }
 
-html.we-theme-solar2 :is(.showcase-card-bg-primary, .showcase-card-border-primary) {
-  --we-showcase-card-bg:     var(--we-primary);
-  --we-showcase-card-border: var(--we-primary);
-}
-
-html.we-theme-solar2 :is(.showcase-card-bg-secondary, .showcase-card-border-secondary) {
-  --we-showcase-card-bg:     var(--we-secondary);
-  --we-showcase-card-border: var(--bs-secondary, var(--we-secondary));
-}
-
-html.we-theme-solar2 :is(.showcase-card-bg-success, .showcase-card-border-success) {
-  --we-showcase-card-bg:     var(--we-success);
-  --we-showcase-card-border: var(--bs-success, var(--we-success));
-}
-
-html.we-theme-solar2 :is(.showcase-card-bg-danger, .showcase-card-border-danger) {
-  --we-showcase-card-bg:     var(--we-danger);
-  --we-showcase-card-border: var(--bs-danger, var(--we-danger));
-}
-
-html.we-theme-solar2 :is(.showcase-card-bg-warning, .showcase-card-border-warning) {
-  --we-showcase-card-bg:     var(--we-warning);
-  --we-showcase-card-border: var(--bs-warning, var(--we-warning));
-}
-
-html.we-theme-solar2 :is(.showcase-card-bg-info, .showcase-card-border-info) {
-  --we-showcase-card-bg:     var(--we-info);
-  --we-showcase-card-border: var(--bs-info, var(--we-info));
-}
-
-html.we-theme-solar2 :is(.showcase-card-bg-light, .showcase-card-border-light) {
-  --we-showcase-card-bg:     #fdf6e3;
-  --we-showcase-card-border: #9fb3b8;
-  --we-showcase-card-fg:     var(--we-bg-subtle);
-}
-
-html.we-theme-solar2 :is(.showcase-card-bg-dark, .showcase-card-border-dark) {
-  --we-showcase-card-bg:     var(--we-bg-subtle);
-  --we-showcase-card-border: #214f5c;
-}
-
-/* Showcase cards: Bootswatch examples constrain cards and use variant-specific chrome. */
-html.we-theme-solar2 .we-card[class*="showcase-card-bg-"],
-html.we-theme-solar2 .we-card[class*="showcase-card-border-"],
-html.we-theme-solar2 [class*="showcase-card-bg-"] .we-card,
-html.we-theme-solar2 [class*="showcase-card-border-"] .we-card {
+html.we-theme-solar2 #solar2-cards-body .we-card {
   max-width: 20rem;
-  margin-bottom: 1rem;
-}
-
-html.we-theme-solar2 [class*="showcase-card-bg-"] .we-card-header {
-  background: rgba(7, 54, 66, 0.25);
-  font-weight: 400;
-}
-
-html.we-theme-solar2 [class*="showcase-card-bg-"].we-card,
-html.we-theme-solar2 [class*="showcase-card-bg-"] .we-card {
-  background:    var(--we-showcase-card-bg);
-  border-color: rgba(0, 43, 54, 0.95);
-  color:        var(--we-showcase-card-fg, #fff);
-}
-
-html.we-theme-solar2 [class*="showcase-card-bg-"] :is(.we-card-header, .we-card-body) {
-  color: var(--we-showcase-card-fg, #fff);
 }
 
 html.we-theme-solar2 #solar2-cards-body .we-card .we-heading-4 {
   font-size:   1.5rem;
   line-height: 1.2;
-}
-
-html.we-theme-solar2 [class*="showcase-card-border-"].we-card,
-html.we-theme-solar2 [class*="showcase-card-border-"] .we-card {
-  border-color: var(--we-showcase-card-border);
 }
 
 /* Navs section: Bootstrap Solar parity for tabs/pills/breadcrumb/pagination/underline. */
