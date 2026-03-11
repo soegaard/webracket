@@ -1069,9 +1069,9 @@
            (with-class "we-section-break"
              (section-heading "solar2-accordions" "Accordions"))
            (with-id "solar2-accordions-body"
-            (accordion
-             @accordion
-             (list
+             (accordion
+              @accordion
+              (list
                (list 'what
                      "Accordion Item #1"
                      (showcase-accordion-body
@@ -1086,104 +1086,101 @@
                      "Accordion Item #3"
                      (showcase-accordion-body
                       "This is the third item's accordion body."
-                      "It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the .accordion-body, though the transition does limit overflow."))))))
+                      "It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the .accordion-body, though the transition does limit overflow.")))))
 
            ;; Dialogs
            (with-class "we-section-break"
              (section-heading "solar2-dialogs" "Dialogs"))
-           (grid
-            2
-              (stack
-               (heading 2 "Modals")
-               (with-class "we-modal-panel showcase-static-modal"
-                 (stack
-                  (with-class "showcase-static-modal-header"
-                    (inline
-                     (heading 5 "Modal title")
-                     (spacer)
-                     (text "×")))
-                  (with-class "showcase-static-modal-body"
-                    (text "Modal body text goes here."))
+           (with-id "solar2-dialogs-body"
+             (with-class "we-grid-safe"
+               (grid
+                2
+                (stack
+                  (heading 2 "Modals")
+                  (with-class "we-modal-panel showcase-static-modal"
+                    (stack
+                     (with-class "showcase-static-modal-header"
+                       (inline
+                        (heading 5 "Modal title")
+                        (spacer)
+                        (text "×")))
+                     (with-class "showcase-static-modal-body"
+                       (text "Modal body text goes here."))
+                     (with-class "we-button-row"
+                       (inline
+                        (spacer)
+                        (with-class "we-btn-primary"
+                          (button "Save changes" (lambda () (void))))
+                        (with-class "we-btn-secondary"
+                          (button "Close" (lambda () (void))))))))
+                  (heading 2 "Offcanvas")
                   (with-class "we-button-row"
                     (inline
-                     (spacer)
                      (with-class "we-btn-primary"
-                       (button "Save changes" (lambda () (void))))
-                     (with-class "we-btn-secondary"
-                       (button "Close" (lambda () (void))))))))
-               (heading 2 "Offcanvas")
-               (with-class "we-button-row"
+                       (button "Link with href" (lambda () (:= @offcanvas-open? #t))))
+                     (with-class "we-btn-primary"
+                       (button "Button with data-bs-target" (lambda () (:= @offcanvas-open? #t))))))
+                  (dialog
+                   @dialog-open?
+                   (lambda (_reason) (:= @dialog-open? #f))
+                   (heading 3 "Confirm Changes")
+                   (text "Apply updated Solar 2 showcase settings?")
+                   (with-class "we-button-row"
+                     (inline
+                      (button "Cancel" (lambda () (:= @dialog-open? #f)))
+                      (button "Confirm" (lambda () (:= @dialog-open? #f))))))
+                  (offcanvas
+                   @offcanvas-open?
+                   (lambda (_reason) (:= @offcanvas-open? #f))
+                   'end
+                   (heading 5 "Offcanvas")
+                   (text "Some text as placeholder. In real life you can have the elements you have chosen. Like, text, images, lists, etc.")))
+                (stack
+                 (heading 2 "Popovers")
                  (inline
-                  (with-class "we-btn-primary"
-                    (button "Link with href" (lambda () (:= @offcanvas-open? #t))))
-                  (with-class "we-btn-primary"
-                    (button "Button with data-bs-target" (lambda () (:= @offcanvas-open? #t))))))
-               (dialog
-                @dialog-open?
-                (lambda (_reason) (:= @dialog-open? #f))
-                (heading 3 "Confirm Changes")
-                (text "Apply updated Solar 2 showcase settings?")
-                (with-class "we-button-row"
-                  (inline
-                   (button "Cancel" (lambda () (:= @dialog-open? #f)))
-                   (button "Confirm" (lambda () (:= @dialog-open? #f)))))
-               )
-               (offcanvas
-                @offcanvas-open?
-                (lambda (_reason) (:= @offcanvas-open? #f))
-                'end
-                (heading 5 "Offcanvas")
-                (text "Some text as placeholder. In real life you can have the elements you have chosen. Like, text, images, lists, etc."))
-               )
-
-              (stack
-               (heading 2 "Popovers")
-               (inline
-                (with-class "showcase-popover-left"
-                  (with-class "we-btn-secondary"
-                    (popover "Left" (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus."))))
-                (with-class "showcase-popover-top"
-                  (with-class "we-btn-secondary"
-                    (popover "Top" (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus."))))
-                (with-class "showcase-popover-bottom"
-                  (with-class "we-btn-secondary"
-                    (popover "Bottom" (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus."))))
-                (with-class "showcase-popover-right"
-                  (with-class "we-btn-secondary"
-                    (popover "Right" (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")))))
-
-               (heading 2 "Tooltips")
-               (inline
-                (with-class "showcase-tooltip-left"
-                  (tooltip "Tooltip on left"
-                           (with-class "we-btn-secondary"
-                             (button "Left" (lambda () (void))))))
-                (with-class "showcase-tooltip-top"
-                  (tooltip "Tooltip on top"
-                           (with-class "we-btn-secondary"
-                             (button "Top" (lambda () (void))))))
-                (with-class "showcase-tooltip-bottom"
-                  (tooltip "Tooltip on bottom"
-                           (with-class "we-btn-secondary"
-                             (button "Bottom" (lambda () (void))))))
-                (with-class "showcase-tooltip-right"
-                  (tooltip "Tooltip on right"
-                           (with-class "we-btn-secondary"
-                             (button "Right" (lambda () (void)))))))
-
-               (heading 2 "Toasts")
-               (with-class "showcase-static-toast"
-                 (stack
-                  (with-class "showcase-static-toast-header"
-                    (inline
-                     (with-class "showcase-static-toast-title"
-                       (text "Bootstrap"))
-                     (spacer)
-                     (with-class "showcase-static-toast-time"
-                       (text "11 mins ago"))
-                     (text "×")))
-                  (with-class "showcase-static-toast-body"
-                    (text "Hello, world! This is a toast message.")))))
+                  (with-class "showcase-popover-left"
+                    (with-class "we-btn-secondary"
+                      (popover "Left" (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus."))))
+                  (with-class "showcase-popover-top"
+                    (with-class "we-btn-secondary"
+                      (popover "Top" (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus."))))
+                  (with-class "showcase-popover-bottom"
+                    (with-class "we-btn-secondary"
+                      (popover "Bottom" (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus."))))
+                  (with-class "showcase-popover-right"
+                    (with-class "we-btn-secondary"
+                      (popover "Right" (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")))))
+                 (heading 2 "Tooltips")
+                 (inline
+                  (with-class "showcase-tooltip-left"
+                    (tooltip "Tooltip on left"
+                             (with-class "we-btn-secondary"
+                               (button "Left" (lambda () (void))))))
+                  (with-class "showcase-tooltip-top"
+                    (tooltip "Tooltip on top"
+                             (with-class "we-btn-secondary"
+                               (button "Top" (lambda () (void))))))
+                  (with-class "showcase-tooltip-bottom"
+                    (tooltip "Tooltip on bottom"
+                             (with-class "we-btn-secondary"
+                               (button "Bottom" (lambda () (void))))))
+                  (with-class "showcase-tooltip-right"
+                    (tooltip "Tooltip on right"
+                             (with-class "we-btn-secondary"
+                               (button "Right" (lambda () (void)))))))
+                 (heading 2 "Toasts")
+                 (with-class "showcase-static-toast"
+                   (stack
+                     (with-class "showcase-static-toast-header"
+                       (inline
+                        (with-class "showcase-static-toast-title"
+                          (text "Bootstrap"))
+                        (spacer)
+                        (with-class "showcase-static-toast-time"
+                          (text "11 mins ago"))
+                        (text "×")))
+                     (with-class "showcase-static-toast-body"
+                       (text "Hello, world! This is a toast message."))))))))
 
            (with-class "we-button-status"
              (text @button-log))

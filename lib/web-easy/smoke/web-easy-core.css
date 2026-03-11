@@ -132,3 +132,8 @@
 .we-section-break-xl {
   margin-top: var(--we-section-break-size-xl, 4rem);
 }
+
+/* Grid utility: allow columns to shrink within constrained layouts. */
+.we-grid-safe > * {
+  min-width: 0;
+}
