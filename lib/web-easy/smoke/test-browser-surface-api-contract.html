@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy surface-api contract smoke test</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #app-frame { width: 100%; height: 420px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <div id="status">Running surface-api contract assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=surface-api" title="web-easy surface-api contract app"></iframe>
+  <script src="./smoke-harness.js"></script>
+  <script>
+    (async function run() {
+      const H = window.SmokeHarness;
+      try {
+        const frame = document.getElementById("app-frame");
+        const doc = await H.loadCase(
+          frame,
+          "./generated/example-browser-smoke-all.html?test=surface-api",
+          function (d) {
+            return !!d.querySelector(".we-tooltip.we-tooltip-right")
+              && !!d.querySelector(".we-popover.we-popover-left")
+              && !!d.querySelector(".we-dropdown.we-dropdown-end")
+              && !!d.querySelector(".we-tab-panel.we-tab-style-joined");
+          },
+          20000
+        );
+
+        H.assertNoForbiddenAttrTokens(doc, "surface-api-contract");
+        H.assertNoInlineWidgetStyles(doc, "surface-api-contract");
+
+        H.assertTrue(!!doc.querySelector(".we-tooltip.we-tooltip-right"), "tooltip placement class right");
+        H.assertTrue(!!doc.querySelector(".we-popover.we-popover-left"), "popover placement class left");
+        H.assertTrue(!!doc.querySelector(".we-dropdown.we-dropdown-end"), "dropdown placement class end");
+        H.assertTrue(!!doc.querySelector(".we-tab-panel.we-tab-style-joined"), "tab-panel variant class joined");
+
+        const openDialog = Array.from(doc.querySelectorAll("button")).find(function (b) {
+          return (b.textContent || "").trim() === "open-dialog-lg";
+        });
+        H.assertTrue(!!openDialog, "open-dialog-lg button exists");
+        openDialog.click();
+        await H.sleep(80);
+        H.assertTrue(
+          !!doc.querySelector(".we-dialog-panel.we-dialog-size-lg"),
+          "dialog panel has lg size class"
+        );
+
+        const closeDialog = Array.from(doc.querySelectorAll("button")).find(function (b) {
+          return (b.textContent || "").trim() === "close-dialog";
+        });
+        H.assertTrue(!!closeDialog, "close-dialog button exists");
+        closeDialog.click();
+        await H.sleep(80);
+
+        const openModal = Array.from(doc.querySelectorAll("button")).find(function (b) {
+          return (b.textContent || "").trim() === "open-modal-sm";
+        });
+        H.assertTrue(!!openModal, "open-modal-sm button exists");
+        openModal.click();
+        await H.sleep(80);
+        H.assertTrue(
+          !!doc.querySelector(".we-modal .we-dialog-panel.we-dialog-size-sm"),
+          "modal panel has sm size class"
+        );
+
+        H.setStatus(
+          "PASS\nsurface-api contract: tooltip/popover/dropdown placement + dialog/modal size + tab variants",
+          "pass"
+        );
+      } catch (err) {
+        console.error(err);
+        window.SmokeHarness.setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

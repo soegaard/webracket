@@ -290,11 +290,12 @@
 ;; showcase-accordion-body : string? string? -> view?
 ;;   Build accordion panel text with lead sentence plus full reference-style copy.
 (define (showcase-accordion-body lead copy)
-  (stack
+  (with-class "showcase-accordion-body-row"
+   (inline
    (with-class "showcase-accordion-lead"
      (text lead))
    (with-class "showcase-accordion-copy"
-     (text copy))))
+     (text copy)))))
 
 ;; section-heading : string? string? -> view?
 ;;   Build a standardized top-level showcase section heading.
@@ -305,8 +306,9 @@
 (define app-renderer
   (render
    (window
-    (container
-     (stack
+    (with-class "showcase-shell"
+      (container
+       (stack
         ;;;
         ;;; Top Bar
         ;;;
@@ -1118,36 +1120,32 @@
                 (stack
                  (heading 2 "Popovers")
                  (inline
-                  (with-class "showcase-popover-left"
-                    (with-class "we-btn-secondary"
-                      (popover "Left" (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus."))))
-                  (with-class "showcase-popover-top"
-                    (with-class "we-btn-secondary"
-                      (popover "Top" (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus."))))
-                  (with-class "showcase-popover-bottom"
-                    (with-class "we-btn-secondary"
-                      (popover "Bottom" (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus."))))
-                  (with-class "showcase-popover-right"
-                    (with-class "we-btn-secondary"
-                      (popover "Right" (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")))))
+                  (with-class "we-btn-secondary"
+                    (popover "Left" 'left (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")))
+                  (with-class "we-btn-secondary"
+                    (popover "Top" 'top (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")))
+                  (with-class "we-btn-secondary"
+                    (popover "Bottom" 'bottom (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")))
+                  (with-class "we-btn-secondary"
+                    (popover "Right" 'right (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus."))))
                  (heading 2 "Tooltips")
                  (inline
-                  (with-class "showcase-tooltip-left"
-                    (tooltip "Tooltip on left"
-                             (with-class "we-btn-secondary"
-                               (button "Left" (lambda () (void))))))
-                  (with-class "showcase-tooltip-top"
-                    (tooltip "Tooltip on top"
-                             (with-class "we-btn-secondary"
-                               (button "Top" (lambda () (void))))))
-                  (with-class "showcase-tooltip-bottom"
-                    (tooltip "Tooltip on bottom"
-                             (with-class "we-btn-secondary"
-                               (button "Bottom" (lambda () (void))))))
-                  (with-class "showcase-tooltip-right"
-                    (tooltip "Tooltip on right"
-                             (with-class "we-btn-secondary"
-                               (button "Right" (lambda () (void)))))))
+                  (tooltip "Tooltip on left"
+                           (with-class "we-btn-secondary"
+                             (button "Left" (lambda () (void))))
+                           'left)
+                  (tooltip "Tooltip on top"
+                           (with-class "we-btn-secondary"
+                             (button "Top" (lambda () (void))))
+                           'top)
+                  (tooltip "Tooltip on bottom"
+                           (with-class "we-btn-secondary"
+                             (button "Bottom" (lambda () (void))))
+                           'bottom)
+                  (tooltip "Tooltip on right"
+                           (with-class "we-btn-secondary"
+                             (button "Right" (lambda () (void))))
+                           'right))
                  (heading 2 "Toasts")
                  (with-class "showcase-static-toast"
                    (stack
@@ -1196,7 +1194,7 @@
                   '(("A" "1") ("B" "2") ("C" "3"))
                   'compact
                   '((variants . (sm))
-                    (caption . "Small table"))))))))
+                    (caption . "Small table")))))))))
 
 (define theme-core-link-node     (install-theme-link! "we-theme-core-css"))
 (define theme-general-link-node  (install-theme-link! "we-theme-external-css"))

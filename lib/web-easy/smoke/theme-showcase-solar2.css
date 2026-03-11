@@ -6,9 +6,9 @@
  */
 
 html.we-theme-solar2 .showcase-shell.we-container {
-  max-width: none;
-  width: calc(100% - 16px);
-  margin: 0 8px;
+  max-width: 1296px;
+  width: min(1296px, calc(100vw - 48px));
+  margin: 0 auto;
 }
 
 html.we-theme-solar2 .showcase-hero {
@@ -355,6 +355,13 @@ html.we-theme-solar2 .showcase-accordion-lead {
   line-height: 1.45;
 }
 
+html.we-theme-solar2 .showcase-accordion-body-row {
+  align-items:   baseline;
+  flex-wrap:     wrap;
+  column-gap:    0.2rem;
+  row-gap:       0;
+}
+
 html.we-theme-solar2 .showcase-accordion-copy {
   color:       var(--we-fg-muted);
   line-height: 1.45;
@@ -369,19 +376,7 @@ html.we-theme-solar2 #solar2-indicators-section .we-alert.showcase-alert-heading
   line-height: 1.5;
   padding: 1rem;
   position: relative;
-  padding-right: 3rem;
   margin-bottom: 1rem;
-}
-
-html.we-theme-solar2 #solar2-indicators-section .we-alert.showcase-alert-heading::after {
-  content: "";
-  position: absolute;
-  right: 1rem;
-  top: 1rem;
-  width: 1em;
-  height: 1em;
-  background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23fff'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414'/%3e%3c/svg%3e") center/1em auto no-repeat;
-  opacity: 0.5;
 }
 
 html.we-theme-solar2 #solar2-indicators-section .we-alert.showcase-alert-heading .we-alert-title {
@@ -450,32 +445,6 @@ html.we-theme-solar2 #solar2-indicators-section .we-alert.showcase-alert-light {
   color:        var(--we-bg-subtle);
 }
 
-/* Alerts: softer tinted fills, closer to Bootswatch's translucent semantic backgrounds. */
-html.we-theme-solar2 #solar2-indicators-section .we-alert-info    { --we-alert-tone: var(--we-info); }
-html.we-theme-solar2 #solar2-indicators-section .we-alert-success { --we-alert-tone: var(--we-success); }
-html.we-theme-solar2 #solar2-indicators-section .we-alert-warn    { --we-alert-tone: var(--we-warning); }
-html.we-theme-solar2 #solar2-indicators-section .we-alert-error   { --we-alert-tone: var(--we-danger); }
-html.we-theme-solar2 #solar2-indicators-section .we-alert-info,
-html.we-theme-solar2 #solar2-indicators-section .we-alert-success,
-html.we-theme-solar2 #solar2-indicators-section .we-alert-warn,
-html.we-theme-solar2 #solar2-indicators-section .we-alert-error {
-  background:   var(--we-alert-tone);
-  border-color: var(--we-alert-tone);
-  color:        var(--we-light-emphasis);
-}
-
-html.we-theme-solar2 #solar2-indicators-section .we-badge {
-  vertical-align: middle;
-  position: relative;
-  top: 0;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0;
-  line-height: 1.1;
-  padding: 0.34em 0.62em;
-  border: 0;
-}
-
 html.we-theme-solar2 #solar2-indicators-section .showcase-badge-row-square .we-badge {
   border-radius: 0.375rem;
 }
@@ -491,32 +460,6 @@ html.we-theme-solar2 #solar2-indicators-section .showcase-badge-row-pill {
 
 html.we-theme-solar2 #solar2-indicators-section .showcase-badge-row-pill {
   margin-top: 0.5rem;
-}
-
-html.we-theme-solar2 #solar2-indicators-section .we-badge.we-badge-primary   { --we-badge-tone: var(--we-primary); }
-html.we-theme-solar2 #solar2-indicators-section .we-badge.we-badge-secondary { --we-badge-tone: var(--we-secondary); }
-html.we-theme-solar2 #solar2-indicators-section .we-badge.we-badge-success   { --we-badge-tone: var(--we-success); }
-html.we-theme-solar2 #solar2-indicators-section .we-badge.we-badge-danger    { --we-badge-tone: var(--we-danger); }
-html.we-theme-solar2 #solar2-indicators-section .we-badge.we-badge-warning   { --we-badge-tone: var(--we-warning); }
-html.we-theme-solar2 #solar2-indicators-section .we-badge.we-badge-info      { --we-badge-tone: var(--we-info); }
-html.we-theme-solar2 #solar2-indicators-section .we-badge.we-badge-primary,
-html.we-theme-solar2 #solar2-indicators-section .we-badge.we-badge-secondary,
-html.we-theme-solar2 #solar2-indicators-section .we-badge.we-badge-success,
-html.we-theme-solar2 #solar2-indicators-section .we-badge.we-badge-danger,
-html.we-theme-solar2 #solar2-indicators-section .we-badge.we-badge-warning,
-html.we-theme-solar2 #solar2-indicators-section .we-badge.we-badge-info {
-  background: var(--we-badge-tone);
-  color:      var(--we-light-emphasis);
-}
-
-html.we-theme-solar2 #solar2-indicators-section .we-badge.we-badge-light {
-  background: #fdf6e3;
-  color:      #2f3b3e;
-}
-
-html.we-theme-solar2 #solar2-indicators-section .we-badge.we-badge-dark {
-  background: var(--we-bg-subtle);
-  color:      var(--we-light-emphasis);
 }
 
 html.we-theme-solar2 .showcase-spinner-sm .we-spinner-icon {
@@ -700,6 +643,8 @@ html.we-theme-solar2 .showcase-card-links .we-link {
 }
 
 html.we-theme-solar2 #solar2-accordions-body {
+  box-sizing: border-box;
+  width: 26rem;
   max-width: 26rem;
 }
 
@@ -735,14 +680,14 @@ html.we-theme-solar2 #solar2-cards + .we-heading-2 + .we-grid .we-card {
 /* Dialogs section: two-column layout with Bootstrap-like row rhythm and compact control rows. */
 html.we-theme-solar2 #solar2-dialogs-body.we-grid {
   gap: 1rem;
-  margin-left: 0;
-  margin-right: 0;
+  margin-left: -12px;
+  margin-right: -12px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 html.we-theme-solar2 #solar2-dialogs-body.we-grid > * {
-  padding-left: 0;
-  padding-right: 0;
+  padding-left: 12px;
+  padding-right: 12px;
 }
 
 html.we-theme-solar2 #solar2-dialogs-body .we-stack {
@@ -765,7 +710,9 @@ html.we-theme-solar2 .showcase-static-modal {
   padding: 0;
   overflow: hidden;
   background: var(--we-bg-subtle);
-  border-color: #0f4a5a;
+  border: 1px solid #002b36;
+  border-radius: 0.5rem;
+  box-shadow: none;
 }
 
 html.we-theme-solar2 .showcase-static-modal-header,
@@ -780,6 +727,7 @@ html.we-theme-solar2 .showcase-static-modal-header .we-heading {
 
 html.we-theme-solar2 .showcase-static-modal .we-button-row {
   padding: 1rem;
+  border-top: 1px solid #002b36;
 }
 
 html.we-theme-solar2 .showcase-static-modal .we-btn-primary .we-button {
@@ -854,20 +802,6 @@ html.we-theme-solar2 .showcase-toast-bottom-left.we-toast {
   left: 8px;
   right: auto;
   bottom: 8px;
-}
-
-html.we-theme-solar2 .showcase-tooltip-top .we-tooltip-bubble,
-html.we-theme-solar2 .showcase-tooltip-right .we-tooltip-bubble,
-html.we-theme-solar2 .showcase-tooltip-bottom .we-tooltip-bubble,
-html.we-theme-solar2 .showcase-tooltip-left .we-tooltip-bubble {
-  min-width: 110px;
-}
-
-html.we-theme-solar2 .showcase-popover-top .we-popover-panel,
-html.we-theme-solar2 .showcase-popover-right .we-popover-panel,
-html.we-theme-solar2 .showcase-popover-bottom .we-popover-panel,
-html.we-theme-solar2 .showcase-popover-left .we-popover-panel {
-  min-width: 180px;
 }
 
 /* Solar showcase: list-group and cards section variant rows/cards. */
@@ -994,17 +928,23 @@ html.we-theme-solar2 [class*="showcase-card-border-"] .we-card {
 
 html.we-theme-solar2 [class*="showcase-card-bg-"] .we-card-header {
   background: rgba(7, 54, 66, 0.25);
+  font-weight: 400;
 }
 
 html.we-theme-solar2 [class*="showcase-card-bg-"].we-card,
 html.we-theme-solar2 [class*="showcase-card-bg-"] .we-card {
   background:    var(--we-showcase-card-bg);
   border-color: rgba(0, 43, 54, 0.95);
-  color:        var(--we-showcase-card-fg, var(--we-light-emphasis));
+  color:        var(--we-showcase-card-fg, #fff);
 }
 
 html.we-theme-solar2 [class*="showcase-card-bg-"] :is(.we-card-header, .we-card-body) {
-  color: var(--we-showcase-card-fg, var(--we-light-emphasis));
+  color: var(--we-showcase-card-fg, #fff);
+}
+
+html.we-theme-solar2 #solar2-cards-body .we-card .we-heading-4 {
+  font-size:   1.5rem;
+  line-height: 1.2;
 }
 
 html.we-theme-solar2 [class*="showcase-card-border-"].we-card,

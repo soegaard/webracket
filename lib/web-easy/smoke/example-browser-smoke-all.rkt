@@ -64,6 +64,7 @@
 (include/reader "smoke-capsule-tab-panel.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-tab-panel-disabled.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-tab-panel-dynamic.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-surface-api.rkt" read-syntax/skip-first-line)
 
 ;; Constants used by smoke-all query dispatch and test registry.
 (define query/test-prefix "?test=") ; Prefix used in query dispatch.
@@ -172,7 +173,9 @@
         (cons 'tab-panel-dynamic
               (list tab-panel-dynamic-make-page
                     tab-panel-dynamic-run-test
-                    tab-panel-dynamic-cleanup))))
+                    tab-panel-dynamic-cleanup))
+        (cons 'surface-api
+              (list surface-api-make-page surface-api-run-test surface-api-cleanup))))
 
 ;; query->test-id : string? -> symbol?
 ;;   Parse `?test=...` query into a registered symbol id.
