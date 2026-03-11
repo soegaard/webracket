@@ -4,7 +4,7 @@ SMOKE_DIR := lib/web-easy/smoke
 SINGLE_COMPILE ?= run-browser-parity-profile-compile.sh
 SINGLE_PAGE ?= test-browser-parity-profile.html
 
-.PHONY: help smoke-ci smoke-headless-lite smoke-style smoke-theme smoke-theme-contracts smoke-theme-core smoke-theme-visual smoke-verify smoke-quick smoke-release smoke-one smoke-list smoke-commands smoke-compare-navbars smoke-compare-buttons smoke-compare-all smoke-solar-parity smoke-solar-sections
+.PHONY: help smoke-ci smoke-headless-lite smoke-style smoke-theme smoke-theme-contracts smoke-theme-core smoke-theme-visual smoke-verify smoke-quick smoke-release smoke-one smoke-list smoke-commands smoke-compare-navbars smoke-compare-buttons smoke-compare-all smoke-solar-parity smoke-solar-sections smoke-solar-sections-gate
 
 help:
 	@echo "Available targets:"
@@ -27,6 +27,7 @@ help:
 	@echo "  smoke-compare-all     Run both compare sweeps."
 	@echo "  smoke-solar-parity    Run full Solar2 parity sweep (accordion/navbar/forms/tables/list/progress)."
 	@echo "  smoke-solar-sections  Run per-section Solar2 parity report (with RMSE per section)."
+	@echo "  smoke-solar-sections-gate  Run quick per-section Solar2 RMSE threshold gate."
 
 smoke-ci:
 	cd $(SMOKE_DIR) && ./headless.sh ci
@@ -97,6 +98,7 @@ smoke-list:
 	@echo "smoke-compare-all"
 	@echo "smoke-solar-parity"
 	@echo "smoke-solar-sections"
+	@echo "smoke-solar-sections-gate"
 
 smoke-commands:
 	cd $(SMOKE_DIR) && ./gen-commands.sh
@@ -117,3 +119,6 @@ smoke-solar-parity:
 
 smoke-solar-sections:
 	cd $(SMOKE_DIR) && ./check-solar-section-parity.sh
+
+smoke-solar-sections-gate:
+	cd $(SMOKE_DIR) && SOLAR_SECTIONS_GATE_ONLY=1 ./check-solar-section-parity.sh

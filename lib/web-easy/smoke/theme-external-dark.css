@@ -63,6 +63,9 @@ html.we-theme-dark {
   --we-space-lg: 10px;
   --we-gap: 4px;
   --we-gap-tab: 6px;
+  --we-menu-popup-offset: 2px;
+  --we-menu-popup-min-width: 150px;
+  --we-menu-popup-gap: 0px;
 
   /* Fallback background/text on the <html> element itself. */
   background: var(--we-bg);
@@ -95,9 +98,6 @@ html.we-theme-dark .we-menu-bar {
 }
 
 html.we-theme-dark .we-menu-popup {
-  top: calc(100% + 2px);
-  min-width: 150px;
-  gap: 0;
   padding: 2px;
   background: #161d28;
   border-color: #5e6a84;

@@ -48,6 +48,9 @@ html.we-theme-solar {
   --we-space-lg: 10px;
   --we-gap: 4px;
   --we-gap-tab: 6px;
+  --we-menu-popup-offset: 4px;
+  --we-menu-popup-min-width: 150px;
+  --we-menu-popup-gap: 4px;
 
   /* Semantic accents. */
   --we-progress-success: #859900;
@@ -276,9 +279,6 @@ html.we-theme-solar .we-menu-label[aria-expanded='true'] {
 }
 
 html.we-theme-solar .we-menu-popup {
-  top: calc(100% + 4px);
-  min-width: 150px;
-  gap: 4px;
   padding: 4px;
   border: 1px solid var(--we-border-menu);
   border-radius: 6px;

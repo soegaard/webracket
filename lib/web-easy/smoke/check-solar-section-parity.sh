@@ -6,8 +6,12 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 echo "[1/3] capture section screenshots + computed metrics"
 "$SCRIPT_DIR/check-solar-sections-diff.sh"
 
-echo "[2/3] summarize per-section deltas (includes RMSE)"
-node "$SCRIPT_DIR/check-solar-polish-summary.mjs"
+if [[ "${SOLAR_SECTIONS_GATE_ONLY:-0}" != "1" ]]; then
+  echo "[2/3] summarize per-section deltas (includes RMSE)"
+  node "$SCRIPT_DIR/check-solar-polish-summary.mjs"
+else
+  echo "[2/3] summary skipped (SOLAR_SECTIONS_GATE_ONLY=1)"
+fi
 
 echo "[3/3] enforce section RMSE thresholds"
 node -e '

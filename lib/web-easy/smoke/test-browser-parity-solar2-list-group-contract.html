@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy parity solar2 list-group contract test</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status { white-space: pre-wrap; padding: 8px; border: 1px solid #999; margin-bottom: 12px; }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #app-frame { width: 100%; height: 260px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <div id="status">Running parity Solar2 list-group contract assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-solar-showcase.html" title="web-easy parity Solar2 list-group contract app"></iframe>
+  <script>
+    function setStatus(text, cls) {
+      const node = document.getElementById("status");
+      node.textContent = text;
+      node.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function assertTrue(v, label) {
+      if (!v) throw new Error(label + ": expected true, got " + String(v));
+    }
+
+    function assertEqual(got, expected, label) {
+      if (got !== expected) {
+        throw new Error(label + ": expected " + JSON.stringify(expected) + ", got " + JSON.stringify(got));
+      }
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const doc = frameDocFrom(frame);
+        if (doc) {
+          const rows = doc.querySelectorAll(".showcase-list-group-row");
+          if (rows.length >= 8) {
+            return { doc, rows: Array.from(rows) };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for parity Solar2 list-group rows");
+    }
+
+    function clippedRows(rows) {
+      const bad = [];
+      rows.forEach((row, i) => {
+        const badge = row.querySelector(".we-badge");
+        const label = row.querySelector("[data-we-widget='text']");
+        if (!badge || !label) {
+          bad.push({ i, reason: "missing badge or label" });
+          return;
+        }
+        const rr = row.getBoundingClientRect();
+        const br = badge.getBoundingClientRect();
+        const lr = label.getBoundingClientRect();
+        const rowMid = rr.top + rr.height / 2;
+        const badgeMid = br.top + br.height / 2;
+        const labelMid = lr.top + lr.height / 2;
+        const clipped = br.top < rr.top || br.bottom > rr.bottom;
+        const centered = Math.abs(badgeMid - rowMid) <= 2 && Math.abs(labelMid - rowMid) <= 2;
+        if (clipped || !centered) {
+          bad.push({ i, clipped, centered });
+        }
+      });
+      return bad;
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        const bad = clippedRows(ui.rows);
+        assertEqual(bad.length, 0, "row clipping/centering failures");
+
+        const list = ui.doc.querySelector(".we-list-group");
+        const style = list ? getComputedStyle(list) : null;
+        assertTrue(!!style, "list-group style available");
+        assertEqual(style.overflowX, "visible", "list-group overflow-x");
+        assertEqual(style.overflowY, "visible", "list-group overflow-y");
+
+        setStatus("PASS\nparity Solar2 list-group: all badge rows unclipped and centered", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

@@ -771,8 +771,9 @@
                  )))))
 
            ;; Navs
-           (with-id "solar2-navs-section"
-             (stack
+           (with-class "we-section-break-xl"
+             (with-id "solar2-navs-section"
+               (stack
               (section-heading "solar2-navs" "Navs")
               (grid
                2
@@ -829,16 +830,17 @@
                   (pagination 5 @page (lambda (v) (:= @page v))))))
               (heading 2 "Underline")
               (with-class "we-tab-style-underline"
-                (tab-panel
+               (tab-panel
                  @underline-tab
                  (list (cons "Active"   (text "Underline active content."))
                        (cons "Link"     (text "Underline link content."))
                        (cons "Link​"    (text "Underline link two content."))
-                       (list "Disabled" (text "Underline disabled content.") #t))))))
+                       (list "Disabled" (text "Underline disabled content.") #t)))))))
 
            ;; Indicators
-           (with-id "solar2-indicators-section"
-             (stack
+           (with-class "we-section-break-xl"
+             (with-id "solar2-indicators-section"
+               (stack
               (section-heading "solar2-indicators" "Indicators")
               (heading 2 "Alerts")
               (with-class "showcase-alert-heading showcase-alert-major"
@@ -908,11 +910,12 @@
                  (badge "Warning" 'warning)
                  (badge "Info" 'info)
                  (badge "Light" 'light)
-                 (badge "Dark" 'dark)))))
+                 (badge "Dark" 'dark))))))
 
            ;; Progress
-           (with-id "solar2-progress-section"
-             (stack
+           (with-class "we-section-break-xl"
+             (with-id "solar2-progress-section"
+               (stack
               (section-heading "solar2-progress" "Progress")
               (heading 3 "Basic")
               (progress-track
@@ -934,7 +937,7 @@
               (progress-track (progress-fill 75 'warn #t))
               (progress-track (progress-fill 100 'error #t))
               (heading 3 "Animated")
-              (progress-track (progress-fill 75 'default #t #t))))
+              (progress-track (progress-fill 75 'default #t #t)))))
 
            ;; Containers
            (section-heading "solar2-containers" "Containers")
@@ -964,7 +967,8 @@
              (showcase-rich-list-group)))
 
            ;; Cards
-           (section-heading "solar2-cards" "Cards")
+           (with-class "we-section-break"
+             (section-heading "solar2-cards" "Cards"))
            (heading 2 "Cards")
            (with-id "solar2-cards-body"
             (grid
@@ -1067,7 +1071,8 @@
                       (link "Another link" "#")))))))
 
            ;; Accordions
-           (section-heading "solar2-accordions" "Accordions")
+           (with-class "we-section-break"
+             (section-heading "solar2-accordions" "Accordions"))
            (with-id "solar2-accordions-body"
             (with-class "showcase-accordion-wrap"
              (accordion
@@ -1090,7 +1095,8 @@
                       "It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the .accordion-body, though the transition does limit overflow."))))))
 
            ;; Dialogs
-           (section-heading "solar2-dialogs" "Dialogs")
+           (with-class "we-section-break"
+             (section-heading "solar2-dialogs" "Dialogs"))
            (with-id "solar2-dialogs-body"
             (with-class "showcase-dialogs-grid"
              (grid

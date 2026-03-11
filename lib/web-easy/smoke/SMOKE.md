@@ -65,6 +65,7 @@ Fast local headless gate (contract + theme + guard, skips full dashboard run):
 | Focused theme contracts lane (no visual diff) | `make smoke-theme-contracts` |
 | Focused theme-core lane | `make smoke-theme-core` |
 | Solar per-section parity report (with RMSE) | `make smoke-solar-sections` |
+| Solar per-section quick RMSE gate | `make smoke-solar-sections-gate` |
 | Headless preflight only | `make smoke-verify` |
 | One-page headless test | `make smoke-one SINGLE_COMPILE=... SINGLE_PAGE=...` |
 | Style-hook contracts only | `./headless.sh style` |
@@ -83,6 +84,8 @@ Fast local headless gate (contract + theme + guard, skips full dashboard run):
 | Solar list-group contract (computed style) | `node ./check-solar-list-group-contract.mjs` |
 | Solar list-group zoom/DPR contract | `node ./check-solar-listgroup-zoom-contract.mjs` |
 | Solar2 list-group browser contract page (dashboard-ready) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-solar-showcase-compile.sh test-browser-solar2-list-group-contract.html` |
+| Parity Solar2 list-group browser contract page | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-solar-showcase-compile.sh test-browser-parity-solar2-list-group-contract.html` |
+| Menu core-structure contract page | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-menu-core-structure-contract.html` |
 | Solar section parity report + threshold gate | `./check-solar-section-parity.sh` |
 | Solar overlays contract (accordions/dialogs) | `node ./check-solar-overlays-contract.mjs` |
 | Solar accordion parity (computed + screenshot) | `./check-solar-accordion-parity.sh` |
@@ -208,6 +211,7 @@ When screenshot/computed output does not match what you see manually:
 - `make smoke-compare-buttons`
 - `make smoke-compare-all`
 - `make smoke-solar-sections`
+- `make smoke-solar-sections-gate`
 
 ## Local Utility Wrapper (`smoke.sh`)
 

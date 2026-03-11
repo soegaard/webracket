@@ -17,7 +17,7 @@ Scope: remaining duplicated selectors across:
 | Selector | Seen In | Classification | Why | Recommendation |
 | --- | --- | --- | --- | --- |
 | `.we-menu-bar` | light/dark/solar/solar2 | mixed | all themes share row mechanics plus per-theme skin values | first safe slice completed: shared mechanics moved to core; keep skin in themes |
-| `.we-menu-popup` | light/dark/solar | mixed | anchor/size mechanics + border/bg/shadow | keep mixed now; possible future split (`top/min-width/gap` decision needed) |
+| `.we-menu-popup` | light/dark/solar/solar2 | mixed | shared anchor/size mechanics + theme skin | first popup split done: core owns `top/min-width/gap` via CSS vars; themes keep visual skin |
 | `.we-menu-label` | light/dark/solar | mixed | interactive element sizing + visual style | keep in themes |
 | `.we-menu-label:hover` | light/dark/solar | visual | hover color/border skin | keep in themes |
 | `.we-menu-label[aria-expanded='true']` | light/dark/solar | visual | open-state visual skin only (stacking now in core) | keep in themes |
@@ -53,6 +53,9 @@ Scope: remaining duplicated selectors across:
 3. `.we-accordion-trigger::after` shared mechanics (`display`, `margin-left`, `transition-property`, `transition-timing-function`) moved to core.
 4. `.we-flow > * + *` vertical rhythm helper moved to core; Solar2 showcase now uses `we-flow` instead of page-only sibling-spacing selectors.
 5. `.we-menu-bar` shared row mechanics (`display/flex-wrap/align-items`) moved to core; theme files now own only visual density/skin values for menu bars.
+6. `.we-menu-popup` shared anchor sizing moved to core via tokens:
+   - core: `top`, `min-width`, `gap` with `--we-menu-popup-*` vars
+   - themes: per-theme token values + popup visual skin only
 
 ## Concrete Menu Split Plan
 
@@ -64,9 +67,8 @@ Goal: split structural menu mechanics from visual skin without changing behavior
 2. Keep in themes (visual density/skin):
    - `.we-menu-bar` `gap`, `padding`, `border`, `border-radius`, `background`
 3. Next candidate (pending decision):
-   - `.we-menu-popup` anchor/flow mechanics:
-     - candidate structural fields: `top`, `min-width`, `gap`
-   - blocked on policy choice: whether popup offset/width is global behavior or theme density.
+   - `.we-menu-popup` left/right anchoring and optional placement helpers
+   - blocked on API choice for popup placement semantics (for example right-aligned menus).
 4. Guardrail:
    - any future extraction must preserve dashboard contracts and Solar parity RMSE thresholds.
 

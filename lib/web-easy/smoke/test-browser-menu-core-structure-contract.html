@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy menu core structure contract test</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status { white-space: pre-wrap; padding: 8px; border: 1px solid #999; margin-bottom: 12px; }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #app-frame { width: 100%; height: 280px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <div id="status">Running menu core structure contract assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=menu-full" title="web-easy menu core structure contract app"></iframe>
+  <script>
+    function setStatus(text, cls) {
+      const node = document.getElementById("status");
+      node.textContent = text;
+      node.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function assertTrue(v, label) {
+      if (!v) throw new Error(label + ": expected true, got " + String(v));
+    }
+
+    function assertEqual(got, expected, label) {
+      if (got !== expected) {
+        throw new Error(label + ": expected " + JSON.stringify(expected) + ", got " + JSON.stringify(got));
+      }
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const doc = frameDocFrom(frame);
+        if (doc) {
+          const bar = doc.querySelector(".we-menu-bar");
+          const popup = doc.querySelector(".we-menu-popup");
+          if (bar && popup) {
+            return { doc, bar, popup };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for menu core structure UI");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        const barStyle = getComputedStyle(ui.bar);
+        assertEqual(barStyle.display, "flex", "menu bar display");
+        assertEqual(barStyle.flexWrap, "wrap", "menu bar flex-wrap");
+        assertEqual(barStyle.alignItems, "center", "menu bar align-items");
+
+        const popupStyle = getComputedStyle(ui.popup);
+        assertTrue(popupStyle.minWidth !== "0px", "menu popup min-width is non-zero");
+        assertTrue(popupStyle.top !== "auto", "menu popup top is positioned");
+
+        const coreCss = await (await fetch("./web-easy-core.css")).text();
+        assertTrue(coreCss.includes(".we-menu-bar"), "core css has .we-menu-bar rule");
+        assertTrue(coreCss.includes("display: flex"), "core css includes menu-bar display");
+        assertTrue(coreCss.includes("flex-wrap: wrap"), "core css includes menu-bar wrap");
+        assertTrue(coreCss.includes("align-items: center"), "core css includes menu-bar align");
+        assertTrue(coreCss.includes("--we-menu-popup-offset"), "core css includes popup offset var");
+        assertTrue(coreCss.includes("--we-menu-popup-min-width"), "core css includes popup min-width var");
+        assertTrue(coreCss.includes("--we-menu-popup-gap"), "core css includes popup gap var");
+
+        setStatus("PASS\nmenu core structure: menu-bar and popup mechanics come from web-easy-core.css", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

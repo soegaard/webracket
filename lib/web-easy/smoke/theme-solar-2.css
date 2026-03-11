@@ -85,6 +85,11 @@ html.we-theme-solar2 {
   --we-progress-success: var(--we-success);
   --we-progress-warn:    var(--we-warning);
   --we-progress-error:   var(--we-danger);
+  --we-menu-popup-offset: 4px;
+  --we-menu-popup-min-width: 160px;
+  --we-menu-popup-gap: 4px;
+  --we-section-break-size: 3rem;
+  --we-section-break-size-xl: 4rem;
   --we-overlay:          rgba(0, 19, 24, 0.72);
   --we-shadow:           rgba(0, 0, 0, 0.45);
   --we-font-sans:        "Source Sans Pro", -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
@@ -256,8 +261,6 @@ html.we-theme-solar2 .we-menu-label[aria-expanded='true'] {
 }
 
 html.we-theme-solar2 .we-menu-popup {
-  min-width:      160px;
-  gap:            4px;
   padding:        4px;
   border:         1px solid var(--we-border-soft);
   border-radius:  var(--we-radius);
@@ -2872,10 +2875,6 @@ html.we-theme-solar2 .showcase-main .we-accordion-section.is-open .we-accordion-
   border-top: 1px solid color-mix(in srgb, var(--we-border-soft) 70%, transparent);
 }
 
-html.we-theme-solar2 #solar2-indicators-section {
-  margin-top: 4rem;
-}
-
 html.we-theme-solar2 #solar2-indicators-section .we-heading-2 {
   margin: 1rem 0 0.65rem 0;
 }
@@ -3090,7 +3089,6 @@ html.we-theme-solar2 .showcase-progress-track {
    keep heading/bar margins in control and avoid additive stack gaps. */
 html.we-theme-solar2 #solar2-progress-section.we-stack {
   --we-stack-gap: 0;
-  margin-top: 4rem;
 }
 
 html.we-theme-solar2 .showcase-progress-track-inner {
@@ -3257,13 +3255,6 @@ html.we-theme-solar2 .showcase-card-links.we-inline {
 html.we-theme-solar2 .showcase-card-links .we-link {
   display: inline;
   line-height: 1.5;
-}
-
-/* Section rhythm: mirror Bootstrap's mt-5 separation between major blocks. */
-html.we-theme-solar2 #solar2-cards,
-html.we-theme-solar2 #solar2-accordions,
-html.we-theme-solar2 #solar2-dialogs {
-  margin-top: 3rem;
 }
 
 html.we-theme-solar2 .showcase-accordion-wrap {
@@ -3618,7 +3609,6 @@ html.we-theme-solar2 #solar2-navs-section {
   --we-nav-link-color:          var(--bs-link-color, var(--we-success));
   --we-nav-link-hover-color:    var(--bs-link-hover-color, var(--we-success));
   --we-nav-link-disabled-color: var(--bs-secondary-color, rgba(131, 148, 150, 0.75));
-  margin-top: 4rem;
 }
 
 html.we-theme-solar2 #solar2-navs-section .we-heading.level-2 {

@@ -1082,6 +1082,7 @@ Core utility note:
 - `we-flow` is now part of the structural core layer (`.we-flow > * + *`) for uniform sibling spacing.
 - Use `with-class "we-flow"` in pages/examples instead of page-specific adjacent-sibling spacing selectors when the intent is generic vertical rhythm.
 - `we-menu-bar` shared row mechanics (`display/flex-wrap/align-items`) are now in core; theme styles keep only menu-bar visual density and skin.
+- `we-menu-popup` shared placement sizing (`top/min-width/gap`) is now core-owned through `--we-menu-popup-*` tokens; themes set token values and keep popup skin.
 
 ## Theme Contract Test Architecture
 
@@ -1097,6 +1098,9 @@ Theme contracts use a dedicated runtime testing layer to keep token plumbing che
    - `smoke/check-solar-section-parity.sh`
    - this captures section screenshots/metrics and prints per-section RMSE via `check-solar-polish-summary.mjs`.
 6. Solar2 list-group clipping/alignment now has a browser contract page (`smoke/test-browser-solar2-list-group-contract.html`) included in the core contract dashboard lane.
+7. Menu structural extraction is guarded by `smoke/test-browser-menu-core-structure-contract.html`.
+8. Solar section parity script supports gate-only mode for quick CI/local thresholds:
+   - `SOLAR_SECTIONS_GATE_ONLY=1 smoke/check-solar-section-parity.sh`
 
 Rationale:
 
