@@ -1018,12 +1018,15 @@
                      (text "Some quick example text to build on the card title and make up the bulk of the card's content."))))
             (stack
              (card "Card header" "2 days ago"
+                   (list (cons 'subtitle "Support card subtitle")
+                         (cons 'media
+                               (with-class "showcase-card-image-cap"
+                                 (text "Image cap")))
+                         (cons 'actions
+                               (list (link "Card link" "#")
+                                     (link "Another link" "#"))))
                    (stack
                     (heading 5 "Special title treatment")
-                    (with-class "showcase-card-subtitle"
-                      (text "Support card subtitle"))
-                    (with-class "showcase-card-image-cap"
-                      (text "Image cap"))
                     (text "Some quick example text to build on the card title and make up the bulk of the card's content.")
                     (with-class "we-list-group"
                       (stack
@@ -1032,20 +1035,13 @@
                        (with-class "we-list-group-item"
                          (text "Dapibus ac facilisis in"))
                        (with-class "we-list-group-item"
-                         (text "Vestibulum at eros"))))
-                    (with-class "showcase-card-links"
-                      (inline
-                       (link "Card link" "#")
-                       (link "Another link" "#")))))
-             (card #f #f
-                   (heading 4 "Card title")
-                   (with-class "showcase-card-subtitle"
-                     (text "Card subtitle"))
-                   (text "Some quick example text to build on the card title and make up the bulk of the card's content.")
-                   (with-class "showcase-card-links"
-                     (inline
-                      (link "Card link" "#")
-                      (link "Another link" "#")))))))
+                         (text "Vestibulum at eros"))))))
+             (card "Card title" #f
+                   (list (cons 'subtitle "Card subtitle")
+                         (cons 'actions
+                               (list (link "Card link" "#")
+                                     (link "Another link" "#"))))
+                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))))))
 
            ;; Accordions
            (with-class "we-section-break"
@@ -1074,21 +1070,22 @@
            (with-class "we-section-break"
              (section-heading "solar2-dialogs" "Dialogs"))
            (with-id "solar2-dialogs-body"
-             (with-class "we-grid-safe"
+             (with-class "we-grid-safe showcase-dialogs-grid"
                (grid
                 2
                 (stack
                   (heading 2 "Modals")
                   (with-class "we-modal-panel showcase-static-modal"
                     (stack
-                     (with-class "showcase-static-modal-header"
+                     (with-class "we-modal-header"
                        (inline
                         (heading 5 "Modal title")
                         (spacer)
-                        (text "×")))
-                     (with-class "showcase-static-modal-body"
+                        (with-class "we-modal-close"
+                          (text "×"))))
+                     (with-class "we-modal-body"
                        (text "Modal body text goes here."))
-                     (with-class "we-button-row"
+                     (with-class "we-modal-footer we-button-row"
                        (inline
                         (spacer)
                         (with-class "we-btn-primary"
@@ -1194,7 +1191,7 @@
                   '(("A" "1") ("B" "2") ("C" "3"))
                   'compact
                   '((variants . (sm))
-                    (caption . "Small table")))))))))
+                    (caption . "Small table"))))))))
 
 (define theme-core-link-node     (install-theme-link! "we-theme-core-css"))
 (define theme-general-link-node  (install-theme-link! "we-theme-external-css"))

@@ -1103,6 +1103,7 @@ Core utility note:
 - Use `with-class "we-flow"` in pages/examples instead of page-specific adjacent-sibling spacing selectors when the intent is generic vertical rhythm.
 - `we-menu-bar` shared row mechanics (`display/flex-wrap/align-items`) are now in core; theme styles keep only menu-bar visual density and skin.
 - `we-menu-popup` shared placement sizing (`top/min-width/gap`) is now core-owned through `--we-menu-popup-*` tokens; themes set token values and keep popup skin.
+- Solar2 progress utility selectors (`showcase-progress-*`, striped/animated progress fills) were migrated from showcase CSS into `theme-solar-2.css`; showcase CSS retains only section/page scaffolding.
 
 ## Theme Contract Test Architecture
 
