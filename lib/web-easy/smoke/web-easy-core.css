@@ -47,6 +47,11 @@
   text-align: left;
 }
 
+.we-accordion-trigger::after {
+  transition-property: transform, color;
+  transition-timing-function: ease;
+}
+
 /* Menus: item layout behavior; visual skinning remains in themes. */
 .we-menu-item {
   display: block;

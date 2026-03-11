@@ -968,7 +968,7 @@ html.we-theme-solar .we-accordion-trigger {
 html.we-theme-solar .we-accordion-trigger::after {
   content: "▸";
   color: #2aa198;
-  transition: transform .16s ease;
+  transition-duration: .16s;
 }
 
 html.we-theme-solar .we-accordion-trigger.is-open {

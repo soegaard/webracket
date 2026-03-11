@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy theme contract vars stylesheet contract test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 320px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running theme-contract-vars.css assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=menu-full" title="theme contract vars app"></iframe>
+
+  <script src="./theme-contract-helper.js"></script>
+  <script>
+    const themeHelper = window.themeContractHelper;
+    const THEME_LAYER_OPTIONS = {
+      themeClass: "we-theme-solar2",
+      coreHref: "../web-easy-core.css",
+      themeHref: "../theme-contract-vars.css"
+    };
+
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    async function waitForCase(frame, src, readyFn, timeoutMs) {
+      await new Promise((resolve, reject) => {
+        const timer = setTimeout(() => reject(new Error("Timed out loading iframe: " + src)), timeoutMs);
+        frame.addEventListener("load", () => {
+          clearTimeout(timer);
+          resolve();
+        }, { once: true });
+        frame.src = src;
+      });
+
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = themeHelper.frameDocFrom(frame);
+        if (frameDoc) {
+          themeHelper.ensureThemeLayer(frameDoc, THEME_LAYER_OPTIONS);
+        }
+        if (frameDoc && readyFn(frameDoc)) {
+          return frameDoc;
+        }
+        await themeHelper.sleep(25);
+      }
+      throw new Error("Timed out waiting for ready state: " + src);
+    }
+
+    function assertTokenDefined(style, name) {
+      const v = (style.getPropertyValue(name) || "").trim();
+      themeHelper.assertTrue(v.length > 0, name + " token exists");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+
+        const menuDoc = await waitForCase(
+          frame,
+          "./generated/example-browser-smoke-all.html?test=menu-full",
+          (d) => d.querySelector(".we-menu-bar[role='menubar']"),
+          20000
+        );
+
+        const links = Array.from(menuDoc.querySelectorAll("link"));
+        const coreIdx = links.findIndex((el) => el.id === "we-theme-core-css");
+        const extIdx = links.findIndex((el) => el.id === "we-theme-external-css");
+        themeHelper.assertTrue(coreIdx >= 0, "core link exists");
+        themeHelper.assertTrue(extIdx >= 0, "external link exists");
+        themeHelper.assertTrue(coreIdx < extIdx, "core link before external link");
+        themeHelper.assertTrue(
+          (links[extIdx].getAttribute("href") || "").includes("theme-contract-vars.css"),
+          "external link points to theme-contract-vars.css"
+        );
+
+        const rootStyle = getComputedStyle(menuDoc.documentElement);
+        [
+          "--we-focus",
+          "--we-bg",
+          "--we-bg-subtle",
+          "--we-bg-selected",
+          "--we-border",
+          "--we-border-menu",
+          "--we-border-strong",
+          "--we-overlay",
+          "--we-progress-success",
+          "--we-progress-warn",
+          "--we-progress-error"
+        ].forEach((tok) => assertTokenDefined(rootStyle, tok));
+
+        const menuBar = menuDoc.querySelector(".we-menu-bar[role='menubar']");
+        const beforeBg = themeHelper.normalizedCssColor(getComputedStyle(menuBar).backgroundColor);
+        menuDoc.documentElement.style.setProperty("--we-bg-subtle", "rgb(223, 243, 233)");
+        await themeHelper.sleep(80);
+        const afterBg = themeHelper.normalizedCssColor(getComputedStyle(menuBar).backgroundColor);
+        themeHelper.assertTrue(afterBg === "rgb(223,243,233)", "menu bar bg follows --we-bg-subtle");
+        themeHelper.assertTrue(afterBg !== beforeBg, "menu bar bg changes when token changes");
+
+        const tabDoc = await waitForCase(
+          frame,
+          "./generated/example-browser-smoke-all.html?test=tab-panel",
+          (d) => d.querySelector(".we-tab-btn[aria-selected='true']"),
+          20000
+        );
+        const selected = tabDoc.querySelector(".we-tab-btn[aria-selected='true']");
+        const beforeTabBg = themeHelper.normalizedCssColor(getComputedStyle(selected).backgroundColor);
+        tabDoc.documentElement.style.setProperty("--we-bg-selected", "rgb(250, 245, 190)");
+        await themeHelper.sleep(80);
+        const afterTabBg = themeHelper.normalizedCssColor(getComputedStyle(selected).backgroundColor);
+        themeHelper.assertTrue(afterTabBg === "rgb(250,245,190)", "selected tab bg follows --we-bg-selected");
+        themeHelper.assertTrue(afterTabBg !== beforeTabBg, "selected tab bg changes when token changes");
+
+        setStatus("PASS\ntheme-contract-vars.css: links/order/tokens/hooks verified", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

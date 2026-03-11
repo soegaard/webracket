@@ -1055,6 +1055,23 @@ Core vs Theme rule (strict):
 - Showcase layer (`theme-showcase-*.css`): page-specific layout/polish only.
 - Load order must be: core -> theme -> showcase (if present).
 
+## Theme Contract Test Architecture
+
+Theme contracts use a dedicated runtime testing layer to keep token plumbing checks stable:
+
+1. Contract pages inject:
+   - `web-easy-core.css`
+   - `theme-contract-vars.css`
+2. `theme-contract-vars.css` is intentionally deterministic and token-forwarding; it is not a user-facing visual theme.
+3. User-facing visual themes (`theme-external-*.css`, `theme-solar-2.css`) are validated by separate theme/external/showcase contracts and visual diff lanes.
+4. Shared test helper (`smoke/theme-contract-helper.js`) centralizes iframe theme injection and basic utilities to reduce drift across contract pages.
+
+Rationale:
+
+- Prevents theme token contracts from depending on incidental visual-theme details.
+- Keeps token behavior tests reproducible while preserving independent visual-theme evolution.
+- Reduces duplication and maintenance risk in contract pages.
+
 ## Behavior Contract Update (2026-03-06)
 
 Recent contract expansion focuses on optional-argument behavior and close-reason semantics:

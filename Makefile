@@ -4,7 +4,7 @@ SMOKE_DIR := lib/web-easy/smoke
 SINGLE_COMPILE ?= run-browser-parity-profile-compile.sh
 SINGLE_PAGE ?= test-browser-parity-profile.html
 
-.PHONY: help smoke-ci smoke-headless-lite smoke-style smoke-theme smoke-theme-core smoke-theme-visual smoke-verify smoke-quick smoke-release smoke-one smoke-list smoke-commands smoke-compare-navbars smoke-compare-buttons smoke-compare-all smoke-solar-parity
+.PHONY: help smoke-ci smoke-headless-lite smoke-style smoke-theme smoke-theme-contracts smoke-theme-core smoke-theme-visual smoke-verify smoke-quick smoke-release smoke-one smoke-list smoke-commands smoke-compare-navbars smoke-compare-buttons smoke-compare-all smoke-solar-parity
 
 help:
 	@echo "Available targets:"
@@ -13,6 +13,7 @@ help:
 	@echo "  smoke-headless-lite   Run contract+smoke+parity+guard without compile (preferred)."
 	@echo "  smoke-style           Run style-hook contracts only (smoke+parity)."
 	@echo "  smoke-theme           Run theme-only dashboard headless."
+	@echo "  smoke-theme-contracts Run focused theme contracts lane (no solar visual diff)."
 	@echo "  smoke-theme-core      Run focused theme-core lane (compile+contracts+solar polish)."
 	@echo "  smoke-theme-visual    Run theme visual-diff lane headless."
 	@echo "  smoke-verify          Run local headless verify preflight."
@@ -41,7 +42,17 @@ smoke-style:
 smoke-theme:
 	cd $(SMOKE_DIR) && ./headless.sh theme
 
+smoke-theme-contracts:
+	cd $(SMOKE_DIR) && ./check-theme-contract-helper.sh
+	cd $(SMOKE_DIR) && ./run-browser-theme-showcase-compile.sh
+	cd $(SMOKE_DIR) && SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-theme-external-css-contract.html
+	cd $(SMOKE_DIR) && SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-theme-core-link-contract.html
+	cd $(SMOKE_DIR) && SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-theme-starter-contract.html
+	cd $(SMOKE_DIR) && SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-theme-contract-vars-contract.html
+	cd $(SMOKE_DIR) && SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-theme-showcase-compile.sh test-browser-theme-showcase-contract.html
+
 smoke-theme-core:
+	cd $(SMOKE_DIR) && ./check-theme-contract-helper.sh
 	cd $(SMOKE_DIR) && ./run-browser-theme-showcase-compile.sh
 	cd $(SMOKE_DIR) && ./run-browser-solar-showcase-compile.sh
 	cd $(SMOKE_DIR) && SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-theme-external-css-contract.html
@@ -71,6 +82,7 @@ smoke-list:
 	@echo "smoke-headless-lite"
 	@echo "smoke-style"
 	@echo "smoke-theme"
+	@echo "smoke-theme-contracts"
 	@echo "smoke-theme-core"
 	@echo "smoke-theme-visual"
 	@echo "smoke-verify"

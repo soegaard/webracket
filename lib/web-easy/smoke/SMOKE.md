@@ -10,6 +10,7 @@ Use `make` from repo root:
 make smoke-commands
 make smoke-headless-lite
 make smoke-style
+make smoke-theme-contracts
 make smoke-ci
 make smoke-theme-core
 ```
@@ -61,6 +62,7 @@ Fast local headless gate (contract + theme + guard, skips full dashboard run):
 | Refresh command inventory | `make smoke-commands` |
 | Fast pre-push gate (skip compile) | `make smoke-headless-lite` |
 | Full local CI gate | `make smoke-ci` |
+| Focused theme contracts lane (no visual diff) | `make smoke-theme-contracts` |
 | Focused theme-core lane | `make smoke-theme-core` |
 | Headless preflight only | `make smoke-verify` |
 | One-page headless test | `make smoke-one SINGLE_COMPILE=... SINGLE_PAGE=...` |
@@ -179,13 +181,16 @@ When screenshot/computed output does not match what you see manually:
 | Theme external-css contract (core-before-theme order) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-theme-external-css-contract.html` |
 | Theme core-link recursive contract | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-theme-core-link-contract.html` |
 | Theme starter contract | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-theme-starter-contract.html` |
+| Theme contract-vars stylesheet contract | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-theme-contract-vars-contract.html` |
 | Theme showcase contract | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-theme-showcase-compile.sh test-browser-theme-showcase-contract.html` |
+| Theme contract helper lint | `./check-theme-contract-helper.sh` |
 
 ## Make Targets
 
 - `make smoke-ci`
 - `make smoke-headless-lite`
 - `make smoke-style`
+- `make smoke-theme-contracts`
 - `make smoke-theme-core`
 - `make smoke-verify`
 - `make smoke-quick`

@@ -445,7 +445,7 @@ html.we-theme-dark .we-accordion-trigger::after {
   margin-left: 8px;
   color: #8f9bb1;
   transform: rotate(0deg);
-  transition: transform 0.18s ease, color 0.18s ease;
+  transition-duration: 0.18s;
 }
 
 html.we-theme-dark .we-accordion-trigger:hover {
