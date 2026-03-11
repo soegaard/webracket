@@ -303,6 +303,12 @@
   (with-id section-id
     (heading 1 title)))
 
+;; card-tone-options : symbol? symbol? -> list?
+;;   Build card options alist for first-class tone and tone-style hooks.
+(define (card-tone-options tone tone-style)
+  (list (cons 'tone tone)
+        (cons 'tone-style tone-style)))
+
 (define app-renderer
   (render
    (window
@@ -951,71 +957,71 @@
             (grid
              3
             (stack
-             (with-class "showcase-card-bg-primary"
-               (card "Header" #f
-                     (heading 4 "Primary card title")
-                     (text "Some quick example text to build on the card title and make up the bulk of the card's content.")))
-             (with-class "showcase-card-bg-secondary"
-               (card "Header" #f
-                     (heading 4 "Secondary card title")
-                     (text "Some quick example text to build on the card title and make up the bulk of the card's content.")))
-             (with-class "showcase-card-bg-success"
-               (card "Header" #f
-                     (heading 4 "Success card title")
-                     (text "Some quick example text to build on the card title and make up the bulk of the card's content.")))
-             (with-class "showcase-card-bg-danger"
-               (card "Header" #f
-                     (heading 4 "Danger card title")
-                     (text "Some quick example text to build on the card title and make up the bulk of the card's content.")))
-             (with-class "showcase-card-bg-warning"
-               (card "Header" #f
-                     (heading 4 "Warning card title")
-                     (text "Some quick example text to build on the card title and make up the bulk of the card's content.")))
-             (with-class "showcase-card-bg-info"
-               (card "Header" #f
-                     (heading 4 "Info card title")
-                     (text "Some quick example text to build on the card title and make up the bulk of the card's content.")))
-             (with-class "showcase-card-bg-light"
-               (card "Header" #f
-                     (heading 4 "Light card title")
-                     (text "Some quick example text to build on the card title and make up the bulk of the card's content.")))
-             (with-class "showcase-card-bg-dark"
-               (card "Header" #f
-                     (heading 4 "Dark card title")
-                     (text "Some quick example text to build on the card title and make up the bulk of the card's content."))))
+             (card "Header" #f
+                   (card-tone-options 'primary 'fill)
+                   (heading 4 "Primary card title")
+                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
+             (card "Header" #f
+                   (card-tone-options 'secondary 'fill)
+                   (heading 4 "Secondary card title")
+                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
+             (card "Header" #f
+                   (card-tone-options 'success 'fill)
+                   (heading 4 "Success card title")
+                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
+             (card "Header" #f
+                   (card-tone-options 'danger 'fill)
+                   (heading 4 "Danger card title")
+                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
+             (card "Header" #f
+                   (card-tone-options 'warning 'fill)
+                   (heading 4 "Warning card title")
+                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
+             (card "Header" #f
+                   (card-tone-options 'info 'fill)
+                   (heading 4 "Info card title")
+                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
+             (card "Header" #f
+                   (card-tone-options 'light 'fill)
+                   (heading 4 "Light card title")
+                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
+             (card "Header" #f
+                   (card-tone-options 'dark 'fill)
+                   (heading 4 "Dark card title")
+                   (text "Some quick example text to build on the card title and make up the bulk of the card's content.")))
             (stack
-             (with-class "showcase-card-border-primary"
-               (card "Header" #f
-                     (heading 4 "Primary card title")
-                     (text "Some quick example text to build on the card title and make up the bulk of the card's content.")))
-             (with-class "showcase-card-border-secondary"
-               (card "Header" #f
-                     (heading 4 "Secondary card title")
-                     (text "Some quick example text to build on the card title and make up the bulk of the card's content.")))
-             (with-class "showcase-card-border-success"
-               (card "Header" #f
-                     (heading 4 "Success card title")
-                     (text "Some quick example text to build on the card title and make up the bulk of the card's content.")))
-             (with-class "showcase-card-border-danger"
-               (card "Header" #f
-                     (heading 4 "Danger card title")
-                     (text "Some quick example text to build on the card title and make up the bulk of the card's content.")))
-             (with-class "showcase-card-border-warning"
-               (card "Header" #f
-                     (heading 4 "Warning card title")
-                     (text "Some quick example text to build on the card title and make up the bulk of the card's content.")))
-             (with-class "showcase-card-border-info"
-               (card "Header" #f
-                     (heading 4 "Info card title")
-                     (text "Some quick example text to build on the card title and make up the bulk of the card's content.")))
-             (with-class "showcase-card-border-light"
-               (card "Header" #f
-                     (heading 4 "Light card title")
-                     (text "Some quick example text to build on the card title and make up the bulk of the card's content.")))
-             (with-class "showcase-card-border-dark"
-               (card "Header" #f
-                     (heading 4 "Dark card title")
-                     (text "Some quick example text to build on the card title and make up the bulk of the card's content."))))
+             (card "Header" #f
+                   (card-tone-options 'primary 'outline)
+                   (heading 4 "Primary card title")
+                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
+             (card "Header" #f
+                   (card-tone-options 'secondary 'outline)
+                   (heading 4 "Secondary card title")
+                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
+             (card "Header" #f
+                   (card-tone-options 'success 'outline)
+                   (heading 4 "Success card title")
+                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
+             (card "Header" #f
+                   (card-tone-options 'danger 'outline)
+                   (heading 4 "Danger card title")
+                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
+             (card "Header" #f
+                   (card-tone-options 'warning 'outline)
+                   (heading 4 "Warning card title")
+                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
+             (card "Header" #f
+                   (card-tone-options 'info 'outline)
+                   (heading 4 "Info card title")
+                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
+             (card "Header" #f
+                   (card-tone-options 'light 'outline)
+                   (heading 4 "Light card title")
+                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
+             (card "Header" #f
+                   (card-tone-options 'dark 'outline)
+                   (heading 4 "Dark card title")
+                   (text "Some quick example text to build on the card title and make up the bulk of the card's content.")))
             (stack
              (card "Card header" "2 days ago"
                    (list (cons 'subtitle "Support card subtitle")

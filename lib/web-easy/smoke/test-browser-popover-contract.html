@@ -102,6 +102,9 @@
 
         assertEqual(ui.panel.getAttribute("aria-hidden"), "false", "popover opens from trigger");
         assertTrue(ui.backdrop.className.includes("is-open"), "backdrop opens with popover");
+        assertTrue(!!ui.frameDoc.querySelector("[data-we-widget='popover-header']"), "popover header region present");
+        assertTrue(!!ui.frameDoc.querySelector("[data-we-widget='popover-body']"), "popover body region present");
+        assertTrue(!!ui.frameDoc.querySelector("[data-we-widget='popover-footer']"), "popover footer region present");
 
         ui.backdrop.click();
         await sleep(120);

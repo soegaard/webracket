@@ -234,7 +234,8 @@ Current compatibility notes:
   - `menu-item`: optional leading/trailing icon args.
   - `input`: optional attrs list (for example `placeholder`, `autocomplete`).
   - `textarea`: optional `rows` (default `3`) and optional attrs list.
-  - `card`: optional variant symbol/list (`compact`, `flat`, `headerless`).
+  - `card`: optional variant symbol/list (`compact`, `flat`, `headerless`) plus optional `tone` + `tone-style` in options (`fill`/`outline`).
+  - `popover`: optional options alist with `title` and `footer` structured regions.
   - `choice`/`dropdown`: option rows now support scalar, pair, or 2-element list forms; labels can differ from ids.
 - New theme token API:
   - `theme-token-ref`
@@ -723,7 +724,7 @@ Current browser backend element mapping (as implemented today):
 | `image` | `img` | Optional `width`/`height`; keeps intrinsic size by default. |
 | `dropdown` | `div` + `menu` composite | Single-trigger popup menu using same behavior as `menu`/`menu-item`. |
 | `tooltip` | `div` + trigger child + `span` bubble | Hover/focus tooltip with `aria-describedby` from trigger to bubble id. |
-| `popover` | `div` + `button` trigger + `div` panel | Click-toggle detail panel with `aria-expanded`/`aria-hidden` and Escape close. |
+| `popover` | `div` + `button` trigger + `div` panel (`header`/`body`/`footer`) | Click-toggle detail panel with `aria-expanded`/`aria-hidden`, Escape close, and optional structured `title`/`footer`. |
 
 ### `navigation-bar` API (`expand`)
 

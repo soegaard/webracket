@@ -999,24 +999,27 @@
                                (cons 'placement placement))
             (list child)))
 
-    ;; popover : (or/c string? observable?) [symbol?] view? ... -> view?
-    ;;   Construct a click-toggle popover with trigger label, optional placement, and body children.
+    ;; popover : (or/c string? observable?) [symbol?] [list?] view? ... -> view?
+    ;;   Construct a click-toggle popover with trigger label, optional placement, optional options, and body children.
     ;;   Optional parameter placement defaults to 'bottom.
+    ;;   Optional parameter options defaults to '() and accepts:
+    ;;     title  -> string/observable heading shown above body.
+    ;;     footer -> string/observable text shown below body.
     (define (popover label . args)
-      (define placement
-        (if (and (pair? args)
-                 (symbol? (car args))
-                 (memq (car args) '(top right bottom left)))
-            (car args)
-            'bottom))
-      (define children
-        (if (and (pair? args)
-                 (symbol? (car args))
-                 (memq (car args) '(top right bottom left)))
-            (cdr args)
-            args))
+      (define has-placement?
+        (and (pair? args)
+             (symbol? (car args))
+             (memq (car args) '(top right bottom left))))
+      (define placement (if has-placement? (car args) 'bottom))
+      (define rest/args (if has-placement? (cdr args) args))
+      (define has-options?
+        (and (pair? rest/args)
+             (options-alist? (car rest/args))))
+      (define options  (if has-options? (car rest/args) '()))
+      (define children (if has-options? (cdr rest/args) rest/args))
       (view kind/popover (list (cons 'label label)
-                               (cons 'placement placement))
+                               (cons 'placement placement)
+                               (cons 'options options))
             children))
 
     ;; card : [(or/c string? observable? false/c)] [(or/c string? observable? false/c)] [any/c] [list?] any/c ... -> view?
@@ -1027,6 +1030,8 @@
     ;;     subtitle -> string/observable subtitle rendered under title.
     ;;     media    -> view content rendered before body.
     ;;     actions  -> list of view values rendered in a card action row.
+    ;;     tone     -> symbol color tone: primary/secondary/success/danger/warning/info/light/dark.
+    ;;     tone-style -> symbol tone style: fill/outline.
     (define (card [title #f] [footer #f] . args)
       (define (all-symbols? xs)
         (cond

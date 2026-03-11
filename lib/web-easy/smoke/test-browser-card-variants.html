@@ -28,7 +28,7 @@
         const frameDoc = frameDocFrom(frame);
         if (frameDoc) {
           const cards = Array.from(frameDoc.querySelectorAll("[data-we-widget='card']"));
-          if (cards.length >= 4) {
+          if (cards.length >= 6) {
             return { frameDoc, cards };
           }
         }
@@ -49,13 +49,16 @@
         const classNames = ui.cards.map((card) => card.getAttribute("class") || "");
         assertTrue(classNames.some((c) => c.includes("we-card-compact")), "compact class");
         assertTrue(classNames.some((c) => c.includes("we-card-flat")), "flat class");
+        assertTrue(classNames.some((c) => c.includes("we-card-tone-primary")), "tone class");
+        assertTrue(classNames.some((c) => c.includes("we-card-tone-fill")), "tone fill class");
+        assertTrue(classNames.some((c) => c.includes("we-card-tone-outline")), "tone outline class");
         const headerlessCard = ui.cards.find((card) => {
           const body = card.querySelector("[data-we-widget='card-body']");
           return body && body.textContent.trim() === "headerless";
         });
         assertTrue(!!headerlessCard, "headerless card present");
         assertTrue(!headerlessCard.querySelector("[data-we-widget='card-header']"), "headerless card has no header");
-        setStatus("PASS\ncard variants render (compact/flat classes, headerless behavior)", "pass");
+        setStatus("PASS\ncard variants render (compact/flat/tone classes, headerless behavior)", "pass");
       } catch (err) {
         console.error(err);
         setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");

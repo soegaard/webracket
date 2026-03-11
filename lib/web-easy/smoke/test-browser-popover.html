@@ -69,10 +69,11 @@
           const trigger = Array.from(frameDoc.querySelectorAll("button"))
             .find((b) => b.textContent.trim() === "actions");
           const panel = frameDoc.querySelector("[data-we-widget='popover-panel']");
+          const body = frameDoc.querySelector("[data-we-widget='popover-body']");
           const retitle = Array.from(frameDoc.querySelectorAll("button"))
             .find((b) => b.textContent.trim() === "retitle");
-          if (trigger && panel && retitle) {
-            return { frameDoc, trigger, panel, retitle };
+          if (trigger && panel && body && retitle) {
+            return { frameDoc, trigger, panel, body, retitle };
           }
         }
         await sleep(25);
@@ -100,7 +101,10 @@
 
         assertTrue(ui.panel.getAttribute("class").includes("is-open"), "popover class after open");
         assertEqual(ui.panel.getAttribute("aria-hidden"), "false", "popover aria-hidden after open");
-        assertTrue((ui.panel.textContent || "").includes("Deploy now?"), "popover content shows title");
+        assertTrue(!!ui.frameDoc.querySelector("[data-we-widget='popover-header']"), "popover header exists");
+        assertTrue(!!ui.frameDoc.querySelector("[data-we-widget='popover-footer']"), "popover footer exists");
+        assertTrue((ui.panel.textContent || "").includes("Deploy now?"), "popover title shows in header");
+        assertTrue((ui.body.textContent || "").includes("Choose an action:"), "popover body text shows");
 
         ui.retitle.click();
         await sleep(100);
@@ -111,7 +115,7 @@
         await sleep(100);
 
         assertEqual(ui.panel.getAttribute("aria-hidden"), "true", "popover closes on Escape");
-        setStatus("PASS\npopover toggles open state and closes on Escape", "pass");
+        setStatus("PASS\npopover toggles open state, exposes structured regions, and closes on Escape", "pass");
       } catch (err) {
         console.error(err);
         setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");

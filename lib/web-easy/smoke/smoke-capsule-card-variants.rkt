@@ -26,7 +26,15 @@
                (card "Default" #f (text "default"))
                (card "Compact" #f 'compact (text "compact"))
                (card "Flat" #f 'flat (text "flat"))
-               (card #f #f 'headerless (text "headerless"))))))
+               (card #f #f 'headerless (text "headerless"))
+               (card "Tone Fill" #f
+                     (list (cons 'tone 'primary)
+                           (cons 'tone-style 'fill))
+                     (text "tone-fill"))
+               (card "Tone Outline" #f
+                     (list (cons 'tone 'primary)
+                           (cons 'tone-style 'outline))
+                     (text "tone-outline"))))))
       (mount-renderer! card-variants-renderer root)
       (void))
 

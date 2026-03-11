@@ -1400,6 +1400,24 @@
        (if compact? " we-card-compact" "")
        (if flat? " we-card-flat" "")))
 
+    ;; normalize-card-tone : any/c -> any/c
+    ;;   Normalize card tone option to accepted symbols or #f.
+    (define (normalize-card-tone raw)
+      (if (symbol? raw)
+          (case raw
+            [(primary secondary success danger warning info light dark) raw]
+            [else #f])
+          #f))
+
+    ;; normalize-card-tone-style : any/c -> any/c
+    ;;   Normalize card tone-style option to fill/outline or #f.
+    (define (normalize-card-tone-style raw)
+      (if (symbol? raw)
+          (case raw
+            [(fill outline) raw]
+            [else #f])
+          #f))
+
     ;; icon-node : string? string? -> dom-node?
     ;;   Construct icon span node with data-we-widget/class and text content.
     (define (icon-node widget class-name icon-text)
@@ -4878,6 +4896,9 @@
          node]
         [(popover)
          (define raw-label (alist-ref (view-props v) 'label 'render))
+         (define options   (alist-ref (view-props v) 'options 'render))
+         (define raw-title  (options-ref options 'title #f))
+         (define raw-footer (options-ref options 'footer #f))
          (define popover-placement
            (normalize-overlay-placement
             (alist-ref (view-props v) 'placement 'render)
@@ -4936,6 +4957,15 @@
                                            (set-open! #f)]
                                           [else
                                            (void)]))))
+         (define panel-body-node (dom-node 'div
+                                           (list (cons 'data-we-widget "popover-body")
+                                                 (cons 'class "we-popover-body"))
+                                           '()
+                                           #f
+                                           #f
+                                           #f))
+         (define panel-header-node #f)
+         (define panel-footer-node #f)
          ;; set-open! : boolean? -> void?
          ;;   Toggle panel visibility and aria state.
          (define (set-open! next-open?)
@@ -4962,6 +4992,36 @@
             (list (cons 'data-we-widget "popover-backdrop")
                   (cons 'aria-hidden (if open? "false" "true"))
                   (cons 'class (if open? "we-popover-backdrop is-open" "we-popover-backdrop")))))
+         ;; refresh-popover-structure! : -> void?
+         ;;   Rebuild popover panel regions from title/body/footer values.
+         (define (refresh-popover-structure!)
+           (define title-value  (maybe-observable-value raw-title))
+           (define footer-value (maybe-observable-value raw-footer))
+           (set! panel-header-node
+                 (if (eq? title-value #f)
+                     #f
+                     (dom-node 'div
+                               (list (cons 'data-we-widget "popover-header")
+                                     (cons 'class "we-popover-header"))
+                               '()
+                               (value->text title-value)
+                               #f
+                               #f)))
+           (set! panel-footer-node
+                 (if (eq? footer-value #f)
+                     #f
+                     (dom-node 'div
+                               (list (cons 'data-we-widget "popover-footer")
+                                     (cons 'class "we-popover-footer"))
+                               '()
+                               (value->text footer-value)
+                               #f
+                               #f)))
+           (backend-replace-children!
+            panel-node
+            (append (if panel-header-node (list panel-header-node) '())
+                    (list panel-body-node)
+                    (if panel-footer-node (list panel-footer-node) '()))))
          (define (set-label! label-value)
            (set-dom-node-text! trigger-node (value->text label-value)))
          (cond
@@ -4970,12 +5030,23 @@
             (define (listener updated)
               (set-label! updated))
             (obs-observe! raw-label listener)
-            (register-cleanup! (lambda () (obs-unobserve! raw-label listener)))]
+           (register-cleanup! (lambda () (obs-unobserve! raw-label listener)))]
            [else
             (set-label! raw-label)])
          (for-each (lambda (child)
-                     (backend-append-child! panel-node (build-node child register-cleanup!)))
+                     (backend-append-child! panel-body-node (build-node child register-cleanup!)))
                    (view-children v))
+         (when (obs? raw-title)
+           (define (title-listener _updated)
+             (refresh-popover-structure!))
+           (obs-observe! raw-title title-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-title title-listener))))
+         (when (obs? raw-footer)
+           (define (footer-listener _updated)
+             (refresh-popover-structure!))
+           (obs-observe! raw-footer footer-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-footer footer-listener))))
+         (refresh-popover-structure!)
          (backend-append-child! node trigger-node)
          (backend-append-child! node backdrop-node)
          (backend-append-child! node panel-node)
@@ -4988,11 +5059,24 @@
          (define raw-subtitle (options-ref options 'subtitle #f))
          (define raw-media    (options-ref options 'media #f))
          (define raw-actions  (options-ref options 'actions '()))
+         (define raw-tone      (options-ref options 'tone #f))
+         (define raw-tone-style (options-ref options 'tone-style #f))
          (define variants (normalize-card-variants raw-variants))
+         ;; card-class : list? any/c any/c -> string?
+         ;;   Build card class string from variants and optional tone/tone-style.
+         (define (card-class variants tone tone-style)
+           (string-append
+            (card-variant-class variants)
+            (if tone
+                (string-append " we-card-tone-" (symbol->string tone))
+                "")
+            (if tone-style
+                (string-append " we-card-tone-" (symbol->string tone-style))
+                "")))
          (define node (dom-node 'div
                                 (list (cons attr/role 'group)
                                       (cons 'data-we-widget "card")
-                                      (cons 'class (card-variant-class variants)))
+                                      (cons 'class (card-class variants #f #f)))
                                 '()
                                 #f
                                 #f
@@ -5029,7 +5113,14 @@
            (define footer-value   (maybe-observable-value raw-footer))
            (define media-value    (maybe-observable-value raw-media))
            (define actions-value  (maybe-observable-value raw-actions))
+           (define tone-value      (normalize-card-tone (maybe-observable-value raw-tone)))
+           (define tone-style-value (normalize-card-tone-style (maybe-observable-value raw-tone-style)))
            (define headerless?  (contains-equal? variants 'headerless))
+           (set-dom-node-attrs!
+            node
+            (list (cons attr/role 'group)
+                  (cons 'data-we-widget "card")
+                  (cons 'class (card-class variants tone-value tone-style-value))))
            (set! title-node
                  (if (or headerless? (eq? title-value #f))
                      #f
@@ -5127,6 +5218,16 @@
              (refresh-card-structure!))
            (obs-observe! raw-actions actions-listener)
            (register-cleanup! (lambda () (obs-unobserve! raw-actions actions-listener))))
+         (when (obs? raw-tone)
+           (define (tone-listener _updated)
+             (refresh-card-structure!))
+           (obs-observe! raw-tone tone-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-tone tone-listener))))
+         (when (obs? raw-tone-style)
+           (define (tone-style-listener _updated)
+             (refresh-card-structure!))
+           (obs-observe! raw-tone-style tone-style-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-tone-style tone-style-listener))))
          (refresh-card-structure!)
          node]
         [(navigation-bar)

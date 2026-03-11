@@ -29,7 +29,9 @@
                         (lambda ()
                           (:= @title "Deploy to staging?"))))
                (popover "actions"
-                        (text @title)
+                        (list (cons 'title @title)
+                              (cons 'footer "Esc closes this popover."))
+                        (text "Choose an action:")
                         (hpanel
                          (button "cancel" (lambda () (void)))
                          (button "confirm" (lambda () (void)))))))))
