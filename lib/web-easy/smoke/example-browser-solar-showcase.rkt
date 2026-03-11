@@ -312,15 +312,13 @@
 ;;   Build a standardized top-level showcase section heading.
 (define (section-heading section-id title)
   (with-id section-id
-    (with-class "showcase-section-title"
-      (heading 1 title))))
+    (heading 1 title)))
 
 (define app-renderer
   (render
    (window
-    (with-class "showcase-shell"
-      (container
-       (stack
+    (container
+     (stack
         ;;;
         ;;; Top Bar
         ;;;
@@ -357,19 +355,17 @@
         ;;;
         ;;; Hero
         ;;;
-        (with-class "showcase-hero"
-          (card #f #f
-                (with-class "showcase-hero-title"
-                  (text "Solar 2 Theme"))
-                (with-class "showcase-hero-lead"
-                  (text "Top-level sections aligned with the Bootswatch Solar showcase layout."))))
+        (card #f #f
+              (with-class "showcase-hero-title"
+                (text "Solar 2 Theme"))
+              (with-class "showcase-hero-lead"
+                (text "Top-level sections aligned with the Bootswatch Solar showcase layout.")))
 
         ;;;
         ;;; Main
         ;;;
         
-        (with-class "showcase-main"
-          (stack
+        (stack
            ;; Navbars
            (section-heading "solar2-navbars" "Navbars")
            (with-class "we-flow"
@@ -564,11 +560,9 @@
 
            ;; Forms
            (section-heading "solar2-forms" "Forms")
-           (with-class "showcase-forms-grid"
-             (grid
-              2
-              (with-class "showcase-forms-left"
-                (stack
+           (grid
+            2
+            (stack
                  (group "Legend"
                    (with-class "we-form-row showcase-static-row"
                      (inline
@@ -687,9 +681,8 @@
                    (with-class "we-form-row"
                      (with-class "we-btn-primary"
                        (inline
-                        (button "Submit" (lambda () (void)))))))))
-                 (with-class "showcase-forms-right"
-                (stack
+                        (button "Submit" (lambda () (void))))))))
+            (stack
                  (with-class "we-form-row"
                    (text "Disabled input"))
                  (with-class "we-form-row we-form-control-block we-form-state-disabled"
@@ -768,7 +761,7 @@
                     (text "Password")
                     (with-attrs '((placeholder "Password") (type "password") (autocomplete "off"))
                       (input "" (lambda (_v) (void)))))
-                 )))))
+                 ))))
 
            ;; Navs
            (with-class "we-section-break-xl"
@@ -1076,8 +1069,7 @@
            (with-class "we-section-break"
              (section-heading "solar2-accordions" "Accordions"))
            (with-id "solar2-accordions-body"
-            (with-class "showcase-accordion-wrap"
-             (accordion
+            (accordion
              @accordion
              (list
                (list 'what
@@ -1099,10 +1091,8 @@
            ;; Dialogs
            (with-class "we-section-break"
              (section-heading "solar2-dialogs" "Dialogs"))
-           (with-id "solar2-dialogs-body"
-            (with-class "showcase-dialogs-grid"
-             (grid
-              2
+           (grid
+            2
               (stack
                (heading 2 "Modals")
                (with-class "we-modal-panel showcase-static-modal"
@@ -1148,40 +1138,38 @@
 
               (stack
                (heading 2 "Popovers")
-               (with-class "showcase-dialogs-row"
-                 (inline
-                  (with-class "showcase-popover-left"
-                    (with-class "we-btn-secondary"
-                      (popover "Left" (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus."))))
-                  (with-class "showcase-popover-top"
-                    (with-class "we-btn-secondary"
-                      (popover "Top" (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus."))))
-                  (with-class "showcase-popover-bottom"
-                    (with-class "we-btn-secondary"
-                      (popover "Bottom" (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus."))))
-                  (with-class "showcase-popover-right"
-                    (with-class "we-btn-secondary"
-                      (popover "Right" (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus."))))))
+               (inline
+                (with-class "showcase-popover-left"
+                  (with-class "we-btn-secondary"
+                    (popover "Left" (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus."))))
+                (with-class "showcase-popover-top"
+                  (with-class "we-btn-secondary"
+                    (popover "Top" (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus."))))
+                (with-class "showcase-popover-bottom"
+                  (with-class "we-btn-secondary"
+                    (popover "Bottom" (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus."))))
+                (with-class "showcase-popover-right"
+                  (with-class "we-btn-secondary"
+                    (popover "Right" (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")))))
 
                (heading 2 "Tooltips")
-               (with-class "showcase-dialogs-row"
-                 (inline
-                  (with-class "showcase-tooltip-left"
-                    (tooltip "Tooltip on left"
-                             (with-class "we-btn-secondary"
-                               (button "Left" (lambda () (void))))))
-                  (with-class "showcase-tooltip-top"
-                    (tooltip "Tooltip on top"
-                             (with-class "we-btn-secondary"
-                               (button "Top" (lambda () (void))))))
-                  (with-class "showcase-tooltip-bottom"
-                    (tooltip "Tooltip on bottom"
-                             (with-class "we-btn-secondary"
-                               (button "Bottom" (lambda () (void))))))
-                  (with-class "showcase-tooltip-right"
-                    (tooltip "Tooltip on right"
-                             (with-class "we-btn-secondary"
-                               (button "Right" (lambda () (void))))))))
+               (inline
+                (with-class "showcase-tooltip-left"
+                  (tooltip "Tooltip on left"
+                           (with-class "we-btn-secondary"
+                             (button "Left" (lambda () (void))))))
+                (with-class "showcase-tooltip-top"
+                  (tooltip "Tooltip on top"
+                           (with-class "we-btn-secondary"
+                             (button "Top" (lambda () (void))))))
+                (with-class "showcase-tooltip-bottom"
+                  (tooltip "Tooltip on bottom"
+                           (with-class "we-btn-secondary"
+                             (button "Bottom" (lambda () (void))))))
+                (with-class "showcase-tooltip-right"
+                  (tooltip "Tooltip on right"
+                           (with-class "we-btn-secondary"
+                             (button "Right" (lambda () (void)))))))
 
                (heading 2 "Toasts")
                (with-class "showcase-static-toast"
@@ -1195,7 +1183,7 @@
                        (text "11 mins ago"))
                      (text "×")))
                   (with-class "showcase-static-toast-body"
-                    (text "Hello, world! This is a toast message."))))))))
+                    (text "Hello, world! This is a toast message.")))))
 
            (with-class "we-button-status"
              (text @button-log))
@@ -1231,9 +1219,7 @@
                   '(("A" "1") ("B" "2") ("C" "3"))
                   'compact
                   '((variants . (sm))
-                    (caption . "Small table")))
-
-           )))))))
+                    (caption . "Small table")))))))
 
 (define theme-core-link-node     (install-theme-link! "we-theme-core-css"))
 (define theme-general-link-node  (install-theme-link! "we-theme-external-css"))
