@@ -346,3 +346,966 @@ html.we-theme-solar2 .we-list-group-item.is-active {
 }
 
 /* ========================================================================== */
+
+
+/* -------------------------------------------------------------------------- */
+/* Migrated generic Solar2 widget rules from showcase stylesheet               */
+/* -------------------------------------------------------------------------- */
+/*
+ * Solar 2 showcase-only scaffolding styles.
+ * Keep only page layout/container styling here.
+ */
+
+html.we-theme-solar2 {
+  --we-stack-gap: 12px;
+  max-width: none;
+  width: calc(100% - 16px);
+  margin: 0 8px;
+}
+
+html.we-theme-solar2 .we-table {
+  --we-table-bg:           var(--we-bg);
+  --we-table-border-color: var(--we-bg-subtle);
+  --we-table-accent-bg:    rgba(255, 255, 255, 0.05);
+  --we-table-striped-bg:   rgba(255, 255, 255, 0.05);
+  --we-table-hover-bg:     rgba(255, 255, 255, 0.075);
+  --we-table-active-bg:    rgba(0, 0, 0, 0.1);
+  border-collapse: collapse;
+  width:           100%;
+  margin-bottom:   1rem;
+  color:           var(--we-fg);
+  border-color:    var(--we-table-border-color);
+}
+
+html.we-theme-solar2 .we-table-caption {
+  caption-side: top;
+  color:        var(--we-fg-muted);
+  font-size:    0.875rem;
+  padding:      0 0 0.35rem 0;
+  text-align:   left;
+}
+
+html.we-theme-solar2 .we-table th,
+html.we-theme-solar2 .we-table td {
+  border:      1px solid var(--we-table-border-color-state, var(--we-table-border-color));
+  background:  var(--we-table-bg);
+  box-shadow:  inset 0 0 0 9999px var(--we-table-bg-state, var(--we-table-bg-type, var(--we-table-accent-bg)));
+  color:       var(--we-table-color-state, var(--we-table-color-type, var(--bs-body-color, var(--we-secondary))));
+  padding:     0.5rem 0.5rem;
+  text-align:  left;
+  vertical-align: top;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Migrated from theme-showcase-solar2.css: widget-level and showcase utility */
+/* rules now live in the general Solar 2 theme so component styling is not     */
+/* tied to the showcase page stylesheet.                                        */
+/* -------------------------------------------------------------------------- */
+
+/*
+ * Solar 2 showcase-only styles.
+ * This file is intentionally page-specific and complements theme-solar-2.css.
+ */
+
+html.we-theme-solar2 {
+  max-width: none;
+  width: calc(100% - 1rem);
+  margin: 0 8px;
+}
+
+html.we-theme-solar2 h1,
+html.we-theme-solar2 .we-heading.level-1 {
+  font-size: calc(1.425rem + 2.1vw);
+  line-height: 1.2;
+  margin: 0 0 8px 0;
+  color: rgb(131, 148, 150);
+  font-weight: 500;
+  font-family: var(--we-font-sans);
+}
+
+html.we-theme-solar2 h2,
+html.we-theme-solar2 .we-heading.level-2 {
+  font-size: calc(1.375rem + 1.5vw);
+  line-height: 1.25;
+  margin: 1rem 0 0.75rem 0;
+  font-weight: 500;
+}
+
+html.we-theme-solar2 h3,
+html.we-theme-solar2 .we-heading.level-3 {
+  font-size: calc(1.325rem + 0.9vw);
+  line-height: 1.3;
+  margin: 0.875rem 0 10px 0;
+  font-weight: 500;
+}
+
+html.we-theme-solar2 h4,
+html.we-theme-solar2 .we-heading.level-4 {
+  font-size: calc(1.3rem + 0.6vw);
+  line-height: 1.35;
+  margin: 0.75rem 0 8px 0;
+  font-weight: 500;
+}
+
+html.we-theme-solar2 h5,
+html.we-theme-solar2 .we-heading.level-5 {
+  font-size: 1rem;
+  line-height: 1.4;
+  margin: 10px 0 6px 0;
+  font-weight: 500;
+}
+
+html.we-theme-solar2 h6,
+html.we-theme-solar2 .we-heading.level-6 {
+  font-size: 0.875rem;
+  line-height: 1.45;
+  margin: 8px 0 6px 0;
+  font-weight: 500;
+  color: var(--we-fg-muted);
+}
+
+html.we-theme-solar2 .we-heading-title {
+  font-weight: 500;
+}
+
+/* Renderer emits header/data rows directly under table (no tbody), so variant row selectors use > tr. */
+html.we-theme-solar2 .we-table.we-table-striped > tr:nth-of-type(even) {
+  --we-table-bg-type: var(--we-table-striped-bg);
+}
+
+html.we-theme-solar2 .we-table.we-table-hover > tr:not(:first-of-type):hover {
+  --we-table-bg-state: var(--we-table-hover-bg);
+}
+
+html.we-theme-solar2 .we-table > tr.we-table-row-active {
+  --we-table-bg-state: var(--we-table-active-bg);
+}
+
+html.we-theme-solar2 .we-table > tr.we-table-row-primary {
+  --we-table-color-type:        var(--we-light-emphasis);
+  --we-table-bg:                var(--we-primary);
+  --we-table-border-color-state: #c4a133;
+}
+
+html.we-theme-solar2 .we-table > tr.we-table-row-secondary {
+  --we-table-color-type:        var(--we-light-emphasis);
+  --we-table-bg:                var(--we-secondary);
+  --we-table-border-color-state: #9ca9ab;
+}
+
+html.we-theme-solar2 .we-table > tr.we-table-row-success {
+  --we-table-color-type:        var(--we-light-emphasis);
+  --we-table-bg:                var(--we-success);
+  --we-table-border-color-state: #55b4ad;
+}
+
+html.we-theme-solar2 .we-table > tr.we-table-row-danger {
+  --we-table-color-type:        var(--we-light-emphasis);
+  --we-table-bg:                var(--we-danger);
+  --we-table-border-color-state: #dc5e9b;
+}
+
+html.we-theme-solar2 .we-table > tr.we-table-row-warning {
+  --we-table-color-type:        var(--we-light-emphasis);
+  --we-table-bg:                var(--we-warning);
+  --we-table-border-color-state: #d56f45;
+}
+
+html.we-theme-solar2 .we-table > tr.we-table-row-info {
+  --we-table-color-type:        var(--we-light-emphasis);
+  --we-table-bg:                var(--we-info);
+  --we-table-border-color-state: #51a2db;
+}
+
+html.we-theme-solar2 .we-table > tr.we-table-row-light {
+  --we-table-color-type:        #000;
+  --we-table-bg:                #fdf6e3;
+  --we-table-border-color-state: #cac5b6;
+}
+
+html.we-theme-solar2 .we-table > tr.we-table-row-dark {
+  --we-table-color-type:        var(--we-light-emphasis);
+  --we-table-bg:                var(--we-bg-subtle);
+  --we-table-border-color-state: #395e68;
+}
+
+html.we-theme-solar2 .we-table.we-table-striped,
+html.we-theme-solar2 .we-table.we-table-hover {
+  border: 1px solid var(--we-table-border-color);
+}
+
+/* Table polish (general): match Solar's lighter header tone and visible grid lines. */
+html.we-theme-solar2 .we-table th,
+html.we-theme-solar2 .we-table td {
+  border-color: var(--we-table-border-color-state, var(--we-table-border-color));
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  vertical-align: top;
+}
+
+html.we-theme-solar2 .we-table th {
+  border-bottom-width: 2px;
+}
+
+html.we-theme-solar2 .we-form-help {
+  color: var(--we-fg-muted);
+  font-size: 0.92rem;
+  margin-top: -0.35rem;
+  margin-bottom: 0.35rem;
+}
+
+html.we-theme-solar2 .we-form-row {
+  margin-top: 0;
+}
+
+html.we-theme-solar2 .we-form-row.we-form-label {
+  margin-top: 1.5rem;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+html.we-theme-solar2 .we-form-row.we-form-control-block {
+  margin-top: 0.5rem;
+}
+
+html.we-theme-solar2 .we-form-check .we-inline {
+  align-items: center;
+  gap: 0.55rem;
+}
+
+html.we-theme-solar2 .we-form-feedback {
+  font-size: 0.88rem;
+  margin-top: 0.3rem;
+  margin-bottom: 0.25rem;
+}
+
+html.we-theme-solar2 .we-form-feedback-valid {
+  color: var(--we-success);
+}
+
+html.we-theme-solar2 .we-form-feedback-invalid {
+  color: var(--we-danger);
+}
+
+html.we-theme-solar2 .we-form-state-valid .we-input,
+html.we-theme-solar2 .we-form-state-valid input.we-input {
+  border-color: var(--we-success);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--we-success) 35%, transparent);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%232aa198' d='M6.3 11.4L2.9 8l1.4-1.4 2 2 5.1-5.1L12.8 5z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: 14px 14px;
+  background-position: right 0.55rem center;
+  padding-right: 2rem;
+}
+
+html.we-theme-solar2 .we-form-state-invalid .we-input,
+html.we-theme-solar2 .we-form-state-invalid input.we-input {
+  border-color: var(--we-danger);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--we-danger) 35%, transparent);
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23d33682' d='M4.2 3l3.8 3.8L11.8 3 13 4.2 9.2 8 13 11.8 11.8 13 8 9.2 4.2 13 3 11.8 6.8 8 3 4.2z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-size: 14px 14px;
+  background-position: right 0.55rem center;
+  padding-right: 2rem;
+}
+
+html.we-theme-solar2 :is(.we-input, input.we-input, select, textarea) {
+  min-height: 0;
+  padding: 0.375rem 0.75rem;
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  border: 0;
+  border-radius: 0.375rem;
+  color: var(--we-bg-subtle);
+  background-color: #adb5bd;
+}
+
+html.we-theme-solar2 :is(.we-choice:disabled, select.we-choice:disabled),
+html.we-theme-solar2 .we-form-state-disabled :is(.we-input, input.we-input) {
+  background: var(--we-secondary);
+  color: #fdf6e3;
+  opacity: 0.72;
+}
+
+html.we-theme-solar2 :is(.we-input:disabled, input.we-input:disabled, textarea.we-textarea:disabled) {
+  background-color: var(--we-secondary);
+  color: #fdf6e3;
+  opacity: 1;
+}
+
+html.we-theme-solar2 :is(.we-choice[multiple], select.we-choice[multiple]) {
+  min-height: 0;
+  height: 98px;
+  line-height: 1.5;
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
+
+html.we-theme-solar2 :is(.we-textarea, textarea.we-textarea) {
+  min-height: 72px;
+  line-height: 1.5;
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
+
+html.we-theme-solar2 input.we-input[type="file"] {
+  min-height: 0;
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
+
+html.we-theme-solar2 .we-input-lg :is(.we-input, input.we-input, input),
+html.we-theme-solar2 :is(.we-input-lg.we-input, input.we-input.we-input-lg) {
+  font-size: 1.25rem;
+  line-height: 1.5;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+}
+
+html.we-theme-solar2 .we-input-sm :is(.we-input, input.we-input, input),
+html.we-theme-solar2 :is(.we-input-sm.we-input, input.we-input.we-input-sm) {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+}
+
+html.we-theme-solar2 .we-radios {
+  gap: 0.42rem;
+}
+
+html.we-theme-solar2 .we-radios .we-text {
+  line-height: 1.3;
+}
+
+/* Bootstrap-like binary controls: radios/checkboxes/switches */
+html.we-theme-solar2 .we-form-check {
+  display: block;
+  min-height: 1.5rem;
+  padding-left: 1.5em;
+  margin-top: 0.5rem;
+  margin-bottom: 0.125rem;
+}
+
+html.we-theme-solar2 .we-form-check.we-inline {
+  display: block;
+}
+
+html.we-theme-solar2 .we-form-check .we-checkbox,
+html.we-theme-solar2 .we-radios .we-radio-input {
+  font-size: 1rem;
+  float: left;
+  margin-left: -1.5em;
+  margin-top: 0.25em;
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+  vertical-align: top;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: rgba(255, 255, 255, 0.75);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  border: 1px solid var(--we-light-emphasis);
+}
+
+html.we-theme-solar2 .we-form-check .we-checkbox {
+  border-radius: 0.25em;
+}
+
+html.we-theme-solar2 .we-radios .we-radio-input {
+  border-radius: 50%;
+}
+
+html.we-theme-solar2 .we-form-check .we-checkbox:checked,
+html.we-theme-solar2 .we-radios .we-radio-input:checked {
+  background-color: var(--we-primary);
+  border-color: var(--we-primary);
+}
+
+html.we-theme-solar2 .we-form-check .we-checkbox:checked {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='none' stroke='rgba(255,255,255,0.75)' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3E%3C/svg%3E");
+}
+
+html.we-theme-solar2 .we-radios .we-radio-input:checked {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3E%3Ccircle r='2' fill='rgba(255,255,255,0.75)'/%3E%3C/svg%3E");
+}
+
+html.we-theme-solar2 .we-form-check .we-checkbox:focus-visible,
+html.we-theme-solar2 .we-radios .we-radio-input:focus-visible {
+  border-color: #839ba1;
+  outline: 0;
+  box-shadow: 0 0 0 0.25rem rgba(181, 137, 0, 0.25);
+}
+
+html.we-theme-solar2 .we-form-check .we-checkbox:disabled,
+html.we-theme-solar2 .we-radios .we-radio-input:disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+html.we-theme-solar2 .we-form-check .we-text,
+html.we-theme-solar2 .we-radios .we-text {
+  font-size: 1rem;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+html.we-theme-solar2 .we-radios .we-radio-option {
+  display: block;
+  min-height: 1.5rem;
+  padding-left: 1.5em;
+  margin-bottom: 0.125rem;
+}
+
+html.we-theme-solar2 .we-switch-row.we-form-check {
+  padding-left: 2.5em;
+}
+
+html.we-theme-solar2 .we-checkbox.we-switch-control {
+  width: 2em;
+  height: 1em;
+  margin-left: -2.5em;
+  border-radius: 2em;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3E%3Ccircle r='3' fill='rgba(255,255,255,0.75)'/%3E%3C/svg%3E");
+  background-position: left center;
+  transition: background-position 0.15s ease-in-out;
+}
+
+html.we-theme-solar2 .we-checkbox.we-switch-control:checked {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3E%3Ccircle r='3' fill='rgba(255,255,255,0.75)'/%3E%3C/svg%3E");
+  background-position: right center;
+}
+
+html.we-theme-solar2 :is(.we-range-default, .we-range-disabled, .we-range-step) .we-slider,
+html.we-theme-solar2 :is(.we-range-default.we-slider, .we-range-disabled.we-slider, .we-range-step.we-slider) {
+  width: 100%;
+  height: 1.5rem;
+  min-height: 1.5rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font-size: 1rem;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-color: transparent;
+}
+
+html.we-theme-solar2 :is(.we-range-default, .we-range-disabled, .we-range-step) .we-slider::-webkit-slider-runnable-track,
+html.we-theme-solar2 :is(.we-range-default.we-slider, .we-range-disabled.we-slider, .we-range-step.we-slider)::-webkit-slider-runnable-track {
+  width: 100%;
+  height: 0.5rem;
+  color: transparent;
+  cursor: pointer;
+  background: var(--we-bg-subtle);
+  border-color: transparent;
+  border-radius: 1rem;
+}
+
+html.we-theme-solar2 :is(.we-range-default, .we-range-disabled, .we-range-step) .we-slider::-webkit-slider-thumb,
+html.we-theme-solar2 :is(.we-range-default.we-slider, .we-range-disabled.we-slider, .we-range-step.we-slider)::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  margin-top: -0.25rem;
+  width: 1rem;
+  height: 1rem;
+  border: 0;
+  border-radius: 1rem;
+  background: var(--we-primary);
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+html.we-theme-solar2 :is(.we-range-default, .we-range-disabled, .we-range-step) .we-slider::-webkit-slider-thumb:active,
+html.we-theme-solar2 :is(.we-range-default.we-slider, .we-range-disabled.we-slider, .we-range-step.we-slider)::-webkit-slider-thumb:active {
+  background: #b5c3c6;
+}
+
+html.we-theme-solar2 :is(.we-range-default, .we-range-disabled, .we-range-step) .we-slider::-moz-range-track,
+html.we-theme-solar2 :is(.we-range-default.we-slider, .we-range-disabled.we-slider, .we-range-step.we-slider)::-moz-range-track {
+  width: 100%;
+  height: 0.5rem;
+  color: transparent;
+  cursor: pointer;
+  border: 0;
+  background: var(--we-bg-subtle);
+  border-color: transparent;
+  border-radius: 1rem;
+}
+
+html.we-theme-solar2 :is(.we-range-default, .we-range-disabled, .we-range-step) .we-slider::-moz-range-thumb,
+html.we-theme-solar2 :is(.we-range-default.we-slider, .we-range-disabled.we-slider, .we-range-step.we-slider)::-moz-range-thumb {
+  width: 1rem;
+  height: 1rem;
+  border: 0;
+  border-radius: 1rem;
+  background: var(--we-primary);
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+html.we-theme-solar2 :is(.we-range-default, .we-range-disabled, .we-range-step) .we-slider::-moz-range-thumb:active,
+html.we-theme-solar2 :is(.we-range-default.we-slider, .we-range-disabled.we-slider, .we-range-step.we-slider)::-moz-range-thumb:active {
+  background: #b5c3c6;
+}
+
+html.we-theme-solar2 :is(.we-range-default, .we-range-disabled, .we-range-step) .we-slider:focus-visible,
+html.we-theme-solar2 :is(.we-range-default.we-slider, .we-range-disabled.we-slider, .we-range-step.we-slider):focus-visible {
+  outline: 0;
+}
+
+html.we-theme-solar2 :is(.we-range-default, .we-range-disabled, .we-range-step) .we-slider:focus-visible::-webkit-slider-thumb,
+html.we-theme-solar2 :is(.we-range-default.we-slider, .we-range-disabled.we-slider, .we-range-step.we-slider):focus-visible::-webkit-slider-thumb {
+  box-shadow: 0 0 0 1px var(--we-bg), 0 0 0 0.25rem color-mix(in srgb, var(--we-primary) 25%, transparent);
+}
+
+html.we-theme-solar2 :is(.we-range-default, .we-range-disabled, .we-range-step) .we-slider:focus-visible::-moz-range-thumb,
+html.we-theme-solar2 :is(.we-range-default.we-slider, .we-range-disabled.we-slider, .we-range-step.we-slider):focus-visible::-moz-range-thumb {
+  box-shadow: 0 0 0 1px var(--we-bg), 0 0 0 0.25rem color-mix(in srgb, var(--we-primary) 25%, transparent);
+}
+
+html.we-theme-solar2 :is(.we-range-disabled .we-slider, .we-range-disabled.we-slider):disabled {
+  pointer-events: none;
+}
+
+html.we-theme-solar2 :is(.we-range-disabled .we-slider, .we-range-disabled.we-slider):disabled::-webkit-slider-thumb {
+  background: var(--we-body-secondary);
+}
+
+html.we-theme-solar2 :is(.we-range-disabled .we-slider, .we-range-disabled.we-slider):disabled::-moz-range-thumb {
+  background: var(--we-body-secondary);
+}
+
+html.we-theme-solar2 :is(.we-input, input.we-input, textarea)::placeholder {
+  color: #657b83;
+  opacity: 1;
+}
+
+/* Plaintext form control (Bootstrap-like form-control-plaintext). */
+/* Keep this after generic showcase input rules so it is not overridden. */
+html.we-theme-solar2 .we-form-control-plaintext :is(.we-input, input.we-input),
+html.we-theme-solar2 :is(.we-form-control-plaintext.we-input, input.we-form-control-plaintext.we-input) {
+  min-height:        0;
+  padding:           0.375rem 0;
+  border:            1px solid transparent;
+  border-width:      1px;
+  border-style:      solid;
+  border-radius:     0;
+  background:        transparent;
+  background-image:  none;
+  color:             var(--we-secondary);
+  box-shadow:        none;
+  outline:           0;
+  appearance:        none;
+  -webkit-appearance: none;
+  -moz-appearance:   none;
+}
+
+html.we-theme-solar2 .we-form-control-plaintext :is(.we-input, input.we-input):focus-visible,
+html.we-theme-solar2 :is(.we-form-control-plaintext.we-input, input.we-form-control-plaintext.we-input):focus-visible {
+  outline:          0;
+  box-shadow:       none;
+  background-image: none;
+}
+
+/* Choice/select polish: hide native arrow and use a consistent Solar caret. */
+html.we-theme-solar2 :is(select, .we-choice) {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image:
+    linear-gradient(45deg, transparent 50%, var(--we-fg-muted) 50%),
+    linear-gradient(135deg, var(--we-fg-muted) 50%, transparent 50%);
+  background-position:
+    calc(100% - 0.875rem) calc(50% - 2px),
+    calc(100% - 9px) calc(50% - 2px);
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  padding-right: 2rem;
+}
+
+html.we-theme-solar2 .we-floating-field {
+  position: relative;
+  padding-top: 2px;
+}
+
+html.we-theme-solar2 .we-floating-field :is(.we-input, input.we-input, input) {
+  min-height: 0;
+  line-height: 1.25;
+  padding-top: 1.125rem;
+  padding-bottom: 1.125rem;
+}
+
+html.we-theme-solar2 .we-floating-field > .we-stack > .we-text:first-child {
+  font-size: 0.75rem;
+  color: var(--we-fg-muted);
+  margin-bottom: -2px;
+}
+
+html.we-theme-solar2 .we-input-group {
+  align-items: stretch;
+  gap: 0;
+  margin-top: 0.55rem;
+}
+
+html.we-theme-solar2 .we-input-group-prefix {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 10px;
+  border: 1px solid var(--we-border-soft);
+  border-right: 0;
+  border-radius: var(--we-radius-sm) 0 0 var(--we-radius-sm);
+  background: var(--we-bg-subtle);
+  color: var(--we-fg-muted);
+}
+
+html.we-theme-solar2 .we-input-group :is(.we-input, input.we-input) {
+  border-radius: 0;
+}
+
+html.we-theme-solar2 .we-input-group .we-button {
+  border-radius: 0 var(--we-radius-sm) var(--we-radius-sm) 0;
+  margin-right: 0;
+}
+
+html.we-theme-solar2 .we-input-group :is(.we-input, input.we-input),
+html.we-theme-solar2 .we-input-group .we-button {
+  min-height: 2.5rem;
+}
+
+html.we-theme-solar2 .we-btn-outline-primary .we-button:hover,
+html.we-theme-solar2 .we-btn-outline-secondary .we-button:hover,
+html.we-theme-solar2 .we-btn-outline-success .we-button:hover,
+html.we-theme-solar2 .we-btn-outline-info .we-button:hover,
+html.we-theme-solar2 .we-btn-outline-warning .we-button:hover,
+html.we-theme-solar2 .we-btn-outline-danger .we-button:hover,
+html.we-theme-solar2 .we-btn-outline-light .we-button:hover,
+html.we-theme-solar2 .we-btn-outline-dark .we-button:hover {
+  filter: brightness(1.08);
+}
+
+html.we-theme-solar2 .we-button[disabled] {
+  opacity: 0.65;
+}
+
+html.we-theme-solar2 .we-button-group > .we-button,
+html.we-theme-solar2 .we-toolbar-group > .we-button {
+  margin-right: 0;
+  border-radius: 0;
+}
+
+html.we-theme-solar2 .we-button-group > .we-button:first-child,
+html.we-theme-solar2 .we-toolbar-group > .we-button:first-child {
+  border-top-left-radius: var(--we-radius-sm);
+  border-bottom-left-radius: var(--we-radius-sm);
+}
+
+html.we-theme-solar2 .we-button-group > .we-button:last-child,
+html.we-theme-solar2 .we-toolbar-group > .we-button:last-child {
+  border-top-right-radius: var(--we-radius-sm);
+  border-bottom-right-radius: var(--we-radius-sm);
+}
+
+html.we-theme-solar2 .we-navigation-bar {
+  margin-top: 0;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+html.we-theme-solar2 .we-navigation-bar .we-navbar-brand {
+  margin-right: 1rem;
+  display: block;
+  min-height: auto;
+  padding: 5px 0;
+  line-height: 30px;
+  font-size: 1.25rem;
+  margin-bottom: 0;
+  align-items: normal;
+}
+
+html.we-theme-solar2 .we-navigation-bar .we-hpanel .we-input,
+html.we-theme-solar2 .we-navigation-bar .we-hpanel input.we-input {
+  min-height: auto;
+}
+
+html.we-theme-solar2 .we-navigation-bar .we-hpanel .we-button {
+  min-height: auto;
+}
+
+html.we-theme-solar2 .we-navigation-bar .we-menu-popup {
+  margin-top: 0;
+}
+
+html.we-theme-solar2 .we-navigation-bar .we-menu-item {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+
+/* Navbar dropdown should look like nav links, not buttons. */
+html.we-theme-solar2 .we-navigation-bar .we-menu-label {
+  position:      static;
+  padding-right: 8px;
+}
+
+/* Match navbar item links to muted dropdown trigger tones. */
+html.we-theme-solar2 .we-navigation-bar .we-navigation-bar-items > .we-button {
+  margin-right: 0;
+}
+
+html.we-theme-solar2 .we-navigation-bar:is(.we-variant-primary, .we-variant-dark) .we-navigation-bar-items > .we-button[aria-current='page'] {
+  color: var(--we-light-emphasis);
+}
+
+/* -------------------------------------------------------------------------- */
+/* 9) Collapsible Containers: collapse/accordion                              */
+/* -------------------------------------------------------------------------- */
+html.we-theme-solar2 .we-collapse {
+  border:        1px solid var(--we-border-soft);
+  border-radius: var(--we-radius);
+  background:    var(--we-bg);
+  /* Bootstrap collapse feel is slower than the runtime default (.18s). */
+  transition:    grid-template-rows 0.35s ease, opacity 0.35s ease;
+}
+
+html.we-theme-solar2 .we-collapse.is-open {
+  border-color: var(--we-border-strong);
+}
+
+/* Accordion uses its own section chrome; neutralize generic collapse borders/radius inside it. */
+html.we-theme-solar2 .we-accordion .we-collapse.we-accordion-content,
+html.we-theme-solar2 .we-accordion .we-collapse.is-open.we-accordion-content {
+  border:        0;
+  border-color:  transparent;
+  border-radius: 0;
+  background:    transparent;
+  box-shadow:    none;
+}
+
+html.we-theme-solar2 .we-accordion {
+  border:        1px solid var(--bs-border-color, #dee2e6);
+  border-radius: var(--we-radius);
+  overflow:      hidden;
+  background:    var(--we-bg);
+}
+
+html.we-theme-solar2 .we-accordion-section {
+  border:        1px solid var(--bs-border-color, #dee2e6);
+  background:    var(--we-bg);
+  border-radius: 0;
+}
+
+html.we-theme-solar2 .we-accordion-section:first-child {
+  border-top-left-radius:  var(--we-radius);
+  border-top-right-radius: var(--we-radius);
+}
+
+html.we-theme-solar2 .we-accordion-section:not(:first-child) {
+  border-top: 0;
+}
+
+html.we-theme-solar2 .we-accordion-section:first-child > .we-accordion-trigger {
+  border-top-left-radius:  calc(var(--we-radius) - 1px);
+  border-top-right-radius: calc(var(--we-radius) - 1px);
+}
+
+html.we-theme-solar2 .we-accordion-section:last-child {
+  border-bottom-left-radius: var(--we-radius);
+  border-bottom-right-radius: var(--we-radius);
+}
+
+html.we-theme-solar2 .we-accordion-trigger {
+  display:       flex;
+  align-items:   center;
+  justify-content: space-between;
+  gap:           0.75rem;
+  width:         100%;
+  text-align:    left;
+  border:        0;
+  border-radius: 0;
+  background:    var(--we-bg);
+  color:         var(--we-fg);
+  padding:       1rem 1.25rem;
+  line-height:   1.2;
+  transition:    color 0.15s ease-in-out, background-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+html.we-theme-solar2 .we-accordion-trigger:hover {
+  z-index: 2;
+}
+
+html.we-theme-solar2 .we-accordion-trigger.is-open {
+  color:      #483700;
+  background: #f0e7cc;
+  box-shadow: inset 0 -1px 0 var(--bs-border-color, #dee2e6);
+}
+
+html.we-theme-solar2 .we-accordion-panel,
+html.we-theme-solar2 .we-accordion-content {
+  background: var(--we-bg);
+  color:      var(--we-fg);
+  border-color: var(--we-fg);
+  padding:    1rem 1.25rem;
+  border-radius: 0;
+}
+
+html.we-theme-solar2 .we-accordion-trigger:focus-visible {
+  outline:        0;
+  box-shadow:     0 0 0 0.25rem color-mix(in srgb, var(--we-border-strong) 26%, transparent);
+  border-radius:  0;
+}
+
+html.we-theme-solar2 .we-accordion-trigger {
+  position: relative;
+}
+
+html.we-theme-solar2 .we-accordion-panel,
+html.we-theme-solar2 .we-accordion-content {
+  background: var(--we-bg);
+  line-height: 1.5;
+}
+
+html.we-theme-solar2 .we-accordion-section.is-open .we-accordion-trigger {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+html.we-theme-solar2 .we-accordion-section.is-open .we-accordion-panel,
+html.we-theme-solar2 .we-accordion-section.is-open .we-accordion-content {
+  border-top: 1px solid color-mix(in srgb, var(--we-border-soft) 70%, transparent);
+}
+
+html.we-theme-solar2 .we-progress {
+  min-height: 1rem;
+}
+
+/* Navs/tabs: tune spacing and active border model to match reference pills/tabs rhythm. */
+html.we-theme-solar2 .we-tab-list {
+  gap: 0.25rem;
+  margin-bottom: 0.75rem;
+}
+
+html.we-theme-solar2 .we-tab-btn {
+  padding: 0.35rem 0.75rem;
+  border-radius: 0.25rem;
+}
+
+html.we-theme-solar2 .we-tab-style-underline .we-tab {
+  border: 1px solid transparent;
+  border-bottom: 0;
+  border-radius: 0.25rem 0.25rem 0 0;
+}
+
+html.we-theme-solar2 .we-tab-style-underline .we-tab.is-active {
+  background: var(--we-bg-subtle);
+  border-color: var(--we-border-soft);
+  border-bottom-color: var(--we-bg-subtle);
+  color: var(--we-fg);
+}
+
+/* Card spacing polish for Solar showcase rhythm. */
+html.we-theme-solar2 .we-card-header {
+  padding: 0.5rem 1rem;
+  font-weight: 600;
+}
+
+/* In showcase content, cards should not auto-stretch unless explicitly layout cards. */
+html.we-theme-solar2 .we-card {
+  align-self: flex-start;
+}
+
+html.we-theme-solar2 .we-card-body {
+  padding: 1rem;
+}
+
+/* Containers/Cards: Bootswatch examples constrain cards to ~20rem with 1rem separation. */
+html.we-theme-solar2 .we-card[class*="showcase-card-bg-"],
+html.we-theme-solar2 .we-card[class*="showcase-card-border-"],
+html.we-theme-solar2 [class*="showcase-card-bg-"] .we-card,
+html.we-theme-solar2 [class*="showcase-card-border-"] .we-card {
+  max-width: 20rem;
+  margin-bottom: 1rem;
+}
+
+html.we-theme-solar2 .we-card-footer {
+  padding: 0.5rem 1rem;
+}
+
+/* Dialog/modal panel rhythm and depth. */
+html.we-theme-solar2 .we-dialog-panel,
+html.we-theme-solar2 .we-modal-panel {
+  padding: 1rem;
+  border-radius: 0.45rem;
+  box-shadow: 0 0.75rem 32px rgba(0, 0, 0, 0.42);
+}
+
+html.we-theme-solar2 .we-table.we-table-borderless th,
+html.we-theme-solar2 .we-table.we-table-borderless td {
+  border: 0;
+}
+
+html.we-theme-solar2 .we-table.we-table-sm th,
+html.we-theme-solar2 .we-table.we-table-sm td {
+  padding: 3px 6px;
+  font-size: 0.8125rem;
+}
+
+/* Solar showcase: pagination size variants used in Navs section. */
+html.we-theme-solar2 .we-pagination-lg .we-pagination .we-page-btn,
+html.we-theme-solar2 .we-pagination-lg .we-pagination .we-page-link {
+  padding: 0.52rem 0.86rem;
+  font-size: 1rem;
+}
+
+html.we-theme-solar2 .we-pagination-sm .we-pagination .we-page-btn,
+html.we-theme-solar2 .we-pagination-sm .we-pagination .we-page-link {
+  padding: 0.22rem 0.5rem;
+  font-size: 0.84rem;
+}
+
+html.we-theme-solar2 [class*="showcase-card-bg-"] .we-card-header {
+  background: rgba(7, 54, 66, 0.25);
+}
+
+html.we-theme-solar2 [class*="showcase-card-bg-"].we-card,
+html.we-theme-solar2 [class*="showcase-card-bg-"] .we-card {
+  background:    var(--we-showcase-card-bg);
+  border-color: rgba(0, 43, 54, 0.95);
+  color:        var(--we-showcase-card-fg, var(--we-light-emphasis));
+}
+
+html.we-theme-solar2 [class*="showcase-card-bg-"] :is(.we-card-header, .we-card-body) {
+  color: var(--we-showcase-card-fg, var(--we-light-emphasis));
+}
+
+html.we-theme-solar2 [class*="showcase-card-border-"].we-card,
+html.we-theme-solar2 [class*="showcase-card-border-"] .we-card {
+  border-color: var(--we-showcase-card-border);
+}
+@media (min-width: 1200px) {
+  html.we-theme-solar2 h1,
+  html.we-theme-solar2 .we-heading.level-1 {
+    font-size: 3rem;
+  }
+
+  html.we-theme-solar2 h2,
+  html.we-theme-solar2 .we-heading.level-2 {
+    font-size: 2.5rem;
+  }
+
+  html.we-theme-solar2 h3,
+  html.we-theme-solar2 .we-heading.level-3 {
+    font-size: 2rem;
+  }
+
+  html.we-theme-solar2 h4,
+  html.we-theme-solar2 .we-heading.level-4 {
+    font-size: 1.75rem;
+  }
+}
