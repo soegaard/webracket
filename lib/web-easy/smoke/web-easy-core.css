@@ -34,6 +34,19 @@
   align-items: flex-end;
 }
 
+.we-accordion {
+  display: flex;
+  flex-direction: column;
+}
+
+.we-accordion-trigger {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+}
+
 /* Menus: item layout behavior; visual skinning remains in themes. */
 .we-menu-item {
   display: block;

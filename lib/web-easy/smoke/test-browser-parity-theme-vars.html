@@ -34,65 +34,30 @@
   <div id="status">Running browser parity theme-vars assertions...</div>
   <iframe id="app-frame" src="./generated/example-browser-parity-all.html?test=parity-tabs" title="web-easy parity theme vars app"></iframe>
 
+  <script src="./theme-contract-helper.js"></script>
   <script>
+    const themeHelper = window.themeContractHelper;
+    const THEME_LAYER_OPTIONS = {
+      themeClass: "we-theme-solar2",
+      coreHref: "../web-easy-core.css",
+      themeHref: "../theme-contract-vars.css"
+    };
+
     function setStatus(text, cls) {
       const status = document.getElementById("status");
       status.textContent = text;
       status.className = cls;
     }
 
-    function sleep(ms) {
-      return new Promise((resolve) => setTimeout(resolve, ms));
-    }
-
-    function frameDocFrom(frame) {
-      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
-    }
-
-    const CORE_CSS = "../web-easy-core.css";
-    const THEME_CSS = "../theme-contract-vars.css";
-
-    function ensureThemeLayer(frameDoc) {
-      frameDoc.documentElement.classList.add("we-theme-solar2");
-      let coreLink = frameDoc.getElementById("we-theme-core-css");
-      if (!coreLink) {
-        coreLink = frameDoc.createElement("link");
-        coreLink.id = "we-theme-core-css";
-        coreLink.rel = "stylesheet";
-        frameDoc.head.appendChild(coreLink);
-      }
-      coreLink.href = CORE_CSS;
-
-      let themeLink = frameDoc.getElementById("we-theme-external-css");
-      if (!themeLink) {
-        themeLink = frameDoc.createElement("link");
-        themeLink.id = "we-theme-external-css";
-        themeLink.rel = "stylesheet";
-        frameDoc.head.appendChild(themeLink);
-      }
-      themeLink.href = THEME_CSS;
-    }
-
-    function assertTrue(v, label) {
-      if (!v) {
-        throw new Error(label + ": expected true, got false");
-      }
-    }
-
     function selectedTabButton(frameDoc) {
       return frameDoc.querySelector("button[aria-selected='true']");
     }
-
-    function normalizedCssColor(v) {
-      return (v || "").replace(/\s+/g, "").toLowerCase();
-    }
-
     async function waitForUI(frame, timeoutMs) {
       const start = Date.now();
       while (Date.now() - start < timeoutMs) {
-        const frameDoc = frameDocFrom(frame);
+        const frameDoc = themeHelper.frameDocFrom(frame);
         if (frameDoc) {
-          ensureThemeLayer(frameDoc);
+          themeHelper.ensureThemeLayer(frameDoc, THEME_LAYER_OPTIONS);
         }
         if (frameDoc) {
           const selected = selectedTabButton(frameDoc);
@@ -100,7 +65,7 @@
             return { frameDoc, selected };
           }
         }
-        await sleep(25);
+        await themeHelper.sleep(25);
       }
       throw new Error("Timed out waiting for parity theme-vars smoke UI");
     }
@@ -117,14 +82,14 @@
 
       const start = Date.now();
       while (Date.now() - start < timeoutMs) {
-        const frameDoc = frameDocFrom(frame);
+        const frameDoc = themeHelper.frameDocFrom(frame);
         if (frameDoc) {
-          ensureThemeLayer(frameDoc);
+          themeHelper.ensureThemeLayer(frameDoc, THEME_LAYER_OPTIONS);
         }
         if (frameDoc && readyFn(frameDoc)) {
           return frameDoc;
         }
-        await sleep(25);
+        await themeHelper.sleep(25);
       }
       throw new Error("Timed out waiting for ready state: " + src);
     }
@@ -141,20 +106,20 @@
         });
 
         const ui = await waitForUI(frame, 20000);
-        const bgBefore = normalizedCssColor(getComputedStyle(ui.selected).backgroundColor);
-        const borderBefore = normalizedCssColor(getComputedStyle(ui.selected).borderTopColor);
+        const bgBefore = themeHelper.normalizedCssColor(getComputedStyle(ui.selected).backgroundColor);
+        const borderBefore = themeHelper.normalizedCssColor(getComputedStyle(ui.selected).borderTopColor);
 
         ui.frameDoc.documentElement.style.setProperty("--we-bg-selected", "rgb(230, 244, 255)");
         ui.frameDoc.documentElement.style.setProperty("--we-border-strong", "rgb(10, 80, 160)");
-        await sleep(80);
+        await themeHelper.sleep(80);
 
-        const bgAfter = normalizedCssColor(getComputedStyle(ui.selected).backgroundColor);
-        const borderAfter = normalizedCssColor(getComputedStyle(ui.selected).borderTopColor);
+        const bgAfter = themeHelper.normalizedCssColor(getComputedStyle(ui.selected).backgroundColor);
+        const borderAfter = themeHelper.normalizedCssColor(getComputedStyle(ui.selected).borderTopColor);
 
-        assertTrue(bgAfter === "rgb(230,244,255)", "selected-tab background follows --we-bg-selected");
-        assertTrue(borderAfter === "rgb(10,80,160)", "selected-tab border follows --we-border-strong");
-        assertTrue(bgAfter !== bgBefore, "selected-tab background changed after var update");
-        assertTrue(borderAfter !== borderBefore, "selected-tab border changed after var update");
+        themeHelper.assertTrue(bgAfter === "rgb(230,244,255)", "selected-tab background follows --we-bg-selected");
+        themeHelper.assertTrue(borderAfter === "rgb(10,80,160)", "selected-tab border follows --we-border-strong");
+        themeHelper.assertTrue(bgAfter !== bgBefore, "selected-tab background changed after var update");
+        themeHelper.assertTrue(borderAfter !== borderBefore, "selected-tab border changed after var update");
 
         const progressDoc = await loadCase(
           frame,
@@ -165,16 +130,16 @@
         const progress = progressDoc.querySelector("progress");
         const successBtn = Array.from(progressDoc.querySelectorAll("button"))
           .find((b) => b.textContent.trim() === "set-success");
-        assertTrue(!!progress, "parity progress present in progress capsule");
-        assertTrue(!!successBtn, "set-success button present in parity progress capsule");
+        themeHelper.assertTrue(!!progress, "parity progress present in progress capsule");
+        themeHelper.assertTrue(!!successBtn, "set-success button present in parity progress capsule");
 
         successBtn.click();
-        await sleep(80);
+        await themeHelper.sleep(80);
         progressDoc.documentElement.style.setProperty("--we-progress-success", "rgb(30, 160, 80)");
-        await sleep(80);
+        await themeHelper.sleep(80);
 
-        const accentAfter = normalizedCssColor(getComputedStyle(progress).accentColor);
-        assertTrue(accentAfter === "rgb(30,160,80)", "parity progress success accent follows --we-progress-success");
+        const accentAfter = themeHelper.normalizedCssColor(getComputedStyle(progress).accentColor);
+        themeHelper.assertTrue(accentAfter === "rgb(30,160,80)", "parity progress success accent follows --we-progress-success");
 
         setStatus(
           "PASS\nparity selected tab + progress styles update via CSS variables",

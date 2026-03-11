@@ -426,8 +426,6 @@ html.we-theme-light .we-dialog-panel:focus-visible {
 /* -------------------------------------------------------------------------- */
 /* Accordion headers should read as section titles, not generic action buttons. */
 html.we-theme-light .we-accordion {
-  display: flex;
-  flex-direction: column;
   gap: 2px;
 }
 
@@ -438,11 +436,6 @@ html.we-theme-light .we-accordion-section {
 }
 
 html.we-theme-light .we-accordion-trigger {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  text-align: left;
   padding: 4px 8px;
   border: none;
   border-radius: 6px;

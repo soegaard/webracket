@@ -34,61 +34,27 @@
   <div id="status">Running browser parity theme menu-vars assertions...</div>
   <iframe id="app-frame" src="./generated/example-browser-parity-all.html?test=parity-menu-full" title="web-easy parity theme menu vars app"></iframe>
 
+  <script src="./theme-contract-helper.js"></script>
   <script>
+    const themeHelper = window.themeContractHelper;
+    const THEME_LAYER_OPTIONS = {
+      themeClass: "we-theme-solar2",
+      coreHref: "../web-easy-core.css",
+      themeHref: "../theme-contract-vars.css"
+    };
+
     function setStatus(text, cls) {
       const status = document.getElementById("status");
       status.textContent = text;
       status.className = cls;
     }
 
-    function sleep(ms) {
-      return new Promise((resolve) => setTimeout(resolve, ms));
-    }
-
-    function frameDocFrom(frame) {
-      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
-    }
-
-    const CORE_CSS = "../web-easy-core.css";
-    const THEME_CSS = "../theme-contract-vars.css";
-
-    function ensureThemeLayer(frameDoc) {
-      frameDoc.documentElement.classList.add("we-theme-solar2");
-      let coreLink = frameDoc.getElementById("we-theme-core-css");
-      if (!coreLink) {
-        coreLink = frameDoc.createElement("link");
-        coreLink.id = "we-theme-core-css";
-        coreLink.rel = "stylesheet";
-        frameDoc.head.appendChild(coreLink);
-      }
-      coreLink.href = CORE_CSS;
-
-      let themeLink = frameDoc.getElementById("we-theme-external-css");
-      if (!themeLink) {
-        themeLink = frameDoc.createElement("link");
-        themeLink.id = "we-theme-external-css";
-        themeLink.rel = "stylesheet";
-        frameDoc.head.appendChild(themeLink);
-      }
-      themeLink.href = THEME_CSS;
-    }
-
-    function assertTrue(v, label) {
-      if (!v) {
-        throw new Error(label + ": expected true, got false");
-      }
-    }
-
-    function normalizedCssColor(v) {
-      return (v || "").replace(/\s+/g, "").toLowerCase();
-    }
-
     async function waitForUI(frame, timeoutMs) {
       const start = Date.now();
       while (Date.now() - start < timeoutMs) {
-        const frameDoc = frameDocFrom(frame);
+        const frameDoc = themeHelper.frameDocFrom(frame);
         if (frameDoc) {
-          ensureThemeLayer(frameDoc);
+          themeHelper.ensureThemeLayer(frameDoc, THEME_LAYER_OPTIONS);
         }
         if (frameDoc) {
           const bar = frameDoc.querySelector(".we-menu-bar[role='menubar']");
@@ -97,7 +63,7 @@
             return { frameDoc, bar };
           }
         }
-        await sleep(25);
+        await themeHelper.sleep(25);
       }
       throw new Error("Timed out waiting for parity theme menu-vars UI");
     }
@@ -114,20 +80,20 @@
         });
 
         const ui = await waitForUI(frame, 20000);
-        const bgBefore = normalizedCssColor(getComputedStyle(ui.bar).backgroundColor);
-        const borderBefore = normalizedCssColor(getComputedStyle(ui.bar).borderTopColor);
+        const bgBefore = themeHelper.normalizedCssColor(getComputedStyle(ui.bar).backgroundColor);
+        const borderBefore = themeHelper.normalizedCssColor(getComputedStyle(ui.bar).borderTopColor);
 
         ui.frameDoc.documentElement.style.setProperty("--we-bg-subtle", "rgb(240, 230, 250)");
         ui.frameDoc.documentElement.style.setProperty("--we-border-menu", "rgb(90, 50, 140)");
-        await sleep(80);
+        await themeHelper.sleep(80);
 
-        const bgAfter = normalizedCssColor(getComputedStyle(ui.bar).backgroundColor);
-        const borderAfter = normalizedCssColor(getComputedStyle(ui.bar).borderTopColor);
+        const bgAfter = themeHelper.normalizedCssColor(getComputedStyle(ui.bar).backgroundColor);
+        const borderAfter = themeHelper.normalizedCssColor(getComputedStyle(ui.bar).borderTopColor);
 
-        assertTrue(bgAfter === "rgb(240,230,250)", "menu bar background follows --we-bg-subtle");
-        assertTrue(borderAfter === "rgb(90,50,140)", "menu bar border follows --we-border-menu");
-        assertTrue(bgAfter !== bgBefore, "menu bar background changed after var update");
-        assertTrue(borderAfter !== borderBefore, "menu bar border changed after var update");
+        themeHelper.assertTrue(bgAfter === "rgb(240,230,250)", "menu bar background follows --we-bg-subtle");
+        themeHelper.assertTrue(borderAfter === "rgb(90,50,140)", "menu bar border follows --we-border-menu");
+        themeHelper.assertTrue(bgAfter !== bgBefore, "menu bar background changed after var update");
+        themeHelper.assertTrue(borderAfter !== borderBefore, "menu bar border changed after var update");
 
         setStatus(
           "PASS\nparity menu bar styles update via CSS variables (--we-bg-subtle/--we-border-menu)",

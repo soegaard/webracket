@@ -1,0 +1,68 @@
+# Core Candidate Audit (External Themes)
+
+Date: 2026-03-11  
+Scope: remaining duplicated selectors across:
+- `theme-external-light.css`
+- `theme-external-dark.css`
+- `theme-external-solar.css`
+
+## Classification Rules
+
+- `structural`: layout/behavior mechanics (`display`, `position`, open/close geometry, flex direction, width behavior).
+- `visual`: colors, borders, shadows, typography, visual spacing polish.
+- `mixed`: both structural and visual in same selector block.
+
+## Audit Table
+
+| Selector | Seen In | Classification | Why | Recommendation |
+| --- | --- | --- | --- | --- |
+| `.we-menu-bar` | light/dark/solar | mixed | contains flex/align + visual skin | keep in themes for now; split into `layout` + `skin` if we want deeper core extraction |
+| `.we-menu-popup` | light/dark/solar | mixed | anchor/size mechanics + border/bg/shadow | keep mixed now; possible future split (`top/min-width/gap` decision needed) |
+| `.we-menu-label` | light/dark/solar | mixed | interactive element sizing + visual style | keep in themes |
+| `.we-menu-label:hover` | light/dark/solar | visual | hover color/border skin | keep in themes |
+| `.we-menu-label[aria-expanded='true']` | light/dark/solar | visual | open-state visual skin only (stacking now in core) | keep in themes |
+| `.we-menu-item` | light/dark/solar | visual | structural part already moved to core; remaining rules are skin | keep in themes |
+| `.we-menu-item:hover` | light/dark/solar | visual | hover color skin | keep in themes |
+| `.we-menu-item:focus-visible` | light/dark/solar | mixed | focus color/outline + z-index clipping fix | keep in themes; possible core z-index helper later |
+| `.we-input` | light/dark/solar | visual | control colors/borders/typography | keep in themes |
+| `.we-input:focus-visible` | light/dark/solar | visual | focus ring/tint styling | keep in themes |
+| `.we-choice` | light/dark/solar | visual | select control skin | keep in themes |
+| `.we-choice:focus-visible` | light/dark/solar | visual | focus skin | keep in themes |
+| `.we-button` | light/dark/solar | visual | button skin | keep in themes |
+| `.we-button:*` variants | light/dark/solar | visual | hover/active/focus/variant skin | keep in themes |
+| `.we-page-btn:focus-visible` | light/dark/solar | visual | focus skin | keep in themes |
+| `.we-dialog-panel` | light/dark/solar | visual | dialog surface skin by theme | keep in themes |
+| `.we-dialog-panel:focus-visible` | light/dark (solar separate style) | visual | focus skin | keep in themes |
+| `.we-tab-list` | light/dark (+solar has its own system) | mixed | structure (`display/align`) + border/padding visual | structure already partially in core; keep remainder in themes |
+| `.we-tab-btn` | light/dark/solar | mixed | tab sizing geometry + visual skin | keep in themes |
+| `.we-tab-btn + .we-tab-btn` | light/dark/solar | mixed | seam join behavior (visual geometry) | keep in themes |
+| `.we-tab-btn.is-selected` | light/dark (+solar uses aria-selected) | visual | active tab skin | keep in themes |
+| `.we-tab-content` | light/dark/solar | visual | panel skin | keep in themes |
+| `.we-alert` / success/warn/error | light/dark/solar | visual | semantic color skins | keep in themes |
+| `.we-toast` / success/warn/error/close | light/dark/solar | visual | toast skins | keep in themes |
+| `.we-accordion` | light/dark/solar | mixed | layout stack + spacing + some skin context | possible split later (`display/flex-direction` candidate), low priority |
+| `.we-accordion-section` | light/dark/solar | visual | panel borders/background | keep in themes |
+| `.we-accordion-trigger` | light/dark/solar | mixed | structural button layout + visual styling | split candidate later if needed |
+| `.we-accordion-trigger::after` | light/dark/solar | mixed | indicator behavior + color | keep in themes |
+| `.we-accordion-trigger.is-open` / `::after` | light/dark/solar | visual | open-state visual styling | keep in themes |
+
+## Safe Next Extraction Candidates
+
+These are the only low-risk remaining candidates that are plausibly structural:
+
+1. `.we-accordion { display:flex; flex-direction:column; }`  
+   - Keep `gap` in themes (visual density), move only container mechanics to core.
+
+2. `.we-accordion-trigger` structural subset  
+   - Candidate properties: `width:100%`, `display:flex`, `align-items:center`, `justify-content:space-between`, `text-align:left`.
+   - Keep padding/colors/border/radius/font in themes.
+
+3. Optional utility for menu item clipping fix  
+   - Could add core helper class for raised focus layering if we want to remove repeated `position:relative; z-index:1` from theme focus blocks.
+
+## What Not To Extract Now
+
+- Anything driven by color or border semantics (`--we-*` token outputs).
+- Tab seam/join details (`margin-left:-1px`, active border-bottom tricks) because they are visual-style dependent.
+- Menu popup offsets (`top`, `gap`, `min-width`) until we decide whether they are part of visual density or global behavior.
+

@@ -34,61 +34,27 @@
   <div id="status">Running browser theme progress-vars assertions...</div>
   <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=progress" title="web-easy theme progress vars app"></iframe>
 
+  <script src="./theme-contract-helper.js"></script>
   <script>
+    const themeHelper = window.themeContractHelper;
+    const THEME_LAYER_OPTIONS = {
+      themeClass: "we-theme-solar2",
+      coreHref: "../web-easy-core.css",
+      themeHref: "../theme-contract-vars.css"
+    };
+
     function setStatus(text, cls) {
       const status = document.getElementById("status");
       status.textContent = text;
       status.className = cls;
     }
 
-    function sleep(ms) {
-      return new Promise((resolve) => setTimeout(resolve, ms));
-    }
-
-    function frameDocFrom(frame) {
-      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
-    }
-
-    const CORE_CSS = "../web-easy-core.css";
-    const THEME_CSS = "../theme-contract-vars.css";
-
-    function ensureThemeLayer(frameDoc) {
-      frameDoc.documentElement.classList.add("we-theme-solar2");
-      let coreLink = frameDoc.getElementById("we-theme-core-css");
-      if (!coreLink) {
-        coreLink = frameDoc.createElement("link");
-        coreLink.id = "we-theme-core-css";
-        coreLink.rel = "stylesheet";
-        frameDoc.head.appendChild(coreLink);
-      }
-      coreLink.href = CORE_CSS;
-
-      let themeLink = frameDoc.getElementById("we-theme-external-css");
-      if (!themeLink) {
-        themeLink = frameDoc.createElement("link");
-        themeLink.id = "we-theme-external-css";
-        themeLink.rel = "stylesheet";
-        frameDoc.head.appendChild(themeLink);
-      }
-      themeLink.href = THEME_CSS;
-    }
-
-    function assertTrue(v, label) {
-      if (!v) {
-        throw new Error(label + ": expected true, got false");
-      }
-    }
-
-    function normalizedCssColor(v) {
-      return (v || "").replace(/\s+/g, "").toLowerCase();
-    }
-
     async function waitForUI(frame, timeoutMs) {
       const start = Date.now();
       while (Date.now() - start < timeoutMs) {
-        const frameDoc = frameDocFrom(frame);
+        const frameDoc = themeHelper.frameDocFrom(frame);
         if (frameDoc) {
-          ensureThemeLayer(frameDoc);
+          themeHelper.ensureThemeLayer(frameDoc, THEME_LAYER_OPTIONS);
         }
         if (frameDoc) {
           const progress = frameDoc.querySelector("progress");
@@ -100,7 +66,7 @@
             return { frameDoc, progress, warnBtn, errorBtn };
           }
         }
-        await sleep(25);
+        await themeHelper.sleep(25);
       }
       throw new Error("Timed out waiting for theme progress-vars smoke UI");
     }
@@ -118,20 +84,20 @@
 
         const ui = await waitForUI(frame, 20000);
         ui.warnBtn.click();
-        await sleep(80);
+        await themeHelper.sleep(80);
         ui.frameDoc.documentElement.style.setProperty("--we-progress-warn", "rgb(18, 120, 210)");
-        await sleep(80);
-        assertTrue(
-          normalizedCssColor(getComputedStyle(ui.progress).accentColor) === "rgb(18,120,210)",
+        await themeHelper.sleep(80);
+        themeHelper.assertTrue(
+          themeHelper.normalizedCssColor(getComputedStyle(ui.progress).accentColor) === "rgb(18,120,210)",
           "warn accent follows --we-progress-warn"
         );
 
         ui.errorBtn.click();
-        await sleep(80);
+        await themeHelper.sleep(80);
         ui.frameDoc.documentElement.style.setProperty("--we-progress-error", "rgb(170, 30, 120)");
-        await sleep(80);
-        assertTrue(
-          normalizedCssColor(getComputedStyle(ui.progress).accentColor) === "rgb(170,30,120)",
+        await themeHelper.sleep(80);
+        themeHelper.assertTrue(
+          themeHelper.normalizedCssColor(getComputedStyle(ui.progress).accentColor) === "rgb(170,30,120)",
           "error accent follows --we-progress-error"
         );
 

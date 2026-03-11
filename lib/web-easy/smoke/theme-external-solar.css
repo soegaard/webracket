@@ -939,8 +939,6 @@ html.we-theme-solar .we-accordion {
   border-radius: 0;
   overflow: visible;
   background: transparent;
-  display: flex;
-  flex-direction: column;
   gap: 6px;
 }
 
@@ -958,17 +956,12 @@ html.we-theme-solar .we-accordion-section + .we-accordion-section {
 }
 
 html.we-theme-solar .we-accordion-trigger {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   padding: 8px 9px;
   border: none;
   border-bottom: 1px solid #2f6671;
   border-radius: 6px;
   background: linear-gradient(#0a3a46, #083540);
   color: #b8c9c9;
-  text-align: left;
   font-weight: 600;
 }
 

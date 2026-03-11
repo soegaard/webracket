@@ -34,66 +34,31 @@
   <div id="status">Running browser theme dialog-vars assertions...</div>
   <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=dialog" title="web-easy theme dialog vars app"></iframe>
 
+  <script src="./theme-contract-helper.js"></script>
   <script>
+    const themeHelper = window.themeContractHelper;
+    const THEME_LAYER_OPTIONS = {
+      themeClass: "we-theme-solar2",
+      coreHref: "../web-easy-core.css",
+      themeHref: "../theme-contract-vars.css"
+    };
+
     function setStatus(text, cls) {
       const status = document.getElementById("status");
       status.textContent = text;
       status.className = cls;
     }
 
-    function sleep(ms) {
-      return new Promise((resolve) => setTimeout(resolve, ms));
-    }
-
-    function frameDocFrom(frame) {
-      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
-    }
-
-    const CORE_CSS = "../web-easy-core.css";
-    const THEME_CSS = "../theme-contract-vars.css";
-
-    function ensureThemeLayer(frameDoc) {
-      frameDoc.documentElement.classList.add("we-theme-solar2");
-      let coreLink = frameDoc.getElementById("we-theme-core-css");
-      if (!coreLink) {
-        coreLink = frameDoc.createElement("link");
-        coreLink.id = "we-theme-core-css";
-        coreLink.rel = "stylesheet";
-        frameDoc.head.appendChild(coreLink);
-      }
-      coreLink.href = CORE_CSS;
-
-      let themeLink = frameDoc.getElementById("we-theme-external-css");
-      if (!themeLink) {
-        themeLink = frameDoc.createElement("link");
-        themeLink.id = "we-theme-external-css";
-        themeLink.rel = "stylesheet";
-        frameDoc.head.appendChild(themeLink);
-      }
-      themeLink.href = THEME_CSS;
-    }
-
-    function assertTrue(v, label) {
-      if (!v) {
-        throw new Error(label + ": expected true, got false");
-      }
-    }
-
     function buttonByText(frameDoc, label) {
       return Array.from(frameDoc.querySelectorAll("button"))
         .find((b) => (b.textContent || "").trim() === label);
     }
-
-    function normalizedCssColor(v) {
-      return (v || "").replace(/\s+/g, "").toLowerCase();
-    }
-
     async function waitForUI(frame, timeoutMs) {
       const start = Date.now();
       while (Date.now() - start < timeoutMs) {
-        const frameDoc = frameDocFrom(frame);
+        const frameDoc = themeHelper.frameDocFrom(frame);
         if (frameDoc) {
-          ensureThemeLayer(frameDoc);
+          themeHelper.ensureThemeLayer(frameDoc, THEME_LAYER_OPTIONS);
         }
         if (frameDoc) {
           const openButton = buttonByText(frameDoc, "open-dialog");
@@ -102,7 +67,7 @@
             return { frameDoc, openButton, dialog };
           }
         }
-        await sleep(25);
+        await themeHelper.sleep(25);
       }
       throw new Error("Timed out waiting for theme dialog-vars UI");
     }
@@ -120,26 +85,26 @@
 
         const ui = await waitForUI(frame, 20000);
         ui.openButton.click();
-        await sleep(100);
+        await themeHelper.sleep(100);
 
         const panel = ui.frameDoc.querySelector(".we-dialog-panel");
-        assertTrue(!!panel, "dialog panel exists");
-        assertTrue(ui.dialog.getAttribute("aria-hidden") === "false", "dialog opened");
+        themeHelper.assertTrue(!!panel, "dialog panel exists");
+        themeHelper.assertTrue(ui.dialog.getAttribute("aria-hidden") === "false", "dialog opened");
 
-        const overlayBefore = normalizedCssColor(getComputedStyle(ui.dialog).backgroundColor);
-        const borderBefore = normalizedCssColor(getComputedStyle(panel).borderTopColor);
+        const overlayBefore = themeHelper.normalizedCssColor(getComputedStyle(ui.dialog).backgroundColor);
+        const borderBefore = themeHelper.normalizedCssColor(getComputedStyle(panel).borderTopColor);
 
         ui.frameDoc.documentElement.style.setProperty("--we-overlay", "rgba(0, 80, 120, 0.4)");
         ui.frameDoc.documentElement.style.setProperty("--we-border", "rgb(90, 20, 120)");
-        await sleep(80);
+        await themeHelper.sleep(80);
 
-        const overlayAfter = normalizedCssColor(getComputedStyle(ui.dialog).backgroundColor);
-        const borderAfter = normalizedCssColor(getComputedStyle(panel).borderTopColor);
+        const overlayAfter = themeHelper.normalizedCssColor(getComputedStyle(ui.dialog).backgroundColor);
+        const borderAfter = themeHelper.normalizedCssColor(getComputedStyle(panel).borderTopColor);
 
-        assertTrue(overlayAfter === "rgba(0,80,120,0.4)", "dialog overlay follows --we-overlay");
-        assertTrue(borderAfter === "rgb(90,20,120)", "dialog panel border follows --we-border");
-        assertTrue(overlayAfter !== overlayBefore, "dialog overlay changed after var update");
-        assertTrue(borderAfter !== borderBefore, "dialog panel border changed after var update");
+        themeHelper.assertTrue(overlayAfter === "rgba(0,80,120,0.4)", "dialog overlay follows --we-overlay");
+        themeHelper.assertTrue(borderAfter === "rgb(90,20,120)", "dialog panel border follows --we-border");
+        themeHelper.assertTrue(overlayAfter !== overlayBefore, "dialog overlay changed after var update");
+        themeHelper.assertTrue(borderAfter !== borderBefore, "dialog panel border changed after var update");
 
         setStatus(
           "PASS\ndialog styles update via CSS variables (--we-overlay/--we-border)",

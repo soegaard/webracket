@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy theme starter contract test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #starter-frame {
+      width: 100%;
+      height: 800px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running theme starter contract assertions...</div>
+  <iframe id="starter-frame" src="./test-browser-theme-starter.html" title="web-easy theme starter"></iframe>
+
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    async function waitForStarterUI(starterFrame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const starterDoc = frameDocFrom(starterFrame);
+        if (starterDoc) {
+          const appFrame = starterDoc.getElementById("app-frame");
+          const current = starterDoc.getElementById("current");
+          if (appFrame && current) {
+            const appDoc = frameDocFrom(appFrame);
+            if (appDoc) {
+              const coreLink = appDoc.getElementById("we-theme-core-css");
+              const externalLink = appDoc.getElementById("we-theme-external-css");
+              if (coreLink && externalLink) {
+                return { appDoc, current };
+              }
+            }
+          }
+        }
+        await sleep(30);
+      }
+      throw new Error("Timed out waiting for theme starter UI");
+    }
+
+    (async function run() {
+      try {
+        const starterFrame = document.getElementById("starter-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading starter page")), 30000);
+          starterFrame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForStarterUI(starterFrame, 30000);
+        assertTrue((ui.current.textContent || "").includes("solar"), "starter initial theme is solar");
+
+        const links = Array.from(ui.appDoc.querySelectorAll("link"));
+        const coreIdx = links.findIndex((el) => el.id === "we-theme-core-css");
+        const extIdx = links.findIndex((el) => el.id === "we-theme-external-css");
+        const showIdx = links.findIndex((el) => el.id === "we-theme-showcase-css");
+        assertTrue(coreIdx >= 0, "core css link exists");
+        assertTrue(extIdx >= 0, "external css link exists");
+        assertTrue(coreIdx < extIdx, "core css is loaded before external css");
+        assertTrue(showIdx < 0, "showcase css link is not present");
+
+        const coreHref = links[coreIdx].getAttribute("href") || "";
+        const extHref = links[extIdx].getAttribute("href") || "";
+        assertTrue(coreHref.includes("web-easy-core.css"), "core href points to web-easy-core.css");
+        assertTrue(extHref.includes("theme-external-solar.css"), "external href points to solar external theme");
+
+        setStatus("PASS\ntheme starter contract: core+external only, correct order, no showcase css", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>
