@@ -26,12 +26,9 @@
                      [#%plain-lambda       λ]))
 
 
-(require (for-syntax (only-in racket/base
-                              syntax-case
-                              syntax/loc
-                              identifier?
-                              #%app
-                              syntax)))
+(require (for-syntax racket/base
+                     racket/path
+                     setup/dirs))
 
 (define-syntax (web-lambda stx)
   (syntax-case stx ()
@@ -44,6 +41,42 @@
     [(_lambda formals body0 body ...)
      (syntax/loc stx
        (#%plain-lambda formals body0 body ...))]))
+
+;; include-lib : (include-lib lib-id) -> require form
+;;   Require `webracket/libs/<lib-id>` at top level.
+(define-syntax (include-lib stx)
+  (define who 'include-lib)
+  (define context (syntax-local-context))
+  (unless (memq context '(module top-level))
+    (raise-syntax-error who "may only be used at top level" stx))
+  (syntax-case stx ()
+    [(_ lib-id)
+     (begin
+       (unless (identifier? #'lib-id)
+         (raise-syntax-error who "expected a library identifier" stx #'lib-id))
+       (define lib-sym (syntax-e #'lib-id))
+       (unless (symbol? lib-sym)
+         (raise-syntax-error who "expected a library identifier" stx #'lib-id))
+       (define collection-main (collection-file-path "main.rkt" "webracket"))
+       (define collection-dir (or (path-only collection-main) (current-directory)))
+       (define lib-file-name (string-append (symbol->string lib-sym) ".rkt"))
+       (define lib-path (build-path collection-dir "libs" lib-file-name))
+       (unless (file-exists? lib-path)
+         (raise-syntax-error
+          who
+          (string-append "unknown library `" (symbol->string lib-sym) "`")
+          stx
+          #'lib-id))
+
+       (define mod-id
+         (datum->syntax stx
+                        (string->symbol
+                         (string-append "webracket/libs/" (symbol->string lib-sym)))))
+       (with-syntax ([module-id mod-id])
+         (syntax/loc stx
+           (require module-id))))]
+    [_
+     (raise-syntax-error who "expected `(include-lib lib-id)`" stx)]))
 
 ;; Constants
 
@@ -117,6 +150,7 @@
 ; (require (only-in racket/base define))
 (provide define define-values)
 ; define-values provided from `fully`
+(provide include-lib)
 
 ;; 3.15 Sequencing: begin, begin0
 ;;   Provided form `fully`.
@@ -204,7 +238,3 @@
 
 (define (namespace-variable-value-simple ns sym)
   (namespace-variable-value-simple sym #t #f ns))
-
-
-
-
