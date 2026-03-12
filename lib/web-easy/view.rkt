@@ -860,6 +860,8 @@
     ;;     footer      -> string/observable or view content.
     ;;     show-close? -> boolean toggle for top-right close button (default #f).
     ;;     close-label -> string/observable aria-label for close button.
+    ;;     tone        -> symbol tone: primary/secondary/success/danger/warning/info/light/dark.
+    ;;     tone-style  -> symbol tone style: fill/outline.
     (define (dialog open on-close . args)
       (define has-size?
         (and (pair? args)
@@ -887,6 +889,8 @@
     ;;     footer      -> string/observable or view content.
     ;;     show-close? -> boolean toggle for top-right close button (default #f).
     ;;     close-label -> string/observable aria-label for close button.
+    ;;     tone        -> symbol tone: primary/secondary/success/danger/warning/info/light/dark.
+    ;;     tone-style  -> symbol tone style: fill/outline.
     (define (modal open on-close . args)
       (define has-size?
         (and (pair? args)
@@ -991,12 +995,26 @@
                                  (cons 'action action))
             '()))
 
-    ;; tooltip : (or/c string? observable?) view? [symbol?] -> view?
-    ;;   Construct a tooltip wrapper with message, trigger child view, and optional placement.
+    ;; tooltip : (or/c string? observable?) view? [symbol?] [list?] -> view?
+    ;;   Construct a tooltip wrapper with message, trigger child view, optional placement, and optional options.
     ;;   Optional parameter placement defaults to 'top.
-    (define (tooltip message child [placement 'top])
+    ;;   Optional parameter options defaults to '() and accepts:
+    ;;     title  -> string/observable heading shown above message.
+    ;;     footer -> string/observable text shown below message.
+    (define (tooltip message child . args)
+      (define has-placement?
+        (and (pair? args)
+             (symbol? (car args))
+             (memq (car args) '(top right bottom left))))
+      (define placement (if has-placement? (car args) 'top))
+      (define rest/args (if has-placement? (cdr args) args))
+      (define has-options?
+        (and (pair? rest/args)
+             (options-alist? (car rest/args))))
+      (define options (if has-options? (car rest/args) '()))
       (view kind/tooltip (list (cons 'message message)
-                               (cons 'placement placement))
+                               (cons 'placement placement)
+                               (cons 'options options))
             (list child)))
 
     ;; popover : (or/c string? observable?) [symbol?] [list?] view? ... -> view?

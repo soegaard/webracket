@@ -71,8 +71,9 @@
         if (frameDoc) {
           const openButton = buttonByText(frameDoc, "open-dialog");
           const dialog = frameDoc.querySelector(".we-dialog[role='dialog']");
-          if (openButton && dialog) {
-            return { frameDoc, openButton, dialog };
+          const panel = frameDoc.querySelector("[data-we-widget='dialog-panel']");
+          if (openButton && dialog && panel) {
+            return { frameDoc, openButton, dialog, panel };
           }
         }
         await sleep(25);
@@ -97,6 +98,8 @@
         assertTrue(dlg.getAttribute("role") === "dialog", "dialog role present");
         assertTrue(dlg.getAttribute("aria-modal") === "true", "dialog aria-modal true");
         assertTrue(dlg.getAttribute("aria-hidden") === "true", "dialog initially hidden");
+        assertTrue(ui.panel.className.includes("we-dialog-tone-primary"), "dialog tone class present");
+        assertTrue(ui.panel.className.includes("we-dialog-tone-outline"), "dialog tone-style class present");
 
         ui.openButton.focus();
         ui.openButton.click();
@@ -104,22 +107,34 @@
 
         const cancelButton = buttonByText(ui.frameDoc, "cancel");
         const confirmButton = buttonByText(ui.frameDoc, "confirm");
+        const header = ui.frameDoc.querySelector("[data-we-widget='dialog-header']");
+        const body = ui.frameDoc.querySelector("[data-we-widget='dialog-body']");
+        const close = ui.frameDoc.querySelector("[data-we-widget='dialog-close']");
         assertTrue(!!cancelButton, "cancel button exists");
         assertTrue(!!confirmButton, "confirm button exists");
+        assertTrue(!!header, "dialog header exists");
+        assertTrue(!!body, "dialog body exists");
+        assertTrue(!!close, "dialog close exists");
         assertTrue(dlg.getAttribute("aria-hidden") === "false", "dialog visible after open");
-        assertTrue(ui.frameDoc.activeElement === cancelButton, "initial focus is in dialog");
+        const dialogFocusables = Array.from(dlg.querySelectorAll("button, [href], input, select, textarea, [tabindex]"))
+          .filter((el) => !el.hasAttribute("disabled"));
+        const initial = ui.frameDoc.activeElement;
+        const initialIx = dialogFocusables.indexOf(initial);
+        assertTrue(initialIx >= 0, "initial focus is in dialog");
 
         ui.frameDoc.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
         await sleep(40);
-        assertTrue(ui.frameDoc.activeElement === confirmButton, "Tab moves focus to next control");
+        const nextIx = (initialIx + 1) % dialogFocusables.length;
+        assertTrue(ui.frameDoc.activeElement === dialogFocusables[nextIx], "Tab moves focus to next control");
 
         ui.frameDoc.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
         await sleep(40);
-        assertTrue(ui.frameDoc.activeElement === cancelButton, "Tab wraps focus in dialog");
+        const wrapIx = (nextIx + 1) % dialogFocusables.length;
+        assertTrue(ui.frameDoc.activeElement === dialogFocusables[wrapIx], "Tab continues focus cycle in dialog");
 
         ui.frameDoc.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true }));
         await sleep(40);
-        assertTrue(ui.frameDoc.activeElement === confirmButton, "Shift+Tab cycles backward in dialog");
+        assertTrue(ui.frameDoc.activeElement === dialogFocusables[nextIx], "Shift+Tab cycles backward in dialog");
 
         dlg.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
         await sleep(80);

@@ -1919,6 +1919,62 @@ html.we-theme-solar2 :is(.we-dialog-close, .we-modal-close):hover {
   background: color-mix(in srgb, var(--we-bg-hover) 60%, transparent);
 }
 
+/* Dialog/modal tone hooks: first-class class contract from renderer options. */
+html.we-theme-solar2 :is(.we-dialog-panel, .we-modal-panel).we-dialog-tone-primary {
+  --we-dialog-tone-bg:     var(--we-primary);
+  --we-dialog-tone-border: var(--we-primary);
+}
+
+html.we-theme-solar2 :is(.we-dialog-panel, .we-modal-panel).we-dialog-tone-secondary {
+  --we-dialog-tone-bg:     var(--we-secondary);
+  --we-dialog-tone-border: var(--bs-secondary, var(--we-secondary));
+}
+
+html.we-theme-solar2 :is(.we-dialog-panel, .we-modal-panel).we-dialog-tone-success {
+  --we-dialog-tone-bg:     var(--we-success);
+  --we-dialog-tone-border: var(--bs-success, var(--we-success));
+}
+
+html.we-theme-solar2 :is(.we-dialog-panel, .we-modal-panel).we-dialog-tone-danger {
+  --we-dialog-tone-bg:     var(--we-danger);
+  --we-dialog-tone-border: var(--bs-danger, var(--we-danger));
+}
+
+html.we-theme-solar2 :is(.we-dialog-panel, .we-modal-panel).we-dialog-tone-warning {
+  --we-dialog-tone-bg:     var(--we-warning);
+  --we-dialog-tone-border: var(--bs-warning, var(--we-warning));
+}
+
+html.we-theme-solar2 :is(.we-dialog-panel, .we-modal-panel).we-dialog-tone-info {
+  --we-dialog-tone-bg:     var(--we-info);
+  --we-dialog-tone-border: var(--bs-info, var(--we-info));
+}
+
+html.we-theme-solar2 :is(.we-dialog-panel, .we-modal-panel).we-dialog-tone-light {
+  --we-dialog-tone-bg:     #fdf6e3;
+  --we-dialog-tone-border: #9fb3b8;
+  --we-dialog-tone-fg:     var(--we-bg-subtle);
+}
+
+html.we-theme-solar2 :is(.we-dialog-panel, .we-modal-panel).we-dialog-tone-dark {
+  --we-dialog-tone-bg:     var(--we-bg-subtle);
+  --we-dialog-tone-border: #214f5c;
+}
+
+html.we-theme-solar2 :is(.we-dialog-panel, .we-modal-panel).we-dialog-tone-fill {
+  background:   var(--we-dialog-tone-bg, var(--we-bg-subtle));
+  border-color: rgba(0, 43, 54, 0.95);
+  color:        var(--we-dialog-tone-fg, #fff);
+}
+
+html.we-theme-solar2 :is(.we-dialog-panel, .we-modal-panel).we-dialog-tone-fill :is(.we-dialog-title, .we-dialog-description, .we-modal-title, .we-modal-description) {
+  color: var(--we-dialog-tone-fg, #fff);
+}
+
+html.we-theme-solar2 :is(.we-dialog-panel, .we-modal-panel).we-dialog-tone-outline {
+  border-color: var(--we-dialog-tone-border, var(--we-border));
+}
+
 /* Popover region hooks: header/body/footer are now first-class renderer nodes. */
 html.we-theme-solar2 .we-popover-header {
   padding:       0.6rem 0.8rem;
@@ -1939,6 +1995,26 @@ html.we-theme-solar2 .we-popover-footer {
   border-top: 1px solid var(--we-border);
   color:      var(--we-fg-muted);
   font-size:  0.92rem;
+}
+
+/* Tooltip region hooks: header/body/footer are now first-class renderer nodes. */
+html.we-theme-solar2 .we-tooltip-header {
+  padding:       0.35rem 0.5rem 0.2rem 0.5rem;
+  font-weight:   600;
+  color:         var(--we-light-emphasis);
+}
+
+html.we-theme-solar2 .we-tooltip-body {
+  display:       block;
+  padding:       0.2rem 0.5rem;
+  color:         var(--we-fg);
+}
+
+html.we-theme-solar2 .we-tooltip-footer {
+  padding:       0.2rem 0.5rem 0.35rem 0.5rem;
+  border-top:    1px solid color-mix(in srgb, var(--we-border) 55%, transparent);
+  color:         var(--we-fg-muted);
+  font-size:     0.84rem;
 }
 
 html.we-theme-solar2 .we-table.we-table-borderless th,

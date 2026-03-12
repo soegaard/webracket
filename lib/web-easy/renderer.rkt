@@ -3740,7 +3740,9 @@
          (define raw-footer     (options-ref options 'footer #f))
          (define raw-show-close? (options-ref options 'show-close? #f))
          (define raw-close-label (options-ref options 'close-label "Close dialog"))
-         (define panel-class
+         (define raw-tone       (options-ref options 'tone #f))
+         (define raw-tone-style (options-ref options 'tone-style #f))
+         (define panel-class-base
            (string-append "we-dialog-panel we-dialog-size-" (symbol->string panel-size)))
          (define node (dom-node 'dialog
                                 (list (cons attr/role 'dialog)
@@ -3754,7 +3756,7 @@
                                 #f
                                 #f))
          (define panel-node (dom-node 'div
-                                      (list (cons 'class panel-class)
+                                      (list (cons 'class panel-class-base)
                                             (cons 'data-we-widget "dialog-panel")
                                             (cons 'tabindex -1))
                                       '()
@@ -3880,6 +3882,18 @@
                     (if (null? footer-children) '() (list footer-node)))))
          (define (set-open! open?)
            (define open-value (not (eq? open? #f)))
+           (define tone-value      (normalize-card-tone (maybe-observable-value raw-tone)))
+           (define tone-style-value (normalize-card-tone-style (maybe-observable-value raw-tone-style)))
+           (define panel-class
+             (string-append
+              panel-class-base
+              (if tone-value
+                  (string-append " we-dialog-tone-" (symbol->string tone-value))
+                  "")
+              (if tone-style-value
+                  (string-append " we-dialog-tone-" (symbol->string tone-style-value))
+                  "")
+              (if open-value " is-open" "")))
            (define panel-attrs/base
              (list (cons 'class panel-class)
                    (cons 'data-we-widget "dialog-panel")
@@ -3938,6 +3952,16 @@
              (rebuild-dialog-structure!))
            (obs-observe! raw-close-label close-label-listener)
            (register-cleanup! (lambda () (obs-unobserve! raw-close-label close-label-listener))))
+         (when (obs? raw-tone)
+           (define (tone-listener _updated)
+             (set-open! (maybe-observable-value raw-open)))
+           (obs-observe! raw-tone tone-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-tone tone-listener))))
+         (when (obs? raw-tone-style)
+           (define (tone-style-listener _updated)
+             (set-open! (maybe-observable-value raw-open)))
+           (obs-observe! raw-tone-style tone-style-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-tone-style tone-style-listener))))
          (cond
            [(obs? raw-open)
             (set-open! (obs-peek raw-open))
@@ -3959,7 +3983,9 @@
          (define raw-footer     (options-ref options 'footer #f))
          (define raw-show-close? (options-ref options 'show-close? #f))
          (define raw-close-label (options-ref options 'close-label "Close modal"))
-         (define panel-class
+         (define raw-tone       (options-ref options 'tone #f))
+         (define raw-tone-style (options-ref options 'tone-style #f))
+         (define panel-class-base
            (string-append "we-dialog-panel we-dialog-size-" (symbol->string panel-size)))
          (define node (dom-node 'dialog
                                 (list (cons attr/role 'dialog)
@@ -3973,7 +3999,7 @@
                                 #f
                                 #f))
          (define panel-node (dom-node 'div
-                                      (list (cons 'class panel-class)
+                                      (list (cons 'class panel-class-base)
                                             (cons 'data-we-widget "modal-panel")
                                             (cons 'tabindex -1))
                                       '()
@@ -4099,6 +4125,18 @@
                     (if (null? footer-children) '() (list footer-node)))))
          (define (set-open! open?)
            (define open-value (not (eq? open? #f)))
+           (define tone-value      (normalize-card-tone (maybe-observable-value raw-tone)))
+           (define tone-style-value (normalize-card-tone-style (maybe-observable-value raw-tone-style)))
+           (define panel-class
+             (string-append
+              panel-class-base
+              (if tone-value
+                  (string-append " we-dialog-tone-" (symbol->string tone-value))
+                  "")
+              (if tone-style-value
+                  (string-append " we-dialog-tone-" (symbol->string tone-style-value))
+                  "")
+              (if open-value " is-open" "")))
            (define panel-attrs/base
              (list (cons 'class panel-class)
                    (cons 'data-we-widget "modal-panel")
@@ -4157,6 +4195,16 @@
              (rebuild-modal-structure!))
            (obs-observe! raw-close-label close-label-listener)
            (register-cleanup! (lambda () (obs-unobserve! raw-close-label close-label-listener))))
+         (when (obs? raw-tone)
+           (define (tone-listener _updated)
+             (set-open! (maybe-observable-value raw-open)))
+           (obs-observe! raw-tone tone-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-tone tone-listener))))
+         (when (obs? raw-tone-style)
+           (define (tone-style-listener _updated)
+             (set-open! (maybe-observable-value raw-open)))
+           (obs-observe! raw-tone-style tone-style-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-tone-style tone-style-listener))))
          (cond
            [(obs? raw-open)
             (set-open! (obs-peek raw-open))
@@ -4799,6 +4847,9 @@
          node]
         [(tooltip)
          (define raw-message (alist-ref (view-props v) 'message 'render))
+         (define options     (alist-ref (view-props v) 'options 'render))
+         (define raw-title   (options-ref options 'title #f))
+         (define raw-footer  (options-ref options 'footer #f))
          (define tooltip-placement
            (normalize-overlay-placement
             (alist-ref (view-props v) 'placement 'render)
@@ -4831,7 +4882,28 @@
                                              (cons 'class "we-tooltip-bubble")
                                              (cons 'aria-hidden "true"))
                                        '()
-                                       ""
+                                       #f
+                                       #f
+                                       #f))
+         (define header-node (dom-node 'div
+                                       (list (cons 'data-we-widget "tooltip-header")
+                                             (cons 'class "we-tooltip-header"))
+                                       '()
+                                       #f
+                                       #f
+                                       #f))
+         (define body-node (dom-node 'span
+                                     (list (cons 'data-we-widget "tooltip-body")
+                                           (cons 'class "we-tooltip-body"))
+                                     '()
+                                     #f
+                                     #f
+                                     #f))
+         (define footer-node (dom-node 'div
+                                       (list (cons 'data-we-widget "tooltip-footer")
+                                             (cons 'class "we-tooltip-footer"))
+                                       '()
+                                       #f
                                        #f
                                        #f))
          ;; Constants for tooltip runtime state.
@@ -4879,17 +4951,38 @@
               [else (void)])))
          (set-dom-node-on-change! trigger-node (dom-node-on-change node))
          (backend-append-child! trigger-node child-node)
-         (define (set-message! message)
-           (set-dom-node-text! bubble-node (value->text message)))
+         ;; refresh-tooltip-structure! : -> void?
+         ;;   Rebuild tooltip bubble regions from title/message/footer values.
+         (define (refresh-tooltip-structure!)
+           (define title-value   (maybe-observable-value raw-title))
+           (define message-value (maybe-observable-value raw-message))
+           (define footer-value  (maybe-observable-value raw-footer))
+           (set-dom-node-text! body-node (value->text message-value))
+           (set-dom-node-text! header-node (if (eq? title-value #f) "" (value->text title-value)))
+           (set-dom-node-text! footer-node (if (eq? footer-value #f) "" (value->text footer-value)))
+           (backend-replace-children!
+            bubble-node
+            (append (if (eq? title-value #f) '() (list header-node))
+                    (list body-node)
+                    (if (eq? footer-value #f) '() (list footer-node)))))
          (cond
            [(obs? raw-message)
-            (set-message! (obs-peek raw-message))
             (define (listener updated)
-              (set-message! updated))
+              (refresh-tooltip-structure!))
             (obs-observe! raw-message listener)
             (register-cleanup! (lambda () (obs-unobserve! raw-message listener)))]
-           [else
-            (set-message! raw-message)])
+           [else (void)])
+         (when (obs? raw-title)
+           (define (title-listener _updated)
+             (refresh-tooltip-structure!))
+           (obs-observe! raw-title title-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-title title-listener))))
+         (when (obs? raw-footer)
+           (define (footer-listener _updated)
+             (refresh-tooltip-structure!))
+           (obs-observe! raw-footer footer-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-footer footer-listener))))
+         (refresh-tooltip-structure!)
          (backend-append-child! node trigger-node)
          (backend-append-child! node bubble-node)
          (set-tooltip-open! #f)

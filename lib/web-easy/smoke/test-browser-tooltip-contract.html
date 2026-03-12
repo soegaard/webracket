@@ -40,8 +40,10 @@
           const bubble = frameDoc.querySelector("[data-we-widget='tooltip-bubble']");
           const setLong = Array.from(frameDoc.querySelectorAll("button"))
             .find((b) => b.textContent.trim() === "set-long");
-          if (trigger && bubble && setLong) {
-            return { trigger, bubble, setLong };
+          const retitle = Array.from(frameDoc.querySelectorAll("button"))
+            .find((b) => b.textContent.trim() === "retitle");
+          if (trigger && bubble && setLong && retitle) {
+            return { trigger, bubble, setLong, retitle };
           }
         }
         await sleep(25);
@@ -64,13 +66,19 @@
         assertEqual(ui.bubble.getAttribute("role"), "tooltip", "tooltip role");
         assertTrue(!!ui.bubble.getAttribute("id"), "tooltip id exists");
         assertEqual(ui.trigger.getAttribute("aria-describedby"), ui.bubble.getAttribute("id"), "trigger aria-describedby wiring");
-        assertEqual(ui.bubble.textContent.trim(), "Click to apply", "initial tooltip text");
+        assertTrue(!!ui.bubble.querySelector("[data-we-widget='tooltip-header']"), "tooltip header exists");
+        assertTrue(!!ui.bubble.querySelector("[data-we-widget='tooltip-body']"), "tooltip body exists");
+        assertTrue(!!ui.bubble.querySelector("[data-we-widget='tooltip-footer']"), "tooltip footer exists");
+        assertEqual(ui.bubble.textContent.trim(), "Apply actionClick to applyPress Esc to dismiss", "initial tooltip content");
 
         ui.setLong.click();
         await sleep(80);
 
-        assertEqual(ui.bubble.textContent.trim(), "Click to apply deployment profile", "tooltip text updates");
-        setStatus("PASS\ntooltip contract: role + aria-describedby + text update", "pass");
+        assertEqual(ui.bubble.textContent.trim(), "Apply actionClick to apply deployment profilePress Esc to dismiss", "tooltip body text updates");
+        ui.retitle.click();
+        await sleep(80);
+        assertEqual(ui.bubble.textContent.trim(), "Apply deploymentClick to apply deployment profilePress Esc to dismiss", "tooltip header updates");
+        setStatus("PASS\ntooltip contract: role + aria-describedby + structured regions + reactive updates", "pass");
       } catch (err) {
         console.error(err);
         setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");

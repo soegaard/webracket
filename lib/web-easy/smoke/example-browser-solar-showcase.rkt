@@ -1108,8 +1108,11 @@
                   (dialog
                    @dialog-open?
                    (lambda (_reason) (:= @dialog-open? #f))
-                   (heading 3 "Confirm Changes")
-                   (text "Apply updated Solar 2 showcase settings?")
+                   (list (cons 'title "Confirm Changes")
+                         (cons 'description "Apply updated Solar 2 showcase settings?")
+                         (cons 'tone 'primary)
+                         (cons 'tone-style 'outline)
+                         (cons 'show-close? #t))
                    (with-class "we-button-row"
                      (inline
                       (button "Cancel" (lambda () (:= @dialog-open? #f)))
@@ -1124,31 +1127,55 @@
                  (heading 2 "Popovers")
                  (inline
                   (with-class "we-btn-secondary"
-                    (popover "Left" 'left (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")))
+                    (popover "Left"
+                             'left
+                             (list (cons 'title "Popover title")
+                                   (cons 'footer "Popover footer"))
+                             (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")))
                   (with-class "we-btn-secondary"
-                    (popover "Top" 'top (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")))
+                    (popover "Top"
+                             'top
+                             (list (cons 'title "Popover title")
+                                   (cons 'footer "Popover footer"))
+                             (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")))
                   (with-class "we-btn-secondary"
-                    (popover "Bottom" 'bottom (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")))
+                    (popover "Bottom"
+                             'bottom
+                             (list (cons 'title "Popover title")
+                                   (cons 'footer "Popover footer"))
+                             (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")))
                   (with-class "we-btn-secondary"
-                    (popover "Right" 'right (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus."))))
+                    (popover "Right"
+                             'right
+                             (list (cons 'title "Popover title")
+                                   (cons 'footer "Popover footer"))
+                             (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus."))))
                  (heading 2 "Tooltips")
                  (inline
                   (tooltip "Tooltip on left"
                            (with-class "we-btn-secondary"
                              (button "Left" (lambda () (void))))
-                           'left)
+                           'left
+                           (list (cons 'title "Tooltip")
+                                 (cons 'footer "Footer text")))
                   (tooltip "Tooltip on top"
                            (with-class "we-btn-secondary"
                              (button "Top" (lambda () (void))))
-                           'top)
+                           'top
+                           (list (cons 'title "Tooltip")
+                                 (cons 'footer "Footer text")))
                   (tooltip "Tooltip on bottom"
                            (with-class "we-btn-secondary"
                              (button "Bottom" (lambda () (void))))
-                           'bottom)
+                           'bottom
+                           (list (cons 'title "Tooltip")
+                                 (cons 'footer "Footer text")))
                   (tooltip "Tooltip on right"
                            (with-class "we-btn-secondary"
                              (button "Right" (lambda () (void))))
-                           'right))
+                           'right
+                           (list (cons 'title "Tooltip")
+                                 (cons 'footer "Footer text"))))
                  (heading 2 "Toasts")
                  (with-class "showcase-static-toast"
                    (stack

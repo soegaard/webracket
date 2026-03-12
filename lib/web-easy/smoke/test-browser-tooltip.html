@@ -69,10 +69,13 @@
           const trigger = Array.from(frameDoc.querySelectorAll("button"))
             .find((b) => b.textContent.trim() === "apply");
           const bubble = frameDoc.querySelector("[data-we-widget='tooltip-bubble']");
+          const body = frameDoc.querySelector("[data-we-widget='tooltip-body']");
           const setLong = Array.from(frameDoc.querySelectorAll("button"))
             .find((b) => b.textContent.trim() === "set-long");
-          if (trigger && bubble && setLong) {
-            return { frameDoc, trigger, bubble, setLong };
+          const retitle = Array.from(frameDoc.querySelectorAll("button"))
+            .find((b) => b.textContent.trim() === "retitle");
+          if (trigger && bubble && body && setLong && retitle) {
+            return { frameDoc, trigger, bubble, body, setLong, retitle };
           }
         }
         await sleep(25);
@@ -93,15 +96,20 @@
 
         const ui = await waitForUI(frame, 20000);
         assertEqual(ui.bubble.getAttribute("class"), "we-tooltip-bubble", "tooltip bubble class");
-        assertEqual(ui.bubble.textContent.trim(), "Click to apply", "initial tooltip text");
+        assertTrue(!!ui.bubble.querySelector("[data-we-widget='tooltip-header']"), "tooltip header exists");
+        assertTrue(!!ui.bubble.querySelector("[data-we-widget='tooltip-footer']"), "tooltip footer exists");
+        assertEqual(ui.body.textContent.trim(), "Click to apply", "initial tooltip body text");
         assertTrue(!!ui.bubble.getAttribute("id"), "tooltip bubble id exists");
         assertEqual(ui.trigger.getAttribute("aria-describedby"), ui.bubble.getAttribute("id"), "trigger aria-describedby points to bubble");
 
         ui.setLong.click();
         await sleep(100);
+        ui.retitle.click();
+        await sleep(100);
 
-        assertEqual(ui.bubble.textContent.trim(), "Click to apply deployment profile", "tooltip text after update");
-        setStatus("PASS\ntooltip sets aria-describedby and updates bubble text", "pass");
+        assertEqual(ui.body.textContent.trim(), "Click to apply deployment profile", "tooltip body text after update");
+        assertTrue((ui.bubble.textContent || "").includes("Apply deployment"), "tooltip header text after update");
+        setStatus("PASS\ntooltip sets aria-describedby and updates structured bubble regions", "pass");
       } catch (err) {
         console.error(err);
         setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");

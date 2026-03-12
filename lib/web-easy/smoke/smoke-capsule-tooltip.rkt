@@ -20,6 +20,7 @@
     ;;   Build and mount the tooltip page under root.
     (define (tooltip-make-page root)
       (define @hint (@ "Click to apply"))
+      (define @title (@ "Apply action"))
       (set! tooltip-renderer
             (render
              (window
@@ -30,11 +31,18 @@
                           (:= @hint "Click to apply")))
                 (button "set-long"
                         (lambda ()
-                          (:= @hint "Click to apply deployment profile"))))
+                          (:= @hint "Click to apply deployment profile")))
+                (button "retitle"
+                        (lambda ()
+                          (:= @title "Apply deployment"))))
                (tooltip @hint
                         (button "apply"
                                 (lambda ()
-                                  (void))))))))
+                                  (void)))
+                        'top
+                        (list (cons 'title @title)
+                              (cons 'footer "Press Esc to dismiss"))
+                        )))))
       (mount-renderer! tooltip-renderer root)
       (void))
 
