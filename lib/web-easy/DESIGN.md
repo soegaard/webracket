@@ -854,6 +854,9 @@ Structured options for richer composition:
   - options:
     - `dismiss-action` -> procedure used by `alert-dismiss`.
     - `dismiss-label` -> aria-label for dismiss affordance.
+    - `layout` -> `stack` (default) or `inline` rich alert body flow.
+    - `scale` -> `normal` (default) or `major` title emphasis.
+    - `tone` -> tone override class (`primary/secondary/success/info/warn/error/light/dark`).
 - `card [title] [footer] [variants] [options] child ...`
   - options:
     - `subtitle` -> `card-subtitle`.
@@ -865,6 +868,8 @@ Structured options for richer composition:
     - `title` -> `*-title` inside `*-header`.
     - `description` -> `*-description` inside `*-body` (also used for `aria-describedby`).
     - `footer` -> `*-footer` content (text or view).
+    - `tone` -> add `we-dialog-tone-*` class (`primary/secondary/success/info/warning/danger/light/dark`).
+    - `tone-style` -> add `we-dialog-tone-fill` or `we-dialog-tone-outline`.
     - `show-close?` -> include `*-close` button (default `#f`).
     - `close-label` -> aria-label for close button.
 

@@ -485,6 +485,9 @@
     ;;   Optional parameter options defaults to '() and accepts:
     ;;     dismiss-action -> procedure to dismiss the alert.
     ;;     dismiss-label  -> string/observable label for dismiss affordance.
+    ;;     layout         -> 'stack (default) or 'inline body arrangement.
+    ;;     scale          -> 'normal (default) or 'major title emphasis.
+    ;;     tone           -> symbol/observable tone override (primary/secondary/success/info/warning/danger/light/dark).
     (define (alert-rich body title link-text link-href [level 'info] [options '()])
       (view kind/alert-rich
             (list (cons 'body body)

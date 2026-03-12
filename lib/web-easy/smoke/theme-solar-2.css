@@ -332,6 +332,8 @@ html.we-theme-solar2 .we-alert {
 
 html.we-theme-solar2 .we-alert .we-alert-title {
   font-weight:   500;
+  font-size:     1.18rem;
+  line-height:   1.2;
   margin-bottom: 0.28rem;
 }
 
@@ -371,17 +373,58 @@ html.we-theme-solar2 .we-alert .we-alert-dismiss:hover {
 }
 
 html.we-theme-solar2 .we-alert-info    { --we-alert-tone: var(--we-info); }
+html.we-theme-solar2 .we-alert-primary { --we-alert-tone: var(--we-primary); }
+html.we-theme-solar2 .we-alert-secondary { --we-alert-tone: var(--we-secondary); }
 html.we-theme-solar2 .we-alert-success { --we-alert-tone: var(--we-success); }
 html.we-theme-solar2 .we-alert-warn    { --we-alert-tone: var(--we-warning); }
 html.we-theme-solar2 .we-alert-error   { --we-alert-tone: var(--we-danger); }
+html.we-theme-solar2 .we-alert-light   { --we-alert-tone: #fdf6e3; }
+html.we-theme-solar2 .we-alert-dark    { --we-alert-tone: var(--we-bg-subtle); }
 
 html.we-theme-solar2 .we-alert-info,
+html.we-theme-solar2 .we-alert-primary,
+html.we-theme-solar2 .we-alert-secondary,
 html.we-theme-solar2 .we-alert-success,
 html.we-theme-solar2 .we-alert-warn,
-html.we-theme-solar2 .we-alert-error {
+html.we-theme-solar2 .we-alert-error,
+html.we-theme-solar2 .we-alert-light,
+html.we-theme-solar2 .we-alert-dark {
   background:   var(--we-alert-tone);
   border-color: var(--we-alert-tone);
   color:        var(--we-light-emphasis);
+}
+
+html.we-theme-solar2 .we-alert-light {
+  color: var(--we-bg-subtle);
+}
+
+html.we-theme-solar2 .we-alert-layout-inline {
+  padding-top:    1rem;
+  padding-bottom: 1rem;
+}
+
+html.we-theme-solar2 .we-alert-layout-inline .we-alert-title,
+html.we-theme-solar2 .we-alert-layout-inline .we-alert-body,
+html.we-theme-solar2 .we-alert-layout-inline .we-alert-link {
+  display:     inline;
+  font-size:   1rem;
+  line-height: 1.5;
+  margin:      0;
+}
+
+html.we-theme-solar2 .we-alert-layout-inline .we-alert-title {
+  margin-right: 0.2rem;
+}
+
+html.we-theme-solar2 .we-alert-layout-inline .we-alert-link {
+  margin-left: 0.2rem;
+  font-weight: 700;
+}
+
+html.we-theme-solar2 .we-alert-scale-major .we-alert-title {
+  font-size:     1.5rem;
+  line-height:   1.2;
+  margin-bottom: 0.45rem;
 }
 
 html.we-theme-solar2 .we-badge {

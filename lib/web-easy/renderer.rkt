@@ -920,24 +920,29 @@
         [else 1]))
 
     ;; normalize-alert-level : any/c -> symbol?
-    ;;   Normalize alert level to one of info/success/warn/error.
+    ;;   Normalize alert level to supported semantic/tone variants.
     (define (normalize-alert-level level)
       (if (symbol? level)
           (case level
-            [(warning)                'warn]
-            [(danger)                 'error]
-            [(info success warn error) level]
-            [else                      'info])
+            [(warning)                                'warn]
+            [(danger)                                 'error]
+            [(info success warn error
+                   primary secondary light dark)      level]
+            [else                                     'info])
           'info))
 
     ;; alert-level-class : symbol? -> string?
     ;;   Return CSS class suffix for alert level.
     (define (alert-level-class level)
       (case level
-        [(success) "we-alert-success"]
-        [(warn)    "we-alert-warn"]
-        [(error)   "we-alert-error"]
-        [else      "we-alert-info"]))
+        [(primary)   "we-alert-primary"]
+        [(secondary) "we-alert-secondary"]
+        [(success)   "we-alert-success"]
+        [(warn)      "we-alert-warn"]
+        [(error)     "we-alert-error"]
+        [(light)     "we-alert-light"]
+        [(dark)      "we-alert-dark"]
+        [else        "we-alert-info"]))
 
     ;; alert-level-role : symbol? -> symbol?
     ;;   Return semantic role for alert level severity.
@@ -945,6 +950,24 @@
       (case level
         [(warn error) 'alert]
         [else         'status]))
+
+    ;; normalize-alert-layout : any/c -> symbol?
+    ;;   Normalize rich alert layout to stack or inline.
+    (define (normalize-alert-layout value)
+      (if (symbol? value)
+          (case value
+            [(inline) 'inline]
+            [else     'stack])
+          'stack))
+
+    ;; normalize-alert-scale : any/c -> symbol?
+    ;;   Normalize rich alert title scale to normal or major.
+    (define (normalize-alert-scale value)
+      (if (symbol? value)
+          (case value
+            [(major) 'major]
+            [else    'normal])
+          'normal))
 
     ;; toast-level-class : symbol? -> string?
     ;;   Return CSS class suffix for toast level.
@@ -1720,6 +1743,9 @@
          (define options       (alist-ref (view-props v) 'options 'render))
          (define raw-dismiss-action (options-ref options 'dismiss-action #f))
          (define raw-dismiss-label  (options-ref options 'dismiss-label "Dismiss"))
+         (define raw-layout         (options-ref options 'layout 'stack))
+         (define raw-scale          (options-ref options 'scale 'normal))
+         (define raw-tone           (options-ref options 'tone #f))
          (define node (dom-node 'div
                                 (list (cons attr/role 'status)
                                       (cons 'data-we-widget "alert")
@@ -1771,6 +1797,12 @@
                 (not (string=? (value->text value) ""))))
          (define (render-alert-rich!)
            (define level (normalize-alert-level (maybe-observable-value raw-level)))
+           (define tone  (normalize-alert-level
+                          (if raw-tone
+                              (maybe-observable-value raw-tone)
+                              level)))
+           (define layout (normalize-alert-layout (maybe-observable-value raw-layout)))
+           (define scale  (normalize-alert-scale (maybe-observable-value raw-scale)))
            (define role (alert-level-role level))
            (define live (if (eq? role 'alert) "assertive" "polite"))
            (define title-value (maybe-observable-value raw-title))
@@ -1783,7 +1815,11 @@
             node
             (list (cons attr/role role)
                   (cons 'data-we-widget "alert")
-                  (cons 'class (string-append "we-alert " (alert-level-class level)))
+                  (cons 'class (string-append
+                                "we-alert "
+                                (alert-level-class tone)
+                                (if (eq? layout 'inline) " we-alert-layout-inline" "")
+                                (if (eq? scale 'major) " we-alert-scale-major" "")))
                   (cons 'aria-live live)))
            (set-dom-node-text! title-node (value->text title-value))
            (set-dom-node-text! body-node (value->text body-value))
@@ -1840,6 +1876,21 @@
              (render-alert-rich!))
            (obs-observe! raw-level level-listener)
            (register-cleanup! (lambda () (obs-unobserve! raw-level level-listener))))
+         (when (and raw-tone (obs? raw-tone))
+           (define (tone-listener _updated)
+             (render-alert-rich!))
+           (obs-observe! raw-tone tone-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-tone tone-listener))))
+         (when (and raw-layout (obs? raw-layout))
+           (define (layout-listener _updated)
+             (render-alert-rich!))
+           (obs-observe! raw-layout layout-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-layout layout-listener))))
+         (when (and raw-scale (obs? raw-scale))
+           (define (scale-listener _updated)
+             (render-alert-rich!))
+           (obs-observe! raw-scale scale-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-scale scale-listener))))
          (when (obs? raw-dismiss-action)
            (define (dismiss-action-listener _updated)
              (render-alert-rich!))

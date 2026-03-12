@@ -826,53 +826,63 @@
                (stack
               (section-heading "solar2-indicators" "Indicators")
               (heading 2 "Alerts")
-              (with-class "showcase-alert-heading showcase-alert-major"
-                (alert-rich
-                 "Best check yo self, you're not looking too good. Nulla vitae elit libero, a pharetra augue. Praesent commodo cursus magna,"
-                 "Warning!"
-                 "vel scelerisque nisl consectetur et"
-                 "#"
-                 'warn))
+              (alert-rich
+               "Best check yo self, you're not looking too good. Nulla vitae elit libero, a pharetra augue. Praesent commodo cursus magna,"
+               "Warning!"
+               "vel scelerisque nisl consectetur et"
+               "#"
+               'warn
+               (list (cons 'scale 'major)
+                     (cons 'dismiss-action (lambda () (void)))))
               (grid
                3
-               (with-class "showcase-alert-heading showcase-alert-compact"
-                 (alert-rich "Change a few things up"
-                             "Oh snap!"
-                             "and try submitting again."
-                             "#"
-                             'error))
-               (with-class "showcase-alert-heading showcase-alert-compact"
-                 (alert-rich "You successfully read"
-                             "Well done!"
-                             "this important alert message"
-                             "#"
-                             'success))
-               (with-class "showcase-alert-heading showcase-alert-compact"
-                 (alert-rich "This"
-                             "Heads up!"
-                             "alert needs your attention, but it's not super important."
-                             "#"
-                             'info)))
+               (alert-rich "Change a few things up"
+                           "Oh snap!"
+                           "and try submitting again."
+                           "#"
+                           'error
+                           (list (cons 'layout 'inline)
+                                 (cons 'dismiss-action (lambda () (void)))))
+               (alert-rich "You successfully read"
+                           "Well done!"
+                           "this important alert message"
+                           "#"
+                           'success
+                           (list (cons 'layout 'inline)
+                                 (cons 'dismiss-action (lambda () (void)))))
+               (alert-rich "This"
+                           "Heads up!"
+                           "alert needs your attention, but it's not super important."
+                           "#"
+                           'info
+                           (list (cons 'layout 'inline)
+                                 (cons 'dismiss-action (lambda () (void))))))
               (grid
                3
-               (with-class "showcase-alert-heading showcase-alert-compact showcase-alert-primary"
-                 (alert-rich "Change a few things up"
-                             "Oh snap!"
-                             "and try submitting again."
-                             "#"
-                             'info))
-               (with-class "showcase-alert-heading showcase-alert-compact showcase-alert-secondary"
-                 (alert-rich "You successfully read"
-                             "Well done!"
-                             "this important alert message"
-                             "#"
-                             'info))
-               (with-class "showcase-alert-heading showcase-alert-compact showcase-alert-light"
-                 (alert-rich "This"
-                             "Heads up!"
-                             "alert needs your attention, but it's not super important."
-                             "#"
-                             'info)))
+               (alert-rich "Change a few things up"
+                           "Oh snap!"
+                           "and try submitting again."
+                           "#"
+                           'info
+                           (list (cons 'layout 'inline)
+                                 (cons 'tone 'primary)
+                                 (cons 'dismiss-action (lambda () (void)))))
+               (alert-rich "You successfully read"
+                           "Well done!"
+                           "this important alert message"
+                           "#"
+                           'info
+                           (list (cons 'layout 'inline)
+                                 (cons 'tone 'secondary)
+                                 (cons 'dismiss-action (lambda () (void)))))
+               (alert-rich "This"
+                           "Heads up!"
+                           "alert needs your attention, but it's not super important."
+                           "#"
+                           'info
+                           (list (cons 'layout 'inline)
+                                 (cons 'tone 'light)
+                                 (cons 'dismiss-action (lambda () (void))))))
               (heading 2 "Badges")
               (with-class "we-button-row showcase-badge-row-square"
                 (inline
@@ -1076,12 +1086,12 @@
            (with-class "we-section-break"
              (section-heading "solar2-dialogs" "Dialogs"))
            (with-id "solar2-dialogs-body"
-             (with-class "we-grid-safe showcase-dialogs-grid"
+             (with-class "we-grid-safe"
                (grid
                 2
                 (stack
                   (heading 2 "Modals")
-                  (with-class "we-modal-panel showcase-static-modal"
+                  (with-class "we-modal-panel"
                     (stack
                      (with-class "we-modal-header"
                        (inline
@@ -1096,7 +1106,7 @@
                         (spacer)
                         (with-class "we-btn-primary"
                           (button "Save changes" (lambda () (void))))
-                        (with-class "we-btn-secondary"
+                        (with-class "we-btn-outline-secondary"
                           (button "Close" (lambda () (void))))))))
                   (heading 2 "Offcanvas")
                   (with-class "we-button-row"
@@ -1126,25 +1136,25 @@
                 (stack
                  (heading 2 "Popovers")
                  (inline
-                  (with-class "we-btn-secondary"
+                  (with-class "we-btn-outline-secondary"
                     (popover "Left"
                              'left
                              (list (cons 'title "Popover title")
                                    (cons 'footer "Popover footer"))
                              (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")))
-                  (with-class "we-btn-secondary"
+                  (with-class "we-btn-outline-secondary"
                     (popover "Top"
                              'top
                              (list (cons 'title "Popover title")
                                    (cons 'footer "Popover footer"))
                              (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")))
-                  (with-class "we-btn-secondary"
+                  (with-class "we-btn-outline-secondary"
                     (popover "Bottom"
                              'bottom
                              (list (cons 'title "Popover title")
                                    (cons 'footer "Popover footer"))
                              (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")))
-                  (with-class "we-btn-secondary"
+                  (with-class "we-btn-outline-secondary"
                     (popover "Right"
                              'right
                              (list (cons 'title "Popover title")
