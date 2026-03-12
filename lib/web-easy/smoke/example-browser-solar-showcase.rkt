@@ -293,11 +293,12 @@
 ;;   Build accordion panel text with lead sentence plus full reference-style copy.
 (define (showcase-accordion-body lead copy)
   (with-class "showcase-accordion-body-row"
-   (inline
-   (with-class "showcase-accordion-lead"
-     (text lead))
-   (with-class "showcase-accordion-copy"
-     (text copy)))))
+    (with-class "showcase-accordion-inline"
+      (inline
+       (with-class "showcase-accordion-lead"
+         (text lead))
+       (with-class "showcase-accordion-copy"
+         (text copy))))))
 
 ;; section-heading : string? string? -> view?
 ;;   Build a standardized top-level showcase section heading.
@@ -1098,30 +1099,32 @@
                    (text "Some quick example text to build on the card title and make up the bulk of the card's content.")))
             (stack
              (card "Card header" "2 days ago"
-                   (list (cons 'subtitle "Support card subtitle")
-                         (cons 'media
-                               (with-class "showcase-card-image-cap"
-                                 (text "Image cap")))
-                         (cons 'actions
+                   (list (cons 'actions
                                (list (link "Card link" "#")
                                      (link "Another link" "#"))))
                    (stack
-                    (heading 5 "Special title treatment")
-                    (text "Some quick example text to build on the card title and make up the bulk of the card's content.")
-                    (with-class "we-list-group"
-                      (stack
-                       (with-class "we-list-group-item"
+                     (heading 5 "Special title treatment")
+                     (with-class "we-card-subtitle"
+                       (text "Support card subtitle"))
+                     (with-class "showcase-card-image-cap"
+                       (text "Image cap"))
+                     (text "Some quick example text to build on the card title and make up the bulk of the card's content.")
+                     (with-class "we-list-group"
+                       (stack
+                        (with-class "we-list-group-item"
                          (text "Cras justo odio"))
                        (with-class "we-list-group-item"
                          (text "Dapibus ac facilisis in"))
                        (with-class "we-list-group-item"
                          (text "Vestibulum at eros"))))))
              (card "Card title" #f
-                   (list (cons 'subtitle "Card subtitle")
-                         (cons 'actions
+                   (list (cons 'actions
                                (list (link "Card link" "#")
                                      (link "Another link" "#"))))
-                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))))))
+                   (stack
+                    (with-class "we-card-subtitle"
+                      (text "Card subtitle"))
+                    (text "Some quick example text to build on the card title and make up the bulk of the card's content."))))))))
 
            ;; Accordions
            (with-class "we-section-break"
@@ -1129,7 +1132,7 @@
            (with-id "solar2-accordions-body"
              (accordion
               @accordion
-              (list
+               (list
                (list 'what
                      "Accordion Item #1"
                      (showcase-accordion-body
@@ -1155,51 +1158,31 @@
                 2
                 (stack
                   (heading 2 "Modals")
-                  (with-class "we-button-row"
-                    (inline
-                     (with-class "we-btn-primary"
-                       (button "Launch demo modal"
-                               (lambda () (:= @modal-open? #t))))))
-                  (modal
-                   @modal-open?
-                   (lambda (_reason) (:= @modal-open? #f))
-                   'md
-                   (list (cons 'title "Modal title")
-                         (cons 'description "Modal body text goes here.")
-                         (cons 'show-close? #t)
-                         (cons 'footer
-                               (with-class "we-button-row"
-                                 (inline
-                                  (with-class "we-btn-outline-secondary"
-                                    (button "Close"
-                                            (lambda ()
-                                              (:= @modal-open? #f))))
-                                  (with-class "we-btn-primary"
-                                    (button "Save changes"
-                                            (lambda ()
-                                              (:= @modal-open? #f))))))))
-                   (text "Modal body text goes here."))
+                  (with-class "showcase-static-modal-wrap"
+                    (with-class "we-modal-panel showcase-static-modal"
+                      (stack
+                       (with-class "we-modal-header"
+                         (inline
+                          (with-class "we-modal-title"
+                            (text "Modal title"))
+                          (spacer)
+                          (with-class "we-modal-close"
+                            (text "×"))))
+                       (with-class "we-modal-body"
+                         (text "Modal body text goes here."))
+                       (with-class "we-modal-footer"
+                         (inline
+                          (with-class "we-btn-primary"
+                            (button "Save changes" (lambda () (void))))
+                          (with-class "we-btn-secondary"
+                            (button "Close" (lambda () (void)))))))))
                   (heading 2 "Offcanvas")
                   (with-class "we-button-row"
                     (inline
                      (with-class "we-btn-primary"
-                       (button "Open dialog" (lambda () (:= @dialog-open? #t))))
-                     (with-class "we-btn-primary"
                        (button "Link with href" (lambda () (:= @offcanvas-open? #t))))
                      (with-class "we-btn-primary"
                        (button "Button with data-bs-target" (lambda () (:= @offcanvas-open? #t))))))
-                  (dialog
-                   @dialog-open?
-                   (lambda (_reason) (:= @dialog-open? #f))
-                   (list (cons 'title "Confirm Changes")
-                         (cons 'description "Apply updated Solar 2 showcase settings?")
-                         (cons 'tone 'primary)
-                         (cons 'tone-style 'outline)
-                         (cons 'show-close? #t))
-                   (with-class "we-button-row"
-                     (inline
-                      (button "Cancel" (lambda () (:= @dialog-open? #f)))
-                      (button "Confirm" (lambda () (:= @dialog-open? #f))))))
                   (offcanvas
                    @offcanvas-open?
                    (lambda (_reason) (:= @offcanvas-open? #f))
@@ -1209,25 +1192,25 @@
                 (stack
                  (heading 2 "Popovers")
                  (inline
-                  (with-class "we-btn-outline-secondary"
+                  (with-class "we-btn-secondary"
                     (popover "Left"
                              'left
                              (list (cons 'title "Popover title")
                                    (cons 'footer "Popover footer"))
                              (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")))
-                  (with-class "we-btn-outline-secondary"
+                  (with-class "we-btn-secondary"
                     (popover "Top"
                              'top
                              (list (cons 'title "Popover title")
                                    (cons 'footer "Popover footer"))
                              (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")))
-                  (with-class "we-btn-outline-secondary"
+                  (with-class "we-btn-secondary"
                     (popover "Bottom"
                              'bottom
                              (list (cons 'title "Popover title")
                                    (cons 'footer "Popover footer"))
                              (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")))
-                  (with-class "we-btn-outline-secondary"
+                  (with-class "we-btn-secondary"
                     (popover "Right"
                              'right
                              (list (cons 'title "Popover title")
@@ -1307,7 +1290,7 @@
                   '(("A" "1") ("B" "2") ("C" "3"))
                   'compact
                   '((variants . (sm))
-                    (caption . "Small table")))))))))
+                    (caption . "Small table"))))))))
 
 (define theme-core-link-node     (install-theme-link! "we-theme-core-css"))
 (define theme-general-link-node  (install-theme-link! "we-theme-external-css"))

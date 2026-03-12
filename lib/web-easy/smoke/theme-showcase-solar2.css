@@ -196,6 +196,33 @@ html.we-theme-solar2 .showcase-buttons-grid .we-button-row .we-toolbar-group {
   background: transparent;
 }
 
+html.we-theme-solar2 .showcase-buttons-grid .we-button-row .we-toolbar-group {
+  display:       inline-flex;
+  gap:           0;
+  border:        1px solid var(--we-secondary);
+  border-radius: var(--we-radius-sm);
+  overflow:      hidden;
+  background:    var(--we-secondary);
+}
+
+html.we-theme-solar2 .showcase-buttons-grid .we-button-row .we-toolbar-group > .we-button {
+  margin:        0;
+  border:        0;
+  border-radius: 0;
+  background:    transparent;
+  color:         #fff;
+}
+
+html.we-theme-solar2 .showcase-buttons-grid .we-button-row .we-toolbar-group > .we-button + .we-button {
+  margin-left: 0;
+}
+
+html.we-theme-solar2 .showcase-buttons-grid .we-button-row.we-button-toolbar {
+  display:       flex;
+  align-items:   center;
+  gap:           0.75rem;
+}
+
 html.we-theme-solar2 .showcase-buttons-grid .we-button-row .we-button-group {
   display:       inline-flex;
   gap:           0;
@@ -479,15 +506,33 @@ html.we-theme-solar2 .showcase-accordion-lead {
 }
 
 html.we-theme-solar2 .showcase-accordion-body-row {
-  align-items:   baseline;
-  flex-wrap:     wrap;
-  column-gap:    0.2rem;
-  row-gap:       0;
+  line-height: 1.45;
+}
+
+html.we-theme-solar2 .showcase-accordion-inline {
+  display: block;
+}
+
+html.we-theme-solar2 .showcase-accordion-inline > [data-we-widget="text"] {
+  display: inline;
+}
+
+html.we-theme-solar2 .showcase-accordion-inline > [data-we-widget="text"]:not(:first-child)::before {
+  content: " ";
 }
 
 html.we-theme-solar2 .showcase-accordion-copy {
   color:       var(--we-fg-muted);
   line-height: 1.45;
+}
+
+html.we-theme-solar2 .showcase-static-modal {
+  width:     min(100%, 31rem);
+  max-width: 31rem;
+}
+
+html.we-theme-solar2 .showcase-static-modal-wrap {
+  margin-left: 4.25rem;
 }
 
 html.we-theme-solar2 #solar2-indicators-section .we-heading-2 {

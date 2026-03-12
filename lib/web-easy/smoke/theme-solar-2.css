@@ -301,9 +301,9 @@ html.we-theme-solar2 .we-navigation-bar {
   justify-content: flex-start;
   gap:           normal;
   position:      relative;
-  min-height:    0;
-  height:        56px;
-  padding:       8px 0;
+  min-height:    56px;
+  height:        auto;
+  padding:       8px 16px;
   border:        0;
   border-radius: var(--we-radius);
   background:    var(--we-bg-subtle);
@@ -378,6 +378,14 @@ html.we-theme-solar2 .we-alert .we-alert-dismiss {
   font-size:      0;
   line-height:    0;
   cursor:         pointer;
+}
+
+html.we-theme-solar2 .we-alert .we-alert-dismiss::before {
+  content:     "×";
+  display:     block;
+  color:       color-mix(in srgb, var(--we-light-emphasis) 72%, transparent);
+  font-size:   2rem;
+  line-height: 1;
 }
 
 html.we-theme-solar2 .we-alert:has(.we-alert-dismiss) {
@@ -888,14 +896,14 @@ html.we-theme-solar2 .we-navigation-bar .we-hpanel .we-button {
 
 html.we-theme-solar2 .we-navigation-bar .we-navbar-brand {
   margin-right:  1rem;
-  display:       block;
-  min-height:    auto;
-  height:        40px;
-  padding:       5px 0;
-  line-height:   30px;
+  display:       flex;
+  align-items:   center;
+  min-height:    0;
+  height:        auto;
+  padding:       0;
+  line-height:   1.5;
   font-size:     1.25rem;
   margin-bottom: 0;
-  align-items:   normal;
 }
 
 /* -------------------------------------------------------------------------- */
