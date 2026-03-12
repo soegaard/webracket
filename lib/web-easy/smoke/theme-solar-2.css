@@ -468,6 +468,15 @@ html.we-theme-solar2 .we-badge.we-badge-dark {
   color:      var(--we-light-emphasis);
 }
 
+/* Badge shape utilities: generic wrappers for square/pill badge variants. */
+html.we-theme-solar2 .we-badge-shape-square .we-badge {
+  border-radius: 0.375rem;
+}
+
+html.we-theme-solar2 .we-badge-shape-pill .we-badge {
+  border-radius: 999px;
+}
+
 /* Semantic button variants (maps to Bootswatch Solar button palette). */
 html.we-theme-solar2 .we-btn-primary.we-button,
 html.we-theme-solar2 .we-btn-primary .we-button {

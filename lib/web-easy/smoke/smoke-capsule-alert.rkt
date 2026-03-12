@@ -20,7 +20,17 @@
     ;;   Build and mount the alert page under root.
     (define (alert-make-page root)
       (define @message (@ "Saved successfully"))
-      (define @level (@ 'success))
+      (define @level   (@ 'success))
+
+      ;; Constants for rich alert option coverage.
+      (define @rich-body   (@ "Change a few things up"))
+      (define @rich-title  (@ "Oh snap!"))
+      (define @rich-link   (@ "Change a few things up"))
+      (define @rich-level  (@ 'info))
+      (define @rich-layout (@ 'stack))
+      (define @rich-scale  (@ 'normal))
+      (define @rich-tone   (@ 'secondary))
+
       (set! alert-renderer
             (render
              (window
@@ -42,7 +52,25 @@
                         (lambda ()
                           (:= @level 'success)
                           (:= @message "Saved successfully"))))
-               (alert @message @level)))))
+               (alert @message @level)
+               (hpanel
+                (button "rich-inline"       (lambda () (:= @rich-layout 'inline)))
+                (button "rich-stack"        (lambda () (:= @rich-layout 'stack)))
+                (button "rich-major"        (lambda () (:= @rich-scale 'major)))
+                (button "rich-normal"       (lambda () (:= @rich-scale 'normal)))
+                (button "rich-tone-info"    (lambda () (:= @rich-tone 'info)))
+                (button "rich-tone-primary" (lambda () (:= @rich-tone 'primary)))
+                (button "rich-tone-light"   (lambda () (:= @rich-tone 'light))))
+               (with-id "alert-rich-target"
+                 (alert-rich @rich-body
+                             @rich-title
+                             @rich-link
+                             "#"
+                             @rich-level
+                             (list (cons 'layout @rich-layout)
+                                   (cons 'scale @rich-scale)
+                                   (cons 'tone @rich-tone)
+                                   (cons 'dismiss-action (lambda () (void))))))))))
       (mount-renderer! alert-renderer root)
       (void))
 

@@ -884,7 +884,7 @@
                                  (cons 'tone 'light)
                                  (cons 'dismiss-action (lambda () (void))))))
               (heading 2 "Badges")
-              (with-class "we-button-row showcase-badge-row-square"
+              (with-class "we-button-row we-badge-shape-square"
                 (inline
                  (badge "Primary" 'primary)
                  (badge "Secondary" 'secondary)
@@ -894,7 +894,7 @@
                  (badge "Info" 'info)
                  (badge "Light" 'light)
                  (badge "Dark" 'dark)))
-              (with-class "we-button-row showcase-badge-row-pill"
+              (with-class "we-button-row we-badge-shape-pill"
                 (inline
                  (badge "Primary" 'primary)
                  (badge "Secondary" 'secondary)

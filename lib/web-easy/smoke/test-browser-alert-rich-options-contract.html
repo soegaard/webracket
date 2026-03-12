@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy alert-rich options contract smoke test</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status { white-space: pre-wrap; padding: 8px; border: 1px solid #999; margin-bottom: 12px; }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #app-frame { width: 100%; height: 340px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <div id="status">Running alert-rich options contract assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=alert" title="web-easy alert-rich options contract app"></iframe>
+  <script>
+    function setStatus(text, cls) {
+      const status = document.getElementById("status");
+      status.textContent = text;
+      status.className = cls;
+    }
+
+    function sleep(ms) {
+      return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function assertTrue(v, label) {
+      if (!v) {
+        throw new Error(label + ": expected true, got false");
+      }
+    }
+
+    function buttonByText(frameDoc, label) {
+      return Array.from(frameDoc.querySelectorAll("button"))
+        .find((b) => (b.textContent || "").trim() === label);
+    }
+
+    async function waitForUI(frame, timeoutMs) {
+      const start = Date.now();
+      while (Date.now() - start < timeoutMs) {
+        const frameDoc = frameDocFrom(frame);
+        if (frameDoc) {
+          const target = frameDoc.querySelector("#alert-rich-target");
+          const inlineBtn = buttonByText(frameDoc, "rich-inline");
+          const majorBtn = buttonByText(frameDoc, "rich-major");
+          const toneBtn = buttonByText(frameDoc, "rich-tone-primary");
+          if (target && inlineBtn && majorBtn && toneBtn) {
+            return { frameDoc, target, inlineBtn, majorBtn, toneBtn };
+          }
+        }
+        await sleep(25);
+      }
+      throw new Error("Timed out waiting for alert-rich contract UI");
+    }
+
+    (async function run() {
+      try {
+        const frame = document.getElementById("app-frame");
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          frame.addEventListener("load", () => {
+            clearTimeout(timer);
+            resolve();
+          }, { once: true });
+        });
+
+        const ui = await waitForUI(frame, 20000);
+        const rich = ui.target;
+        const cls0 = rich.getAttribute("class") || "";
+
+        assertTrue(cls0.includes("we-alert"), "alert-rich has base class");
+        assertTrue(cls0.includes("we-alert-secondary"), "alert-rich initial tone class");
+        assertTrue(!cls0.includes("we-alert-layout-inline"), "alert-rich initial layout is stack");
+        assertTrue(!cls0.includes("we-alert-scale-major"), "alert-rich initial scale is normal");
+        assertTrue(!!rich.querySelector("[data-we-widget='alert-dismiss']"), "alert-rich dismiss exists");
+
+        ui.inlineBtn.click();
+        await sleep(80);
+        const cls1 = rich.getAttribute("class") || "";
+        assertTrue(cls1.includes("we-alert-layout-inline"), "layout inline class applied");
+
+        ui.majorBtn.click();
+        await sleep(80);
+        const cls2 = rich.getAttribute("class") || "";
+        assertTrue(cls2.includes("we-alert-scale-major"), "scale major class applied");
+
+        ui.toneBtn.click();
+        await sleep(80);
+        const cls3 = rich.getAttribute("class") || "";
+        assertTrue(cls3.includes("we-alert-primary"), "tone override class applied");
+
+        setStatus("PASS\nalert-rich options contract: layout/scale/tone classes + dismiss", "pass");
+      } catch (err) {
+        console.error(err);
+        setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

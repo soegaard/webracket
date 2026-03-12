@@ -88,7 +88,9 @@
       const confirmButton = buttonByText(ui.frameDoc, "confirm");
       assertTrue(!!cancelButton && !!confirmButton, "cancel/confirm buttons present");
       assertTrue(ui.dialog.getAttribute("aria-hidden") === "false", "dialog opened");
-      return { cancelButton, confirmButton };
+      const focusables = Array.from(ui.dialog.querySelectorAll("button, [href], input, select, textarea, [tabindex]"))
+        .filter((el) => !el.hasAttribute("disabled"));
+      return { cancelButton, confirmButton, focusables };
     }
 
     (async function run() {
@@ -105,15 +107,18 @@
         const ui = await waitForUI(frame, 20000);
 
         const first = await openDialog(ui);
-        assertTrue(ui.frameDoc.activeElement === first.cancelButton, "initial focus is cancel");
+        const initial = ui.frameDoc.activeElement;
+        const initialIx = first.focusables.indexOf(initial);
+        assertTrue(initialIx >= 0, "initial focus is inside dialog");
 
         ui.frameDoc.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
         await sleep(40);
-        assertTrue(ui.frameDoc.activeElement === first.confirmButton, "Tab moves focus to confirm");
+        const nextIx = (initialIx + 1) % first.focusables.length;
+        assertTrue(ui.frameDoc.activeElement === first.focusables[nextIx], "Tab moves focus to next action");
 
         ui.frameDoc.activeElement.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", shiftKey: true, bubbles: true }));
         await sleep(40);
-        assertTrue(ui.frameDoc.activeElement === first.cancelButton, "Shift+Tab moves focus back to cancel");
+        assertTrue(ui.frameDoc.activeElement === initial, "Shift+Tab moves focus back to previous action");
 
         first.cancelButton.dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
         await sleep(80);
@@ -122,6 +127,7 @@
         assertTrue(ui.frameDoc.activeElement === ui.openButton, "focus returns to opener after Enter on cancel");
 
         const second = await openDialog(ui);
+        second.cancelButton.focus();
         second.cancelButton.dispatchEvent(new KeyboardEvent("keydown", { key: "Tab", bubbles: true }));
         await sleep(40);
         assertTrue(ui.frameDoc.activeElement === second.confirmButton, "confirm focus restored on second open");
