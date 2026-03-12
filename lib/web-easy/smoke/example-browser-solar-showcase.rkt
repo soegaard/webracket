@@ -838,7 +838,7 @@
                3
                (alert-rich "Change a few things up"
                            "Oh snap!"
-                           "and try submitting again."
+                           "Change a few things up"
                            "#"
                            'error
                            (list (cons 'layout 'inline)
@@ -861,7 +861,7 @@
                3
                (alert-rich "Change a few things up"
                            "Oh snap!"
-                           "and try submitting again."
+                           "Change a few things up"
                            "#"
                            'info
                            (list (cons 'layout 'inline)
