@@ -47,6 +47,8 @@
 (define @pill         (@ "Alpha"))
 (define @underline-tab (@ "Active"))
 (define @pill-vertical (@ "Active"))
+(define @btn-check-selected (@ '(c1)))
+(define @btn-radio-selected (@ 'r1))
 
 ;; normalize-theme-id : any/c -> symbol?
 ;;   Normalize incoming theme id to one of the supported symbols.
@@ -166,39 +168,39 @@
 (define (progress-fill-class variant striped? animated?)
   (define variant-class
     (case variant
-      [(success) "showcase-progress-fill-success"]
-      [(info)    "showcase-progress-fill-info"]
-      [(warn)    "showcase-progress-fill-warn"]
-      [(error)   "showcase-progress-fill-error"]
-      [else      "showcase-progress-fill-default"]))
-  (string-append "showcase-progress-fill "
+      [(success) "we-progress-fill-success"]
+      [(info)    "we-progress-fill-info"]
+      [(warn)    "we-progress-fill-warn"]
+      [(error)   "we-progress-fill-error"]
+      [else      "we-progress-fill-default"]))
+  (string-append "we-progress-fill "
                  variant-class
-                 (if striped? " showcase-progress-fill-striped" "")
-                 (if animated? " showcase-progress-fill-animated" "")))
+                 (if striped? " we-progress-fill-striped" "")
+                 (if animated? " we-progress-fill-animated" "")))
 
 ;; progress-fill-color : symbol? -> string?
 ;;   Map progress variant to Solar showcase fill class suffix.
 (define (progress-fill-color variant)
   (case variant
-    [(success) "showcase-progress-fill-success"]
-    [(info)    "showcase-progress-fill-info"]
-    [(warn)    "showcase-progress-fill-warn"]
-    [(error)   "showcase-progress-fill-error"]
-    [else      "showcase-progress-fill-default"]))
+    [(success) "we-progress-fill-success"]
+    [(info)    "we-progress-fill-info"]
+    [(warn)    "we-progress-fill-warn"]
+    [(error)   "we-progress-fill-error"]
+    [else      "we-progress-fill-default"]))
 
 ;; progress-width-class : number? -> string?
 ;;   Map known showcase percentage values to width utility classes.
 (define (progress-width-class pct)
   (case pct
-    [(10)  "showcase-progress-w-10"]
-    [(15)  "showcase-progress-w-15"]
-    [(20)  "showcase-progress-w-20"]
-    [(25)  "showcase-progress-w-25"]
-    [(30)  "showcase-progress-w-30"]
-    [(50)  "showcase-progress-w-50"]
-    [(75)  "showcase-progress-w-75"]
-    [(100) "showcase-progress-w-100"]
-    [else  "showcase-progress-w-0"]))
+    [(10)  "we-progress-w-10"]
+    [(15)  "we-progress-w-15"]
+    [(20)  "we-progress-w-20"]
+    [(25)  "we-progress-w-25"]
+    [(30)  "we-progress-w-30"]
+    [(50)  "we-progress-w-50"]
+    [(75)  "we-progress-w-75"]
+    [(100) "we-progress-w-100"]
+    [else  "we-progress-w-0"]))
 
 ;; progress-fill : number? symbol? [boolean?] [boolean?] -> view?
 ;;   Build one showcase progress fill segment with width percentage and variant class.
@@ -215,9 +217,9 @@
 ;; progress-track : view? ... -> view?
 ;;   Build one showcase progress track containing one or more fill segments.
 (define (progress-track . fills)
-  (with-class "showcase-progress-track"
-    (with-class "showcase-progress-track-inner"
-      (with-class "showcase-progress-fill-row"
+  (with-class "we-progress-track"
+    (with-class "we-progress-track-inner"
+      (with-class "we-progress-fill-row"
         (apply inline fills)))))
 
 ;; showcase-list-group-row : string? number? -> view?
@@ -369,60 +371,120 @@
 
            ;; Buttons
            (section-heading "solar2-buttons" "Buttons")
-           (with-class "we-button-row"
-             (inline
-              (showcase-button "Primary"   "we-btn-primary"   #f)
-              (showcase-button "Secondary" "we-btn-secondary" #f)
-              (showcase-button "Success"   "we-btn-success"   #f)
-              (showcase-button "Info"      "we-btn-info"      #f)
-              (showcase-button "Warning"   "we-btn-warning"   #f)
-              (showcase-button "Danger"    "we-btn-danger"    #f)
-              (showcase-button "Light"     "we-btn-light"     #f)
-              (showcase-button "Dark"      "we-btn-dark"      #f)
-              (showcase-button "Link"      "we-btn-link"      #f)))
-           (with-class "we-button-row"
-             (inline
-              (showcase-button "Primary"   "we-btn-primary"   #t)
-              (showcase-button "Secondary" "we-btn-secondary" #t)
-              (showcase-button "Success"   "we-btn-success"   #t)
-              (showcase-button "Info"      "we-btn-info"      #t)
-              (showcase-button "Warning"   "we-btn-warning"   #t)
-              (showcase-button "Danger"    "we-btn-danger"    #t)
-              (showcase-button "Light"     "we-btn-light"     #t)
-              (showcase-button "Dark"      "we-btn-dark"      #t)
-              (showcase-button "Link"      "we-btn-link"      #t)))
-           (with-class "we-button-row"
-             (inline
-              (showcase-button "Primary"   "we-btn-outline-primary"   #f)
-              (showcase-button "Secondary" "we-btn-outline-secondary" #f)
-              (showcase-button "Success"   "we-btn-outline-success"   #f)
-              (showcase-button "Info"      "we-btn-outline-info"      #f)
-              (showcase-button "Warning"   "we-btn-outline-warning"   #f)
-              (showcase-button "Danger"    "we-btn-outline-danger"    #f)
-              (showcase-button "Light"     "we-btn-outline-light"     #f)
-              (showcase-button "Dark"      "we-btn-outline-dark"      #f)))
-           (with-class "we-button-row"
-             (inline
-              (with-class "we-btn-lg"
-                (showcase-button "Large button" "we-btn-primary" #f))
-              (showcase-button "Default button" "we-btn-primary" #f)
-              (with-class "we-btn-sm"
-                (showcase-button "Small button" "we-btn-primary" #f))))
-           (with-class "we-button-row"
-             (button-group
-              (button "Left"   (lambda () (log-button! "Group/Left")))
-              (button "Middle" (lambda () (log-button! "Group/Middle")))
-              (button "Right"  (lambda () (log-button! "Group/Right")))))
-           (with-class "we-button-row"
-             (button-toolbar
-              (toolbar-group
-               (button "1" (lambda () (log-button! "Toolbar/1")))
-               (button "2" (lambda () (log-button! "Toolbar/2"))))
-              (toolbar-group
-               (button "A" (lambda () (log-button! "Toolbar/A")))
-               (button "B" (lambda () (log-button! "Toolbar/B"))))))
-           (with-class "we-button-row showcase-block-button-row"
-             (showcase-button "Block button" "we-btn-primary" #f))
+           (with-class "showcase-buttons-grid"
+             (grid
+              2
+              (stack
+               (with-class "we-button-row"
+                (inline
+                 (showcase-button "Primary"   "we-btn-primary"   #f)
+                 (showcase-button "Secondary" "we-btn-secondary" #f)
+                 (showcase-button "Success"   "we-btn-success"   #f)
+                 (showcase-button "Info"      "we-btn-info"      #f)
+                 (showcase-button "Warning"   "we-btn-warning"   #f)
+                 (showcase-button "Danger"    "we-btn-danger"    #f)
+                 (showcase-button "Light"     "we-btn-light"     #f)
+                 (showcase-button "Dark"      "we-btn-dark"      #f)
+                 (showcase-button "Link"      "we-btn-link"      #f)))
+               (with-class "we-button-row"
+                (inline
+                 (showcase-button "Primary"   "we-btn-primary"   #t)
+                 (showcase-button "Secondary" "we-btn-secondary" #t)
+                 (showcase-button "Success"   "we-btn-success"   #t)
+                 (showcase-button "Info"      "we-btn-info"      #t)
+                 (showcase-button "Warning"   "we-btn-warning"   #t)
+                 (showcase-button "Danger"    "we-btn-danger"    #t)
+                 (showcase-button "Light"     "we-btn-light"     #t)
+                 (showcase-button "Dark"      "we-btn-dark"      #t)
+                 (showcase-button "Link"      "we-btn-link"      #t)))
+               (with-class "we-button-row"
+                (inline
+                 (showcase-button "Primary"   "we-btn-outline-primary"   #f)
+                 (showcase-button "Secondary" "we-btn-outline-secondary" #f)
+                 (showcase-button "Success"   "we-btn-outline-success"   #f)
+                 (showcase-button "Info"      "we-btn-outline-info"      #f)
+                 (showcase-button "Warning"   "we-btn-outline-warning"   #f)
+                 (showcase-button "Danger"    "we-btn-outline-danger"    #f)
+                 (showcase-button "Light"     "we-btn-outline-light"     #f)
+                 (showcase-button "Dark"      "we-btn-outline-dark"      #f)))
+               (with-class "we-button-row"
+                (inline
+                 (with-class "we-btn-primary"
+                  (dropdown "Dropdown button"
+                            '((action "Action")
+                              (another "Another action")
+                              (more "Something else here"))
+                            (lambda (id)
+                              (log-button! (~a "Dropdown/Primary/" id)))))
+                 (with-class "we-btn-secondary"
+                  (dropdown "Dropdown button"
+                            '((action "Action")
+                              (another "Another action")
+                              (more "Something else here"))
+                            (lambda (id)
+                              (log-button! (~a "Dropdown/Secondary/" id)))))))
+               (with-class "we-button-row"
+                (inline
+                 (with-class "we-btn-lg"
+                  (showcase-button "Large button" "we-btn-primary" #f))
+                 (showcase-button "Default button" "we-btn-primary" #f)
+                 (with-class "we-btn-sm"
+                  (showcase-button "Small button" "we-btn-primary" #f)))))
+              (stack
+               (with-class "showcase-block-button-grid"
+                (stack
+                 (with-class "we-btn-lg showcase-block-button-row"
+                  (showcase-button "Block button" "we-btn-primary" #f))
+                 (with-class "we-btn-lg showcase-block-button-row"
+                  (showcase-button "Block button" "we-btn-primary" #f))))
+               (with-class "showcase-btn-check-group"
+                (toggle-button-group
+                 'checkbox
+                 '((c1 "Checkbox 1")
+                   (c2 "Checkbox 2")
+                   (c3 "Checkbox 3"))
+                 @btn-check-selected
+                 (lambda (next)
+                   (:= @btn-check-selected next)
+                   (log-button! (~a "Check/" next)))))
+               (with-class "showcase-btn-radio-group"
+                (toggle-button-group
+                 'radio
+                 '((r1 "Radio 1")
+                   (r2 "Radio 2")
+                   (r3 "Radio 3"))
+                 @btn-radio-selected
+                 (lambda (next)
+                   (:= @btn-radio-selected next)
+                   (log-button! (~a "Radio/" next)))))
+               (with-class "we-button-group-vertical"
+                (stack
+                 (with-class "we-btn-primary" (button "Button" (lambda () (log-button! "Vertical/1"))))
+                 (with-class "we-btn-primary" (button "Button" (lambda () (log-button! "Vertical/2"))))
+                 (with-class "we-btn-primary" (button "Button" (lambda () (log-button! "Vertical/3"))))
+                 (with-class "we-btn-primary" (button "Button" (lambda () (log-button! "Vertical/4"))))
+                 (with-class "we-btn-primary" (button "Button" (lambda () (log-button! "Vertical/5"))))
+                 (with-class "we-btn-primary" (button "Button" (lambda () (log-button! "Vertical/6"))))))
+               (with-class "we-button-row"
+                (with-class "we-btn-secondary"
+                  (button-group
+                   (button "Left"   (lambda () (log-button! "Group/Left")))
+                   (button "Middle" (lambda () (log-button! "Group/Middle")))
+                   (button "Right"  (lambda () (log-button! "Group/Right"))))))
+               (with-class "we-button-row"
+                (with-class "we-btn-secondary"
+                  (button-toolbar
+                   (toolbar-group
+                    (button "1" (lambda () (log-button! "Toolbar/1")))
+                    (button "2" (lambda () (log-button! "Toolbar/2")))
+                    (button "3" (lambda () (log-button! "Toolbar/3")))
+                    (button "4" (lambda () (log-button! "Toolbar/4"))))
+                   (toolbar-group
+                    (button "5" (lambda () (log-button! "Toolbar/5")))
+                    (button "6" (lambda () (log-button! "Toolbar/6")))
+                    (button "7" (lambda () (log-button! "Toolbar/7"))))
+                   (toolbar-group
+                    (button "8" (lambda () (log-button! "Toolbar/8"))))))))))
 
            ;; Typography
            (section-heading "solar2-typography" "Typography")
@@ -550,206 +612,208 @@
            (section-heading "solar2-forms" "Forms")
            (grid
             2
-            (stack
-                 (group "Legend"
-                   (with-class "we-form-row showcase-static-row"
-                     (inline
-                      (with-class "showcase-static-label"
-                        (text "Email"))
-                      (with-class "showcase-static-value"
-                        (with-class "we-form-control-plaintext"
-                          (with-attrs '((readonly "readonly") (value "email@example.com"))
-                            (input "" (lambda (_v) (void))))))))
-                   (with-class "we-form-row we-form-label"
-                     (text "Email address"))
-                   (with-class "we-form-row we-form-control-block"
-                     (with-attrs '((id "exampleInputEmail1")
-                                   (placeholder "Enter email")
-                                   (type "email"))
-                       (input @name (lambda (v) (:= @name v)))))
-                   (with-class "we-form-help"
-                     (text "We'll never share your email with anyone else."))
-                   (with-class "we-form-row we-form-label"
-                     (text "Password"))
-                   (with-class "we-form-row we-form-control-block"
-                     (with-attrs '((id "exampleInputPassword1")
-                                   (placeholder "Password")
-                                   (type "password")
-                                   (autocomplete "off"))
-                       (input @notes (lambda (v) (:= @notes v)))))
-                   (with-class "we-form-row we-form-label"
-                     (text "Example select"))
-                   (with-class "we-form-row we-form-control-block"
-                     (with-attrs '((id "exampleSelect1"))
-                       (choice '("1" "2" "3" "4" "5")
-                               @select-value
-                               (lambda (v) (:= @select-value v)))))
-                   (with-class "we-form-row we-form-label"
-                     (text "Example disabled select"))
-                   (with-class "we-form-row we-form-control-block"
-                     (with-attrs '((id "exampleDisabledSelect1")
-                                   (disabled "disabled"))
-                       (choice '("1" "2" "3" "4" "5")
-                               "1"
-                               (lambda (_v) (void)))))
-                   (with-class "we-form-row we-form-label"
-                     (text "Example multiple select"))
-                   (with-class "we-form-row we-form-control-block"
-                     (with-attrs '((id "exampleSelect2")
-                                   (multiple "multiple")
-                                   (size "5"))
-                       (choice '("1" "2" "3" "4" "5")
-                               "1"
-                               (lambda (_v) (void)))))
-                   (with-class "we-form-row we-form-label"
-                     (text "Example textarea"))
-                   (with-class "we-form-row we-form-control-block"
-                     (with-attrs '((id "exampleTextarea"))
-                       (textarea @notes
-                                 (lambda (v) (:= @notes v))
-                                 3
-                                 '())))
-                   (with-class "we-form-row"
-                     (text "Default file input example"))
-                   (with-class "we-form-row we-form-control-block"
-                     (with-attrs '((type "file"))
-                       (input "" (lambda (_v) (void))))
-                   )
-                   (with-class "we-form-row"
-                     (group "Radio buttons"
-                       (radios '("Option one is this and that - be sure to include why it's great"
-                                 "Option two can be something else and selecting it will deselect option one"
-                                 ("Option three is disabled"
-                                  "Option three is disabled"
-                                  #t))
-                               @radio-value
-                               (lambda (v) (:= @radio-value v)))))
-                   (with-class "we-form-row"
-                     (group "Checkboxes"
-                       (stack
-                        (with-class "we-form-check we-checkbox-row"
-                          (inline
-                           (checkbox @accept?
-                                     (lambda (v) (:= @accept? v)))
-                           (text "Default checkbox")))
-                        (with-class "we-form-check we-checkbox-row"
-                          (inline
-                           (checkbox #t (lambda (_v) (void)))
-                           (text "Checked checkbox"))))))
-                   (with-class "we-form-row"
-                     (group "Switches"
-                       (stack
-                        (with-class "we-form-check we-switch-row"
-                          (inline
-                           (with-class "we-switch-control"
-                             (checkbox #f (lambda (_v) (void))))
-                           (text "Default switch checkbox input")))
-                        (with-class "we-form-check we-switch-row"
-                          (inline
-                           (with-class "we-switch-control"
-                             (checkbox #t (lambda (_v) (void))))
-                           (text "Checked switch checkbox input"))))))
-                   (with-class "we-form-row"
-                     (heading 3 "Ranges"))
-                   (with-class "we-form-row"
-                     (text "Example range"))
-                   (with-class "we-form-row we-form-control-block we-range-default"
-                     (with-attrs '((id "customRange1"))
-                       (slider @level (lambda (v) (:= @level v)) 0 100)))
-                   (with-class "we-form-row"
-                     (text "Disabled range"))
-                   (with-class "we-form-row we-range-disabled"
-                     (with-attrs '((disabled "disabled"))
-                       (slider 50 (lambda (_v) (void)) 0 100)))
-                   (with-class "we-form-row"
-                     (text "Example range"))
-                   (with-class "we-form-row we-range-step"
-                     (with-attrs '((min "0") (max "5") (step "0.5"))
-                       (slider 3 (lambda (_v) (void)) 0 5)))
-                   (with-class "we-form-row"
-                     (with-class "we-btn-primary"
-                       (inline
-                        (button "Submit" (lambda () (void))))))))
-            (stack
-                 (with-class "we-form-row"
-                   (text "Disabled input"))
-                 (with-class "we-form-row we-form-control-block we-form-state-disabled"
-                   (with-attrs '((id "disabledInput")
-                                 (placeholder "Disabled input here...")
-                                 (disabled "disabled"))
-                     (input "" (lambda (_v) (void))))
-                 )
-                 (with-class "we-form-row"
-                   (text "Readonly input"))
+            (with-class "showcase-forms-left"
+              (stack
+               (group "Legend"
+                 (with-class "we-form-row showcase-static-row"
+                   (inline
+                    (with-class "showcase-static-label"
+                      (text "Email"))
+                    (with-class "showcase-static-value"
+                      (with-class "we-form-control-plaintext"
+                        (with-attrs '((readonly "readonly") (value "email@example.com"))
+                          (input "" (lambda (_v) (void))))))))
+                 (with-class "we-form-row we-form-label"
+                   (text "Email address"))
                  (with-class "we-form-row we-form-control-block"
-                   (with-attrs '((id "readOnlyInput")
-                                 (placeholder "Readonly input here...")
-                                 (readonly "readonly"))
+                   (with-attrs '((id "exampleInputEmail1")
+                                 (placeholder "Enter email")
+                                 (type "email"))
+                     (input @name (lambda (v) (:= @name v)))))
+                 (with-class "we-form-help"
+                   (text "We'll never share your email with anyone else."))
+                 (with-class "we-form-row we-form-label"
+                   (text "Password"))
+                 (with-class "we-form-row we-form-control-block"
+                   (with-attrs '((id "exampleInputPassword1")
+                                 (placeholder "Password")
+                                 (type "password")
+                                 (autocomplete "off"))
+                     (input @notes (lambda (v) (:= @notes v)))))
+                 (with-class "we-form-row we-form-label"
+                   (text "Example select"))
+                 (with-class "we-form-row we-form-control-block"
+                   (with-attrs '((id "exampleSelect1"))
+                     (choice '("1" "2" "3" "4" "5")
+                             @select-value
+                             (lambda (v) (:= @select-value v)))))
+                 (with-class "we-form-row we-form-label"
+                   (text "Example disabled select"))
+                 (with-class "we-form-row we-form-control-block"
+                   (with-attrs '((id "exampleDisabledSelect1")
+                                 (disabled "disabled"))
+                     (choice '("1" "2" "3" "4" "5")
+                             "1"
+                             (lambda (_v) (void)))))
+                 (with-class "we-form-row we-form-label"
+                   (text "Example multiple select"))
+                 (with-class "we-form-row we-form-control-block"
+                   (with-attrs '((id "exampleSelect2")
+                                 (multiple "multiple")
+                                 (size "5"))
+                     (choice '("1" "2" "3" "4" "5")
+                             "1"
+                             (lambda (_v) (void)))))
+                 (with-class "we-form-row we-form-label"
+                   (text "Example textarea"))
+                 (with-class "we-form-row we-form-control-block"
+                   (with-attrs '((id "exampleTextarea"))
+                     (textarea @notes
+                               (lambda (v) (:= @notes v))
+                               3
+                               '())))
+                 (with-class "we-form-row"
+                   (text "Default file input example"))
+                 (with-class "we-form-row we-form-control-block"
+                   (with-attrs '((type "file"))
                      (input "" (lambda (_v) (void))))
                  )
                  (with-class "we-form-row"
-                   (text "Valid input"))
-                 (with-class "we-form-state-valid we-form-control-block showcase-field-valid"
-                   (with-attrs '((id "inputValid")
-                                 (value "correct value"))
-                     (input "" (lambda (_v) (void))))
-                 )
-                 (with-class "we-form-feedback we-form-feedback-valid"
-                   (text "Success! You've done it."))
+                   (group "Radio buttons"
+                     (radios '("Option one is this and that - be sure to include why it's great"
+                               "Option two can be something else and selecting it will deselect option one"
+                               ("Option three is disabled"
+                                "Option three is disabled"
+                                #t))
+                             @radio-value
+                             (lambda (v) (:= @radio-value v)))))
                  (with-class "we-form-row"
-                   (text "Invalid input"))
-                 (with-class "we-form-state-invalid we-form-control-block showcase-field-invalid"
-                   (with-attrs '((id "inputInvalid")
-                                 (value "wrong value"))
-                     (input "" (lambda (_v) (void))))
-                 )
-                 (with-class "we-form-feedback we-form-feedback-invalid"
-                   (text "Sorry, that username's taken. Try another?"))
+                   (group "Checkboxes"
+                     (stack
+                      (with-class "we-form-check we-checkbox-row"
+                        (inline
+                         (checkbox @accept?
+                                   (lambda (v) (:= @accept? v)))
+                         (text "Default checkbox")))
+                      (with-class "we-form-check we-checkbox-row"
+                        (inline
+                         (checkbox #t (lambda (_v) (void)))
+                         (text "Checked checkbox"))))))
                  (with-class "we-form-row"
-                   (text "Large input"))
-                 (with-attrs '((placeholder ".form-control-lg"))
-                   (with-class "we-input-lg"
-                     (input "" (lambda (_v) (void))))
-                 )
+                   (group "Switches"
+                     (stack
+                      (with-class "we-form-check we-switch-row"
+                        (inline
+                         (with-class "we-switch-control"
+                           (checkbox #f (lambda (_v) (void))))
+                         (text "Default switch checkbox input")))
+                      (with-class "we-form-check we-switch-row"
+                        (inline
+                         (with-class "we-switch-control"
+                           (checkbox #t (lambda (_v) (void))))
+                         (text "Checked switch checkbox input"))))))
                  (with-class "we-form-row"
-                   (text "Default input"))
-                 (with-class "showcase-field-default"
-                   (with-attrs '((placeholder "Default input"))
+                   (heading 3 "Ranges"))
+                 (with-class "we-form-row"
+                   (text "Example range"))
+                 (with-class "we-form-row we-form-control-block we-range-default"
+                   (with-attrs '((id "customRange1"))
+                     (slider @level (lambda (v) (:= @level v)) 0 100)))
+                 (with-class "we-form-row"
+                   (text "Disabled range"))
+                 (with-class "we-form-row we-range-disabled"
+                   (with-attrs '((disabled "disabled"))
+                     (slider 50 (lambda (_v) (void)) 0 100)))
+                 (with-class "we-form-row"
+                   (text "Example range"))
+                 (with-class "we-form-row we-range-step"
+                   (with-attrs '((min "0") (max "5") (step "0.5"))
+                     (slider 3 (lambda (_v) (void)) 0 5)))
+                 (with-class "we-form-row"
+                   (with-class "we-btn-primary"
+                     (inline
+                      (button "Submit" (lambda () (void)))))))))
+            (with-class "showcase-forms-right"
+              (stack
+               (with-class "we-form-row"
+                 (text "Disabled input"))
+               (with-class "we-form-row we-form-control-block we-form-state-disabled"
+                 (with-attrs '((id "disabledInput")
+                               (placeholder "Disabled input here...")
+                               (disabled "disabled"))
+                   (input "" (lambda (_v) (void))))
+               )
+               (with-class "we-form-row"
+                 (text "Readonly input"))
+               (with-class "we-form-row we-form-control-block"
+                 (with-attrs '((id "readOnlyInput")
+                               (placeholder "Readonly input here...")
+                               (readonly "readonly"))
+                   (input "" (lambda (_v) (void))))
+               )
+               (with-class "we-form-row"
+                 (text "Valid input"))
+               (with-class "we-form-state-valid we-form-control-block showcase-field-valid"
+                 (with-attrs '((id "inputValid")
+                               (value "correct value"))
+                   (input "" (lambda (_v) (void))))
+               )
+               (with-class "we-form-feedback we-form-feedback-valid"
+                 (text "Success! You've done it."))
+               (with-class "we-form-row"
+                 (text "Invalid input"))
+               (with-class "we-form-state-invalid we-form-control-block showcase-field-invalid"
+                 (with-attrs '((id "inputInvalid")
+                               (value "wrong value"))
+                   (input "" (lambda (_v) (void))))
+               )
+               (with-class "we-form-feedback we-form-feedback-invalid"
+                 (text "Sorry, that username's taken. Try another?"))
+               (with-class "we-form-row"
+                 (text "Large input"))
+               (with-attrs '((placeholder ".form-control-lg"))
+                 (with-class "we-input-lg"
+                   (input "" (lambda (_v) (void))))
+               )
+               (with-class "we-form-row"
+                 (text "Default input"))
+               (with-class "showcase-field-default"
+                 (with-attrs '((placeholder "Default input"))
                    (input "" (lambda (_v) (void)))
-                   ))
-                 (with-class "we-form-row"
-                   (text "Small input"))
-                 (with-attrs '((placeholder ".form-control-sm"))
-                   (with-class "we-input-sm"
-                     (input "" (lambda (_v) (void))))
-                 )
-                 (with-class "we-form-row"
-                   (text "Input addons"))
-                 (with-class "we-input-group"
-                   (inline
-                    (with-class "we-input-group-prefix"
-                      (text "$"))
-                    (input "" (lambda (_v) (void)))
-                    (with-class "we-input-group-prefix"
-                      (text ".00"))))
-                 (with-class "we-input-group"
-                   (inline
-                    (input "" (lambda (_v) (void)))
-                    (button "Button" (lambda () (void)))))
-                 (with-class "we-form-row"
-                   (text "Floating labels"))
-                 (with-class "we-floating-field"
-                   (stack
-                    (text "Email address")
-                    (with-attrs '((placeholder "name@example.com"))
-                      (input "" (lambda (_v) (void)))))
-                 )
-                 (with-class "we-floating-field"
-                   (stack
-                    (text "Password")
-                    (with-attrs '((placeholder "Password") (type "password") (autocomplete "off"))
-                      (input "" (lambda (_v) (void)))))
-                 ))))
+                 ))
+               (with-class "we-form-row"
+                 (text "Small input"))
+               (with-attrs '((placeholder ".form-control-sm"))
+                 (with-class "we-input-sm"
+                   (input "" (lambda (_v) (void))))
+               )
+               (with-class "we-form-row"
+                 (text "Input addons"))
+               (with-class "we-input-group"
+                 (inline
+                  (with-class "we-input-group-prefix"
+                    (text "$"))
+                  (input "" (lambda (_v) (void)))
+                  (with-class "we-input-group-prefix"
+                    (text ".00"))))
+               (with-class "we-input-group"
+                 (inline
+                  (input "" (lambda (_v) (void)))
+                  (button "Button" (lambda () (void)))))
+               (with-class "we-form-row"
+                 (text "Floating labels"))
+               (with-class "we-floating-field"
+                 (stack
+                  (text "Email address")
+                  (with-attrs '((placeholder "name@example.com"))
+                    (input "" (lambda (_v) (void)))))
+               )
+               (with-class "we-floating-field"
+                 (stack
+                  (text "Password")
+                  (with-attrs '((placeholder "Password") (type "password") (autocomplete "off"))
+                    (input "" (lambda (_v) (void)))))
+               ))))
 
            ;; Navs
            (with-class "we-section-break-xl"
@@ -829,39 +893,39 @@
               (alert-rich
                "Best check yo self, you're not looking too good. Nulla vitae elit libero, a pharetra augue. Praesent commodo cursus magna,"
                "Warning!"
-               "vel scelerisque nisl consectetur et"
+               "vel scelerisque nisl consectetur et."
                "#"
                'warn
                (list (cons 'scale 'major)
                      (cons 'dismiss-action (lambda () (void)))))
               (grid
                3
-               (alert-rich "Change a few things up"
+               (alert-rich "Change a few things up and"
                            "Oh snap!"
-                           "Change a few things up"
+                           "try submitting again."
                            "#"
                            'error
                            (list (cons 'layout 'inline)
                                  (cons 'dismiss-action (lambda () (void)))))
                (alert-rich "You successfully read"
                            "Well done!"
-                           "this important alert message"
+                           "this important alert message."
                            "#"
                            'success
                            (list (cons 'layout 'inline)
                                  (cons 'dismiss-action (lambda () (void)))))
-               (alert-rich "This"
+               (alert-rich "This alert needs your attention, but it's not super important."
                            "Heads up!"
-                           "alert needs your attention, but it's not super important."
-                           "#"
+                           #f
+                           #f
                            'info
                            (list (cons 'layout 'inline)
                                  (cons 'dismiss-action (lambda () (void))))))
               (grid
                3
-               (alert-rich "Change a few things up"
+               (alert-rich "Change a few things up and"
                            "Oh snap!"
-                           "Change a few things up"
+                           "try submitting again."
                            "#"
                            'info
                            (list (cons 'layout 'inline)
@@ -869,16 +933,16 @@
                                  (cons 'dismiss-action (lambda () (void)))))
                (alert-rich "You successfully read"
                            "Well done!"
-                           "this important alert message"
+                           "this important alert message."
                            "#"
                            'info
                            (list (cons 'layout 'inline)
                                  (cons 'tone 'secondary)
                                  (cons 'dismiss-action (lambda () (void)))))
-               (alert-rich "This"
+               (alert-rich "This alert needs your attention, but it's not super important."
                            "Heads up!"
-                           "alert needs your attention, but it's not super important."
-                           "#"
+                           #f
+                           #f
                            'info
                            (list (cons 'layout 'inline)
                                  (cons 'tone 'light)
@@ -1091,26 +1155,35 @@
                 2
                 (stack
                   (heading 2 "Modals")
-                  (with-class "we-modal-panel"
-                    (stack
-                     (with-class "we-modal-header"
-                       (inline
-                        (heading 5 "Modal title")
-                        (spacer)
-                        (with-class "we-modal-close"
-                          (text "×"))))
-                     (with-class "we-modal-body"
-                       (text "Modal body text goes here."))
-                     (with-class "we-modal-footer we-button-row"
-                       (inline
-                        (spacer)
-                        (with-class "we-btn-primary"
-                          (button "Save changes" (lambda () (void))))
-                        (with-class "we-btn-outline-secondary"
-                          (button "Close" (lambda () (void))))))))
+                  (with-class "we-button-row"
+                    (inline
+                     (with-class "we-btn-primary"
+                       (button "Launch demo modal"
+                               (lambda () (:= @modal-open? #t))))))
+                  (modal
+                   @modal-open?
+                   (lambda (_reason) (:= @modal-open? #f))
+                   'md
+                   (list (cons 'title "Modal title")
+                         (cons 'description "Modal body text goes here.")
+                         (cons 'show-close? #t)
+                         (cons 'footer
+                               (with-class "we-button-row"
+                                 (inline
+                                  (with-class "we-btn-outline-secondary"
+                                    (button "Close"
+                                            (lambda ()
+                                              (:= @modal-open? #f))))
+                                  (with-class "we-btn-primary"
+                                    (button "Save changes"
+                                            (lambda ()
+                                              (:= @modal-open? #f))))))))
+                   (text "Modal body text goes here."))
                   (heading 2 "Offcanvas")
                   (with-class "we-button-row"
                     (inline
+                     (with-class "we-btn-primary"
+                       (button "Open dialog" (lambda () (:= @dialog-open? #t))))
                      (with-class "we-btn-primary"
                        (button "Link with href" (lambda () (:= @offcanvas-open? #t))))
                      (with-class "we-btn-primary"
@@ -1234,7 +1307,7 @@
                   '(("A" "1") ("B" "2") ("C" "3"))
                   'compact
                   '((variants . (sm))
-                    (caption . "Small table"))))))))
+                    (caption . "Small table")))))))))
 
 (define theme-core-link-node     (install-theme-link! "we-theme-core-css"))
 (define theme-general-link-node  (install-theme-link! "we-theme-external-css"))
