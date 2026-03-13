@@ -26,7 +26,7 @@
             (lambda (color)
               (case color
                 [(green) 'success]
-                [(red)   'error]
+                [(red)   'danger]
                 [else    'info]))))
       (set! controls-renderer
             (render

@@ -360,7 +360,6 @@
       (define old-popover-hidden? (popover-hidden-attr? old-attrs))
       (define new-popover-hidden? (popover-hidden-attr? attrs))
       (when (or (eq? tag 'select)
-                (eq? tag 'radios)
                 (eq? tag 'choice))
         (define choices (alist-ref/default attrs 'choices '()))
         (define option-pairs (alist-ref/default attrs 'option-pairs '()))
@@ -372,7 +371,9 @@
                     [(choices option-pairs columns density menu-trigger open)
                      (void)]
                     [(selected)
-                     (js-set! native "value" (value->attr-string value))]
+                     (when (or (eq? tag 'select)
+                               (eq? tag 'choice))
+                       (js-set! native "value" (value->attr-string value)))]
                     [(value)
                      (js-set! native "value" (value->attr-string value))]
                     [(checked)
@@ -426,7 +427,8 @@
         [(input) "input"]
         [(textarea) "textarea"]
         [(checkbox) "input"]
-        [(choice radios select) "select"]
+        [(choice select) "select"]
+        [(radios) "div"]
         [(slider) "input"]
         [(progress) "progress"]
         [(spacer) "div"]

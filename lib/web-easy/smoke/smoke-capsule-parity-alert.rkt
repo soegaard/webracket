@@ -30,13 +30,13 @@
                         (lambda ()
                           (:= @level 'info)
                           (:= @message "Parity informational update")))
-                (button "set-warn"
+                (button "set-warning"
                         (lambda ()
-                          (:= @level 'warn)
+                          (:= @level 'warning)
                           (:= @message "Parity warning")))
-                (button "set-error"
+                (button "set-danger"
                         (lambda ()
-                          (:= @level 'error)
+                          (:= @level 'danger)
                           (:= @message "Parity failed"))))
                (alert @message @level)))))
       (mount-renderer! parity-alert-renderer root)

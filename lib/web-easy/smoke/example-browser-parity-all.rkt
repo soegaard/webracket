@@ -279,9 +279,9 @@
     (js-append-child! (js-document-body) r)
     r))
 
-;; render-error! : string? -> void?
-;;   Render a plain-text error in the root container.
-(define (render-error! msg)
+;; render-danger! : string? -> void?
+;;   Render a plain-text danger in the root container.
+(define (render-danger! msg)
   (js-replace-children! root (js-create-text-node msg)))
 
 (cond
@@ -291,6 +291,6 @@
    (define _cleanup (caddr selected-entry))
    (make-page root)
    (unless (run-test root)
-     (render-error! "parity-all test setup failed"))]
+     (render-danger! "parity-all test setup failed"))]
   [else
-   (render-error! "unknown parity-all test id")])
+   (render-danger! "unknown parity-all test id")])

@@ -51,7 +51,7 @@
 ;;   heading-with-subtitle  Build a semantic heading view with muted subtitle text.
 ;;   display-heading-with-subtitle  Build a semantic display heading view with muted subtitle text.
 ;;   lead           Build a lead paragraph view.
-;;   blockquote     Build a semantic blockquote with optional attribution.
+;;   blockquote     Build a semantic blockquote with optional attribution and alignment.
 ;;   button         Build a button view with click action.
 ;;   link           Build a link view with href.
 ;;   button-group   Build a grouped button container view.
@@ -90,6 +90,7 @@
 ;;   tooltip        Build a tooltip container view.
 ;;   popover        Build a popover container view.
 ;;   card           Build a card container with optional title/footer.
+;;   top-bar        Build a top bar container view.
 ;;   navigation-bar Build a navigation bar container view.
 ;;   menu-bar       Build a menu-bar container view.
 ;;   menu           Build a menu container view.
@@ -173,6 +174,7 @@
    tooltip
    popover
    card
+   top-bar
    navigation-bar
    menu-bar
    menu
@@ -241,6 +243,7 @@
     (define kind/tooltip   'tooltip)   ; Tooltip container view.
     (define kind/popover   'popover)   ; Popover container view.
     (define kind/card      'card)      ; Card container view.
+    (define kind/top-bar   'top-bar)   ; Top bar container view.
     (define kind/navigation-bar 'navigation-bar) ; Navigation bar container view.
     (define kind/menu-bar  'menu-bar)  ; Menu bar container view.
     (define kind/menu      'menu)      ; Menu container view.
@@ -332,6 +335,27 @@
                                       (car normalized)))
              normalized)
            attrs))
+
+    ;; normalize-blockquote-align : any/c symbol? -> symbol?
+    ;;   Normalize blockquote alignment to one of 'left, 'center, or 'right.
+    (define (normalize-blockquote-align align who)
+      (unless (symbol? align)
+        (raise-arguments-error who
+                               "expected #:align as symbol? ('left, 'center, or 'right)"
+                               "align"
+                               align))
+      (case align
+        [(left center right) align]
+        [else
+         (raise-arguments-error who
+                                "expected #:align as one of 'left, 'center, or 'right"
+                                "align"
+                                align)]))
+
+    ;; grid-gap-value? : any/c -> boolean?
+    ;;   Return #t when v can be interpreted as a grid gap value.
+    (define (grid-gap-value? v)
+      (or (number? v) (string? v)))
 
     ;; view-with-props : view? list? -> view?
     ;;   Rebuild original view with replacement props.
@@ -448,13 +472,24 @@
 
     ;; grid : any/c view? ... -> view?
     ;;   Construct a grid layout container with columns specification and children.
+    ;;   Columns can be count (e.g. 2), responsive symbol ('auto/'responsive),
+    ;;   CSS template string, or weighted list (e.g. '(70 30)).
+    ;;   Optional first child can be a gap value (number px or CSS length string).
     (define/key (grid columns
                       #:id [id #f]
                       #:class [class #f]
                       #:attrs [attrs '()]
-                      . children)
+                      . children0)
+      (define gap #f)
+      (define children children0)
+      (when (and (pair? children)
+                 (grid-gap-value? (car children)))
+        (set! gap (car children))
+        (set! children (cdr children)))
       (apply-root-decorators
-       (view kind/grid (list (cons 'columns columns)) children)
+       (view kind/grid (list (cons 'columns columns)
+                             (cons 'gap gap))
+             children)
        id
        class
        attrs
@@ -969,16 +1004,20 @@
        'lead))
 
     ;; blockquote : (or/c string? observable?) [(or/c string? observable? false/c)] -> view?
-    ;;   Construct a semantic blockquote with optional attribution footer.
+    ;;   Construct a semantic blockquote with optional attribution footer and alignment.
     ;;   Optional parameter attribution defaults to #f.
     (define/key (blockquote content
                             [attribution #f]
+                            #:align [align 'left]
                             #:id [id #f]
                             #:class [class #f]
                             #:attrs [attrs '()])
+      (define final-align
+        (normalize-blockquote-align align 'blockquote))
       (apply-root-decorators
        (view kind/blockquote (list (cons 'value content)
-                                   (cons 'attribution attribution))
+                                   (cons 'attribution attribution)
+                                   (cons 'align final-align))
              '())
        id
        class
@@ -1911,6 +1950,20 @@
        attrs
        'card))
 
+    ;; top-bar : view? ... -> view?
+    ;;   Construct a top bar container for page-level header content.
+    (define/key (top-bar
+                 #:id [id #f]
+                 #:class [class #f]
+                 #:attrs [attrs '()]
+                 . children)
+      (apply-root-decorators
+       (view kind/top-bar '() children)
+       id
+       class
+       attrs
+       'top-bar))
+
     ;; navigation-bar : [(or/c symbol? observable?)] [(or/c boolean? observable?)] [symbol?] view? ... -> view?
     ;;   Construct a navigation bar with optional orientation/collapsed/expand props and children.
     ;;   Optional parameter orientation defaults to 'horizontal.
@@ -2063,6 +2116,7 @@
             tooltip
             popover
             card
+            top-bar
             navigation-bar
             menu-bar
             menu

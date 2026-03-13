@@ -129,7 +129,7 @@
        .we-popover-trigger{align-self:flex-start;position:relative;z-index:1201;}\
        .we-popover-backdrop{position:fixed;inset:0;display:none;background:transparent;z-index:1190;}\
        .we-popover-backdrop.is-open{display:block;}\
-       .we-popover-panel{position:absolute;left:0;top:calc(100% + var(--we-space-xs,2px));min-width:220px;display:none;flex-direction:column;gap:var(--we-gap,4px);padding:var(--we-space-md,8px);border:1px solid var(--we-border,#888);border-radius:8px;background:var(--we-bg,#fff);color:var(--we-fg,#111);z-index:1200;box-shadow:0 8px 22px var(--we-shadow,rgba(0,0,0,.28));}\
+       .we-popover-panel{position:absolute;left:0;top:calc(100% + var(--we-space-xs,2px));min-width:220px;display:none;flex-direction:column;gap:var(--we-gap,0.5rem);padding:var(--we-space-md,8px);border:1px solid var(--we-border,#888);border-radius:8px;background:var(--we-bg,#fff);color:var(--we-fg,#111);z-index:1200;box-shadow:0 8px 22px var(--we-shadow,rgba(0,0,0,.28));}\
        .we-popover.we-popover-left .we-popover-panel{left:auto;right:calc(100% + var(--we-space-xs,2px));top:50%;transform:translateY(-50%);}\
        .we-popover.we-popover-right .we-popover-panel{left:calc(100% + var(--we-space-xs,2px));right:auto;top:50%;transform:translateY(-50%);}\
        .we-popover.we-popover-top .we-popover-panel{left:50%;right:auto;top:auto;bottom:calc(100% + var(--we-space-xs,2px));transform:translateX(-50%);}\
@@ -137,12 +137,12 @@
        .we-popover-panel.is-open{display:flex;}\
        .we-popover-panel:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.14)),var(--we-focus-tint,rgba(10,102,194,.14)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}")
     (define legacy-visual-control-style-text ; CSS defaults for controls and table density classes.
-      ":root{--we-focus:#0a66c2;--we-focus-tint:rgba(10,102,194,.20);--we-fg:#111;--we-bg:#fff;--we-bg-subtle:#f3f3f3;--we-bg-selected:#ececec;--we-bg-disabled:#f3f3f3;--we-bg-hover:#e8e8e8;--we-border:#888;--we-border-menu:#aaa;--we-border-muted:#999;--we-border-soft:#bbb;--we-border-hover:#c0c0c0;--we-border-strong:#333;--we-fg-muted:#777;--we-overlay:rgba(0,0,0,0.45);--we-shadow:rgba(0,0,0,.28);--we-progress-success:#3a9147;--we-progress-warn:#b57c1c;--we-progress-error:#b24545;--we-heading-fg:var(--we-fg,#111);--we-display-heading-fg:var(--we-heading-fg,var(--we-fg,#111));--we-heading-subtitle-fg:var(--we-fg-muted,#777);--we-lead-fg:var(--we-fg-muted,#777);--we-heading-space-compact:0;--we-heading-space-normal:0 0 var(--we-space-xs,2px) 0;--we-heading-space-loose:0 0 var(--we-space-sm,4px) 0;--we-menu-item-hover-bg:var(--we-bg-hover,#e8e8e8);--we-menu-item-hover-fg:var(--we-fg,#111);--we-tab-active-border:var(--we-bg-selected,#ececec);--we-input-placeholder:var(--we-fg-muted,#777);--we-space-xs:2px;--we-space-sm:4px;--we-space-md:8px;--we-space-lg:10px;--we-gap:4px;--we-gap-tab:6px;}\
-       .we-vpanel,.we-group,.we-if-view,.we-cond-view,.we-case-view,.we-observable-view,.we-list-view{display:flex;flex-direction:column;gap:var(--we-gap,4px);}\
-       .we-stack{display:flex;flex-direction:column;gap:var(--we-stack-gap,var(--we-gap,4px));}\
+      ":root{--we-focus:#0a66c2;--we-focus-tint:rgba(10,102,194,.20);--we-fg:#111;--we-bg:#fff;--we-bg-subtle:#f3f3f3;--we-bg-selected:#ececec;--we-bg-disabled:#f3f3f3;--we-bg-hover:#e8e8e8;--we-border:#888;--we-border-menu:#aaa;--we-border-muted:#999;--we-border-soft:#bbb;--we-border-hover:#c0c0c0;--we-border-strong:#333;--we-fg-muted:#777;--we-overlay:rgba(0,0,0,0.45);--we-shadow:rgba(0,0,0,.28);--we-progress-success:#3a9147;--we-progress-warning:#b57c1c;--we-progress-danger:#b24545;--we-heading-fg:var(--we-fg,#111);--we-display-heading-fg:var(--we-heading-fg,var(--we-fg,#111));--we-heading-subtitle-fg:var(--we-fg-muted,#777);--we-lead-fg:var(--we-fg-muted,#777);--we-heading-space-compact:0;--we-heading-space-normal:0 0 var(--we-space-xs,2px) 0;--we-heading-space-loose:0 0 var(--we-space-sm,4px) 0;--we-menu-item-hover-bg:var(--we-bg-hover,#e8e8e8);--we-menu-item-hover-fg:var(--we-fg,#111);--we-tab-active-border:var(--we-bg-selected,#ececec);--we-input-placeholder:var(--we-fg-muted,#777);--we-space-xs:2px;--we-space-sm:4px;--we-space-md:8px;--we-space-lg:10px;--we-gap:0.5rem;--we-form-gap:var(--we-gap,0.5rem);--we-gap-tab:0.375rem;}\
+       .we-vpanel,.we-group,.we-if-view,.we-cond-view,.we-case-view,.we-observable-view,.we-list-view{display:flex;flex-direction:column;gap:var(--we-gap,0.5rem);}\
+       .we-stack{display:flex;flex-direction:column;gap:var(--we-stack-gap,var(--we-gap,0.5rem));}\
        .we-container{width:min(1200px,calc(100vw - 28px));max-width:1200px;margin:0 auto;}\
-       .we-grid{display:grid;grid-template-columns:var(--we-grid-columns,repeat(auto-fit,minmax(320px,1fr)));gap:12px;align-items:stretch;}\
-       .we-inline{display:flex;flex-direction:row;align-items:center;gap:var(--we-gap,4px);flex-wrap:wrap;}\
+       .we-grid{display:grid;grid-template-columns:var(--we-grid-columns,repeat(auto-fit,minmax(320px,1fr)));gap:var(--we-grid-gap,12px);align-items:stretch;}\
+       .we-inline{display:flex;flex-direction:row;align-items:center;gap:var(--we-gap,0.5rem);flex-wrap:wrap;}\
        .we-spacer{display:block;flex:1 1 auto;min-width:0;min-height:0;}\
        .we-alert{align-self:stretch;padding:var(--we-space-sm,4px) var(--we-space-md,8px);border:1px solid var(--we-border-soft,#bbb);border-radius:4px;background:var(--we-bg-subtle,#f3f3f3);color:var(--we-fg,#111);}\
        .we-alert-title{display:block;font-weight:700;margin:0 0 var(--we-space-xs,2px) 0;}\
@@ -150,14 +150,14 @@
        .we-alert-link{display:inline-block;margin-top:var(--we-space-xs,2px);}\
        .we-alert-info{border-color:var(--we-border-soft,#bbb);background:var(--we-bg-subtle,#f3f3f3);}\
        .we-alert-success{border-color:#6a9b73;background:#e8f4e8;}\
-       .we-alert-warn{border-color:#b79256;background:#fff4df;}\
-       .we-alert-error{border-color:#b25a5a;background:#fdeaea;}\
+       .we-alert-warning{border-color:#b79256;background:#fff4df;}\
+       .we-alert-danger{border-color:#b25a5a;background:#fdeaea;}\
        .we-toast{position:fixed;right:var(--we-space-md,8px);bottom:var(--we-space-md,8px);display:none;align-items:flex-start;gap:var(--we-space-sm,4px);min-width:220px;max-width:min(420px,calc(100vw - 2 * var(--we-space-md,8px)));padding:var(--we-space-sm,4px) var(--we-space-md,8px);border:1px solid var(--we-border-soft,#bbb);border-radius:6px;background:var(--we-bg,#fff);color:var(--we-fg,#111);box-shadow:0 6px 18px var(--we-shadow,rgba(0,0,0,.28));transform:translateY(6px);opacity:0;transition:opacity .18s ease,transform .18s ease;}\
        .we-toast.is-open{display:flex;transform:translateY(0);opacity:1;}\
        .we-toast-info{border-color:var(--we-border-soft,#bbb);background:var(--we-bg,#fff);}\
        .we-toast-success{border-color:#6a9b73;background:#e8f4e8;}\
-       .we-toast-warn{border-color:#b79256;background:#fff4df;}\
-       .we-toast-error{border-color:#b25a5a;background:#fdeaea;}\
+       .we-toast-warning{border-color:#b79256;background:#fff4df;}\
+       .we-toast-danger{border-color:#b25a5a;background:#fdeaea;}\
        .we-toast-title{display:block;font-weight:600;}\
        .we-toast-message{flex:1 1 auto;}\
        /* Keep close-button content-sized in vpanel/hpanel flex layouts (avoid default stretch-to-full-width). */\
@@ -175,12 +175,10 @@
        .we-badge-primary{border-color:var(--we-border-strong,#333);background:var(--we-bg-selected,#ececec);}\
        .we-badge-secondary{border-color:var(--we-border-soft,#bbb);background:var(--we-bg-subtle,#f3f3f3);}\
        .we-badge-success{border-color:#6a9b73;background:#e8f4e8;}\
-       .we-badge-warning{border-color:#b79256;background:#fff4df;}\
-       .we-badge-danger{border-color:#b25a5a;background:#fdeaea;}\
        .we-badge-light{border-color:var(--we-border-soft,#bbb);background:var(--we-bg,#fff);}\
        .we-badge-dark{border-color:var(--we-border-strong,#333);background:var(--we-border-strong,#333);color:var(--we-bg,#fff);}\
-       .we-badge-warn{border-color:#b79256;background:#fff4df;}\
-       .we-badge-error{border-color:#b25a5a;background:#fdeaea;}\
+       .we-badge-warning{border-color:#b79256;background:#fff4df;}\
+       .we-badge-danger{border-color:#b25a5a;background:#fdeaea;}\
        .we-spinner{display:inline-flex;align-items:center;gap:var(--we-space-sm,4px);align-self:flex-start;color:var(--we-fg,#111);}\
        .we-spinner-icon{width:12px;height:12px;border:2px solid var(--we-border-soft,#bbb);border-top-color:var(--we-border-strong,#333);border-radius:50%;animation:we-spin .8s linear infinite;}\
        .we-spinner-label{color:var(--we-fg,#111);}\
@@ -192,7 +190,7 @@
        .we-collapse{display:grid;grid-template-rows:0fr;opacity:0;visibility:hidden;overflow:hidden;align-self:stretch;transition:grid-template-rows .18s ease,opacity .18s ease;}\
        .we-collapse>*{min-height:0;overflow:hidden;}\
        .we-collapse.is-open{grid-template-rows:1fr;opacity:1;visibility:visible;}\
-       .we-hpanel{display:flex;flex-direction:row;align-items:center;gap:var(--we-gap,4px);}\
+       .we-hpanel{display:flex;flex-direction:row;align-items:center;gap:var(--we-gap,0.5rem);}\
        .we-button-toolbar{display:flex;flex-wrap:wrap;align-items:center;align-self:flex-start;gap:var(--we-space-sm,4px);}\
        .we-button-group{display:inline-flex;flex-wrap:wrap;align-items:center;align-self:flex-start;gap:0;border:1px solid var(--we-border-soft,#bbb);border-radius:6px;overflow:hidden;background:var(--we-bg,#fff);}\
        .we-button-group>.we-button{border:0;border-right:1px solid var(--we-border-soft,#bbb);border-radius:0;margin:0;}\
@@ -277,6 +275,10 @@
        .we-heading-subtitle{font-weight:400;font-size:0.7em;color:var(--we-heading-subtitle-fg,var(--we-fg-muted,#777));}\
        .we-lead{margin:0;font-size:1.15em;line-height:1.45;color:var(--we-lead-fg,var(--we-fg-muted,#555));}\
        .we-blockquote{margin:0 0 var(--we-space-md,8px) 0;}\
+       .we-blockquote-align-center{text-align:center;}\
+       .we-blockquote-align-right{text-align:right;}\
+       .we-blockquote-align-center :is(.we-blockquote-quote,.we-blockquote-text,.we-blockquote-attrib){text-align:center;}\
+       .we-blockquote-align-right :is(.we-blockquote-quote,.we-blockquote-text,.we-blockquote-attrib){text-align:right;}\
        .we-blockquote-quote{margin:0 0 var(--we-space-sm,4px) 0;font-size:1.25em;line-height:1.35;}\
        .we-blockquote-text{margin:0;}\
        .we-blockquote-attrib{margin:0;font-size:0.875em;color:var(--we-fg-muted,#777);}\
@@ -284,12 +286,12 @@
        .we-choice:focus-visible{background-image:linear-gradient(var(--we-focus-tint,rgba(10,102,194,.14)),var(--we-focus-tint,rgba(10,102,194,.14)));outline:1px solid var(--we-focus,#0a66c2);outline-offset:0;}\
        .we-progress-info{}\
        .we-progress-success{accent-color:var(--we-progress-success,#3a9147);}\
-       .we-progress-warn{accent-color:var(--we-progress-warn,#b57c1c);}\
-       .we-progress-error{accent-color:var(--we-progress-error,#b24545);}\
+       .we-progress-warning{accent-color:var(--we-progress-warning,#b57c1c);}\
+       .we-progress-danger{accent-color:var(--we-progress-danger,#b24545);}\
        .we-dropdown{display:inline-block;align-self:flex-start;}\
        .we-card{display:flex;flex-direction:column;align-self:stretch;border:1px solid var(--we-border-soft,#bbb);border-radius:8px;background:var(--we-bg,#fff);overflow:hidden;}\
        .we-card-header{padding:var(--we-space-sm,4px) var(--we-space-md,8px);border-bottom:1px solid var(--we-border-soft,#bbb);background:var(--we-bg-subtle,#f3f3f3);font-weight:600;}\
-       .we-card-body{display:flex;flex-direction:column;gap:var(--we-gap,4px);padding:var(--we-space-md,8px);}\
+       .we-card-body{display:flex;flex-direction:column;gap:var(--we-gap,0.5rem);padding:var(--we-space-md,8px);}\
        .we-card-footer{padding:var(--we-space-sm,4px) var(--we-space-md,8px);border-top:1px solid var(--we-border-soft,#bbb);background:var(--we-bg-subtle,#f3f3f3);}\
        .we-navigation-bar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--we-space-sm,4px);align-self:stretch;padding:var(--we-space-sm,4px) var(--we-space-md,8px);border:1px solid var(--we-border-menu,#aaa);border-radius:6px;background:var(--we-bg-subtle,#f3f3f3);}\
        .we-navigation-bar.is-vertical{flex-direction:column;align-items:stretch;}\
@@ -300,11 +302,11 @@
        .we-offcanvas{position:fixed;inset:0;display:none;z-index:2100;}\
        .we-offcanvas.is-open{display:block;}\
        .we-offcanvas-backdrop{position:absolute;inset:0;background:var(--we-overlay,rgba(0,0,0,0.45));}\
-       .we-offcanvas-panel{position:absolute;top:0;bottom:0;width:min(380px,85vw);display:flex;flex-direction:column;gap:var(--we-gap,4px);padding:var(--we-space-md,8px);background:var(--we-bg,#fff);border:1px solid var(--we-border,#888);box-shadow:0 8px 22px var(--we-shadow,rgba(0,0,0,.28));overflow:auto;}\
+       .we-offcanvas-panel{position:absolute;top:0;bottom:0;width:min(380px,85vw);display:flex;flex-direction:column;gap:var(--we-gap,0.5rem);padding:var(--we-space-md,8px);background:var(--we-bg,#fff);border:1px solid var(--we-border,#888);box-shadow:0 8px 22px var(--we-shadow,rgba(0,0,0,.28));overflow:auto;}\
        .we-offcanvas-panel.is-end{right:0;border-radius:8px 0 0 8px;}\
        .we-offcanvas-panel.is-start{left:0;border-radius:0 8px 8px 0;}\
-       .we-carousel{display:flex;flex-direction:column;gap:var(--we-gap,4px);align-self:stretch;border:1px solid var(--we-border-soft,#bbb);border-radius:8px;background:var(--we-bg,#fff);padding:var(--we-space-sm,4px);}\
-       .we-carousel-viewport{display:flex;flex-direction:column;gap:var(--we-gap,4px);padding:var(--we-space-sm,4px);}\
+       .we-carousel{display:flex;flex-direction:column;gap:var(--we-gap,0.5rem);align-self:stretch;border:1px solid var(--we-border-soft,#bbb);border-radius:8px;background:var(--we-bg,#fff);padding:var(--we-space-sm,4px);}\
+       .we-carousel-viewport{display:flex;flex-direction:column;gap:var(--we-gap,0.5rem);padding:var(--we-space-sm,4px);}\
        .we-carousel-controls{display:flex;align-items:center;justify-content:space-between;gap:var(--we-space-sm,4px);}\
        .we-carousel-indicators{display:flex;flex-wrap:wrap;gap:var(--we-space-xs,2px);}\
        .we-carousel-indicator{width:1.6em;height:1.6em;border:1px solid var(--we-border-soft,#bbb);border-radius:999px;background:var(--we-bg,#fff);}\
@@ -313,7 +315,7 @@
        .we-scrollspy{display:flex;flex-direction:column;align-self:stretch;gap:var(--we-space-xs,2px);padding:var(--we-space-xs,2px);border:1px solid var(--we-border-soft,#bbb);border-radius:6px;background:var(--we-bg,#fff);}\
        .we-scrollspy-nav{display:flex;flex-wrap:wrap;align-items:center;gap:var(--we-space-xs,2px);}\
        .we-scrollspy-sections{display:flex;flex-direction:column;gap:var(--we-space-sm,4px);max-height:240px;overflow:auto;padding:var(--we-space-xs,2px);border-top:1px solid var(--we-border-soft,#bbb);}\
-       .we-scrollspy-section{display:flex;flex-direction:column;gap:var(--we-gap,4px);padding:var(--we-space-sm,4px);border:1px solid var(--we-border-soft,#bbb);border-radius:4px;background:var(--we-bg,#fff);}\
+       .we-scrollspy-section{display:flex;flex-direction:column;gap:var(--we-gap,0.5rem);padding:var(--we-space-sm,4px);border:1px solid var(--we-border-soft,#bbb);border-radius:4px;background:var(--we-bg,#fff);}\
        .we-scrollspy-item{padding:2px 8px;border:1px solid transparent;border-radius:4px;background:transparent;color:var(--we-fg,#111);}\
        .we-scrollspy-item:hover{background:var(--we-bg-hover,#e8e8e8);}\
        .we-scrollspy-item.is-current{background:var(--we-bg-selected,#ececec);border-color:var(--we-border-soft,#bbb);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px;}\
@@ -348,26 +350,29 @@
     ;; - includes layout, positioning, and open/closed mechanics required for behavior.
     ;; - excludes visual theme concerns (colors, borders, padding, shadows, typography).
     (define structural-base-style-text ; Minimal structural CSS injected once per window root.
-      ".we-vpanel,.we-group,.we-if-view,.we-cond-view,.we-case-view,.we-observable-view,.we-list-view{display:flex;flex-direction:column;gap:var(--we-gap,4px);}\
-       .we-stack{display:flex;flex-direction:column;gap:var(--we-stack-gap,var(--we-gap,4px));}\
-       .we-hpanel{display:flex;flex-direction:row;align-items:center;gap:var(--we-gap,4px);}\
+      ".we-vpanel,.we-group,.we-if-view,.we-cond-view,.we-case-view,.we-observable-view,.we-list-view{display:flex;flex-direction:column;gap:var(--we-gap,0.5rem);}\
+       .we-stack{display:flex;flex-direction:column;gap:var(--we-stack-gap,var(--we-gap,0.5rem));}\
+       .we-hpanel{display:flex;flex-direction:row;align-items:center;gap:var(--we-gap,0.5rem);}\
        .we-container{width:min(1200px,calc(100vw - 28px));max-width:1200px;margin:0 auto;}\
-       .we-grid{display:grid;grid-template-columns:var(--we-grid-columns,repeat(auto-fit,minmax(320px,1fr)));gap:12px;align-items:stretch;}\
-       .we-inline{display:flex;flex-direction:row;align-items:center;gap:var(--we-gap,4px);flex-wrap:wrap;}\
+       .we-grid{display:grid;grid-template-columns:var(--we-grid-columns,repeat(auto-fit,minmax(320px,1fr)));gap:var(--we-grid-gap,12px);align-items:stretch;}\
+       .we-inline{display:flex;flex-direction:row;align-items:center;gap:var(--we-gap,0.5rem);flex-wrap:wrap;}\
        .we-spacer{display:block;flex:1 1 auto;min-width:0;min-height:0;}\
        .we-toolbar{display:flex;flex-wrap:wrap;align-items:center;align-self:stretch;gap:var(--we-space-sm,4px);}\
        .we-toolbar-group{display:inline-flex;flex-wrap:wrap;align-items:center;align-self:flex-start;gap:var(--we-space-xs,2px);}\
+       .we-top-bar{display:flex;flex-wrap:wrap;align-items:center;align-self:stretch;gap:var(--we-space-sm,4px);}\
        .we-button-toolbar{display:flex;flex-wrap:wrap;align-items:center;align-self:flex-start;gap:var(--we-space-sm,4px);}\
        .we-button-group{display:inline-flex;flex-wrap:wrap;align-items:center;align-self:flex-start;}\
        .we-button-group>.we-button{margin:0;}\
        .we-tab-panel{display:flex;flex-direction:column;align-items:stretch;}\
        .we-menu{position:relative;display:inline-block;}\
+       .we-menu-label{-webkit-appearance:none;appearance:none;font:inherit;}\
        .we-menu-bar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--we-space-xs,2px);}\
        .we-menu-popup{position:absolute;top:calc(100% + var(--we-space-xs,2px));left:0;min-width:150px;display:none;flex-direction:column;z-index:1000;}\
        .we-dropdown.we-dropdown-up .we-menu-popup{top:auto;bottom:calc(100% + var(--we-space-xs,2px));left:0;right:auto;}\
        .we-dropdown.we-dropdown-start .we-menu-popup{top:0;left:auto;right:calc(100% + var(--we-space-xs,2px));bottom:auto;}\
        .we-dropdown.we-dropdown-end .we-menu-popup{top:0;left:calc(100% + var(--we-space-xs,2px));right:auto;bottom:auto;}\
        .we-menu-popup.is-open{display:flex;}\
+       .we-top-bar{display:flex;flex-wrap:wrap;align-items:center;align-self:stretch;gap:var(--we-space-sm,4px);}\
        .we-navigation-bar{display:flex;flex-wrap:wrap;align-items:center;gap:var(--we-space-sm,4px);align-self:stretch;}\
        .we-navigation-bar.is-vertical{flex-direction:column;align-items:stretch;}\
        .we-navigation-bar-toggle{display:inline-flex;align-self:flex-start;}\
@@ -902,6 +907,20 @@
         [else
          (list column 'left)]))
 
+    ;; positive-number-list? : any/c -> boolean?
+    ;;   Check whether v is a non-empty list of positive numbers.
+    (define (positive-number-list? v)
+      (cond
+        [(not (list? v)) #f]
+        [(null? v)       #f]
+        [else
+         (let loop ([xs v])
+           (cond
+             [(null? xs) #t]
+             [(and (number? (car xs)) (> (car xs) 0))
+              (loop (cdr xs))]
+             [else #f]))]))
+
     ;; grid-columns-template : any/c -> string?
     ;;   Normalize grid columns value to CSS template expression string.
     (define (grid-columns-template columns)
@@ -912,9 +931,29 @@
          (if (> columns 0)
              (string-append "repeat(" (number->string columns) ",minmax(0,1fr))")
              "repeat(auto-fit,minmax(320px,1fr))")]
+        [(positive-number-list? columns)
+         (let loop ([xs columns] [acc ""])
+           (if (null? xs)
+               acc
+               (let ([part (string-append "minmax(0," (number->string (car xs)) "fr)")])
+                 (loop (cdr xs)
+                       (if (string=? acc "")
+                           part
+                           (string-append acc " " part))))))]
         [(string? columns) columns]
         [else
          "repeat(auto-fit,minmax(320px,1fr))"]))
+
+    ;; grid-gap-template : any/c -> string?
+    ;;   Normalize grid gap value to CSS length expression string.
+    (define (grid-gap-template gap)
+      (cond
+        [(number? gap)
+         (if (>= gap 0)
+             (string-append (number->string gap) "px")
+             "12px")]
+        [(string? gap) gap]
+        [else "12px"]))
 
     ;; normalize-spacer-grow : any/c -> number?
     ;;   Normalize spacer grow factor to positive numeric value.
@@ -928,9 +967,9 @@
     (define (normalize-alert-level level)
       (if (symbol? level)
           (case level
-            [(warning)                                'warn]
-            [(danger)                                 'error]
-            [(info success warn error
+            [(warning)                                'warning]
+            [(danger)                                 'danger]
+            [(info success warning danger
                    primary secondary light dark)      level]
             [else                                     'info])
           'info))
@@ -942,8 +981,8 @@
         [(primary)   "we-alert-primary"]
         [(secondary) "we-alert-secondary"]
         [(success)   "we-alert-success"]
-        [(warn)      "we-alert-warn"]
-        [(error)     "we-alert-error"]
+        [(warning)   "we-alert-warning"]
+        [(danger)    "we-alert-danger"]
         [(light)     "we-alert-light"]
         [(dark)      "we-alert-dark"]
         [else        "we-alert-info"]))
@@ -952,8 +991,16 @@
     ;;   Return semantic role for alert level severity.
     (define (alert-level-role level)
       (case level
-        [(warn error) 'alert]
+        [(warning danger) 'alert]
         [else         'status]))
+
+    ;; invoke-close-callback : any/c symbol? -> void?
+    ;;   Call close callback with reason when arity allows, else call without args.
+    (define (invoke-close-callback on-close reason)
+      (when (procedure? on-close)
+        (if (procedure-arity-includes? on-close 1)
+            (on-close reason)
+            (on-close))))
 
     ;; normalize-alert-layout : any/c -> symbol?
     ;;   Normalize rich alert layout to stack or inline.
@@ -978,8 +1025,8 @@
     (define (toast-level-class level)
       (case level
         [(success) "we-toast-success"]
-        [(warn)    "we-toast-warn"]
-        [(error)   "we-toast-error"]
+        [(warning) "we-toast-warning"]
+        [(danger)  "we-toast-danger"]
         [else      "we-toast-info"]))
 
     ;; progress-level-class : symbol? -> string?
@@ -987,17 +1034,17 @@
     (define (progress-level-class level)
       (case level
         [(success) "we-progress-success"]
-        [(warn)    "we-progress-warn"]
-        [(error)   "we-progress-error"]
+        [(warning) "we-progress-warning"]
+        [(danger)  "we-progress-danger"]
         [else      "we-progress-info"]))
 
     ;; normalize-badge-level : any/c -> symbol?
-    ;;   Normalize badge level to supported variants and legacy aliases.
+    ;;   Normalize badge level to supported variants.
     (define (normalize-badge-level level)
       (if (symbol? level)
           (case level
-            [(primary secondary success info warning danger light dark warn error) level]
-            [else                                                             'info])
+            [(primary secondary success info warning danger light dark) level]
+            [else                                                      'info])
           'info))
 
     ;; badge-level-class : symbol? -> string?
@@ -1011,8 +1058,6 @@
         [(danger)    "we-badge-danger"]
         [(light)     "we-badge-light"]
         [(dark)      "we-badge-dark"]
-        [(warn)      "we-badge-warn"]
-        [(error)     "we-badge-error"]
         [else        "we-badge-info"]))
 
     ;; normalize-page-count : any/c -> number?
@@ -1605,10 +1650,17 @@
          node]
         [(grid)
          (define raw-columns      (alist-ref (view-props v) 'columns 'render))
+         (define raw-gap          (alist-ref (view-props v) 'gap #f))
          (define columns-template (grid-columns-template (maybe-observable-value raw-columns)))
+         (define gap-template
+           (grid-gap-template (maybe-observable-value raw-gap)))
          (define node (dom-node 'div (list (cons 'data-we-widget "grid")
                                            (cons 'class "we-grid")
-                                           (cons 'style (string-append "--we-grid-columns:" columns-template ";")))
+                                           (cons 'style (string-append "--we-grid-columns:"
+                                                                       columns-template
+                                                                       ";--we-grid-gap:"
+                                                                       gap-template
+                                                                       ";")))
                                 '()
                                 #f
                                 #f
@@ -2693,10 +2745,22 @@
         [(blockquote)
          (define raw-value (alist-ref (view-props v) 'value 'render))
          (define raw-attribution (alist-ref (view-props v) 'attribution #f))
+         (define align
+           (alist-ref (view-props v) 'align 'left))
+         (define align-class
+           (case align
+             [(left) #f]
+             [(center) "we-blockquote-align-center"]
+             [(right) "we-blockquote-align-right"]
+             [else #f]))
+         (define node-class
+           (if align-class
+               (string-append "we-blockquote " align-class)
+               "we-blockquote"))
          (define node
            (dom-node 'figure
                      (list (cons 'data-we-widget "blockquote")
-                           (cons 'class "we-blockquote"))
+                           (cons 'class node-class))
                      '()
                      #f
                      #f
@@ -3905,16 +3969,15 @@
                      #f
                      #f
                      #f))
-         (define backdrop-node
-           (dom-node 'div
-                     (list (cons 'data-we-widget "offcanvas-backdrop")
-                           (cons 'class "we-offcanvas-backdrop"))
-                     '()
-                     #f
-                     (lambda ()
-                       (when (procedure? on-close)
-                         (on-close)))
-                     #f))
+        (define backdrop-node
+          (dom-node 'div
+                    (list (cons 'data-we-widget "offcanvas-backdrop")
+                          (cons 'class "we-offcanvas-backdrop"))
+                    '()
+                    #f
+                    (lambda ()
+                      (invoke-close-callback on-close 'backdrop))
+                    #f))
          (define panel-node
            (dom-node 'div
                      (list (cons 'data-we-widget "offcanvas-panel")
@@ -3923,7 +3986,12 @@
                      #f
                      #f
                      #f))
-         (backend-append-child! panel-node (build-node (close-button on-close "Close panel") register-cleanup!))
+         (backend-append-child!
+          panel-node
+          (build-node
+           (close-button (lambda () (invoke-close-callback on-close 'button))
+                         "Close panel")
+           register-cleanup!))
          (for-each (lambda (child)
                      (backend-append-child! panel-node (build-node child register-cleanup!)))
                    (view-children v))
@@ -5568,7 +5636,7 @@
            (register-cleanup! (lambda () (obs-unobserve! raw-tone-style tone-style-listener))))
          (refresh-card-structure!)
          node]
-        [(navigation-bar)
+       [(navigation-bar)
          (define raw-orientation (alist-ref (view-props v) 'orientation 'render))
          (define raw-collapsed? (alist-ref (view-props v) 'collapsed? 'render))
          (define raw-expand (alist-ref (view-props v) 'expand 'render))
@@ -5657,6 +5725,19 @@
             (register-cleanup! (lambda () (obs-unobserve! raw-collapsed? collapsed-listener)))]
            [else
             (set-collapsed! (maybe-observable-value raw-collapsed?))])
+         node]
+        [(top-bar)
+         (define node (dom-node 'header
+                                (list (cons attr/role 'banner)
+                                      (cons 'data-we-widget "top-bar")
+                                      (cons 'class "we-top-bar"))
+                                '()
+                                #f
+                                #f
+                                #f))
+         (for-each (lambda (child)
+                     (backend-append-child! node (build-node child register-cleanup!)))
+                   (view-children v))
          node]
         [(menu-bar)
          (define node (dom-node 'menu-bar

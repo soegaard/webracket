@@ -82,9 +82,9 @@
   (define normalized-theme (normalize-theme-id theme))
   (define path
     (case normalized-theme
-      [(light) "../theme-external-light.css"]
-      [(dark)  "../theme-external-dark.css"]
-      [else    "../theme-external-solar.css"]))
+      [(light) "../themes/theme-external-light.css"]
+      [(dark)  "../themes/theme-external-dark.css"]
+      [else    "../themes/theme-external-solar.css"]))
   path)
 
 ;; theme-css-path/showcase : any/c -> string?
@@ -93,15 +93,15 @@
   (define normalized-theme (normalize-theme-id theme))
   (define path
     (case normalized-theme
-      [(light) "../theme-showcase-light.css"]
-      [(dark)  "../theme-showcase-dark.css"]
-      [else    "../theme-showcase-solar.css"]))
+      [(light) "../themes/theme-showcase-light.css"]
+      [(dark)  "../themes/theme-showcase-dark.css"]
+      [else    "../themes/theme-showcase-solar.css"]))
   path)
 
 ;; theme-css-path/core : -> string?
 ;;   Path to shared web-easy structural core stylesheet.
 (define (theme-css-path/core)
-  "../web-easy-core.css")
+  "../themes/web-easy-core.css")
 
 ;; normalize-tab-style-id : any/c -> symbol?
 ;;   Normalize tab style id for root class switching.
@@ -249,9 +249,9 @@
                    ;; Download links
                    (toolbar
                       (toolbar-group
-                       (link "Download Solar CSS" "../theme-external-solar.css" #t #:class "showcase-link-button")
-                       (link "Download Light CSS" "../theme-external-light.css" #t #:class "showcase-link-button")
-                       (link "Download Dark CSS" "../theme-external-dark.css" #t #:class "showcase-link-button"))
+                       (link "Download Solar CSS" "../themes/theme-external-solar.css" #t #:class "showcase-link-button")
+                       (link "Download Light CSS" "../themes/theme-external-light.css" #t #:class "showcase-link-button")
+                       (link "Download Dark CSS" "../themes/theme-external-dark.css" #t #:class "showcase-link-button"))
                       #:class "showcase-controls-download-row")
                    #:class "showcase-topbar-controls")
                 #:class "showcase-topbar-inner")
@@ -289,7 +289,7 @@
                             #:class "we-button-primary")
                   (button "Secondary"
                             (lambda ()
-                              (show-toast! 'warn "Buttons" "Secondary clicked."))
+                              (show-toast! 'warning "Buttons" "Secondary clicked."))
                             #:class "we-button-secondary")
                   (button "Ghost"
                             (lambda ()
@@ -298,8 +298,8 @@
                  #:class "showcase-button-row")
                (alert "Info alert: configuration saved." 'info)
                (alert "Success alert: build finished." 'success)
-               (alert "Warning alert: pending review." 'warn)
-               (alert "Error alert: deploy failed." 'error)
+               (alert "Warning alert: pending review." 'warning)
+               (alert "Error alert: deploy failed." 'danger)
                (inline
                  (badge "Badge" 'info)
                  (badge "42" 'success)

@@ -36,18 +36,18 @@
                           (:= @level 'success)
                           (:= @dismissible #t)
                           (:= @open #t)))
-                (button "show-error"
+                (button "show-danger"
                         (lambda ()
                           (:= @title "Build")
                           (:= @message "Build failed")
-                          (:= @level 'error)
+                          (:= @level 'danger)
                           (:= @dismissible #t)
                           (:= @open #t)))
                 (button "show-locked"
                         (lambda ()
                           (:= @title "Deploy")
                           (:= @message "Deploy in progress")
-                          (:= @level 'warn)
+                          (:= @level 'warning)
                           (:= @dismissible #f)
                           (:= @open #t))))
                (toast @open

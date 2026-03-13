@@ -36,12 +36,12 @@
                 (button "set-success"
                         (lambda ()
                           (:= @variant 'success)))
-                (button "set-warn"
+                (button "set-warning"
                         (lambda ()
-                          (:= @variant 'warn)))
-                (button "set-error"
+                          (:= @variant 'warning)))
+                (button "set-danger"
                         (lambda ()
-                          (:= @variant 'error)))
+                          (:= @variant 'danger)))
                 (button "step"
                         (lambda ()
                           (<~ @value (lambda (n)

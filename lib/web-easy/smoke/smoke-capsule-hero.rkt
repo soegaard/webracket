@@ -27,9 +27,9 @@
                (heading-with-subtitle 1 "Operations Center" "live status")
                (lead "Monitor deployments, incidents, and release readiness from one view.")
                (hpanel
-                (button "mark-warn"
+                (button "mark-warning"
                         (lambda ()
-                          (:= @status "Investigating elevated error rate")))
+                          (:= @status "Investigating elevated danger rate")))
                 (button "mark-ok"
                         (lambda ()
                           (:= @status "All systems nominal"))))

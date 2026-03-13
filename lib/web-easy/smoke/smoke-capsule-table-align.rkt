@@ -20,7 +20,7 @@
     ;;   Build and mount the table-align page under root.
     (define (table-align-make-page root)
       (define @rows (@ '(("alpha" 12 "ok")
-                         ("beta" 3 "warn"))))
+                         ("beta" 3 "warning"))))
       (set! table-align-renderer
             (render
              (window

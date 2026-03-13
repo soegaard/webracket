@@ -210,15 +210,21 @@
    (window
     (vpanel
      (blockquote @quote-text @quote-attrib)
-     (blockquote "No attribution")))))
+     (blockquote "No attribution")
+     (blockquote "Centered quote" "Centered attribution" #:align 'center)
+     (blockquote "Right quote" "Right attribution" #:align 'right)))))
 (define blockquote-panel (node-child (renderer-root r-blockquote) 0))
 (define blockquote-node (node-child blockquote-panel 0))
 (define blockquote-quote-node (node-child blockquote-node 0))
 (define blockquote-text-node (node-child blockquote-quote-node 0))
 (define blockquote-attrib-node (node-child blockquote-node 1))
 (define blockquote-no-attrib-node (node-child blockquote-panel 1))
+(define blockquote-center-node (node-child blockquote-panel 2))
+(define blockquote-right-node (node-child blockquote-panel 3))
 (check-equal (node-attr blockquote-node 'data-we-widget) "blockquote" "blockquote data-we-widget attr")
 (check-equal (node-attr blockquote-node 'class) "we-blockquote" "blockquote class")
+(check-equal (node-attr blockquote-center-node 'class) "we-blockquote we-blockquote-align-center" "blockquote center class")
+(check-equal (node-attr blockquote-right-node 'class) "we-blockquote we-blockquote-align-right" "blockquote right class")
 (check-equal (dom-node-tag blockquote-node) 'figure "blockquote tag figure")
 (check-equal (node-attr blockquote-quote-node 'data-we-widget) "blockquote-quote" "blockquote quote widget attr")
 (check-equal (dom-node-tag blockquote-quote-node) 'blockquote "blockquote quote tag")
@@ -397,8 +403,21 @@
 (check-equal (node-attr spacer-layout-node 'data-we-widget) "spacer" "spacer data-we-widget attr")
 (check-equal (node-attr spacer-layout-node 'class) "we-spacer" "spacer class")
 (check-equal (node-attr spacer-layout-node 'style) "flex-grow:2;" "spacer grow style")
-(check-equal (node-attr grid-layout-node 'style) "--we-grid-columns:repeat(2,minmax(0,1fr));" "grid columns style")
+(check-equal (node-attr grid-layout-node 'style) "--we-grid-columns:repeat(2,minmax(0,1fr));--we-grid-gap:12px;" "grid columns style")
 (check-equal (length (dom-node-children grid-layout-node)) 2 "grid child count")
+
+;; grid supports explicit gap via #:gap.
+(define r-grid-gap
+  (render
+   (window
+    (grid 2
+          "0.9rem"
+          (text "left")
+          (text "right")))))
+(define grid-gap-node (node-child (renderer-root r-grid-gap) 0))
+(check-equal (node-attr grid-gap-node 'style)
+             "--we-grid-columns:repeat(2,minmax(0,1fr));--we-grid-gap:0.9rem;"
+             "grid gap style")
 
 ;; navigation-bar renders navigation container with child actions
 (define r-navigation-bar
@@ -691,10 +710,10 @@
 (check-equal (node-attr alert-node 'aria-live) "polite" "alert success aria-live")
 (check-equal (dom-node-text alert-node) "Saved" "alert initial text")
 (:= @alert-text "Disk almost full")
-(:= @alert-level 'warn)
-(check-equal (node-attr alert-node 'class) "we-alert we-alert-warn" "alert warn class")
-(check-equal (node-attr alert-node 'role) 'alert "alert warn role")
-(check-equal (node-attr alert-node 'aria-live) "assertive" "alert warn aria-live")
+(:= @alert-level 'warning)
+(check-equal (node-attr alert-node 'class) "we-alert we-alert-warning" "alert warning class")
+(check-equal (node-attr alert-node 'role) 'alert "alert warning role")
+(check-equal (node-attr alert-node 'aria-live) "assertive" "alert warning aria-live")
 (check-equal (dom-node-text alert-node) "Disk almost full" "alert text after update")
 (define r-alert-decorators
   (render
@@ -731,7 +750,7 @@
 (define alert-rich-title-node (node-child alert-rich-node 0))
 (define alert-rich-body-node (node-child alert-rich-node 1))
 (define alert-rich-link-node (node-child alert-rich-node 2))
-(check-equal (node-attr alert-rich-node 'class) "we-alert we-alert-warn" "alert-rich warning class")
+(check-equal (node-attr alert-rich-node 'class) "we-alert we-alert-warning" "alert-rich warning class")
 (check-equal (node-attr alert-rich-node 'aria-live) "assertive" "alert-rich warning aria-live")
 (check-equal (node-attr alert-rich-title-node 'class) "we-alert-title" "alert-rich title class")
 (check-equal (dom-node-text alert-rich-title-node) "Well done!" "alert-rich title text")
@@ -829,8 +848,8 @@
 (check-equal (dom-node-text badge-node) "stable" "badge text after update")
 (:= @badge-level 'danger)
 (check-equal (node-attr badge-node 'class) "we-badge we-badge-danger" "badge danger class")
-(:= @badge-level 'warn)
-(check-equal (node-attr badge-node 'class) "we-badge we-badge-warn" "badge legacy warn alias class")
+(:= @badge-level 'warning)
+(check-equal (node-attr badge-node 'class) "we-badge we-badge-warning" "badge legacy warning alias class")
 
 ;; spinner renders icon/label and updates observable label text
 (define @spinner-label (@ "Loading..."))
@@ -882,8 +901,8 @@
 (check-equal (node-attr toast-node 'class) "we-toast we-toast-success is-open" "toast initial class")
 (check-equal (node-attr toast-node 'aria-hidden) "false" "toast initially visible")
 (check-equal (dom-node-text toast-message-node) "Build complete" "toast message text")
-(:= @toast-level 'error)
-(check-equal (node-attr toast-node 'class) "we-toast we-toast-error is-open" "toast error class")
+(:= @toast-level 'danger)
+(check-equal (node-attr toast-node 'class) "we-toast we-toast-danger is-open" "toast danger class")
 (dom-node-click! toast-close-node)
 (check-equal (obs-peek @toast-open) #f "toast close action updates open state")
 (check-equal (node-attr toast-node 'aria-hidden) "true" "toast hidden after close")
@@ -1461,7 +1480,7 @@
 (check-equal (node-attr progress-node 'value) 65 "progress reflects observable update")
 
 ;; progress supports variant classes
-(define @progress-variant (@ 'warn))
+(define @progress-variant (@ 'warning))
 (define r8b
   (render
    (window
@@ -1472,7 +1491,7 @@
                #:max 100
                #:variant @progress-variant)))))
 (define progress-node-2 (node-child (node-child (renderer-root r8b) 0) 0))
-(check-equal (node-attr progress-node-2 'class) "we-progress we-progress-warn" "progress warn variant class")
+(check-equal (node-attr progress-node-2 'class) "we-progress we-progress-warning" "progress warning variant class")
 (:= @progress-variant 'success)
 (check-equal (node-attr progress-node-2 'class) "we-progress we-progress-success" "progress success variant class")
 (:= @progress-variant 'mystery)
@@ -1615,7 +1634,7 @@
     (vpanel
      (table
                '(("service" left) ("status" center))
-               '(("api" "ok") ("db" "warn"))
+               '(("api" "ok") ("db" "warning"))
                #:density 'normal
                #:caption "Status table"
                #:variants '(striped hover borderless sm))))))
@@ -1644,7 +1663,7 @@
     (vpanel
      (table
                '(state value)
-               '(("ok" 1) ("warn" 2) ("fail" 3))
+               '(("ok" 1) ("warning" 2) ("fail" 3))
                #:density 'normal
                #:row-variants '(success warning danger))))))
 (define table-node-row-variants (node-child (node-child (renderer-root r14bvr) 0) 0))

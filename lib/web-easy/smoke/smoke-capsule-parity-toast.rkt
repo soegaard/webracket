@@ -29,18 +29,18 @@
              (window
               (vpanel
                (hpanel
-                (button "show-error"
+                (button "show-danger"
                         (lambda ()
                           (:= @title "Parity Build")
                           (:= @message "Parity build failed")
-                          (:= @level 'error)
+                          (:= @level 'danger)
                           (:= @dismissible #t)
                           (:= @open #t)))
                 (button "show-locked"
                         (lambda ()
                           (:= @title "Parity Deploy")
                           (:= @message "Parity deploy locked")
-                          (:= @level 'warn)
+                          (:= @level 'warning)
                           (:= @dismissible #f)
                           (:= @open #t))))
                (toast @open

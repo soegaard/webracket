@@ -30,17 +30,17 @@
                         (lambda ()
                           (:= @level 'info)
                           (:= @message "beta")))
-                (button "set-warn"
+                (button "set-warning"
                         (lambda ()
-                          (:= @level 'warn)
+                          (:= @level 'warning)
                           (:= @message "degraded")))
                 (button "set-success"
                         (lambda ()
                           (:= @level 'success)
                           (:= @message "stable")))
-                (button "set-error"
+                (button "set-danger"
                         (lambda ()
-                          (:= @level 'error)
+                          (:= @level 'danger)
                           (:= @message "failed"))))
                (badge @message @level)))))
       (mount-renderer! badge-renderer root)

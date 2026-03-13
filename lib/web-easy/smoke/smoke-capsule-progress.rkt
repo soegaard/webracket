@@ -40,12 +40,12 @@
                 (button "success"
                         (lambda ()
                           (:= @variant 'success)))
-                (button "warn"
+                (button "warning"
                         (lambda ()
-                          (:= @variant 'warn)))
-                (button "error"
+                          (:= @variant 'warning)))
+                (button "danger"
                         (lambda ()
-                          (:= @variant 'error)))
+                          (:= @variant 'danger)))
                 (button "inc"
                         (lambda ()
                           (<~ @value (lambda (n)

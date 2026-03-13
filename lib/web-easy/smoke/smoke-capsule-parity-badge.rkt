@@ -26,17 +26,17 @@
              (window
               (vpanel
                (hpanel
-                (button "set-warn"
+                (button "set-warning"
                         (lambda ()
-                          (:= @level 'warn)
+                          (:= @level 'warning)
                           (:= @message "needs-attention")))
                 (button "set-success"
                         (lambda ()
                           (:= @level 'success)
                           (:= @message "ready")))
-                (button "set-error"
+                (button "set-danger"
                         (lambda ()
-                          (:= @level 'error)
+                          (:= @level 'danger)
                           (:= @message "broken"))))
                (badge @message @level)))))
       (mount-renderer! parity-badge-renderer root)

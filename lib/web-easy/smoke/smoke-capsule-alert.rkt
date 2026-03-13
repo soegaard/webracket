@@ -40,13 +40,13 @@
                         (lambda ()
                           (:= @level 'info)
                           (:= @message "Informational update")))
-                (button "set-warn"
+                (button "set-warning"
                         (lambda ()
-                          (:= @level 'warn)
+                          (:= @level 'warning)
                           (:= @message "Disk space low")))
-                (button "set-error"
+                (button "set-danger"
                         (lambda ()
-                          (:= @level 'error)
+                          (:= @level 'danger)
                           (:= @message "Save failed")))
                 (button "set-success"
                         (lambda ()
