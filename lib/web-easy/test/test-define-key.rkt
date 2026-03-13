@@ -6,7 +6,7 @@
 
 ;; Focused tests for `define/key`.
 
-(include/reader "../define.rkt" read-syntax/skip-first-line)
+(include-lib define)
 
 (define (check-equal got want label)
   (unless (equal? got want)
@@ -28,11 +28,15 @@
 ;; First-class use in value position.
 (define f foo)
 (check-equal (f 3) 42 "first-class procedure value")
+(check-equal (call/key f 3 #:bar 11) 11 "call/key supports aliased function keyword call")
 
 ;; Required keyword argument (no default).
 (define/key (needs-k x #:k k)
   (+ x k))
 (check-equal (needs-k 4 #:k 9) 13 "required keyword argument")
+(check-equal ((lambda (fn) (call/key fn 4 #:k 9)) needs-k)
+             13
+             "call/key supports higher-order keyword call")
 
 ;; Positional optional arguments.
 (define/key (opt-pos x [y 10] [z (+ y 1)])
@@ -52,6 +56,10 @@
   (list a b r k req))
 (check-equal (mixed 5 #:req 9) '(5 10 () 1 9) "mixed defaults")
 (check-equal (mixed 5 6 7 8 #:k 2 #:req 9) '(5 6 (7 8) 2 9) "mixed full call")
+(define mixed-alias mixed)
+(check-equal (call/key mixed-alias 5 6 7 8 #:k 2 #:req 9)
+             '(5 6 (7 8) 2 9)
+             "call/key supports mixed-form alias calls")
 
 ;; Single evaluation checks.
 (define eval-count 0)

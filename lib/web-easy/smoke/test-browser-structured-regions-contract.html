@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy structured regions contract smoke test</title>
+  <style>
+    body { font-family: monospace; margin: 16px; }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass { color: #0a6a0a; border-color: #0a6a0a; }
+    #status.fail { color: #8a1111; border-color: #8a1111; }
+    #app-frame { width: 100%; height: 540px; border: 1px solid #999; }
+  </style>
+</head>
+<body>
+  <div id="status">Running structured regions contract assertions...</div>
+  <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=structured-regions" title="web-easy structured regions contract app"></iframe>
+  <script src="./smoke-harness.js"></script>
+  <script>
+    (async function run() {
+      const H = window.SmokeHarness;
+      try {
+        const frame = document.getElementById("app-frame");
+        const doc = await H.loadCase(
+          frame,
+          "./generated/example-browser-smoke-all.html?test=structured-regions",
+          function (d) {
+            return !!d.querySelector("[data-we-widget='alert-dismiss']")
+              && !!d.querySelector("[data-we-widget='card-subtitle']")
+              && !!d.querySelector("[data-we-widget='dialog-header']")
+              && !!d.querySelector("[data-we-widget='modal-header']");
+          },
+          20000
+        );
+
+        H.assertNoForbiddenAttrTokens(doc, "structured-regions-contract");
+        H.assertNoInlineWidgetStyles(doc, "structured-regions-contract");
+
+        H.assertTrue(!!doc.querySelector("[data-we-widget='alert-title']"), "alert title exists");
+        H.assertTrue(!!doc.querySelector("[data-we-widget='alert-body']"), "alert body exists");
+        H.assertTrue(!!doc.querySelector("[data-we-widget='alert-link']"), "alert link exists");
+        const dismiss = doc.querySelector("[data-we-widget='alert-dismiss']");
+        H.assertTrue(!!dismiss, "alert dismiss exists");
+        dismiss.click();
+        await H.sleep(80);
+        H.assertTrue((doc.body.textContent || "").indexOf("alert-dismissed") >= 0, "alert dismiss action updates view");
+
+        H.assertTrue(!!doc.querySelector("[data-we-widget='card-subtitle']"), "card subtitle exists");
+        H.assertTrue(!!doc.querySelector("[data-we-widget='card-media']"), "card media exists");
+        H.assertTrue(!!doc.querySelector("[data-we-widget='card-actions']"), "card actions exists");
+
+        H.assertTrue(!!doc.querySelector("[data-we-widget='dialog-title']"), "dialog title exists");
+        H.assertTrue(!!doc.querySelector("[data-we-widget='dialog-description']"), "dialog description exists");
+        H.assertTrue(!!doc.querySelector("[data-we-widget='dialog-footer']"), "dialog footer exists");
+        H.assertTrue(!!doc.querySelector("[data-we-widget='dialog-close']"), "dialog close exists");
+
+        H.assertTrue(!!doc.querySelector("[data-we-widget='modal-title']"), "modal title exists");
+        H.assertTrue(!!doc.querySelector("[data-we-widget='modal-description']"), "modal description exists");
+        H.assertTrue(!!doc.querySelector("[data-we-widget='modal-footer']"), "modal footer exists");
+        H.assertTrue(!!doc.querySelector("[data-we-widget='modal-close']"), "modal close exists");
+
+        H.setStatus(
+          "PASS\nstructured regions contract: alert/card/dialog/modal hooks present",
+          "pass"
+        );
+      } catch (err) {
+        console.error(err);
+        window.SmokeHarness.setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
+      }
+    })();
+  </script>
+</body>
+</html>

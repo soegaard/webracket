@@ -1,5 +1,5 @@
 #lang webracket
-(include/reader "../../define.rkt" read-syntax/skip-first-line)
+(include-lib define)
 
 (define/key (bad-missing x #:a [a 1])
   (+ x a))

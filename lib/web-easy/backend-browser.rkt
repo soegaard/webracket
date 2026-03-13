@@ -92,7 +92,16 @@
         [(symbol? v) (symbol->string v)]
         [(number? v) (number->string v)]
         [(boolean? v) (if v "true" "false")]
-        [else "#<value>"]))
+        [(list? v)
+         (let loop ([rest v] [acc ""])
+           (cond
+             [(null? rest) acc]
+             [(string=? acc "")
+              (loop (cdr rest) (value->attr-string (car rest)))]
+             [else
+              (loop (cdr rest)
+                    (string-append acc "," (value->attr-string (car rest))))]))]
+        [else "~unprintable~"]))
 
     ;; clear-attributes! : any/c list? -> void?
     ;;   Clear pass is currently a no-op for portability across host primitive sets.
