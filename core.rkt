@@ -21,7 +21,7 @@
 
 ; core
 (provide (rename-out [#%plain-module-begin #%module-begin]
-                     [#%plain-app          #%app]
+                     [web-#%app            #%app]
                      [lambda lambda] ; [#%plain-lambda       lambda]
                      [#%plain-lambda       λ]))
 
@@ -41,6 +41,30 @@
     [(_lambda formals body0 body ...)
      (syntax/loc stx
        (#%plain-lambda formals body0 body ...))]))
+
+(define-for-syntax (keyword-token? stx)
+  (keyword? (syntax-e stx)))
+
+(define-for-syntax (rewrite-keyword-token stx)
+  (if (keyword-token? stx)
+      (datum->syntax stx (list 'quote (syntax-e stx)) stx stx)
+      stx))
+
+;; web-#%app : like #%plain-app, but rewrite keyword tokens to keyword values.
+;; This enables keyword surface syntax in non-macro call positions.
+(define-syntax (web-#%app stx)
+  (syntax-case stx ()
+    [(_ f arg ...)
+     (let* ([args (syntax->list #'(arg ...))]
+            [has-keyword? (and args (ormap keyword-token? args))])
+       (if has-keyword?
+           (with-syntax ([(arg* ...) (map rewrite-keyword-token args)])
+             (syntax/loc stx
+               (#%plain-app f arg* ...)))
+           (syntax/loc stx
+             (#%plain-app f arg ...))))]
+    [(_ . _)
+     (raise-syntax-error '#%app "bad application form" stx)]))
 
 ;; include-lib : (include-lib lib-id) -> require form
 ;;   Require `webracket/libs/<lib-id>` at top level.
