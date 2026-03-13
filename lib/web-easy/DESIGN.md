@@ -1113,6 +1113,7 @@ Remaining follow-up:
 2. Expand and document the public theme/class contract (which classes are stable API vs internal).
 3. Completed: close-button icon glyph is CSS-token-driven via `--we-close-glyph` and contract-tested in core/parity close-button pages.
 4. Deep keyboard contracts for dropdown/scrollspy are now part of contract dashboard gating (core + parity).
+5. Reduce showcase-only composition/style hooks (`showcase-*`) by promoting generally useful patterns to public components or general `we-*` utilities; avoid demo-only classes where core APIs can express the same structure.
 
 Migration note:
 - Renderer-injected CSS is structural-only.
