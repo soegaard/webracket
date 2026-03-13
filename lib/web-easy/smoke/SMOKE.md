@@ -57,6 +57,13 @@ Fast local headless gate (contract + theme + guard, skips full dashboard run):
 ./check-all.sh --headless --fast-theme
 ```
 
+`check-all.sh` core sequence includes:
+
+- real-Racket web-easy tests
+- `define/key` negative tests (`lib/web-easy/test/test-define-key-negative.sh`)
+- WebRacket `-r` path tests
+- smoke compile matrix
+
 ## Task To Command
 
 | Task | Command |
@@ -249,9 +256,10 @@ Available utility commands:
 
 ## Compile Architecture
 
-- `check-smoke.sh` runs a preflight wrapper-arity scan before compile:
-  - `racket ../../../tools/check-wrapper-arity.rkt lib/web-easy/smoke`
-  - set `SMOKE_SKIP_WRAPPER_ARITY_CHECK=1` to skip temporarily.
+- `check-smoke.sh` runs a preflight constructor-arity scan before compile:
+  - `racket ../../../tools/check-constructor-arity.rkt lib/web-easy/smoke`
+  - set `SMOKE_SKIP_ARITY_CHECK=1` to skip temporarily.
+  - compatibility alias (legacy env var): `SMOKE_SKIP_WRAPPER_ARITY_CHECK=1`.
 - Generated browser artifacts are written to `smoke/generated/`.
 - Core smoke pages compile via `example-browser-smoke-all.rkt` selected by `?test=...`.
 - Parity pages compile via `example-browser-parity-all.rkt` selected by `?test=...`.
@@ -259,7 +267,7 @@ Available utility commands:
 - Contract dashboards are split to avoid monolithic headless timeout risk:
   - `test-browser-contract-dashboard-core.html`
   - `test-browser-contract-dashboard-parity.html`
-  - wrapper: `test-browser-contract-dashboard.html`
+  - combined dashboard: `test-browser-contract-dashboard.html`
 - Contract layering (from fastest signal to full behavior):
   - `core-structure` pages (`test-browser-core-structure-contract.html`, `test-browser-parity-core-structure-contract.html`)
   - individual contract pages

@@ -124,12 +124,11 @@
           (lambda ()
             (:= @selected id))))
 
-;; navbar-demo : observable? observable? -> view?
+;; navbar-demo : observable? observable? string? -> view?
 ;;   Build one navbar row with brand, links, dropdown, and search form.
-(define (navbar-demo @selected @query)
-  (navigation-bar
-   (with-class "we-navbar-brand"
-     (text "Navbar"))
+(define (navbar-demo @selected @query variant-class)
+  (call/key navigation-bar
+   (call/key text "Navbar" #:class "we-navbar-brand")
    (nav-item-button @selected 'home     "Home")
    (nav-item-button @selected 'features "Features")
    (nav-item-button @selected 'pricing  "Pricing")
@@ -139,13 +138,16 @@
           (menu-item "Action"         (lambda () (void)))
           (menu-item "Another action" (lambda () (void)))
           (menu-item "Something else here" (lambda () (void)))
-          (divider 'horizontal)
+          (call/key divider #:orientation 'horizontal)
           (menu-item "Separated link" (lambda () (void)))))
    (spacer)
    (hpanel
-    (with-attrs '((placeholder "Search"))
-      (input @query (lambda (v) (:= @query v))))
-    (button "Search" (lambda () (void))))))
+    (call/key input
+              @query
+              (lambda (v) (:= @query v))
+              #:attrs '((placeholder "Search")))
+    (button "Search" (lambda () (void))))
+   #:class variant-class))
 
 ;; log-button! : string? -> void?
 ;;   Record a showcase button click in the status line.
@@ -155,13 +157,17 @@
 ;; showcase-button : string? string? boolean? -> view?
 ;;   Build one showcase button with a variant class and optional disabled state.
 (define (showcase-button label variant-class disabled?)
-  (with-class variant-class
-    (if disabled?
-        (with-attrs '((disabled "disabled"))
-          (button label (lambda () (void))))
-        (button label
+  (if disabled?
+      (call/key button
+                label
+                (lambda () (void))
+                #:class variant-class
+                #:attrs '((disabled "disabled")))
+      (call/key button
+                label
                 (lambda ()
-                  (log-button! label))))))
+                  (log-button! label))
+                #:class variant-class)))
 
 ;; progress-fill-class : symbol? boolean? boolean? -> string?
 ;;   Build fill class string for showcase progress bars.
@@ -207,30 +213,31 @@
 ;;   Optional parameter striped? defaults to #f.
 ;;   Optional parameter animated? defaults to #f.
 (define (progress-fill pct variant [striped? #f] [animated? #f])
-  (with-class (string-append (progress-fill-class variant striped? animated?)
-                             " "
-                             (progress-fill-color variant)
-                             " "
-                             (progress-width-class pct))
-    (text " ")))
+  (call/key text
+            " "
+            #:class (string-append (progress-fill-class variant striped? animated?)
+                                   " "
+                                   (progress-fill-color variant)
+                                   " "
+                                   (progress-width-class pct))))
 
 ;; progress-track : view? ... -> view?
 ;;   Build one showcase progress track containing one or more fill segments.
 (define (progress-track . fills)
-  (with-class "we-progress-track"
-    (with-class "we-progress-track-inner"
-      (with-class "we-progress-fill-row"
-        (apply inline fills)))))
+  (call/key inline
+            (call/key inline
+                      (apply inline fills)
+                      #:class "we-progress-fill-row")
+            #:class "we-progress-track we-progress-track-inner"))
 
 ;; showcase-list-group-row : string? number? -> view?
 ;;   Build one list-group row with a right-aligned badge count.
 (define (showcase-list-group-row label count)
-  (with-class "we-list-group-item showcase-list-group-row"
-    (inline
-     (text label)
-     (spacer)
-     (with-class "showcase-list-group-badge"
-       (badge (~a count) 'primary)))))
+  (call/key inline
+            (text label)
+            (spacer)
+            (call/key badge (~a count) 'primary #:class "showcase-list-group-badge")
+            #:class "we-list-group-item showcase-list-group-row"))
 
 ;; showcase-static-list-group : (listof (list string? number?)) [string?] -> view?
 ;;   Build a static list-group with badge rows; optional extra class decorates the group.
@@ -241,116 +248,108 @@
            (showcase-list-group-row (first entry) (second entry)))
          entries))
   (define group-view
-    (with-class "showcase-list-group-panel"
-      (with-class "we-stack-gap-0"
-        (apply stack rows))))
+    (call/key stack
+              (apply stack rows)
+              #:class "showcase-list-group-panel we-stack-gap-0"))
   (if extra-class
-      (with-class (string-append "we-list-group " extra-class)
-        group-view)
-      (with-class "we-list-group"
-        group-view)))
+      (call/key stack group-view #:class (string-append "we-list-group " extra-class))
+      (call/key stack group-view #:class "we-list-group")))
 
 ;; showcase-rich-list-item : string? string? string? string? [boolean?] -> view?
 ;;   Build one rich list-group row with heading, meta text, body text and muted footnote.
 ;;   Optional parameter active? defaults to #f.
 (define (showcase-rich-list-item heading meta body footnote [active? #f])
-  (with-class (if active?
-                  "we-list-group-item showcase-rich-list-item is-active"
-                  "we-list-group-item showcase-rich-list-item")
-    (with-class "we-stack-gap-1"
-      (stack
-       (inline
-        (with-class "showcase-rich-list-heading"
-          (text heading))
-        (spacer)
-        (with-class "showcase-rich-list-meta"
-          (text meta)))
-       (with-class "showcase-rich-list-body"
-         (text body))
-       (with-class "showcase-rich-list-footnote"
-         (text footnote))))))
+  (call/key stack
+            (inline
+             (call/key text heading #:class "showcase-rich-list-heading")
+             (spacer)
+             (call/key text meta #:class "showcase-rich-list-meta"))
+            (call/key text body #:class "showcase-rich-list-body")
+            (call/key text footnote #:class "showcase-rich-list-footnote")
+            #:class (string-append (if active?
+                                       "we-list-group-item showcase-rich-list-item is-active"
+                                       "we-list-group-item showcase-rich-list-item")
+                                   " we-stack-gap-1")))
 
 ;; showcase-rich-list-group : -> view?
 ;;   Build the rich list-group sample used in the Containers section.
 (define (showcase-rich-list-group)
-  (with-class "we-list-group showcase-rich-list-group"
-    (with-class "showcase-list-group-panel"
-      (with-class "we-stack-gap-0"
-        (stack
-         (showcase-rich-list-item
-          "List group item heading"
-          "3 days ago"
-          "Donec id elit non mi porta gravida at eget metus. Maecenas sed diam eget risus varius blandit."
-          "Donec id elit non mi porta."
-          #t)
-         (showcase-rich-list-item
-          "List group item heading"
-          "3 days ago"
-          "Donec id elit non mi porta gravida at eget metus. Maecenas sed diam eget risus varius blandit."
-          "Donec id elit non mi porta."))))))
+  (call/key stack
+            (showcase-rich-list-item
+             "List group item heading"
+             "3 days ago"
+             "Donec id elit non mi porta gravida at eget metus. Maecenas sed diam eget risus varius blandit."
+             "Donec id elit non mi porta."
+             #t)
+            (showcase-rich-list-item
+             "List group item heading"
+             "3 days ago"
+             "Donec id elit non mi porta gravida at eget metus. Maecenas sed diam eget risus varius blandit."
+             "Donec id elit non mi porta.")
+            #:class "we-list-group showcase-rich-list-group showcase-list-group-panel we-stack-gap-0"))
 
 ;; showcase-accordion-body : string? string? -> view?
 ;;   Build accordion panel text with lead sentence plus full reference-style copy.
 (define (showcase-accordion-body lead copy)
-  (with-class "showcase-accordion-body-row"
-    (with-class "showcase-accordion-inline"
-      (inline
-       (with-class "showcase-accordion-lead"
-         (text lead))
-       (with-class "showcase-accordion-copy"
-         (text copy))))))
+  (call/key inline
+            (call/key text lead #:class "showcase-accordion-lead")
+            (call/key text copy #:class "showcase-accordion-copy")
+            #:class "showcase-accordion-body-row showcase-accordion-inline"))
 
 ;; section-heading : string? string? -> view?
 ;;   Build a standardized top-level showcase section heading.
 (define (section-heading section-id title)
-  (with-id section-id
-    (heading 1 title)))
+  (call/key heading 1 title #:id section-id))
 
-;; card-tone-options : symbol? symbol? -> list?
-;;   Build card options alist for first-class tone and tone-style hooks.
-(define (card-tone-options tone tone-style)
-  (list (cons 'tone tone)
-        (cons 'tone-style tone-style)))
+;; tone-card : symbol? symbol? string? -> view?
+;;   Build a tone-styled card sample row with title/copy content.
+(define (tone-card tone tone-style title)
+  (call/key card
+            "Header"
+            #f
+            (heading 4 title)
+            (text "Some quick example text to build on the card title and make up the bulk of the card's content.")
+            #:tone tone
+            #:tone-style tone-style))
 
 (define app-renderer
   (render
    (window
-    (with-class "showcase-shell"
-      (container
+    (call/key container
        (stack
         ;;;
         ;;; Top Bar
         ;;;
-        (with-id "theme-showcase-hero"
-          (with-class "showcase-topbar"
-            (card #f #f
-              (with-class "showcase-topbar-inner"
-                (inline
-                 (with-class "showcase-brand"
-                   (stack
-                    (with-class "showcase-brand-title"
-                      (text "web-easy"))
-                    (with-class "showcase-brand-subtitle"
-                      (text "Solar showcase"))))
-                 (spacer)
-                 (with-class "showcase-topbar-controls"
-                   (stack
-                    (with-class "showcase-controls-label"
-                      (text "Theme"))
-                    (with-class "showcase-theme-choice"
-                      (choice '((solar2 "Solar 2") (solar "Solar") (light "Light") (dark "Dark"))
-                              @theme
-                              (lambda (next-theme)
-                                (:= @theme (normalize-theme-id next-theme))
-                                (:= @theme-status (~a next-theme))))))))))))
+        (call/key card
+                  #f
+                  #f
+                  (call/key inline
+                            (call/key stack
+                                      (call/key text "web-easy" #:class "showcase-brand-title")
+                                      (call/key text "Solar showcase" #:class "showcase-brand-subtitle")
+                                      #:class "showcase-brand")
+                            (spacer)
+                            (call/key stack
+                                      (call/key text "Theme" #:class "showcase-controls-label")
+                                      (call/key choice '((solar2 "Solar 2") (solar "Solar") (light "Light") (dark "Dark"))
+                                                @theme
+                                                (lambda (next-theme)
+                                                  (:= @theme (normalize-theme-id next-theme))
+                                                  (:= @theme-status (~a next-theme)))
+                                                #:class "showcase-theme-choice")
+                                      #:class "showcase-topbar-controls")
+                            #:class "showcase-topbar-inner")
+                  #:id "theme-showcase-hero"
+                  #:class "showcase-topbar")
         ;;;
         ;;; Hero
         ;;;
-        (card #f #f
-              (with-class "showcase-hero-title"
-                (text "Solar 2 Theme"))
-              (with-class "showcase-hero-lead"
-                (text "Top-level sections aligned with the Bootswatch Solar showcase layout.")))
+        (call/key card
+                  #f
+                  #f
+                  (call/key text "Solar 2 Theme" #:class "showcase-hero-title")
+                  (call/key text "Top-level sections aligned with the Bootswatch Solar showcase layout."
+                            #:class "showcase-hero-lead"))
 
         ;;;
         ;;; Main
@@ -359,500 +358,513 @@
         (stack
            ;; Navbars
            (section-heading "solar2-navbars" "Navbars")
-           (with-class "we-flow"
-             (stack
-              (with-class "we-variant-primary"
-                (navbar-demo @selected-1 @query-1))
-              (with-class "we-variant-dark"
-                (navbar-demo @selected-2 @query-2))
-              (with-class "we-variant-light"
-                (navbar-demo @selected-3 @query-3))
-              (with-class "we-variant-subtle"
-                (navbar-demo @selected-4 @query-4))))
+           (call/key stack
+                     (navbar-demo @selected-1 @query-1 "we-variant-primary")
+                     (navbar-demo @selected-2 @query-2 "we-variant-dark")
+                     (navbar-demo @selected-3 @query-3 "we-variant-light")
+                     (navbar-demo @selected-4 @query-4 "we-variant-subtle")
+                     #:class "we-flow")
 
            ;; Buttons
            (section-heading "solar2-buttons" "Buttons")
-           (with-class "showcase-buttons-grid"
-             (grid
-              2
-              (stack
-               (with-class "we-button-row"
-                (inline
-                 (showcase-button "Primary"   "we-btn-primary"   #f)
-                 (showcase-button "Secondary" "we-btn-secondary" #f)
-                 (showcase-button "Success"   "we-btn-success"   #f)
-                 (showcase-button "Info"      "we-btn-info"      #f)
-                 (showcase-button "Warning"   "we-btn-warning"   #f)
-                 (showcase-button "Danger"    "we-btn-danger"    #f)
-                 (showcase-button "Light"     "we-btn-light"     #f)
-                 (showcase-button "Dark"      "we-btn-dark"      #f)
-                 (showcase-button "Link"      "we-btn-link"      #f)))
-               (with-class "we-button-row"
-                (inline
-                 (showcase-button "Primary"   "we-btn-primary"   #t)
-                 (showcase-button "Secondary" "we-btn-secondary" #t)
-                 (showcase-button "Success"   "we-btn-success"   #t)
-                 (showcase-button "Info"      "we-btn-info"      #t)
-                 (showcase-button "Warning"   "we-btn-warning"   #t)
-                 (showcase-button "Danger"    "we-btn-danger"    #t)
-                 (showcase-button "Light"     "we-btn-light"     #t)
-                 (showcase-button "Dark"      "we-btn-dark"      #t)
-                 (showcase-button "Link"      "we-btn-link"      #t)))
-               (with-class "we-button-row"
-                (inline
-                 (showcase-button "Primary"   "we-btn-outline-primary"   #f)
-                 (showcase-button "Secondary" "we-btn-outline-secondary" #f)
-                 (showcase-button "Success"   "we-btn-outline-success"   #f)
-                 (showcase-button "Info"      "we-btn-outline-info"      #f)
-                 (showcase-button "Warning"   "we-btn-outline-warning"   #f)
-                 (showcase-button "Danger"    "we-btn-outline-danger"    #f)
-                 (showcase-button "Light"     "we-btn-outline-light"     #f)
-                 (showcase-button "Dark"      "we-btn-outline-dark"      #f)))
-               (with-class "we-button-row"
-                (inline
-                 (with-class "we-btn-primary"
-                  (dropdown "Dropdown button"
-                            '((action "Action")
-                              (another "Another action")
-                              (more "Something else here"))
-                            (lambda (id)
-                              (log-button! (~a "Dropdown/Primary/" id)))))
-                 (with-class "we-btn-secondary"
-                  (dropdown "Dropdown button"
-                            '((action "Action")
-                              (another "Another action")
-                              (more "Something else here"))
-                            (lambda (id)
-                              (log-button! (~a "Dropdown/Secondary/" id)))))))
-               (with-class "we-button-row"
-                (inline
-                 (with-class "we-btn-lg"
-                  (showcase-button "Large button" "we-btn-primary" #f))
-                 (showcase-button "Default button" "we-btn-primary" #f)
-                 (with-class "we-btn-sm"
-                  (showcase-button "Small button" "we-btn-primary" #f)))))
-              (stack
-               (with-class "showcase-block-button-grid"
-                (stack
-                 (with-class "we-btn-lg showcase-block-button-row"
-                  (showcase-button "Block button" "we-btn-primary" #f))
-                 (with-class "we-btn-lg showcase-block-button-row"
-                  (showcase-button "Block button" "we-btn-primary" #f))))
-               (with-class "showcase-btn-check-group"
-                (toggle-button-group
-                 'checkbox
-                 '((c1 "Checkbox 1")
-                   (c2 "Checkbox 2")
-                   (c3 "Checkbox 3"))
-                 @btn-check-selected
-                 (lambda (next)
-                   (:= @btn-check-selected next)
-                   (log-button! (~a "Check/" next)))))
-               (with-class "showcase-btn-radio-group"
-                (toggle-button-group
-                 'radio
-                 '((r1 "Radio 1")
-                   (r2 "Radio 2")
-                   (r3 "Radio 3"))
-                 @btn-radio-selected
-                 (lambda (next)
-                   (:= @btn-radio-selected next)
-                   (log-button! (~a "Radio/" next)))))
-               (with-class "we-button-group-vertical"
-                (stack
-                 (with-class "we-btn-primary" (button "Button" (lambda () (log-button! "Vertical/1"))))
-                 (with-class "we-btn-primary" (button "Button" (lambda () (log-button! "Vertical/2"))))
-                 (with-class "we-btn-primary" (button "Button" (lambda () (log-button! "Vertical/3"))))
-                 (with-class "we-btn-primary" (button "Button" (lambda () (log-button! "Vertical/4"))))
-                 (with-class "we-btn-primary" (button "Button" (lambda () (log-button! "Vertical/5"))))
-                 (with-class "we-btn-primary" (button "Button" (lambda () (log-button! "Vertical/6"))))))
-               (with-class "we-button-row"
-                (with-class "we-btn-secondary"
-                  (button-group
-                   (button "Left"   (lambda () (log-button! "Group/Left")))
-                   (button "Middle" (lambda () (log-button! "Group/Middle")))
-                   (button "Right"  (lambda () (log-button! "Group/Right"))))))
-               (with-class "we-button-row"
-                (with-class "we-btn-secondary"
-                  (button-toolbar
-                   (toolbar-group
-                    (button "1" (lambda () (log-button! "Toolbar/1")))
-                    (button "2" (lambda () (log-button! "Toolbar/2")))
-                    (button "3" (lambda () (log-button! "Toolbar/3")))
-                    (button "4" (lambda () (log-button! "Toolbar/4"))))
-                   (toolbar-group
-                    (button "5" (lambda () (log-button! "Toolbar/5")))
-                    (button "6" (lambda () (log-button! "Toolbar/6")))
-                    (button "7" (lambda () (log-button! "Toolbar/7"))))
-                   (toolbar-group
-                    (button "8" (lambda () (log-button! "Toolbar/8"))))))))))
+           (call/key grid
+                     2
+                     (stack
+                      (call/key inline
+                                (showcase-button "Primary"   "we-btn-primary"   #f)
+                                (showcase-button "Secondary" "we-btn-secondary" #f)
+                                (showcase-button "Success"   "we-btn-success"   #f)
+                                (showcase-button "Info"      "we-btn-info"      #f)
+                                (showcase-button "Warning"   "we-btn-warning"   #f)
+                                (showcase-button "Danger"    "we-btn-danger"    #f)
+                                (showcase-button "Light"     "we-btn-light"     #f)
+                                (showcase-button "Dark"      "we-btn-dark"      #f)
+                                (showcase-button "Link"      "we-btn-link"      #f)
+                                #:class "we-button-row")
+                      (call/key inline
+                                (showcase-button "Primary"   "we-btn-primary"   #t)
+                                (showcase-button "Secondary" "we-btn-secondary" #t)
+                                (showcase-button "Success"   "we-btn-success"   #t)
+                                (showcase-button "Info"      "we-btn-info"      #t)
+                                (showcase-button "Warning"   "we-btn-warning"   #t)
+                                (showcase-button "Danger"    "we-btn-danger"    #t)
+                                (showcase-button "Light"     "we-btn-light"     #t)
+                                (showcase-button "Dark"      "we-btn-dark"      #t)
+                                (showcase-button "Link"      "we-btn-link"      #t)
+                                #:class "we-button-row")
+                      (call/key inline
+                                (showcase-button "Primary"   "we-btn-outline-primary"   #f)
+                                (showcase-button "Secondary" "we-btn-outline-secondary" #f)
+                                (showcase-button "Success"   "we-btn-outline-success"   #f)
+                                (showcase-button "Info"      "we-btn-outline-info"      #f)
+                                (showcase-button "Warning"   "we-btn-outline-warning"   #f)
+                                (showcase-button "Danger"    "we-btn-outline-danger"    #f)
+                                (showcase-button "Light"     "we-btn-outline-light"     #f)
+                                (showcase-button "Dark"      "we-btn-outline-dark"      #f)
+                                #:class "we-button-row")
+                      (call/key inline
+                                (call/key dropdown
+                                          "Dropdown button"
+                                          '((action "Action")
+                                            (another "Another action")
+                                            (more "Something else here"))
+                                          (lambda (id)
+                                            (log-button! (~a "Dropdown/Primary/" id)))
+                                          #:class "we-btn-primary")
+                                (call/key dropdown
+                                          "Dropdown button"
+                                          '((action "Action")
+                                            (another "Another action")
+                                            (more "Something else here"))
+                                          (lambda (id)
+                                            (log-button! (~a "Dropdown/Secondary/" id)))
+                                          #:class "we-btn-secondary")
+                                #:class "we-button-row")
+                      (call/key inline
+                                (showcase-button "Large button"   "we-btn-primary we-btn-lg" #f)
+                                (showcase-button "Default button" "we-btn-primary"           #f)
+                                (showcase-button "Small button"   "we-btn-primary we-btn-sm" #f)
+                                #:class "we-button-row"))
+                     (stack
+                      (call/key stack
+                                (showcase-button "Block button" "we-btn-primary we-btn-lg showcase-block-button-row" #f)
+                                (showcase-button "Block button" "we-btn-primary we-btn-lg showcase-block-button-row" #f)
+                                #:class "showcase-block-button-grid")
+                      (call/key toggle-button-group
+                                'checkbox
+                                '((c1 "Checkbox 1")
+                                  (c2 "Checkbox 2")
+                                  (c3 "Checkbox 3"))
+                                @btn-check-selected
+                                (lambda (next)
+                                  (:= @btn-check-selected next)
+                                  (log-button! (~a "Check/" next)))
+                                #:class "showcase-btn-check-group")
+                      (call/key toggle-button-group
+                                'radio
+                                '((r1 "Radio 1")
+                                  (r2 "Radio 2")
+                                  (r3 "Radio 3"))
+                                @btn-radio-selected
+                                (lambda (next)
+                                  (:= @btn-radio-selected next)
+                                  (log-button! (~a "Radio/" next)))
+                                #:class "showcase-btn-radio-group")
+                      (call/key stack
+                                (call/key button "Button" (lambda () (log-button! "Vertical/1")) #:class "we-btn-primary")
+                                (call/key button "Button" (lambda () (log-button! "Vertical/2")) #:class "we-btn-primary")
+                                (call/key button "Button" (lambda () (log-button! "Vertical/3")) #:class "we-btn-primary")
+                                (call/key button "Button" (lambda () (log-button! "Vertical/4")) #:class "we-btn-primary")
+                                (call/key button "Button" (lambda () (log-button! "Vertical/5")) #:class "we-btn-primary")
+                                (call/key button "Button" (lambda () (log-button! "Vertical/6")) #:class "we-btn-primary")
+                                #:class "we-button-group-vertical")
+                      (call/key inline
+                                (call/key button-group
+                                          (button "Left"   (lambda () (log-button! "Group/Left")))
+                                          (button "Middle" (lambda () (log-button! "Group/Middle")))
+                                          (button "Right"  (lambda () (log-button! "Group/Right")))
+                                          #:class "we-btn-secondary")
+                                #:class "we-button-row")
+                      (call/key inline
+                                (call/key button-toolbar
+                                          (toolbar-group
+                                           (button "1" (lambda () (log-button! "Toolbar/1")))
+                                           (button "2" (lambda () (log-button! "Toolbar/2")))
+                                           (button "3" (lambda () (log-button! "Toolbar/3")))
+                                           (button "4" (lambda () (log-button! "Toolbar/4"))))
+                                          (toolbar-group
+                                           (button "5" (lambda () (log-button! "Toolbar/5")))
+                                           (button "6" (lambda () (log-button! "Toolbar/6")))
+                                           (button "7" (lambda () (log-button! "Toolbar/7"))))
+                                          (toolbar-group
+                                           (button "8" (lambda () (log-button! "Toolbar/8"))))
+                                          #:class "we-btn-secondary")
+                                #:class "we-button-row"))
+                     #:class "showcase-buttons-grid")
 
            ;; Typography
            (section-heading "solar2-typography" "Typography")
-           (with-class "showcase-typography-grid"
-             (grid
-              3
-              (vpanel
-               (heading 1 "Heading 1")
-               (heading 2 "Heading 2")
-               (heading 3 "Heading 3")
-               (heading 4 "Heading 4")
-               (heading 5 "Heading 5")
-               (heading 6 "Heading 6")
-               (heading-with-subtitle 3 "Heading" "with faded secondary text")
-               (with-class "showcase-typography-lead"
-                 (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor.")))
-              (vpanel
-               (heading 2 "Example body text")
-               (inline
-                (text "Nullam quis risus eget ")
-                (link "urna mollis ornare" "#")
-                (text " vel eu leo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus."))
-               (with-class "showcase-fine-print"
-                 (text "This line of text is meant to be treated as fine print."))
-               (inline
-                (text "The following is ")
-                (with-class "showcase-text-strong"
-                  (text "rendered as bold text"))
-                (text "."))
-               (inline
-                (text "The following is ")
-                (with-class "showcase-text-emphasis"
-                  (text "rendered as italicized text"))
-                (text "."))
-               (inline
-                (text "An abbreviation of the word attribute is ")
-                (with-attrs '((title "attribute"))
-                  (with-class "showcase-abbr"
-                    (text "attr")))
-                (text ".")))
-              (vpanel
-               (heading 2 "Emphasis classes")
-               (with-class "showcase-text-primary"
-                 (text "text-primary"))
-               (with-class "showcase-text-primary-emphasis"
-                 (text "text-primary-emphasis"))
-               (with-class "showcase-text-secondary"
-                 (text "text-secondary"))
-               (with-class "showcase-text-secondary-emphasis"
-                 (text "text-secondary-emphasis"))
-               (with-class "showcase-text-success"
-                 (text "text-success"))
-               (with-class "showcase-text-success-emphasis"
-                 (text "text-success-emphasis"))
-               (with-class "showcase-text-danger"
-                 (text "text-danger"))
-               (with-class "showcase-text-danger-emphasis"
-                 (text "text-danger-emphasis"))
-               (with-class "showcase-text-warning"
-                 (text "text-warning"))
-               (with-class "showcase-text-warning-emphasis"
-                 (text "text-warning-emphasis"))
-               (with-class "showcase-text-info"
-                 (text "text-info"))
-               (with-class "showcase-text-info-emphasis"
-                 (text "text-info-emphasis"))
-               (with-class "showcase-text-light"
-                 (text "text-light"))
-               (with-class "showcase-text-light-emphasis"
-                 (text "text-light-emphasis"))
-               (with-class "showcase-text-dark"
-                 (text "text-dark"))
-               (with-class "showcase-text-dark-emphasis"
-                 (text "text-dark-emphasis"))
-               (with-class "showcase-text-body"
-                 (text "text-body"))
-               (with-class "showcase-text-body-emphasis"
-                 (text "text-body-emphasis"))
-               (with-class "showcase-text-body-secondary"
-                 (text "text-body-secondary"))
-               (with-class "showcase-text-tertiary"
-                 (text "text-body-tertiary")))))
+           (call/key grid
+                     3
+                     (vpanel
+                      (heading 1 "Heading 1")
+                      (heading 2 "Heading 2")
+                      (heading 3 "Heading 3")
+                      (heading 4 "Heading 4")
+                      (heading 5 "Heading 5")
+                      (heading 6 "Heading 6")
+                      (heading-with-subtitle 3 "Heading" "with faded secondary text")
+                      (call/key text
+                                "Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor."
+                                #:class "showcase-typography-lead"))
+                     (vpanel
+                      (heading 2 "Example body text")
+                      (inline
+                       (text "Nullam quis risus eget ")
+                       (link "urna mollis ornare" "#")
+                       (text " vel eu leo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus."))
+                      (call/key text
+                                "This line of text is meant to be treated as fine print."
+                                #:class "showcase-fine-print")
+                      (inline
+                       (text "The following is ")
+                       (call/key text "rendered as bold text" #:class "showcase-text-strong")
+                       (text "."))
+                      (inline
+                       (text "The following is ")
+                       (call/key text "rendered as italicized text" #:class "showcase-text-emphasis")
+                       (text "."))
+                      (inline
+                       (text "An abbreviation of the word attribute is ")
+                       (call/key text "attr"
+                                 #:class "showcase-abbr"
+                                 #:attrs '((title "attribute")))
+                       (text ".")))
+                     (vpanel
+                      (heading 2 "Emphasis classes")
+                      (call/key text "text-primary" #:class "showcase-text-primary")
+                      (call/key text "text-primary-emphasis" #:class "showcase-text-primary-emphasis")
+                      (call/key text "text-secondary" #:class "showcase-text-secondary")
+                      (call/key text "text-secondary-emphasis" #:class "showcase-text-secondary-emphasis")
+                      (call/key text "text-success" #:class "showcase-text-success")
+                      (call/key text "text-success-emphasis" #:class "showcase-text-success-emphasis")
+                      (call/key text "text-danger" #:class "showcase-text-danger")
+                      (call/key text "text-danger-emphasis" #:class "showcase-text-danger-emphasis")
+                      (call/key text "text-warning" #:class "showcase-text-warning")
+                      (call/key text "text-warning-emphasis" #:class "showcase-text-warning-emphasis")
+                      (call/key text "text-info" #:class "showcase-text-info")
+                      (call/key text "text-info-emphasis" #:class "showcase-text-info-emphasis")
+                      (call/key text "text-light" #:class "showcase-text-light")
+                      (call/key text "text-light-emphasis" #:class "showcase-text-light-emphasis")
+                      (call/key text "text-dark" #:class "showcase-text-dark")
+                      (call/key text "text-dark-emphasis" #:class "showcase-text-dark-emphasis")
+                      (call/key text "text-body" #:class "showcase-text-body")
+                      (call/key text "text-body-emphasis" #:class "showcase-text-body-emphasis")
+                      (call/key text "text-body-secondary" #:class "showcase-text-body-secondary")
+                      (call/key text "text-body-tertiary" #:class "showcase-text-tertiary"))
+                     #:class "showcase-typography-grid")
            (heading 2 "Blockquotes")
-           (with-class "showcase-typography-grid"
-             (grid
-              3
-              (with-class "showcase-blockquote"
-                (blockquote
-                 "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante."
-                 "Someone famous in Source Title"))
-              (with-class "showcase-blockquote showcase-blockquote-center"
-                (blockquote
-                 "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante."
-                 "Someone famous in Source Title"))
-              (with-class "showcase-blockquote showcase-blockquote-right"
-                (blockquote
-                 "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante."
-                 "Someone famous in Source Title"))
-             )
-           )
-           (with-class "showcase-inline-code"
-             (text "(render (window (text \"hello\")))"))
-           (with-class "showcase-pre"
-             (text "(define app\n  (render\n   (window\n    (vpanel (text \"A\") (text \"B\")))))"))
+           (call/key grid
+                     3
+                     (call/key blockquote
+                               "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante."
+                               "Someone famous in Source Title"
+                               #:class "showcase-blockquote")
+                     (call/key blockquote
+                               "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante."
+                               "Someone famous in Source Title"
+                               #:class "showcase-blockquote showcase-blockquote-center")
+                     (call/key blockquote
+                               "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante."
+                               "Someone famous in Source Title"
+                               #:class "showcase-blockquote showcase-blockquote-right")
+                     #:class "showcase-typography-grid")
+           (call/key text "(render (window (text \"hello\")))"
+                     #:class "showcase-inline-code")
+           (call/key text "(define app\n  (render\n   (window\n    (vpanel (text \"A\") (text \"B\")))))"
+                     #:class "showcase-pre")
 
            ;; Tables
            (section-heading "solar2-tables" "Tables")
-           (table '("Type" "Column heading" "Column heading" "Column heading")
-                  '(("Active"    "Column content" "Column content" "Column content")
-                    ("Default"   "Column content" "Column content" "Column content")
-                    ("Primary"   "Column content" "Column content" "Column content")
-                    ("Secondary" "Column content" "Column content" "Column content")
-                    ("Success"   "Column content" "Column content" "Column content")
-                    ("Danger"    "Column content" "Column content" "Column content")
-                    ("Warning"   "Column content" "Column content" "Column content")
-                    ("Info"      "Column content" "Column content" "Column content")
-                    ("Light"     "Column content" "Column content" "Column content")
-                    ("Dark"      "Column content" "Column content" "Column content"))
-                  'normal
-                  '((variants . (hover))
-                    (row-variants . (active #f primary secondary success danger warning info light dark))
-                    (row-header-column . 0)))
+           (call/key table
+                     '("Type" "Column heading" "Column heading" "Column heading")
+                     '(("Active"    "Column content" "Column content" "Column content")
+                       ("Default"   "Column content" "Column content" "Column content")
+                       ("Primary"   "Column content" "Column content" "Column content")
+                       ("Secondary" "Column content" "Column content" "Column content")
+                       ("Success"   "Column content" "Column content" "Column content")
+                       ("Danger"    "Column content" "Column content" "Column content")
+                       ("Warning"   "Column content" "Column content" "Column content")
+                       ("Info"      "Column content" "Column content" "Column content")
+                       ("Light"     "Column content" "Column content" "Column content")
+                       ("Dark"      "Column content" "Column content" "Column content"))
+                     #:density 'normal
+                     #:variants '(hover)
+                     #:row-variants '(active #f primary secondary success danger warning info light dark)
+                     #:row-header-column 0)
 
            ;; Forms
            (section-heading "solar2-forms" "Forms")
            (grid
             2
-            (with-class "showcase-forms-left"
-              (stack
-               (group "Legend"
-                 (with-class "we-form-row showcase-static-row"
-                   (inline
-                    (with-class "showcase-static-label"
-                      (text "Email"))
-                    (with-class "showcase-static-value"
-                      (with-class "we-form-control-plaintext"
-                        (with-attrs '((readonly "readonly") (value "email@example.com"))
-                          (input "" (lambda (_v) (void))))))))
-                 (with-class "we-form-row we-form-label"
-                   (text "Email address"))
-                 (with-class "we-form-row we-form-control-block"
-                   (with-attrs '((id "exampleInputEmail1")
-                                 (placeholder "Enter email")
-                                 (type "email"))
-                     (input @name (lambda (v) (:= @name v)))))
-                 (with-class "we-form-help"
-                   (text "We'll never share your email with anyone else."))
-                 (with-class "we-form-row we-form-label"
-                   (text "Password"))
-                 (with-class "we-form-row we-form-control-block"
-                   (with-attrs '((id "exampleInputPassword1")
-                                 (placeholder "Password")
-                                 (type "password")
-                                 (autocomplete "off"))
-                     (input @notes (lambda (v) (:= @notes v)))))
-                 (with-class "we-form-row we-form-label"
-                   (text "Example select"))
-                 (with-class "we-form-row we-form-control-block"
-                   (with-attrs '((id "exampleSelect1"))
-                     (choice '("1" "2" "3" "4" "5")
-                             @select-value
-                             (lambda (v) (:= @select-value v)))))
-                 (with-class "we-form-row we-form-label"
-                   (text "Example disabled select"))
-                 (with-class "we-form-row we-form-control-block"
-                   (with-attrs '((id "exampleDisabledSelect1")
-                                 (disabled "disabled"))
-                     (choice '("1" "2" "3" "4" "5")
-                             "1"
-                             (lambda (_v) (void)))))
-                 (with-class "we-form-row we-form-label"
-                   (text "Example multiple select"))
-                 (with-class "we-form-row we-form-control-block"
-                   (with-attrs '((id "exampleSelect2")
-                                 (multiple "multiple")
-                                 (size "5"))
-                     (choice '("1" "2" "3" "4" "5")
-                             "1"
-                             (lambda (_v) (void)))))
-                 (with-class "we-form-row we-form-label"
-                   (text "Example textarea"))
-                 (with-class "we-form-row we-form-control-block"
-                   (with-attrs '((id "exampleTextarea"))
-                     (textarea @notes
-                               (lambda (v) (:= @notes v))
-                               3
-                               '())))
-                 (with-class "we-form-row"
-                   (text "Default file input example"))
-                 (with-class "we-form-row we-form-control-block"
-                   (with-attrs '((type "file"))
-                     (input "" (lambda (_v) (void))))
-                 )
-                 (with-class "we-form-row"
-                   (group "Radio buttons"
-                     (radios '("Option one is this and that - be sure to include why it's great"
-                               "Option two can be something else and selecting it will deselect option one"
-                               ("Option three is disabled"
-                                "Option three is disabled"
-                                #t))
-                             @radio-value
-                             (lambda (v) (:= @radio-value v)))))
-                 (with-class "we-form-row"
-                   (group "Checkboxes"
-                     (stack
-                      (with-class "we-form-check we-checkbox-row"
-                        (inline
-                         (checkbox @accept?
-                                   (lambda (v) (:= @accept? v)))
-                         (text "Default checkbox")))
-                      (with-class "we-form-check we-checkbox-row"
-                        (inline
-                         (checkbox #t (lambda (_v) (void)))
-                         (text "Checked checkbox"))))))
-                 (with-class "we-form-row"
-                   (group "Switches"
-                     (stack
-                      (with-class "we-form-check we-switch-row"
-                        (inline
-                         (with-class "we-switch-control"
-                           (checkbox #f (lambda (_v) (void))))
-                         (text "Default switch checkbox input")))
-                      (with-class "we-form-check we-switch-row"
-                        (inline
-                         (with-class "we-switch-control"
-                           (checkbox #t (lambda (_v) (void))))
-                         (text "Checked switch checkbox input"))))))
-                 (with-class "we-form-row"
-                   (heading 3 "Ranges"))
-                 (with-class "we-form-row"
-                   (text "Example range"))
-                 (with-class "we-form-row we-form-control-block we-range-default"
-                   (with-attrs '((id "customRange1"))
-                     (slider @level (lambda (v) (:= @level v)) 0 100)))
-                 (with-class "we-form-row"
-                   (text "Disabled range"))
-                 (with-class "we-form-row we-range-disabled"
-                   (with-attrs '((disabled "disabled"))
-                     (slider 50 (lambda (_v) (void)) 0 100)))
-                 (with-class "we-form-row"
-                   (text "Example range"))
-                 (with-class "we-form-row we-range-step"
-                   (with-attrs '((min "0") (max "5") (step "0.5"))
-                     (slider 3 (lambda (_v) (void)) 0 5)))
-                 (with-class "we-form-row"
-                   (with-class "we-btn-primary"
-                     (inline
-                      (button "Submit" (lambda () (void)))))))))
-            (with-class "showcase-forms-right"
-              (stack
-               (with-class "we-form-row"
-                 (text "Disabled input"))
-               (with-class "we-form-row we-form-control-block we-form-state-disabled"
-                 (with-attrs '((id "disabledInput")
-                               (placeholder "Disabled input here...")
-                               (disabled "disabled"))
-                   (input "" (lambda (_v) (void))))
-               )
-               (with-class "we-form-row"
-                 (text "Readonly input"))
-               (with-class "we-form-row we-form-control-block"
-                 (with-attrs '((id "readOnlyInput")
-                               (placeholder "Readonly input here...")
-                               (readonly "readonly"))
-                   (input "" (lambda (_v) (void))))
-               )
-               (with-class "we-form-row"
-                 (text "Valid input"))
-               (with-class "we-form-state-valid we-form-control-block showcase-field-valid"
-                 (with-attrs '((id "inputValid")
-                               (value "correct value"))
-                   (input "" (lambda (_v) (void))))
-               )
-               (with-class "we-form-feedback we-form-feedback-valid"
-                 (text "Success! You've done it."))
-               (with-class "we-form-row"
-                 (text "Invalid input"))
-               (with-class "we-form-state-invalid we-form-control-block showcase-field-invalid"
-                 (with-attrs '((id "inputInvalid")
-                               (value "wrong value"))
-                   (input "" (lambda (_v) (void))))
-               )
-               (with-class "we-form-feedback we-form-feedback-invalid"
-                 (text "Sorry, that username's taken. Try another?"))
-               (with-class "we-form-row"
-                 (text "Large input"))
-               (with-attrs '((placeholder ".form-control-lg"))
-                 (with-class "we-input-lg"
-                   (input "" (lambda (_v) (void))))
-               )
-               (with-class "we-form-row"
-                 (text "Default input"))
-               (with-class "showcase-field-default"
-                 (with-attrs '((placeholder "Default input"))
-                   (input "" (lambda (_v) (void)))
-                 ))
-               (with-class "we-form-row"
-                 (text "Small input"))
-               (with-attrs '((placeholder ".form-control-sm"))
-                 (with-class "we-input-sm"
-                   (input "" (lambda (_v) (void))))
-               )
-               (with-class "we-form-row"
-                 (text "Input addons"))
-               (with-class "we-input-group"
-                 (inline
-                  (with-class "we-input-group-prefix"
-                    (text "$"))
-                  (input "" (lambda (_v) (void)))
-                  (with-class "we-input-group-prefix"
-                    (text ".00"))))
-               (with-class "we-input-group"
-                 (inline
-                  (input "" (lambda (_v) (void)))
-                  (button "Button" (lambda () (void)))))
-               (with-class "we-form-row"
-                 (text "Floating labels"))
-               (with-class "we-floating-field"
-                 (stack
-                  (text "Email address")
-                  (with-attrs '((placeholder "name@example.com"))
-                    (input "" (lambda (_v) (void)))))
-               )
-               (with-class "we-floating-field"
-                 (stack
-                  (text "Password")
-                  (with-attrs '((placeholder "Password") (type "password") (autocomplete "off"))
-                    (input "" (lambda (_v) (void)))))
-               ))))
+            (call/key stack
+                      (group "Legend"
+                             (call/key inline
+                                       (call/key text "Email"
+                                                 #:class "showcase-static-label")
+                                       (call/key input
+                                                 ""
+                                                 (lambda (_v) (void))
+                                                 #:input-attrs '((readonly "readonly")
+                                                                 (value "email@example.com"))
+                                                 #:class "showcase-static-value we-form-control-plaintext")
+                                       #:class "we-form-row showcase-static-row")
+                             (call/key text "Email address"
+                                       #:class "we-form-row we-form-label")
+                             (call/key input
+                                       @name
+                                       (lambda (v) (:= @name v))
+                                       #:input-attrs '((id "exampleInputEmail1")
+                                                       (placeholder "Enter email")
+                                                       (type "email"))
+                                       #:class "we-form-row we-form-control-block")
+                             (call/key text "We'll never share your email with anyone else."
+                                       #:class "we-form-help")
+                             (call/key text "Password"
+                                       #:class "we-form-row we-form-label")
+                             (call/key input
+                                       @notes
+                                       (lambda (v) (:= @notes v))
+                                       #:input-attrs '((id "exampleInputPassword1")
+                                                       (placeholder "Password")
+                                                       (type "password")
+                                                       (autocomplete "off"))
+                                       #:class "we-form-row we-form-control-block")
+                             (call/key text "Example select"
+                                       #:class "we-form-row we-form-label")
+                             (call/key choice
+                                       '("1" "2" "3" "4" "5")
+                                       @select-value
+                                       (lambda (v) (:= @select-value v))
+                                       #:attrs '((id "exampleSelect1"))
+                                       #:class "we-form-row we-form-control-block")
+                             (call/key text "Example disabled select"
+                                       #:class "we-form-row we-form-label")
+                             (call/key choice
+                                       '("1" "2" "3" "4" "5")
+                                       "1"
+                                       (lambda (_v) (void))
+                                       #:attrs '((id "exampleDisabledSelect1")
+                                                 (disabled "disabled"))
+                                       #:class "we-form-row we-form-control-block")
+                             (call/key text "Example multiple select"
+                                       #:class "we-form-row we-form-label")
+                             (call/key choice
+                                       '("1" "2" "3" "4" "5")
+                                       "1"
+                                       (lambda (_v) (void))
+                                       #:attrs '((id "exampleSelect2")
+                                                 (multiple "multiple")
+                                                 (size "5"))
+                                       #:class "we-form-row we-form-control-block")
+                             (call/key text "Example textarea"
+                                       #:class "we-form-row we-form-label")
+                             (call/key textarea
+                                       @notes
+                                       (lambda (v) (:= @notes v))
+                                       #:rows 3
+                                       #:textarea-attrs '((id "exampleTextarea"))
+                                       #:class "we-form-row we-form-control-block")
+                             (call/key text "Default file input example"
+                                       #:class "we-form-row")
+                             (call/key input
+                                       ""
+                                       (lambda (_v) (void))
+                                       #:input-attrs '((type "file"))
+                                       #:class "we-form-row we-form-control-block")
+                             (call/key group
+                                       "Radio buttons"
+                                       (call/key radios
+                                                 '("Option one is this and that - be sure to include why it's great"
+                                                   "Option two can be something else and selecting it will deselect option one"
+                                                   ("Option three is disabled"
+                                                    "Option three is disabled"
+                                                    #t))
+                                                 @radio-value
+                                                 (lambda (v) (:= @radio-value v)))
+                                       #:class "we-form-row")
+                             (call/key group
+                                       "Checkboxes"
+                                       (call/key stack
+                                                 (call/key inline
+                                                           (checkbox @accept?
+                                                                     (lambda (v) (:= @accept? v)))
+                                                           (text "Default checkbox")
+                                                           #:class "we-form-check we-checkbox-row")
+                                                 (call/key inline
+                                                           (checkbox #t (lambda (_v) (void)))
+                                                           (text "Checked checkbox")
+                                                           #:class "we-form-check we-checkbox-row"))
+                                       #:class "we-form-row")
+                             (call/key group
+                                       "Switches"
+                                       (call/key stack
+                                                 (call/key inline
+                                                           (call/key checkbox
+                                                                     #f
+                                                                     (lambda (_v) (void))
+                                                                     #:class "we-switch-control")
+                                                           (text "Default switch checkbox input")
+                                                           #:class "we-form-check we-switch-row")
+                                                 (call/key inline
+                                                           (call/key checkbox
+                                                                     #t
+                                                                     (lambda (_v) (void))
+                                                                     #:class "we-switch-control")
+                                                           (text "Checked switch checkbox input")
+                                                           #:class "we-form-check we-switch-row"))
+                                       #:class "we-form-row")
+                             (call/key heading 3 "Ranges"
+                                       #:class "we-form-row")
+                             (call/key text "Example range"
+                                       #:class "we-form-row")
+                             (call/key slider
+                                       @level
+                                       (lambda (v) (:= @level v))
+                                       #:min 0
+                                       #:max 100
+                                       #:id "customRange1"
+                                       #:class "we-form-row we-form-control-block we-range-default")
+                             (call/key text "Disabled range"
+                                       #:class "we-form-row")
+                             (call/key slider
+                                       50
+                                       (lambda (_v) (void))
+                                       #:min 0
+                                       #:max 100
+                                       #:attrs '((disabled "disabled"))
+                                       #:class "we-form-row we-range-disabled")
+                             (call/key text "Example range"
+                                       #:class "we-form-row")
+                             (call/key slider
+                                       3
+                                       (lambda (_v) (void))
+                                       #:min 0
+                                       #:max 5
+                                       #:attrs '((min "0") (max "5") (step "0.5"))
+                                       #:class "we-form-row we-range-step")
+                             (call/key inline
+                                       (button "Submit" (lambda () (void)))
+                                       #:class "we-form-row we-btn-primary"))
+                      #:class "showcase-forms-left")
+            (call/key stack
+                      (call/key text "Disabled input"
+                                #:class "we-form-row")
+                      (call/key input
+                                ""
+                                (lambda (_v) (void))
+                                #:input-attrs '((id "disabledInput")
+                                                (placeholder "Disabled input here...")
+                                                (disabled "disabled"))
+                                #:class "we-form-row we-form-control-block we-form-state-disabled")
+                      (call/key text "Readonly input"
+                                #:class "we-form-row")
+                      (call/key input
+                                ""
+                                (lambda (_v) (void))
+                                #:input-attrs '((id "readOnlyInput")
+                                                (placeholder "Readonly input here...")
+                                                (readonly "readonly"))
+                                #:class "we-form-row we-form-control-block")
+                      (call/key text "Valid input"
+                                #:class "we-form-row")
+                      (call/key input
+                                ""
+                                (lambda (_v) (void))
+                                #:input-attrs '((id "inputValid")
+                                                (value "correct value"))
+                                #:class "we-form-state-valid we-form-control-block showcase-field-valid")
+                      (call/key text "Success! You've done it."
+                                #:class "we-form-feedback we-form-feedback-valid")
+                      (call/key text "Invalid input"
+                                #:class "we-form-row")
+                      (call/key input
+                                ""
+                                (lambda (_v) (void))
+                                #:input-attrs '((id "inputInvalid")
+                                                (value "wrong value"))
+                                #:class "we-form-state-invalid we-form-control-block showcase-field-invalid")
+                      (call/key text "Sorry, that username's taken. Try another?"
+                                #:class "we-form-feedback we-form-feedback-invalid")
+                      (call/key text "Large input"
+                                #:class "we-form-row")
+                      (call/key input
+                                ""
+                                (lambda (_v) (void))
+                                #:input-attrs '((placeholder ".form-control-lg"))
+                                #:class "we-input-lg")
+                      (call/key text "Default input"
+                                #:class "we-form-row")
+                      (call/key input
+                                ""
+                                (lambda (_v) (void))
+                                #:input-attrs '((placeholder "Default input"))
+                                #:class "showcase-field-default")
+                      (call/key text "Small input"
+                                #:class "we-form-row")
+                      (call/key input
+                                ""
+                                (lambda (_v) (void))
+                                #:input-attrs '((placeholder ".form-control-sm"))
+                                #:class "we-input-sm")
+                      (call/key text "Input addons"
+                                #:class "we-form-row")
+                      (call/key inline
+                                (call/key text "$"
+                                          #:class "we-input-group-prefix")
+                                (input "" (lambda (_v) (void)))
+                                (call/key text ".00"
+                                          #:class "we-input-group-prefix")
+                                #:class "we-input-group")
+                      (call/key inline
+                                (input "" (lambda (_v) (void)))
+                                (button "Button" (lambda () (void)))
+                                #:class "we-input-group")
+                      (call/key text "Floating labels"
+                                #:class "we-form-row")
+                      (call/key stack
+                                (text "Email address")
+                                (call/key input
+                                          ""
+                                          (lambda (_v) (void))
+                                          #:input-attrs '((placeholder "name@example.com")))
+                                #:class "we-floating-field")
+                      (call/key stack
+                                (text "Password")
+                                (call/key input
+                                          ""
+                                          (lambda (_v) (void))
+                                          #:input-attrs '((placeholder "Password")
+                                                          (type "password")
+                                                          (autocomplete "off")))
+                                #:class "we-floating-field")
+                      #:class "showcase-forms-right"))
 
            ;; Navs
-           (with-class "we-section-break-xl"
-             (with-id "solar2-navs-section"
-               (stack
+           (call/key stack
                 (section-heading "solar2-navs" "Navs")
                 (grid
                  2
-                 (with-class "we-stack-gap-1"
-                  (stack
-                   (heading 2 "Tabs")
-                   (tab-panel
-                    @tab
-                    (list (cons "Home"
-                                (text "Raw denim you probably haven't heard of them jean shorts Austin. Nesciunt tofu stumptown aliqua, retro synth master cleanse. Mustache cliche tempor, williamsburg carles vegan helvetica. Reprehenderit butcher retro keffiyeh dreamcatcher synth. Cosby sweater eu banh mi, qui irure terry richardson ex squid. Aliquip placeat salvia cillum iphone. Seitan aliquip quis cardigan american apparel, butcher voluptate nisi qui."))
-                          (cons "Profile"
-                                (text "Food truck fixie locavore, accusamus mcsweeney's marfa nulla single-origin coffee squid. Exercitation +1 labore velit, blog sartorial PBR leggings next level wes anderson artisan four loko farm-to-table craft beer twee. Qui photo booth letterpress, commodo enim craft beer mlkshk aliquip jean shorts ullamco ad vinyl cillum PBR. Homo nostrud organic, assumenda labore aesthetic magna delectus mollit."))
-                          (cons "Disabled"
-                                (text "Etsy mixtape wayfarers, ethical wes anderson tofu before they sold out mcsweeney's organic lomo retro fanny pack lo-fi farm-to-table readymade. Messenger bag gentrify pitchfork tattooed craft beer, iphone skateboard locavore carles etsy salvia banksy hoodie helvetica. DIY synth PBR banksy irony. Leggings gentrify squid 8-bit cred pitchfork."))
-                          (cons "Dropdown ▾"
-                                (text "Trust fund seitan letterpress, keytar raw denim keffiyeh etsy art party before they sold out master cleanse gluten-free squid scenester freegan cosby sweater. Fanny pack portland seitan DIY, art party locavore wolf cliche high life echo park Austin. Cred vinyl keffiyeh DIY salvia PBR, banh mi before they sold out farm-to-table VHS viral locavore cosby sweater."))))))
-                 (with-class "we-stack-gap-1"
-                  (stack
-                   (heading 2 "Pills")
-                   (with-class "we-tab-style-pills"
-                    (tab-panel
-                     @pill
-                     (list (cons "Active"     (text "Active pill content."))
-                           (cons "Dropdown ▾" (text "Dropdown pill content."))
-                           (cons "Link"       (text "Link pill content."))
-                           (cons "Disabled"   (text "Disabled pill content.")))))
-                   (with-class "we-tab-style-pills we-nav-pills-vertical"
-                    (tab-panel
-                     @pill-vertical
-                     (list (cons "Active"     (text "Active vertical pill content."))
-                           (cons "Dropdown ▾" (text "Dropdown vertical content."))
-                           (cons "Link"       (text "Link vertical content."))
-                           (cons "Disabled"   (text "Disabled vertical content."))))))))
+                 (call/key stack
+                           (heading 2 "Tabs")
+                           (tab-panel
+                            @tab
+                            (list (cons "Home"
+                                        (text "Raw denim you probably haven't heard of them jean shorts Austin. Nesciunt tofu stumptown aliqua, retro synth master cleanse. Mustache cliche tempor, williamsburg carles vegan helvetica. Reprehenderit butcher retro keffiyeh dreamcatcher synth. Cosby sweater eu banh mi, qui irure terry richardson ex squid. Aliquip placeat salvia cillum iphone. Seitan aliquip quis cardigan american apparel, butcher voluptate nisi qui."))
+                                  (cons "Profile"
+                                        (text "Food truck fixie locavore, accusamus mcsweeney's marfa nulla single-origin coffee squid. Exercitation +1 labore velit, blog sartorial PBR leggings next level wes anderson artisan four loko farm-to-table craft beer twee. Qui photo booth letterpress, commodo enim craft beer mlkshk aliquip jean shorts ullamco ad vinyl cillum PBR. Homo nostrud organic, assumenda labore aesthetic magna delectus mollit."))
+                                  (cons "Disabled"
+                                        (text "Etsy mixtape wayfarers, ethical wes anderson tofu before they sold out mcsweeney's organic lomo retro fanny pack lo-fi farm-to-table readymade. Messenger bag gentrify pitchfork tattooed craft beer, iphone skateboard locavore carles etsy salvia banksy hoodie helvetica. DIY synth PBR banksy irony. Leggings gentrify squid 8-bit cred pitchfork."))
+                                  (cons "Dropdown ▾"
+                                        (text "Trust fund seitan letterpress, keytar raw denim keffiyeh etsy art party before they sold out master cleanse gluten-free squid scenester freegan cosby sweater. Fanny pack portland seitan DIY, art party locavore wolf cliche high life echo park Austin. Cred vinyl keffiyeh DIY salvia PBR, banh mi before they sold out farm-to-table VHS viral locavore cosby sweater."))))
+                           #:class "we-stack-gap-1")
+                 (call/key stack
+                           (heading 2 "Pills")
+                           (call/key tab-panel
+                                     @pill
+                                     (list (cons "Active"     (text "Active pill content."))
+                                           (cons "Dropdown ▾" (text "Dropdown pill content."))
+                                           (cons "Link"       (text "Link pill content."))
+                                           (cons "Disabled"   (text "Disabled pill content.")))
+                                     #:class "we-tab-style-pills")
+                           (call/key tab-panel
+                                     @pill-vertical
+                                     (list (cons "Active"     (text "Active vertical pill content."))
+                                           (cons "Dropdown ▾" (text "Dropdown vertical content."))
+                                           (cons "Link"       (text "Link vertical content."))
+                                           (cons "Disabled"   (text "Disabled vertical content.")))
+                                     #:class "we-tab-style-pills we-nav-pills-vertical")
+                           #:class "we-stack-gap-1"))
                 (grid
                  2
                  (stack
@@ -872,108 +884,112 @@
                  (stack
                   (heading 2 "Pagination")
                   (pagination 5 @page (lambda (v) (:= @page v)))
-                  (with-class "we-pagination-lg"
-                   (pagination 5 @page (lambda (v) (:= @page v))))
-                  (with-class "we-pagination-sm"
-                   (pagination 5 @page (lambda (v) (:= @page v))))))
+                  (call/key pagination 5 @page (lambda (v) (:= @page v)) #:class "we-pagination-lg")
+                  (call/key pagination 5 @page (lambda (v) (:= @page v)) #:class "we-pagination-sm")))
                 (heading 2 "Underline")
-                (with-class "we-tab-style-underline"
-                 (tab-panel
-                  @underline-tab
-                  (list (cons "Active"   (text "Underline active content."))
-                        (cons "Link"     (text "Underline link content."))
-                        (cons "Link​"    (text "Underline link two content."))
-                        (list "Disabled" (text "Underline disabled content.") #t)))))))
+                (call/key tab-panel
+                          @underline-tab
+                          (list (cons "Active"   (text "Underline active content."))
+                                (cons "Link"     (text "Underline link content."))
+                                (cons "Link​"    (text "Underline link two content."))
+                                (list "Disabled" (text "Underline disabled content.") #t))
+                          #:class "we-tab-style-underline")
+                #:class "we-section-break-xl"
+                #:id "solar2-navs-section")
 
            ;; Indicators
-           (with-class "we-section-break-xl"
-             (with-id "solar2-indicators-section"
-               (stack
+           (call/key stack
               (section-heading "solar2-indicators" "Indicators")
               (heading 2 "Alerts")
-              (alert-rich
-               "Best check yo self, you're not looking too good. Nulla vitae elit libero, a pharetra augue. Praesent commodo cursus magna,"
-               "Warning!"
-               "vel scelerisque nisl consectetur et."
-               "#"
-               'warn
-               (list (cons 'scale 'major)
-                     (cons 'dismiss-action (lambda () (void)))))
+              (call/key alert-rich
+                        "Best check yo self, you're not looking too good. Nulla vitae elit libero, a pharetra augue. Praesent commodo cursus magna,"
+                        "Warning!"
+                        "vel scelerisque nisl consectetur et."
+                        "#"
+                        #:level 'warn
+                        #:scale 'major
+                        #:dismiss-action (lambda () (void)))
               (grid
                3
-               (alert-rich "Change a few things up and"
-                           "Oh snap!"
-                           "try submitting again."
-                           "#"
-                           'error
-                           (list (cons 'layout 'inline)
-                                 (cons 'dismiss-action (lambda () (void)))))
-               (alert-rich "You successfully read"
-                           "Well done!"
-                           "this important alert message."
-                           "#"
-                           'success
-                           (list (cons 'layout 'inline)
-                                 (cons 'dismiss-action (lambda () (void)))))
-               (alert-rich "This alert needs your attention, but it's not super important."
-                           "Heads up!"
-                           #f
-                           #f
-                           'info
-                           (list (cons 'layout 'inline)
-                                 (cons 'dismiss-action (lambda () (void))))))
+               (call/key alert-rich
+                         "Change a few things up and"
+                         "Oh snap!"
+                         "try submitting again."
+                         "#"
+                         #:level 'error
+                         #:layout 'inline
+                         #:dismiss-action (lambda () (void)))
+               (call/key alert-rich
+                         "You successfully read"
+                         "Well done!"
+                         "this important alert message."
+                         "#"
+                         #:level 'success
+                         #:layout 'inline
+                         #:dismiss-action (lambda () (void)))
+               (call/key alert-rich
+                         "This alert needs your attention, but it's not super important."
+                         "Heads up!"
+                         #f
+                         #f
+                         #:level 'info
+                         #:layout 'inline
+                         #:dismiss-action (lambda () (void))))
               (grid
                3
-               (alert-rich "Change a few things up and"
-                           "Oh snap!"
-                           "try submitting again."
-                           "#"
-                           'info
-                           (list (cons 'layout 'inline)
-                                 (cons 'tone 'primary)
-                                 (cons 'dismiss-action (lambda () (void)))))
-               (alert-rich "You successfully read"
-                           "Well done!"
-                           "this important alert message."
-                           "#"
-                           'info
-                           (list (cons 'layout 'inline)
-                                 (cons 'tone 'secondary)
-                                 (cons 'dismiss-action (lambda () (void)))))
-               (alert-rich "This alert needs your attention, but it's not super important."
-                           "Heads up!"
-                           #f
-                           #f
-                           'info
-                           (list (cons 'layout 'inline)
-                                 (cons 'tone 'light)
-                                 (cons 'dismiss-action (lambda () (void))))))
+               (call/key alert-rich
+                         "Change a few things up and"
+                         "Oh snap!"
+                         "try submitting again."
+                         "#"
+                         #:level 'info
+                         #:layout 'inline
+                         #:tone 'primary
+                         #:dismiss-action (lambda () (void)))
+               (call/key alert-rich
+                         "You successfully read"
+                         "Well done!"
+                         "this important alert message."
+                         "#"
+                         #:level 'info
+                         #:layout 'inline
+                         #:tone 'secondary
+                         #:dismiss-action (lambda () (void)))
+               (call/key alert-rich
+                         "This alert needs your attention, but it's not super important."
+                         "Heads up!"
+                         #f
+                         #f
+                         #:level 'info
+                         #:layout 'inline
+                         #:tone 'light
+                         #:dismiss-action (lambda () (void))))
               (heading 2 "Badges")
-              (with-class "we-button-row we-badge-shape-square"
-                (inline
-                 (badge "Primary" 'primary)
-                 (badge "Secondary" 'secondary)
-                 (badge "Success" 'success)
-                 (badge "Danger" 'danger)
-                 (badge "Warning" 'warning)
-                 (badge "Info" 'info)
-                 (badge "Light" 'light)
-                 (badge "Dark" 'dark)))
-              (with-class "we-button-row we-badge-shape-pill"
-                (inline
-                 (badge "Primary" 'primary)
-                 (badge "Secondary" 'secondary)
-                 (badge "Success" 'success)
-                 (badge "Danger" 'danger)
-                 (badge "Warning" 'warning)
-                 (badge "Info" 'info)
-                 (badge "Light" 'light)
-                 (badge "Dark" 'dark))))))
+              (call/key inline
+                        (badge "Primary" 'primary)
+                        (badge "Secondary" 'secondary)
+                        (badge "Success" 'success)
+                        (badge "Danger" 'danger)
+                        (badge "Warning" 'warning)
+                        (badge "Info" 'info)
+                        (badge "Light" 'light)
+                        (badge "Dark" 'dark)
+                        #:class "we-button-row we-badge-shape-square")
+              (call/key inline
+                        (badge "Primary" 'primary)
+                        (badge "Secondary" 'secondary)
+                        (badge "Success" 'success)
+                        (badge "Danger" 'danger)
+                        (badge "Warning" 'warning)
+                        (badge "Info" 'info)
+                        (badge "Light" 'light)
+                        (badge "Dark" 'dark)
+                        #:class "we-button-row we-badge-shape-pill")
+              #:class "we-section-break-xl"
+              #:id "solar2-indicators-section")
 
            ;; Progress
-           (with-class "we-section-break-xl"
-             (with-id "solar2-progress-section"
-               (stack
+           (call/key stack
               (section-heading "solar2-progress" "Progress")
               (heading 3 "Basic")
               (progress-track
@@ -995,7 +1011,9 @@
               (progress-track (progress-fill 75 'warn #t))
               (progress-track (progress-fill 100 'error #t))
               (heading 3 "Animated")
-              (progress-track (progress-fill 75 'default #t #t)))))
+              (progress-track (progress-fill 75 'default #t #t))
+              #:class "we-section-break-xl"
+              #:id "solar2-progress-section")
 
            ;; Containers
            (section-heading "solar2-containers" "Containers")
@@ -1025,272 +1043,248 @@
              (showcase-rich-list-group)))
 
            ;; Cards
-           (with-class "we-section-break"
-             (section-heading "solar2-cards" "Cards"))
+           (call/key section-heading "solar2-cards" "Cards"
+                     #:class "we-section-break")
            (heading 2 "Cards")
-           (with-id "solar2-cards-body"
-            (grid
-             3
-            (stack
-             (card "Header" #f
-                   (card-tone-options 'primary 'fill)
-                   (heading 4 "Primary card title")
-                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
-             (card "Header" #f
-                   (card-tone-options 'secondary 'fill)
-                   (heading 4 "Secondary card title")
-                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
-             (card "Header" #f
-                   (card-tone-options 'success 'fill)
-                   (heading 4 "Success card title")
-                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
-             (card "Header" #f
-                   (card-tone-options 'danger 'fill)
-                   (heading 4 "Danger card title")
-                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
-             (card "Header" #f
-                   (card-tone-options 'warning 'fill)
-                   (heading 4 "Warning card title")
-                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
-             (card "Header" #f
-                   (card-tone-options 'info 'fill)
-                   (heading 4 "Info card title")
-                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
-             (card "Header" #f
-                   (card-tone-options 'light 'fill)
-                   (heading 4 "Light card title")
-                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
-             (card "Header" #f
-                   (card-tone-options 'dark 'fill)
-                   (heading 4 "Dark card title")
-                   (text "Some quick example text to build on the card title and make up the bulk of the card's content.")))
-            (stack
-             (card "Header" #f
-                   (card-tone-options 'primary 'outline)
-                   (heading 4 "Primary card title")
-                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
-             (card "Header" #f
-                   (card-tone-options 'secondary 'outline)
-                   (heading 4 "Secondary card title")
-                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
-             (card "Header" #f
-                   (card-tone-options 'success 'outline)
-                   (heading 4 "Success card title")
-                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
-             (card "Header" #f
-                   (card-tone-options 'danger 'outline)
-                   (heading 4 "Danger card title")
-                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
-             (card "Header" #f
-                   (card-tone-options 'warning 'outline)
-                   (heading 4 "Warning card title")
-                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
-             (card "Header" #f
-                   (card-tone-options 'info 'outline)
-                   (heading 4 "Info card title")
-                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
-             (card "Header" #f
-                   (card-tone-options 'light 'outline)
-                   (heading 4 "Light card title")
-                   (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
-             (card "Header" #f
-                   (card-tone-options 'dark 'outline)
-                   (heading 4 "Dark card title")
-                   (text "Some quick example text to build on the card title and make up the bulk of the card's content.")))
-            (stack
-             (card "Card header" "2 days ago"
-                   (list (cons 'actions
-                               (list (link "Card link" "#")
-                                     (link "Another link" "#"))))
-                   (stack
-                     (heading 5 "Special title treatment")
-                     (with-class "we-card-subtitle"
-                       (text "Support card subtitle"))
-                     (with-class "showcase-card-image-cap"
-                       (text "Image cap"))
-                     (text "Some quick example text to build on the card title and make up the bulk of the card's content.")
-                     (with-class "we-list-group"
-                       (stack
-                        (with-class "we-list-group-item"
-                         (text "Cras justo odio"))
-                       (with-class "we-list-group-item"
-                         (text "Dapibus ac facilisis in"))
-                       (with-class "we-list-group-item"
-                         (text "Vestibulum at eros"))))))
-             (card "Card title" #f
-                   (list (cons 'actions
-                               (list (link "Card link" "#")
-                                     (link "Another link" "#"))))
-                   (stack
-                    (with-class "we-card-subtitle"
-                      (text "Card subtitle"))
-                    (text "Some quick example text to build on the card title and make up the bulk of the card's content."))))))))
+           (call/key grid
+                     3
+                     (stack
+                      (tone-card 'primary   'fill    "Primary card title")
+                      (tone-card 'secondary 'fill    "Secondary card title")
+                      (tone-card 'success   'fill    "Success card title")
+                      (tone-card 'danger    'fill    "Danger card title")
+                      (tone-card 'warning   'fill    "Warning card title")
+                      (tone-card 'info      'fill    "Info card title")
+                      (tone-card 'light     'fill    "Light card title")
+                      (tone-card 'dark      'fill    "Dark card title"))
+                     (stack
+                      (tone-card 'primary   'outline "Primary card title")
+                      (tone-card 'secondary 'outline "Secondary card title")
+                      (tone-card 'success   'outline "Success card title")
+                      (tone-card 'danger    'outline "Danger card title")
+                      (tone-card 'warning   'outline "Warning card title")
+                      (tone-card 'info      'outline "Info card title")
+                      (tone-card 'light     'outline "Light card title")
+                      (tone-card 'dark      'outline "Dark card title"))
+                     (stack
+                      (call/key card
+                                "Card header"
+                                "2 days ago"
+                                (stack
+                                 (heading 5 "Special title treatment")
+                                 (call/key text "Support card subtitle"
+                                           #:class "we-card-subtitle")
+                                 (call/key text "Image cap"
+                                           #:class "showcase-card-image-cap")
+                                 (text "Some quick example text to build on the card title and make up the bulk of the card's content.")
+                                 (call/key stack
+                                           (call/key text "Cras justo odio"
+                                                     #:class "we-list-group-item")
+                                           (call/key text "Dapibus ac facilisis in"
+                                                     #:class "we-list-group-item")
+                                           (call/key text "Vestibulum at eros"
+                                                     #:class "we-list-group-item")
+                                           #:class "we-list-group"))
+                                #:actions (list (link "Card link" "#")
+                                                (link "Another link" "#")))
+                      (call/key card
+                                "Card title"
+                                #f
+                                (stack
+                                 (call/key text "Card subtitle"
+                                           #:class "we-card-subtitle")
+                                 (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
+                                #:actions (list (link "Card link" "#")
+                                                (link "Another link" "#"))))
+                     #:id "solar2-cards-body")
 
            ;; Accordions
-           (with-class "we-section-break"
-             (section-heading "solar2-accordions" "Accordions"))
-           (with-id "solar2-accordions-body"
-             (accordion
-              @accordion
-               (list
-               (list 'what
-                     "Accordion Item #1"
-                     (showcase-accordion-body
-                      "This is the first item's accordion body."
-                      "It is shown by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the .accordion-body, though the transition does limit overflow."))
-               (list 'themes
-                     "Accordion Item #2"
-                     (showcase-accordion-body
-                      "This is the second item's accordion body."
-                      "It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the .accordion-body, though the transition does limit overflow."))
-               (list 'third
-                     "Accordion Item #3"
-                     (showcase-accordion-body
-                      "This is the third item's accordion body."
-                      "It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the .accordion-body, though the transition does limit overflow.")))))
+           (call/key section-heading "solar2-accordions" "Accordions"
+                     #:class "we-section-break")
+           (call/key accordion
+                     @accordion
+                     (list
+                      (list 'what
+                            "Accordion Item #1"
+                            (showcase-accordion-body
+                             "This is the first item's accordion body."
+                             "It is shown by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the .accordion-body, though the transition does limit overflow."))
+                      (list 'themes
+                            "Accordion Item #2"
+                            (showcase-accordion-body
+                             "This is the second item's accordion body."
+                             "It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the .accordion-body, though the transition does limit overflow."))
+                      (list 'third
+                            "Accordion Item #3"
+                            (showcase-accordion-body
+                             "This is the third item's accordion body."
+                             "It is hidden by default, until the collapse plugin adds the appropriate classes that we use to style each element. These classes control the overall appearance, as well as the showing and hiding via CSS transitions. You can modify any of this with custom CSS or overriding our default variables. It's also worth noting that just about any HTML can go within the .accordion-body, though the transition does limit overflow.")))
+                     #:id "solar2-accordions-body")
 
            ;; Dialogs
-           (with-class "we-section-break"
-             (section-heading "solar2-dialogs" "Dialogs"))
-           (with-id "solar2-dialogs-body"
-             (with-class "we-grid-safe"
-               (grid
+           (call/key section-heading "solar2-dialogs" "Dialogs"
+                     #:class "we-section-break")
+           (call/key grid
                 2
                 (stack
                   (heading 2 "Modals")
-                  (with-class "showcase-static-modal-wrap"
-                    (with-class "we-modal-panel showcase-static-modal"
-                      (stack
-                       (with-class "we-modal-header"
-                         (inline
-                          (with-class "we-modal-title"
-                            (text "Modal title"))
-                          (spacer)
-                          (with-class "we-modal-close"
-                            (text "×"))))
-                       (with-class "we-modal-body"
-                         (text "Modal body text goes here."))
-                       (with-class "we-modal-footer"
-                         (inline
-                          (with-class "we-btn-primary"
-                            (button "Save changes" (lambda () (void))))
-                          (with-class "we-btn-secondary"
-                            (button "Close" (lambda () (void)))))))))
+                  (call/key stack
+                            (call/key inline
+                                      (call/key text "Modal title"
+                                                #:class "we-modal-title")
+                                      (spacer)
+                                      (call/key text "×"
+                                                #:class "we-modal-close")
+                                      #:class "we-modal-header")
+                            (call/key text "Modal body text goes here."
+                                      #:class "we-modal-body")
+                            (call/key inline
+                                      (call/key button "Save changes"
+                                                (lambda () (void))
+                                                #:class "we-btn-primary")
+                                      (call/key button "Close"
+                                                (lambda () (void))
+                                                #:class "we-btn-secondary")
+                                      #:class "we-modal-footer")
+                            #:class "showcase-static-modal-wrap we-modal-panel showcase-static-modal")
                   (heading 2 "Offcanvas")
-                  (with-class "we-button-row"
-                    (inline
-                     (with-class "we-btn-primary"
-                       (button "Link with href" (lambda () (:= @offcanvas-open? #t))))
-                     (with-class "we-btn-primary"
-                       (button "Button with data-bs-target" (lambda () (:= @offcanvas-open? #t))))))
-                  (offcanvas
-                   @offcanvas-open?
-                   (lambda (_reason) (:= @offcanvas-open? #f))
-                   'end
-                   (heading 5 "Offcanvas")
-                   (text "Some text as placeholder. In real life you can have the elements you have chosen. Like, text, images, lists, etc.")))
+                  (call/key inline
+                            (call/key button
+                                      "Link with href"
+                                      (lambda () (:= @offcanvas-open? #t))
+                                      #:class "we-btn-primary")
+                            (call/key button
+                                      "Button with data-bs-target"
+                                      (lambda () (:= @offcanvas-open? #t))
+                                      #:class "we-btn-primary")
+                            #:class "we-button-row")
+                  (call/key offcanvas
+                            @offcanvas-open?
+                            (lambda (_reason) (:= @offcanvas-open? #f))
+                            (heading 5 "Offcanvas")
+                            (text "Some text as placeholder. In real life you can have the elements you have chosen. Like, text, images, lists, etc.")
+                            #:side 'end))
                 (stack
                  (heading 2 "Popovers")
                  (inline
-                  (with-class "we-btn-secondary"
-                    (popover "Left"
-                             'left
-                             (list (cons 'title "Popover title")
-                                   (cons 'footer "Popover footer"))
-                             (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")))
-                  (with-class "we-btn-secondary"
-                    (popover "Top"
-                             'top
-                             (list (cons 'title "Popover title")
-                                   (cons 'footer "Popover footer"))
-                             (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")))
-                  (with-class "we-btn-secondary"
-                    (popover "Bottom"
-                             'bottom
-                             (list (cons 'title "Popover title")
-                                   (cons 'footer "Popover footer"))
-                             (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")))
-                  (with-class "we-btn-secondary"
-                    (popover "Right"
-                             'right
-                             (list (cons 'title "Popover title")
-                                   (cons 'footer "Popover footer"))
-                             (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus."))))
+                  (call/key popover
+                            "Left"
+                            (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")
+                            #:placement 'left
+                            #:title "Popover title"
+                            #:footer "Popover footer"
+                            #:class "we-btn-secondary")
+                  (call/key popover
+                            "Top"
+                            (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")
+                            #:placement 'top
+                            #:title "Popover title"
+                            #:footer "Popover footer"
+                            #:class "we-btn-secondary")
+                  (call/key popover
+                            "Bottom"
+                            (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")
+                            #:placement 'bottom
+                            #:title "Popover title"
+                            #:footer "Popover footer"
+                            #:class "we-btn-secondary")
+                  (call/key popover
+                            "Right"
+                            (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")
+                            #:placement 'right
+                            #:title "Popover title"
+                            #:footer "Popover footer"
+                            #:class "we-btn-secondary"))
                  (heading 2 "Tooltips")
                  (inline
-                  (tooltip "Tooltip on left"
-                           (with-class "we-btn-secondary"
-                             (button "Left" (lambda () (void))))
-                           'left
-                           (list (cons 'title "Tooltip")
-                                 (cons 'footer "Footer text")))
-                  (tooltip "Tooltip on top"
-                           (with-class "we-btn-secondary"
-                             (button "Top" (lambda () (void))))
-                           'top
-                           (list (cons 'title "Tooltip")
-                                 (cons 'footer "Footer text")))
-                  (tooltip "Tooltip on bottom"
-                           (with-class "we-btn-secondary"
-                             (button "Bottom" (lambda () (void))))
-                           'bottom
-                           (list (cons 'title "Tooltip")
-                                 (cons 'footer "Footer text")))
-                  (tooltip "Tooltip on right"
-                           (with-class "we-btn-secondary"
-                             (button "Right" (lambda () (void))))
-                           'right
-                           (list (cons 'title "Tooltip")
-                                 (cons 'footer "Footer text"))))
+                  (call/key tooltip
+                            "Tooltip on left"
+                            (call/key button "Left"
+                                      (lambda () (void))
+                                      #:class "we-btn-secondary")
+                            #:placement 'left
+                            #:title "Tooltip"
+                            #:footer "Footer text")
+                  (call/key tooltip
+                            "Tooltip on top"
+                            (call/key button "Top"
+                                      (lambda () (void))
+                                      #:class "we-btn-secondary")
+                            #:placement 'top
+                            #:title "Tooltip"
+                            #:footer "Footer text")
+                  (call/key tooltip
+                            "Tooltip on bottom"
+                            (call/key button "Bottom"
+                                      (lambda () (void))
+                                      #:class "we-btn-secondary")
+                            #:placement 'bottom
+                            #:title "Tooltip"
+                            #:footer "Footer text")
+                  (call/key tooltip
+                            "Tooltip on right"
+                            (call/key button "Right"
+                                      (lambda () (void))
+                                      #:class "we-btn-secondary")
+                            #:placement 'right
+                            #:title "Tooltip"
+                            #:footer "Footer text"))
                  (heading 2 "Toasts")
-                 (with-class "showcase-static-toast"
-                   (stack
-                     (with-class "showcase-static-toast-header"
-                       (inline
-                        (with-class "showcase-static-toast-title"
-                          (text "Bootstrap"))
-                        (spacer)
-                        (with-class "showcase-static-toast-time"
-                          (text "11 mins ago"))
-                        (text "×")))
-                     (with-class "showcase-static-toast-body"
-                       (text "Hello, world! This is a toast message."))))))))
+                 (call/key stack
+                           (call/key inline
+                                     (call/key text "Bootstrap"
+                                               #:class "showcase-static-toast-title")
+                                     (spacer)
+                                     (call/key text "11 mins ago"
+                                               #:class "showcase-static-toast-time")
+                                     (text "×")
+                                     #:class "showcase-static-toast-header")
+                           (call/key text "Hello, world! This is a toast message."
+                                     #:class "showcase-static-toast-body")
+                           #:class "showcase-static-toast"))
+               #:class "we-grid-safe"
+               #:id "solar2-dialogs-body")
 
-           (with-class "we-button-status"
-             (text @button-log))
+           (call/key text @button-log
+                     #:class "we-button-status")
 
            ;; Appendix
            (section-heading "solar2-appendix" "Appendix: Table Variants")
-           (table '("Name" "Status" "ETA")
-                  @table-rows
-                  'compact
-                  '((caption . "Compact table")))
-           (table '(("Service" left) ("Health" center) ("Latency" right))
-                  '(("API" "OK" "120ms")
-                    ("DB" "WARN" "220ms")
-                    ("Queue" "OK" "98ms"))
-                  'normal
-                  '((variants . (striped))
-                    (caption . "Striped rows")))
-           (table '("Region" "Errors" "SLA")
-                  '(("eu-west" "2" "99.9%")
-                    ("us-east" "0" "99.99%")
-                    ("ap-south" "4" "99.5%"))
-                  'normal
-                  '((variants . (hover))
-                    (caption . "Hover rows")))
-           (table '("Task" "Owner" "Status")
-                  '(("design" "Alice" "done")
-                    ("build" "Bob" "running")
-                    ("ship" "Carol" "blocked"))
-                  'normal
-                  '((variants . (borderless))
-                    (caption . "Borderless")))
-           (table '("k" "v")
-                  '(("A" "1") ("B" "2") ("C" "3"))
-                  'compact
-                  '((variants . (sm))
-                    (caption . "Small table"))))))))
+           (call/key table
+                     '("Name" "Status" "ETA")
+                     @table-rows
+                     #:density 'compact
+                     #:caption "Compact table")
+           (call/key table
+                     '(("Service" left) ("Health" center) ("Latency" right))
+                     '(("API" "OK" "120ms")
+                       ("DB" "WARN" "220ms")
+                       ("Queue" "OK" "98ms"))
+                     #:density 'normal
+                     #:variants '(striped)
+                     #:caption "Striped rows")
+           (call/key table
+                     '("Region" "Errors" "SLA")
+                     '(("eu-west" "2" "99.9%")
+                       ("us-east" "0" "99.99%")
+                       ("ap-south" "4" "99.5%"))
+                     #:density 'normal
+                     #:variants '(hover)
+                     #:caption "Hover rows")
+           (call/key table
+                     '("Task" "Owner" "Status")
+                     '(("design" "Alice" "done")
+                       ("build" "Bob" "running")
+                       ("ship" "Carol" "blocked"))
+                     #:density 'normal
+                     #:variants '(borderless)
+                     #:caption "Borderless")
+           (call/key table
+                     '("k" "v")
+                     '(("A" "1") ("B" "2") ("C" "3"))
+                     #:density 'compact
+                     #:variants '(sm)
+                     #:caption "Small table")))))))
 
 (define theme-core-link-node     (install-theme-link! "we-theme-core-css"))
 (define theme-general-link-node  (install-theme-link! "we-theme-external-css"))

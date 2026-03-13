@@ -34,8 +34,9 @@ Coding guidelines for Racket/WebRacket code in `lib/web-easy`.
 23. For consecutive calls with the same callee and simple arguments, align argument columns to improve scanability.
 24. CSS comments are required when adding non-obvious visual behavior (for example no-layout-shift active states, focus rendering, layering, or seam fixes). In beginner-facing stylesheets, always explain the rationale in plain language.
 25. Use `navigation-bar` as the component/API name; avoid `navbar` naming to prevent confusion with HTML naming.
-26. For wrapper-style calls (for example `with-class`, `with-id`, `with-attrs`), keep the first argument on the same line as the callee:
-    - prefer `(with-class "name" ...)` over
-      `(with-class` newline `"name" ...`.
+26. Prefer keyword-first constructor calls for DOM decoration:
+    - use `#:class`, `#:id`, and `#:attrs` on constructors instead of decorator composition.
+    - for direct constructor identifiers, use direct keyword calls.
+    - for aliased/higher-order constructor values, use `call/key`.
 27. For component calls where the first argument is a short title/label string (for example `card`, `group`, `menu`, `button`), keep that first string argument on the same line as the callee.
 28. Theme-level typography and component styling rules must be defined in the theme stylesheet (general scope), not only in showcase/page-specific selectors; showcase CSS should only contain page-layout scaffolding.

@@ -492,10 +492,14 @@
       (define attrs         (dom-node-attrs n))
       (define choices-pair  (assq 'choices attrs))
       (define choices-value (if choices-pair (cdr choices-pair) '()))
+      (define widget-pair   (assq 'data-we-widget attrs))
+      (define class-pair    (assq 'class attrs))
       (set-dom-node-attrs!
        n
-       (list (cons 'choices choices-value)
-             (cons 'selected selected)))
+       (append (if widget-pair (list widget-pair) '())
+               (if class-pair (list class-pair) '())
+               (list (cons 'choices choices-value)
+                     (cons 'selected selected))))
       (define on-change (dom-node-on-change n))
       (when on-change
         (on-change selected)))
@@ -1654,6 +1658,126 @@
                      (backend-append-child! node (build-node child register-cleanup!)))
                    (view-children v))
          node]
+        [(toggle-button-group)
+         (define raw-mode     (alist-ref (view-props v) 'mode 'render))
+         (define raw-choices  (alist-ref (view-props v) 'choices 'render))
+         (define raw-selected (alist-ref (view-props v) 'selected 'render))
+         (define action       (alist-ref (view-props v) 'action 'render))
+         (define node (dom-node 'div
+                                (list (cons attr/role 'group)
+                                      (cons 'data-we-widget "toggle-button-group")
+                                      (cons 'class "we-toggle-button-group")
+                                      (cons 'mode (maybe-observable-value raw-mode)))
+                                '()
+                                #f
+                                #f
+                                #f))
+         ;; constants for toggle-button-group mode tags.
+         (define mode/radio    'radio)    ; Exclusive selection mode.
+         (define mode/checkbox 'checkbox) ; Multi-selection mode.
+         ;; selected?/selection : any/c any/c any/c -> boolean?
+         ;;   Determine whether item-id is selected in the current mode.
+         (define (selected?/selection mode selection item-id)
+           (case mode
+             [(checkbox)
+              (and (list? selection)
+                   (member item-id selection))]
+             [else
+              (equal? selection item-id)]))
+         ;; toggle-class : any/c any/c any/c -> string?
+         ;;   Build button class string from mode/selection.
+         (define (toggle-class mode selection item-id)
+           (if (selected?/selection mode selection item-id)
+               "we-button is-active"
+               "we-button"))
+         ;; next-selection : any/c any/c any/c -> any/c
+         ;;   Compute next selection after clicking item-id.
+         (define (next-selection mode selection item-id)
+           (case mode
+             [(checkbox)
+              (cond
+                [(not (list? selection))
+                 (list item-id)]
+                [(member item-id selection)
+                 (let loop ([xs selection])
+                   (cond
+                     [(null? xs) '()]
+                     [(equal? (car xs) item-id)
+                      (loop (cdr xs))]
+                     [else
+                      (cons (car xs) (loop (cdr xs)))]))]
+                [else
+                 (append selection (list item-id))])]
+             [else
+              item-id]))
+         (define mode-value (maybe-observable-value raw-mode))
+         (define choices-value (maybe-observable-value raw-choices))
+         (define selected-value (maybe-observable-value raw-selected))
+         (define button-bindings '())
+         (define (refresh-toggle!)
+           (set! mode-value (maybe-observable-value raw-mode))
+           (set! choices-value (maybe-observable-value raw-choices))
+           (set! selected-value (maybe-observable-value raw-selected))
+           (set-dom-node-attrs!
+            node
+            (list (cons attr/role 'group)
+                  (cons 'data-we-widget "toggle-button-group")
+                  (cons 'class "we-toggle-button-group")
+                  (cons 'mode mode-value)))
+           (set! button-bindings
+                 (map (lambda (choice)
+                        (define choice-id (list-ref choice 0))
+                        (define choice-label (list-ref choice 1))
+                        (define button-node
+                          (dom-node 'button
+                                    (list (cons attr/role 'button)
+                                          (cons 'data-we-widget "button")
+                                          (cons 'class (toggle-class mode-value selected-value choice-id)))
+                                    '()
+                                    (value->text choice-label)
+                                    (lambda ()
+                                      (action (next-selection mode-value selected-value choice-id)))
+                                    #f))
+                        (cons choice-id button-node))
+                      choices-value))
+           (backend-replace-children! node (map cdr button-bindings)))
+         (define (refresh-selected-only!)
+           (set! selected-value (maybe-observable-value raw-selected))
+           (for-each (lambda (binding)
+                       (define choice-id   (car binding))
+                       (define button-node (cdr binding))
+                       (set-dom-node-attrs!
+                        button-node
+                        (list (cons attr/role 'button)
+                              (cons 'data-we-widget "button")
+                              (cons 'class (toggle-class mode-value selected-value choice-id)))))
+                     button-bindings))
+         (cond
+           [(obs? raw-mode)
+            (define (mode-listener _updated)
+              (refresh-toggle!))
+            (obs-observe! raw-mode mode-listener)
+            (register-cleanup! (lambda () (obs-unobserve! raw-mode mode-listener)))]
+           [else
+            (void)])
+         (cond
+           [(obs? raw-choices)
+            (define (choices-listener _updated)
+              (refresh-toggle!))
+            (obs-observe! raw-choices choices-listener)
+            (register-cleanup! (lambda () (obs-unobserve! raw-choices choices-listener)))]
+           [else
+            (void)])
+         (cond
+           [(obs? raw-selected)
+            (define (selected-listener _updated)
+              (refresh-selected-only!))
+            (obs-observe! raw-selected selected-listener)
+            (register-cleanup! (lambda () (obs-unobserve! raw-selected selected-listener)))]
+           [else
+            (void)])
+         (refresh-toggle!)
+         node]
         [(button-toolbar)
          (define node (dom-node 'div
                                 (list (cons attr/role 'toolbar)
@@ -1744,6 +1868,7 @@
          (define raw-dismiss-action (options-ref options 'dismiss-action #f))
          (define raw-dismiss-label  (options-ref options 'dismiss-label "Dismiss"))
          (define raw-layout         (options-ref options 'layout 'stack))
+         (define raw-inline-segments (options-ref options 'inline-segments #f))
          (define raw-scale          (options-ref options 'scale 'normal))
          (define raw-tone           (options-ref options 'tone #f))
          (define node (dom-node 'div
@@ -1795,6 +1920,33 @@
          (define (non-empty-text? value)
            (and (not (eq? value #f))
                 (not (string=? (value->text value) ""))))
+         ;; inline-segment-node : any/c -> (or/c #f dom-node?)
+         ;;   Convert one inline segment descriptor to a DOM node.
+         (define (inline-segment-node segment)
+           (cond
+             [(and (list? segment)
+                   (= (length segment) 2)
+                   (eq? (car segment) 'text))
+              (dom-node 'span
+                        (list (cons 'data-we-widget "alert-body")
+                              (cons 'class "we-alert-body"))
+                        '()
+                        (value->text (list-ref segment 1))
+                        #f
+                        #f)]
+             [(and (list? segment)
+                   (= (length segment) 3)
+                   (eq? (car segment) 'link))
+              (dom-node 'a
+                        (list (cons 'data-we-widget "alert-link")
+                              (cons 'class "we-alert-link")
+                              (cons 'href (value->text (list-ref segment 2))))
+                        '()
+                        (value->text (list-ref segment 1))
+                        #f
+                        #f)]
+             [else
+              #f]))
          (define (render-alert-rich!)
            (define level (normalize-alert-level (maybe-observable-value raw-level)))
            (define tone  (normalize-alert-level
@@ -1809,6 +1961,7 @@
            (define body-value (maybe-observable-value raw-body))
            (define link-text-value (maybe-observable-value raw-link-text))
            (define link-href-value (maybe-observable-value raw-link-href))
+           (define inline-segments-value (maybe-observable-value raw-inline-segments))
            (define dismiss-label-value (maybe-observable-value raw-dismiss-label))
            (define dismiss-action (maybe-observable-value raw-dismiss-action))
            (set-dom-node-attrs!
@@ -1842,14 +1995,29 @@
             (if (procedure? dismiss-action)
                 (lambda () (dismiss-action))
                 #f))
+           (define inline-segment-nodes
+             (if (and (list? inline-segments-value)
+                      (pair? inline-segments-value))
+                 (let loop ([segments inline-segments-value])
+                   (cond
+                     [(null? segments)
+                      '()]
+                     [else
+                      (define maybe-node (inline-segment-node (car segments)))
+                      (if maybe-node
+                          (cons maybe-node (loop (cdr segments)))
+                          (loop (cdr segments)))]))
+                 '()))
            (backend-replace-children!
             node
             (append (if (non-empty-text? title-value) (list title-node) '())
-                    (list body-node)
-                    (if (and (non-empty-text? link-text-value)
-                             (non-empty-text? link-href-value))
-                        (list link-node)
-                        '())
+                    (if (pair? inline-segment-nodes)
+                        inline-segment-nodes
+                        (append (list body-node)
+                                (if (and (non-empty-text? link-text-value)
+                                         (non-empty-text? link-href-value))
+                                    (list link-node)
+                                    '())))
                     (if (procedure? dismiss-action) (list dismiss-node) '()))))
          (when (obs? raw-body)
            (define (body-listener _updated)
@@ -1886,6 +2054,11 @@
              (render-alert-rich!))
            (obs-observe! raw-layout layout-listener)
            (register-cleanup! (lambda () (obs-unobserve! raw-layout layout-listener))))
+         (when (and raw-inline-segments (obs? raw-inline-segments))
+           (define (inline-segments-listener _updated)
+             (render-alert-rich!))
+           (obs-observe! raw-inline-segments inline-segments-listener)
+           (register-cleanup! (lambda () (obs-unobserve! raw-inline-segments inline-segments-listener))))
          (when (and raw-scale (obs? raw-scale))
            (define (scale-listener _updated)
              (render-alert-rich!))
@@ -3670,8 +3843,10 @@
                         (equal? current-id section-id)))
                   (equal? raw-selected section-id)))
             (define collapse-node
-              (build-node (with-class "we-accordion-content"
-                            (collapse collapse-open section-view))
+              (build-node (call/key collapse
+                                    collapse-open
+                                    section-view
+                                    #:class "we-accordion-content")
                           register-cleanup!))
             (set-dom-node-attrs!
              collapse-node
@@ -3943,8 +4118,7 @@
                   "")
               (if tone-style-value
                   (string-append " we-dialog-tone-" (symbol->string tone-style-value))
-                  "")
-              (if open-value " is-open" "")))
+                  "")))
            (define panel-attrs/base
              (list (cons 'class panel-class)
                    (cons 'data-we-widget "dialog-panel")
@@ -4186,8 +4360,7 @@
                   "")
               (if tone-style-value
                   (string-append " we-dialog-tone-" (symbol->string tone-style-value))
-                  "")
-              (if open-value " is-open" "")))
+                  "")))
            (define panel-attrs/base
              (list (cons 'class panel-class)
                    (cons 'data-we-widget "modal-panel")
@@ -4346,8 +4519,16 @@
          (define density      (normalize-table-density (maybe-observable-value raw-density)))
          (define density-css  (density-class density))
          (define variant-css  (table-variant-class variants))
+         (define caption-value
+           (let ([v (maybe-observable-value raw-caption)])
+             (if (eq? v #f) #f (value->text v))))
          (define node (dom-node 'table
                                 (list (cons 'data-we-widget "table")
+                                      (cons 'columns columns)
+                                      (cons 'variants variants)
+                                      (cons 'row-variants row-variants)
+                                      (cons 'row-header-column row-header-column)
+                                      (cons 'caption caption-value)
                                       (cons 'density density)
                                       (cons 'class (string-append "we-table " density-css variant-css)))
                                 '()
@@ -4377,9 +4558,11 @@
          (define action       (alist-ref (view-props v) 'action   'render))
          (define group-name   (next-radio-group-name))
          (define node
-           (dom-node 'div
+           (dom-node 'radios
                      (list (cons 'data-we-widget "radios")
-                           (cons 'class "we-radios"))
+                           (cons 'choices rows)
+                           (cons 'class "we-radios")
+                           (cons 'selected #f))
                      '()
                      #f
                      #f
@@ -4439,6 +4622,12 @@
          (define (set-selected! selected)
            (define selected-text (value->text selected))
            (define matched? #f)
+           (set-dom-node-attrs!
+            node
+            (list (cons 'data-we-widget "radios")
+                  (cons 'choices rows)
+                  (cons 'class "we-radios")
+                  (cons 'selected selected)))
            (for-each
             (lambda (triple)
               (define input-node (list-ref triple 0))
@@ -4486,7 +4675,11 @@
             (obs-observe! raw-selected listener)
             (register-cleanup! (lambda () (obs-unobserve! raw-selected listener)))]
            [else
-            (set-selected! raw-selected)])
+           (set-selected! raw-selected)])
+         (set-dom-node-on-change!
+          node
+          (lambda (selected)
+            (action selected)))
          node]
         [(image)
          (define raw-src    (alist-ref (view-props v) 'src    'render))
@@ -5008,6 +5201,7 @@
            (define title-value   (maybe-observable-value raw-title))
            (define message-value (maybe-observable-value raw-message))
            (define footer-value  (maybe-observable-value raw-footer))
+           (set-dom-node-text! bubble-node (value->text message-value))
            (set-dom-node-text! body-node (value->text message-value))
            (set-dom-node-text! header-node (if (eq? title-value #f) "" (value->text title-value)))
            (set-dom-node-text! footer-node (if (eq? footer-value #f) "" (value->text footer-value)))

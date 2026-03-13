@@ -106,7 +106,7 @@ This replaces module `require/provide` boundaries with explicit include-time nam
 Rationale:
 
 - This is the established pattern already used by WebRacket stdlib, so it aligns with current toolchain behavior.
-- `define-values` wrappers preserve encapsulation by exposing only intended names from each file.
+- `define-values` export capsules preserve encapsulation by exposing only intended names from each file.
 - Keeping the same composition style as stdlib lowers maintenance risk and eases debugging.
 
 ## Runtime Model
@@ -140,7 +140,7 @@ Planned target:
   - `renderer-destroy`
 - Core views:
   - `window` (mapped to root container node)
-  - `hpanel`, `vpanel`, `group`, `button-group`, `button-toolbar`, `card`, `navigation-bar`
+  - `hpanel`, `vpanel`, `group`, `button-group`, `toggle-button-group`, `button-toolbar`, `card`, `navigation-bar`
   - `container`, `grid`, `stack`, `inline`
   - `text`
   - `spinner`
@@ -310,11 +310,32 @@ Limitations:
 
 - Keyword tokens are consumed by macro expansion. For non-macro callees, use `call/key` instead of raw `(f ... #:kw ...)`.
 
+## Keyword-First API (Breaking Change)
+
+`web-easy` now uses keyword-first constructor calls. Wrapper constructors
+(`with-class`, `with-id`, `with-attrs`) are removed from the public API.
+
+| Old form | New form |
+|---|---|
+| `(with-class "c" (text "x"))` | `(text "x" #:class "c")` |
+| `(with-id "n" (button "ok" f))` | `(button "ok" f #:id "n")` |
+| `(with-attrs '((placeholder "name")) (input @v set!))` | `(input @v set! #:input-attrs '((placeholder "name")))` |
+| `(table cols rows 'compact)` | `(call/key table cols rows #:density 'compact)` |
+| `(table cols rows 'normal '((caption . "C") (variants . (striped))))` | `(call/key table cols rows #:density 'normal #:caption "C" #:variants '(striped))` |
+| `(progress @v 0 100 'info)` | `(call/key progress @v #:min 0 #:max 100 #:variant 'info)` |
+| `(offcanvas @open close! 'end body)` | `(call/key offcanvas @open close! body #:side 'end)` |
+| `(alert-rich body title link href 'warn '((layout . inline)))` | `(call/key alert-rich body title link href #:level 'warn #:layout 'inline)` |
+
+Notes:
+
+- Direct constructor identifiers can be called with direct keyword syntax.
+- Aliased/higher-order constructor values must use `call/key`.
+
 ## Layout Primitives
 
 `web-easy` now includes first-class layout primitives for page-level structure:
 
-- `container`: centered width-constrained wrapper
+- `container`: centered width-constrained container
 - `grid`: responsive grid layout with columns specification
 - `stack`: vertical spacing/layout primitive
 - `inline`: horizontal wrapping row primitive
@@ -323,8 +344,8 @@ Limitations:
 Rationale:
 
 - Reduce reliance on CSS-only structure classes in examples and apps.
-- Make layout intent explicit in view code instead of encoded in wrapper class names.
-- Reduce parenthesis-heavy `with-class` composition for common layout patterns.
+- Make layout intent explicit in view code instead of encoded in ad hoc class names.
+- Reduce parenthesis-heavy decorator composition by using constructor keywords (`#:class`, `#:id`, `#:attrs`) for common layout patterns.
 - Keep visual customization in CSS while preserving semantic structure in view constructors.
 
 ## Step 2: Port Status Matrix
@@ -334,10 +355,10 @@ Current status snapshot (March 1, 2026):
 | Area | Item | Status | Coverage | Notes |
 |---|---|---|---|---|
 | Renderer lifecycle | `render`, `renderer?`, `renderer-root`, `renderer-destroy` | Implemented | Core tests + smoke | Browser backend integrated via `backend-browser.rkt`. |
-| Core layout/views | `window`, `hpanel`, `vpanel`, `group`, `button-group`, `button-toolbar`, `card`, `navigation-bar`, `spacer`, `collapse`, `accordion`, `dialog` | Implemented | Core tests + smoke | Uses DOM container mapping; `accordion` is composed from `button` + `collapse` with keyboard navigation. |
+| Core layout/views | `window`, `hpanel`, `vpanel`, `group`, `button-group`, `toggle-button-group`, `button-toolbar`, `card`, `navigation-bar`, `spacer`, `collapse`, `accordion`, `dialog` | Implemented | Core tests + smoke | Uses DOM container mapping; `accordion` is composed from `button` + `collapse` with keyboard navigation. |
 | Basic controls | `text`, `spinner`, `alert`, `badge`, `toast`, `button`, `input`, `checkbox`, `choice`, `slider`, `progress`, `pagination`, `breadcrumb`, `list-group`, `radios`, `image`, `tooltip`, `popover` | Implemented | Core tests + smoke | Browser behavior validated in dedicated smoke pages. |
 | Dynamic composition | `if-view`, `cond-view`, `case-view`, `observable-view`, `list-view` | Implemented | Core tests + smoke | Keyed reconciliation and branch switching covered. |
-| Menus | `dropdown`, `menu-bar`, `menu`, `menu-item` | Implemented (web-adapted MVP) | Core tests + smoke | `dropdown` is a single-trigger menu wrapper over shared menu semantics. |
+| Menus | `dropdown`, `menu-bar`, `menu`, `menu-item` | Implemented (web-adapted MVP) | Core tests + smoke | `dropdown` is a single-trigger menu container over shared menu semantics. |
 | Tabs | `tab-panel` | Implemented | Core tests + smoke | Includes keyboard navigation, disabled tabs, and focus tracking checks. |
 | Observables core | `obs?`, `obs`, `obs-name`, `obs-observe!`, `obs-unobserve!`, `obs-update!`, `obs-set!`, `obs-peek`, `obs-map`, `obs-filter` | Implemented | Core tests | Compatible MVP surface. |
 | Operators | `@`, `:=`, `<~`, `λ<~`, `~>`, `~#>` | Implemented | Core tests + smoke | Operator smoke covers filter + thunk behavior in browser runtime. |
@@ -363,6 +384,7 @@ Remaining Step 2 planning items:
 | Breadcrumb | `breadcrumb` | Y | Y | Y | Y |
 | Buttons | `button` | Y | Y | Y | P |
 | Button group | `button-group` | Y | Y | Y | Y |
+| Toggle button group | `toggle-button-group` | Y | Y | Y | Y |
 | Card | `card` | Y | Y | Y | Y |
 | Carousel | `carousel` | Y | Y | Y | Y |
 | Close button | `close-button` | Y | Y | Y | Y |
@@ -464,7 +486,7 @@ Rules:
 6. Selectors intended for user theming are part of the public contract and should be
    treated as stable.
 
-Current migration note:
+Current state:
 
 - `renderer.rkt` now injects structural base CSS only.
 - Visual component defaults are kept in external theme files (for example
@@ -557,7 +579,7 @@ Current `web-easy` test workflows:
 
 Command ownership:
 
-- `smoke.sh`: local/manual utility wrapper (serve + compile helpers).
+- `smoke.sh`: local/manual utility driver (serve + compile helpers).
 - `headless.sh`: canonical headless orchestration entrypoint.
 - `make`: canonical repo-root automation entrypoints.
 
@@ -700,12 +722,12 @@ Current browser backend element mapping (as implemented today):
 
 | widget/tag | HTML element(s) | Notes |
 |---|---|---|
-| `window`, `vpanel`, `hpanel`, `button-group`, `button-toolbar`, `card`, `navigation-bar` | `div`/`nav` | `vpanel`/`hpanel` use flex layout styles; grouped controls use inline-flex/flex rows; `card` is sectioned with header/body/footer child nodes; `navigation-bar` uses `role="navigation"`. |
+| `window`, `vpanel`, `hpanel`, `button-group`, `toggle-button-group`, `button-toolbar`, `card`, `navigation-bar` | `div`/`nav` | `vpanel`/`hpanel` use flex layout styles; grouped controls use inline-flex/flex rows; `card` is sectioned with header/body/footer child nodes; `navigation-bar` uses `role="navigation"`. |
 | `collapse` | `div` | Visibility container using `is-open` class and `aria-hidden` state. |
 | `accordion` | `div` + `button` + `div` | Section widget composed as accordion root/section/trigger/collapse regions; panel region uses stable class hook `.we-accordion-content`. |
 | `dialog`, `modal` | `dialog` + panel `div` | `data-we-widget` distinguishes `dialog` vs `modal`; both expose `role="dialog"` + `aria-modal` + observable `open` state, and panel uses `aria-describedby` when first child is descriptive text. |
 | `group` | `fieldset` + `legend` | Group title is rendered as a real `legend` child. |
-| `text` | `span` | Plain inline text node wrapper. |
+| `text` | `span` | Plain inline text node. |
 | `spinner` | `div` + `span` | Animated loading indicator with optional status label. |
 | `alert` | `div` | Inline status banner with severity classes (`info/success/warn/error`). |
 | `badge` | `span` | Compact inline severity marker with class-based variants. |
@@ -891,7 +913,7 @@ Heading API mapping:
 Rationale:
 
 - keeps semantic heading tags stable for accessibility/SEO while exposing display-scale styling as classes/tokens.
-- align/spacing variants avoid ad hoc wrapper CSS in app code and keep typography choices in component API.
+- align/spacing variants avoid ad hoc utility CSS in app code and keep typography choices in component API.
 - subtitle variants reuse the same child widget hooks (`heading-title`, `heading-subtitle`) for consistent theming/tests.
 
 Contract enforcement status:
@@ -1108,7 +1130,7 @@ Core vs Theme rule (strict):
 
 Core utility note:
 - `we-flow` is now part of the structural core layer (`.we-flow > * + *`) for uniform sibling spacing.
-- Use `with-class "we-flow"` in pages/examples instead of page-specific adjacent-sibling spacing selectors when the intent is generic vertical rhythm.
+- Use constructor keywords (for example `(stack #:class "we-flow" ...)`) instead of page-specific adjacent-sibling spacing selectors when the intent is generic vertical rhythm.
 - `we-menu-bar` shared row mechanics (`display/flex-wrap/align-items`) are now in core; theme styles keep only menu-bar visual density and skin.
 - `we-menu-popup` shared placement sizing (`top/min-width/gap`) is now core-owned through `--we-menu-popup-*` tokens; themes set token values and keep popup skin.
 - Solar2 progress utility selectors (`showcase-progress-*`, striped/animated progress fills) were migrated from showcase CSS into `theme-solar-2.css`; showcase CSS retains only section/page scaffolding.

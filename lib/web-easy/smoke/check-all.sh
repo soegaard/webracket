@@ -43,17 +43,20 @@ if [ "$CONTRACT_FIRST" -eq 1 ] && [ "$FAST_THEME" -eq 0 ]; then
   echo
 fi
 
-echo "[1/3] core tests (real Racket)"
+echo "[1/4] core tests (real Racket)"
 racket "$ROOT_DIR/lib/web-easy/test/test-web-easy.rkt"
 
-echo "[2/3] core tests (webracket -r)"
+echo "[2/4] keyword negative tests"
+(cd "$ROOT_DIR/lib/web-easy/test" && ./test-define-key-negative.sh)
+
+echo "[3/4] core tests (webracket -r)"
 WEBRACKET_OUT="$(cd "$ROOT_DIR/lib/web-easy/test" && racket ../../../webracket.rkt -r test-web-easy-run.rkt)"
 if [ -n "$WEBRACKET_OUT" ] && [ "$WEBRACKET_OUT" != "#<void>" ]; then
   printf '%s\n' "$WEBRACKET_OUT"
 fi
 echo "web-easy webracket tests passed"
 
-echo "[3/3] smoke compile"
+echo "[4/4] smoke compile"
 "$SCRIPT_DIR/check-smoke.sh"
 
 if [ "$HEADLESS" -eq 1 ]; then

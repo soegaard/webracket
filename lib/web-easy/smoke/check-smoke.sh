@@ -4,11 +4,13 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 
-if [ "${SMOKE_SKIP_WRAPPER_ARITY_CHECK:-0}" != "1" ]; then
-  echo "[pre] wrapper arity scan"
-  racket "$ROOT_DIR/tools/check-wrapper-arity.rkt" "$SCRIPT_DIR"
+skip_arity_check="${SMOKE_SKIP_ARITY_CHECK:-${SMOKE_SKIP_WRAPPER_ARITY_CHECK:-0}}"
+
+if [ "$skip_arity_check" != "1" ]; then
+  echo "[pre] constructor arity scan"
+  racket "$ROOT_DIR/tools/check-constructor-arity.rkt" "$SCRIPT_DIR"
 else
-  echo "[pre] wrapper arity scan skipped (SMOKE_SKIP_WRAPPER_ARITY_CHECK=1)"
+  echo "[pre] constructor arity scan skipped (SMOKE_SKIP_ARITY_CHECK=1)"
 fi
 
 labels=(

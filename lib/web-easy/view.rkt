@@ -6,15 +6,18 @@
 
 ;; Class-free declarative view constructors and shared view data representation.
 ;;
+;; Constructor keyword contract:
+;;   Constructors that materialize a concrete root node support
+;;   `#:id`, `#:class`, and `#:attrs` for root decoration.
+;;   (Core composition forms like `window`/`vpanel`/`hpanel` and
+;;    branch combinators keep positional contracts.)
+;;
 ;; Exports:
 ;;   view           View structure constructor.
 ;;   view?          Predicate for view values.
 ;;   view-kind      Access the view kind tag.
 ;;   view-props     Access the view property alist.
 ;;   view-children  Access the view child list.
-;;   with-attrs     Attach extra DOM attrs to a specific view instance.
-;;   with-class     Attach extra CSS class(es) to a specific view instance.
-;;   with-id        Attach a specific DOM id to a view instance.
 ;;   window         Build a root window view.
 ;;   vpanel         Build a vertical panel view.
 ;;   hpanel         Build a horizontal panel view.
@@ -52,6 +55,7 @@
 ;;   button         Build a button view with click action.
 ;;   link           Build a link view with href.
 ;;   button-group   Build a grouped button container view.
+;;   toggle-button-group Build an exclusive/non-exclusive toggle button group view.
 ;;   button-toolbar Build a horizontal toolbar of button groups.
 ;;   toolbar        Build a generic horizontal toolbar container.
 ;;   toolbar-group  Build a grouped toolbar section container.
@@ -83,8 +87,8 @@
 ;;   dropdown       Build a dropdown menu view.
 ;;   carousel       Build a carousel with indicators and navigation actions.
 ;;   scrollspy      Build a section navigation view with active tracking.
-;;   tooltip        Build a tooltip wrapper view.
-;;   popover        Build a popover wrapper view.
+;;   tooltip        Build a tooltip container view.
+;;   popover        Build a popover container view.
 ;;   card           Build a card container with optional title/footer.
 ;;   navigation-bar Build a navigation bar container view.
 ;;   menu-bar       Build a menu-bar container view.
@@ -97,9 +101,6 @@
    view-kind
    view-props
    view-children
-   with-attrs
-   with-class
-   with-id
    window
    vpanel
    hpanel
@@ -137,6 +138,7 @@
    button
    link
    button-group
+   toggle-button-group
    button-toolbar
    toolbar
    toolbar-group
@@ -204,6 +206,7 @@
     (define kind/button    'button)    ; Clickable action view.
     (define kind/link      'link)      ; Link view.
     (define kind/button-group 'button-group) ; Grouped button container view.
+    (define kind/toggle-button-group 'toggle-button-group) ; Toggle button group view.
     (define kind/button-toolbar 'button-toolbar) ; Horizontal toolbar for button groups.
     (define kind/toolbar   'toolbar)   ; Generic horizontal toolbar container.
     (define kind/toolbar-group 'toolbar-group) ; Grouped toolbar section container.
@@ -235,8 +238,8 @@
     (define kind/dropdown  'dropdown)  ; Dropdown menu view.
     (define kind/carousel  'carousel)  ; Carousel control view.
     (define kind/scrollspy 'scrollspy) ; Active section navigation view.
-    (define kind/tooltip   'tooltip)   ; Tooltip wrapper view.
-    (define kind/popover   'popover)   ; Popover wrapper view.
+    (define kind/tooltip   'tooltip)   ; Tooltip container view.
+    (define kind/popover   'popover)   ; Popover container view.
     (define kind/card      'card)      ; Card container view.
     (define kind/navigation-bar 'navigation-bar) ; Navigation bar container view.
     (define kind/menu-bar  'menu-bar)  ; Menu bar container view.
@@ -337,20 +340,20 @@
             props
             (view-children v)))
 
-    ;; with-class/internal : view? (or/c string? symbol? list?) -> view?
+    ;; apply-extra-class/internal : view? (or/c string? symbol? list?) -> view?
     ;;   Return v with extra class(es) added to the rendered root node.
-    (define (with-class/internal v classes)
+    (define (apply-extra-class/internal v classes)
       (define props      (view-props v))
       (define old-classes (view-props-ref/default props 'extra-class '()))
       (define new-classes (append old-classes
-                                  (normalize-class-list classes 'with-class)))
+                                  (normalize-class-list classes 'apply-root-decorators)))
       (view-with-props v
                        (view-props-set props 'extra-class new-classes)))
 
-    ;; with-attrs/internal : view? list? -> view?
+    ;; apply-extra-attrs/internal : view? list? -> view?
     ;;   Return v with extra attrs added to the rendered root node.
-    (define (with-attrs/internal v attrs)
-      (define normalized (normalize-attrs-list attrs 'with-attrs))
+    (define (apply-extra-attrs/internal v attrs)
+      (define normalized (normalize-attrs-list attrs 'apply-root-decorators))
       (define attrs-without-class
         (let loop ([remaining normalized])
           (cond
@@ -365,59 +368,54 @@
           (cond
             [(null? remaining) '()]
             [(eq? (caar remaining) 'class)
-             (append (normalize-class-list (cdar remaining) 'with-attrs)
+             (append (normalize-class-list (cdar remaining) 'apply-root-decorators)
                      (loop (cdr remaining)))]
             [else
              (loop (cdr remaining))])))
       (define base-props (view-props v))
       (define old-attrs (view-props-ref/default base-props 'extra-attrs '()))
-      (define v-with-attrs
+      (define v-with-extra-attrs
         (view-with-props v
                          (view-props-set base-props
                                          'extra-attrs
                                          (append old-attrs attrs-without-class))))
       (if (null? class-values)
-          v-with-attrs
-          (with-class/internal v-with-attrs class-values)))
+          v-with-extra-attrs
+          (apply-extra-class/internal v-with-extra-attrs class-values)))
 
-    ;; with-class : (or/c string? symbol? list?) view? -> view?
-    ;;   Add class(es) to a view root.
-    (define (with-class classes v)
-      (unless (view? v)
-        (raise-arguments-error 'with-class
-                               "expected view?"
-                               "view"
-                               v))
-      (with-class/internal v classes))
+    ;; apply-root-decorators : view? any/c any/c any/c symbol? -> view?
+    ;;   Apply #:id #:class #:attrs to a view root in keyword-capable constructors.
+    (define keyword-not-given (list 'keyword-not-given))
 
-    ;; with-attrs : list? view? -> view?
-    ;;   Add attrs to a view root.
-    (define (with-attrs attrs v)
-      (unless (view? v)
-        (raise-arguments-error 'with-attrs
-                               "expected view?"
-                               "view"
-                               v))
-      (with-attrs/internal v attrs))
+    ;; keyword-given? : any/c -> boolean?
+    ;;   Return #t when v is a supplied keyword argument value.
+    (define (keyword-given? v)
+      (not (eq? v keyword-not-given)))
 
-    ;; with-id : (or/c string? symbol?) view? -> view?
-    ;;   Add id attr to a view root.
-    (define (with-id id-value v)
-      (unless (view? v)
-        (raise-arguments-error 'with-id
-                               "expected view?"
-                               "view"
-                               v))
-      (cond
-        [(string? id-value)
-         (with-attrs/internal v (list (list 'id id-value)))]
-        [(symbol? id-value)
-         (with-attrs/internal v (list (list 'id (symbol->string id-value))))]
-        [else
-         (raise-arguments-error 'with-id
-                                "expected id as string? or symbol?"
-                                "id"
-                                id-value)]))
+    (define (apply-root-decorators v id-value class-value attrs-value who)
+      (define decorated-with-attrs
+        (if (or (eq? attrs-value #f)
+                (and (list? attrs-value) (null? attrs-value)))
+            v
+            (apply-extra-attrs/internal v attrs-value)))
+      (define decorated-with-id
+        (cond
+          [(eq? id-value #f)
+           decorated-with-attrs]
+          [(string? id-value)
+           (apply-extra-attrs/internal decorated-with-attrs
+                                       (list (list 'id id-value)))]
+          [(symbol? id-value)
+           (apply-extra-attrs/internal decorated-with-attrs
+                                       (list (list 'id (symbol->string id-value))))]
+          [else
+           (raise-arguments-error who
+                                  "expected #:id as string?, symbol?, or #f"
+                                  "id"
+                                  id-value)]))
+      (if (eq? class-value #f)
+          decorated-with-id
+          (apply-extra-class/internal decorated-with-id class-value)))
 
     ;; window : view? ... -> view?
     ;;   Construct a root window view with children.
@@ -436,28 +434,73 @@
 
     ;; container : view? ... -> view?
     ;;   Construct a centered width-constrained layout container view.
-    (define (container . children)
-      (view kind/container '() children))
+    (define/key (container
+                 #:id [id #f]
+                 #:class [class #f]
+                 #:attrs [attrs '()]
+                 . children)
+      (apply-root-decorators
+       (view kind/container '() children)
+       id
+       class
+       attrs
+       'container))
 
     ;; grid : any/c view? ... -> view?
     ;;   Construct a grid layout container with columns specification and children.
-    (define (grid columns . children)
-      (view kind/grid (list (cons 'columns columns)) children))
+    (define/key (grid columns
+                      #:id [id #f]
+                      #:class [class #f]
+                      #:attrs [attrs '()]
+                      . children)
+      (apply-root-decorators
+       (view kind/grid (list (cons 'columns columns)) children)
+       id
+       class
+       attrs
+       'grid))
 
     ;; stack : view? ... -> view?
     ;;   Construct a vertical stack layout container view.
-    (define (stack . children)
-      (view kind/stack '() children))
+    (define/key (stack
+                 #:id [id #f]
+                 #:class [class #f]
+                 #:attrs [attrs '()]
+                 . children)
+      (apply-root-decorators
+       (view kind/stack '() children)
+       id
+       class
+       attrs
+       'stack))
 
     ;; inline : view? ... -> view?
     ;;   Construct a horizontal inline layout container view.
-    (define (inline . children)
-      (view kind/inline '() children))
+    (define/key (inline
+                 #:id [id #f]
+                 #:class [class #f]
+                 #:attrs [attrs '()]
+                 . children)
+      (apply-root-decorators
+       (view kind/inline '() children)
+       id
+       class
+       attrs
+       'inline))
 
     ;; group : (or/c string? observable?) view? ... -> view?
     ;;   Construct a labeled container view with children.
-    (define (group label . children)
-      (view kind/group (list (cons 'label label)) children))
+    (define/key (group label
+                       #:id [id #f]
+                       #:class [class #f]
+                       #:attrs [attrs '()]
+                       . children)
+      (apply-root-decorators
+       (view kind/group (list (cons 'label label)) children)
+       id
+       class
+       attrs
+       'group))
 
     ;; alert : (or/c string? observable?) [(or/c symbol? observable?)] -> view?
     ;;   Construct an inline alert/status view with optional severity level.
@@ -488,15 +531,47 @@
     ;;     layout         -> 'stack (default) or 'inline body arrangement.
     ;;     scale          -> 'normal (default) or 'major title emphasis.
     ;;     tone           -> symbol/observable tone override (primary/secondary/success/info/warning/danger/light/dark).
-    (define (alert-rich body title link-text link-href [level 'info] [options '()])
-      (view kind/alert-rich
-            (list (cons 'body body)
-                  (cons 'title title)
-                  (cons 'link-text link-text)
-                  (cons 'link-href link-href)
-                  (cons 'level level)
-                  (cons 'options options))
-            '()))
+    (define/key (alert-rich body
+                            title
+                            link-text
+                            link-href
+                            [level 'info]
+                            [options '()]
+                            #:level [level-kw #f]
+                            #:dismiss-action [dismiss-action #f]
+                            #:dismiss-label [dismiss-label #f]
+                            #:layout [layout #f]
+                            #:inline-segments [inline-segments #f]
+                            #:scale [scale #f]
+                            #:tone [tone #f]
+                            #:id [id #f]
+                            #:class [class #f]
+                            #:attrs [attrs '()])
+      (define final-level
+        (if (eq? level-kw #f) level level-kw))
+      (define final-options
+        (if (list? options) options '()))
+      (define options-with-keywords
+        (append final-options
+                (list (cons 'dismiss-action dismiss-action)
+                      (cons 'dismiss-label dismiss-label)
+                      (cons 'layout layout)
+                      (cons 'inline-segments inline-segments)
+                      (cons 'scale scale)
+                      (cons 'tone tone))))
+      (apply-root-decorators
+       (view kind/alert-rich
+             (list (cons 'body body)
+                   (cons 'title title)
+                   (cons 'link-text link-text)
+                   (cons 'link-href link-href)
+                   (cons 'level final-level)
+                   (cons 'options options-with-keywords))
+             '())
+       id
+       class
+       attrs
+       'alert-rich))
 
     ;; toast : (or/c boolean? observable?) (-> any/c) (or/c string? observable?) [(or/c symbol? observable?)] [(or/c string? observable? false/c)] [(or/c boolean? observable?)] [number?] [boolean?] -> view?
     ;;   Construct a non-modal toast with open flag, close action, message, optional title/dismiss control, optional auto-hide duration, and pause-on-hover.
@@ -527,10 +602,19 @@
     ;; badge : (or/c string? observable?) [(or/c symbol? observable?)] -> view?
     ;;   Construct a compact inline badge with optional severity level.
     ;;   Optional parameter level defaults to 'info.
-    (define (badge value [level 'info])
-      (view kind/badge (list (cons 'value value)
-                             (cons 'level level))
-            '()))
+    (define/key (badge value
+                       [level 'info]
+                       #:id [id #f]
+                       #:class [class #f]
+                       #:attrs [attrs '()])
+      (apply-root-decorators
+       (view kind/badge (list (cons 'value value)
+                              (cons 'level level))
+             '())
+       id
+       class
+       attrs
+       'badge))
 
     ;; spinner : [(or/c string? observable? false/c)] -> view?
     ;;   Construct a loading spinner with optional label text.
@@ -543,26 +627,66 @@
     ;;   Construct a placeholder/skeleton block with optional shape and width.
     ;;   Optional parameter shape defaults to 'text.
     ;;   Optional parameter width defaults to #f.
-    (define (placeholder [shape 'text] [width #f])
-      (view kind/placeholder (list (cons 'shape shape)
-                                   (cons 'width width))
-            '()))
+    (define/key (placeholder [shape 'text]
+                             [width #f]
+                             #:shape [shape-kw #f]
+                             #:width [width-kw #f]
+                             #:id [id #f]
+                             #:class [class #f]
+                             #:attrs [attrs '()])
+      (define final-shape
+        (if (eq? shape-kw #f) shape shape-kw))
+      (define final-width
+        (if (eq? width-kw #f) width width-kw))
+      (apply-root-decorators
+       (view kind/placeholder (list (cons 'shape final-shape)
+                                    (cons 'width final-width))
+             '())
+       id
+       class
+       attrs
+       'placeholder))
 
     ;; text : (or/c string? observable?) -> view?
     ;;   Construct a text view from static or observable value.
-    (define (text s)
-      (view kind/text (list (cons 'value s)) '()))
+    (define/key (text s
+                      #:id [id #f]
+                      #:class [class #f]
+                      #:attrs [attrs '()])
+      (apply-root-decorators
+       (view kind/text (list (cons 'value s)) '())
+       id
+       class
+       attrs
+       'text))
 
     ;; heading : (or/c number? observable?) (or/c string? observable?) [symbol?] [symbol?] -> view?
     ;;   Construct a semantic heading view with level normalized to 1..6 and optional align/spacing style variants.
     ;;   Optional parameter align defaults to 'left.
     ;;   Optional parameter spacing defaults to 'normal.
-    (define (heading level content [align 'left] [spacing 'normal])
-      (view kind/heading (list (cons 'level level)
-                               (cons 'value content)
-                               (cons 'align align)
-                               (cons 'spacing spacing))
-            '()))
+    (define/key (heading level
+                         content
+                         [align 'left]
+                         [spacing 'normal]
+                         #:align [align-kw #f]
+                         #:spacing [spacing-kw #f]
+                         #:id [id #f]
+                         #:class [class #f]
+                         #:attrs [attrs '()])
+      (define final-align
+        (if (eq? align-kw #f) align align-kw))
+      (define final-spacing
+        (if (eq? spacing-kw #f) spacing spacing-kw))
+      (apply-root-decorators
+       (view kind/heading (list (cons 'level level)
+                                (cons 'value content)
+                                (cons 'align final-align)
+                                (cons 'spacing final-spacing))
+             '())
+       id
+       class
+       attrs
+       'heading))
 
     ;; h1 : (or/c string? observable?) -> view?
     ;;   Construct a semantic level-1 heading view.
@@ -598,12 +722,29 @@
     ;;   Construct a semantic heading view with display style, level normalized to 1..6, and optional align/spacing style variants.
     ;;   Optional parameter align defaults to 'left.
     ;;   Optional parameter spacing defaults to 'normal.
-    (define (display-heading level content [align 'left] [spacing 'normal])
-      (view kind/display-heading (list (cons 'level level)
-                                       (cons 'value content)
-                                       (cons 'align align)
-                                       (cons 'spacing spacing))
-            '()))
+    (define/key (display-heading level
+                                 content
+                                 [align 'left]
+                                 [spacing 'normal]
+                                 #:align [align-kw #f]
+                                 #:spacing [spacing-kw #f]
+                                 #:id [id #f]
+                                 #:class [class #f]
+                                 #:attrs [attrs '()])
+      (define final-align
+        (if (eq? align-kw #f) align align-kw))
+      (define final-spacing
+        (if (eq? spacing-kw #f) spacing spacing-kw))
+      (apply-root-decorators
+       (view kind/display-heading (list (cons 'level level)
+                                        (cons 'value content)
+                                        (cons 'align final-align)
+                                        (cons 'spacing final-spacing))
+             '())
+       id
+       class
+       attrs
+       'display-heading))
 
     ;; display-1 : (or/c string? observable?) -> view?
     ;;   Construct a semantic display level-1 heading view.
@@ -639,166 +780,423 @@
     ;;   Construct a semantic heading view with muted subtitle text and optional align/spacing style variants.
     ;;   Optional parameter align defaults to 'left.
     ;;   Optional parameter spacing defaults to 'normal.
-    (define (heading-with-subtitle level content subtitle [align 'left] [spacing 'normal])
-      (view kind/heading-with-subtitle
-            (list (cons 'level level)
-                  (cons 'value content)
-                  (cons 'subtitle subtitle)
-                  (cons 'align align)
-                  (cons 'spacing spacing))
-            '()))
+    (define/key (heading-with-subtitle level
+                                       content
+                                       subtitle
+                                       [align 'left]
+                                       [spacing 'normal]
+                                       #:align [align-kw #f]
+                                       #:spacing [spacing-kw #f]
+                                       #:id [id #f]
+                                       #:class [class #f]
+                                       #:attrs [attrs '()])
+      (define final-align
+        (if (eq? align-kw #f) align align-kw))
+      (define final-spacing
+        (if (eq? spacing-kw #f) spacing spacing-kw))
+      (apply-root-decorators
+       (view kind/heading-with-subtitle
+             (list (cons 'level level)
+                   (cons 'value content)
+                   (cons 'subtitle subtitle)
+                   (cons 'align final-align)
+                   (cons 'spacing final-spacing))
+             '())
+       id
+       class
+       attrs
+       'heading-with-subtitle))
 
     ;; display-heading-with-subtitle : (or/c number? observable?) (or/c string? observable?) (or/c string? observable?) [symbol?] [symbol?] -> view?
     ;;   Construct a semantic display heading view with muted subtitle text and optional align/spacing style variants.
     ;;   Optional parameter align defaults to 'left.
     ;;   Optional parameter spacing defaults to 'normal.
-    (define (display-heading-with-subtitle level content subtitle [align 'left] [spacing 'normal])
-      (view kind/display-heading-with-subtitle
-            (list (cons 'level level)
-                  (cons 'value content)
-                  (cons 'subtitle subtitle)
-                  (cons 'align align)
-                  (cons 'spacing spacing))
-            '()))
+    (define/key (display-heading-with-subtitle level
+                                               content
+                                               subtitle
+                                               [align 'left]
+                                               [spacing 'normal]
+                                               #:align [align-kw #f]
+                                               #:spacing [spacing-kw #f]
+                                               #:id [id #f]
+                                               #:class [class #f]
+                                               #:attrs [attrs '()])
+      (define final-align
+        (if (eq? align-kw #f) align align-kw))
+      (define final-spacing
+        (if (eq? spacing-kw #f) spacing spacing-kw))
+      (apply-root-decorators
+       (view kind/display-heading-with-subtitle
+             (list (cons 'level level)
+                   (cons 'value content)
+                   (cons 'subtitle subtitle)
+                   (cons 'align final-align)
+                   (cons 'spacing final-spacing))
+             '())
+       id
+       class
+       attrs
+       'display-heading-with-subtitle))
 
     ;; lead : (or/c string? observable?) -> view?
     ;;   Construct a lead paragraph view from static or observable value.
-    (define (lead content)
-      (view kind/lead (list (cons 'value content)) '()))
+    (define/key (lead content
+                      #:id [id #f]
+                      #:class [class #f]
+                      #:attrs [attrs '()])
+      (apply-root-decorators
+       (view kind/lead (list (cons 'value content)) '())
+       id
+       class
+       attrs
+       'lead))
 
     ;; blockquote : (or/c string? observable?) [(or/c string? observable? false/c)] -> view?
     ;;   Construct a semantic blockquote with optional attribution footer.
     ;;   Optional parameter attribution defaults to #f.
-    (define (blockquote content [attribution #f])
-      (view kind/blockquote (list (cons 'value content)
-                                  (cons 'attribution attribution))
-            '()))
+    (define/key (blockquote content
+                            [attribution #f]
+                            #:id [id #f]
+                            #:class [class #f]
+                            #:attrs [attrs '()])
+      (apply-root-decorators
+       (view kind/blockquote (list (cons 'value content)
+                                   (cons 'attribution attribution))
+             '())
+       id
+       class
+       attrs
+       'blockquote))
 
     ;; button : (or/c string? observable?) (-> any/c) [any/c] [any/c] -> view?
     ;;   Construct a button view with optional leading/trailing icon labels.
     ;;   Optional parameter leading-icon defaults to #f.
     ;;   Optional parameter trailing-icon defaults to #f.
-    (define (button label action [leading-icon #f] [trailing-icon #f])
-      (view kind/button (list (cons 'label label)
-                              (cons 'action action)
-                              (cons 'leading-icon leading-icon)
-                              (cons 'trailing-icon trailing-icon))
-            '()))
+    (define/key (button label
+                        action
+                        [leading-icon #f]
+                        [trailing-icon #f]
+                        #:id [id #f]
+                        #:class [class #f]
+                        #:attrs [attrs '()])
+      (apply-root-decorators
+       (view kind/button (list (cons 'label label)
+                               (cons 'action action)
+                               (cons 'leading-icon leading-icon)
+                               (cons 'trailing-icon trailing-icon))
+             '())
+       id
+       class
+       attrs
+       'button))
 
     ;; link : (or/c string? observable?) (or/c string? observable?) [boolean?] [any/c] -> view?
     ;;   Construct a link view with href and optional download/target attributes.
     ;;   Optional parameter download? defaults to #f.
     ;;   Optional parameter target defaults to #f.
-    (define (link label href [download? #f] [target #f])
-      (view kind/link (list (cons 'label label)
-                            (cons 'href href)
-                            (cons 'download download?)
-                            (cons 'target target))
-            '()))
+    (define/key (link label
+                      href
+                      [download? #f]
+                      [target #f]
+                      #:download? [download?-kw #f]
+                      #:target [target-kw #f]
+                      #:id [id #f]
+                      #:class [class #f]
+                      #:attrs [attrs '()])
+      (define final-download?
+        (if (eq? download?-kw #f) download? download?-kw))
+      (define final-target
+        (if (eq? target-kw #f) target target-kw))
+      (apply-root-decorators
+       (view kind/link (list (cons 'label label)
+                             (cons 'href href)
+                             (cons 'download final-download?)
+                             (cons 'target final-target))
+             '())
+       id
+       class
+       attrs
+       'link))
 
     ;; button-group : view? ... -> view?
     ;;   Construct a grouped button container view.
-    (define (button-group . children)
-      (view kind/button-group '() children))
+    (define/key (button-group
+                 #:id [id #f]
+                 #:class [class #f]
+                 #:attrs [attrs '()]
+                 . children)
+      (apply-root-decorators
+       (view kind/button-group '() children)
+       id
+       class
+       attrs
+       'button-group))
+
+    ;; toggle-button-group : symbol? list? (or/c any/c observable?) (-> any/c any/c) -> view?
+    ;;   Construct an exclusive/non-exclusive toggle button group.
+    (define/key (toggle-button-group mode
+                                     choices
+                                     selected
+                                     action
+                                     #:id [id #f]
+                                     #:class [class #f]
+                                     #:attrs [attrs '()])
+      (apply-root-decorators
+       (view kind/toggle-button-group (list (cons 'mode mode)
+                                            (cons 'choices choices)
+                                            (cons 'selected selected)
+                                            (cons 'action action))
+             '())
+       id
+       class
+       attrs
+       'toggle-button-group))
 
     ;; button-toolbar : view? ... -> view?
     ;;   Construct a horizontal toolbar of grouped button controls.
-    (define (button-toolbar . children)
-      (view kind/button-toolbar '() children))
+    (define/key (button-toolbar
+                 #:id [id #f]
+                 #:class [class #f]
+                 #:attrs [attrs '()]
+                 . children)
+      (apply-root-decorators
+       (view kind/button-toolbar '() children)
+       id
+       class
+       attrs
+       'button-toolbar))
 
     ;; toolbar : view? ... -> view?
     ;;   Construct a generic horizontal toolbar container.
-    (define (toolbar . children)
-      (view kind/toolbar '() children))
+    (define/key (toolbar
+                 #:id [id #f]
+                 #:class [class #f]
+                 #:attrs [attrs '()]
+                 . children)
+      (apply-root-decorators
+       (view kind/toolbar '() children)
+       id
+       class
+       attrs
+       'toolbar))
 
     ;; toolbar-group : view? ... -> view?
     ;;   Construct a grouped toolbar section container.
-    (define (toolbar-group . children)
-      (view kind/toolbar-group '() children))
+    (define/key (toolbar-group
+                 #:id [id #f]
+                 #:class [class #f]
+                 #:attrs [attrs '()]
+                 . children)
+      (apply-root-decorators
+       (view kind/toolbar-group '() children)
+       id
+       class
+       attrs
+       'toolbar-group))
 
     ;; input : (or/c string? observable?) (-> any/c any/c) [(or/c (-> any/c) false/c)] [list?] -> view?
     ;;   Construct an input view with current value, change action, optional Enter action, and attrs.
     ;;   Optional parameter on-enter defaults to #f.
     ;;   Optional parameter attrs defaults to '().
-    (define (input value action [on-enter #f] [attrs '()])
-      (view kind/input (list (cons 'value value)
-                             (cons 'action action)
-                             (cons 'on-enter on-enter)
-                             (cons 'attrs attrs))
-            '()))
+    (define/key (input value
+                       action
+                       [on-enter #f]
+                       [input-attrs '()]
+                       #:on-enter [on-enter-kw #f]
+                       #:input-attrs [input-attrs-kw #f]
+                       #:id [id #f]
+                       #:class [class #f]
+                       #:attrs [attrs '()])
+      (define final-on-enter
+        (if (eq? on-enter-kw #f) on-enter on-enter-kw))
+      (define final-input-attrs
+        (if (eq? input-attrs-kw #f) input-attrs input-attrs-kw))
+      (apply-root-decorators
+       (view kind/input (list (cons 'value value)
+                              (cons 'action action)
+                              (cons 'on-enter final-on-enter)
+                              (cons 'attrs final-input-attrs))
+             '())
+       id
+       class
+       attrs
+       'input))
 
     ;; textarea : (or/c string? observable?) (-> any/c any/c) [number?] [list?] -> view?
     ;;   Construct a textarea view with current value, change action, optional rows, and attrs.
     ;;   Optional parameter rows defaults to 3.
     ;;   Optional parameter attrs defaults to '().
-    (define (textarea value action [rows 3] [attrs '()])
-      (view kind/textarea (list (cons 'value value)
-                                (cons 'action action)
-                                (cons 'rows rows)
-                                (cons 'attrs attrs))
-            '()))
+    (define/key (textarea value
+                          action
+                          [rows 3]
+                          [textarea-attrs '()]
+                          #:rows [rows-kw #f]
+                          #:textarea-attrs [textarea-attrs-kw #f]
+                          #:id [id #f]
+                          #:class [class #f]
+                          #:attrs [attrs '()])
+      (define final-rows
+        (if (eq? rows-kw #f) rows rows-kw))
+      (define final-textarea-attrs
+        (if (eq? textarea-attrs-kw #f) textarea-attrs textarea-attrs-kw))
+      (apply-root-decorators
+       (view kind/textarea (list (cons 'value value)
+                                 (cons 'action action)
+                                 (cons 'rows final-rows)
+                                 (cons 'attrs final-textarea-attrs))
+             '())
+       id
+       class
+       attrs
+       'textarea))
 
     ;; checkbox : (or/c boolean? observable?) (-> any/c any/c) -> view?
     ;;   Construct a checkbox view with current state and toggle action.
-    (define (checkbox value action)
-      (view kind/checkbox (list (cons 'value value)
-                                (cons 'action action))
-            '()))
+    (define/key (checkbox value
+                          action
+                          #:id [id #f]
+                          #:class [class #f]
+                          #:attrs [attrs '()])
+      (apply-root-decorators
+       (view kind/checkbox (list (cons 'value value)
+                                 (cons 'action action))
+             '())
+       id
+       class
+       attrs
+       'checkbox))
 
     ;; choice : list? (or/c any/c observable?) (-> any/c any/c) -> view?
     ;;   Construct a choice view with options, selected value, and action.
-    (define (choice choices selected action)
-      (view kind/choice (list (cons 'choices choices)
-                              (cons 'selected selected)
-                              (cons 'action action))
-            '()))
+    (define/key (choice choices
+                        selected
+                        action
+                        #:id [id #f]
+                        #:class [class #f]
+                        #:attrs [attrs '()])
+      (apply-root-decorators
+       (view kind/choice (list (cons 'choices choices)
+                               (cons 'selected selected)
+                               (cons 'action action))
+             '())
+       id
+       class
+       attrs
+       'choice))
 
     ;; slider : (or/c number? observable?) (-> any/c any/c) [number?] [number?] -> view?
     ;;   Construct a slider with value, action, and optional min/max bounds.
     ;;   Optional parameter min defaults to 0.
     ;;   Optional parameter max defaults to 100.
-    (define (slider value action [min 0] [max 100])
-      (view kind/slider (list (cons 'value value)
-                              (cons 'action action)
-                              (cons 'min min)
-                              (cons 'max max))
-            '()))
+    (define/key (slider value
+                        action
+                        [min 0]
+                        [max 100]
+                        #:min [min-kw #f]
+                        #:max [max-kw #f]
+                        #:id [id #f]
+                        #:class [class #f]
+                        #:attrs [attrs '()])
+      (define final-min
+        (if (eq? min-kw #f) min min-kw))
+      (define final-max
+        (if (eq? max-kw #f) max max-kw))
+      (apply-root-decorators
+       (view kind/slider (list (cons 'value value)
+                               (cons 'action action)
+                               (cons 'min final-min)
+                               (cons 'max final-max))
+             '())
+       id
+       class
+       attrs
+       'slider))
 
     ;; progress : (or/c number? observable?) [number?] [number?] [(or/c symbol? observable?)] -> view?
     ;;   Construct a progress display with optional min/max bounds and variant.
     ;;   Optional parameter min defaults to 0.
     ;;   Optional parameter max defaults to 100.
     ;;   Optional parameter variant defaults to 'info.
-    (define (progress value [min 0] [max 100] [variant 'info])
-      (view kind/progress (list (cons 'value value)
-                                (cons 'min min)
-                                (cons 'max max)
-                                (cons 'variant variant))
-            '()))
+    (define/key (progress value
+                          [min 0]
+                          [max 100]
+                          [variant 'info]
+                          #:min [min-kw #f]
+                          #:max [max-kw #f]
+                          #:variant [variant-kw #f]
+                          #:id [id #f]
+                          #:class [class #f]
+                          #:attrs [attrs '()])
+      (define final-min
+        (if (eq? min-kw #f) min min-kw))
+      (define final-max
+        (if (eq? max-kw #f) max max-kw))
+      (define final-variant
+        (if (eq? variant-kw #f) variant variant-kw))
+      (apply-root-decorators
+       (view kind/progress (list (cons 'value value)
+                                 (cons 'min final-min)
+                                 (cons 'max final-max)
+                                 (cons 'variant final-variant))
+             '())
+       id
+       class
+       attrs
+       'progress))
 
     ;; pagination : (or/c number? observable?) (or/c number? observable?) (-> any/c any/c) -> view?
     ;;   Construct a pagination control for page-count, current page, and page-change action.
-    (define (pagination page-count current-page action)
-      (view kind/pagination (list (cons 'page-count page-count)
-                                  (cons 'current-page current-page)
-                                  (cons 'action action))
-            '()))
+    (define/key (pagination page-count
+                            current-page
+                            action
+                            #:id [id #f]
+                            #:class [class #f]
+                            #:attrs [attrs '()])
+      (apply-root-decorators
+       (view kind/pagination (list (cons 'page-count page-count)
+                                   (cons 'current-page current-page)
+                                   (cons 'action action))
+             '())
+       id
+       class
+       attrs
+       'pagination))
 
     ;; breadcrumb : list? (or/c any/c observable?) (-> any/c any/c) -> view?
     ;;   Construct a breadcrumb control for entries, current id, and navigation action.
-    (define (breadcrumb entries current action)
-      (view kind/breadcrumb (list (cons 'entries entries)
-                                  (cons 'current current)
-                                  (cons 'action action))
-            '()))
+    (define/key (breadcrumb entries
+                            current
+                            action
+                            #:id [id #f]
+                            #:class [class #f]
+                            #:attrs [attrs '()])
+      (apply-root-decorators
+       (view kind/breadcrumb (list (cons 'entries entries)
+                                   (cons 'current current)
+                                   (cons 'action action))
+             '())
+       id
+       class
+       attrs
+       'breadcrumb))
 
     ;; list-group : list? (or/c any/c observable?) (-> any/c any/c) -> view?
     ;;   Construct a selectable list-group from entries, current id, and selection action.
-    (define (list-group entries current action)
-      (view kind/list-group (list (cons 'entries entries)
-                                  (cons 'current current)
-                                  (cons 'action action))
-            '()))
+    (define/key (list-group entries
+                            current
+                            action
+                            #:id [id #f]
+                            #:class [class #f]
+                            #:attrs [attrs '()])
+      (apply-root-decorators
+       (view kind/list-group (list (cons 'entries entries)
+                                   (cons 'current current)
+                                   (cons 'action action))
+             '())
+       id
+       class
+       attrs
+       'list-group))
 
     ;; if-view : (or/c any/c observable?) view? view? -> view?
     ;;   Construct a conditional view that selects then-view or else-view.
@@ -826,33 +1224,84 @@
     ;; tab-panel : (or/c any/c observable?) (listof (cons any/c view?)) [any/c] -> view?
     ;;   Construct a selected-tab branch view keyed by tab id, with optional style variants.
     ;;   Optional parameter variants defaults to 'default.
-    (define (tab-panel selected tabs [variants 'default])
-      (view kind/tab-panel (list (cons 'selected selected)
-                                 (cons 'tabs tabs)
-                                 (cons 'variants variants))
-            '()))
+    (define/key (tab-panel selected
+                           tabs
+                           [variants 'default]
+                           #:variants [variants-kw #f]
+                           #:id [id #f]
+                           #:class [class #f]
+                           #:attrs [attrs '()])
+      (define final-variants
+        (if (eq? variants-kw #f) variants variants-kw))
+      (apply-root-decorators
+       (view kind/tab-panel (list (cons 'selected selected)
+                                  (cons 'tabs tabs)
+                                  (cons 'variants final-variants))
+             '())
+       id
+       class
+       attrs
+       'tab-panel))
 
     ;; collapse : (or/c boolean? observable?) view? -> view?
     ;;   Construct a container view that shows child only when open is true.
-    (define (collapse open child)
-      (view kind/collapse (list (cons 'open open))
-            (list child)))
+    (define/key (collapse open
+                          child
+                          #:id [id #f]
+                          #:class [class #f]
+                          #:attrs [attrs '()])
+      (apply-root-decorators
+       (view kind/collapse (list (cons 'open open))
+             (list child))
+       id
+       class
+       attrs
+       'collapse))
 
     ;; accordion : (or/c any/c observable?) list? -> view?
     ;;   Construct a single-open accordion from section rows: (list id label view).
-    (define (accordion selected sections)
-      (view kind/accordion (list (cons 'selected selected)
-                                 (cons 'sections sections))
-            '()))
+    (define/key (accordion selected
+                           sections
+                           #:id [id #f]
+                           #:class [class #f]
+                           #:attrs [attrs '()])
+      (apply-root-decorators
+       (view kind/accordion (list (cons 'selected selected)
+                                  (cons 'sections sections))
+             '())
+       id
+       class
+       attrs
+       'accordion))
 
     ;; offcanvas : (or/c boolean? observable?) (-> any/c) [(or/c symbol? observable?)] view? ... -> view?
     ;;   Construct an offcanvas side panel with open flag, close action, and optional side.
     ;;   Optional parameter side defaults to 'end.
-    (define (offcanvas open on-close [side 'end] . children)
-      (view kind/offcanvas (list (cons 'open open)
-                                 (cons 'on-close on-close)
-                                 (cons 'side side))
-            children))
+    (define/key (offcanvas open
+                           on-close
+                           #:side [side-kw #f]
+                           #:id [id #f]
+                           #:class [class #f]
+                           #:attrs [attrs '()]
+                           . args)
+      (define side 'end)
+      (define children args)
+      (when (and (pair? children)
+                 (or (symbol? (car children))
+                     (obs? (car children))))
+        (set! side (car children))
+        (set! children (cdr children)))
+      (define final-side
+        (if (eq? side-kw #f) side side-kw))
+      (apply-root-decorators
+       (view kind/offcanvas (list (cons 'open open)
+                                  (cons 'on-close on-close)
+                                  (cons 'side final-side))
+             children)
+       id
+       class
+       attrs
+       'offcanvas))
 
     ;; dialog : (or/c boolean? observable?) (-> any/c) [symbol?] [list?] view? ... -> view?
     ;;   Construct a modal dialog that is visible when open is true and closes via on-close.
@@ -865,23 +1314,53 @@
     ;;     close-label -> string/observable aria-label for close button.
     ;;     tone        -> symbol tone: primary/secondary/success/danger/warning/info/light/dark.
     ;;     tone-style  -> symbol tone style: fill/outline.
-    (define (dialog open on-close . args)
-      (define has-size?
-        (and (pair? args)
-             (symbol? (car args))
-             (memq (car args) '(sm md lg xl))))
-      (define size      (if has-size? (car args) 'md))
-      (define rest/args (if has-size? (cdr args) args))
-      (define has-options?
-        (and (pair? rest/args)
-             (options-alist? (car rest/args))))
-      (define options  (if has-options? (car rest/args) '()))
-      (define children (if has-options? (cdr rest/args) rest/args))
-      (view kind/dialog (list (cons 'open open)
-                              (cons 'on-close on-close)
-                              (cons 'size size)
-                              (cons 'options options))
-            children))
+    (define/key (dialog open
+                        on-close
+                        #:size [size-kw #f]
+                        #:title [title #f]
+                        #:description [description #f]
+                        #:footer [footer #f]
+                        #:show-close? [show-close? #f]
+                        #:close-label [close-label "Close dialog"]
+                        #:tone [tone #f]
+                        #:tone-style [tone-style #f]
+                        #:id [id #f]
+                        #:class [class #f]
+                        #:attrs [attrs '()]
+                        . args)
+      (define size 'md)
+      (define rest/args args)
+      (define old-options '())
+      (when (and (pair? rest/args)
+                 (symbol? (car rest/args))
+                 (memq (car rest/args) '(sm md lg xl)))
+        (set! size (car rest/args))
+        (set! rest/args (cdr rest/args)))
+      (when (and (pair? rest/args)
+                 (options-alist? (car rest/args)))
+        (set! old-options (car rest/args))
+        (set! rest/args (cdr rest/args)))
+      (define final-size
+        (if (eq? size-kw #f) size size-kw))
+      (define options
+        (append old-options
+                (list (cons 'title title)
+                      (cons 'description description)
+                      (cons 'footer footer)
+                      (cons 'show-close? show-close?)
+                      (cons 'close-label close-label)
+                      (cons 'tone tone)
+                      (cons 'tone-style tone-style))))
+      (apply-root-decorators
+       (view kind/dialog (list (cons 'open open)
+                               (cons 'on-close on-close)
+                               (cons 'size final-size)
+                               (cons 'options options))
+             rest/args)
+       id
+       class
+       attrs
+       'dialog))
 
     ;; modal : (or/c boolean? observable?) (-> any/c) [symbol?] [list?] view? ... -> view?
     ;;   Construct a modal container that mirrors dialog behavior.
@@ -894,23 +1373,53 @@
     ;;     close-label -> string/observable aria-label for close button.
     ;;     tone        -> symbol tone: primary/secondary/success/danger/warning/info/light/dark.
     ;;     tone-style  -> symbol tone style: fill/outline.
-    (define (modal open on-close . args)
-      (define has-size?
-        (and (pair? args)
-             (symbol? (car args))
-             (memq (car args) '(sm md lg xl))))
-      (define size      (if has-size? (car args) 'md))
-      (define rest/args (if has-size? (cdr args) args))
-      (define has-options?
-        (and (pair? rest/args)
-             (options-alist? (car rest/args))))
-      (define options  (if has-options? (car rest/args) '()))
-      (define children (if has-options? (cdr rest/args) rest/args))
-      (view kind/modal (list (cons 'open open)
-                             (cons 'on-close on-close)
-                             (cons 'size size)
-                             (cons 'options options))
-            children))
+    (define/key (modal open
+                       on-close
+                       #:size [size-kw #f]
+                       #:title [title #f]
+                       #:description [description #f]
+                       #:footer [footer #f]
+                       #:show-close? [show-close? #f]
+                       #:close-label [close-label "Close modal"]
+                       #:tone [tone #f]
+                       #:tone-style [tone-style #f]
+                       #:id [id #f]
+                       #:class [class #f]
+                       #:attrs [attrs '()]
+                       . args)
+      (define size 'md)
+      (define rest/args args)
+      (define old-options '())
+      (when (and (pair? rest/args)
+                 (symbol? (car rest/args))
+                 (memq (car rest/args) '(sm md lg xl)))
+        (set! size (car rest/args))
+        (set! rest/args (cdr rest/args)))
+      (when (and (pair? rest/args)
+                 (options-alist? (car rest/args)))
+        (set! old-options (car rest/args))
+        (set! rest/args (cdr rest/args)))
+      (define final-size
+        (if (eq? size-kw #f) size size-kw))
+      (define options
+        (append old-options
+                (list (cons 'title title)
+                      (cons 'description description)
+                      (cons 'footer footer)
+                      (cons 'show-close? show-close?)
+                      (cons 'close-label close-label)
+                      (cons 'tone tone)
+                      (cons 'tone-style tone-style))))
+      (apply-root-decorators
+       (view kind/modal (list (cons 'open open)
+                              (cons 'on-close on-close)
+                              (cons 'size final-size)
+                              (cons 'options options))
+             rest/args)
+       id
+       class
+       attrs
+       'modal))
 
     ;; observable-view : (or/c any/c observable?) (-> any/c view?) [(-> any/c any/c boolean?)] -> view?
     ;;   Construct a dynamic single-child view from value using make-view.
@@ -924,14 +1433,36 @@
     ;; spacer : [number?] -> view?
     ;;   Construct an empty spacer view with optional grow factor.
     ;;   Optional parameter grow defaults to 1.
-    (define (spacer [grow 1])
-      (view kind/spacer (list (cons 'grow grow)) '()))
+    (define/key (spacer [grow 1]
+                        #:grow [grow-kw #f]
+                        #:id [id #f]
+                        #:class [class #f]
+                        #:attrs [attrs '()])
+      (define final-grow
+        (if (eq? grow-kw #f) grow grow-kw))
+      (apply-root-decorators
+       (view kind/spacer (list (cons 'grow final-grow)) '())
+       id
+       class
+       attrs
+       'spacer))
 
     ;; divider : [symbol?] -> view?
     ;;   Construct a divider with orientation 'horizontal or 'vertical.
     ;;   Optional parameter orientation defaults to 'horizontal.
-    (define (divider [orientation 'horizontal])
-      (view kind/divider (list (cons 'orientation orientation)) '()))
+    (define/key (divider [orientation 'horizontal]
+                         #:orientation [orientation-kw #f]
+                         #:id [id #f]
+                         #:class [class #f]
+                         #:attrs [attrs '()])
+      (define final-orientation
+        (if (eq? orientation-kw #f) orientation orientation-kw))
+      (apply-root-decorators
+       (view kind/divider (list (cons 'orientation final-orientation)) '())
+       id
+       class
+       attrs
+       'divider))
 
     ;; table : list? (or/c list? observable?) [symbol?] [list?] -> view?
     ;;   Construct a table view with columns/rows, optional spacing density, and optional options alist.
@@ -943,52 +1474,155 @@
     ;;     row-variants -> list of symbols per data row:
     ;;                     active/primary/secondary/success/danger/warning/info/light/dark.
     ;;     row-header-column -> non-negative column index rendered as <th scope=\"row\"> in data rows.
-    (define (table columns rows [density 'normal] [options '()])
-      (view kind/table (list (cons 'columns columns)
-                             (cons 'rows rows)
-                             (cons 'density density)
-                             (cons 'options options))
-            '()))
+    (define/key (table columns
+                       rows
+                       [density 'normal]
+                       [options-pos '()]
+                       #:density [density-kw #f]
+                       #:caption [caption #f]
+                       #:variants [variants #f]
+                       #:row-variants [row-variants #f]
+                       #:row-header-column [row-header-column #f]
+                       #:id [id #f]
+                       #:class [class #f]
+                       #:attrs [attrs '()])
+      (define final-density
+        (if (eq? density-kw #f) density density-kw))
+      (define old-caption
+        (if (list? options-pos)
+            (let ([p (assq 'caption options-pos)])
+              (if p (cdr p) #f))
+            #f))
+      (define old-variants
+        (if (list? options-pos)
+            (let ([p (assq 'variants options-pos)])
+              (if p (cdr p) #f))
+            #f))
+      (define old-row-variants
+        (if (list? options-pos)
+            (let ([p (assq 'row-variants options-pos)])
+              (if p (cdr p) #f))
+            #f))
+      (define old-row-header-column
+        (if (list? options-pos)
+            (let ([p (assq 'row-header-column options-pos)])
+              (if p (cdr p) #f))
+            #f))
+      (define options
+        (list (cons 'caption (if (eq? caption #f) old-caption caption))
+              (cons 'variants (if (eq? variants #f) old-variants variants))
+              (cons 'row-variants (if (eq? row-variants #f) old-row-variants row-variants))
+              (cons 'row-header-column (if (eq? row-header-column #f)
+                                           old-row-header-column
+                                           row-header-column))))
+      (apply-root-decorators
+       (view kind/table (list (cons 'columns columns)
+                              (cons 'rows rows)
+                              (cons 'density final-density)
+                              (cons 'options options))
+             '())
+       id
+       class
+       attrs
+       'table))
 
     ;; radios : list? (or/c any/c observable?) (-> any/c any/c) -> view?
     ;;   Construct a radio-choice control with choices and selected value.
-    (define (radios choices selected action)
-      (view kind/radios (list (cons 'choices choices)
-                              (cons 'selected selected)
-                              (cons 'action action))
-            '()))
+    (define/key (radios choices
+                        selected
+                        action
+                        #:id [id #f]
+                        #:class [class #f]
+                        #:attrs [attrs '()])
+      (apply-root-decorators
+       (view kind/radios (list (cons 'choices choices)
+                               (cons 'selected selected)
+                               (cons 'action action))
+             '())
+       id
+       class
+       attrs
+       'radios))
 
     ;; image : (or/c string? observable?) [any/c] [any/c] -> view?
     ;;   Construct an image view from a source path/string with optional width/height attrs.
     ;;   Optional parameter width defaults to #f.
     ;;   Optional parameter height defaults to #f.
-    (define (image src [width #f] [height #f])
-      (view kind/image (list (cons 'src src)
-                             (cons 'width width)
-                             (cons 'height height))
-            '()))
+    (define/key (image src
+                       [width #f]
+                       [height #f]
+                       #:width [width-kw #f]
+                       #:height [height-kw #f]
+                       #:id [id #f]
+                       #:class [class #f]
+                       #:attrs [attrs '()])
+      (define final-width
+        (if (eq? width-kw #f) width width-kw))
+      (define final-height
+        (if (eq? height-kw #f) height height-kw))
+      (apply-root-decorators
+       (view kind/image (list (cons 'src src)
+                              (cons 'width final-width)
+                              (cons 'height final-height))
+             '())
+       id
+       class
+       attrs
+       'image))
 
     ;; dropdown : (or/c string? observable?) list? (-> any/c any/c) [symbol?] -> view?
     ;;   Construct a dropdown menu from a label and entry rows: (list id label).
     ;;   Optional parameter placement defaults to 'down.
-    (define (dropdown label entries action [placement 'down])
-      (view kind/dropdown (list (cons 'label label)
-                                (cons 'entries entries)
-                                (cons 'action action)
-                                (cons 'placement placement))
-            '()))
+    (define/key (dropdown label
+                          entries
+                          action
+                          [placement 'down]
+                          #:placement [placement-kw #f]
+                          #:id [id #f]
+                          #:class [class #f]
+                          #:attrs [attrs '()])
+      (define final-placement
+        (if (eq? placement-kw #f) placement placement-kw))
+      (apply-root-decorators
+       (view kind/dropdown (list (cons 'label label)
+                                 (cons 'entries entries)
+                                 (cons 'action action)
+                                 (cons 'placement final-placement))
+             '())
+       id
+       class
+       attrs
+       'dropdown))
 
     ;; carousel : list? (or/c number? observable?) (-> any/c any/c) [boolean?] [boolean?] -> view?
     ;;   Construct a carousel from item rows, current index, and index-change action with optional wrap and autoplay flags.
     ;;   Optional parameter wrap? defaults to #t.
     ;;   Optional parameter autoplay? defaults to #f.
-    (define (carousel items current-index action [wrap? #t] [autoplay? #f])
-      (view kind/carousel (list (cons 'items items)
-                                (cons 'current-index current-index)
-                                (cons 'action action)
-                                (cons 'wrap? wrap?)
-                                (cons 'autoplay? autoplay?))
-            '()))
+    (define/key (carousel items
+                          current-index
+                          action
+                          [wrap? #t]
+                          [autoplay? #f]
+                          #:wrap? [wrap-kw keyword-not-given]
+                          #:autoplay? [autoplay-kw keyword-not-given]
+                          #:id [id #f]
+                          #:class [class #f]
+                          #:attrs [attrs '()])
+      (define final-wrap?
+        (if (keyword-given? wrap-kw) wrap-kw wrap?))
+      (define final-autoplay?
+        (if (keyword-given? autoplay-kw) autoplay-kw autoplay?))
+      (apply-root-decorators
+       (view kind/carousel (list (cons 'items items)
+                                 (cons 'current-index current-index)
+                                 (cons 'action action)
+                                 (cons 'wrap? final-wrap?)
+                                 (cons 'autoplay? final-autoplay?))
+             '())
+       id
+       class
+       attrs
+       'carousel))
 
     ;; scrollspy : list? (or/c any/c observable?) (-> any/c any/c) -> view?
     ;;   Construct scroll-tracking section navigation from rows: (list id label [content-view]).
@@ -999,26 +1633,46 @@
             '()))
 
     ;; tooltip : (or/c string? observable?) view? [symbol?] [list?] -> view?
-    ;;   Construct a tooltip wrapper with message, trigger child view, optional placement, and optional options.
+    ;;   Construct a tooltip container with message, trigger child view, optional placement, and optional options.
     ;;   Optional parameter placement defaults to 'top.
     ;;   Optional parameter options defaults to '() and accepts:
     ;;     title  -> string/observable heading shown above message.
     ;;     footer -> string/observable text shown below message.
-    (define (tooltip message child . args)
-      (define has-placement?
-        (and (pair? args)
-             (symbol? (car args))
-             (memq (car args) '(top right bottom left))))
-      (define placement (if has-placement? (car args) 'top))
-      (define rest/args (if has-placement? (cdr args) args))
-      (define has-options?
-        (and (pair? rest/args)
-             (options-alist? (car rest/args))))
-      (define options (if has-options? (car rest/args) '()))
-      (view kind/tooltip (list (cons 'message message)
-                               (cons 'placement placement)
-                               (cons 'options options))
-            (list child)))
+    (define/key (tooltip message
+                         child
+                         #:placement [placement-kw #f]
+                         #:title [title #f]
+                         #:footer [footer #f]
+                         #:id [id #f]
+                         #:class [class #f]
+                         #:attrs [attrs '()]
+                         . args)
+      (define placement 'top)
+      (define old-options '())
+      (when (and (pair? args)
+                 (symbol? (car args))
+                 (memq (car args) '(top right bottom left)))
+        (set! placement (car args))
+        (set! args (cdr args)))
+      (when (and (pair? args)
+                 (options-alist? (car args)))
+        (set! old-options (car args))
+        (set! args (cdr args)))
+      (define final-placement
+        (if (eq? placement-kw #f) placement placement-kw))
+      (define options
+        (append old-options
+                (list (cons 'title title)
+                      (cons 'footer footer))))
+      (apply-root-decorators
+       (view kind/tooltip (list (cons 'message message)
+                                (cons 'placement final-placement)
+                                (cons 'options options))
+             (list child))
+       id
+       class
+       attrs
+       'tooltip))
 
     ;; popover : (or/c string? observable?) [symbol?] [list?] view? ... -> view?
     ;;   Construct a click-toggle popover with trigger label, optional placement, optional options, and body children.
@@ -1026,22 +1680,41 @@
     ;;   Optional parameter options defaults to '() and accepts:
     ;;     title  -> string/observable heading shown above body.
     ;;     footer -> string/observable text shown below body.
-    (define (popover label . args)
-      (define has-placement?
-        (and (pair? args)
-             (symbol? (car args))
-             (memq (car args) '(top right bottom left))))
-      (define placement (if has-placement? (car args) 'bottom))
-      (define rest/args (if has-placement? (cdr args) args))
-      (define has-options?
-        (and (pair? rest/args)
-             (options-alist? (car rest/args))))
-      (define options  (if has-options? (car rest/args) '()))
-      (define children (if has-options? (cdr rest/args) rest/args))
-      (view kind/popover (list (cons 'label label)
-                               (cons 'placement placement)
-                               (cons 'options options))
-            children))
+    (define/key (popover label
+                         #:placement [placement-kw #f]
+                         #:title [title #f]
+                         #:footer [footer #f]
+                         #:id [id #f]
+                         #:class [class #f]
+                         #:attrs [attrs '()]
+                         . args)
+      (define placement 'bottom)
+      (define old-options '())
+      (define children args)
+      (when (and (pair? children)
+                 (symbol? (car children))
+                 (memq (car children) '(top right bottom left)))
+        (set! placement (car children))
+        (set! children (cdr children)))
+      (when (and (pair? children)
+                 (options-alist? (car children)))
+        (set! old-options (car children))
+        (set! children (cdr children)))
+      (define final-placement
+        (if (eq? placement-kw #f) placement placement-kw))
+      (define options
+        (append old-options
+                (list (cons 'title title)
+                      (cons 'footer footer))))
+      (apply-root-decorators
+       (view kind/popover (list (cons 'label label)
+                                (cons 'placement final-placement)
+                                (cons 'options options))
+             children)
+       id
+       class
+       attrs
+       'popover))
 
     ;; card : [(or/c string? observable? false/c)] [(or/c string? observable? false/c)] [any/c] [list?] any/c ... -> view?
     ;;   Construct a card with optional title/footer, optional variant(s), and body children.
@@ -1053,39 +1726,87 @@
     ;;     actions  -> list of view values rendered in a card action row.
     ;;     tone     -> symbol color tone: primary/secondary/success/danger/warning/info/light/dark.
     ;;     tone-style -> symbol tone style: fill/outline.
-    (define (card [title #f] [footer #f] . args)
+    (define/key (card [title #f]
+                      [footer #f]
+                      #:variants [variants-kw #f]
+                      #:subtitle [subtitle #f]
+                      #:media [media #f]
+                      #:actions [actions #f]
+                      #:tone [tone #f]
+                      #:tone-style [tone-style #f]
+                      #:id [id #f]
+                      #:class [class #f]
+                      #:attrs [attrs '()]
+                      . args)
       (define (all-symbols? xs)
         (cond
           [(null? xs) #t]
           [(symbol? (car xs)) (all-symbols? (cdr xs))]
           [else #f]))
+      (define variants 'default)
+      (define rest/args args)
+      (define old-options '())
       (define has-variant?
-        (and (pair? args)
-             (or (symbol? (car args))
-                 (and (list? (car args))
-                      (not (null? (car args)))
-                      (all-symbols? (car args))))))
-      (define variants (if has-variant?
-                           (car args)
-                           'default))
-      (define rest/args (if has-variant? (cdr args) args))
-      (define has-options?
         (and (pair? rest/args)
-             (options-alist? (car rest/args))))
-      (define options  (if has-options? (car rest/args) '()))
-      (define children (if has-options? (cdr rest/args) rest/args))
-      (view kind/card (list (cons 'title title)
-                            (cons 'footer footer)
-                            (cons 'variants variants)
-                            (cons 'options options))
-            children))
+             (or (symbol? (car rest/args))
+                 (and (list? (car rest/args))
+                      (not (null? (car rest/args)))
+                      (all-symbols? (car rest/args))))))
+      (when has-variant?
+        (set! variants (car rest/args))
+        (set! rest/args (cdr rest/args)))
+      (when (and (pair? rest/args)
+                 (options-alist? (car rest/args)))
+        (set! old-options (car rest/args))
+        (set! rest/args (cdr rest/args)))
+      (define final-variants
+        (if (eq? variants-kw #f) variants variants-kw))
+      (define old-subtitle
+        (let ([p (assq 'subtitle old-options)])
+          (if p (cdr p) #f)))
+      (define old-media
+        (let ([p (assq 'media old-options)])
+          (if p (cdr p) #f)))
+      (define old-actions
+        (let ([p (assq 'actions old-options)])
+          (if p (cdr p) #f)))
+      (define old-tone
+        (let ([p (assq 'tone old-options)])
+          (if p (cdr p) #f)))
+      (define old-tone-style
+        (let ([p (assq 'tone-style old-options)])
+          (if p (cdr p) #f)))
+      (define options
+        (append old-options
+                (list (cons 'subtitle (if (eq? subtitle #f) old-subtitle subtitle))
+                      (cons 'media (if (eq? media #f) old-media media))
+                      (cons 'actions (if (eq? actions #f) old-actions actions))
+                      (cons 'tone (if (eq? tone #f) old-tone tone))
+                      (cons 'tone-style (if (eq? tone-style #f) old-tone-style tone-style)))))
+      (apply-root-decorators
+       (view kind/card (list (cons 'title title)
+                             (cons 'footer footer)
+                             (cons 'variants final-variants)
+                             (cons 'options options))
+             rest/args)
+       id
+       class
+       attrs
+       'card))
 
     ;; navigation-bar : [(or/c symbol? observable?)] [(or/c boolean? observable?)] [symbol?] view? ... -> view?
     ;;   Construct a navigation bar with optional orientation/collapsed/expand props and children.
     ;;   Optional parameter orientation defaults to 'horizontal.
     ;;   Optional parameter collapsed? defaults to #f.
     ;;   Optional parameter expand defaults to 'never.
-    (define (navigation-bar . args)
+    (define/key (navigation-bar
+                 #:orientation [orientation-kw #f]
+                 #:collapsed? [collapsed?-kw #f]
+                 #:expand [expand-kw #f]
+                 #:id [id #f]
+                 #:class [class #f]
+                 #:attrs [attrs '()]
+                 . args)
       (define orientation 'horizontal)
       (define collapsed? #f)
       (define expand 'never)
@@ -1104,11 +1825,19 @@
                  (symbol? (car children)))
         (set! expand (car children))
         (set! children (cdr children)))
-      (view kind/navigation-bar
-            (list (cons 'orientation orientation)
-                  (cons 'collapsed? collapsed?)
-                  (cons 'expand expand))
-            children))
+      (define final-orientation (if (eq? orientation-kw #f) orientation orientation-kw))
+      (define final-collapsed?  (if (eq? collapsed?-kw #f) collapsed? collapsed?-kw))
+      (define final-expand      (if (eq? expand-kw #f) expand expand-kw))
+      (apply-root-decorators
+       (view kind/navigation-bar
+             (list (cons 'orientation final-orientation)
+                   (cons 'collapsed? final-collapsed?)
+                   (cons 'expand final-expand))
+             children)
+       id
+       class
+       attrs
+       'navigation-bar))
 
     ;; menu-bar : view? ... -> view?
     ;;   Construct a menu bar containing menu children.
@@ -1145,9 +1874,6 @@
             view-kind
             view-props
             view-children
-            with-attrs
-            with-class
-            with-id
             window
             vpanel
             hpanel
@@ -1185,6 +1911,7 @@
             button
             link
             button-group
+            toggle-button-group
             button-toolbar
             toolbar
             toolbar-group
