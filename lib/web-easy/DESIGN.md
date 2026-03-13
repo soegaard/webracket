@@ -1161,6 +1161,13 @@ Light/Dark "done" gate:
 5. Keyboard/focus/disabled states remain visible and consistent across both themes.
 6. Theme contracts pass (`./headless.sh theme`) and style contracts pass (`./check-style-headless.sh`).
 
+Light/Dark freeze note (2026-03-13):
+
+- Final theme/showcase sweep passed:
+  - `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-theme-showcase-compile.sh test-browser-theme-showcase-contract.html`
+  - `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-theme-external-css-contract.html`
+- Known deltas at freeze time: none blocking (no contract failures; no unstyled fallback observed in light/dark switch flow).
+
 Additional architecture notes:
 
 1. Shared test helper (`smoke/theme-contract-helper.js`) centralizes iframe theme injection and basic utilities to reduce drift across contract pages.
