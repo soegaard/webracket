@@ -46,16 +46,14 @@ html.we-theme-solar {
   --we-space-sm: 4px;
   --we-space-md: 8px;
   --we-space-lg: 10px;
-  --we-gap: 4px;
-  --we-gap-tab: 6px;
   --we-menu-popup-offset: 4px;
   --we-menu-popup-min-width: 150px;
   --we-menu-popup-gap: 4px;
 
   /* Semantic accents. */
   --we-progress-success: #859900;
-  --we-progress-warn: #b58900;
-  --we-progress-error: #dc322f;
+  --we-progress-warning: #b58900;
+  --we-progress-danger: #dc322f;
 
   /* Optional close-button glyph token. */
   --we-close-glyph: "✕";
@@ -77,6 +75,34 @@ html.we-theme-solar body {
   font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   margin: 0;
   padding: 0;
+}
+
+/* General text tone utilities (used by showcase and user apps). */
+html.we-theme-solar .we-text-primary { color: var(--we-primary, var(--we-border-strong)); }
+html.we-theme-solar .we-text-primary-emphasis { color: var(--we-primary-emphasis, var(--we-primary, var(--we-border-strong))); }
+html.we-theme-solar .we-text-secondary { color: var(--we-secondary, var(--we-fg-muted)); }
+html.we-theme-solar .we-text-secondary-emphasis { color: var(--we-secondary-emphasis, var(--we-secondary, var(--we-fg-muted))); }
+html.we-theme-solar .we-text-success { color: var(--we-success, var(--we-progress-success)); }
+html.we-theme-solar .we-text-success-emphasis { color: var(--we-success-emphasis, var(--we-success, var(--we-progress-success))); }
+html.we-theme-solar .we-text-info { color: var(--we-info, var(--we-focus)); }
+html.we-theme-solar .we-text-info-emphasis { color: var(--we-info-emphasis, var(--we-info, var(--we-focus))); }
+html.we-theme-solar .we-text-warning { color: var(--we-warning, var(--we-progress-warning)); }
+html.we-theme-solar .we-text-warning-emphasis { color: var(--we-warning-emphasis, var(--we-warning, var(--we-progress-warning))); }
+html.we-theme-solar .we-text-danger { color: var(--we-danger, var(--we-progress-danger)); }
+html.we-theme-solar .we-text-danger-emphasis { color: var(--we-danger-emphasis, var(--we-danger, var(--we-progress-danger))); }
+html.we-theme-solar .we-text-light { color: var(--we-light, #eee8d5); }
+html.we-theme-solar .we-text-light-emphasis { color: var(--we-light-emphasis, var(--we-light, #eee8d5)); }
+html.we-theme-solar .we-text-dark { color: var(--we-dark, #001f27); }
+html.we-theme-solar .we-text-dark-emphasis { color: var(--we-dark-emphasis, var(--we-dark, #001f27)); }
+html.we-theme-solar .we-text-body { color: var(--we-fg); }
+html.we-theme-solar .we-text-body-emphasis { color: var(--we-fg); }
+html.we-theme-solar .we-text-body-secondary { color: var(--we-body-secondary, var(--we-fg-muted)); }
+html.we-theme-solar .we-text-body-tertiary { color: var(--we-body-tertiary, var(--we-fg-muted)); }
+html.we-theme-solar .we-heading-subtitle {
+  margin-left: 0.35rem;
+  color: var(--we-fg-muted);
+  font-size: 0.7em;
+  font-weight: 400;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -242,6 +268,69 @@ html.we-theme-solar .we-card-body {
   gap: 8px;
 }
 
+html.we-theme-solar .we-card {
+  border-color: var(--we-border-soft);
+  border-radius: 6px;
+  background: var(--we-bg);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+html.we-theme-solar .we-card-header,
+html.we-theme-solar .we-card-footer {
+  background: var(--we-bg-subtle);
+  background-clip: padding-box;
+  border-color: var(--we-border-soft);
+  color: var(--we-fg);
+  padding: 8px 10px;
+}
+
+html.we-theme-solar .we-card .we-heading {
+  margin: 0 0 2px 0;
+  color: inherit;
+}
+
+html.we-theme-solar .we-card-tone-primary   { --we-card-tone-bg: var(--we-border-strong); --we-card-tone-border: var(--we-border-strong); --we-card-tone-fg: #fff; }
+html.we-theme-solar .we-card-tone-secondary { --we-card-tone-bg: #6f878c; --we-card-tone-border: #6f878c; --we-card-tone-fg: #fff; }
+html.we-theme-solar .we-card-tone-success   { --we-card-tone-bg: var(--we-progress-success); --we-card-tone-border: var(--we-progress-success); --we-card-tone-fg: #f7fff6; }
+html.we-theme-solar .we-card-tone-info      { --we-card-tone-bg: var(--we-focus); --we-card-tone-border: var(--we-focus); --we-card-tone-fg: #f4fbff; }
+html.we-theme-solar .we-card-tone-warning   { --we-card-tone-bg: var(--we-progress-warning); --we-card-tone-border: var(--we-progress-warning); --we-card-tone-fg: #fff8ea; }
+html.we-theme-solar .we-card-tone-danger    { --we-card-tone-bg: var(--we-progress-danger); --we-card-tone-border: var(--we-progress-danger); --we-card-tone-fg: #fff3f3; }
+html.we-theme-solar .we-card-tone-light     { --we-card-tone-bg: #fdf6e3; --we-card-tone-border: #cdbf95; --we-card-tone-fg: #073642; }
+html.we-theme-solar .we-card-tone-dark      { --we-card-tone-bg: #073642; --we-card-tone-border: #073642; --we-card-tone-fg: #eee8d5; }
+
+html.we-theme-solar .we-card.we-card-tone-fill {
+  background: var(--we-card-tone-bg, var(--we-bg));
+  border-color: var(--we-card-tone-border, var(--we-border-soft));
+  color: var(--we-card-tone-fg, var(--we-fg));
+}
+
+html.we-theme-solar .we-card.we-card-tone-fill :is(.we-card-header, .we-card-body, .we-card-footer, .we-card-subtitle, .we-card-media-text, .we-card-action-text) {
+  color: var(--we-card-tone-fg, var(--we-fg));
+}
+
+html.we-theme-solar .we-card.we-card-tone-fill .we-card-header,
+html.we-theme-solar .we-card.we-card-tone-fill .we-card-footer {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+html.we-theme-solar .we-card.we-card-tone-outline {
+  border-color: var(--we-card-tone-border, var(--we-border-soft));
+  color: var(--we-card-tone-border, var(--we-fg));
+}
+
+html.we-theme-solar .we-card.we-card-tone-outline .we-card-header,
+html.we-theme-solar .we-card.we-card-tone-outline .we-card-footer {
+  background: color-mix(in srgb, var(--we-card-tone-bg, var(--we-bg)) 12%, var(--we-bg));
+  border-color: color-mix(in srgb, var(--we-card-tone-border, var(--we-border-soft)) 55%, var(--we-bg));
+}
+
+html.we-theme-solar .we-card-actions {
+  border-top: 1px solid var(--we-border-soft);
+  padding: 8px 10px;
+}
+
 html.we-theme-solar .we-inline,
 html.we-theme-solar .we-toolbar,
 html.we-theme-solar .we-toolbar-group {
@@ -261,6 +350,8 @@ html.we-theme-solar .we-menu-bar {
 }
 
 html.we-theme-solar .we-menu-label {
+  -webkit-appearance: none;
+  appearance: none;
   padding: 5px 9px;
   border: 1px solid var(--we-border);
   border-radius: 4px;
@@ -721,11 +812,91 @@ html.we-theme-solar .we-group {
   background: #073642;
 }
 
-html.we-theme-solar .we-dialog-panel {
+html.we-theme-solar .we-dialog-panel,
+html.we-theme-solar .we-modal-panel {
+  border: 1px solid var(--we-border-menu);
+  border-radius: 6px;
   border-color: var(--we-border-menu);
   background: #073642;
   color: var(--we-fg);
   box-shadow: 0 14px 32px var(--we-shadow);
+}
+
+html.we-theme-solar .we-dialog-header,
+html.we-theme-solar .we-modal-header {
+  border-bottom: 1px solid var(--we-border-soft);
+  padding: 0.65rem 0.9rem;
+  margin: 0;
+}
+
+html.we-theme-solar .we-dialog-body,
+html.we-theme-solar .we-modal-body {
+  padding: 0.85rem 0.9rem;
+}
+
+html.we-theme-solar .we-dialog-footer,
+html.we-theme-solar .we-modal-footer {
+  border-top: 1px solid var(--we-border-soft);
+  padding: 0.65rem 0.9rem;
+  margin: 0;
+}
+
+html.we-theme-solar .we-dialog-close,
+html.we-theme-solar .we-modal-close {
+  margin-left: auto;
+  width: 1.5rem;
+  height: 1.5rem;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--we-fg);
+  opacity: 0.75;
+  font-size: 1.4rem;
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+}
+
+html.we-theme-solar .we-dialog-close:hover,
+html.we-theme-solar .we-modal-close:hover {
+  background: rgba(147, 161, 161, 0.16);
+  opacity: 1;
+}
+
+html.we-theme-solar .we-dialog-close:focus-visible,
+html.we-theme-solar .we-modal-close:focus-visible {
+  outline: 1px solid var(--we-focus);
+  outline-offset: 0;
+  opacity: 1;
+}
+
+html.we-theme-solar .we-offcanvas-panel > .we-close-button {
+  align-self: flex-end;
+  margin: 0 0 0.25rem 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--we-fg);
+  opacity: 0.75;
+}
+
+html.we-theme-solar .we-offcanvas-panel > .we-close-button:hover {
+  background: rgba(147, 161, 161, 0.16);
+  opacity: 1;
+}
+
+html.we-theme-solar .we-offcanvas-panel > .we-close-button:focus-visible {
+  outline: 1px solid var(--we-focus);
+  outline-offset: 0;
+  opacity: 1;
 }
 
 html.we-theme-solar .we-table,
@@ -774,38 +945,123 @@ html.we-theme-solar .we-toast-success {
   background: rgba(133, 153, 0, 0.18);
 }
 
-html.we-theme-solar .we-alert-warn,
-html.we-theme-solar .we-toast-warn {
+html.we-theme-solar .we-alert-warning,
+html.we-theme-solar .we-toast-warning {
   border-color: #be9551;
   background: rgba(181, 137, 0, 0.16);
 }
 
-html.we-theme-solar .we-alert-error,
-html.we-theme-solar .we-toast-error {
+html.we-theme-solar .we-alert-danger,
+html.we-theme-solar .we-toast-danger {
   border-color: #bb6163;
   background: rgba(220, 50, 47, 0.16);
 }
 
 html.we-theme-solar .we-toast {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "title close"
+    "message close";
+  column-gap: 0.625rem;
+  row-gap: 0.25rem;
+  align-items: start;
   border-color: var(--we-border);
   background: var(--we-bg);
   border-radius: 6px;
-  padding: 8px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
+  padding: 0.75rem 0.875rem;
   box-shadow: 0 8px 22px var(--we-shadow);
+}
+
+html.we-theme-solar .we-toast-title {
+  grid-area: title;
+  display: block;
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+html.we-theme-solar .we-toast-message {
+  grid-area: message;
+  display: block;
+  margin: 0;
+  line-height: 1.45;
 }
 
 html.we-theme-solar .we-close-button,
 html.we-theme-solar .we-toast-close {
-  padding: 2px 7px;
+  grid-area: close;
+  align-self: start;
+  justify-self: end;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font-size: 0;
+  line-height: 0;
+  opacity: 0.75;
+}
+
+html.we-theme-solar .we-close-button::before,
+html.we-theme-solar .we-toast-close::before {
+  content: "\00d7";
+  display: block;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+html.we-theme-solar .we-close-button:hover,
+html.we-theme-solar .we-toast-close:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+html.we-theme-solar .we-close-button:focus-visible,
+html.we-theme-solar .we-toast-close:focus-visible {
+  opacity: 1;
+  outline: 1px solid var(--we-focus);
+  outline-offset: 1px;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 html.we-theme-solar progress {
   accent-color: var(--we-progress-success);
   height: 7px;
+}
+
+/* Segmented progress-fill helper classes (used by showcase and user pages). */
+html.we-theme-solar .we-progress-fill-default { background: var(--we-border-strong); }
+html.we-theme-solar .we-progress-fill-success { background: var(--we-progress-success); }
+html.we-theme-solar .we-progress-fill-info    { background: var(--we-focus); }
+html.we-theme-solar .we-progress-fill-warning { background: var(--we-progress-warning); }
+html.we-theme-solar .we-progress-fill-danger  { background: var(--we-progress-danger); }
+
+html.we-theme-solar .we-progress-fill-striped {
+  background-image:
+    linear-gradient(
+      -45deg,
+      rgba(255, 255, 255, 0.24) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgba(255, 255, 255, 0.24) 50%,
+      rgba(255, 255, 255, 0.24) 75%,
+      transparent 75%,
+      transparent
+    );
+  background-size: 1rem 1rem;
+}
+
+html.we-theme-solar .we-progress-fill-animated {
+  animation: we-solar-progress-stripes 1s linear infinite;
+}
+
+@keyframes we-solar-progress-stripes {
+  from { background-position-x: 1rem; }
+  to { background-position-x: 0; }
 }
 
 html.we-theme-solar .we-pagination {
@@ -818,6 +1074,10 @@ html.we-theme-solar .we-page-btn {
 }
 
 html.we-theme-solar .we-list-group-item {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
   border: 0;
   /* Keep item corners square so only horizontal separators are visible inside. */
   border-radius: 0;
@@ -827,6 +1087,12 @@ html.we-theme-solar .we-list-group-item {
   color: var(--we-fg);
   font-size: 16px;
   line-height: 1.35;
+}
+
+html.we-theme-solar button.we-list-group-item,
+html.we-theme-solar .we-list-group-item[data-we-widget="list-group-item"] {
+  appearance: none;
+  cursor: pointer;
 }
 
 html.we-theme-solar .we-list-group {

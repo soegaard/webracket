@@ -290,6 +290,38 @@ html.we-theme-solar .showcase-button-row.we-inline {
   flex-wrap: wrap;
 }
 
+/* Static list-group rows in showcase: keep count badge docked right with separator. */
+html.we-theme-solar .showcase-list-group-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  width: 100%;
+  gap: 0.5rem;
+}
+
+html.we-theme-solar .showcase-list-group-row > [data-we-widget="text"] {
+  white-space: nowrap;
+}
+
+html.we-theme-solar .showcase-list-group-badge {
+  margin-left: auto;
+  padding-left: 0.75rem;
+  border-left: 1px solid var(--we-border-soft);
+  border-radius: 0;
+  min-width: 2rem;
+  text-align: center;
+}
+
+/* Variant list-group rows in the Containers section. */
+html.we-theme-solar .showcase-list-variant .we-list-group-item:nth-child(1) { background: #f0e7cc; color: #483700; border-color: #e1d099; }
+html.we-theme-solar .showcase-list-variant .we-list-group-item:nth-child(2) { background: #e6eaea; color: #343b3c; border-color: #cdd4d5; }
+html.we-theme-solar .showcase-list-variant .we-list-group-item:nth-child(3) { background: #d4ecea; color: #11403d; border-color: #aad9d6; }
+html.we-theme-solar .showcase-list-variant .we-list-group-item:nth-child(4) { background: #d4e8f6; color: #0f3854; border-color: #a8d1ed; }
+html.we-theme-solar .showcase-list-variant .we-list-group-item:nth-child(5) { background: #f5dbd0; color: #511e09; border-color: #eab7a2; }
+html.we-theme-solar .showcase-list-variant .we-list-group-item:nth-child(6) { background: #f6d7e6; color: #541634; border-color: #edadcd; }
+html.we-theme-solar .showcase-list-variant .we-list-group-item:nth-child(7) { background: #fefbf1; color: #495057; border-color: #eee8d5; }
+html.we-theme-solar .showcase-list-variant .we-list-group-item:nth-child(8) { background: #ced4da; color: #495057; border-color: #adb5bd; }
+
 html.we-theme-solar .showcase-card .we-breadcrumb-item {
   color: var(--we-fg);
   padding: 0;
@@ -337,4 +369,52 @@ html.we-theme-solar .showcase-card .we-accordion-content {
   padding: 8px 9px;
   background: var(--we-bg);
   color: var(--we-fg);
+}
+
+/* Static toast sample in showcase. */
+html.we-theme-solar .showcase-static-toast {
+  width: min(360px, 100%);
+  border: 1px solid var(--we-border-soft);
+  border-radius: 6px;
+  background: var(--we-bg);
+  color: var(--we-fg);
+  box-shadow: 0 8px 22px var(--we-shadow);
+  overflow: hidden;
+}
+
+html.we-theme-solar .showcase-static-toast-header.we-inline {
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--we-border-soft);
+  background: var(--we-bg-subtle);
+}
+
+html.we-theme-solar .showcase-static-toast-title {
+  font-weight: 700;
+}
+
+html.we-theme-solar .showcase-static-toast-time {
+  color: var(--we-fg-muted);
+}
+
+html.we-theme-solar .showcase-static-toast-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 4px;
+  color: var(--we-fg-muted);
+  line-height: 1;
+}
+
+html.we-theme-solar .showcase-static-toast-close:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+html.we-theme-solar .showcase-static-toast-body {
+  display: block;
+  padding: 0.65rem 0.75rem;
+  line-height: 1.45;
 }

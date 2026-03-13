@@ -83,8 +83,8 @@ html.we-theme-solar2 {
   --we-light-emphasis:     #fdf6e3;
   --we-dark-emphasis:      #dee2e6;
   --we-progress-success: var(--we-success);
-  --we-progress-warn:    var(--we-warning);
-  --we-progress-error:   var(--we-danger);
+  --we-progress-warning:    var(--we-warning);
+  --we-progress-danger:   var(--we-danger);
   --we-menu-popup-offset: 4px;
   --we-menu-popup-min-width: 160px;
   --we-menu-popup-gap: 4px;
@@ -121,6 +121,74 @@ html.we-theme-solar2 body {
 
 html.we-theme-solar2 .we-text {
   line-height: 1.5;
+}
+
+/* General text emphasis helpers (theme-level, not showcase-specific). */
+html.we-theme-solar2 .we-text-fine-print {
+  color:     var(--we-fg-muted);
+  font-size: 0.875rem;
+}
+
+html.we-theme-solar2 .we-text-strong {
+  font-weight: 700;
+}
+
+html.we-theme-solar2 .we-text-emphasis {
+  font-style: italic;
+}
+
+html.we-theme-solar2 .we-text-abbr {
+  border-bottom: 1px dotted var(--we-fg-muted);
+  cursor:        help;
+}
+
+/* General text tone utilities (used by showcase and user apps). */
+html.we-theme-solar2 .we-text-primary { color: var(--we-primary); }
+html.we-theme-solar2 .we-text-primary-emphasis { color: var(--we-primary-emphasis, var(--we-primary)); }
+html.we-theme-solar2 .we-text-secondary { color: var(--we-secondary); }
+html.we-theme-solar2 .we-text-secondary-emphasis { color: var(--we-secondary-emphasis, var(--we-secondary)); }
+html.we-theme-solar2 .we-text-success { color: var(--we-success); }
+html.we-theme-solar2 .we-text-success-emphasis { color: var(--we-success-emphasis, var(--we-success)); }
+html.we-theme-solar2 .we-text-info { color: var(--we-info); }
+html.we-theme-solar2 .we-text-info-emphasis { color: var(--we-info-emphasis, var(--we-info)); }
+html.we-theme-solar2 .we-text-warning { color: var(--we-warning); }
+html.we-theme-solar2 .we-text-warning-emphasis { color: var(--we-warning-emphasis, var(--we-warning)); }
+html.we-theme-solar2 .we-text-danger { color: var(--we-danger); }
+html.we-theme-solar2 .we-text-danger-emphasis { color: var(--we-danger-emphasis, var(--we-danger)); }
+html.we-theme-solar2 .we-text-light { color: var(--we-light); }
+html.we-theme-solar2 .we-text-light-emphasis { color: var(--we-light-emphasis, var(--we-light)); }
+html.we-theme-solar2 .we-text-dark { color: var(--we-dark); }
+html.we-theme-solar2 .we-text-dark-emphasis { color: var(--we-dark-emphasis, var(--we-dark)); }
+html.we-theme-solar2 .we-text-body { color: var(--we-fg); }
+html.we-theme-solar2 .we-text-body-emphasis { color: var(--we-fg); }
+html.we-theme-solar2 .we-text-body-secondary { color: var(--we-body-secondary, var(--we-fg-muted)); }
+html.we-theme-solar2 .we-text-body-tertiary { color: var(--we-body-tertiary, var(--we-fg-muted)); }
+
+/* Blockquote typography and attribution style for Solar 2. */
+html.we-theme-solar2 .we-blockquote {
+  border-left: 0;
+  margin:      0 0 1rem 0;
+  padding:     0;
+  background:  transparent;
+}
+
+html.we-theme-solar2 .we-blockquote .we-blockquote-quote {
+  margin:      0;
+  font-size:   1.25rem;
+  line-height: 1.35;
+  color:       var(--we-fg);
+}
+
+html.we-theme-solar2 .we-blockquote .we-blockquote-attrib {
+  margin-top:    0.375rem;
+  margin-bottom: 0;
+  color:         var(--we-secondary);
+  font-size:     0.875em;
+  line-height:   1.5;
+}
+
+html.we-theme-solar2 .we-blockquote .we-blockquote-attrib::before {
+  content: "— ";
 }
 
 /* Heading scale aligned to Bootstrap/Solar defaults. */
@@ -204,6 +272,13 @@ html.we-theme-solar2 .we-heading-title {
   font-weight: 500;
 }
 
+html.we-theme-solar2 .we-heading-subtitle {
+  margin-left: 0.35rem;
+  color: var(--we-fg-muted);
+  font-size: 0.7em;
+  font-weight: 400;
+}
+
 @media (min-width: 1200px) {
   html.we-theme-solar2 h1,
   html.we-theme-solar2 .we-heading.level-1 {
@@ -257,15 +332,15 @@ html.we-theme-solar2 button:hover {
   background: var(--we-bg-hover);
 }
 
-html.we-theme-solar2 .we-btn-lg.we-button,
-html.we-theme-solar2 .we-btn-lg .we-button {
+html.we-theme-solar2 .we-button-lg.we-button,
+html.we-theme-solar2 .we-button-lg .we-button {
   padding:       0.5rem 1rem;
   font-size:     1.25rem;
   border-radius: 0.5rem;
 }
 
-html.we-theme-solar2 .we-btn-sm.we-button,
-html.we-theme-solar2 .we-btn-sm .we-button {
+html.we-theme-solar2 .we-button-sm.we-button,
+html.we-theme-solar2 .we-button-sm .we-button {
   padding:       0.25rem 0.5rem;
   font-size:     0.875rem;
   border-radius: 0.25rem;
@@ -401,8 +476,8 @@ html.we-theme-solar2 .we-alert-info    { --we-alert-tone: var(--we-info); }
 html.we-theme-solar2 .we-alert-primary { --we-alert-tone: var(--we-primary); }
 html.we-theme-solar2 .we-alert-secondary { --we-alert-tone: var(--we-secondary); }
 html.we-theme-solar2 .we-alert-success { --we-alert-tone: var(--we-success); }
-html.we-theme-solar2 .we-alert-warn    { --we-alert-tone: var(--we-warning); }
-html.we-theme-solar2 .we-alert-error   { --we-alert-tone: var(--we-danger); }
+html.we-theme-solar2 .we-alert-warning    { --we-alert-tone: var(--we-warning); }
+html.we-theme-solar2 .we-alert-danger   { --we-alert-tone: var(--we-danger); }
 html.we-theme-solar2 .we-alert-light   { --we-alert-tone: #fdf6e3; }
 html.we-theme-solar2 .we-alert-dark    { --we-alert-tone: var(--we-bg-subtle); }
 
@@ -410,8 +485,8 @@ html.we-theme-solar2 .we-alert-info,
 html.we-theme-solar2 .we-alert-primary,
 html.we-theme-solar2 .we-alert-secondary,
 html.we-theme-solar2 .we-alert-success,
-html.we-theme-solar2 .we-alert-warn,
-html.we-theme-solar2 .we-alert-error,
+html.we-theme-solar2 .we-alert-warning,
+html.we-theme-solar2 .we-alert-danger,
 html.we-theme-solar2 .we-alert-light,
 html.we-theme-solar2 .we-alert-dark {
   background:   var(--we-alert-tone);
@@ -424,11 +499,18 @@ html.we-theme-solar2 .we-alert-light {
 }
 
 html.we-theme-solar2 .we-alert-layout-inline {
-  padding-top:    1rem;
-  padding-bottom: 1rem;
+  display:        flex;
+  flex-wrap:      wrap;
+  align-items:    center;
+  column-gap:     0.2rem;
+  row-gap:        0.1rem;
 }
 
-html.we-theme-solar2 .we-alert-layout-inline .we-alert-title,
+html.we-theme-solar2 .we-alert-layout-inline .we-alert-title {
+  flex-basis: 100%;
+  margin:     0 0 0.1rem 0;
+}
+
 html.we-theme-solar2 .we-alert-layout-inline .we-alert-body,
 html.we-theme-solar2 .we-alert-layout-inline .we-alert-link {
   display:     inline;
@@ -437,19 +519,101 @@ html.we-theme-solar2 .we-alert-layout-inline .we-alert-link {
   margin:      0;
 }
 
-html.we-theme-solar2 .we-alert-layout-inline .we-alert-title {
-  margin-right: 0.2rem;
-}
-
 html.we-theme-solar2 .we-alert-layout-inline .we-alert-link {
   margin-left: 0.2rem;
   font-weight: 700;
+}
+
+html.we-theme-solar2 .we-alert-layout-inline .we-alert-dismiss {
+  margin-left: auto;
 }
 
 html.we-theme-solar2 .we-alert-scale-major .we-alert-title {
   font-size:     1.5rem;
   line-height:   1.2;
   margin-bottom: 0.45rem;
+}
+
+/* Toasts: floating alerts with stacked title/message and close icon at top-right. */
+html.we-theme-solar2 .we-toast {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "title close"
+    "message close";
+  column-gap: 0.625rem;
+  row-gap: 0.25rem;
+  align-items: start;
+  border: 1px solid var(--we-border);
+  border-radius: var(--we-radius);
+  background: var(--we-bg-subtle);
+  color: var(--we-light-emphasis);
+  padding: 0.75rem 0.875rem;
+  box-shadow: 0 8px 22px var(--we-shadow);
+}
+
+html.we-theme-solar2 .we-toast-title {
+  grid-area: title;
+  display: block;
+  margin: 0;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+html.we-theme-solar2 .we-toast-message {
+  grid-area: message;
+  display: block;
+  margin: 0;
+  line-height: 1.45;
+}
+
+html.we-theme-solar2 .we-toast-info    { --we-toast-tone: var(--we-info); }
+html.we-theme-solar2 .we-toast-success { --we-toast-tone: var(--we-success); }
+html.we-theme-solar2 .we-toast-warning { --we-toast-tone: var(--we-warning); }
+html.we-theme-solar2 .we-toast-danger  { --we-toast-tone: var(--we-danger); }
+
+html.we-theme-solar2 .we-toast-info,
+html.we-theme-solar2 .we-toast-success,
+html.we-theme-solar2 .we-toast-warning,
+html.we-theme-solar2 .we-toast-danger {
+  background: color-mix(in srgb, var(--we-toast-tone) 18%, var(--we-bg));
+  border-color: color-mix(in srgb, var(--we-toast-tone) 60%, var(--we-border));
+}
+
+html.we-theme-solar2 .we-toast-close {
+  grid-area: close;
+  align-self: start;
+  justify-self: end;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  font-size: 0;
+  line-height: 0;
+  opacity: 0.75;
+}
+
+html.we-theme-solar2 .we-toast-close::before {
+  content: "\00d7";
+  display: block;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+html.we-theme-solar2 .we-toast-close:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+html.we-theme-solar2 .we-toast-close:focus-visible {
+  opacity: 1;
+  outline: 1px solid var(--we-focus);
+  outline-offset: 1px;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 html.we-theme-solar2 .we-badge {
@@ -511,162 +675,162 @@ html.we-theme-solar2 .we-badge-shape-pill {
 
 /* Semantic button variants (maps to Bootswatch Solar button palette). */
 /* Variant classes are often used as lightweight wrappers around button/dropdown widgets. */
-html.we-theme-solar2 :is(.we-btn-primary,
-                          .we-btn-secondary,
-                          .we-btn-success,
-                          .we-btn-info,
-                          .we-btn-warning,
-                          .we-btn-danger,
-                          .we-btn-light,
-                          .we-btn-dark,
-                          .we-btn-link,
-                          .we-btn-outline-primary,
-                          .we-btn-outline-secondary,
-                          .we-btn-outline-success,
-                          .we-btn-outline-info,
-                          .we-btn-outline-warning,
-                          .we-btn-outline-danger,
-                          .we-btn-outline-light,
-                          .we-btn-outline-dark) {
+html.we-theme-solar2 :is(.we-button-primary,
+                          .we-button-secondary,
+                          .we-button-success,
+                          .we-button-info,
+                          .we-button-warning,
+                          .we-button-danger,
+                          .we-button-light,
+                          .we-button-dark,
+                          .we-button-link,
+                          .we-button-outline-primary,
+                          .we-button-outline-secondary,
+                          .we-button-outline-success,
+                          .we-button-outline-info,
+                          .we-button-outline-warning,
+                          .we-button-outline-danger,
+                          .we-button-outline-light,
+                          .we-button-outline-dark) {
   display: inline-block;
 }
 
-html.we-theme-solar2 .we-btn-primary.we-button,
-html.we-theme-solar2 .we-btn-primary .we-button {
+html.we-theme-solar2 .we-button-primary.we-button,
+html.we-theme-solar2 .we-button-primary .we-button {
   background:   var(--we-primary);
   color:        #fff;
   border-color: var(--we-primary);
 }
 
-html.we-theme-solar2 .we-btn-secondary.we-button,
-html.we-theme-solar2 .we-btn-secondary .we-button {
+html.we-theme-solar2 .we-button-secondary.we-button,
+html.we-theme-solar2 .we-button-secondary .we-button {
   background:   var(--we-secondary);
   color:        #fff;
   border-color: var(--we-secondary);
 }
 
-html.we-theme-solar2 .we-btn-success.we-button,
-html.we-theme-solar2 .we-btn-success .we-button {
+html.we-theme-solar2 .we-button-success.we-button,
+html.we-theme-solar2 .we-button-success .we-button {
   background:   var(--we-success);
   color:        #fff;
   border-color: var(--we-success);
 }
 
-html.we-theme-solar2 .we-btn-info.we-button,
-html.we-theme-solar2 .we-btn-info .we-button {
+html.we-theme-solar2 .we-button-info.we-button,
+html.we-theme-solar2 .we-button-info .we-button {
   background:   var(--we-info);
   color:        #fff;
   border-color: var(--we-info);
 }
 
-html.we-theme-solar2 .we-btn-warning.we-button,
-html.we-theme-solar2 .we-btn-warning .we-button {
+html.we-theme-solar2 .we-button-warning.we-button,
+html.we-theme-solar2 .we-button-warning .we-button {
   background:   var(--we-warning);
   color:        #fff;
   border-color: var(--we-warning);
 }
 
-html.we-theme-solar2 .we-btn-danger.we-button,
-html.we-theme-solar2 .we-btn-danger .we-button {
+html.we-theme-solar2 .we-button-danger.we-button,
+html.we-theme-solar2 .we-button-danger .we-button {
   background:   var(--we-danger);
   color:        #fff;
   border-color: var(--we-danger);
 }
 
-html.we-theme-solar2 .we-btn-light.we-button,
-html.we-theme-solar2 .we-btn-light .we-button {
+html.we-theme-solar2 .we-button-light.we-button,
+html.we-theme-solar2 .we-button-light .we-button {
   background:   var(--we-light);
   color:        #000;
   border-color: var(--we-light);
 }
 
-html.we-theme-solar2 .we-btn-dark.we-button,
-html.we-theme-solar2 .we-btn-dark .we-button {
+html.we-theme-solar2 .we-button-dark.we-button,
+html.we-theme-solar2 .we-button-dark .we-button {
   background:   #073642;
   color:        #fff;
   border-color: #073642;
 }
 
-html.we-theme-solar2 .we-btn-link.we-button,
-html.we-theme-solar2 .we-btn-link .we-button {
+html.we-theme-solar2 .we-button-link.we-button,
+html.we-theme-solar2 .we-button-link .we-button {
   background:   transparent;
   color:        var(--we-primary);
   border-color: transparent;
   text-decoration: underline;
 }
 
-html.we-theme-solar2 .we-btn-outline-primary.we-button,
-html.we-theme-solar2 .we-btn-outline-primary .we-button {
+html.we-theme-solar2 .we-button-outline-primary.we-button,
+html.we-theme-solar2 .we-button-outline-primary .we-button {
   background:   transparent;
   color:        var(--we-primary);
   border-color: var(--we-primary);
 }
 
-html.we-theme-solar2 .we-btn-outline-secondary.we-button,
-html.we-theme-solar2 .we-btn-outline-secondary .we-button {
+html.we-theme-solar2 .we-button-outline-secondary.we-button,
+html.we-theme-solar2 .we-button-outline-secondary .we-button {
   background:   transparent;
   color:        var(--we-secondary);
   border-color: var(--we-secondary);
 }
 
-html.we-theme-solar2 .we-btn-outline-success.we-button,
-html.we-theme-solar2 .we-btn-outline-success .we-button {
+html.we-theme-solar2 .we-button-outline-success.we-button,
+html.we-theme-solar2 .we-button-outline-success .we-button {
   background:   transparent;
   color:        var(--we-success);
   border-color: var(--we-success);
 }
 
-html.we-theme-solar2 .we-btn-outline-info.we-button,
-html.we-theme-solar2 .we-btn-outline-info .we-button {
+html.we-theme-solar2 .we-button-outline-info.we-button,
+html.we-theme-solar2 .we-button-outline-info .we-button {
   background:   transparent;
   color:        var(--we-info);
   border-color: var(--we-info);
 }
 
-html.we-theme-solar2 .we-btn-outline-warning.we-button,
-html.we-theme-solar2 .we-btn-outline-warning .we-button {
+html.we-theme-solar2 .we-button-outline-warning.we-button,
+html.we-theme-solar2 .we-button-outline-warning .we-button {
   background:   transparent;
   color:        var(--we-warning);
   border-color: var(--we-warning);
 }
 
-html.we-theme-solar2 .we-btn-outline-danger.we-button,
-html.we-theme-solar2 .we-btn-outline-danger .we-button {
+html.we-theme-solar2 .we-button-outline-danger.we-button,
+html.we-theme-solar2 .we-button-outline-danger .we-button {
   background:   transparent;
   color:        var(--we-danger);
   border-color: var(--we-danger);
 }
 
-html.we-theme-solar2 .we-btn-outline-light.we-button,
-html.we-theme-solar2 .we-btn-outline-light .we-button {
+html.we-theme-solar2 .we-button-outline-light.we-button,
+html.we-theme-solar2 .we-button-outline-light .we-button {
   background:   transparent;
   color:        var(--we-light);
   border-color: var(--we-light);
 }
 
-html.we-theme-solar2 .we-btn-outline-dark.we-button,
-html.we-theme-solar2 .we-btn-outline-dark .we-button {
+html.we-theme-solar2 .we-button-outline-dark.we-button,
+html.we-theme-solar2 .we-button-outline-dark .we-button {
   background:   transparent;
   color:        #073642;
   border-color: #073642;
 }
 
-html.we-theme-solar2 .we-btn-primary.we-button:hover,
-html.we-theme-solar2 .we-btn-primary .we-button:hover,
-html.we-theme-solar2 .we-btn-secondary.we-button:hover,
-html.we-theme-solar2 .we-btn-secondary .we-button:hover,
-html.we-theme-solar2 .we-btn-success.we-button:hover,
-html.we-theme-solar2 .we-btn-success .we-button:hover,
-html.we-theme-solar2 .we-btn-info.we-button:hover,
-html.we-theme-solar2 .we-btn-info .we-button:hover,
-html.we-theme-solar2 .we-btn-warning.we-button:hover,
-html.we-theme-solar2 .we-btn-warning .we-button:hover,
-html.we-theme-solar2 .we-btn-danger.we-button:hover,
-html.we-theme-solar2 .we-btn-danger .we-button:hover,
-html.we-theme-solar2 .we-btn-light.we-button:hover,
-html.we-theme-solar2 .we-btn-light .we-button:hover,
-html.we-theme-solar2 .we-btn-dark.we-button:hover,
-html.we-theme-solar2 .we-btn-dark .we-button:hover {
+html.we-theme-solar2 .we-button-primary.we-button:hover,
+html.we-theme-solar2 .we-button-primary .we-button:hover,
+html.we-theme-solar2 .we-button-secondary.we-button:hover,
+html.we-theme-solar2 .we-button-secondary .we-button:hover,
+html.we-theme-solar2 .we-button-success.we-button:hover,
+html.we-theme-solar2 .we-button-success .we-button:hover,
+html.we-theme-solar2 .we-button-info.we-button:hover,
+html.we-theme-solar2 .we-button-info .we-button:hover,
+html.we-theme-solar2 .we-button-warning.we-button:hover,
+html.we-theme-solar2 .we-button-warning .we-button:hover,
+html.we-theme-solar2 .we-button-danger.we-button:hover,
+html.we-theme-solar2 .we-button-danger .we-button:hover,
+html.we-theme-solar2 .we-button-light.we-button:hover,
+html.we-theme-solar2 .we-button-light .we-button:hover,
+html.we-theme-solar2 .we-button-dark.we-button:hover,
+html.we-theme-solar2 .we-button-dark .we-button:hover {
   filter: brightness(0.92);
 }
 
@@ -817,6 +981,8 @@ html.we-theme-solar2 .we-navigation-bar .we-menu-item:hover {
 
 html.we-theme-solar2 .we-navigation-bar .we-navigation-bar-items > .we-button,
 html.we-theme-solar2 .we-navigation-bar .we-menu-label {
+  -webkit-appearance: none;
+  appearance: none;
   padding:      8px;
   min-height:   0;
   border-width: 0;
@@ -918,6 +1084,8 @@ html.we-theme-solar2 .we-menu-bar {
 }
 
 html.we-theme-solar2 .we-menu-label {
+  -webkit-appearance: none;
+  appearance: none;
   background:    var(--we-bg);
   color:         var(--we-fg);
   border:        1px solid var(--we-border);
@@ -930,24 +1098,24 @@ html.we-theme-solar2 .we-menu-label:hover {
 }
 
 /* Dropdown trigger variant mapping so dropdowns can live in button rows. */
-html.we-theme-solar2 .we-dropdown.we-btn-primary .we-menu-label,
-html.we-theme-solar2 .we-btn-primary .we-dropdown .we-menu-label {
+html.we-theme-solar2 .we-dropdown.we-button-primary .we-menu-label,
+html.we-theme-solar2 .we-button-primary .we-dropdown .we-menu-label {
   background:   var(--we-primary);
   color:        #fff;
   border-color: var(--we-primary);
 }
 
-html.we-theme-solar2 .we-dropdown.we-btn-secondary .we-menu-label,
-html.we-theme-solar2 .we-btn-secondary .we-dropdown .we-menu-label {
+html.we-theme-solar2 .we-dropdown.we-button-secondary .we-menu-label,
+html.we-theme-solar2 .we-button-secondary .we-dropdown .we-menu-label {
   background:   var(--we-secondary);
   color:        #fff;
   border-color: var(--we-secondary);
 }
 
-html.we-theme-solar2 .we-dropdown.we-btn-primary .we-menu-label:hover,
-html.we-theme-solar2 .we-btn-primary .we-dropdown .we-menu-label:hover,
-html.we-theme-solar2 .we-dropdown.we-btn-secondary .we-menu-label:hover,
-html.we-theme-solar2 .we-btn-secondary .we-dropdown .we-menu-label:hover {
+html.we-theme-solar2 .we-dropdown.we-button-primary .we-menu-label:hover,
+html.we-theme-solar2 .we-button-primary .we-dropdown .we-menu-label:hover,
+html.we-theme-solar2 .we-dropdown.we-button-secondary .we-menu-label:hover,
+html.we-theme-solar2 .we-button-secondary .we-dropdown .we-menu-label:hover {
   filter: brightness(0.92);
 }
 
@@ -987,6 +1155,50 @@ html.we-theme-solar2 .we-menu-item:focus-visible {
   outline:          1px solid var(--we-focus);
   outline-offset:   0;
   background-image: linear-gradient(var(--we-focus-tint), var(--we-focus-tint));
+}
+
+/* Breadcrumbs render as compact link-like trails, not as boxed buttons. */
+html.we-theme-solar2 .we-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  font-size: 0.95rem;
+}
+
+html.we-theme-solar2 .we-breadcrumb .we-breadcrumb-item {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: var(--we-fg);
+  font-weight: 400;
+  line-height: 1.35;
+  padding: 0;
+  margin: 0;
+  min-height: 0;
+  text-align: left;
+  text-decoration: none;
+}
+
+html.we-theme-solar2 .we-breadcrumb .we-breadcrumb-item:hover {
+  background: transparent;
+  color: var(--we-fg);
+  text-decoration: underline;
+}
+
+html.we-theme-solar2 .we-breadcrumb .we-breadcrumb-item.is-current {
+  color: var(--we-fg-muted);
+  text-decoration: none;
+}
+
+html.we-theme-solar2 .we-breadcrumb .we-breadcrumb-sep {
+  color: var(--we-fg-muted);
+  opacity: 1;
+  padding: 0;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -1295,8 +1507,8 @@ html.we-theme-solar2 .we-group-legend {
 html.we-theme-solar2 .we-form-help {
   color: var(--we-fg-muted);
   font-size: 0.92rem;
-  margin-top: -0.35rem;
-  margin-bottom: 0.35rem;
+  margin-top: 0;
+  margin-bottom: calc(var(--we-form-gap, var(--we-gap, 0.5rem)) * 0.2);
 }
 
 html.we-theme-solar2 .we-form-row {
@@ -1304,18 +1516,18 @@ html.we-theme-solar2 .we-form-row {
 }
 
 html.we-theme-solar2 .we-form-row.we-form-label {
-  margin-top: 1rem;
+  margin-top: calc(var(--we-form-gap, var(--we-gap, 0.5rem)) * 0.75);
   padding-top: 0;
   padding-bottom: 0;
 }
 
 html.we-theme-solar2 .we-form-row.we-form-control-block {
-  margin-top: 0.35rem;
+  margin-top: calc(var(--we-form-gap, var(--we-gap, 0.5rem)) * 0.1);
 }
 
 /* Nested form groups ("Radio buttons", "Checkboxes", "Switches") use compact legend rhythm. */
 html.we-theme-solar2 .we-form-row .we-group {
-  margin-top: 0.35rem;
+  margin-top: calc(var(--we-form-gap, var(--we-gap, 0.5rem)) * 0.2);
 }
 
 html.we-theme-solar2 .we-form-row .we-group-legend {
@@ -1332,8 +1544,8 @@ html.we-theme-solar2 .we-form-check .we-inline {
 
 html.we-theme-solar2 .we-form-feedback {
   font-size: 0.88rem;
-  margin-top: 0.3rem;
-  margin-bottom: 0.25rem;
+  margin-top: calc(var(--we-form-gap, var(--we-gap, 0.5rem)) * 0.2);
+  margin-bottom: calc(var(--we-form-gap, var(--we-gap, 0.5rem)) * 0.2);
 }
 
 html.we-theme-solar2 .we-form-feedback-valid {
@@ -1443,8 +1655,8 @@ html.we-theme-solar2 .we-form-check {
   display: block;
   min-height: 1.5rem;
   padding-left: 1.5em;
-  margin-top: 0.5rem;
-  margin-bottom: 0.125rem;
+  margin-top: calc(var(--we-form-gap, var(--we-gap, 0.5rem)) * 0.3);
+  margin-bottom: 0;
 }
 
 html.we-theme-solar2 .we-form-check.we-inline {
@@ -1485,7 +1697,7 @@ html.we-theme-solar2 .we-radios .we-radio-input:checked {
   border-color: var(--we-primary);
 }
 
-html.we-theme-solar2 .we-form-check .we-checkbox:checked {
+html.we-theme-solar2 .we-form-check .we-checkbox:not(.we-switch-control):checked {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath fill='none' stroke='rgba(255,255,255,0.75)' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3E%3C/svg%3E");
 }
 
@@ -1521,22 +1733,34 @@ html.we-theme-solar2 .we-radios .we-radio-option {
 }
 
 html.we-theme-solar2 .we-switch-row.we-form-check {
-  padding-left: 2.5em;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding-left: 0;
 }
 
 html.we-theme-solar2 .we-checkbox.we-switch-control {
-  width: 2em;
-  height: 1em;
-  margin-left: -2.5em;
-  border-radius: 2em;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3E%3Ccircle r='3' fill='rgba(255,255,255,0.75)'/%3E%3C/svg%3E");
-  background-position: left center;
-  transition: background-position 0.15s ease-in-out;
+  float: none;
+  margin: 0;
+  width: 2.25rem;
+  height: 1.25rem;
+  border-radius: 999px;
+  border-color: #b9c3c7;
+  background-color: #adb8bd;
+  background-image: radial-gradient(circle, #f5f7f8 0 48%, transparent 49%);
+  background-size: 1rem 1rem;
+  background-repeat: no-repeat;
+  background-position: left 0.12rem center;
+  transition: background-position 0.18s ease-in-out,
+              background-color 0.18s ease-in-out,
+              border-color 0.18s ease-in-out;
 }
 
 html.we-theme-solar2 .we-checkbox.we-switch-control:checked {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3E%3Ccircle r='3' fill='rgba(255,255,255,0.75)'/%3E%3C/svg%3E");
-  background-position: right center;
+  background-color: var(--we-primary);
+  border-color: var(--we-primary);
+  background-image: radial-gradient(circle, #f0e8d0 0 48%, transparent 49%);
+  background-position: right 0.12rem center;
 }
 
 html.we-theme-solar2 :is(.we-range-default, .we-range-disabled, .we-range-step) .we-slider,
@@ -1734,14 +1958,14 @@ html.we-theme-solar2 .we-input-group .we-button {
   min-height: 2.5rem;
 }
 
-html.we-theme-solar2 .we-btn-outline-primary .we-button:hover,
-html.we-theme-solar2 .we-btn-outline-secondary .we-button:hover,
-html.we-theme-solar2 .we-btn-outline-success .we-button:hover,
-html.we-theme-solar2 .we-btn-outline-info .we-button:hover,
-html.we-theme-solar2 .we-btn-outline-warning .we-button:hover,
-html.we-theme-solar2 .we-btn-outline-danger .we-button:hover,
-html.we-theme-solar2 .we-btn-outline-light .we-button:hover,
-html.we-theme-solar2 .we-btn-outline-dark .we-button:hover {
+html.we-theme-solar2 .we-button-outline-primary .we-button:hover,
+html.we-theme-solar2 .we-button-outline-secondary .we-button:hover,
+html.we-theme-solar2 .we-button-outline-success .we-button:hover,
+html.we-theme-solar2 .we-button-outline-info .we-button:hover,
+html.we-theme-solar2 .we-button-outline-warning .we-button:hover,
+html.we-theme-solar2 .we-button-outline-danger .we-button:hover,
+html.we-theme-solar2 .we-button-outline-light .we-button:hover,
+html.we-theme-solar2 .we-button-outline-dark .we-button:hover {
   filter: brightness(1.08);
 }
 
@@ -2005,8 +2229,8 @@ html.we-theme-solar2 .we-progress-w-100 { width: 100%; }
 html.we-theme-solar2 .we-progress-fill-default { background: var(--we-primary); }
 html.we-theme-solar2 .we-progress-fill-success { background: var(--we-success); }
 html.we-theme-solar2 .we-progress-fill-info    { background: var(--we-info); }
-html.we-theme-solar2 .we-progress-fill-warn    { background: var(--we-warning); }
-html.we-theme-solar2 .we-progress-fill-error   { background: var(--we-danger); }
+html.we-theme-solar2 .we-progress-fill-warning { background: var(--we-warning); }
+html.we-theme-solar2 .we-progress-fill-danger  { background: var(--we-danger); }
 
 html.we-theme-solar2 .we-progress-fill-striped {
   background-image: linear-gradient(

@@ -9,8 +9,8 @@
 (include/reader    "smoke-format.rkt" read-syntax/skip-first-line)
 
 ;; Constants for page state.
-(define @theme        (@ 'solar2))
-(define @theme-status (@ "solar2"))
+(define @theme        (@ 'light))
+(define @theme-status (@ "light"))
 (define @selected-1   (@ 'home))
 (define @selected-2   (@ 'home))
 (define @selected-3   (@ 'home))
@@ -32,9 +32,6 @@
 (define @level        (@ 42))
 (define @progress-kind (@ 'info))
 (define @list-current (@ 'current))
-(define @table-rows   (@ '(("alpha" "stable" "today")
-                           ("beta" "pending" "tomorrow")
-                           ("gamma" "blocked" "later"))))
 (define @accordion    (@ 'what))
 (define @dialog-open? (@ #f))
 (define @offcanvas-open? (@ #f))
@@ -71,26 +68,26 @@
 ;;   Map theme id to general stylesheet path.
 (define (theme-css-path/general theme)
   (case theme
-    [(light)  "../theme-external-light.css"]
-    [(dark)   "../theme-external-dark.css"]
-    [(solar)  "../theme-external-solar.css"]
-    [(solar2) "../theme-solar-2.css"]
-    [else     "../theme-external-light.css"]))
+    [(light)  "../themes/theme-external-light.css"]
+    [(dark)   "../themes/theme-external-dark.css"]
+    [(solar)  "../themes/theme-external-solar.css"]
+    [(solar2) "../themes/theme-solar-2.css"]
+    [else     "../themes/theme-external-light.css"]))
 
 ;; theme-css-path/showcase : any/c -> string?
 ;;   Map theme id to page-specific stylesheet path.
 (define (theme-css-path/showcase theme)
   (case theme
-    [(light)  "../theme-showcase-light.css"]
-    [(dark)   "../theme-showcase-dark.css"]
-    [(solar)  "../theme-showcase-solar.css"]
-    [(solar2) "../theme-showcase-solar2.css"]
-    [else     "../theme-showcase-light.css"]))
+    [(light)  "../themes/theme-showcase-light.css"]
+    [(dark)   "../themes/theme-showcase-dark.css"]
+    [(solar)  "../themes/theme-showcase-solar.css"]
+    [(solar2) "../themes/theme-showcase-solar2.css"]
+    [else     "../themes/theme-showcase-light.css"]))
 
 ;; theme-css-path/core : -> string?
 ;;   Path to shared web-easy structural core stylesheet.
 (define (theme-css-path/core)
-  "../web-easy-core.css")
+  "../themes/web-easy-core.css")
 
 ;; install-theme-link! : string? -> any/c
 ;;   Create and attach a stylesheet <link> with the given id.
@@ -176,8 +173,8 @@
     (case variant
       [(success) "we-progress-fill-success"]
       [(info)    "we-progress-fill-info"]
-      [(warn)    "we-progress-fill-warn"]
-      [(error)   "we-progress-fill-error"]
+      [(warning)    "we-progress-fill-warning"]
+      [(danger)   "we-progress-fill-danger"]
       [else      "we-progress-fill-default"]))
   (string-append "we-progress-fill "
                  variant-class
@@ -190,8 +187,8 @@
   (case variant
     [(success) "we-progress-fill-success"]
     [(info)    "we-progress-fill-info"]
-    [(warn)    "we-progress-fill-warn"]
-    [(error)   "we-progress-fill-error"]
+    [(warning)    "we-progress-fill-warning"]
+    [(danger)   "we-progress-fill-danger"]
     [else      "we-progress-fill-default"]))
 
 ;; progress-width-class : number? -> string?
@@ -250,7 +247,7 @@
   (define group-view
     (stack
               (apply stack rows)
-              #:class "showcase-list-group-panel we-stack-gap-0"))
+              #:class "we-stack-gap-0"))
   (if extra-class
       (stack group-view #:class (string-append "we-list-group " extra-class))
       (stack group-view #:class "we-list-group")))
@@ -286,7 +283,7 @@
              "3 days ago"
              "Donec id elit non mi porta gravida at eget metus. Maecenas sed diam eget risus varius blandit."
              "Donec id elit non mi porta.")
-            #:class "we-list-group showcase-rich-list-group showcase-list-group-panel we-stack-gap-0"))
+            #:class "we-list-group showcase-rich-list-group we-stack-gap-0"))
 
 ;; showcase-accordion-body : string? string? -> view?
 ;;   Build accordion panel text with lead sentence plus full reference-style copy.
@@ -315,42 +312,31 @@
 (define app-renderer
   (render
    (window
-    (container
-       (stack
+    (stack
         ;;;
         ;;; Top Bar
         ;;;
-        (card
-                  #f
-                  #f
-                  (inline
-                            (stack
-                                      (text "web-easy" #:class "showcase-brand-title")
-                                      (text "Solar showcase" #:class "showcase-brand-subtitle")
-                                      #:class "showcase-brand")
-                            (spacer)
-                            (stack
-                                      (text "Theme" #:class "showcase-controls-label")
-                                      (choice '((solar2 "Solar 2") (solar "Solar") (light "Light") (dark "Dark"))
-                                                @theme
-                                                (lambda (next-theme)
-                                                  (:= @theme (normalize-theme-id next-theme))
-                                                  (:= @theme-status (~a next-theme)))
-                                                #:class "showcase-theme-choice")
-                                      #:class "showcase-topbar-controls")
-                            #:class "showcase-topbar-inner")
-                  #:id "theme-showcase-hero"
-                  #:class "showcase-topbar")
-        ;;;
-        ;;; Hero
-        ;;;
-        (card
-                  #f
-                  #f
-                  (text "Solar 2 Theme" #:class "showcase-hero-title")
-                  (text "Top-level sections aligned with the Bootswatch Solar showcase layout."
-                            #:class "showcase-hero-lead"))
-
+        (top-bar
+         (inline
+          (stack
+           (text "web-easy" #:class "showcase-brand-title")
+           (text "Solar showcase" #:class "showcase-brand-subtitle")
+           #:class "showcase-brand")
+          (spacer)
+          (stack
+           (text "Theme" #:class "showcase-controls-label")
+           (choice '((solar2 "Solar 2") (solar "Solar") (light "Light") (dark "Dark"))
+                   @theme
+                   (lambda (next-theme)
+                     (:= @theme (normalize-theme-id next-theme))
+                     (:= @theme-status (~a next-theme)))
+                   #:class "showcase-theme-choice")
+           #:class "showcase-topbar-controls")
+          #:class "showcase-topbar-inner")
+         #:id "theme-showcase-hero"
+         #:class "showcase-topbar")
+        (container
+         (stack
         ;;;
         ;;; Main
         ;;;
@@ -368,39 +354,39 @@
            ;; Buttons
            (section-heading "solar2-buttons" "Buttons")
            (grid
-                     2
+                     '(60 40)
                      (stack
                       (inline
-                                (showcase-button "Primary"   "we-btn-primary"   #f)
-                                (showcase-button "Secondary" "we-btn-secondary" #f)
-                                (showcase-button "Success"   "we-btn-success"   #f)
-                                (showcase-button "Info"      "we-btn-info"      #f)
-                                (showcase-button "Warning"   "we-btn-warning"   #f)
-                                (showcase-button "Danger"    "we-btn-danger"    #f)
-                                (showcase-button "Light"     "we-btn-light"     #f)
-                                (showcase-button "Dark"      "we-btn-dark"      #f)
-                                (showcase-button "Link"      "we-btn-link"      #f)
+                                (showcase-button "Primary"   "we-button-primary"   #f)
+                                (showcase-button "Secondary" "we-button-secondary" #f)
+                                (showcase-button "Success"   "we-button-success"   #f)
+                                (showcase-button "Info"      "we-button-info"      #f)
+                                (showcase-button "Warning"   "we-button-warning"   #f)
+                                (showcase-button "Danger"    "we-button-danger"    #f)
+                                (showcase-button "Light"     "we-button-light"     #f)
+                                (showcase-button "Dark"      "we-button-dark"      #f)
+                                (showcase-button "Link"      "we-button-link"      #f)
                                 #:class "we-button-row")
                       (inline
-                                (showcase-button "Primary"   "we-btn-primary"   #t)
-                                (showcase-button "Secondary" "we-btn-secondary" #t)
-                                (showcase-button "Success"   "we-btn-success"   #t)
-                                (showcase-button "Info"      "we-btn-info"      #t)
-                                (showcase-button "Warning"   "we-btn-warning"   #t)
-                                (showcase-button "Danger"    "we-btn-danger"    #t)
-                                (showcase-button "Light"     "we-btn-light"     #t)
-                                (showcase-button "Dark"      "we-btn-dark"      #t)
-                                (showcase-button "Link"      "we-btn-link"      #t)
+                                (showcase-button "Primary"   "we-button-primary"   #t)
+                                (showcase-button "Secondary" "we-button-secondary" #t)
+                                (showcase-button "Success"   "we-button-success"   #t)
+                                (showcase-button "Info"      "we-button-info"      #t)
+                                (showcase-button "Warning"   "we-button-warning"   #t)
+                                (showcase-button "Danger"    "we-button-danger"    #t)
+                                (showcase-button "Light"     "we-button-light"     #t)
+                                (showcase-button "Dark"      "we-button-dark"      #t)
+                                (showcase-button "Link"      "we-button-link"      #t)
                                 #:class "we-button-row")
                       (inline
-                                (showcase-button "Primary"   "we-btn-outline-primary"   #f)
-                                (showcase-button "Secondary" "we-btn-outline-secondary" #f)
-                                (showcase-button "Success"   "we-btn-outline-success"   #f)
-                                (showcase-button "Info"      "we-btn-outline-info"      #f)
-                                (showcase-button "Warning"   "we-btn-outline-warning"   #f)
-                                (showcase-button "Danger"    "we-btn-outline-danger"    #f)
-                                (showcase-button "Light"     "we-btn-outline-light"     #f)
-                                (showcase-button "Dark"      "we-btn-outline-dark"      #f)
+                                (showcase-button "Primary"   "we-button-outline-primary"   #f)
+                                (showcase-button "Secondary" "we-button-outline-secondary" #f)
+                                (showcase-button "Success"   "we-button-outline-success"   #f)
+                                (showcase-button "Info"      "we-button-outline-info"      #f)
+                                (showcase-button "Warning"   "we-button-outline-warning"   #f)
+                                (showcase-button "Danger"    "we-button-outline-danger"    #f)
+                                (showcase-button "Light"     "we-button-outline-light"     #f)
+                                (showcase-button "Dark"      "we-button-outline-dark"      #f)
                                 #:class "we-button-row")
                       (inline
                                 (dropdown
@@ -410,7 +396,7 @@
                                             (more "Something else here"))
                                           (lambda (id)
                                             (log-button! (~a "Dropdown/Primary/" id)))
-                                          #:class "we-btn-primary")
+                                          #:class "we-button-primary")
                                 (dropdown
                                           "Dropdown button"
                                           '((action "Action")
@@ -418,17 +404,17 @@
                                             (more "Something else here"))
                                           (lambda (id)
                                             (log-button! (~a "Dropdown/Secondary/" id)))
-                                          #:class "we-btn-secondary")
+                                          #:class "we-button-secondary")
                                 #:class "we-button-row")
                       (inline
-                                (showcase-button "Large button"   "we-btn-primary we-btn-lg" #f)
-                                (showcase-button "Default button" "we-btn-primary"           #f)
-                                (showcase-button "Small button"   "we-btn-primary we-btn-sm" #f)
+                                (showcase-button "Large button"   "we-button-primary we-button-lg" #f)
+                                (showcase-button "Default button" "we-button-primary"           #f)
+                                (showcase-button "Small button"   "we-button-primary we-button-sm" #f)
                                 #:class "we-button-row"))
                      (stack
                       (stack
-                                (showcase-button "Block button" "we-btn-primary we-btn-lg showcase-block-button-row" #f)
-                                (showcase-button "Block button" "we-btn-primary we-btn-lg showcase-block-button-row" #f)
+                                (showcase-button "Block button" "we-button-primary we-button-lg showcase-block-button-row" #f)
+                                (showcase-button "Block button" "we-button-primary we-button-lg showcase-block-button-row" #f)
                                 #:class "showcase-block-button-grid")
                       (toggle-button-group
                                 'checkbox
@@ -451,19 +437,19 @@
                                   (log-button! (~a "Radio/" next)))
                                 #:class "showcase-btn-radio-group")
                       (stack
-                                (button "Button" (lambda () (log-button! "Vertical/1")) #:class "we-btn-primary")
-                                (button "Button" (lambda () (log-button! "Vertical/2")) #:class "we-btn-primary")
-                                (button "Button" (lambda () (log-button! "Vertical/3")) #:class "we-btn-primary")
-                                (button "Button" (lambda () (log-button! "Vertical/4")) #:class "we-btn-primary")
-                                (button "Button" (lambda () (log-button! "Vertical/5")) #:class "we-btn-primary")
-                                (button "Button" (lambda () (log-button! "Vertical/6")) #:class "we-btn-primary")
+                                (button "Button" (lambda () (log-button! "Vertical/1")) #:class "we-button-primary")
+                                (button "Button" (lambda () (log-button! "Vertical/2")) #:class "we-button-primary")
+                                (button "Button" (lambda () (log-button! "Vertical/3")) #:class "we-button-primary")
+                                (button "Button" (lambda () (log-button! "Vertical/4")) #:class "we-button-primary")
+                                (button "Button" (lambda () (log-button! "Vertical/5")) #:class "we-button-primary")
+                                (button "Button" (lambda () (log-button! "Vertical/6")) #:class "we-button-primary")
                                 #:class "we-button-group-vertical")
                       (inline
                                 (button-group
                                           (button "Left"   (lambda () (log-button! "Group/Left")))
                                           (button "Middle" (lambda () (log-button! "Group/Middle")))
                                           (button "Right"  (lambda () (log-button! "Group/Right")))
-                                          #:class "we-btn-secondary")
+                                          #:class "we-button-secondary")
                                 #:class "we-button-row")
                       (inline
                                 (button-toolbar
@@ -478,7 +464,7 @@
                                            (button "7" (lambda () (log-button! "Toolbar/7"))))
                                           (toolbar-group
                                            (button "8" (lambda () (log-button! "Toolbar/8"))))
-                                          #:class "we-btn-secondary")
+                                          #:class "we-button-secondary")
                                 #:class "we-button-row"))
                      #:class "showcase-buttons-grid")
 
@@ -505,65 +491,56 @@
                        (text " vel eu leo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus."))
                       (text
                                 "This line of text is meant to be treated as fine print."
-                                #:class "showcase-fine-print")
+                                #:class "we-text-fine-print")
                       (inline
                        (text "The following is ")
-                       (text "rendered as bold text" #:class "showcase-text-strong")
-                       (text "."))
+                       (text "rendered as bold text." #:class "we-text-strong"))
                       (inline
                        (text "The following is ")
-                       (text "rendered as italicized text" #:class "showcase-text-emphasis")
-                       (text "."))
+                       (text "rendered as italicized text." #:class "we-text-emphasis"))
                       (inline
                        (text "An abbreviation of the word attribute is ")
-                       (text "attr"
-                                 #:class "showcase-abbr"
-                                 #:attrs '((title "attribute")))
-                       (text ".")))
+                       (text "attr."
+                                 #:class "we-text-abbr"
+                                 #:attrs '((title "attribute")))))
                      (vpanel
                       (heading 2 "Emphasis classes")
-                      (text "text-primary" #:class "showcase-text-primary")
-                      (text "text-primary-emphasis" #:class "showcase-text-primary-emphasis")
-                      (text "text-secondary" #:class "showcase-text-secondary")
-                      (text "text-secondary-emphasis" #:class "showcase-text-secondary-emphasis")
-                      (text "text-success" #:class "showcase-text-success")
-                      (text "text-success-emphasis" #:class "showcase-text-success-emphasis")
-                      (text "text-danger" #:class "showcase-text-danger")
-                      (text "text-danger-emphasis" #:class "showcase-text-danger-emphasis")
-                      (text "text-warning" #:class "showcase-text-warning")
-                      (text "text-warning-emphasis" #:class "showcase-text-warning-emphasis")
-                      (text "text-info" #:class "showcase-text-info")
-                      (text "text-info-emphasis" #:class "showcase-text-info-emphasis")
-                      (text "text-light" #:class "showcase-text-light")
-                      (text "text-light-emphasis" #:class "showcase-text-light-emphasis")
-                      (text "text-dark" #:class "showcase-text-dark")
-                      (text "text-dark-emphasis" #:class "showcase-text-dark-emphasis")
-                      (text "text-body" #:class "showcase-text-body")
-                      (text "text-body-emphasis" #:class "showcase-text-body-emphasis")
-                      (text "text-body-secondary" #:class "showcase-text-body-secondary")
-                      (text "text-body-tertiary" #:class "showcase-text-tertiary"))
+                      (text "text-primary" #:class "we-text-primary showcase-text-primary")
+                      (text "text-primary-emphasis" #:class "we-text-primary-emphasis showcase-text-primary-emphasis")
+                      (text "text-secondary" #:class "we-text-secondary showcase-text-secondary")
+                      (text "text-secondary-emphasis" #:class "we-text-secondary-emphasis showcase-text-secondary-emphasis")
+                      (text "text-success" #:class "we-text-success showcase-text-success")
+                      (text "text-success-emphasis" #:class "we-text-success-emphasis showcase-text-success-emphasis")
+                      (text "text-danger" #:class "we-text-danger showcase-text-danger")
+                      (text "text-danger-emphasis" #:class "we-text-danger-emphasis showcase-text-danger-emphasis")
+                      (text "text-warning" #:class "we-text-warning showcase-text-warning")
+                      (text "text-warning-emphasis" #:class "we-text-warning-emphasis showcase-text-warning-emphasis")
+                      (text "text-info" #:class "we-text-info showcase-text-info")
+                      (text "text-info-emphasis" #:class "we-text-info-emphasis showcase-text-info-emphasis")
+                      (text "text-light" #:class "we-text-light showcase-text-light")
+                      (text "text-light-emphasis" #:class "we-text-light-emphasis showcase-text-light-emphasis")
+                      (text "text-dark" #:class "we-text-dark showcase-text-dark")
+                      (text "text-dark-emphasis" #:class "we-text-dark-emphasis showcase-text-dark-emphasis")
+                      (text "text-body" #:class "we-text-body showcase-text-body")
+                      (text "text-body-emphasis" #:class "we-text-body-emphasis showcase-text-body-emphasis")
+                      (text "text-body-secondary" #:class "we-text-body-secondary showcase-text-body-secondary")
+                      (text "text-body-tertiary" #:class "we-text-body-tertiary showcase-text-tertiary"))
                      #:class "showcase-typography-grid")
            (heading 2 "Blockquotes")
            (grid
                      3
                      (blockquote
                                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante."
-                               "Someone famous in Source Title"
-                               #:class "showcase-blockquote")
+                               "Someone famous in Source Title")
                      (blockquote
                                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante."
                                "Someone famous in Source Title"
-                               #:class "showcase-blockquote showcase-blockquote-center")
+                               #:align 'center)
                      (blockquote
                                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante."
                                "Someone famous in Source Title"
-                               #:class "showcase-blockquote showcase-blockquote-right")
+                               #:align 'right)
                      #:class "showcase-typography-grid")
-           (text "(render (window (text \"hello\")))"
-                     #:class "showcase-inline-code")
-           (text "(define app\n  (render\n   (window\n    (vpanel (text \"A\") (text \"B\")))))"
-                     #:class "showcase-pre")
-
            ;; Tables
            (section-heading "solar2-tables" "Tables")
            (table
@@ -586,7 +563,8 @@
            ;; Forms
            (section-heading "solar2-forms" "Forms")
            (grid
-            2
+            '(60 40)
+            "3rem"
             (stack
                       (group "Legend"
                              (inline
@@ -734,8 +712,9 @@
                                        #:attrs '((min "0") (max "5") (step "0.5"))
                                        #:class "we-form-row we-range-step")
                              (inline
-                                       (button "Submit" (lambda () (void)))
-                                       #:class "we-form-row we-btn-primary"))
+                                       (button "Submit" (lambda () (void))
+                                               #:class "we-button-primary")
+                                       #:class "we-form-row"))
                       #:class "showcase-forms-left")
             (stack
                       (text "Disabled input"
@@ -906,7 +885,7 @@
                         "Warning!"
                         "vel scelerisque nisl consectetur et."
                         "#"
-                        #:level 'warn
+                        #:level 'warning
                         #:scale 'major
                         #:dismiss-action (lambda () (void)))
               (grid
@@ -916,7 +895,7 @@
                          "Oh snap!"
                          "try submitting again."
                          "#"
-                         #:level 'error
+                         #:level 'danger
                          #:layout 'inline
                          #:dismiss-action (lambda () (void)))
                (alert-rich
@@ -997,8 +976,8 @@
               (heading 3 "Contextual alternatives")
               (progress-track (progress-fill 25 'success))
               (progress-track (progress-fill 50 'info))
-              (progress-track (progress-fill 75 'warn))
-              (progress-track (progress-fill 100 'error))
+              (progress-track (progress-fill 75 'warning))
+              (progress-track (progress-fill 100 'danger))
               (heading 3 "Multiple bars")
               (progress-track
                (progress-fill 15 'default)
@@ -1008,8 +987,8 @@
               (progress-track (progress-fill 10 'default #t))
               (progress-track (progress-fill 25 'success #t))
               (progress-track (progress-fill 50 'info #t))
-              (progress-track (progress-fill 75 'warn #t))
-              (progress-track (progress-fill 100 'error #t))
+              (progress-track (progress-fill 75 'warning #t))
+              (progress-track (progress-fill 100 'danger #t))
               (heading 3 "Animated")
               (progress-track (progress-fill 75 'default #t #t))
               #:class "we-section-break-xl"
@@ -1144,10 +1123,10 @@
                             (inline
                                       (button "Save changes"
                                                 (lambda () (void))
-                                                #:class "we-btn-primary")
+                                                #:class "we-button-primary")
                                       (button "Close"
                                                 (lambda () (void))
-                                                #:class "we-btn-secondary")
+                                                #:class "we-button-secondary")
                                       #:class "we-modal-footer")
                             #:class "showcase-static-modal-wrap we-modal-panel showcase-static-modal")
                   (heading 2 "Offcanvas")
@@ -1155,11 +1134,11 @@
                             (button
                                       "Link with href"
                                       (lambda () (:= @offcanvas-open? #t))
-                                      #:class "we-btn-primary")
+                                      #:class "we-button-primary")
                             (button
                                       "Button with data-bs-target"
                                       (lambda () (:= @offcanvas-open? #t))
-                                      #:class "we-btn-primary")
+                                      #:class "we-button-primary")
                             #:class "we-button-row")
                   (offcanvas
                             @offcanvas-open?
@@ -1176,35 +1155,35 @@
                             #:placement 'left
                             #:title "Popover title"
                             #:footer "Popover footer"
-                            #:class "we-btn-secondary")
+                            #:class "we-button-secondary")
                   (popover
                             "Top"
                             (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")
                             #:placement 'top
                             #:title "Popover title"
                             #:footer "Popover footer"
-                            #:class "we-btn-secondary")
+                            #:class "we-button-secondary")
                   (popover
                             "Bottom"
                             (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")
                             #:placement 'bottom
                             #:title "Popover title"
                             #:footer "Popover footer"
-                            #:class "we-btn-secondary")
+                            #:class "we-button-secondary")
                   (popover
                             "Right"
                             (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")
                             #:placement 'right
                             #:title "Popover title"
                             #:footer "Popover footer"
-                            #:class "we-btn-secondary"))
+                            #:class "we-button-secondary"))
                  (heading 2 "Tooltips")
                  (inline
                   (tooltip
                             "Tooltip on left"
                             (button "Left"
                                       (lambda () (void))
-                                      #:class "we-btn-secondary")
+                                      #:class "we-button-secondary")
                             #:placement 'left
                             #:title "Tooltip"
                             #:footer "Footer text")
@@ -1212,7 +1191,7 @@
                             "Tooltip on top"
                             (button "Top"
                                       (lambda () (void))
-                                      #:class "we-btn-secondary")
+                                      #:class "we-button-secondary")
                             #:placement 'top
                             #:title "Tooltip"
                             #:footer "Footer text")
@@ -1220,7 +1199,7 @@
                             "Tooltip on bottom"
                             (button "Bottom"
                                       (lambda () (void))
-                                      #:class "we-btn-secondary")
+                                      #:class "we-button-secondary")
                             #:placement 'bottom
                             #:title "Tooltip"
                             #:footer "Footer text")
@@ -1228,7 +1207,7 @@
                             "Tooltip on right"
                             (button "Right"
                                       (lambda () (void))
-                                      #:class "we-btn-secondary")
+                                      #:class "we-button-secondary")
                             #:placement 'right
                             #:title "Tooltip"
                             #:footer "Footer text"))
@@ -1240,7 +1219,8 @@
                                      (spacer)
                                      (text "11 mins ago"
                                                #:class "showcase-static-toast-time")
-                                     (text "×")
+                                     (text "×"
+                                               #:class "showcase-static-toast-close")
                                      #:class "showcase-static-toast-header")
                            (text "Hello, world! This is a toast message."
                                      #:class "showcase-static-toast-body")
@@ -1251,43 +1231,7 @@
            (text @button-log
                      #:class "we-button-status")
 
-           ;; Appendix
-           (section-heading "solar2-appendix" "Appendix: Table Variants")
-           (table
-                     '("Name" "Status" "ETA")
-                     @table-rows
-                     #:density 'compact
-                     #:caption "Compact table")
-           (table
-                     '(("Service" left) ("Health" center) ("Latency" right))
-                     '(("API" "OK" "120ms")
-                       ("DB" "WARN" "220ms")
-                       ("Queue" "OK" "98ms"))
-                     #:density 'normal
-                     #:variants '(striped)
-                     #:caption "Striped rows")
-           (table
-                     '("Region" "Errors" "SLA")
-                     '(("eu-west" "2" "99.9%")
-                       ("us-east" "0" "99.99%")
-                       ("ap-south" "4" "99.5%"))
-                     #:density 'normal
-                     #:variants '(hover)
-                     #:caption "Hover rows")
-           (table
-                     '("Task" "Owner" "Status")
-                     '(("design" "Alice" "done")
-                       ("build" "Bob" "running")
-                       ("ship" "Carol" "blocked"))
-                     #:density 'normal
-                     #:variants '(borderless)
-                     #:caption "Borderless")
-           (table
-                     '("k" "v")
-                     '(("A" "1") ("B" "2") ("C" "3"))
-                     #:density 'compact
-                     #:variants '(sm)
-                     #:caption "Small table")))))))
+           )))))))
 
 (define theme-core-link-node     (install-theme-link! "we-theme-core-css"))
 (define theme-general-link-node  (install-theme-link! "we-theme-external-css"))
