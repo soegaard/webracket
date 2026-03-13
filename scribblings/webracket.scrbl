@@ -1,7 +1,8 @@
 #lang scribble/manual
 
 @(require scribble/manual
-          scribble/example)
+          scribble/example
+          scribble-tools)
 
 @title{WebRacket Manual}
 @table-of-contents[]
@@ -19,9 +20,197 @@ trusted as an authoritative or complete specification.}
 This manual currently documents:
 
 @itemlist[
+  @item{Installation prerequisites and setup steps.}
   @item{The command-line compiler driver.}
   @item{Library forms that are implemented as syntax-layer helpers.}
 ]
+
+@section{WebRacket at a Glance}
+
+A high-level overview of what WebRacket is, what it targets, and how the main
+pieces fit together.
+
+@subsection{What WebRacket Is}
+
+WebRacket is a @bold{Racket-to-WebAssembly compiler} designed to run practical
+Racket programs directly in modern web browsers.
+
+It compiles a substantial subset of Racket to WebAssembly, which you can think
+of as portable machine code for the browser.
+
+WebAssembly runs in a virtual machine that is separate from the JavaScript
+engine. Because of this separation, a foreign-function interface (FFI) is
+required when WebRacket code needs browser features such as DOM operations,
+timers, and graphics APIs.
+
+In practice, WebRacket:
+
+@itemlist[
+  @item{Targets modern browsers such as Chrome, Firefox, and Safari.}
+  @item{Uses a custom runtime designed for WebAssembly.}
+  @item{Keeps the boundary to JavaScript explicit via the FFI.}
+]
+
+@subsection{What WebRacket Is Not}
+
+WebRacket is not a drop-in replacement for Racket on the Racket VM.
+Some features are missing or differ because of browser and WebAssembly
+constraints.
+
+WebRacket aims for a useful and predictable subset, with differences reduced
+over time.
+
+@subsection{Execution Model}
+
+WebRacket programs execute as single-threaded WebAssembly modules embedded in
+a browser environment. This model drives how computation, memory management,
+and host interaction are structured.
+
+@itemlist[
+  @item{@bold{Single-threaded execution}: no parallel threads or shared-memory
+        concurrency.}
+  @item{@bold{Custom runtime}: implements core Racket value representations and
+        primitive operations.}
+  @item{@bold{WebAssembly GC types}: uses Wasm GC for heap-allocated values
+        where available.}
+]
+
+@subsection{Language Coverage}
+
+WebRacket focuses on practical web programs. It supports many core forms and
+data structures, while some areas are still in progress.
+
+Supported areas include:
+
+@itemlist[
+  @item{Fixnums and flonums.}
+  @item{Strings and byte strings.}
+  @item{Symbols and keywords.}
+  @item{Pairs, vectors, boxes, and mutable hash tables.}
+  @item{The standard expander, including @racket[for] and @racket[match].}
+  @item{Tail calls, multiple values, and upward exceptions.}
+  @item{Structures with super-structures and properties.}
+  @item{Large parts of @tt{racket/base}.}
+]
+
+Current limitations include:
+
+@itemlist[
+  @item{Single-threaded execution only.}
+  @item{Module support is still in progress.}
+  @item{No support for continuations and continuation marks.}
+  @item{Some numeric and control features are not yet implemented.}
+  @item{Keyword-argument behavior is evolving; see the Libraries chapter for
+        current @racket[define/key] and @racket[call/key] support.}
+]
+
+@subsection{JavaScript FFI}
+
+WebRacket integrates with the browser through an explicit JavaScript FFI.
+This is how programs use the DOM, Canvas, and libraries such as MathJax,
+Xterm.js, and JSXGraph.
+
+The FFI keeps conversions and effects explicit so boundary behavior stays
+predictable and debuggable.
+
+@subsection{Very Brief Compiler Overview}
+
+WebRacket uses a direct-style compiler that translates expanded Racket programs
+to WebAssembly through a sequence of code transformations. This structure
+makes it easier to relate generated code back to source code.
+
+@section{Installation}
+
+Set up WebRacket for both terminal and browser use.
+
+@subsection{Prerequisites}
+
+You need:
+
+@itemlist[
+  @item{@tt{wasm-tools} (Bytecode Alliance) v1.243.0 or newer}
+  @item{@tt{node} with support for @tt{--experimental-wasm-exnref}}
+  @item{Racket 9.0 or newer}
+  @item{@tt{raco-static-web}}
+  @item{A local clone of the WebRacket repository}
+]
+
+@subsection{Installation Steps}
+
+@bold{1. Install wasm-tools}
+
+Download the latest release:
+@url{https://github.com/bytecodealliance/wasm-tools/releases}
+
+Extract and put it on your @tt{PATH}, then verify:
+
+@shellblock{
+tar -xvf wasm-tools-1.243.0-aarch64-macos.tar.gz
+sudo mv wasm-tools /usr/local/bin/
+wasm-tools
+}
+
+On macOS, if quarantine blocks execution:
+
+@shellblock{
+sudo xattr -d com.apple.quarantine /usr/local/bin/wasm-tools
+}
+
+@bold{2. Install Node.js}
+
+Download:
+@url{https://nodejs.org/en/download}
+
+Verify Node and required flags:
+
+@shellblock{
+node
+node --experimental-wasm-exnref --expose-gc
+}
+
+@bold{3. Install Racket}
+
+Install Racket 9.0 or newer:
+@url{https://download.racket-lang.org/}
+
+@bold{4. Install raco-static-web}
+
+@shellblock{
+raco pkg install raco-static-web
+raco static-web
+}
+
+@bold{5. Install nanopass}
+
+@shellblock{
+raco pkg install nanopass
+}
+
+@bold{6. Clone WebRacket}
+
+@shellblock{
+git clone https://github.com/soegaard/webracket.git
+}
+
+@bold{7. Install the local checkout as package @tt{webracket}}
+
+Run in the root of the cloned @tt{webracket} repository:
+
+@shellblock{
+raco pkg install --auto --name webracket .
+}
+
+@bold{8. Quick test}
+
+Serve examples and open one in your browser:
+
+@shellblock{
+cd examples
+raco static-web
+}
+
+Then open:
+@url{http://localhost:8000/}
 
 @section{Command-Line Tool}
 
@@ -52,7 +241,7 @@ artifact(s), metadata, and host-side runtime support.
 
 @subsection{Canonical Invocation}
 
-@verbatim{
+@shellblock{
 racket webracket.rkt [option ...] <filename>
 }
 
@@ -60,13 +249,13 @@ racket webracket.rkt [option ...] <filename>
 
 Minimal compile:
 
-@verbatim{
+@shellblock{
 racket webracket.rkt program.rkt
 }
 
 Compile and run immediately in Node mode:
 
-@verbatim{
+@shellblock{
 racket webracket.rkt --node --run program.rkt
 }
 
@@ -74,43 +263,43 @@ racket webracket.rkt --node --run program.rkt
 
 Compile with default output names:
 
-@verbatim{
+@shellblock{
 racket webracket.rkt program.rkt
 }
 
 Choose explicit output files:
 
-@verbatim{
+@shellblock{
 racket webracket.rkt --wat-file out/program.wat --wasm-file out/program.wasm --host-file out/program.js program.rkt
 }
 
 Target browser host generation:
 
-@verbatim{
+@shellblock{
 racket webracket.rkt --browser program.rkt
 }
 
 Compile without the standard library:
 
-@verbatim{
+@shellblock{
 racket webracket.rkt --no-stdlib program.rkt
 }
 
 Dump compiler passes (limit to 25 dumps):
 
-@verbatim{
+@shellblock{
 racket webracket.rkt --dump-passes tmp/passes --dump-passes-limit 25 program.rkt
 }
 
 Print timing information:
 
-@verbatim{
+@shellblock{
 racket webracket.rkt --timings program.rkt
 }
 
 Include one or more @tt{.ffi} files:
 
-@verbatim{
+@shellblock{
 racket webracket.rkt --ffi dom --ffi standard program.rkt
 }
 
@@ -195,14 +384,14 @@ FFI and linker flags:
 @subsection{Examples}
 
 @itemlist[
-  @item{@tt{racket webracket.rkt program.rkt}}
-  @item{@tt{racket webracket.rkt --node --run program.rkt}}
-  @item{@tt{racket webracket.rkt --browser program.rkt}}
-  @item{@tt{racket webracket.rkt --wat-file out/program.wat --wasm-file out/program.wasm --host-file out/program.js program.rkt}}
-  @item{@tt{racket webracket.rkt --no-stdlib program.rkt}}
-  @item{@tt{racket webracket.rkt --dump-passes tmp/passes --dump-passes-limit 25 program.rkt}}
-  @item{@tt{racket webracket.rkt --timings program.rkt}}
-  @item{@tt{racket webracket.rkt --ffi dom --ffi standard program.rkt}}
+  @item{@shell-code{racket webracket.rkt program.rkt}}
+  @item{@shell-code{racket webracket.rkt --node --run program.rkt}}
+  @item{@shell-code{racket webracket.rkt --browser program.rkt}}
+  @item{@shell-code{racket webracket.rkt --wat-file out/program.wat --wasm-file out/program.wasm --host-file out/program.js program.rkt}}
+  @item{@shell-code{racket webracket.rkt --no-stdlib program.rkt}}
+  @item{@shell-code{racket webracket.rkt --dump-passes tmp/passes --dump-passes-limit 25 program.rkt}}
+  @item{@shell-code{racket webracket.rkt --timings program.rkt}}
+  @item{@shell-code{racket webracket.rkt --ffi dom --ffi standard program.rkt}}
 ]
 
 @section{Libraries}
