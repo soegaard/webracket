@@ -23,8 +23,8 @@
   --we-overlay: rgba(0, 0, 0, 0.45);
   --we-shadow: rgba(0, 0, 0, 0.28);
   --we-progress-success: #3a9147;
-  --we-progress-warn: #b57c1c;
-  --we-progress-error: #b24545;
+  --we-progress-warning: #b57c1c;
+  --we-progress-danger: #b24545;
   --we-heading-fg: var(--we-fg, #111111);
   --we-display-heading-fg: var(--we-heading-fg, var(--we-fg, #111111));
   --we-heading-subtitle-fg: var(--we-fg-muted, #777777);
@@ -83,12 +83,12 @@
   accent-color: var(--we-progress-success, #3a9147);
 }
 
-.we-progress-warn {
-  accent-color: var(--we-progress-warn, #b57c1c);
+.we-progress-warning {
+  accent-color: var(--we-progress-warning, #b57c1c);
 }
 
-.we-progress-error {
-  accent-color: var(--we-progress-error, #b24545);
+.we-progress-danger {
+  accent-color: var(--we-progress-danger, #b24545);
 }
 
 [data-we-widget='heading'] {
