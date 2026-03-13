@@ -89,17 +89,17 @@
     function checkProgressVariantHooks(frameDoc) {
       const progress = frameDoc.querySelector("[data-we-widget='progress'].we-progress");
       const warnBtn = Array.from(frameDoc.querySelectorAll("button"))
-        .find((b) => b.textContent.trim() === "warn");
+        .find((b) => b.textContent.trim() === "warning");
       const errorBtn = Array.from(frameDoc.querySelectorAll("button"))
-        .find((b) => b.textContent.trim() === "error");
+        .find((b) => b.textContent.trim() === "danger");
       assertTrue(!!progress, "progress variant hook progress node present");
-      assertTrue(!!warnBtn, "progress variant hook warn button present");
-      assertTrue(!!errorBtn, "progress variant hook error button present");
+      assertTrue(!!warnBtn, "progress variant hook warning button present");
+      assertTrue(!!errorBtn, "progress variant hook danger button present");
 
       warnBtn.click();
-      assertTrue(progress.className.includes("we-progress-warn"), "progress variant hook warn class");
+      assertTrue(progress.className.includes("we-progress-warning"), "progress variant hook warning class");
       errorBtn.click();
-      assertTrue(progress.className.includes("we-progress-error"), "progress variant hook error class");
+      assertTrue(progress.className.includes("we-progress-danger"), "progress variant hook danger class");
     }
 
     function checkGroupTableHooks(frameDoc) {

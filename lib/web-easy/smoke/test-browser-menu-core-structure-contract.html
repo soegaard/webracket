@@ -77,7 +77,7 @@
         assertTrue(popupStyle.minWidth !== "0px", "menu popup min-width is non-zero");
         assertTrue(popupStyle.top !== "auto", "menu popup top is positioned");
 
-        const coreCss = await (await fetch("./web-easy-core.css")).text();
+        const coreCss = await (await fetch("./themes/web-easy-core.css")).text();
         assertTrue(coreCss.includes(".we-menu-bar"), "core css has .we-menu-bar rule");
         assertTrue(coreCss.includes("display: flex"), "core css includes menu-bar display");
         assertTrue(coreCss.includes("flex-wrap: wrap"), "core css includes menu-bar wrap");

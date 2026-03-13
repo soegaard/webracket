@@ -64,7 +64,7 @@
           const successButton = Array.from(frameDoc.querySelectorAll("button"))
             .find((b) => b.textContent.trim() === "set-success");
           const errorButton = Array.from(frameDoc.querySelectorAll("button"))
-            .find((b) => b.textContent.trim() === "set-error");
+            .find((b) => b.textContent.trim() === "set-danger");
           const stepButton = Array.from(frameDoc.querySelectorAll("button"))
             .find((b) => b.textContent.trim() === "step");
           if (progress && successButton && errorButton && stepButton) {
@@ -101,9 +101,9 @@
 
         ui.errorButton.click();
         await sleep(100);
-        assertEqual(ui.progress.className.includes("we-progress-error"), true, "parity progress class after error click");
+        assertEqual(ui.progress.className.includes("we-progress-danger"), true, "parity progress class after danger click");
 
-        setStatus("PASS\nparity progress value 30->40; variants info->success->error", "pass");
+        setStatus("PASS\nparity progress value 30->40; variants info->success->danger", "pass");
       } catch (err) {
         console.error(err);
         setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");

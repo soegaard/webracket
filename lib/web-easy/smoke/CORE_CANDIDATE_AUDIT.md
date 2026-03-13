@@ -38,8 +38,8 @@ Scope: remaining duplicated selectors across:
 | `.we-tab-btn + .we-tab-btn` | light/dark/solar | mixed | seam join behavior (visual geometry) | keep in themes |
 | `.we-tab-btn.is-selected` | light/dark (+solar uses aria-selected) | visual | active tab skin | keep in themes |
 | `.we-tab-content` | light/dark/solar | visual | panel skin | keep in themes |
-| `.we-alert` / success/warn/error | light/dark/solar | visual | semantic color skins | keep in themes |
-| `.we-toast` / success/warn/error/close | light/dark/solar | visual | toast skins | keep in themes |
+| `.we-alert` / success/warning/danger | light/dark/solar | visual | semantic color skins | keep in themes |
+| `.we-toast` / success/warning/danger/close | light/dark/solar | visual | toast skins | keep in themes |
 | `.we-accordion` | light/dark/solar | mixed | layout stack + spacing + some skin context | `display/flex-direction` extracted to core; keep theme `gap` and skin |
 | `.we-accordion-section` | light/dark/solar | visual | panel borders/background | keep in themes |
 | `.we-accordion-trigger` | light/dark/solar | mixed | structural button layout + visual styling | structural subset extracted to core; keep visual skin in themes |

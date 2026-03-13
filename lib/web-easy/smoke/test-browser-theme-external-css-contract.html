@@ -67,7 +67,7 @@
       const link = frameDoc.getElementById("we-theme-core-css");
       if (!link) return false;
       const href = link.getAttribute("href") || "";
-      return href.includes("web-easy-core.css");
+      return href.includes("themes/web-easy-core.css");
     }
 
     function assertCoreBeforeTheme(frameDoc, label) {
@@ -164,10 +164,10 @@
 
         const ui = await waitForDemoReady(frame, 30000);
         assertTrue((ui.current.textContent || "").includes("solar"), "initial theme is solar");
-        assertTrue(hasCoreCssLink(ui.menuDoc), "menu frame has web-easy-core.css");
-        assertTrue(hasCoreCssLink(ui.tabsDoc), "tabs frame has web-easy-core.css");
-        assertTrue(hasCoreCssLink(ui.controlsDoc), "controls frame has web-easy-core.css");
-        assertTrue(hasCoreCssLink(ui.dialogDoc), "dialog frame has web-easy-core.css");
+        assertTrue(hasCoreCssLink(ui.menuDoc), "menu frame has themes/web-easy-core.css");
+        assertTrue(hasCoreCssLink(ui.tabsDoc), "tabs frame has themes/web-easy-core.css");
+        assertTrue(hasCoreCssLink(ui.controlsDoc), "controls frame has themes/web-easy-core.css");
+        assertTrue(hasCoreCssLink(ui.dialogDoc), "dialog frame has themes/web-easy-core.css");
         assertCoreBeforeTheme(ui.menuDoc, "menu frame");
         assertCoreBeforeTheme(ui.tabsDoc, "tabs frame");
         assertCoreBeforeTheme(ui.controlsDoc, "controls frame");

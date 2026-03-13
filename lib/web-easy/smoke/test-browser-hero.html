@@ -24,9 +24,9 @@
         const doc = await H.loadCase(frame, "./generated/example-browser-smoke-all.html?test=hero", (d) => !!d.querySelector("[data-we-widget='heading-with-subtitle']"), 20000);
         const statusNode = () => Array.from(doc.querySelectorAll("[data-we-widget='text']")).find((n) => (n.textContent || "").trim().startsWith("status:"));
         H.assertEqual((statusNode().textContent || "").trim(), "status:All systems nominal", "initial hero status");
-        Array.from(doc.querySelectorAll("button")).find((b) => (b.textContent || "").trim() === "mark-warn").click();
+        Array.from(doc.querySelectorAll("button")).find((b) => (b.textContent || "").trim() === "mark-warning").click();
         await H.sleep(80);
-        H.assertEqual((statusNode().textContent || "").trim(), "status:Investigating elevated error rate", "status after mark-warn");
+        H.assertEqual((statusNode().textContent || "").trim(), "status:Investigating elevated danger rate", "status after mark-warning");
         H.setStatus("PASS\nhero page composition renders and updates", "pass");
       } catch (err) {
         console.error(err);

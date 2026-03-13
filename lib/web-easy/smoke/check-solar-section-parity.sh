@@ -45,7 +45,7 @@ const rmseFor = (section) => {
 
 const failures = [];
 for (const section of Object.keys(thresholds)) {
-  const exists = report.some((r) => r.section === section && !r.error);
+  const exists = report.some((r) => r.section === section && !r.danger);
   if (!exists) {
     failures.push(`${section}: missing section data in report`);
     continue;

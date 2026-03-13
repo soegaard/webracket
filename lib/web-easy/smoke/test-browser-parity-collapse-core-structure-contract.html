@@ -79,7 +79,7 @@
         assertEqual(ui.collapse.getAttribute("class"), "we-collapse is-open", "collapse class (open)");
         assertEqual(ui.collapse.getAttribute("aria-hidden"), "false", "collapse aria-hidden (open)");
 
-        const coreCss = await (await fetch("./web-easy-core.css")).text();
+        const coreCss = await (await fetch("./themes/web-easy-core.css")).text();
         assertTrue(coreCss.includes(".we-collapse"), "core css has .we-collapse rule");
         assertTrue(coreCss.includes("grid-template-rows: 0fr"), "core css has closed grid row mechanics");
         assertTrue(coreCss.includes(".we-collapse.is-open"), "core css has open class rule");

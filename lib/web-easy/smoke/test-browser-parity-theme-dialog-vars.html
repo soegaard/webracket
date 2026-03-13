@@ -34,13 +34,13 @@
   <div id="status">Running browser parity theme dialog-vars assertions...</div>
   <iframe id="app-frame" src="./generated/example-browser-parity-all.html?test=parity-dialog" title="web-easy parity theme dialog vars app"></iframe>
 
-  <script src="./theme-contract-helper.js"></script>
+  <script src="./themes/theme-contract-helper.js"></script>
   <script>
     const themeHelper = window.themeContractHelper;
     const THEME_LAYER_OPTIONS = {
       themeClass: "we-theme-solar2",
-      coreHref: "../web-easy-core.css",
-      themeHref: "../theme-contract-vars.css"
+      coreHref: "../themes/web-easy-core.css",
+      themeHref: "../themes/theme-contract-vars.css"
     };
 
     function setStatus(text, cls) {

@@ -126,15 +126,15 @@
       const successBtn = Array.from(frameDoc.querySelectorAll("button"))
         .find((b) => b.textContent.trim() === "set-success");
       const errorBtn = Array.from(frameDoc.querySelectorAll("button"))
-        .find((b) => b.textContent.trim() === "set-error");
+        .find((b) => b.textContent.trim() === "set-danger");
       assertTrue(!!progress, "parity progress hook progress node present");
       assertTrue(!!successBtn, "parity progress hook success button present");
-      assertTrue(!!errorBtn, "parity progress hook error button present");
+      assertTrue(!!errorBtn, "parity progress hook danger button present");
 
       successBtn.click();
       assertTrue(progress.className.includes("we-progress-success"), "parity progress hook success class");
       errorBtn.click();
-      assertTrue(progress.className.includes("we-progress-error"), "parity progress hook error class");
+      assertTrue(progress.className.includes("we-progress-danger"), "parity progress hook danger class");
     }
 
     function checkParityTooltipHooks(frameDoc) {

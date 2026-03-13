@@ -25,15 +25,15 @@
         H.assertNoForbiddenAttrTokens(doc, "progress-contract");
         H.assertNoInlineWidgetStyles(doc, "progress-contract");
         const progress = doc.querySelector("[data-we-widget='progress'].we-progress");
-        const warnButton = Array.from(doc.querySelectorAll("button")).find((b) => (b.textContent || "").trim() === "warn");
-        const errorButton = Array.from(doc.querySelectorAll("button")).find((b) => (b.textContent || "").trim() === "error");
+        const warnButton = Array.from(doc.querySelectorAll("button")).find((b) => (b.textContent || "").trim() === "warning");
+        const errorButton = Array.from(doc.querySelectorAll("button")).find((b) => (b.textContent || "").trim() === "danger");
         H.assertTrue((progress.className || "").includes("we-progress-info"), "initial progress class info");
         warnButton.click();
         await H.sleep(100);
-        H.assertTrue((progress.className || "").includes("we-progress-warn"), "progress class after warn");
+        H.assertTrue((progress.className || "").includes("we-progress-warning"), "progress class after warning");
         errorButton.click();
         await H.sleep(100);
-        H.assertTrue((progress.className || "").includes("we-progress-error"), "progress class after error");
+        H.assertTrue((progress.className || "").includes("we-progress-danger"), "progress class after danger");
         H.setStatus("PASS\nprogress contract: data-we-widget + variant class transitions", "pass");
       } catch (err) {
         console.error(err);

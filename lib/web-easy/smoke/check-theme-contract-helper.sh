@@ -18,7 +18,7 @@ FILES=(
 FAIL=0
 
 for f in "${FILES[@]}"; do
-  if ! rg -q '<script src="./theme-contract-helper.js"></script>' "$f"; then
+  if ! rg -q '<script src="./themes/theme-contract-helper.js"></script>' "$f"; then
     echo "helper-lint: missing theme-contract-helper import in $(basename "$f")"
     FAIL=1
   fi

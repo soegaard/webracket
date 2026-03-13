@@ -62,7 +62,7 @@
         if (frameDoc) {
           const alert = frameDoc.querySelector("[data-we-widget='alert']");
           const setWarn = Array.from(frameDoc.querySelectorAll("button"))
-            .find((b) => b.textContent.trim() === "set-warn");
+            .find((b) => b.textContent.trim() === "set-warning");
           if (alert && setWarn) {
             return { frameDoc, alert, setWarn };
           }
@@ -90,8 +90,8 @@
         ui.setWarn.click();
         await sleep(100);
 
-        assertEqual(ui.alert.getAttribute("class"), "we-alert we-alert-warn", "warn alert class");
-        assertEqual(ui.alert.getAttribute("role"), "alert", "warn alert role");
+        assertEqual(ui.alert.getAttribute("class"), "we-alert we-alert-warning", "warning alert class");
+        assertEqual(ui.alert.getAttribute("role"), "alert", "warning alert role");
         setStatus("PASS\nalert severity updates class/role", "pass");
       } catch (err) {
         console.error(err);

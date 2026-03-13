@@ -77,27 +77,27 @@
       <option value="dark">Dark</option>
     </select>
     <span id="current">current=solar</span>
-    <a href="./web-easy-core.css" download>Download Core CSS</a>
-    <a href="./theme-external-solar.css" download>Download Solar CSS</a>
-    <a href="./theme-external-light.css" download>Download Light CSS</a>
-    <a href="./theme-external-dark.css" download>Download Dark CSS</a>
+    <a href="./themes/web-easy-core.css" download>Download Core CSS</a>
+    <a href="./themes/theme-external-solar.css" download>Download Solar CSS</a>
+    <a href="./themes/theme-external-light.css" download>Download Light CSS</a>
+    <a href="./themes/theme-external-dark.css" download>Download Dark CSS</a>
   </header>
 
   <main class="content">
     <p class="note">
       This page intentionally applies only two layers inside the app iframe:
-      <code>web-easy-core.css</code> then <code>theme-external-*.css</code>.
+      <code>themes/web-easy-core.css</code> then <code>theme-external-*.css</code>.
       No showcase stylesheet is loaded.
     </p>
     <iframe id="app-frame" src="./generated/example-browser-parity-all.html?test=parity-workspace" title="theme starter workspace"></iframe>
   </main>
 
   <script>
-    const CORE_CSS = "../web-easy-core.css";
+    const CORE_CSS = "../themes/web-easy-core.css";
     const THEMES = {
-      light: "../theme-external-light.css",
-      dark: "../theme-external-dark.css",
-      solar: "../theme-external-solar.css"
+      light: "../themes/theme-external-light.css",
+      dark: "../themes/theme-external-dark.css",
+      solar: "../themes/theme-external-solar.css"
     };
 
     function frameDocFrom(frame) {

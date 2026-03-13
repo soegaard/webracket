@@ -62,7 +62,7 @@
         if (frameDoc) {
           const badge = frameDoc.querySelector("[data-we-widget='badge']");
           const setError = Array.from(frameDoc.querySelectorAll("button"))
-            .find((b) => b.textContent.trim() === "set-error");
+            .find((b) => b.textContent.trim() === "set-danger");
           if (badge && setError) {
             return { frameDoc, badge, setError };
           }
@@ -90,8 +90,8 @@
         ui.setError.click();
         await sleep(100);
 
-        assertEqual(ui.badge.getAttribute("class"), "we-badge we-badge-error", "error badge class");
-        assertEqual(ui.badge.textContent.trim(), "failed", "error badge text");
+        assertEqual(ui.badge.getAttribute("class"), "we-badge we-badge-danger", "danger badge class");
+        assertEqual(ui.badge.textContent.trim(), "failed", "danger badge text");
         setStatus("PASS\nbadge severity updates class/text", "pass");
       } catch (err) {
         console.error(err);

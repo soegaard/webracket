@@ -34,13 +34,13 @@
   <div id="status">Running browser theme progress-vars assertions...</div>
   <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=progress" title="web-easy theme progress vars app"></iframe>
 
-  <script src="./theme-contract-helper.js"></script>
+  <script src="./themes/theme-contract-helper.js"></script>
   <script>
     const themeHelper = window.themeContractHelper;
     const THEME_LAYER_OPTIONS = {
       themeClass: "we-theme-solar2",
-      coreHref: "../web-easy-core.css",
-      themeHref: "../theme-contract-vars.css"
+      coreHref: "../themes/web-easy-core.css",
+      themeHref: "../themes/theme-contract-vars.css"
     };
 
     function setStatus(text, cls) {
@@ -59,9 +59,9 @@
         if (frameDoc) {
           const progress = frameDoc.querySelector("progress");
           const warnBtn = Array.from(frameDoc.querySelectorAll("button"))
-            .find((b) => b.textContent.trim() === "warn");
+            .find((b) => b.textContent.trim() === "warning");
           const errorBtn = Array.from(frameDoc.querySelectorAll("button"))
-            .find((b) => b.textContent.trim() === "error");
+            .find((b) => b.textContent.trim() === "danger");
           if (progress && warnBtn && errorBtn) {
             return { frameDoc, progress, warnBtn, errorBtn };
           }
@@ -85,20 +85,20 @@
         const ui = await waitForUI(frame, 20000);
         ui.warnBtn.click();
         await themeHelper.sleep(80);
-        ui.frameDoc.documentElement.style.setProperty("--we-progress-warn", "rgb(18, 120, 210)");
+        ui.frameDoc.documentElement.style.setProperty("--we-progress-warning", "rgb(18, 120, 210)");
         await themeHelper.sleep(80);
         themeHelper.assertTrue(
           themeHelper.normalizedCssColor(getComputedStyle(ui.progress).accentColor) === "rgb(18,120,210)",
-          "warn accent follows --we-progress-warn"
+          "warning accent follows --we-progress-warning"
         );
 
         ui.errorBtn.click();
         await themeHelper.sleep(80);
-        ui.frameDoc.documentElement.style.setProperty("--we-progress-error", "rgb(170, 30, 120)");
+        ui.frameDoc.documentElement.style.setProperty("--we-progress-danger", "rgb(170, 30, 120)");
         await themeHelper.sleep(80);
         themeHelper.assertTrue(
           themeHelper.normalizedCssColor(getComputedStyle(ui.progress).accentColor) === "rgb(170,30,120)",
-          "error accent follows --we-progress-error"
+          "danger accent follows --we-progress-danger"
         );
 
         setStatus("PASS\nprogress variant accent colors follow progress theme tokens", "pass");

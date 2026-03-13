@@ -62,9 +62,9 @@
         if (frameDoc) {
           const progress = frameDoc.querySelector("progress");
           const warnButton = Array.from(frameDoc.querySelectorAll("button"))
-            .find((b) => b.textContent.trim() === "warn");
+            .find((b) => b.textContent.trim() === "warning");
           const errorButton = Array.from(frameDoc.querySelectorAll("button"))
-            .find((b) => b.textContent.trim() === "error");
+            .find((b) => b.textContent.trim() === "danger");
           const incButton = Array.from(frameDoc.querySelectorAll("button"))
             .find((b) => b.textContent.trim() === "inc");
           if (progress && warnButton && errorButton && incButton) {
@@ -93,7 +93,7 @@
 
         ui.warnButton.click();
         await sleep(100);
-        assertEqual(ui.progress.className.includes("we-progress-warn"), true, "progress class after warn click");
+        assertEqual(ui.progress.className.includes("we-progress-warning"), true, "progress class after warning click");
 
         ui.incButton.click();
         await sleep(100);
@@ -101,9 +101,9 @@
 
         ui.errorButton.click();
         await sleep(100);
-        assertEqual(ui.progress.className.includes("we-progress-error"), true, "progress class after error click");
+        assertEqual(ui.progress.className.includes("we-progress-danger"), true, "progress class after danger click");
 
-        setStatus("PASS\nprogress value 25->30; variants info->warn->error", "pass");
+        setStatus("PASS\nprogress value 25->30; variants info->warning->danger", "pass");
       } catch (err) {
         console.error(err);
         setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");

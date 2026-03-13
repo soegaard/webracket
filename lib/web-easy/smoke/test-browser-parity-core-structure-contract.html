@@ -104,7 +104,7 @@
         assertTrue(tabUI.doc.querySelectorAll(".we-tab-btn").length >= 3, "tab buttons present");
         assertEqual(tabUI.doc.querySelectorAll(".we-tab-btn[aria-selected='true']").length, 1, "single selected tab header");
 
-        const coreCss = await (await fetch("./web-easy-core.css")).text();
+        const coreCss = await (await fetch("./themes/web-easy-core.css")).text();
         assertTrue(coreCss.includes(".we-collapse"), "core css has collapse rule");
         assertTrue(coreCss.includes("grid-template-rows: 0fr"), "core css has collapse closed mechanics");
         assertTrue(coreCss.includes(".we-tab-list"), "core css has tab-list rule");

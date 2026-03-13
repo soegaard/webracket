@@ -73,7 +73,7 @@
         assertTrue(ui.doc.querySelectorAll(".we-tab-btn").length >= 3, "tab buttons present");
         assertEqual(ui.doc.querySelectorAll(".we-tab-btn[aria-selected='true']").length, 1, "single selected tab header");
 
-        const coreCss = await (await fetch("./web-easy-core.css")).text();
+        const coreCss = await (await fetch("./themes/web-easy-core.css")).text();
         assertTrue(coreCss.includes(".we-tab-list"), "core css has .we-tab-list rule");
         assertTrue(coreCss.includes("flex-wrap: wrap"), "core css has tab-list wrap mechanics");
         assertTrue(coreCss.includes(".we-tab-panel"), "core css has .we-tab-panel rule");

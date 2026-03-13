@@ -28,7 +28,7 @@
 <body>
   <div id="status">Running theme helper API contract assertions...</div>
 
-  <script src="./theme-contract-helper.js"></script>
+  <script src="./themes/theme-contract-helper.js"></script>
   <script>
     function setStatus(text, cls) {
       const status = document.getElementById("status");
@@ -68,15 +68,15 @@
         assertTrue(!!doc, "frameDocFrom returns document");
         helper.ensureThemeLayer(doc, {
           themeClass: "we-theme-solar2",
-          coreHref: "../web-easy-core.css",
-          themeHref: "../theme-contract-vars.css"
+          coreHref: "../themes/web-easy-core.css",
+          themeHref: "../themes/theme-contract-vars.css"
         });
         const coreLink = doc.getElementById("we-theme-core-css");
         const extLink = doc.getElementById("we-theme-external-css");
         assertTrue(!!coreLink, "ensureThemeLayer creates core link");
         assertTrue(!!extLink, "ensureThemeLayer creates external link");
-        assertTrue((coreLink.getAttribute("href") || "").includes("web-easy-core.css"), "core href set");
-        assertTrue((extLink.getAttribute("href") || "").includes("theme-contract-vars.css"), "theme href set");
+        assertTrue((coreLink.getAttribute("href") || "").includes("themes/web-easy-core.css"), "core href set");
+        assertTrue((extLink.getAttribute("href") || "").includes("themes/theme-contract-vars.css"), "theme href set");
 
         const color = helper.normalizedCssColor("RGB(10, 20, 30)");
         assertTrue(color === "rgb(10,20,30)", "normalizedCssColor normalizes spacing and case");

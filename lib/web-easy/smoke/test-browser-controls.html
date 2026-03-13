@@ -102,7 +102,7 @@
         assertEqual(hasText(ui.frameDoc, "color:red"), true, "initial color text contains color:red");
         assertEqual(hasText(ui.frameDoc, "level:10"), true, "initial level text contains level:10");
         if (ui.progress) {
-          assertEqual(ui.progress.className.includes("we-progress-error"), true, "initial progress variant class is error");
+          assertEqual(ui.progress.className.includes("we-progress-danger"), true, "initial progress variant class is danger");
         }
 
         ui.select.value = "green";
@@ -123,7 +123,7 @@
           assertEqual(hasText(ui.frameDoc, "level:42"), true, "fallback progress/text contains level:42");
         }
 
-        setStatus("PASS\ncolor: red->green; level: 10->42; progress variant: error->success", "pass");
+        setStatus("PASS\ncolor: red->green; level: 10->42; progress variant: danger->success", "pass");
       } catch (err) {
         console.error(err);
         const frame = document.getElementById("app-frame");

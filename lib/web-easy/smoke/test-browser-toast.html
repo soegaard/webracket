@@ -64,7 +64,7 @@
           const close = frameDoc.querySelector("[data-we-widget='toast-close']");
           const title = frameDoc.querySelector("[data-we-widget='toast-title']");
           const showError = Array.from(frameDoc.querySelectorAll("button"))
-            .find((b) => b.textContent.trim() === "show-error");
+            .find((b) => b.textContent.trim() === "show-danger");
           const showLocked = Array.from(frameDoc.querySelectorAll("button"))
             .find((b) => b.textContent.trim() === "show-locked");
           if (toast && close && title && showError && showLocked) {
@@ -95,7 +95,7 @@
         assertEqual(ui.toast.getAttribute("aria-hidden"), "true", "toast hidden after close");
         ui.showError.click();
         await sleep(100);
-        assertEqual(ui.toast.getAttribute("class"), "we-toast we-toast-error is-open", "toast class after show-error");
+        assertEqual(ui.toast.getAttribute("class"), "we-toast we-toast-danger is-open", "toast class after show-danger");
         ui.showLocked.click();
         await sleep(100);
         const closeAfterLock = ui.frameDoc.querySelector("[data-we-widget='toast-close']");

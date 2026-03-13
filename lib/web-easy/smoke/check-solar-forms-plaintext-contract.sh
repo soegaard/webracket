@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-CSS="$SCRIPT_DIR/theme-solar-2.css"
+CSS="$SCRIPT_DIR/themes/theme-solar-2.css"
 
 echo "[1/1] plaintext selector scope contract"
 if rg -n "showcase-main .*we-form-control-plaintext|we-form-control-plaintext.*showcase-main" "$CSS" >/dev/null; then

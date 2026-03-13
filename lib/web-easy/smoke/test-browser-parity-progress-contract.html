@@ -64,7 +64,7 @@
           const successButton = Array.from(frameDoc.querySelectorAll("button"))
             .find((b) => b.textContent.trim() === "set-success");
           const errorButton = Array.from(frameDoc.querySelectorAll("button"))
-            .find((b) => b.textContent.trim() === "set-error");
+            .find((b) => b.textContent.trim() === "set-danger");
           if (progress && successButton && errorButton) {
             return { progress, successButton, errorButton };
           }
@@ -94,7 +94,7 @@
 
         ui.errorButton.click();
         await sleep(100);
-        assertTrue(ui.progress.className.includes("we-progress-error"), "parity progress variant class after error");
+        assertTrue(ui.progress.className.includes("we-progress-danger"), "parity progress variant class after danger");
 
         setStatus("PASS\nparity progress contract: data-we-widget + variant class transitions", "pass");
       } catch (err) {

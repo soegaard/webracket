@@ -131,7 +131,7 @@
         assertTrue(tabUI.doc.querySelectorAll(".we-tab-btn").length >= 3, "tab buttons present");
         assertEqual(tabUI.doc.querySelectorAll(".we-tab-btn[aria-selected='true']").length, 1, "single selected tab header");
 
-        const coreCss = await (await fetch("./web-easy-core.css")).text();
+        const coreCss = await (await fetch("./themes/web-easy-core.css")).text();
         assertTrue(coreCss.includes(".we-menu-bar"), "core css has .we-menu-bar rule");
         assertTrue(coreCss.includes("display: flex"), "core css has menu bar display");
         assertTrue(coreCss.includes(".we-collapse"), "core css has collapse rule");

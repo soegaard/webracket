@@ -33,7 +33,7 @@
           const disabledPrimary = Array
             .from(doc.querySelectorAll(".showcase-main button[disabled]"))
             .find((b) => (b.textContent || "").trim() === "Primary" &&
-                         (b.getAttribute("class") || "").includes("we-btn-primary"));
+                         (b.getAttribute("class") || "").includes("we-button-primary"));
           if (disabledPrimary) return disabledPrimary;
         }
         await sleep(25);

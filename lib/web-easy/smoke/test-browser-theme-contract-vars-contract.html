@@ -31,16 +31,16 @@
   </style>
 </head>
 <body>
-  <div id="status">Running theme-contract-vars.css assertions...</div>
+  <div id="status">Running themes/theme-contract-vars.css assertions...</div>
   <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=menu-full" title="theme contract vars app"></iframe>
 
-  <script src="./theme-contract-helper.js"></script>
+  <script src="./themes/theme-contract-helper.js"></script>
   <script>
     const themeHelper = window.themeContractHelper;
     const THEME_LAYER_OPTIONS = {
       themeClass: "we-theme-solar2",
-      coreHref: "../web-easy-core.css",
-      themeHref: "../theme-contract-vars.css"
+      coreHref: "../themes/web-easy-core.css",
+      themeHref: "../themes/theme-contract-vars.css"
     };
 
     function setStatus(text, cls) {
@@ -96,8 +96,8 @@
         themeHelper.assertTrue(extIdx >= 0, "external link exists");
         themeHelper.assertTrue(coreIdx < extIdx, "core link before external link");
         themeHelper.assertTrue(
-          (links[extIdx].getAttribute("href") || "").includes("theme-contract-vars.css"),
-          "external link points to theme-contract-vars.css"
+          (links[extIdx].getAttribute("href") || "").includes("themes/theme-contract-vars.css"),
+          "external link points to themes/theme-contract-vars.css"
         );
 
         const rootStyle = getComputedStyle(menuDoc.documentElement);
@@ -111,8 +111,8 @@
           "--we-border-strong",
           "--we-overlay",
           "--we-progress-success",
-          "--we-progress-warn",
-          "--we-progress-error"
+          "--we-progress-warning",
+          "--we-progress-danger"
         ].forEach((tok) => assertTokenDefined(rootStyle, tok));
 
         const menuBar = menuDoc.querySelector(".we-menu-bar[role='menubar']");

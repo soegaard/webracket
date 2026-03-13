@@ -194,8 +194,8 @@
     }
 
     .we-alert-success { border-color: #6a9b73; }
-    .we-alert-warn { border-color: #b79256; }
-    .we-alert-error { border-color: #b25a5a; }
+    .we-alert-warning { border-color: #b79256; }
+    .we-alert-danger { border-color: #b25a5a; }
 
     .we-badge {
       display: inline-block;
@@ -382,8 +382,8 @@
 
     .we-accordion-content.is-open { display: block; }
   </style>
-  <link id="theme-link-general" rel="stylesheet" href="./theme-external-solar.css">
-  <link id="theme-link-showcase" rel="stylesheet" href="./theme-showcase-solar.css">
+  <link id="theme-link-general" rel="stylesheet" href="./themes/theme-external-solar.css">
+  <link id="theme-link-showcase" rel="stylesheet" href="./themes/theme-showcase-solar.css">
 </head>
 <body>
   <header class="topbar">
@@ -401,9 +401,9 @@
         </select>
         <button id="toggle-showcase-css" type="button">Toggle Showcase CSS</button>
         <span id="showcase-css-status">Showcase CSS: on</span>
-        <a href="./theme-external-solar.css" download>Download Solar CSS</a>
-        <a href="./theme-external-light.css" download>Download Light CSS</a>
-        <a href="./theme-external-dark.css" download>Download Dark CSS</a>
+        <a href="./themes/theme-external-solar.css" download>Download Solar CSS</a>
+        <a href="./themes/theme-external-light.css" download>Download Light CSS</a>
+        <a href="./themes/theme-external-dark.css" download>Download Dark CSS</a>
       </div>
     </div>
   </header>
@@ -428,8 +428,8 @@
           </div>
           <div class="we-alert">Info alert: configuration saved.</div>
           <div class="we-alert we-alert-success">Success alert: build finished.</div>
-          <div class="we-alert we-alert-warn">Warning alert: pending review.</div>
-          <div class="we-alert we-alert-error">Error alert: deploy failed.</div>
+          <div class="we-alert we-alert-warning">Warning alert: pending review.</div>
+          <div class="we-alert we-alert-danger">Error alert: deploy failed.</div>
           <div class="button-row">
             <span class="we-badge">Badge</span>
             <span class="we-badge">42</span>
@@ -556,14 +556,14 @@
       const root = document.documentElement;
       let showcaseCssEnabled = true;
       const themeHrefGeneral = {
-        solar: "./theme-external-solar.css",
-        light: "./theme-external-light.css",
-        dark: "./theme-external-dark.css"
+        solar: "./themes/theme-external-solar.css",
+        light: "./themes/theme-external-light.css",
+        dark: "./themes/theme-external-dark.css"
       };
       const themeHrefShowcase = {
-        solar: "./theme-showcase-solar.css",
-        light: "./theme-showcase-light.css",
-        dark: "./theme-showcase-dark.css"
+        solar: "./themes/theme-showcase-solar.css",
+        light: "./themes/theme-showcase-light.css",
+        dark: "./themes/theme-showcase-dark.css"
       };
 
       function applyTheme(name) {

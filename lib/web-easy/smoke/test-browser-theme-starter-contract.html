@@ -103,7 +103,7 @@
 
         const coreHref = links[coreIdx].getAttribute("href") || "";
         const extHref = links[extIdx].getAttribute("href") || "";
-        assertTrue(coreHref.includes("web-easy-core.css"), "core href points to web-easy-core.css");
+        assertTrue(coreHref.includes("themes/web-easy-core.css"), "core href points to themes/web-easy-core.css");
         assertTrue(extHref.includes("theme-external-solar.css"), "external href points to solar external theme");
 
         setStatus("PASS\ntheme starter contract: core+external only, correct order, no showcase css", "pass");
