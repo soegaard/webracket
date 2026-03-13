@@ -28,6 +28,12 @@
   (define p (assq key (dom-node-attrs n)))
   (if p (cdr p) #f))
 
+(define (node-class-contains? n class-name)
+  (define class-value (node-attr n 'class))
+  (and (string? class-value)
+       (string-contains? (string-append " " class-value " ")
+                         (string-append " " class-name " "))))
+
 (define (node-child-by-role n role)
   (let loop ([children (dom-node-children n)])
     (cond
@@ -118,16 +124,16 @@
 (check-equal (node-attr label-node 'data-we-widget) "text" "text data-we-widget attr")
 (check-equal (dom-node-tag root-style-node) 'style "window includes shared style node")
 (define injected-style-text (dom-node-text root-style-node))
-(check-equal (if (regexp-match? #rx"background:" injected-style-text) #t #f)
+(check-equal (if (string-contains? injected-style-text "background:") #t #f)
              #f
              "shared style omits visual background rules")
-(check-equal (if (regexp-match? #rx"color:" injected-style-text) #t #f)
+(check-equal (if (string-contains? injected-style-text "color:") #t #f)
              #f
              "shared style omits visual color rules")
-(check-equal (if (regexp-match? #rx"border:" injected-style-text) #t #f)
+(check-equal (if (string-contains? injected-style-text "border:") #t #f)
              #f
              "shared style omits visual border rules")
-(check-equal (if (regexp-match? #rx"padding:" injected-style-text) #t #f)
+(check-equal (if (string-contains? injected-style-text "padding:") #t #f)
              #f
              "shared style omits visual padding rules")
 (check-equal (dom-node-text label-node) "0" "initial text")
@@ -400,9 +406,12 @@
 (define r-navigation-bar-collapsed
   (render
    (window
-    (navigation-bar 'vertical #t 'always
-                    (button "one" (lambda () (void)))
-                    (button "two" (lambda () (void)))))))
+    (call/key navigation-bar
+              (button "one" (lambda () (void)))
+              (button "two" (lambda () (void)))
+              #:orientation 'vertical
+              #:collapsed? #t
+              #:expand 'always)))))
 (define navigation-bar-collapsed-node (node-child (renderer-root r-navigation-bar-collapsed) 0))
 (define navigation-bar-toggle-node (node-child navigation-bar-collapsed-node 0))
 (check-equal (node-attr navigation-bar-collapsed-node 'class)
@@ -434,6 +443,20 @@
 (check-equal (node-attr close-button-node 'aria-label) "Close panel" "close-button aria-label")
 (dom-node-click! close-button-node)
 (check-equal (obs-peek @close-count) 1 "close-button action callback")
+(define r-close-button-decorators
+  (render
+   (window
+    (vpanel
+     (call/key close-button
+               (lambda () (void))
+               "Close drawer"
+               #:id "close-decorated"
+               #:class "close-extra"
+               #:attrs '((data-probe "close")))))))
+(define close-button-decorated-node (node-child (node-child (renderer-root r-close-button-decorators) 0) 0))
+(check-equal (node-attr close-button-decorated-node 'id) "close-decorated" "close-button decorator id")
+(check-equal (node-class-contains? close-button-decorated-node "close-extra") #t "close-button decorator class")
+(check-equal (node-attr close-button-decorated-node 'data-probe) "close" "close-button decorator attrs")
 
 ;; placeholder renders shape classes and width attribute from observables
 (define @placeholder-shape (@ 'text))
@@ -457,11 +480,12 @@
   (render
    (window
     (vpanel
-     (offcanvas @off-open
-                (lambda ()
-                  (:= @off-open #f))
-                @off-side
-                (text "body"))))))
+     (call/key offcanvas
+               @off-open
+               (lambda ()
+                 (:= @off-open #f))
+               (text "body")
+               #:side @off-side)))))
 (define off-root-node (node-child (node-child (renderer-root r-offcanvas) 0) 0))
 (define off-panel-node (node-child-by-widget off-root-node "offcanvas-panel"))
 (check-equal (node-attr off-root-node 'class) "we-offcanvas" "offcanvas initial class")
@@ -481,10 +505,13 @@
   (render
    (window
     (vpanel
-     (carousel carousel-items
+     (call/key carousel
+               carousel-items
                @carousel-index
                (lambda (next-index)
-                 (:= @carousel-index next-index)))))))
+                 (:= @carousel-index next-index))
+               #:wrap? #t
+               #:autoplay? #f))))))
 (define carousel-node (node-child (node-child (renderer-root r-carousel) 0) 0))
 (define carousel-controls (node-child-by-widget carousel-node "carousel-controls"))
 (define carousel-next (node-child-by-widget carousel-controls "carousel-next"))
@@ -497,12 +524,13 @@
   (render
    (window
     (vpanel
-     (carousel carousel-items
+     (call/key carousel
+               carousel-items
                @carousel-index-no-wrap
                (lambda (next-index)
                  (:= @carousel-index-no-wrap next-index))
-               #f
-               #f)))))
+               #:wrap? #f
+               #:autoplay? #f)))))
 (define carousel-node-no-wrap (node-child (node-child (renderer-root r-carousel-no-wrap) 0) 0))
 (define carousel-controls-no-wrap (node-child-by-widget carousel-node-no-wrap "carousel-controls"))
 (define carousel-next-no-wrap (node-child-by-widget carousel-controls-no-wrap "carousel-next"))
@@ -577,6 +605,56 @@
 (dom-node-click! right-minus-node)
 (check-equal (obs-peek @right-count) 9 "button-toolbar right action")
 
+;; toggle-button-group supports checkbox and radio modes with click updates
+(define @toggle-check (@ '(a)))
+(define @toggle-radio (@ 'left))
+(define r-toggle-buttons
+  (render
+   (window
+    (vpanel
+     (toggle-button-group
+      'checkbox
+      '((a "A") (b "B") (c "C"))
+      @toggle-check
+      (lambda (next)
+        (:= @toggle-check next)))
+     (toggle-button-group
+      'radio
+      '((left "Left") (center "Center") (right "Right"))
+      @toggle-radio
+      (lambda (next)
+        (:= @toggle-radio next)))))))
+(define toggle-panel       (node-child (renderer-root r-toggle-buttons) 0))
+(define toggle-check-node  (node-child toggle-panel 0))
+(define toggle-radio-node  (node-child toggle-panel 1))
+(define toggle-check-a     (node-child toggle-check-node 0))
+(define toggle-check-b     (node-child toggle-check-node 1))
+(define toggle-radio-left  (node-child toggle-radio-node 0))
+(define toggle-radio-right (node-child toggle-radio-node 2))
+(check-equal (node-attr toggle-check-node 'data-we-widget) "toggle-button-group" "toggle-button-group checkbox widget attr")
+(check-equal (node-attr toggle-check-node 'mode) 'checkbox "toggle-button-group checkbox mode attr")
+(check-equal (node-attr toggle-radio-node 'mode) 'radio "toggle-button-group radio mode attr")
+(check-equal (node-class-contains? toggle-check-a "is-active") #t "toggle checkbox initial active")
+(check-equal (node-class-contains? toggle-check-b "is-active") #f "toggle checkbox initial inactive")
+(dom-node-click! toggle-check-b)
+(check-equal (if (and (= (length (obs-peek @toggle-check)) 2)
+                      (member 'a (obs-peek @toggle-check))
+                      (member 'b (obs-peek @toggle-check)))
+                 #t
+                 #f)
+             #t
+             "toggle checkbox click appends selected id")
+(check-equal (node-class-contains? toggle-check-b "is-active") #t "toggle checkbox clicked button active class")
+(dom-node-click! toggle-check-a)
+(check-equal (obs-peek @toggle-check) '(b) "toggle checkbox click removes selected id")
+(check-equal (node-class-contains? toggle-check-a "is-active") #f "toggle checkbox removed button inactive class")
+(check-equal (node-class-contains? toggle-radio-left "is-active") #t "toggle radio initial active")
+(check-equal (node-class-contains? toggle-radio-right "is-active") #f "toggle radio initial inactive")
+(dom-node-click! toggle-radio-right)
+(check-equal (obs-peek @toggle-radio) 'right "toggle radio click updates selected id")
+(check-equal (node-class-contains? toggle-radio-left "is-active") #f "toggle radio previous inactive after click")
+(check-equal (node-class-contains? toggle-radio-right "is-active") #t "toggle radio clicked active after click")
+
 ;; alert renders severity classes and updates text/role from observables
 (define @alert-text (@ "Saved"))
 (define @alert-level (@ 'success))
@@ -597,6 +675,20 @@
 (check-equal (node-attr alert-node 'role) 'alert "alert warn role")
 (check-equal (node-attr alert-node 'aria-live) "assertive" "alert warn aria-live")
 (check-equal (dom-node-text alert-node) "Disk almost full" "alert text after update")
+(define r-alert-decorators
+  (render
+   (window
+    (vpanel
+     (call/key alert
+               "Decorated alert"
+               'info
+               #:id "alert-decorated"
+               #:class "alert-extra"
+               #:attrs '((data-probe "alert")))))))
+(define alert-decorated-node (node-child (node-child (renderer-root r-alert-decorators) 0) 0))
+(check-equal (node-attr alert-decorated-node 'id) "alert-decorated" "alert decorator id")
+(check-equal (node-class-contains? alert-decorated-node "alert-extra") #t "alert decorator class")
+(check-equal (node-attr alert-decorated-node 'data-probe) "alert" "alert decorator attrs")
 
 ;; alert-rich renders title/body/link and updates classes/children from observables
 (define @alert-rich-body      (@ "Your plan is active."))
@@ -608,11 +700,12 @@
   (render
    (window
     (vpanel
-     (alert-rich @alert-rich-body
-                 @alert-rich-title
-                 @alert-rich-link-text
-                 @alert-rich-link-href
-                 @alert-rich-level)))))
+     (call/key alert-rich
+               @alert-rich-body
+               @alert-rich-title
+               @alert-rich-link-text
+               @alert-rich-link-href
+               #:level @alert-rich-level)))))
 (define alert-rich-node (node-child (node-child (renderer-root r-alert-rich) 0) 0))
 (define alert-rich-title-node (node-child alert-rich-node 0))
 (define alert-rich-body-node (node-child alert-rich-node 1))
@@ -638,19 +731,64 @@
   (render
    (window
     (vpanel
-     (alert-rich "Disk almost full"
-                 "Warning"
-                 "Details"
-                 "/alerts"
-                 'warning
-                 (list (cons 'dismiss-action (lambda () (:= @alert-rich-dismissed #t)))
-                       (cons 'dismiss-label "Close warning")))))))
+     (call/key alert-rich
+               "Disk almost full"
+               "Warning"
+               "Details"
+               "/alerts"
+               #:level 'warning
+               #:dismiss-action (lambda () (:= @alert-rich-dismissed #t))
+               #:dismiss-label "Close warning")))))
 (define alert-rich-dismiss-node (node-child (node-child (renderer-root r-alert-rich-dismiss) 0) 0))
 (define alert-rich-dismiss-button (node-child alert-rich-dismiss-node 3))
 (check-equal (node-attr alert-rich-dismiss-button 'data-we-widget) "alert-dismiss" "alert-rich dismiss widget")
 (check-equal (node-attr alert-rich-dismiss-button 'aria-label) "Close warning" "alert-rich dismiss aria-label")
 (dom-node-click! alert-rich-dismiss-button)
 (check-equal (obs-peek @alert-rich-dismissed) #t "alert-rich dismiss action called")
+
+;; alert-rich supports explicit inline segments for exact text/link ordering
+(define r-alert-rich-inline-segments
+  (render
+   (window
+    (vpanel
+     (call/key alert-rich
+               ""
+               "Heads up!"
+               #f
+               #f
+               #:level 'info
+               #:layout 'inline
+               #:inline-segments (list (list 'text " This ")
+                                       (list 'link "alert needs your attention" "/alerts")
+                                       (list 'text ", but it's not super important."))))))))
+(define alert-rich-inline-segments-node
+  (node-child (node-child (renderer-root r-alert-rich-inline-segments) 0) 0))
+(define alert-rich-inline-segments-title
+  (node-child alert-rich-inline-segments-node 0))
+(define alert-rich-inline-segments-body-1
+  (node-child alert-rich-inline-segments-node 1))
+(define alert-rich-inline-segments-link
+  (node-child alert-rich-inline-segments-node 2))
+(define alert-rich-inline-segments-body-2
+  (node-child alert-rich-inline-segments-node 3))
+(check-equal (node-attr alert-rich-inline-segments-node 'class)
+             "we-alert we-alert-info we-alert-layout-inline"
+             "alert-rich inline-segments class")
+(check-equal (dom-node-text alert-rich-inline-segments-title)
+             "Heads up!"
+             "alert-rich inline-segments title")
+(check-equal (dom-node-text alert-rich-inline-segments-body-1)
+             " This "
+             "alert-rich inline-segments body text 1")
+(check-equal (node-attr alert-rich-inline-segments-link 'href)
+             "/alerts"
+             "alert-rich inline-segments link href")
+(check-equal (dom-node-text alert-rich-inline-segments-link)
+             "alert needs your attention"
+             "alert-rich inline-segments link text")
+(check-equal (dom-node-text alert-rich-inline-segments-body-2)
+             ", but it's not super important."
+             "alert-rich inline-segments body text 2")
 
 ;; badge renders level classes and updates text from observables
 (define @badge-text (@ "beta"))
@@ -690,6 +828,19 @@
 (check-equal (dom-node-text spinner-label-node) "Loading..." "spinner initial label text")
 (:= @spinner-label "Syncing")
 (check-equal (dom-node-text spinner-label-node) "Syncing" "spinner label updates from observable")
+(define r-spinner-decorators
+  (render
+   (window
+    (vpanel
+     (call/key spinner
+               "Decorated spinner"
+               #:id "spinner-decorated"
+               #:class "spinner-extra"
+               #:attrs '((data-probe "spinner")))))))
+(define spinner-decorated-node (node-child (node-child (renderer-root r-spinner-decorators) 0) 0))
+(check-equal (node-attr spinner-decorated-node 'id) "spinner-decorated" "spinner decorator id")
+(check-equal (node-class-contains? spinner-decorated-node "spinner-extra") #t "spinner decorator class")
+(check-equal (node-attr spinner-decorated-node 'data-probe) "spinner" "spinner decorator attrs")
 
 ;; toast renders as non-modal notification and closes via dismiss action
 (define @toast-open (@ #t))
@@ -715,6 +866,22 @@
 (dom-node-click! toast-close-node)
 (check-equal (obs-peek @toast-open) #f "toast close action updates open state")
 (check-equal (node-attr toast-node 'aria-hidden) "true" "toast hidden after close")
+(define r-toast-decorators
+  (render
+   (window
+    (vpanel
+     (call/key toast
+               #t
+               (lambda () (void))
+               "Decorated toast"
+               'info
+               #:id "toast-decorated"
+               #:class "toast-extra"
+               #:attrs '((data-probe "toast")))))))
+(define toast-decorated-node (node-child (node-child (renderer-root r-toast-decorators) 0) 0))
+(check-equal (node-attr toast-decorated-node 'id) "toast-decorated" "toast decorator id")
+(check-equal (node-class-contains? toast-decorated-node "toast-extra") #t "toast decorator class")
+(check-equal (node-attr toast-decorated-node 'data-probe) "toast" "toast decorator attrs")
 
 ;; toast supports optional title and non-dismissible mode
 (define @toast-open-2 (@ #t))
@@ -766,10 +933,11 @@
   (render
    (window
     (vpanel
-     (modal @modal-open
-            (lambda ()
-              (:= @modal-open #f))
-            (text "Modal body"))))))
+     (call/key modal
+               @modal-open
+               (lambda ()
+                 (:= @modal-open #f))
+               (text "Modal body"))))))
 (define modal-node (node-child (node-child (renderer-root r-modal) 0) 0))
 (check-equal (node-attr modal-node 'data-we-widget) "modal" "modal data-we-widget attr")
 (check-equal (node-attr modal-node 'class) "we-modal" "modal base class")
@@ -782,10 +950,11 @@
   (render
    (window
     (vpanel
-     (modal #t
-            (lambda () (void))
-            'lg
-            (text "Modal body large"))))))
+     (call/key modal
+               #t
+               (lambda () (void))
+               (text "Modal body large")
+               #:size 'lg)))))
 (define modal-lg-node (node-child (node-child (renderer-root r-modal-lg) 0) 0))
 (define modal-lg-panel-node (node-child modal-lg-node 0))
 (check-equal (node-attr modal-lg-panel-node 'class) "we-dialog-panel we-dialog-size-lg" "modal lg panel class")
@@ -795,14 +964,15 @@
   (render
    (window
     (vpanel
-     (modal #t
-            (lambda () (void))
-            'md
-            (list (cons 'title "Modal title")
-                  (cons 'description "Modal description")
-                  (cons 'footer "Modal footer")
-                  (cons 'show-close? #t))
-            (text "Modal body"))))))
+     (call/key modal
+               #t
+               (lambda () (void))
+               (text "Modal body")
+               #:size 'md
+               #:title "Modal title"
+               #:description "Modal description"
+               #:footer "Modal footer"
+               #:show-close? #t)))))
 (define modal-structured-node (node-child (node-child (renderer-root r-modal-structured) 0) 0))
 (define modal-structured-panel (node-child modal-structured-node 0))
 (define modal-structured-header (node-child modal-structured-panel 0))
@@ -982,16 +1152,17 @@
              (lambda ()
                (:= @dialog-open #t)
                (:= @dialog-status "open")))
-     (dialog @dialog-open
-             (lambda ()
-               (:= @dialog-open #f)
-               (:= @dialog-status "esc-close"))
-             (vpanel
-              (text "Delete project?")
-              (button "cancel"
-                      (lambda ()
-                        (:= @dialog-open #f)
-                        (:= @dialog-status "cancel")))))
+     (call/key dialog
+               @dialog-open
+               (lambda ()
+                 (:= @dialog-open #f)
+                 (:= @dialog-status "esc-close"))
+               (vpanel
+                (text "Delete project?")
+                (button "cancel"
+                        (lambda ()
+                          (:= @dialog-open #f)
+                          (:= @dialog-status "cancel")))))
      (text (~> @dialog-status
                (lambda (status)
                  (string-append "dialog-status:" status))))))))
@@ -1026,10 +1197,11 @@
   (render
    (window
     (vpanel
-     (dialog #t
-             (lambda () (void))
-             'sm
-             (text "Small dialog"))))))
+     (call/key dialog
+               #t
+               (lambda () (void))
+               (text "Small dialog")
+               #:size 'sm)))))
 (define dialog-sm-node (node-child (node-child (renderer-root r-dialog-sm) 0) 0))
 (define dialog-sm-panel-node (node-child dialog-sm-node 0))
 (check-equal (node-attr dialog-sm-panel-node 'class) "we-dialog-panel we-dialog-size-sm" "dialog sm panel class")
@@ -1039,14 +1211,15 @@
   (render
    (window
     (vpanel
-     (dialog #t
-             (lambda () (void))
-             'md
-             (list (cons 'title "Dialog title")
-                   (cons 'description "Dialog description")
-                   (cons 'footer "Dialog footer")
-                   (cons 'show-close? #t))
-             (text "Dialog body"))))))
+     (call/key dialog
+               #t
+               (lambda () (void))
+               (text "Dialog body")
+               #:size 'md
+               #:title "Dialog title"
+               #:description "Dialog description"
+               #:footer "Dialog footer"
+               #:show-close? #t)))))
 (define dialog-structured-node (node-child (node-child (renderer-root r-dialog-structured) 0) 0))
 (define dialog-structured-panel (node-child dialog-structured-node 0))
 (define dialog-structured-header (node-child dialog-structured-panel 0))
@@ -1180,9 +1353,10 @@
   (render
    (window
     (vpanel
-     (input @name-enter
-            (lambda (new-value) (:= @name-enter new-value))
-            (lambda () (<~ @submitted add1)))))))
+     (call/key input
+               @name-enter
+               (lambda (new-value) (:= @name-enter new-value))
+               #:on-enter (lambda () (<~ @submitted add1)))))))
 (define input-enter-node (node-child (node-child (renderer-root r4b) 0) 0))
 (check-equal (obs-peek @submitted) 0 "input enter initial submitted count")
 (dom-node-keydown! input-enter-node "Escape")
@@ -1232,10 +1406,11 @@
   (render
    (window
     (vpanel
-     (slider @level
-             (lambda (new-value) (:= @level new-value))
-             0
-             100)))))
+     (call/key slider
+               @level
+               (lambda (new-value) (:= @level new-value))
+               #:min 0
+               #:max 100)))))
 (define slider-node (node-child (node-child (renderer-root r7) 0) 0))
 (check-equal (node-attr slider-node 'min) 0 "slider min attr")
 (check-equal (node-attr slider-node 'max) 100 "slider max attr")
@@ -1254,7 +1429,7 @@
   (render
    (window
     (vpanel
-     (progress @percent 0 100)))))
+     (call/key progress @percent #:min 0 #:max 100)))))
 (define progress-node (node-child (node-child (renderer-root r8) 0) 0))
 (check-equal (node-attr progress-node 'min) 0 "progress min attr")
 (check-equal (node-attr progress-node 'max) 100 "progress max attr")
@@ -1270,7 +1445,11 @@
   (render
    (window
     (vpanel
-     (progress 30 0 100 @progress-variant)))))
+     (call/key progress
+               30
+               #:min 0
+               #:max 100
+               #:variant @progress-variant)))))
 (define progress-node-2 (node-child (node-child (renderer-root r8b) 0) 0))
 (check-equal (node-attr progress-node-2 'class) "we-progress we-progress-warn" "progress warn variant class")
 (:= @progress-variant 'success)
@@ -1369,7 +1548,10 @@
   (render
    (window
     (vpanel
-     (table '(value) @rows)))))
+     (call/key table
+               '(value)
+               @rows
+               #:density 'normal)))))
 (define table-node (node-child (node-child (renderer-root r14) 0) 0))
 (check-equal (dom-node-tag table-node) 'table "table node tag")
 (check-equal (node-attr table-node 'data-we-widget) "table" "table data-we-widget attr")
@@ -1400,7 +1582,7 @@
   (render
    (window
     (vpanel
-     (table '(k v) '(("a" 1)) 'compact)))))
+     (call/key table '(k v) '(("a" 1)) #:density 'compact)))))
 (define table-node-compact (node-child (node-child (renderer-root r14b) 0) 0))
 (check-equal (node-attr table-node-compact 'density) 'compact "table compact density attr")
 (check-equal (node-attr table-node-compact 'class) "we-table we-density-compact" "table compact density class")
@@ -1410,11 +1592,12 @@
   (render
    (window
     (vpanel
-     (table '(("service" left) ("status" center))
-            '(("api" "ok") ("db" "warn"))
-            'normal
-            '((caption . "Status table")
-              (variants . (striped hover borderless sm))))))))
+     (call/key table
+               '(("service" left) ("status" center))
+               '(("api" "ok") ("db" "warn"))
+               #:density 'normal
+               #:caption "Status table"
+               #:variants '(striped hover borderless sm))))))
 (define table-node-variants (node-child (node-child (renderer-root r14bv) 0) 0))
 (define table-caption-node (node-child table-node-variants 0))
 (check-equal (node-attr table-node-variants 'variants)
@@ -1438,10 +1621,11 @@
   (render
    (window
     (vpanel
-     (table '(state value)
-            '(("ok" 1) ("warn" 2) ("fail" 3))
-            'normal
-            '((row-variants . (success warning danger))))))))
+     (call/key table
+               '(state value)
+               '(("ok" 1) ("warn" 2) ("fail" 3))
+               #:density 'normal
+               #:row-variants '(success warning danger))))))
 (define table-node-row-variants (node-child (node-child (renderer-root r14bvr) 0) 0))
 (check-equal (node-attr table-node-row-variants 'row-variants)
              '(success warning danger)
@@ -1461,10 +1645,11 @@
   (render
    (window
     (vpanel
-     (table '(type value)
-            '(("alpha" 1) ("beta" 2))
-            'normal
-            '((row-header-column . 0)))))))
+     (call/key table
+               '(type value)
+               '(("alpha" 1) ("beta" 2))
+               #:density 'normal
+               #:row-header-column 0)))))
 (define table-node-row-header (node-child (node-child (renderer-root r14bvh) 0) 0))
 (define table-row-header-cell (node-child (node-child table-node-row-header 1) 0))
 (check-equal (node-attr table-node-row-header 'row-header-column)
@@ -1485,8 +1670,10 @@
   (render
    (window
     (vpanel
-     (table '(("name" left) ("count" right) ("state" center))
-            '(("alpha" 12 "ok")))))))
+     (call/key table
+               '(("name" left) ("count" right) ("state" center))
+               '(("alpha" 12 "ok"))
+               #:density 'normal)))))
 (define table-node-aligned (node-child (node-child (renderer-root r14c) 0) 0))
 (define table-aligned-header-row (node-child table-node-aligned 0))
 (define table-aligned-data-row (node-child table-node-aligned 1))
@@ -1584,7 +1771,7 @@
   (render
    (window
     (vpanel
-     (image "size.png" 64 32)))))
+     (call/key image "size.png" #:width 64 #:height 32)))))
 (define image-node3 (node-child (node-child (renderer-root r19b) 0) 0))
 (check-equal (node-attr image-node3 'src) "size.png" "image sized src")
 (check-equal (node-attr image-node3 'width) 64 "image optional width attr")
@@ -1623,10 +1810,11 @@
   (render
    (window
     (vpanel
-     (dropdown "More"
+     (call/key dropdown
+               "More"
                '((open "Open"))
                (lambda (_id) (void))
-               'up)))))
+               #:placement 'up)))))
 (define dropdown-up-node (node-child (node-child (renderer-root r19c-up) 0) 0))
 (check-equal (node-attr dropdown-up-node 'class) "we-dropdown we-dropdown-up" "dropdown up placement class")
 
@@ -1636,8 +1824,9 @@
   (render
    (window
     (vpanel
-     (tooltip @tooltip-message
-              (button "run" (lambda () (void))))))))
+     (call/key tooltip
+               @tooltip-message
+               (button "run" (lambda () (void))))))))
 (define tooltip-node (node-child (node-child (renderer-root r19tooltip) 0) 0))
 (define tooltip-trigger-node (node-child tooltip-node 0))
 (define tooltip-child-node (node-child tooltip-trigger-node 0))
@@ -1660,9 +1849,10 @@
   (render
    (window
     (vpanel
-     (popover @popover-label
-              (text "deploy-body")
-              (button "confirm" (lambda () (void))))))))
+     (call/key popover
+               @popover-label
+               (text "deploy-body")
+               (button "confirm" (lambda () (void))))))))
 (define popover-node (node-child (node-child (renderer-root r19popover) 0) 0))
 (define popover-trigger-node (node-child popover-node 0))
 (define popover-backdrop-node (node-child popover-node 1))
@@ -1695,9 +1885,10 @@
   (render
    (window
     (vpanel
-     (tooltip "left-tip"
-              (button "left" (lambda () (void)))
-              'left)))))
+     (call/key tooltip
+               "left-tip"
+               (button "left" (lambda () (void)))
+               #:placement 'left)))))
 (define tooltip-left-node (node-child (node-child (renderer-root r19tooltip-left) 0) 0))
 (check-equal (node-attr tooltip-left-node 'class) "we-tooltip we-tooltip-left" "tooltip left placement class")
 
@@ -1705,7 +1896,7 @@
   (render
    (window
     (vpanel
-     (popover "Actions" 'right (text "body"))))))
+     (call/key popover "Actions" (text "body") #:placement 'right)))))
 (define popover-right-node (node-child (node-child (renderer-root r19popover-right) 0) 0))
 (check-equal (node-attr popover-right-node 'class) "we-popover we-popover-right" "popover right placement class")
 
@@ -1716,9 +1907,10 @@
   (render
    (window
     (vpanel
-     (card @card-title
-           @card-footer
-           (text "body-line"))))))
+     (call/key card
+               @card-title
+               @card-footer
+               (text "body-line"))))))
 (define card-node (node-child (node-child (renderer-root r19d) 0) 0))
 (define card-header-node (node-child card-node 0))
 (define card-body-node (node-child card-node 1))
@@ -1744,14 +1936,14 @@
   (render
    (window
     (vpanel
-     (card "Title"
-           "Footer"
-           (list (cons 'subtitle "Subtitle")
-                 (cons 'media (text "media"))
-                 (cons 'actions (list (button "save" (lambda () (void)))
-                                      (button "cancel" (lambda () (void)))))
-                 )
-           (text "body"))))))
+     (call/key card
+               "Title"
+               "Footer"
+               (text "body")
+               #:subtitle "Subtitle"
+               #:media (text "media")
+               #:actions (list (button "save" (lambda () (void)))
+                               (button "cancel" (lambda () (void)))))))))
 (define card-options-node (node-child (node-child (renderer-root r19d-options) 0) 0))
 (define card-options-subtitle (node-child card-options-node 1))
 (define card-options-media (node-child card-options-node 2))
@@ -1905,10 +2097,11 @@
   (render
    (window
     (vpanel
-     (tab-panel (@ 'a)
-                (list (cons 'a (text "A"))
-                      (cons 'b (text "B")))
-                'underline)))))
+     (call/key tab-panel
+               (@ 'a)
+               (list (cons 'a (text "A"))
+                     (cons 'b (text "B")))
+               #:variants 'underline)))))
 (define tab-panel-underline-node (node-child (node-child (renderer-root r21-underline) 0) 0))
 (check-equal (node-attr tab-panel-underline-node 'class)
              "we-tab-panel we-tab-style-underline"
@@ -2012,7 +2205,7 @@
      (toolbar
       (toolbar-group
        (button "a" (lambda () (void))))
-      (divider 'vertical)
+      (call/key divider #:orientation 'vertical)
       (toolbar-group
        (button "b" (lambda () (void)))))))))
 (define toolbar-node (node-child (node-child (renderer-root r24-layout) 0) 0))
@@ -2029,11 +2222,11 @@
   (render
    (window
     (vpanel
-     (input "alice"
-            (lambda (_v) (void))
-            #f
-            '((placeholder "Your name")
-              (autocomplete "name")))))))
+     (call/key input
+               "alice"
+               (lambda (_v) (void))
+               #:input-attrs '((placeholder "Your name")
+                               (autocomplete "name")))))))
 (define input-node-attrs (node-child (node-child (renderer-root r25-input) 0) 0))
 (check-equal (node-attr input-node-attrs 'placeholder) "Your name" "input placeholder attr")
 (check-equal (node-attr input-node-attrs 'autocomplete) "name" "input autocomplete attr")
@@ -2044,11 +2237,12 @@
   (render
    (window
     (vpanel
-     (textarea @notes
+     (call/key textarea
+               @notes
                (lambda (v) (:= @notes v))
-               4
-               '((placeholder "Notes")
-                 (spellcheck "true")))))))
+               #:rows 4
+               #:textarea-attrs '((placeholder "Notes")
+                                  (spellcheck "true")))))))
 (define textarea-node (node-child (node-child (renderer-root r25-textarea) 0) 0))
 (check-equal (node-attr textarea-node 'data-we-widget) "textarea" "textarea data-we-widget attr")
 (check-equal (node-attr textarea-node 'class) "we-textarea" "textarea class")
@@ -2096,8 +2290,7 @@
   (render
    (window
     (vpanel
-     (card "T" "F" '(compact flat headerless)
-           (text "body"))))))
+     (call/key card "T" "F" (text "body") #:variants '(compact flat headerless))))))
 (define card-node-variants (node-child (node-child (renderer-root r28-card) 0) 0))
 (check-equal (node-attr card-node-variants 'class) "we-card we-card-compact we-card-flat" "card variants class")
 (check-equal (length (dom-node-children card-node-variants)) 2 "headerless card renders body + footer only")

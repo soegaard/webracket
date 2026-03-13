@@ -503,12 +503,21 @@
        'group))
 
     ;; alert : (or/c string? observable?) [(or/c symbol? observable?)] -> view?
-    ;;   Construct an inline alert/status view with optional severity level.
+    ;;   Construct an inline alert/status view with optional severity level and root decorators.
     ;;   Optional parameter level defaults to 'info.
-    (define (alert value [level 'info])
-      (view kind/alert (list (cons 'value value)
-                             (cons 'level level))
-            '()))
+    (define/key (alert value
+                       [level 'info]
+                       #:id [id #f]
+                       #:class [class #f]
+                       #:attrs [attrs '()])
+      (apply-root-decorators
+       (view kind/alert (list (cons 'value value)
+                              (cons 'level level))
+             '())
+       id
+       class
+       attrs
+       'alert))
 
     ;; options-alist? : any/c -> boolean?
     ;;   Check whether value is an options alist with symbol keys.
@@ -538,12 +547,12 @@
                             [level 'info]
                             [options '()]
                             #:level [level-kw #f]
-                            #:dismiss-action [dismiss-action #f]
-                            #:dismiss-label [dismiss-label #f]
-                            #:layout [layout #f]
-                            #:inline-segments [inline-segments #f]
-                            #:scale [scale #f]
-                            #:tone [tone #f]
+                            #:dismiss-action [dismiss-action keyword-not-given]
+                            #:dismiss-label [dismiss-label keyword-not-given]
+                            #:layout [layout keyword-not-given]
+                            #:inline-segments [inline-segments keyword-not-given]
+                            #:scale [scale keyword-not-given]
+                            #:tone [tone keyword-not-given]
                             #:id [id #f]
                             #:class [class #f]
                             #:attrs [attrs '()])
@@ -551,14 +560,18 @@
         (if (eq? level-kw #f) level level-kw))
       (define final-options
         (if (list? options) options '()))
+      (define (option-given-pair key value)
+        (if (keyword-given? value)
+            (list (cons key value))
+            '()))
       (define options-with-keywords
         (append final-options
-                (list (cons 'dismiss-action dismiss-action)
-                      (cons 'dismiss-label dismiss-label)
-                      (cons 'layout layout)
-                      (cons 'inline-segments inline-segments)
-                      (cons 'scale scale)
-                      (cons 'tone tone))))
+                (option-given-pair 'dismiss-action dismiss-action)
+                (option-given-pair 'dismiss-label dismiss-label)
+                (option-given-pair 'layout layout)
+                (option-given-pair 'inline-segments inline-segments)
+                (option-given-pair 'scale scale)
+                (option-given-pair 'tone tone)))
       (apply-root-decorators
        (view kind/alert-rich
              (list (cons 'body body)
@@ -574,30 +587,54 @@
        'alert-rich))
 
     ;; toast : (or/c boolean? observable?) (-> any/c) (or/c string? observable?) [(or/c symbol? observable?)] [(or/c string? observable? false/c)] [(or/c boolean? observable?)] [number?] [boolean?] -> view?
-    ;;   Construct a non-modal toast with open flag, close action, message, optional title/dismiss control, optional auto-hide duration, and pause-on-hover.
+    ;;   Construct a non-modal toast with open flag, close action, message, optional title/dismiss control, optional auto-hide duration, pause-on-hover, and root decorators.
     ;;   Optional parameter level defaults to 'info.
     ;;   Optional parameter title defaults to #f.
     ;;   Optional parameter dismissible? defaults to #t.
     ;;   Optional parameter duration-ms defaults to 0.
     ;;   Optional parameter pause-on-hover? defaults to #t.
-    (define (toast open on-close value [level 'info] [title #f] [dismissible? #t] [duration-ms 0] [pause-on-hover? #t])
-      (view kind/toast (list (cons 'open open)
-                             (cons 'on-close on-close)
-                             (cons 'value value)
-                             (cons 'level level)
-                             (cons 'title title)
-                             (cons 'dismissible? dismissible?)
-                             (cons 'duration-ms duration-ms)
-                             (cons 'pause-on-hover? pause-on-hover?))
-            '()))
+    (define/key (toast open
+                       on-close
+                       value
+                       [level 'info]
+                       [title #f]
+                       [dismissible? #t]
+                       [duration-ms 0]
+                       [pause-on-hover? #t]
+                       #:id [id #f]
+                       #:class [class #f]
+                       #:attrs [attrs '()])
+      (apply-root-decorators
+       (view kind/toast (list (cons 'open open)
+                              (cons 'on-close on-close)
+                              (cons 'value value)
+                              (cons 'level level)
+                              (cons 'title title)
+                              (cons 'dismissible? dismissible?)
+                              (cons 'duration-ms duration-ms)
+                              (cons 'pause-on-hover? pause-on-hover?))
+             '())
+       id
+       class
+       attrs
+       'toast))
 
     ;; close-button : (-> any/c) [(or/c string? observable?)] -> view?
-    ;;   Construct a standardized close button with action and optional aria-label.
+    ;;   Construct a standardized close button with action, optional aria-label, and root decorators.
     ;;   Optional parameter aria-label defaults to "Close".
-    (define (close-button action [aria-label "Close"])
-      (view kind/close-button (list (cons 'action action)
-                                    (cons 'aria-label aria-label))
-            '()))
+    (define/key (close-button action
+                              [aria-label "Close"]
+                              #:id [id #f]
+                              #:class [class #f]
+                              #:attrs [attrs '()])
+      (apply-root-decorators
+       (view kind/close-button (list (cons 'action action)
+                                     (cons 'aria-label aria-label))
+             '())
+       id
+       class
+       attrs
+       'close-button))
 
     ;; badge : (or/c string? observable?) [(or/c symbol? observable?)] -> view?
     ;;   Construct a compact inline badge with optional severity level.
@@ -617,11 +654,19 @@
        'badge))
 
     ;; spinner : [(or/c string? observable? false/c)] -> view?
-    ;;   Construct a loading spinner with optional label text.
+    ;;   Construct a loading spinner with optional label text and root decorators.
     ;;   Optional parameter label defaults to "Loading...".
-    (define (spinner [label "Loading..."])
-      (view kind/spinner (list (cons 'label label))
-            '()))
+    (define/key (spinner [label "Loading..."]
+                         #:id [id #f]
+                         #:class [class #f]
+                         #:attrs [attrs '()])
+      (apply-root-decorators
+       (view kind/spinner (list (cons 'label label))
+             '())
+       id
+       class
+       attrs
+       'spinner))
 
     ;; placeholder : [(or/c symbol? observable?)] [(or/c any/c observable?)] -> view?
     ;;   Construct a placeholder/skeleton block with optional shape and width.
