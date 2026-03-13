@@ -267,6 +267,27 @@
 (check-equal (node-attr (node-child heading-wrappers-panel 11) 'class)
              "we-display-heading we-display-heading-6 we-display-heading-align-left we-display-heading-space-normal"
              "display-6 wrapper class")
+(define r-heading-wrapper-decorators
+  (render
+   (window
+    (vpanel
+     (h1 "Decorated heading"
+         #:id "h1-decorated"
+         #:class "title-class"
+         #:attrs '((data-probe "h1")))
+     (display-2 "Decorated display"
+                #:id "display-2-decorated"
+                #:class "display-class"
+                #:attrs '((data-probe "d2")))))))
+(define heading-wrapper-decorators-panel (node-child (renderer-root r-heading-wrapper-decorators) 0))
+(define h1-decorated-node (node-child heading-wrapper-decorators-panel 0))
+(define display-2-decorated-node (node-child heading-wrapper-decorators-panel 1))
+(check-equal (node-attr h1-decorated-node 'id) "h1-decorated" "h1 decorator id")
+(check-equal (node-class-contains? h1-decorated-node "title-class") #t "h1 decorator class")
+(check-equal (node-attr h1-decorated-node 'data-probe) "h1" "h1 decorator attrs")
+(check-equal (node-attr display-2-decorated-node 'id) "display-2-decorated" "display-2 decorator id")
+(check-equal (node-class-contains? display-2-decorated-node "display-class") #t "display-2 decorator class")
+(check-equal (node-attr display-2-decorated-node 'data-probe) "d2" "display-2 decorator attrs")
 
 ;; heading-with-subtitle renders semantic heading plus muted subtitle and updates observables
 (define @subtitle-level (@ 3))

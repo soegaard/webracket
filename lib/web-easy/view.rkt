@@ -734,34 +734,70 @@
        'heading))
 
     ;; h1 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic level-1 heading view.
-    (define (h1 content)
-      (heading 1 content))
+    ;;   Construct a semantic level-1 heading view with optional root decorators.
+    (define/key (h1 content
+                    #:id [id #f]
+                    #:class [class #f]
+                    #:attrs [attrs '()])
+      (heading 1 content
+               #:id id
+               #:class class
+               #:attrs attrs))
 
     ;; h2 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic level-2 heading view.
-    (define (h2 content)
-      (heading 2 content))
+    ;;   Construct a semantic level-2 heading view with optional root decorators.
+    (define/key (h2 content
+                    #:id [id #f]
+                    #:class [class #f]
+                    #:attrs [attrs '()])
+      (heading 2 content
+               #:id id
+               #:class class
+               #:attrs attrs))
 
     ;; h3 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic level-3 heading view.
-    (define (h3 content)
-      (heading 3 content))
+    ;;   Construct a semantic level-3 heading view with optional root decorators.
+    (define/key (h3 content
+                    #:id [id #f]
+                    #:class [class #f]
+                    #:attrs [attrs '()])
+      (heading 3 content
+               #:id id
+               #:class class
+               #:attrs attrs))
 
     ;; h4 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic level-4 heading view.
-    (define (h4 content)
-      (heading 4 content))
+    ;;   Construct a semantic level-4 heading view with optional root decorators.
+    (define/key (h4 content
+                    #:id [id #f]
+                    #:class [class #f]
+                    #:attrs [attrs '()])
+      (heading 4 content
+               #:id id
+               #:class class
+               #:attrs attrs))
 
     ;; h5 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic level-5 heading view.
-    (define (h5 content)
-      (heading 5 content))
+    ;;   Construct a semantic level-5 heading view with optional root decorators.
+    (define/key (h5 content
+                    #:id [id #f]
+                    #:class [class #f]
+                    #:attrs [attrs '()])
+      (heading 5 content
+               #:id id
+               #:class class
+               #:attrs attrs))
 
     ;; h6 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic level-6 heading view.
-    (define (h6 content)
-      (heading 6 content))
+    ;;   Construct a semantic level-6 heading view with optional root decorators.
+    (define/key (h6 content
+                    #:id [id #f]
+                    #:class [class #f]
+                    #:attrs [attrs '()])
+      (heading 6 content
+               #:id id
+               #:class class
+               #:attrs attrs))
 
     ;; display-heading : (or/c number? observable?) (or/c string? observable?) [symbol?] [symbol?] -> view?
     ;;   Construct a semantic heading view with display style, level normalized to 1..6, and optional align/spacing style variants.
@@ -792,34 +828,70 @@
        'display-heading))
 
     ;; display-1 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic display level-1 heading view.
-    (define (display-1 content)
-      (display-heading 1 content))
+    ;;   Construct a semantic display level-1 heading view with optional root decorators.
+    (define/key (display-1 content
+                           #:id [id #f]
+                           #:class [class #f]
+                           #:attrs [attrs '()])
+      (display-heading 1 content
+                       #:id id
+                       #:class class
+                       #:attrs attrs))
 
     ;; display-2 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic display level-2 heading view.
-    (define (display-2 content)
-      (display-heading 2 content))
+    ;;   Construct a semantic display level-2 heading view with optional root decorators.
+    (define/key (display-2 content
+                           #:id [id #f]
+                           #:class [class #f]
+                           #:attrs [attrs '()])
+      (display-heading 2 content
+                       #:id id
+                       #:class class
+                       #:attrs attrs))
 
     ;; display-3 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic display level-3 heading view.
-    (define (display-3 content)
-      (display-heading 3 content))
+    ;;   Construct a semantic display level-3 heading view with optional root decorators.
+    (define/key (display-3 content
+                           #:id [id #f]
+                           #:class [class #f]
+                           #:attrs [attrs '()])
+      (display-heading 3 content
+                       #:id id
+                       #:class class
+                       #:attrs attrs))
 
     ;; display-4 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic display level-4 heading view.
-    (define (display-4 content)
-      (display-heading 4 content))
+    ;;   Construct a semantic display level-4 heading view with optional root decorators.
+    (define/key (display-4 content
+                           #:id [id #f]
+                           #:class [class #f]
+                           #:attrs [attrs '()])
+      (display-heading 4 content
+                       #:id id
+                       #:class class
+                       #:attrs attrs))
 
     ;; display-5 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic display level-5 heading view.
-    (define (display-5 content)
-      (display-heading 5 content))
+    ;;   Construct a semantic display level-5 heading view with optional root decorators.
+    (define/key (display-5 content
+                           #:id [id #f]
+                           #:class [class #f]
+                           #:attrs [attrs '()])
+      (display-heading 5 content
+                       #:id id
+                       #:class class
+                       #:attrs attrs))
 
     ;; display-6 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic display level-6 heading view.
-    (define (display-6 content)
-      (display-heading 6 content))
+    ;;   Construct a semantic display level-6 heading view with optional root decorators.
+    (define/key (display-6 content
+                           #:id [id #f]
+                           #:class [class #f]
+                           #:attrs [attrs '()])
+      (display-heading 6 content
+                       #:id id
+                       #:class class
+                       #:attrs attrs))
 
     ;; heading-with-subtitle : (or/c number? observable?) (or/c string? observable?) (or/c string? observable?) [symbol?] [symbol?] -> view?
     ;;   Construct a semantic heading view with muted subtitle text and optional align/spacing style variants.
