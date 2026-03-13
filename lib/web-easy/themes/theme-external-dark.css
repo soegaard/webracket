@@ -56,6 +56,15 @@ html.we-theme-dark {
   --we-tab-active-border: #25344a;
   /* Input/textarea placeholder text color. */
   --we-input-placeholder: #9aabc8;
+  /* Semantic tones used by badges/tables/cards/progress variants. */
+  --we-primary: #4f9fc1;
+  --we-secondary: #7f8eab;
+  --we-success: #5ca877;
+  --we-info: #5f9cd8;
+  --we-warning: #c5a770;
+  --we-danger: #cc7e7e;
+  --we-light: #d9e2f3;
+  --we-dark: #121722;
   /* Spacing scale (used by multiple widgets). */
   --we-space-xs: 2px;
   --we-space-sm: 4px;
@@ -103,6 +112,13 @@ html.we-theme-dark .we-menu-popup {
   border-color: #5e6a84;
   border-radius: 4px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.45);
+}
+
+/* Popup separators should read as subtle menu section breaks. */
+html.we-theme-dark .we-menu-popup .we-divider,
+html.we-theme-dark .we-menu-popup .we-divider-horizontal {
+  margin: 3px 2px;
+  border-top-color: #4c5a73;
 }
 
 html.we-theme-dark .we-menu-label {
@@ -254,6 +270,81 @@ html.we-theme-dark .we-button-ghost:hover {
   color: #d9e7ff;
 }
 
+/* Extended semantic button variants used by demos/tests. */
+html.we-theme-dark .we-button-primary {
+  background: #2f7ea0;
+  border-color: #4f9fc1;
+  color: #eef7ff;
+}
+
+html.we-theme-dark .we-button-secondary {
+  background: #2a3342;
+  border-color: #7f8eab;
+  color: #d9e2f3;
+}
+
+html.we-theme-dark .we-button-success {
+  background: #2f7850;
+  border-color: #5ca877;
+  color: #eaf8ef;
+}
+
+html.we-theme-dark .we-button-info {
+  background: #2a5f97;
+  border-color: #5f9cd8;
+  color: #edf5ff;
+}
+
+html.we-theme-dark .we-button-warning {
+  background: #8b6b36;
+  border-color: #c5a770;
+  color: #fff5e3;
+}
+
+html.we-theme-dark .we-button-danger {
+  background: #8a4b4b;
+  border-color: #cc7e7e;
+  color: #ffecec;
+}
+
+html.we-theme-dark .we-button-light {
+  background: #cfd9eb;
+  border-color: #cfd9eb;
+  color: #1a2230;
+}
+
+html.we-theme-dark .we-button-dark {
+  background: #0f141f;
+  border-color: #0f141f;
+  color: #d9e2f3;
+}
+
+html.we-theme-dark .we-button-link {
+  background: transparent;
+  border-color: transparent;
+  color: #7db7ff;
+  text-decoration: underline;
+}
+
+html.we-theme-dark .we-button-outline-primary { background: transparent; border-color: #4f9fc1; color: #8fcbeb; }
+html.we-theme-dark .we-button-outline-secondary { background: transparent; border-color: #7f8eab; color: #b7c7e0; }
+html.we-theme-dark .we-button-outline-success { background: transparent; border-color: #5ca877; color: #8ccaa1; }
+html.we-theme-dark .we-button-outline-info { background: transparent; border-color: #5f9cd8; color: #8fc0eb; }
+html.we-theme-dark .we-button-outline-warning { background: transparent; border-color: #c5a770; color: #e3ca9d; }
+html.we-theme-dark .we-button-outline-danger { background: transparent; border-color: #cc7e7e; color: #e3aaaa; }
+html.we-theme-dark .we-button-outline-light { background: transparent; border-color: #cfd9eb; color: #e3ecfb; }
+html.we-theme-dark .we-button-outline-dark { background: transparent; border-color: #6d7e9e; color: #aab7cf; }
+
+html.we-theme-dark .we-button-lg {
+  padding: 8px 14px;
+  font-size: 1.15rem;
+}
+
+html.we-theme-dark .we-button-sm {
+  padding: 3px 9px;
+  font-size: 0.85rem;
+}
+
 /* Pagination links should look like buttons, not underlined text links. */
 html.we-theme-dark .we-page-btn,
 html.we-theme-dark .we-page-btn:hover,
@@ -296,19 +387,48 @@ html.we-theme-dark .we-alert {
   color: var(--we-fg);
 }
 
+html.we-theme-dark .we-alert-primary {
+  border-color: #537f9c;
+  background: #2a4356;
+  color: #e3f2ff;
+}
+
+html.we-theme-dark .we-alert-secondary {
+  border-color: #7f8eab;
+  background: #2c3342;
+  color: #d7deee;
+}
+
 html.we-theme-dark .we-alert-success {
   border-color: #7ab088;
   background: #1f3424;
 }
 
-html.we-theme-dark .we-alert-warn {
+html.we-theme-dark .we-alert-info {
+  border-color: #6c95c4;
+  background: #203245;
+}
+
+html.we-theme-dark .we-alert-warning {
   border-color: #c5a770;
   background: #3b3020;
 }
 
-html.we-theme-dark .we-alert-error {
+html.we-theme-dark .we-alert-danger {
   border-color: #cc7e7e;
   background: #3b2222;
+}
+
+html.we-theme-dark .we-alert-light {
+  border-color: #aebbd1;
+  background: #cfd9eb;
+  color: #1a2230;
+}
+
+html.we-theme-dark .we-alert-dark {
+  border-color: #0f141f;
+  background: #0f141f;
+  color: #d9e2f3;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -328,12 +448,17 @@ html.we-theme-dark .we-toast-success {
   background: #1f3424;
 }
 
-html.we-theme-dark .we-toast-warn {
+html.we-theme-dark .we-toast-info {
+  border-color: #6c95c4;
+  background: #203245;
+}
+
+html.we-theme-dark .we-toast-warning {
   border-color: #c5a770;
   background: #3b3020;
 }
 
-html.we-theme-dark .we-toast-error {
+html.we-theme-dark .we-toast-danger {
   border-color: #cc7e7e;
   background: #3b2222;
 }
@@ -386,9 +511,15 @@ html.we-theme-dark .we-tab-btn.is-disabled {
 
 html.we-theme-dark .we-tab-content {
   border: 1px solid #7383a1;
-  border-radius: 0 8px 8px 8px;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
   background: #13161c;
   padding: 10px;
+}
+
+html.we-theme-dark .we-tab-panel > .we-tab-list + .we-tab-content {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 
 /* Dialog surface colors are theme-owned, so theme switching updates overlays. */
@@ -465,3 +596,617 @@ html.we-theme-dark .we-accordion-trigger.is-open::after {
  * --we-fg and input/select background colors first.
  */
 /* Showcase page shell/topbar/hero styles live in theme-showcase-dark.css. */
+
+/* -------------------------------------------------------------------------- */
+/* 8) Extended Component Coverage (non-showcase widgets)                       */
+/* -------------------------------------------------------------------------- */
+/* Navigation bar: links should look like nav links, not raised buttons. */
+html.we-theme-dark .we-navigation-bar {
+  border: 1px solid #5d6b85;
+  border-radius: 6px;
+  background: #1a2230;
+  padding: 6px 10px;
+}
+
+html.we-theme-dark .we-navigation-bar .we-divider,
+html.we-theme-dark .we-navigation-bar .we-divider-horizontal {
+  border-top-color: #4e5e79;
+}
+
+html.we-theme-dark .we-navigation-bar .we-divider-vertical {
+  border-left-color: #4e5e79;
+}
+
+html.we-theme-dark .we-navigation-bar .we-navigation-bar-items > .we-button,
+html.we-theme-dark .we-navigation-bar .we-menu-label {
+  border: 1px solid transparent;
+  background: transparent;
+  color: #b7c7e0;
+}
+
+html.we-theme-dark .we-navigation-bar .we-navigation-bar-items > .we-button:hover,
+html.we-theme-dark .we-navigation-bar .we-menu-label:hover {
+  background: #2c3748;
+  border-color: #6f7f9d;
+  color: #d9e7ff;
+}
+
+html.we-theme-dark .we-navigation-bar .we-navigation-bar-items > .we-button[aria-current='page'],
+html.we-theme-dark .we-navigation-bar .we-menu-label[aria-expanded='true'] {
+  background: #31435a;
+  border-color: #8fa3c6;
+  color: #e3efff;
+}
+
+html.we-theme-dark .we-navigation-bar .we-menu-popup {
+  border-color: #7383a1;
+  background: #1a2230;
+}
+
+/* Navbar variants used by the four-row showcase sample. */
+html.we-theme-dark .we-navigation-bar.we-variant-primary,
+html.we-theme-dark .we-variant-primary .we-navigation-bar {
+  border-color: #3f8fb2;
+  background: #2f7ea0;
+}
+
+html.we-theme-dark .we-navigation-bar.we-variant-dark,
+html.we-theme-dark .we-variant-dark .we-navigation-bar {
+  border-color: #5d6b85;
+  background: #1a2230;
+}
+
+html.we-theme-dark .we-navigation-bar.we-variant-light,
+html.we-theme-dark .we-variant-light .we-navigation-bar {
+  border-color: #cfd9eb;
+  background: #e5ecf8;
+}
+
+html.we-theme-dark .we-navigation-bar.we-variant-subtle,
+html.we-theme-dark .we-variant-subtle .we-navigation-bar {
+  border-color: #45647b;
+  background: #173748;
+}
+
+html.we-theme-dark .we-navigation-bar.we-variant-primary :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label),
+html.we-theme-dark .we-variant-primary .we-navigation-bar :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label),
+html.we-theme-dark .we-navigation-bar.we-variant-dark :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label),
+html.we-theme-dark .we-variant-dark .we-navigation-bar :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label) {
+  color: #dfeaff;
+}
+
+html.we-theme-dark .we-navigation-bar.we-variant-light :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label),
+html.we-theme-dark .we-variant-light .we-navigation-bar :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label) {
+  color: #1a2230;
+}
+
+html.we-theme-dark .we-navigation-bar.we-variant-subtle :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label),
+html.we-theme-dark .we-variant-subtle .we-navigation-bar :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label) {
+  color: #d3e9f7;
+}
+
+html.we-theme-dark .we-navigation-bar.we-variant-primary .we-navigation-bar-items > .we-button:hover,
+html.we-theme-dark .we-navigation-bar.we-variant-primary .we-menu-label:hover,
+html.we-theme-dark .we-variant-primary .we-navigation-bar .we-navigation-bar-items > .we-button:hover,
+html.we-theme-dark .we-variant-primary .we-navigation-bar .we-menu-label:hover {
+  background: #3f8fb2;
+  border-color: #66abca;
+  color: #ffffff;
+}
+
+html.we-theme-dark .we-navigation-bar.we-variant-subtle .we-navigation-bar-items > .we-button:hover,
+html.we-theme-dark .we-navigation-bar.we-variant-subtle .we-menu-label:hover,
+html.we-theme-dark .we-variant-subtle .we-navigation-bar .we-navigation-bar-items > .we-button:hover,
+html.we-theme-dark .we-variant-subtle .we-navigation-bar .we-menu-label:hover {
+  background: #2a4a5d;
+  border-color: #5f88a1;
+  color: #e8f4fb;
+}
+
+html.we-theme-dark .we-navigation-bar.we-variant-primary .we-menu-popup,
+html.we-theme-dark .we-variant-primary .we-navigation-bar .we-menu-popup {
+  border-color: #5f94c2;
+  background: #1a2230;
+}
+
+html.we-theme-dark .we-navigation-bar.we-variant-dark .we-menu-popup,
+html.we-theme-dark .we-variant-dark .we-navigation-bar .we-menu-popup {
+  border-color: #667998;
+  background: #1a2230;
+}
+
+html.we-theme-dark .we-navigation-bar.we-variant-light .we-menu-popup,
+html.we-theme-dark .we-variant-light .we-navigation-bar .we-menu-popup {
+  border-color: #a9b9d2;
+  background: #1a2230;
+}
+
+html.we-theme-dark .we-navigation-bar.we-variant-subtle .we-menu-popup,
+html.we-theme-dark .we-variant-subtle .we-navigation-bar .we-menu-popup {
+  border-color: #6e93aa;
+  background: #1a2230;
+}
+
+/* Cards/lists/tables share one subtle container system in this theme. */
+html.we-theme-dark .we-card {
+  border: 1px solid #5f6f8a;
+  border-radius: 8px;
+  background: #13161c;
+}
+
+html.we-theme-dark .we-card-header,
+html.we-theme-dark .we-card-footer {
+  border-color: #5f6f8a;
+  background: #1b2230;
+  color: #cdd9ee;
+}
+
+html.we-theme-dark .we-card-subtitle {
+  color: var(--we-fg-muted);
+}
+
+html.we-theme-dark .we-list-group {
+  border: 1px solid #5f6f8a;
+  border-radius: 8px;
+  background: #13161c;
+}
+
+html.we-theme-dark .we-list-group-item {
+  border-bottom: 1px solid #475670;
+}
+
+html.we-theme-dark .we-list-group-item.is-current,
+html.we-theme-dark .we-list-group-item.is-active {
+  background: #25344a;
+  border-color: #7f93b6;
+}
+
+html.we-theme-dark .we-table {
+  border: 1px solid #5f6f8a;
+  border-collapse: collapse;
+  background: #13161c;
+}
+
+html.we-theme-dark .we-table th,
+html.we-theme-dark .we-table td {
+  border: 1px solid #46556e;
+}
+
+html.we-theme-dark .we-table th {
+  background: #1f2a38;
+  color: #d9e2f3;
+}
+
+html.we-theme-dark .we-table.we-table-striped > tr:nth-of-type(even) {
+  background: #1a2331;
+}
+
+html.we-theme-dark .we-table.we-table-hover > tr:not(:first-of-type):hover {
+  background: #223044;
+}
+
+html.we-theme-dark .we-table > tr.we-table-row-active {
+  background: #2a374d;
+}
+
+html.we-theme-dark .we-table > tr.we-table-row-primary { background: #2a4356; }
+html.we-theme-dark .we-table > tr.we-table-row-secondary { background: #2c3342; }
+html.we-theme-dark .we-table > tr.we-table-row-success { background: #223b2b; }
+html.we-theme-dark .we-table > tr.we-table-row-info { background: #23364e; }
+html.we-theme-dark .we-table > tr.we-table-row-warning { background: #3b3020; }
+html.we-theme-dark .we-table > tr.we-table-row-danger { background: #3b2222; }
+html.we-theme-dark .we-table > tr.we-table-row-light { background: #3a4355; }
+html.we-theme-dark .we-table > tr.we-table-row-dark { background: #121722; }
+
+/* Badges: tone classes should be visually distinct in examples and apps. */
+html.we-theme-dark .we-badge {
+  border: 1px solid #6e7f9b;
+  background: #1f2a38;
+  color: #d9e2f3;
+}
+
+html.we-theme-dark .we-badge.we-badge-primary { background: #2a4356; border-color: #537f9c; }
+html.we-theme-dark .we-badge.we-badge-secondary { background: #2c3342; border-color: #7f8eab; }
+html.we-theme-dark .we-badge.we-badge-success { background: #223b2b; border-color: #5ca877; }
+html.we-theme-dark .we-badge.we-badge-info { background: #23364e; border-color: #5f9cd8; }
+html.we-theme-dark .we-badge.we-badge-warning { background: #3b3020; border-color: #c5a770; }
+html.we-theme-dark .we-badge.we-badge-danger { background: #3b2222; border-color: #cc7e7e; }
+html.we-theme-dark .we-badge.we-badge-light { background: #cfd9eb; border-color: #cfd9eb; color: #1a2230; }
+html.we-theme-dark .we-badge.we-badge-dark { background: #0f141f; border-color: #0f141f; color: #d9e2f3; }
+
+/* Navigation helpers for breadcrumb/pagination. */
+html.we-theme-dark .we-breadcrumb-item.is-current,
+html.we-theme-dark .we-page-btn.is-current {
+  background: #25344a;
+  border-color: #7f93b6;
+  color: #e3efff;
+  text-decoration: none;
+}
+
+html.we-theme-dark .we-page-btn.is-disabled {
+  background: #262d39;
+  border-color: #4e5970;
+  color: #8f9bb1;
+}
+
+/* Grouped buttons should read as one control, without visual gaps. */
+html.we-theme-dark .we-button-group,
+html.we-theme-dark .we-toolbar-group {
+  border-color: #7f8eab;
+  background: #1a2230;
+}
+
+html.we-theme-dark .we-button-group > .we-button + .we-button,
+html.we-theme-dark .we-toolbar-group > .we-button + .we-button {
+  border-left-color: #687997;
+}
+
+/* Tooltip/popover/offcanvas/carousel/scrollspy surfaces. */
+html.we-theme-dark .we-tooltip-bubble,
+html.we-theme-dark .we-popover-panel {
+  border-color: #7383a1;
+  background: #1a2230;
+  color: var(--we-fg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+html.we-theme-dark .we-offcanvas-panel {
+  border-color: #7383a1;
+  background: #1a2230;
+  color: var(--we-fg);
+}
+
+html.we-theme-dark .we-carousel,
+html.we-theme-dark .we-scrollspy {
+  border-color: #5f6f8a;
+  background: #13161c;
+}
+
+html.we-theme-dark .we-carousel-indicator.is-current,
+html.we-theme-dark .we-scrollspy-item.is-current {
+  background: #25344a;
+  border-color: #9eb2d5;
+}
+
+/* Progress: include striped and animated variants for contracts/examples. */
+html.we-theme-dark .we-progress {
+  display: block;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 1rem;
+  min-height: 1rem;
+  border: 1px solid #5e6c85;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #1f2a38;
+}
+
+html.we-theme-dark .we-progress::-webkit-progress-bar {
+  background: #1f2a38;
+}
+
+html.we-theme-dark .we-progress::-webkit-progress-inner-element {
+  display: block;
+  height: 100%;
+}
+
+html.we-theme-dark .we-progress::-webkit-progress-value {
+  background: var(--we-progress-fill, var(--we-info));
+}
+
+html.we-theme-dark .we-progress::-moz-progress-bar {
+  background: var(--we-progress-fill, var(--we-info));
+}
+
+html.we-theme-dark .we-progress.we-progress-info {
+  --we-progress-fill: var(--we-info);
+}
+
+html.we-theme-dark .we-progress.we-progress-success {
+  --we-progress-fill: var(--we-success);
+}
+
+html.we-theme-dark .we-progress.we-progress-warning {
+  --we-progress-fill: var(--we-warning);
+}
+
+html.we-theme-dark .we-progress.we-progress-danger {
+  --we-progress-fill: var(--we-danger);
+}
+
+html.we-theme-dark .we-progress-fill-default { background: var(--we-info); }
+html.we-theme-dark .we-progress-fill-success { background: var(--we-success); }
+html.we-theme-dark .we-progress-fill-info { background: var(--we-info); }
+html.we-theme-dark .we-progress-fill-warning { background: var(--we-warning); }
+html.we-theme-dark .we-progress-fill-danger { background: var(--we-danger); }
+
+html.we-theme-dark .we-progress-fill-striped {
+  background-image:
+    linear-gradient(
+      -45deg,
+      rgba(255, 255, 255, 0.24) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgba(255, 255, 255, 0.24) 50%,
+      rgba(255, 255, 255, 0.24) 75%,
+      transparent 75%,
+      transparent
+    );
+  background-size: 1rem 1rem;
+}
+
+html.we-theme-dark .we-progress-fill-animated {
+  animation: we-dark-progress-stripes 1s linear infinite;
+}
+
+html.we-theme-dark .we-progress.we-progress-striped::-webkit-progress-value,
+html.we-theme-dark .we-progress.we-progress-striped::-moz-progress-bar {
+  background-image:
+    linear-gradient(
+      -45deg,
+      rgba(255, 255, 255, 0.24) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgba(255, 255, 255, 0.24) 50%,
+      rgba(255, 255, 255, 0.24) 75%,
+      transparent 75%,
+      transparent
+    );
+  background-size: 1rem 1rem;
+}
+
+html.we-theme-dark .we-progress.we-progress-animated::-webkit-progress-value,
+html.we-theme-dark .we-progress.we-progress-animated::-moz-progress-bar {
+  animation: we-dark-progress-stripes 1s linear infinite;
+}
+
+@keyframes we-dark-progress-stripes {
+  from { background-position-x: 1rem; }
+  to { background-position-x: 0; }
+}
+
+/* Typography and readable long-form content blocks. */
+html.we-theme-dark .we-heading,
+html.we-theme-dark .we-display-heading {
+  color: #e4edff;
+}
+
+html.we-theme-dark .we-lead {
+  color: #b8c6df;
+}
+
+html.we-theme-dark .we-blockquote-quote {
+  color: #d9e7ff;
+}
+
+html.we-theme-dark .we-blockquote-attrib {
+  color: #9fb2d5;
+}
+
+/* Group + form semantics should be visible without showcase-specific CSS. */
+html.we-theme-dark .we-group {
+  border: 1px solid #5f6f8a;
+  border-radius: 8px;
+  background: #13161c;
+}
+
+html.we-theme-dark .we-group-legend {
+  color: #b7c7e0;
+  font-weight: 600;
+}
+
+html.we-theme-dark .we-checkbox,
+html.we-theme-dark .we-radio-input,
+html.we-theme-dark .we-slider {
+  accent-color: #5f9cd8;
+}
+
+/* Dialog/modal/offcanvas overlays should track dark theme tokens. */
+html.we-theme-dark .we-dialog,
+html.we-theme-dark .we-modal {
+  background: var(--we-overlay);
+}
+
+html.we-theme-dark .we-dialog-panel {
+  border-color: #7383a1;
+  background: #1a2230;
+  color: var(--we-fg);
+}
+
+html.we-theme-dark .we-offcanvas-backdrop {
+  background: rgba(2, 6, 12, 0.7);
+}
+
+/* Misc separators and helper widgets. */
+html.we-theme-dark .we-divider,
+html.we-theme-dark .we-divider-vertical {
+  border-color: #475670;
+}
+
+html.we-theme-dark .we-placeholder {
+  border-color: #52617c;
+  background: #1f2a38;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 9) Rich Component Internals (alert/dialog/popover/carousel/scrollspy)       */
+/* -------------------------------------------------------------------------- */
+html.we-theme-dark .we-alert-title {
+  font-weight: 700;
+  color: #d7e5ff;
+}
+
+html.we-theme-dark .we-alert-body {
+  color: var(--we-fg);
+}
+
+html.we-theme-dark .we-alert-link {
+  color: #8fc2ff;
+  text-underline-offset: 2px;
+}
+
+html.we-theme-dark .we-alert-dismiss {
+  border: 1px solid #6e7f9b;
+  border-radius: 4px;
+  background: #212c3a;
+  color: #c7d5ee;
+}
+
+html.we-theme-dark .we-alert-layout-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+html.we-theme-dark .we-alert-scale-major {
+  padding: 8px 12px;
+}
+
+html.we-theme-dark .we-dialog-header,
+html.we-theme-dark .we-modal-header,
+html.we-theme-dark .we-popover-header,
+html.we-theme-dark .we-tooltip-header {
+  border-bottom: 1px solid #4c5d78;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+}
+
+html.we-theme-dark .we-dialog-footer,
+html.we-theme-dark .we-modal-footer,
+html.we-theme-dark .we-popover-footer,
+html.we-theme-dark .we-tooltip-footer {
+  border-top: 1px solid #4c5d78;
+  padding-top: 6px;
+  margin-top: 6px;
+}
+
+html.we-theme-dark .we-dialog-title,
+html.we-theme-dark .we-modal-title,
+html.we-theme-dark .we-popover-title,
+html.we-theme-dark .we-tooltip-title {
+  font-weight: 700;
+  color: #d7e5ff;
+}
+
+html.we-theme-dark .we-dialog-description,
+html.we-theme-dark .we-modal-description,
+html.we-theme-dark .we-popover-body,
+html.we-theme-dark .we-tooltip-body {
+  color: #b5c6e2;
+}
+
+html.we-theme-dark .we-dialog-close,
+html.we-theme-dark .we-modal-close {
+  border: 1px solid #6e7f9b;
+  border-radius: 4px;
+  background: #212c3a;
+  color: #c7d5ee;
+}
+
+html.we-theme-dark .we-carousel-controls {
+  border-top: 1px solid #4c5d78;
+  padding-top: 6px;
+}
+
+html.we-theme-dark .we-carousel-nav,
+html.we-theme-dark .we-carousel-prev,
+html.we-theme-dark .we-carousel-next {
+  border: 1px solid #7f93b6;
+  border-radius: 4px;
+  background: #25344a;
+  color: #e3efff;
+}
+
+html.we-theme-dark .we-carousel-nav:hover,
+html.we-theme-dark .we-carousel-prev:hover,
+html.we-theme-dark .we-carousel-next:hover {
+  background: #31445f;
+}
+
+html.we-theme-dark .we-carousel-indicator {
+  border: 1px solid #7f93b6;
+  background: #1a2230;
+}
+
+html.we-theme-dark .we-carousel-indicator.is-current {
+  background: #25344a;
+}
+
+html.we-theme-dark .we-scrollspy-nav {
+  border-bottom: 1px solid #4c5d78;
+  padding-bottom: 4px;
+}
+
+html.we-theme-dark .we-scrollspy-sections {
+  border-top: 1px solid #4c5d78;
+  background: #131923;
+}
+
+html.we-theme-dark .we-scrollspy-section {
+  border: 1px solid #4c5d78;
+  border-radius: 6px;
+  background: #13161c;
+}
+
+html.we-theme-dark .we-scrollspy-item {
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #b7c7e0;
+}
+
+html.we-theme-dark .we-scrollspy-item:hover {
+  background: #223044;
+  border-color: #6f83a5;
+}
+
+html.we-theme-dark .we-card-media {
+  border-top: 1px solid #4c5d78;
+  border-bottom: 1px solid #4c5d78;
+  background: #182231;
+}
+
+html.we-theme-dark .we-card-media-text,
+html.we-theme-dark .we-card-action-text {
+  color: #b5c6e2;
+}
+
+html.we-theme-dark .we-card-actions {
+  border-top: 1px solid #4c5d78;
+}
+
+html.we-theme-dark .we-button-toolbar {
+  gap: 8px;
+}
+
+html.we-theme-dark .we-table-caption {
+  color: #93a7ca;
+  margin-bottom: 4px;
+}
+
+html.we-theme-dark .we-table.we-table-borderless th,
+html.we-theme-dark .we-table.we-table-borderless td {
+  border-color: transparent;
+}
+
+html.we-theme-dark .we-table.we-table-sm th,
+html.we-theme-dark .we-table.we-table-sm td {
+  padding: 2px 6px;
+}
+
+html.we-theme-dark .we-link {
+  color: #8fc2ff;
+}
+
+html.we-theme-dark .we-link:hover {
+  color: #b5d6ff;
+  background: transparent;
+}
+
+html.we-theme-dark .we-close-button {
+  border: 1px solid #6e7f9b;
+  border-radius: 4px;
+  background: #212c3a;
+  color: #c7d5ee;
+}

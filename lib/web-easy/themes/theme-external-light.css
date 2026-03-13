@@ -59,6 +59,15 @@ html.we-theme-light {
   --we-tab-active-border: #e7f0ff;
   /* Input/textarea placeholder text color. */
   --we-input-placeholder: #6f7f99;
+  /* Semantic tones used by badges/tables/cards/progress variants. */
+  --we-primary: #2f7ea0;
+  --we-secondary: #7a8da6;
+  --we-success: #3d8b5a;
+  --we-info: #2c7dc8;
+  --we-warning: #c1862f;
+  --we-danger: #b65757;
+  --we-light: #f7f9fc;
+  --we-dark: #2a3342;
   /* Spacing scale (used by multiple widgets). */
   --we-space-xs: 2px;
   --we-space-sm: 4px;
@@ -130,6 +139,13 @@ html.we-theme-light .we-menu-popup {
   border-radius: 4px;
   background: #ffffff;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Popup separators should read as subtle menu section breaks. */
+html.we-theme-light .we-menu-popup .we-divider,
+html.we-theme-light .we-menu-popup .we-divider-horizontal {
+  margin: 3px 2px;
+  border-top-color: #cfd8e6;
 }
 
 html.we-theme-light .we-menu-item {
@@ -265,6 +281,81 @@ html.we-theme-light .we-button-ghost:hover {
   border-color: #6f86aa;
 }
 
+/* Extended semantic button variants used by demos/tests. */
+html.we-theme-light .we-button-primary {
+  background: #2f7ea0;
+  border-color: #2f7ea0;
+  color: #ffffff;
+}
+
+html.we-theme-light .we-button-secondary {
+  background: #e9eef6;
+  border-color: #91a6c4;
+  color: #2f4563;
+}
+
+html.we-theme-light .we-button-success {
+  background: #3d8b5a;
+  border-color: #3d8b5a;
+  color: #ffffff;
+}
+
+html.we-theme-light .we-button-info {
+  background: #2c7dc8;
+  border-color: #2c7dc8;
+  color: #ffffff;
+}
+
+html.we-theme-light .we-button-warning {
+  background: #c1862f;
+  border-color: #c1862f;
+  color: #ffffff;
+}
+
+html.we-theme-light .we-button-danger {
+  background: #b65757;
+  border-color: #b65757;
+  color: #ffffff;
+}
+
+html.we-theme-light .we-button-light {
+  background: #ffffff;
+  border-color: #c0cee2;
+  color: #2a3f5f;
+}
+
+html.we-theme-light .we-button-dark {
+  background: #2a3342;
+  border-color: #2a3342;
+  color: #ffffff;
+}
+
+html.we-theme-light .we-button-link {
+  background: transparent;
+  border-color: transparent;
+  color: #2f7ea0;
+  text-decoration: underline;
+}
+
+html.we-theme-light .we-button-outline-primary { background: transparent; border-color: #2f7ea0; color: #2f7ea0; }
+html.we-theme-light .we-button-outline-secondary { background: transparent; border-color: #91a6c4; color: #3f587a; }
+html.we-theme-light .we-button-outline-success { background: transparent; border-color: #3d8b5a; color: #2f6f48; }
+html.we-theme-light .we-button-outline-info { background: transparent; border-color: #2c7dc8; color: #2c7dc8; }
+html.we-theme-light .we-button-outline-warning { background: transparent; border-color: #c1862f; color: #8a5e1f; }
+html.we-theme-light .we-button-outline-danger { background: transparent; border-color: #b65757; color: #8a4343; }
+html.we-theme-light .we-button-outline-light { background: #ffffff; border-color: #c0cee2; color: #456389; }
+html.we-theme-light .we-button-outline-dark { background: transparent; border-color: #2a3342; color: #2a3342; }
+
+html.we-theme-light .we-button-lg {
+  padding: 8px 14px;
+  font-size: 1.15rem;
+}
+
+html.we-theme-light .we-button-sm {
+  padding: 3px 9px;
+  font-size: 0.85rem;
+}
+
 /* Pagination links should look like buttons, not underlined text links. */
 html.we-theme-light .we-page-btn,
 html.we-theme-light .we-page-btn:hover,
@@ -302,19 +393,48 @@ html.we-theme-light .we-alert {
   color: var(--we-fg);
 }
 
+html.we-theme-light .we-alert-primary {
+  border-color: #85a8bf;
+  background: #d8e8f2;
+  color: #1f3a4d;
+}
+
+html.we-theme-light .we-alert-secondary {
+  border-color: #b2bfd3;
+  background: #e5eaf2;
+  color: #33465f;
+}
+
 html.we-theme-light .we-alert-success {
   border-color: #6a9b73;
   background: #e8f4e8;
 }
 
-html.we-theme-light .we-alert-warn {
+html.we-theme-light .we-alert-info {
+  border-color: #6e9fd1;
+  background: #e7f1fc;
+}
+
+html.we-theme-light .we-alert-warning {
   border-color: #b79256;
   background: #fff4df;
 }
 
-html.we-theme-light .we-alert-error {
+html.we-theme-light .we-alert-danger {
   border-color: #b25a5a;
   background: #fdeaea;
+}
+
+html.we-theme-light .we-alert-light {
+  border-color: #d0d9e8;
+  background: #ffffff;
+  color: #2a3f5f;
+}
+
+html.we-theme-light .we-alert-dark {
+  border-color: #2a3342;
+  background: #2a3342;
+  color: #ffffff;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -334,12 +454,17 @@ html.we-theme-light .we-toast-success {
   background: #e8f4e8;
 }
 
-html.we-theme-light .we-toast-warn {
+html.we-theme-light .we-toast-info {
+  border-color: #6e9fd1;
+  background: #e7f1fc;
+}
+
+html.we-theme-light .we-toast-warning {
   border-color: #b79256;
   background: #fff4df;
 }
 
-html.we-theme-light .we-toast-error {
+html.we-theme-light .we-toast-danger {
   border-color: #b25a5a;
   background: #fdeaea;
 }
@@ -392,9 +517,15 @@ html.we-theme-light .we-tab-btn.is-disabled {
 
 html.we-theme-light .we-tab-content {
   border: 1px solid #9aa9c3;
-  border-radius: 0 8px 8px 8px;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
   background: #ffffff;
   padding: 10px;
+}
+
+html.we-theme-light .we-tab-panel > .we-tab-list + .we-tab-content {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
 }
 
 /* Dialog surface colors are theme-owned, so theme switching updates overlays. */
@@ -471,3 +602,626 @@ html.we-theme-light .we-accordion-trigger.is-open::after {
  * need component-specific styling, add new blocks below this line.
  */
 /* Showcase page shell/topbar/hero styles live in theme-showcase-light.css. */
+
+/* -------------------------------------------------------------------------- */
+/* 8) Extended Component Coverage (non-showcase widgets)                       */
+/* -------------------------------------------------------------------------- */
+/* Navigation bar: links should look like nav links, not raised buttons. */
+html.we-theme-light .we-navigation-bar {
+  border: 1px solid #9aa9c3;
+  border-radius: 6px;
+  background: #f3f6fb;
+  padding: 6px 10px;
+}
+
+html.we-theme-light .we-navigation-bar .we-divider,
+html.we-theme-light .we-navigation-bar .we-divider-horizontal {
+  border-top-color: #c6d3e8;
+}
+
+html.we-theme-light .we-navigation-bar .we-divider-vertical {
+  border-left-color: #c6d3e8;
+}
+
+html.we-theme-light .we-navigation-bar .we-navigation-bar-items > .we-button,
+html.we-theme-light .we-navigation-bar .we-menu-label {
+  border: 1px solid transparent;
+  background: transparent;
+  color: #35567d;
+}
+
+html.we-theme-light .we-navigation-bar .we-navigation-bar-items > .we-button:hover,
+html.we-theme-light .we-navigation-bar .we-menu-label:hover {
+  background: #e9f0fb;
+  border-color: #c0cee2;
+  color: #284664;
+}
+
+html.we-theme-light .we-navigation-bar .we-navigation-bar-items > .we-button[aria-current='page'],
+html.we-theme-light .we-navigation-bar .we-menu-label[aria-expanded='true'] {
+  background: #e3edfb;
+  border-color: #9fb4d6;
+  color: #233f5c;
+}
+
+html.we-theme-light .we-navigation-bar .we-menu-popup {
+  border-color: #9aa9c3;
+  background: #ffffff;
+}
+
+/* Navbar variants used by the four-row showcase sample. */
+html.we-theme-light .we-navigation-bar.we-variant-primary,
+html.we-theme-light .we-variant-primary .we-navigation-bar {
+  border-color: #2f7ea0;
+  background: #2f7ea0;
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-dark,
+html.we-theme-light .we-variant-dark .we-navigation-bar {
+  border-color: #2a3342;
+  background: #2a3342;
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-light,
+html.we-theme-light .we-variant-light .we-navigation-bar {
+  border-color: #c8d4e7;
+  background: #fbfdff;
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-subtle,
+html.we-theme-light .we-variant-subtle .we-navigation-bar {
+  border-color: #d4deec;
+  background: #f4f8fc;
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-primary :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label),
+html.we-theme-light .we-variant-primary .we-navigation-bar :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label),
+html.we-theme-light .we-navigation-bar.we-variant-dark :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label),
+html.we-theme-light .we-variant-dark .we-navigation-bar :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label) {
+  color: #f3f8ff;
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-light :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label),
+html.we-theme-light .we-variant-light .we-navigation-bar :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label) {
+  color: #2e4a6e;
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-subtle :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label),
+html.we-theme-light .we-variant-subtle .we-navigation-bar :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label) {
+  color: #4e6788;
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-primary .we-navigation-bar-items > .we-button:hover,
+html.we-theme-light .we-navigation-bar.we-variant-primary .we-menu-label:hover,
+html.we-theme-light .we-variant-primary .we-navigation-bar .we-navigation-bar-items > .we-button:hover,
+html.we-theme-light .we-variant-primary .we-navigation-bar .we-menu-label:hover {
+  background: #266985;
+  border-color: #266985;
+  color: #ffffff;
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-dark .we-navigation-bar-items > .we-button:hover,
+html.we-theme-light .we-navigation-bar.we-variant-dark .we-menu-label:hover,
+html.we-theme-light .we-variant-dark .we-navigation-bar .we-navigation-bar-items > .we-button:hover,
+html.we-theme-light .we-variant-dark .we-navigation-bar .we-menu-label:hover {
+  background: #394559;
+  border-color: #5d6f8c;
+  color: #ffffff;
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-subtle .we-navigation-bar-items > .we-button:hover,
+html.we-theme-light .we-navigation-bar.we-variant-subtle .we-menu-label:hover,
+html.we-theme-light .we-variant-subtle .we-navigation-bar .we-navigation-bar-items > .we-button:hover,
+html.we-theme-light .we-variant-subtle .we-navigation-bar .we-menu-label:hover {
+  background: #e8eff8;
+  border-color: #c3d0e3;
+  color: #3d5779;
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-primary .we-menu-popup,
+html.we-theme-light .we-variant-primary .we-navigation-bar .we-menu-popup {
+  border-color: #2c6f90;
+  background: #ffffff;
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-dark .we-menu-popup,
+html.we-theme-light .we-variant-dark .we-navigation-bar .we-menu-popup {
+  border-color: #41516a;
+  background: #ffffff;
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-light .we-menu-popup,
+html.we-theme-light .we-variant-light .we-navigation-bar .we-menu-popup {
+  border-color: #b8c8de;
+  background: #ffffff;
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-subtle .we-menu-popup,
+html.we-theme-light .we-variant-subtle .we-navigation-bar .we-menu-popup {
+  border-color: #bfcde2;
+  background: #ffffff;
+}
+
+/* Cards/lists/tables share one subtle container system in this theme. */
+html.we-theme-light .we-card {
+  border: 1px solid #c0cee2;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+html.we-theme-light .we-card-header,
+html.we-theme-light .we-card-footer {
+  border-color: #c0cee2;
+  background: #f3f6fb;
+  color: #2b3f5f;
+}
+
+html.we-theme-light .we-card-subtitle {
+  color: var(--we-fg-muted);
+}
+
+html.we-theme-light .we-list-group {
+  border: 1px solid #c0cee2;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+html.we-theme-light .we-list-group-item {
+  border-bottom: 1px solid #d9e3f1;
+}
+
+html.we-theme-light .we-list-group-item.is-current,
+html.we-theme-light .we-list-group-item.is-active {
+  background: #e7f0ff;
+  border-color: #9fb4d6;
+}
+
+html.we-theme-light .we-table {
+  border: 1px solid #c0cee2;
+  border-collapse: collapse;
+  background: #ffffff;
+}
+
+html.we-theme-light .we-table th,
+html.we-theme-light .we-table td {
+  border: 1px solid #d4deed;
+}
+
+html.we-theme-light .we-table th {
+  background: #eef3fb;
+  color: #2b3f5f;
+}
+
+html.we-theme-light .we-table.we-table-striped > tr:nth-of-type(even) {
+  background: #f7faff;
+}
+
+html.we-theme-light .we-table.we-table-hover > tr:not(:first-of-type):hover {
+  background: #edf3fc;
+}
+
+html.we-theme-light .we-table > tr.we-table-row-active {
+  background: #dfe8f6;
+}
+
+html.we-theme-light .we-table > tr.we-table-row-primary { background: #d8e8f2; }
+html.we-theme-light .we-table > tr.we-table-row-secondary { background: #e5eaf2; }
+html.we-theme-light .we-table > tr.we-table-row-success { background: #e4f2e7; }
+html.we-theme-light .we-table > tr.we-table-row-info { background: #e4eefb; }
+html.we-theme-light .we-table > tr.we-table-row-warning { background: #fdf1de; }
+html.we-theme-light .we-table > tr.we-table-row-danger { background: #f9e5e5; }
+html.we-theme-light .we-table > tr.we-table-row-light { background: #f9fbff; }
+html.we-theme-light .we-table > tr.we-table-row-dark { background: #dce2ec; }
+
+/* Badges: tone classes should be visually distinct in examples and apps. */
+html.we-theme-light .we-badge {
+  border: 1px solid #b4c3da;
+  background: #eef3fb;
+  color: #2b3f5f;
+}
+
+html.we-theme-light .we-badge.we-badge-primary { background: #d8e8f2; border-color: #9fbdd0; }
+html.we-theme-light .we-badge.we-badge-secondary { background: #e5eaf2; border-color: #c0cad8; }
+html.we-theme-light .we-badge.we-badge-success { background: #e4f2e7; border-color: #abd1b6; }
+html.we-theme-light .we-badge.we-badge-info { background: #e4eefb; border-color: #aac3e7; }
+html.we-theme-light .we-badge.we-badge-warning { background: #fdf1de; border-color: #e0bf8d; }
+html.we-theme-light .we-badge.we-badge-danger { background: #f9e5e5; border-color: #d8aeae; }
+html.we-theme-light .we-badge.we-badge-light { background: #ffffff; border-color: #c0cee2; }
+html.we-theme-light .we-badge.we-badge-dark { background: #2a3342; border-color: #2a3342; color: #ffffff; }
+
+/* Navigation helpers for breadcrumb/pagination. */
+html.we-theme-light .we-breadcrumb-item.is-current,
+html.we-theme-light .we-page-btn.is-current {
+  background: #e7f0ff;
+  border-color: #9fb4d6;
+  color: #233f5c;
+  text-decoration: none;
+}
+
+html.we-theme-light .we-page-btn.is-disabled {
+  background: #f0f4fa;
+  border-color: #d1dcea;
+  color: #8b9cb5;
+}
+
+/* Grouped buttons should read as one control, without visual gaps. */
+html.we-theme-light .we-button-group,
+html.we-theme-light .we-toolbar-group {
+  border-color: #9aa9c3;
+  background: #ffffff;
+}
+
+html.we-theme-light .we-button-group > .we-button + .we-button,
+html.we-theme-light .we-toolbar-group > .we-button + .we-button {
+  border-left-color: #b9c8de;
+}
+
+/* Tooltip/popover/offcanvas/carousel/scrollspy surfaces. */
+html.we-theme-light .we-tooltip-bubble,
+html.we-theme-light .we-popover-panel {
+  border-color: #9aa9c3;
+  background: #ffffff;
+  color: var(--we-fg);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+}
+
+html.we-theme-light .we-offcanvas-panel {
+  border-color: #9aa9c3;
+  background: #ffffff;
+  color: var(--we-fg);
+}
+
+html.we-theme-light .we-carousel,
+html.we-theme-light .we-scrollspy {
+  border-color: #c0cee2;
+  background: #ffffff;
+}
+
+html.we-theme-light .we-carousel-indicator.is-current,
+html.we-theme-light .we-scrollspy-item.is-current {
+  background: #e7f0ff;
+  border-color: #9fb4d6;
+}
+
+/* Progress: include striped and animated variants for contracts/examples. */
+html.we-theme-light .we-progress {
+  display: block;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 1rem;
+  min-height: 1rem;
+  border: 1px solid #b9c8de;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #e9eef6;
+}
+
+html.we-theme-light .we-progress::-webkit-progress-bar {
+  background: #e9eef6;
+}
+
+html.we-theme-light .we-progress::-webkit-progress-inner-element {
+  display: block;
+  height: 100%;
+}
+
+html.we-theme-light .we-progress::-webkit-progress-value {
+  background: var(--we-progress-fill, var(--we-info));
+}
+
+html.we-theme-light .we-progress::-moz-progress-bar {
+  background: var(--we-progress-fill, var(--we-info));
+}
+
+html.we-theme-light .we-progress.we-progress-info {
+  --we-progress-fill: var(--we-info);
+}
+
+html.we-theme-light .we-progress.we-progress-success {
+  --we-progress-fill: var(--we-success);
+}
+
+html.we-theme-light .we-progress.we-progress-warning {
+  --we-progress-fill: var(--we-warning);
+}
+
+html.we-theme-light .we-progress.we-progress-danger {
+  --we-progress-fill: var(--we-danger);
+}
+
+html.we-theme-light .we-progress-fill-default { background: var(--we-info); }
+html.we-theme-light .we-progress-fill-success { background: var(--we-success); }
+html.we-theme-light .we-progress-fill-info { background: var(--we-info); }
+html.we-theme-light .we-progress-fill-warning { background: var(--we-warning); }
+html.we-theme-light .we-progress-fill-danger { background: var(--we-danger); }
+
+html.we-theme-light .we-progress-fill-striped {
+  background-image:
+    linear-gradient(
+      -45deg,
+      rgba(255, 255, 255, 0.35) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgba(255, 255, 255, 0.35) 50%,
+      rgba(255, 255, 255, 0.35) 75%,
+      transparent 75%,
+      transparent
+    );
+  background-size: 1rem 1rem;
+}
+
+html.we-theme-light .we-progress-fill-animated {
+  animation: we-light-progress-stripes 1s linear infinite;
+}
+
+html.we-theme-light .we-progress.we-progress-striped::-webkit-progress-value,
+html.we-theme-light .we-progress.we-progress-striped::-moz-progress-bar {
+  background-image:
+    linear-gradient(
+      -45deg,
+      rgba(255, 255, 255, 0.35) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgba(255, 255, 255, 0.35) 50%,
+      rgba(255, 255, 255, 0.35) 75%,
+      transparent 75%,
+      transparent
+    );
+  background-size: 1rem 1rem;
+}
+
+html.we-theme-light .we-progress.we-progress-animated::-webkit-progress-value,
+html.we-theme-light .we-progress.we-progress-animated::-moz-progress-bar {
+  animation: we-light-progress-stripes 1s linear infinite;
+}
+
+@keyframes we-light-progress-stripes {
+  from { background-position-x: 1rem; }
+  to { background-position-x: 0; }
+}
+
+/* Typography and readable long-form content blocks. */
+html.we-theme-light .we-heading,
+html.we-theme-light .we-display-heading {
+  color: #1f3452;
+}
+
+html.we-theme-light .we-lead {
+  color: #4c6385;
+}
+
+html.we-theme-light .we-blockquote-quote {
+  color: #2b4569;
+}
+
+html.we-theme-light .we-blockquote-attrib {
+  color: #5f7597;
+}
+
+/* Group + form semantics should be visible without showcase-specific CSS. */
+html.we-theme-light .we-group {
+  border: 1px solid #c0cee2;
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+html.we-theme-light .we-group-legend {
+  color: #35567d;
+  font-weight: 600;
+}
+
+html.we-theme-light .we-checkbox,
+html.we-theme-light .we-radio-input,
+html.we-theme-light .we-slider {
+  accent-color: #2f7ea0;
+}
+
+/* Dialog/modal/offcanvas overlays should track light theme tokens. */
+html.we-theme-light .we-dialog,
+html.we-theme-light .we-modal {
+  background: var(--we-overlay);
+}
+
+html.we-theme-light .we-dialog-panel {
+  border-color: #9aa9c3;
+  background: #ffffff;
+  color: var(--we-fg);
+}
+
+html.we-theme-light .we-offcanvas-backdrop {
+  background: rgba(0, 0, 0, 0.38);
+}
+
+/* Misc separators and helper widgets. */
+html.we-theme-light .we-divider,
+html.we-theme-light .we-divider-vertical {
+  border-color: #d0d9e8;
+}
+
+html.we-theme-light .we-placeholder {
+  border-color: #ccd7e8;
+  background: #eef3fb;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 9) Rich Component Internals (alert/dialog/popover/carousel/scrollspy)       */
+/* -------------------------------------------------------------------------- */
+html.we-theme-light .we-alert-title {
+  font-weight: 700;
+  color: #294a6e;
+}
+
+html.we-theme-light .we-alert-body {
+  color: var(--we-fg);
+}
+
+html.we-theme-light .we-alert-link {
+  color: #2f7ea0;
+  text-underline-offset: 2px;
+}
+
+html.we-theme-light .we-alert-dismiss {
+  border: 1px solid #b7c7df;
+  border-radius: 4px;
+  background: #f7fbff;
+  color: #3a587a;
+}
+
+html.we-theme-light .we-alert-layout-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+html.we-theme-light .we-alert-scale-major {
+  padding: 8px 12px;
+}
+
+html.we-theme-light .we-dialog-header,
+html.we-theme-light .we-modal-header,
+html.we-theme-light .we-popover-header,
+html.we-theme-light .we-tooltip-header {
+  border-bottom: 1px solid #d6e0ef;
+  padding-bottom: 6px;
+  margin-bottom: 6px;
+}
+
+html.we-theme-light .we-dialog-footer,
+html.we-theme-light .we-modal-footer,
+html.we-theme-light .we-popover-footer,
+html.we-theme-light .we-tooltip-footer {
+  border-top: 1px solid #d6e0ef;
+  padding-top: 6px;
+  margin-top: 6px;
+}
+
+html.we-theme-light .we-dialog-title,
+html.we-theme-light .we-modal-title,
+html.we-theme-light .we-popover-title,
+html.we-theme-light .we-tooltip-title {
+  font-weight: 700;
+  color: #294a6e;
+}
+
+html.we-theme-light .we-dialog-description,
+html.we-theme-light .we-modal-description,
+html.we-theme-light .we-popover-body,
+html.we-theme-light .we-tooltip-body {
+  color: #3b5274;
+}
+
+html.we-theme-light .we-dialog-close,
+html.we-theme-light .we-modal-close {
+  border: 1px solid #b7c7df;
+  border-radius: 4px;
+  background: #f7fbff;
+  color: #3a587a;
+}
+
+html.we-theme-light .we-carousel-controls {
+  border-top: 1px solid #d6e0ef;
+  padding-top: 6px;
+}
+
+html.we-theme-light .we-carousel-nav,
+html.we-theme-light .we-carousel-prev,
+html.we-theme-light .we-carousel-next {
+  border: 1px solid #9fb4d6;
+  border-radius: 4px;
+  background: #f7fbff;
+  color: #2f4f7f;
+}
+
+html.we-theme-light .we-carousel-nav:hover,
+html.we-theme-light .we-carousel-prev:hover,
+html.we-theme-light .we-carousel-next:hover {
+  background: #e9f0fb;
+}
+
+html.we-theme-light .we-carousel-indicator {
+  border: 1px solid #9fb4d6;
+  background: #ffffff;
+}
+
+html.we-theme-light .we-carousel-indicator.is-current {
+  background: #e7f0ff;
+}
+
+html.we-theme-light .we-scrollspy-nav {
+  border-bottom: 1px solid #d6e0ef;
+  padding-bottom: 4px;
+}
+
+html.we-theme-light .we-scrollspy-sections {
+  border-top: 1px solid #d6e0ef;
+  background: #fcfdff;
+}
+
+html.we-theme-light .we-scrollspy-section {
+  border: 1px solid #d6e0ef;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+html.we-theme-light .we-scrollspy-item {
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: #35567d;
+}
+
+html.we-theme-light .we-scrollspy-item:hover {
+  background: #edf3fc;
+  border-color: #c6d6ec;
+}
+
+html.we-theme-light .we-card-media {
+  border-top: 1px solid #d6e0ef;
+  border-bottom: 1px solid #d6e0ef;
+  background: #f7faff;
+}
+
+html.we-theme-light .we-card-media-text,
+html.we-theme-light .we-card-action-text {
+  color: #3b5274;
+}
+
+html.we-theme-light .we-card-actions {
+  border-top: 1px solid #d6e0ef;
+}
+
+html.we-theme-light .we-button-toolbar {
+  gap: 8px;
+}
+
+html.we-theme-light .we-table-caption {
+  color: #607795;
+  margin-bottom: 4px;
+}
+
+html.we-theme-light .we-table.we-table-borderless th,
+html.we-theme-light .we-table.we-table-borderless td {
+  border-color: transparent;
+}
+
+html.we-theme-light .we-table.we-table-sm th,
+html.we-theme-light .we-table.we-table-sm td {
+  padding: 2px 6px;
+}
+
+html.we-theme-light .we-link {
+  color: #2f7ea0;
+}
+
+html.we-theme-light .we-link:hover {
+  color: #266985;
+  background: transparent;
+}
+
+html.we-theme-light .we-close-button {
+  border: 1px solid #b7c7df;
+  border-radius: 4px;
+  background: #f7fbff;
+  color: #3a587a;
+}

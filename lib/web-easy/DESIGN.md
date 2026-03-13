@@ -489,7 +489,7 @@ Current state:
 
 - `renderer.rkt` now injects structural base CSS only.
 - Visual component defaults are kept in external theme files (for example
-  `smoke/theme-external-*.css`, `smoke/theme-solar-2.css`).
+  `smoke/theme-external-*.css`, `smoke/themes/theme-solar-2.css`).
 - When later exact-match sections fully override earlier theme blocks, prune the dead
   earlier blocks to keep the stylesheet readable.
 
@@ -844,7 +844,7 @@ Default theme tokens (CSS custom properties):
 - Borders/text:
   - `--we-border`, `--we-border-menu`, `--we-border-muted`, `--we-border-soft`, `--we-border-hover`, `--we-border-strong`, `--we-fg`, `--we-fg-muted`
 - Progress variants:
-  - `--we-progress-success`, `--we-progress-warn`, `--we-progress-error`
+  - `--we-progress-success`, `--we-progress-warning`, `--we-progress-danger`
 - Heading typography:
   - `--we-heading-fg`, `--we-display-heading-fg`, `--we-heading-subtitle-fg`, `--we-lead-fg`
   - `--we-heading-space-compact`, `--we-heading-space-normal`, `--we-heading-space-loose`
@@ -858,7 +858,7 @@ Stable styling contract (current baseline):
 | Surface | Stable `data-we-widget` hooks | Stable classes | Primary token hooks |
 |---|---|---|---|
 | Buttons/inputs/select | `button`, `input`, `textarea`, `choice`, `checkbox` | `.we-button`, `.we-input`, `.we-textarea`, `.we-choice`, `.we-checkbox` | `--we-bg`, `--we-bg-hover`, `--we-border-soft`, `--we-focus`, `--we-fg`, `--we-input-placeholder` |
-| Range/progress | `slider`, `progress` | `.we-slider`, `.we-progress`, `.we-progress-info`, `.we-progress-success`, `.we-progress-warn`, `.we-progress-error` | `--we-fg`, `--we-focus`, `--we-progress-success`, `--we-progress-warn`, `--we-progress-error` |
+| Range/progress | `slider`, `progress` | `.we-slider`, `.we-progress`, `.we-progress-info`, `.we-progress-success`, `.we-progress-warning`, `.we-progress-danger` | `--we-fg`, `--we-focus`, `--we-progress-success`, `--we-progress-warning`, `--we-progress-danger` |
 | Alert/badge/spinner | `alert`, `alert-title`, `alert-body`, `alert-link`, `alert-dismiss`, `badge`, `spinner` | `.we-alert`, `.we-alert-*`, `.we-alert-title`, `.we-alert-body`, `.we-alert-link`, `.we-alert-dismiss`, `.we-badge`, `.we-badge-*`, `.we-spinner`, `.we-spinner-icon`, `.we-spinner-label` | `--we-bg-subtle`, `--we-border-soft`, `--we-fg`, `--we-border-strong` |
 | Toast/collapse/accordion | `toast`, `collapse`, `accordion`, `accordion-trigger` | `.we-toast`, `.we-toast-*`, `.we-collapse`, `.is-open`, `.we-accordion`, `.we-accordion-trigger`, `.we-accordion-content` | `--we-bg`, `--we-bg-subtle`, `--we-bg-selected`, `--we-bg-hover`, `--we-border-soft`, `--we-focus`, `--we-shadow` |
 | Pagination/breadcrumb/list-group | `pagination`, `page-button`, `breadcrumb`, `breadcrumb-item`, `list-group`, `list-group-item` | `.we-pagination`, `.we-page-btn`, `.we-breadcrumb`, `.we-breadcrumb-item`, `.we-list-group`, `.we-list-group-item`, `.is-current` | `--we-bg`, `--we-bg-selected`, `--we-bg-hover`, `--we-border-soft`, `--we-fg`, `--we-fg-muted`, `--we-focus` |
@@ -1116,40 +1116,60 @@ Remaining follow-up:
 
 Migration note:
 - Renderer-injected CSS is structural-only.
-- Shared widget mechanics can live in a core external stylesheet (`smoke/web-easy-core.css`), loaded before theme stylesheets.
-- Visual defaults must come from external theme stylesheets (for example `theme-external-*.css` / `theme-solar-2.css`).
+- Shared widget mechanics can live in a core external stylesheet (`smoke/themes/web-easy-core.css`), loaded before theme stylesheets.
+- Visual defaults must come from external theme stylesheets (for example `themes/theme-external-*.css` / `themes/theme-solar-2.css`).
 - Page-specific showcase polish remains in showcase stylesheets (for example `theme-showcase-*.css`).
 - Legacy visual CSS constants are retained in source as migration reference and are not injected.
 
 Core vs Theme rule (strict):
-- Core layer (`web-easy-core.css`): structure/behavior only (`display`, layout direction, open/close mechanics, positioning anchors).
-- Theme layer (`theme-external-*.css`, `theme-solar-2.css`): visuals only (colors, borders, typography, shadows, spacing polish).
+- Core layer (`themes/web-easy-core.css`): structure/behavior only (`display`, layout direction, open/close mechanics, positioning anchors).
+- Theme layer (`themes/theme-external-*.css`, `themes/theme-solar-2.css`): visuals only (colors, borders, typography, shadows, spacing polish).
 - Showcase layer (`theme-showcase-*.css`): page-specific layout/polish only.
 - Load order must be: core -> theme -> showcase (if present).
+
+Light/Dark style intent:
+- `themes/theme-external-light.css` and `themes/theme-external-dark.css` are the default general-purpose themes for applications, not showcase-specific skins.
+- Visual language: neutral system-style controls, moderate corner radius, clear borders, and conservative elevation.
+- Contrast policy: keep text/background contrast strong and state colors readable (hover/active/focus/disabled) across all supported widgets.
+- Density policy: comfortable defaults (not compact-first), consistent vertical rhythm, and predictable control sizing.
+- Component coverage goal: both themes should style the same widget surface area as Solar2 (including newer components), so users can switch themes without unstyled fallbacks.
+- Customization goal: these files should remain approachable as starter themes users can copy and modify without depending on showcase selectors.
 
 Core utility note:
 - `we-flow` is now part of the structural core layer (`.we-flow > * + *`) for uniform sibling spacing.
 - Use constructor keywords (for example `(stack #:class "we-flow" ...)`) instead of page-specific adjacent-sibling spacing selectors when the intent is generic vertical rhythm.
 - `we-menu-bar` shared row mechanics (`display/flex-wrap/align-items`) are now in core; theme styles keep only menu-bar visual density and skin.
 - `we-menu-popup` shared placement sizing (`top/min-width/gap`) is now core-owned through `--we-menu-popup-*` tokens; themes set token values and keep popup skin.
-- Solar2 progress utility selectors (`showcase-progress-*`, striped/animated progress fills) were migrated from showcase CSS into `theme-solar-2.css`; showcase CSS retains only section/page scaffolding.
+- Solar2 progress utility selectors (`showcase-progress-*`, striped/animated progress fills) were migrated from showcase CSS into `themes/theme-solar-2.css`; showcase CSS retains only section/page scaffolding.
 
 ## Theme Contract Test Architecture
 
 Theme contracts use a dedicated runtime testing layer to keep token plumbing checks stable:
 
 1. Contract pages inject:
-   - `web-easy-core.css`
-   - `theme-contract-vars.css`
-2. `theme-contract-vars.css` is intentionally deterministic and token-forwarding; it is not a user-facing visual theme.
-3. User-facing visual themes (`theme-external-*.css`, `theme-solar-2.css`) are validated by separate theme/external/showcase contracts and visual diff lanes.
-4. Shared test helper (`smoke/theme-contract-helper.js`) centralizes iframe theme injection and basic utilities to reduce drift across contract pages.
-5. Solar section parity can be run and summarized per section with:
+   - `themes/web-easy-core.css`
+   - `themes/theme-contract-vars.css`
+2. `themes/theme-contract-vars.css` is intentionally deterministic and token-forwarding; it is not a user-facing visual theme.
+3. User-facing visual themes (`themes/theme-external-*.css`, `themes/theme-solar-2.css`) are validated by separate theme/external/showcase contracts and visual diff lanes.
+
+Light/Dark "done" gate:
+
+1. No unstyled fallbacks when switching between `we-theme-light` and `we-theme-dark` on the full showcase page.
+2. Full tone coverage for alert/toast/progress/button/table/list variants (`primary`, `secondary`, `success`, `info`, `warning`, `danger`, `light`, `dark` where applicable).
+3. Navigation variants remain visually distinct (`primary`, `dark`, `light`, `subtle`) including menu-label and popup skin.
+4. Tab strip and tab content connect correctly (`tab-content` top seam hidden and top corners squared under tab list).
+5. Keyboard/focus/disabled states remain visible and consistent across both themes.
+6. Theme contracts pass (`./headless.sh theme`) and style contracts pass (`./check-style-headless.sh`).
+
+Additional architecture notes:
+
+1. Shared test helper (`smoke/theme-contract-helper.js`) centralizes iframe theme injection and basic utilities to reduce drift across contract pages.
+2. Solar section parity can be run and summarized per section with:
    - `smoke/check-solar-section-parity.sh`
    - this captures section screenshots/metrics and prints per-section RMSE via `check-solar-polish-summary.mjs`.
-6. Solar2 list-group clipping/alignment now has a browser contract page (`smoke/test-browser-solar2-list-group-contract.html`) included in the core contract dashboard lane.
-7. Menu structural extraction is guarded by `smoke/test-browser-menu-core-structure-contract.html`.
-8. Solar section parity script supports gate-only mode for quick CI/local thresholds:
+3. Solar2 list-group clipping/alignment now has a browser contract page (`smoke/test-browser-solar2-list-group-contract.html`) included in the core contract dashboard lane.
+4. Menu structural extraction is guarded by `smoke/test-browser-menu-core-structure-contract.html`.
+5. Solar section parity script supports gate-only mode for quick CI/local thresholds:
    - `SOLAR_SECTIONS_GATE_ONLY=1 smoke/check-solar-section-parity.sh`
 
 Rationale:

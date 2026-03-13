@@ -135,7 +135,7 @@ Fast local headless gate (contract + theme + guard, skips full dashboard run):
 
 Accordion screenshot diff now includes strict preflight guards:
 - expected theme class present (`we-theme-solar2` by default)
-- expected stylesheet hrefs present (`theme-solar-2.css`, `theme-showcase-solar2.css` by default)
+- expected stylesheet hrefs present (`themes/theme-solar-2.css`, `theme-showcase-solar2.css` by default)
 - required selectors visible on generated and reference pages
 - metadata artifact written to:
   - `generated/solar-accordion-diff/accordion-metadata.json`
@@ -151,10 +151,10 @@ When screenshot/computed output does not match what you see manually:
 2. Confirm generated page is on expected theme:
    - `document.documentElement.className` should include `we-theme-solar2`.
 3. Confirm stylesheet links:
-   - `#we-theme-core-css` should include `web-easy-core.css`
-   - `#we-theme-external-css` should include `theme-solar-2.css`
+   - `#we-theme-core-css` should include `themes/web-easy-core.css`
+   - `#we-theme-external-css` should include `themes/theme-solar-2.css`
    - `#we-theme-showcase-css` should include `theme-showcase-solar2.css`
-   - theme token/vars contract pages inject `theme-contract-vars.css` intentionally for deterministic token plumbing checks
+   - theme token/vars contract pages inject `themes/theme-contract-vars.css` intentionally for deterministic token plumbing checks
 4. Use preflight metadata:
    - `generated/solar-accordion-diff/accordion-metadata.json`
    - verify `themeClass`, `stylesheets`, `selectorVisible`.
@@ -332,7 +332,7 @@ Failure triage order:
 
 - Contract dashboards are behavior gates. Visual-diff checks run in the separate `theme-visual` lane.
 - The Playwright guard ignores only bare `pageerror: unreachable` teardown events seen during iframe unload.
-- Console `error` events and explicit page `FAIL` statuses still fail the run.
+- Console `danger` events and explicit page `FAIL` statuses still fail the run.
 - If a page is flaky in dashboard mode but stable in `check-single-headless.sh`, treat it as harness/teardown first; isolate before changing component behavior.
 
 ## Layout Recipes Demo
@@ -458,7 +458,7 @@ Selected before/after computed metrics:
 - Manual external CSS theming example:
 - `test-browser-theme-external-css.html`
   - `test-browser-listgroup-clipping-debug.html` (manual clipping debugger with zoom control)
-  - editable stylesheets: `theme-external-light.css`, `theme-external-dark.css`, `theme-external-solar.css`
+  - editable stylesheets: `../themes/theme-external-light.css`, `../themes/theme-external-dark.css`, `../themes/theme-external-solar.css`
   - gallery covers workspace/menu/tabs/dialog/controls/width/profile/list pages
 
 Close-button icon theming:
