@@ -35,14 +35,15 @@
                 (button "set-autoplay-off" (lambda () (:= @autoplay #f)))
                 (button "set-first" (lambda () (:= @index 0)))
                 (button "set-last" (lambda () (:= @index 2))))
-               (carousel (list (list 0 "first"  (text "parity-slide-first"))
+               (carousel
+                         (list (list 0 "first"  (text "parity-slide-first"))
                                (list 1 "second" (text "parity-slide-second"))
                                (list 2 "third"  (text "parity-slide-third")))
                          @index
                          (lambda (next-index)
                            (:= @index next-index))
-                         @wrap
-                         @autoplay)
+                         #:wrap? @wrap
+                         #:autoplay? @autoplay)
                (text (~> @index
                          (lambda (i)
                            (~a "parity-index:" i))))

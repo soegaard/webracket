@@ -24,11 +24,11 @@
              (window
               (vpanel
                (text "top")
-               (divider 'horizontal)
+               (divider #:orientation 'horizontal)
                (text "bottom")
                (hpanel
                 (text "left")
-                (divider 'vertical)
+                (divider #:orientation 'vertical)
                 (text "right"))))))
       (mount-renderer! divider-renderer root)
       (void))

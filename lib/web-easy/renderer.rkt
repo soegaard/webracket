@@ -3843,7 +3843,7 @@
                         (equal? current-id section-id)))
                   (equal? raw-selected section-id)))
             (define collapse-node
-              (build-node (call/key collapse
+              (build-node (collapse
                                     collapse-open
                                     section-view
                                     #:class "we-accordion-content")

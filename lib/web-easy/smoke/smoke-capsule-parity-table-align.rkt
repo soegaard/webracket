@@ -27,8 +27,10 @@
             (render
              (window
               (vpanel
-               (table '(("name" left) ("count" right) ("state" center))
-                      @rows)
+               (table
+                         '(("name" left) ("count" right) ("state" center))
+                         @rows
+                         #:density 'normal)
                (text (~> @rows (lambda (rows) (~a "parity-rows:" (length rows)))))))))
       (mount-renderer! parity-table-align-renderer root)
       (void))

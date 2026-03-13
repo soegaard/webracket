@@ -156,8 +156,14 @@
                                                       (lambda (_)
                                                         (vpanel
                                                          (text (summary-text))
-                                                         (progress (completion-pct))
-                                                         (table '(checklist) (visible-rows)))))))
+                                                         (progress
+                                                                   (completion-pct)
+                                                                   #:min 0
+                                                                   #:max 100)
+                                                         (table
+                                                                   '(checklist)
+                                                                   (visible-rows)
+                                                                   #:density 'normal))))))
                   (text (~> @status
                             (lambda (status)
                               (~a "status:" status)))))

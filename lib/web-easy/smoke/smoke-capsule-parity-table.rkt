@@ -106,7 +106,10 @@
          (window
           (vpanel
            (group "Team"
-                  (table '(name role status) @rows 'compact)
+                  (table
+                            '(name role status)
+                            @rows
+                            #:density 'compact)
                   (text (~> @rows
                             (lambda (rows)
                               (~a "rows:" (length rows))))

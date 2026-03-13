@@ -35,14 +35,15 @@
                 (button "set-autoplay-off" (lambda () (:= @autoplay #f)))
                 (button "set-first" (lambda () (:= @index 0)))
                 (button "set-last" (lambda () (:= @index 2))))
-               (carousel (list (list 0 "alpha" (text "slide-alpha"))
+               (carousel
+                         (list (list 0 "alpha" (text "slide-alpha"))
                                (list 1 "beta"  (text "slide-beta"))
                                (list 2 "gamma" (text "slide-gamma")))
                          @index
                          (lambda (next-index)
                            (:= @index next-index))
-                         @wrap
-                         @autoplay)
+                         #:wrap? @wrap
+                         #:autoplay? @autoplay)
                (text (~> @index
                          (lambda (i)
                            (~a "index:" i))))

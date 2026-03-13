@@ -26,19 +26,23 @@
       (define @rows (@ (list (list "a" "ok")
                              (list "b" "hold"))))
       (set! width-renderer
-        (render
-         (window
-          (vpanel
-           (group "Width Policy"
-                  (input @name (lambda (v) (:= @name v)))
-                  (checkbox @enabled (lambda (v) (:= @enabled v)))
-                  (choice (list "one" "two" "three")
-                          @choice
-                          (lambda (v) (:= @choice v)))
-                  (slider @level (lambda (v) (:= @level v)) 0 100)
-                  (progress @level 0 100)
-                  (button "noop" (lambda () (void)))
-                  (table '(item state) @rows 'compact))))))
+            (render
+             (window
+              (vpanel
+               (group "Width Policy"
+                      (input @name (lambda (v) (:= @name v)))
+                      (checkbox @enabled (lambda (v) (:= @enabled v)))
+                      (choice (list "one" "two" "three")
+                              @choice
+                              (lambda (v) (:= @choice v)))
+                      (slider @level (lambda (v) (:= @level v))
+                                #:min 0
+                                #:max 100)
+                      (progress @level
+                                #:min 0
+                                #:max 100)
+                      (button "noop" (lambda () (void)))
+                      (table '(item state) @rows #:density 'compact))))))
       (mount-renderer! width-renderer root)
       (void))
 

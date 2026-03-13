@@ -127,8 +127,8 @@
 ;; navbar-demo : observable? observable? string? -> view?
 ;;   Build one navbar row with brand, links, dropdown, and search form.
 (define (navbar-demo @selected @query variant-class)
-  (call/key navigation-bar
-   (call/key text "Navbar" #:class "we-navbar-brand")
+  (navigation-bar
+   (text "Navbar" #:class "we-navbar-brand")
    (nav-item-button @selected 'home     "Home")
    (nav-item-button @selected 'features "Features")
    (nav-item-button @selected 'pricing  "Pricing")
@@ -138,11 +138,11 @@
           (menu-item "Action"         (lambda () (void)))
           (menu-item "Another action" (lambda () (void)))
           (menu-item "Something else here" (lambda () (void)))
-          (call/key divider #:orientation 'horizontal)
+          (divider #:orientation 'horizontal)
           (menu-item "Separated link" (lambda () (void)))))
    (spacer)
    (hpanel
-    (call/key input
+    (input
               @query
               (lambda (v) (:= @query v))
               #:attrs '((placeholder "Search")))
@@ -158,12 +158,12 @@
 ;;   Build one showcase button with a variant class and optional disabled state.
 (define (showcase-button label variant-class disabled?)
   (if disabled?
-      (call/key button
+      (button
                 label
                 (lambda () (void))
                 #:class variant-class
                 #:attrs '((disabled "disabled")))
-      (call/key button
+      (button
                 label
                 (lambda ()
                   (log-button! label))
@@ -213,7 +213,7 @@
 ;;   Optional parameter striped? defaults to #f.
 ;;   Optional parameter animated? defaults to #f.
 (define (progress-fill pct variant [striped? #f] [animated? #f])
-  (call/key text
+  (text
             " "
             #:class (string-append (progress-fill-class variant striped? animated?)
                                    " "
@@ -224,8 +224,8 @@
 ;; progress-track : view? ... -> view?
 ;;   Build one showcase progress track containing one or more fill segments.
 (define (progress-track . fills)
-  (call/key inline
-            (call/key inline
+  (inline
+            (inline
                       (apply inline fills)
                       #:class "we-progress-fill-row")
             #:class "we-progress-track we-progress-track-inner"))
@@ -233,10 +233,10 @@
 ;; showcase-list-group-row : string? number? -> view?
 ;;   Build one list-group row with a right-aligned badge count.
 (define (showcase-list-group-row label count)
-  (call/key inline
+  (inline
             (text label)
             (spacer)
-            (call/key badge (~a count) 'primary #:class "showcase-list-group-badge")
+            (badge (~a count) 'primary #:class "showcase-list-group-badge")
             #:class "we-list-group-item showcase-list-group-row"))
 
 ;; showcase-static-list-group : (listof (list string? number?)) [string?] -> view?
@@ -248,24 +248,24 @@
            (showcase-list-group-row (first entry) (second entry)))
          entries))
   (define group-view
-    (call/key stack
+    (stack
               (apply stack rows)
               #:class "showcase-list-group-panel we-stack-gap-0"))
   (if extra-class
-      (call/key stack group-view #:class (string-append "we-list-group " extra-class))
-      (call/key stack group-view #:class "we-list-group")))
+      (stack group-view #:class (string-append "we-list-group " extra-class))
+      (stack group-view #:class "we-list-group")))
 
 ;; showcase-rich-list-item : string? string? string? string? [boolean?] -> view?
 ;;   Build one rich list-group row with heading, meta text, body text and muted footnote.
 ;;   Optional parameter active? defaults to #f.
 (define (showcase-rich-list-item heading meta body footnote [active? #f])
-  (call/key stack
+  (stack
             (inline
-             (call/key text heading #:class "showcase-rich-list-heading")
+             (text heading #:class "showcase-rich-list-heading")
              (spacer)
-             (call/key text meta #:class "showcase-rich-list-meta"))
-            (call/key text body #:class "showcase-rich-list-body")
-            (call/key text footnote #:class "showcase-rich-list-footnote")
+             (text meta #:class "showcase-rich-list-meta"))
+            (text body #:class "showcase-rich-list-body")
+            (text footnote #:class "showcase-rich-list-footnote")
             #:class (string-append (if active?
                                        "we-list-group-item showcase-rich-list-item is-active"
                                        "we-list-group-item showcase-rich-list-item")
@@ -274,7 +274,7 @@
 ;; showcase-rich-list-group : -> view?
 ;;   Build the rich list-group sample used in the Containers section.
 (define (showcase-rich-list-group)
-  (call/key stack
+  (stack
             (showcase-rich-list-item
              "List group item heading"
              "3 days ago"
@@ -291,20 +291,20 @@
 ;; showcase-accordion-body : string? string? -> view?
 ;;   Build accordion panel text with lead sentence plus full reference-style copy.
 (define (showcase-accordion-body lead copy)
-  (call/key inline
-            (call/key text lead #:class "showcase-accordion-lead")
-            (call/key text copy #:class "showcase-accordion-copy")
+  (inline
+            (text lead #:class "showcase-accordion-lead")
+            (text copy #:class "showcase-accordion-copy")
             #:class "showcase-accordion-body-row showcase-accordion-inline"))
 
 ;; section-heading : string? string? -> view?
 ;;   Build a standardized top-level showcase section heading.
 (define (section-heading section-id title)
-  (call/key heading 1 title #:id section-id))
+  (heading 1 title #:id section-id))
 
 ;; tone-card : symbol? symbol? string? -> view?
 ;;   Build a tone-styled card sample row with title/copy content.
 (define (tone-card tone tone-style title)
-  (call/key card
+  (card
             "Header"
             #f
             (heading 4 title)
@@ -315,23 +315,23 @@
 (define app-renderer
   (render
    (window
-    (call/key container
+    (container
        (stack
         ;;;
         ;;; Top Bar
         ;;;
-        (call/key card
+        (card
                   #f
                   #f
-                  (call/key inline
-                            (call/key stack
-                                      (call/key text "web-easy" #:class "showcase-brand-title")
-                                      (call/key text "Solar showcase" #:class "showcase-brand-subtitle")
+                  (inline
+                            (stack
+                                      (text "web-easy" #:class "showcase-brand-title")
+                                      (text "Solar showcase" #:class "showcase-brand-subtitle")
                                       #:class "showcase-brand")
                             (spacer)
-                            (call/key stack
-                                      (call/key text "Theme" #:class "showcase-controls-label")
-                                      (call/key choice '((solar2 "Solar 2") (solar "Solar") (light "Light") (dark "Dark"))
+                            (stack
+                                      (text "Theme" #:class "showcase-controls-label")
+                                      (choice '((solar2 "Solar 2") (solar "Solar") (light "Light") (dark "Dark"))
                                                 @theme
                                                 (lambda (next-theme)
                                                   (:= @theme (normalize-theme-id next-theme))
@@ -344,11 +344,11 @@
         ;;;
         ;;; Hero
         ;;;
-        (call/key card
+        (card
                   #f
                   #f
-                  (call/key text "Solar 2 Theme" #:class "showcase-hero-title")
-                  (call/key text "Top-level sections aligned with the Bootswatch Solar showcase layout."
+                  (text "Solar 2 Theme" #:class "showcase-hero-title")
+                  (text "Top-level sections aligned with the Bootswatch Solar showcase layout."
                             #:class "showcase-hero-lead"))
 
         ;;;
@@ -358,7 +358,7 @@
         (stack
            ;; Navbars
            (section-heading "solar2-navbars" "Navbars")
-           (call/key stack
+           (stack
                      (navbar-demo @selected-1 @query-1 "we-variant-primary")
                      (navbar-demo @selected-2 @query-2 "we-variant-dark")
                      (navbar-demo @selected-3 @query-3 "we-variant-light")
@@ -367,10 +367,10 @@
 
            ;; Buttons
            (section-heading "solar2-buttons" "Buttons")
-           (call/key grid
+           (grid
                      2
                      (stack
-                      (call/key inline
+                      (inline
                                 (showcase-button "Primary"   "we-btn-primary"   #f)
                                 (showcase-button "Secondary" "we-btn-secondary" #f)
                                 (showcase-button "Success"   "we-btn-success"   #f)
@@ -381,7 +381,7 @@
                                 (showcase-button "Dark"      "we-btn-dark"      #f)
                                 (showcase-button "Link"      "we-btn-link"      #f)
                                 #:class "we-button-row")
-                      (call/key inline
+                      (inline
                                 (showcase-button "Primary"   "we-btn-primary"   #t)
                                 (showcase-button "Secondary" "we-btn-secondary" #t)
                                 (showcase-button "Success"   "we-btn-success"   #t)
@@ -392,7 +392,7 @@
                                 (showcase-button "Dark"      "we-btn-dark"      #t)
                                 (showcase-button "Link"      "we-btn-link"      #t)
                                 #:class "we-button-row")
-                      (call/key inline
+                      (inline
                                 (showcase-button "Primary"   "we-btn-outline-primary"   #f)
                                 (showcase-button "Secondary" "we-btn-outline-secondary" #f)
                                 (showcase-button "Success"   "we-btn-outline-success"   #f)
@@ -402,8 +402,8 @@
                                 (showcase-button "Light"     "we-btn-outline-light"     #f)
                                 (showcase-button "Dark"      "we-btn-outline-dark"      #f)
                                 #:class "we-button-row")
-                      (call/key inline
-                                (call/key dropdown
+                      (inline
+                                (dropdown
                                           "Dropdown button"
                                           '((action "Action")
                                             (another "Another action")
@@ -411,7 +411,7 @@
                                           (lambda (id)
                                             (log-button! (~a "Dropdown/Primary/" id)))
                                           #:class "we-btn-primary")
-                                (call/key dropdown
+                                (dropdown
                                           "Dropdown button"
                                           '((action "Action")
                                             (another "Another action")
@@ -420,17 +420,17 @@
                                             (log-button! (~a "Dropdown/Secondary/" id)))
                                           #:class "we-btn-secondary")
                                 #:class "we-button-row")
-                      (call/key inline
+                      (inline
                                 (showcase-button "Large button"   "we-btn-primary we-btn-lg" #f)
                                 (showcase-button "Default button" "we-btn-primary"           #f)
                                 (showcase-button "Small button"   "we-btn-primary we-btn-sm" #f)
                                 #:class "we-button-row"))
                      (stack
-                      (call/key stack
+                      (stack
                                 (showcase-button "Block button" "we-btn-primary we-btn-lg showcase-block-button-row" #f)
                                 (showcase-button "Block button" "we-btn-primary we-btn-lg showcase-block-button-row" #f)
                                 #:class "showcase-block-button-grid")
-                      (call/key toggle-button-group
+                      (toggle-button-group
                                 'checkbox
                                 '((c1 "Checkbox 1")
                                   (c2 "Checkbox 2")
@@ -440,7 +440,7 @@
                                   (:= @btn-check-selected next)
                                   (log-button! (~a "Check/" next)))
                                 #:class "showcase-btn-check-group")
-                      (call/key toggle-button-group
+                      (toggle-button-group
                                 'radio
                                 '((r1 "Radio 1")
                                   (r2 "Radio 2")
@@ -450,23 +450,23 @@
                                   (:= @btn-radio-selected next)
                                   (log-button! (~a "Radio/" next)))
                                 #:class "showcase-btn-radio-group")
-                      (call/key stack
-                                (call/key button "Button" (lambda () (log-button! "Vertical/1")) #:class "we-btn-primary")
-                                (call/key button "Button" (lambda () (log-button! "Vertical/2")) #:class "we-btn-primary")
-                                (call/key button "Button" (lambda () (log-button! "Vertical/3")) #:class "we-btn-primary")
-                                (call/key button "Button" (lambda () (log-button! "Vertical/4")) #:class "we-btn-primary")
-                                (call/key button "Button" (lambda () (log-button! "Vertical/5")) #:class "we-btn-primary")
-                                (call/key button "Button" (lambda () (log-button! "Vertical/6")) #:class "we-btn-primary")
+                      (stack
+                                (button "Button" (lambda () (log-button! "Vertical/1")) #:class "we-btn-primary")
+                                (button "Button" (lambda () (log-button! "Vertical/2")) #:class "we-btn-primary")
+                                (button "Button" (lambda () (log-button! "Vertical/3")) #:class "we-btn-primary")
+                                (button "Button" (lambda () (log-button! "Vertical/4")) #:class "we-btn-primary")
+                                (button "Button" (lambda () (log-button! "Vertical/5")) #:class "we-btn-primary")
+                                (button "Button" (lambda () (log-button! "Vertical/6")) #:class "we-btn-primary")
                                 #:class "we-button-group-vertical")
-                      (call/key inline
-                                (call/key button-group
+                      (inline
+                                (button-group
                                           (button "Left"   (lambda () (log-button! "Group/Left")))
                                           (button "Middle" (lambda () (log-button! "Group/Middle")))
                                           (button "Right"  (lambda () (log-button! "Group/Right")))
                                           #:class "we-btn-secondary")
                                 #:class "we-button-row")
-                      (call/key inline
-                                (call/key button-toolbar
+                      (inline
+                                (button-toolbar
                                           (toolbar-group
                                            (button "1" (lambda () (log-button! "Toolbar/1")))
                                            (button "2" (lambda () (log-button! "Toolbar/2")))
@@ -484,7 +484,7 @@
 
            ;; Typography
            (section-heading "solar2-typography" "Typography")
-           (call/key grid
+           (grid
                      3
                      (vpanel
                       (heading 1 "Heading 1")
@@ -494,7 +494,7 @@
                       (heading 5 "Heading 5")
                       (heading 6 "Heading 6")
                       (heading-with-subtitle 3 "Heading" "with faded secondary text")
-                      (call/key text
+                      (text
                                 "Vivamus sagittis lacus vel augue laoreet rutrum faucibus dolor auctor."
                                 #:class "showcase-typography-lead"))
                      (vpanel
@@ -503,70 +503,70 @@
                        (text "Nullam quis risus eget ")
                        (link "urna mollis ornare" "#")
                        (text " vel eu leo. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus."))
-                      (call/key text
+                      (text
                                 "This line of text is meant to be treated as fine print."
                                 #:class "showcase-fine-print")
                       (inline
                        (text "The following is ")
-                       (call/key text "rendered as bold text" #:class "showcase-text-strong")
+                       (text "rendered as bold text" #:class "showcase-text-strong")
                        (text "."))
                       (inline
                        (text "The following is ")
-                       (call/key text "rendered as italicized text" #:class "showcase-text-emphasis")
+                       (text "rendered as italicized text" #:class "showcase-text-emphasis")
                        (text "."))
                       (inline
                        (text "An abbreviation of the word attribute is ")
-                       (call/key text "attr"
+                       (text "attr"
                                  #:class "showcase-abbr"
                                  #:attrs '((title "attribute")))
                        (text ".")))
                      (vpanel
                       (heading 2 "Emphasis classes")
-                      (call/key text "text-primary" #:class "showcase-text-primary")
-                      (call/key text "text-primary-emphasis" #:class "showcase-text-primary-emphasis")
-                      (call/key text "text-secondary" #:class "showcase-text-secondary")
-                      (call/key text "text-secondary-emphasis" #:class "showcase-text-secondary-emphasis")
-                      (call/key text "text-success" #:class "showcase-text-success")
-                      (call/key text "text-success-emphasis" #:class "showcase-text-success-emphasis")
-                      (call/key text "text-danger" #:class "showcase-text-danger")
-                      (call/key text "text-danger-emphasis" #:class "showcase-text-danger-emphasis")
-                      (call/key text "text-warning" #:class "showcase-text-warning")
-                      (call/key text "text-warning-emphasis" #:class "showcase-text-warning-emphasis")
-                      (call/key text "text-info" #:class "showcase-text-info")
-                      (call/key text "text-info-emphasis" #:class "showcase-text-info-emphasis")
-                      (call/key text "text-light" #:class "showcase-text-light")
-                      (call/key text "text-light-emphasis" #:class "showcase-text-light-emphasis")
-                      (call/key text "text-dark" #:class "showcase-text-dark")
-                      (call/key text "text-dark-emphasis" #:class "showcase-text-dark-emphasis")
-                      (call/key text "text-body" #:class "showcase-text-body")
-                      (call/key text "text-body-emphasis" #:class "showcase-text-body-emphasis")
-                      (call/key text "text-body-secondary" #:class "showcase-text-body-secondary")
-                      (call/key text "text-body-tertiary" #:class "showcase-text-tertiary"))
+                      (text "text-primary" #:class "showcase-text-primary")
+                      (text "text-primary-emphasis" #:class "showcase-text-primary-emphasis")
+                      (text "text-secondary" #:class "showcase-text-secondary")
+                      (text "text-secondary-emphasis" #:class "showcase-text-secondary-emphasis")
+                      (text "text-success" #:class "showcase-text-success")
+                      (text "text-success-emphasis" #:class "showcase-text-success-emphasis")
+                      (text "text-danger" #:class "showcase-text-danger")
+                      (text "text-danger-emphasis" #:class "showcase-text-danger-emphasis")
+                      (text "text-warning" #:class "showcase-text-warning")
+                      (text "text-warning-emphasis" #:class "showcase-text-warning-emphasis")
+                      (text "text-info" #:class "showcase-text-info")
+                      (text "text-info-emphasis" #:class "showcase-text-info-emphasis")
+                      (text "text-light" #:class "showcase-text-light")
+                      (text "text-light-emphasis" #:class "showcase-text-light-emphasis")
+                      (text "text-dark" #:class "showcase-text-dark")
+                      (text "text-dark-emphasis" #:class "showcase-text-dark-emphasis")
+                      (text "text-body" #:class "showcase-text-body")
+                      (text "text-body-emphasis" #:class "showcase-text-body-emphasis")
+                      (text "text-body-secondary" #:class "showcase-text-body-secondary")
+                      (text "text-body-tertiary" #:class "showcase-text-tertiary"))
                      #:class "showcase-typography-grid")
            (heading 2 "Blockquotes")
-           (call/key grid
+           (grid
                      3
-                     (call/key blockquote
+                     (blockquote
                                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante."
                                "Someone famous in Source Title"
                                #:class "showcase-blockquote")
-                     (call/key blockquote
+                     (blockquote
                                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante."
                                "Someone famous in Source Title"
                                #:class "showcase-blockquote showcase-blockquote-center")
-                     (call/key blockquote
+                     (blockquote
                                "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Integer posuere erat a ante."
                                "Someone famous in Source Title"
                                #:class "showcase-blockquote showcase-blockquote-right")
                      #:class "showcase-typography-grid")
-           (call/key text "(render (window (text \"hello\")))"
+           (text "(render (window (text \"hello\")))"
                      #:class "showcase-inline-code")
-           (call/key text "(define app\n  (render\n   (window\n    (vpanel (text \"A\") (text \"B\")))))"
+           (text "(define app\n  (render\n   (window\n    (vpanel (text \"A\") (text \"B\")))))"
                      #:class "showcase-pre")
 
            ;; Tables
            (section-heading "solar2-tables" "Tables")
-           (call/key table
+           (table
                      '("Type" "Column heading" "Column heading" "Column heading")
                      '(("Active"    "Column content" "Column content" "Column content")
                        ("Default"   "Column content" "Column content" "Column content")
@@ -587,32 +587,32 @@
            (section-heading "solar2-forms" "Forms")
            (grid
             2
-            (call/key stack
+            (stack
                       (group "Legend"
-                             (call/key inline
-                                       (call/key text "Email"
+                             (inline
+                                       (text "Email"
                                                  #:class "showcase-static-label")
-                                       (call/key input
+                                       (input
                                                  ""
                                                  (lambda (_v) (void))
                                                  #:input-attrs '((readonly "readonly")
                                                                  (value "email@example.com"))
                                                  #:class "showcase-static-value we-form-control-plaintext")
                                        #:class "we-form-row showcase-static-row")
-                             (call/key text "Email address"
+                             (text "Email address"
                                        #:class "we-form-row we-form-label")
-                             (call/key input
+                             (input
                                        @name
                                        (lambda (v) (:= @name v))
                                        #:input-attrs '((id "exampleInputEmail1")
                                                        (placeholder "Enter email")
                                                        (type "email"))
                                        #:class "we-form-row we-form-control-block")
-                             (call/key text "We'll never share your email with anyone else."
+                             (text "We'll never share your email with anyone else."
                                        #:class "we-form-help")
-                             (call/key text "Password"
+                             (text "Password"
                                        #:class "we-form-row we-form-label")
-                             (call/key input
+                             (input
                                        @notes
                                        (lambda (v) (:= @notes v))
                                        #:input-attrs '((id "exampleInputPassword1")
@@ -620,26 +620,26 @@
                                                        (type "password")
                                                        (autocomplete "off"))
                                        #:class "we-form-row we-form-control-block")
-                             (call/key text "Example select"
+                             (text "Example select"
                                        #:class "we-form-row we-form-label")
-                             (call/key choice
+                             (choice
                                        '("1" "2" "3" "4" "5")
                                        @select-value
                                        (lambda (v) (:= @select-value v))
                                        #:attrs '((id "exampleSelect1"))
                                        #:class "we-form-row we-form-control-block")
-                             (call/key text "Example disabled select"
+                             (text "Example disabled select"
                                        #:class "we-form-row we-form-label")
-                             (call/key choice
+                             (choice
                                        '("1" "2" "3" "4" "5")
                                        "1"
                                        (lambda (_v) (void))
                                        #:attrs '((id "exampleDisabledSelect1")
                                                  (disabled "disabled"))
                                        #:class "we-form-row we-form-control-block")
-                             (call/key text "Example multiple select"
+                             (text "Example multiple select"
                                        #:class "we-form-row we-form-label")
-                             (call/key choice
+                             (choice
                                        '("1" "2" "3" "4" "5")
                                        "1"
                                        (lambda (_v) (void))
@@ -647,24 +647,24 @@
                                                  (multiple "multiple")
                                                  (size "5"))
                                        #:class "we-form-row we-form-control-block")
-                             (call/key text "Example textarea"
+                             (text "Example textarea"
                                        #:class "we-form-row we-form-label")
-                             (call/key textarea
+                             (textarea
                                        @notes
                                        (lambda (v) (:= @notes v))
                                        #:rows 3
                                        #:textarea-attrs '((id "exampleTextarea"))
                                        #:class "we-form-row we-form-control-block")
-                             (call/key text "Default file input example"
+                             (text "Default file input example"
                                        #:class "we-form-row")
-                             (call/key input
+                             (input
                                        ""
                                        (lambda (_v) (void))
                                        #:input-attrs '((type "file"))
                                        #:class "we-form-row we-form-control-block")
-                             (call/key group
+                             (group
                                        "Radio buttons"
-                                       (call/key radios
+                                       (radios
                                                  '("Option one is this and that - be sure to include why it's great"
                                                    "Option two can be something else and selecting it will deselect option one"
                                                    ("Option three is disabled"
@@ -673,155 +673,155 @@
                                                  @radio-value
                                                  (lambda (v) (:= @radio-value v)))
                                        #:class "we-form-row")
-                             (call/key group
+                             (group
                                        "Checkboxes"
-                                       (call/key stack
-                                                 (call/key inline
+                                       (stack
+                                                 (inline
                                                            (checkbox @accept?
                                                                      (lambda (v) (:= @accept? v)))
                                                            (text "Default checkbox")
                                                            #:class "we-form-check we-checkbox-row")
-                                                 (call/key inline
+                                                 (inline
                                                            (checkbox #t (lambda (_v) (void)))
                                                            (text "Checked checkbox")
                                                            #:class "we-form-check we-checkbox-row"))
                                        #:class "we-form-row")
-                             (call/key group
+                             (group
                                        "Switches"
-                                       (call/key stack
-                                                 (call/key inline
-                                                           (call/key checkbox
+                                       (stack
+                                                 (inline
+                                                           (checkbox
                                                                      #f
                                                                      (lambda (_v) (void))
                                                                      #:class "we-switch-control")
                                                            (text "Default switch checkbox input")
                                                            #:class "we-form-check we-switch-row")
-                                                 (call/key inline
-                                                           (call/key checkbox
+                                                 (inline
+                                                           (checkbox
                                                                      #t
                                                                      (lambda (_v) (void))
                                                                      #:class "we-switch-control")
                                                            (text "Checked switch checkbox input")
                                                            #:class "we-form-check we-switch-row"))
                                        #:class "we-form-row")
-                             (call/key heading 3 "Ranges"
+                             (heading 3 "Ranges"
                                        #:class "we-form-row")
-                             (call/key text "Example range"
+                             (text "Example range"
                                        #:class "we-form-row")
-                             (call/key slider
+                             (slider
                                        @level
                                        (lambda (v) (:= @level v))
                                        #:min 0
                                        #:max 100
                                        #:id "customRange1"
                                        #:class "we-form-row we-form-control-block we-range-default")
-                             (call/key text "Disabled range"
+                             (text "Disabled range"
                                        #:class "we-form-row")
-                             (call/key slider
+                             (slider
                                        50
                                        (lambda (_v) (void))
                                        #:min 0
                                        #:max 100
                                        #:attrs '((disabled "disabled"))
                                        #:class "we-form-row we-range-disabled")
-                             (call/key text "Example range"
+                             (text "Example range"
                                        #:class "we-form-row")
-                             (call/key slider
+                             (slider
                                        3
                                        (lambda (_v) (void))
                                        #:min 0
                                        #:max 5
                                        #:attrs '((min "0") (max "5") (step "0.5"))
                                        #:class "we-form-row we-range-step")
-                             (call/key inline
+                             (inline
                                        (button "Submit" (lambda () (void)))
                                        #:class "we-form-row we-btn-primary"))
                       #:class "showcase-forms-left")
-            (call/key stack
-                      (call/key text "Disabled input"
+            (stack
+                      (text "Disabled input"
                                 #:class "we-form-row")
-                      (call/key input
+                      (input
                                 ""
                                 (lambda (_v) (void))
                                 #:input-attrs '((id "disabledInput")
                                                 (placeholder "Disabled input here...")
                                                 (disabled "disabled"))
                                 #:class "we-form-row we-form-control-block we-form-state-disabled")
-                      (call/key text "Readonly input"
+                      (text "Readonly input"
                                 #:class "we-form-row")
-                      (call/key input
+                      (input
                                 ""
                                 (lambda (_v) (void))
                                 #:input-attrs '((id "readOnlyInput")
                                                 (placeholder "Readonly input here...")
                                                 (readonly "readonly"))
                                 #:class "we-form-row we-form-control-block")
-                      (call/key text "Valid input"
+                      (text "Valid input"
                                 #:class "we-form-row")
-                      (call/key input
+                      (input
                                 ""
                                 (lambda (_v) (void))
                                 #:input-attrs '((id "inputValid")
                                                 (value "correct value"))
                                 #:class "we-form-state-valid we-form-control-block showcase-field-valid")
-                      (call/key text "Success! You've done it."
+                      (text "Success! You've done it."
                                 #:class "we-form-feedback we-form-feedback-valid")
-                      (call/key text "Invalid input"
+                      (text "Invalid input"
                                 #:class "we-form-row")
-                      (call/key input
+                      (input
                                 ""
                                 (lambda (_v) (void))
                                 #:input-attrs '((id "inputInvalid")
                                                 (value "wrong value"))
                                 #:class "we-form-state-invalid we-form-control-block showcase-field-invalid")
-                      (call/key text "Sorry, that username's taken. Try another?"
+                      (text "Sorry, that username's taken. Try another?"
                                 #:class "we-form-feedback we-form-feedback-invalid")
-                      (call/key text "Large input"
+                      (text "Large input"
                                 #:class "we-form-row")
-                      (call/key input
+                      (input
                                 ""
                                 (lambda (_v) (void))
                                 #:input-attrs '((placeholder ".form-control-lg"))
                                 #:class "we-input-lg")
-                      (call/key text "Default input"
+                      (text "Default input"
                                 #:class "we-form-row")
-                      (call/key input
+                      (input
                                 ""
                                 (lambda (_v) (void))
                                 #:input-attrs '((placeholder "Default input"))
                                 #:class "showcase-field-default")
-                      (call/key text "Small input"
+                      (text "Small input"
                                 #:class "we-form-row")
-                      (call/key input
+                      (input
                                 ""
                                 (lambda (_v) (void))
                                 #:input-attrs '((placeholder ".form-control-sm"))
                                 #:class "we-input-sm")
-                      (call/key text "Input addons"
+                      (text "Input addons"
                                 #:class "we-form-row")
-                      (call/key inline
-                                (call/key text "$"
+                      (inline
+                                (text "$"
                                           #:class "we-input-group-prefix")
                                 (input "" (lambda (_v) (void)))
-                                (call/key text ".00"
+                                (text ".00"
                                           #:class "we-input-group-prefix")
                                 #:class "we-input-group")
-                      (call/key inline
+                      (inline
                                 (input "" (lambda (_v) (void)))
                                 (button "Button" (lambda () (void)))
                                 #:class "we-input-group")
-                      (call/key text "Floating labels"
+                      (text "Floating labels"
                                 #:class "we-form-row")
-                      (call/key stack
+                      (stack
                                 (text "Email address")
-                                (call/key input
+                                (input
                                           ""
                                           (lambda (_v) (void))
                                           #:input-attrs '((placeholder "name@example.com")))
                                 #:class "we-floating-field")
-                      (call/key stack
+                      (stack
                                 (text "Password")
-                                (call/key input
+                                (input
                                           ""
                                           (lambda (_v) (void))
                                           #:input-attrs '((placeholder "Password")
@@ -831,11 +831,11 @@
                       #:class "showcase-forms-right"))
 
            ;; Navs
-           (call/key stack
+           (stack
                 (section-heading "solar2-navs" "Navs")
                 (grid
                  2
-                 (call/key stack
+                 (stack
                            (heading 2 "Tabs")
                            (tab-panel
                             @tab
@@ -848,16 +848,16 @@
                                   (cons "Dropdown ▾"
                                         (text "Trust fund seitan letterpress, keytar raw denim keffiyeh etsy art party before they sold out master cleanse gluten-free squid scenester freegan cosby sweater. Fanny pack portland seitan DIY, art party locavore wolf cliche high life echo park Austin. Cred vinyl keffiyeh DIY salvia PBR, banh mi before they sold out farm-to-table VHS viral locavore cosby sweater."))))
                            #:class "we-stack-gap-1")
-                 (call/key stack
+                 (stack
                            (heading 2 "Pills")
-                           (call/key tab-panel
+                           (tab-panel
                                      @pill
                                      (list (cons "Active"     (text "Active pill content."))
                                            (cons "Dropdown ▾" (text "Dropdown pill content."))
                                            (cons "Link"       (text "Link pill content."))
                                            (cons "Disabled"   (text "Disabled pill content.")))
                                      #:class "we-tab-style-pills")
-                           (call/key tab-panel
+                           (tab-panel
                                      @pill-vertical
                                      (list (cons "Active"     (text "Active vertical pill content."))
                                            (cons "Dropdown ▾" (text "Dropdown vertical content."))
@@ -884,10 +884,10 @@
                  (stack
                   (heading 2 "Pagination")
                   (pagination 5 @page (lambda (v) (:= @page v)))
-                  (call/key pagination 5 @page (lambda (v) (:= @page v)) #:class "we-pagination-lg")
-                  (call/key pagination 5 @page (lambda (v) (:= @page v)) #:class "we-pagination-sm")))
+                  (pagination 5 @page (lambda (v) (:= @page v)) #:class "we-pagination-lg")
+                  (pagination 5 @page (lambda (v) (:= @page v)) #:class "we-pagination-sm")))
                 (heading 2 "Underline")
-                (call/key tab-panel
+                (tab-panel
                           @underline-tab
                           (list (cons "Active"   (text "Underline active content."))
                                 (cons "Link"     (text "Underline link content."))
@@ -898,10 +898,10 @@
                 #:id "solar2-navs-section")
 
            ;; Indicators
-           (call/key stack
+           (stack
               (section-heading "solar2-indicators" "Indicators")
               (heading 2 "Alerts")
-              (call/key alert-rich
+              (alert-rich
                         "Best check yo self, you're not looking too good. Nulla vitae elit libero, a pharetra augue. Praesent commodo cursus magna,"
                         "Warning!"
                         "vel scelerisque nisl consectetur et."
@@ -911,7 +911,7 @@
                         #:dismiss-action (lambda () (void)))
               (grid
                3
-               (call/key alert-rich
+               (alert-rich
                          "Change a few things up and"
                          "Oh snap!"
                          "try submitting again."
@@ -919,7 +919,7 @@
                          #:level 'error
                          #:layout 'inline
                          #:dismiss-action (lambda () (void)))
-               (call/key alert-rich
+               (alert-rich
                          "You successfully read"
                          "Well done!"
                          "this important alert message."
@@ -927,7 +927,7 @@
                          #:level 'success
                          #:layout 'inline
                          #:dismiss-action (lambda () (void)))
-               (call/key alert-rich
+               (alert-rich
                          "This alert needs your attention, but it's not super important."
                          "Heads up!"
                          #f
@@ -937,7 +937,7 @@
                          #:dismiss-action (lambda () (void))))
               (grid
                3
-               (call/key alert-rich
+               (alert-rich
                          "Change a few things up and"
                          "Oh snap!"
                          "try submitting again."
@@ -946,7 +946,7 @@
                          #:layout 'inline
                          #:tone 'primary
                          #:dismiss-action (lambda () (void)))
-               (call/key alert-rich
+               (alert-rich
                          "You successfully read"
                          "Well done!"
                          "this important alert message."
@@ -955,7 +955,7 @@
                          #:layout 'inline
                          #:tone 'secondary
                          #:dismiss-action (lambda () (void)))
-               (call/key alert-rich
+               (alert-rich
                          "This alert needs your attention, but it's not super important."
                          "Heads up!"
                          #f
@@ -965,7 +965,7 @@
                          #:tone 'light
                          #:dismiss-action (lambda () (void))))
               (heading 2 "Badges")
-              (call/key inline
+              (inline
                         (badge "Primary" 'primary)
                         (badge "Secondary" 'secondary)
                         (badge "Success" 'success)
@@ -975,7 +975,7 @@
                         (badge "Light" 'light)
                         (badge "Dark" 'dark)
                         #:class "we-button-row we-badge-shape-square")
-              (call/key inline
+              (inline
                         (badge "Primary" 'primary)
                         (badge "Secondary" 'secondary)
                         (badge "Success" 'success)
@@ -989,7 +989,7 @@
               #:id "solar2-indicators-section")
 
            ;; Progress
-           (call/key stack
+           (stack
               (section-heading "solar2-progress" "Progress")
               (heading 3 "Basic")
               (progress-track
@@ -1043,10 +1043,11 @@
              (showcase-rich-list-group)))
 
            ;; Cards
-           (call/key section-heading "solar2-cards" "Cards"
+           (heading 1 "Cards"
+                     #:id "solar2-cards"
                      #:class "we-section-break")
            (heading 2 "Cards")
-           (call/key grid
+           (grid
                      3
                      (stack
                       (tone-card 'primary   'fill    "Primary card title")
@@ -1067,31 +1068,31 @@
                       (tone-card 'light     'outline "Light card title")
                       (tone-card 'dark      'outline "Dark card title"))
                      (stack
-                      (call/key card
+                      (card
                                 "Card header"
                                 "2 days ago"
                                 (stack
                                  (heading 5 "Special title treatment")
-                                 (call/key text "Support card subtitle"
+                                 (text "Support card subtitle"
                                            #:class "we-card-subtitle")
-                                 (call/key text "Image cap"
+                                 (text "Image cap"
                                            #:class "showcase-card-image-cap")
                                  (text "Some quick example text to build on the card title and make up the bulk of the card's content.")
-                                 (call/key stack
-                                           (call/key text "Cras justo odio"
+                                 (stack
+                                           (text "Cras justo odio"
                                                      #:class "we-list-group-item")
-                                           (call/key text "Dapibus ac facilisis in"
+                                           (text "Dapibus ac facilisis in"
                                                      #:class "we-list-group-item")
-                                           (call/key text "Vestibulum at eros"
+                                           (text "Vestibulum at eros"
                                                      #:class "we-list-group-item")
                                            #:class "we-list-group"))
                                 #:actions (list (link "Card link" "#")
                                                 (link "Another link" "#")))
-                      (call/key card
+                      (card
                                 "Card title"
                                 #f
                                 (stack
-                                 (call/key text "Card subtitle"
+                                 (text "Card subtitle"
                                            #:class "we-card-subtitle")
                                  (text "Some quick example text to build on the card title and make up the bulk of the card's content."))
                                 #:actions (list (link "Card link" "#")
@@ -1099,9 +1100,10 @@
                      #:id "solar2-cards-body")
 
            ;; Accordions
-           (call/key section-heading "solar2-accordions" "Accordions"
+           (heading 1 "Accordions"
+                     #:id "solar2-accordions"
                      #:class "we-section-break")
-           (call/key accordion
+           (accordion
                      @accordion
                      (list
                       (list 'what
@@ -1122,43 +1124,44 @@
                      #:id "solar2-accordions-body")
 
            ;; Dialogs
-           (call/key section-heading "solar2-dialogs" "Dialogs"
+           (heading 1 "Dialogs"
+                     #:id "solar2-dialogs"
                      #:class "we-section-break")
-           (call/key grid
+           (grid
                 2
                 (stack
                   (heading 2 "Modals")
-                  (call/key stack
-                            (call/key inline
-                                      (call/key text "Modal title"
+                  (stack
+                            (inline
+                                      (text "Modal title"
                                                 #:class "we-modal-title")
                                       (spacer)
-                                      (call/key text "×"
+                                      (text "×"
                                                 #:class "we-modal-close")
                                       #:class "we-modal-header")
-                            (call/key text "Modal body text goes here."
+                            (text "Modal body text goes here."
                                       #:class "we-modal-body")
-                            (call/key inline
-                                      (call/key button "Save changes"
+                            (inline
+                                      (button "Save changes"
                                                 (lambda () (void))
                                                 #:class "we-btn-primary")
-                                      (call/key button "Close"
+                                      (button "Close"
                                                 (lambda () (void))
                                                 #:class "we-btn-secondary")
                                       #:class "we-modal-footer")
                             #:class "showcase-static-modal-wrap we-modal-panel showcase-static-modal")
                   (heading 2 "Offcanvas")
-                  (call/key inline
-                            (call/key button
+                  (inline
+                            (button
                                       "Link with href"
                                       (lambda () (:= @offcanvas-open? #t))
                                       #:class "we-btn-primary")
-                            (call/key button
+                            (button
                                       "Button with data-bs-target"
                                       (lambda () (:= @offcanvas-open? #t))
                                       #:class "we-btn-primary")
                             #:class "we-button-row")
-                  (call/key offcanvas
+                  (offcanvas
                             @offcanvas-open?
                             (lambda (_reason) (:= @offcanvas-open? #f))
                             (heading 5 "Offcanvas")
@@ -1167,28 +1170,28 @@
                 (stack
                  (heading 2 "Popovers")
                  (inline
-                  (call/key popover
+                  (popover
                             "Left"
                             (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")
                             #:placement 'left
                             #:title "Popover title"
                             #:footer "Popover footer"
                             #:class "we-btn-secondary")
-                  (call/key popover
+                  (popover
                             "Top"
                             (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")
                             #:placement 'top
                             #:title "Popover title"
                             #:footer "Popover footer"
                             #:class "we-btn-secondary")
-                  (call/key popover
+                  (popover
                             "Bottom"
                             (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")
                             #:placement 'bottom
                             #:title "Popover title"
                             #:footer "Popover footer"
                             #:class "we-btn-secondary")
-                  (call/key popover
+                  (popover
                             "Right"
                             (text "Vivamus sagittis lacus vel augue laoreet rutrum faucibus.")
                             #:placement 'right
@@ -1197,65 +1200,65 @@
                             #:class "we-btn-secondary"))
                  (heading 2 "Tooltips")
                  (inline
-                  (call/key tooltip
+                  (tooltip
                             "Tooltip on left"
-                            (call/key button "Left"
+                            (button "Left"
                                       (lambda () (void))
                                       #:class "we-btn-secondary")
                             #:placement 'left
                             #:title "Tooltip"
                             #:footer "Footer text")
-                  (call/key tooltip
+                  (tooltip
                             "Tooltip on top"
-                            (call/key button "Top"
+                            (button "Top"
                                       (lambda () (void))
                                       #:class "we-btn-secondary")
                             #:placement 'top
                             #:title "Tooltip"
                             #:footer "Footer text")
-                  (call/key tooltip
+                  (tooltip
                             "Tooltip on bottom"
-                            (call/key button "Bottom"
+                            (button "Bottom"
                                       (lambda () (void))
                                       #:class "we-btn-secondary")
                             #:placement 'bottom
                             #:title "Tooltip"
                             #:footer "Footer text")
-                  (call/key tooltip
+                  (tooltip
                             "Tooltip on right"
-                            (call/key button "Right"
+                            (button "Right"
                                       (lambda () (void))
                                       #:class "we-btn-secondary")
                             #:placement 'right
                             #:title "Tooltip"
                             #:footer "Footer text"))
                  (heading 2 "Toasts")
-                 (call/key stack
-                           (call/key inline
-                                     (call/key text "Bootstrap"
+                 (stack
+                           (inline
+                                     (text "Bootstrap"
                                                #:class "showcase-static-toast-title")
                                      (spacer)
-                                     (call/key text "11 mins ago"
+                                     (text "11 mins ago"
                                                #:class "showcase-static-toast-time")
                                      (text "×")
                                      #:class "showcase-static-toast-header")
-                           (call/key text "Hello, world! This is a toast message."
+                           (text "Hello, world! This is a toast message."
                                      #:class "showcase-static-toast-body")
                            #:class "showcase-static-toast"))
                #:class "we-grid-safe"
                #:id "solar2-dialogs-body")
 
-           (call/key text @button-log
+           (text @button-log
                      #:class "we-button-status")
 
            ;; Appendix
            (section-heading "solar2-appendix" "Appendix: Table Variants")
-           (call/key table
+           (table
                      '("Name" "Status" "ETA")
                      @table-rows
                      #:density 'compact
                      #:caption "Compact table")
-           (call/key table
+           (table
                      '(("Service" left) ("Health" center) ("Latency" right))
                      '(("API" "OK" "120ms")
                        ("DB" "WARN" "220ms")
@@ -1263,7 +1266,7 @@
                      #:density 'normal
                      #:variants '(striped)
                      #:caption "Striped rows")
-           (call/key table
+           (table
                      '("Region" "Errors" "SLA")
                      '(("eu-west" "2" "99.9%")
                        ("us-east" "0" "99.99%")
@@ -1271,7 +1274,7 @@
                      #:density 'normal
                      #:variants '(hover)
                      #:caption "Hover rows")
-           (call/key table
+           (table
                      '("Task" "Owner" "Status")
                      '(("design" "Alice" "done")
                        ("build" "Bob" "running")
@@ -1279,7 +1282,7 @@
                      #:density 'normal
                      #:variants '(borderless)
                      #:caption "Borderless")
-           (call/key table
+           (table
                      '("k" "v")
                      '(("A" "1") ("B" "2") ("C" "3"))
                      #:density 'compact

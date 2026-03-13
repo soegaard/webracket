@@ -35,14 +35,14 @@
                 (button "retitle"
                         (lambda ()
                           (:= @title "Apply deployment"))))
-               (tooltip @hint
-                        (button "apply"
-                                (lambda ()
-                                  (void)))
-                        'top
-                        (list (cons 'title @title)
-                              (cons 'footer "Press Esc to dismiss"))
-                        )))))
+               (tooltip
+                         @hint
+                         (button "apply"
+                                 (lambda ()
+                                   (void)))
+                         #:placement 'top
+                         #:title @title
+                         #:footer "Press Esc to dismiss")))))
       (mount-renderer! tooltip-renderer root)
       (void))
 

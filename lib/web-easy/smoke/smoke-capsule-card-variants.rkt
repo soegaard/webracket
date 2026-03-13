@@ -24,17 +24,18 @@
              (window
               (vpanel
                (card "Default" #f (text "default"))
-               (card "Compact" #f 'compact (text "compact"))
-               (card "Flat" #f 'flat (text "flat"))
-               (card #f #f 'headerless (text "headerless"))
-               (card "Tone Fill" #f
-                     (list (cons 'tone 'primary)
-                           (cons 'tone-style 'fill))
-                     (text "tone-fill"))
-               (card "Tone Outline" #f
-                     (list (cons 'tone 'primary)
-                           (cons 'tone-style 'outline))
-                     (text "tone-outline"))))))
+               (card "Compact" #f (text "compact")
+                         #:variants 'compact)
+               (card "Flat" #f (text "flat")
+                         #:variants 'flat)
+               (card #f #f (text "headerless")
+                         #:variants 'headerless)
+               (card "Tone Fill" #f (text "tone-fill")
+                         #:tone 'primary
+                         #:tone-style 'fill)
+               (card "Tone Outline" #f (text "tone-outline")
+                         #:tone 'primary
+                         #:tone-style 'outline)))))
       (mount-renderer! card-variants-renderer root)
       (void))
 

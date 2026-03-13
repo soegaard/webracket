@@ -406,7 +406,7 @@
 (define r-navigation-bar-collapsed
   (render
    (window
-    (call/key navigation-bar
+    (navigation-bar
               (button "one" (lambda () (void)))
               (button "two" (lambda () (void)))
               #:orientation 'vertical
@@ -447,7 +447,7 @@
   (render
    (window
     (vpanel
-     (call/key close-button
+     (close-button
                (lambda () (void))
                "Close drawer"
                #:id "close-decorated"
@@ -480,7 +480,7 @@
   (render
    (window
     (vpanel
-     (call/key offcanvas
+     (offcanvas
                @off-open
                (lambda ()
                  (:= @off-open #f))
@@ -505,7 +505,7 @@
   (render
    (window
     (vpanel
-     (call/key carousel
+     (carousel
                carousel-items
                @carousel-index
                (lambda (next-index)
@@ -524,7 +524,7 @@
   (render
    (window
     (vpanel
-     (call/key carousel
+     (carousel
                carousel-items
                @carousel-index-no-wrap
                (lambda (next-index)
@@ -679,7 +679,7 @@
   (render
    (window
     (vpanel
-     (call/key alert
+     (alert
                "Decorated alert"
                'info
                #:id "alert-decorated"
@@ -700,7 +700,7 @@
   (render
    (window
     (vpanel
-     (call/key alert-rich
+     (alert-rich
                @alert-rich-body
                @alert-rich-title
                @alert-rich-link-text
@@ -731,7 +731,7 @@
   (render
    (window
     (vpanel
-     (call/key alert-rich
+     (alert-rich
                "Disk almost full"
                "Warning"
                "Details"
@@ -751,7 +751,7 @@
   (render
    (window
     (vpanel
-     (call/key alert-rich
+     (alert-rich
                ""
                "Heads up!"
                #f
@@ -832,7 +832,7 @@
   (render
    (window
     (vpanel
-     (call/key spinner
+     (spinner
                "Decorated spinner"
                #:id "spinner-decorated"
                #:class "spinner-extra"
@@ -870,7 +870,7 @@
   (render
    (window
     (vpanel
-     (call/key toast
+     (toast
                #t
                (lambda () (void))
                "Decorated toast"
@@ -933,7 +933,7 @@
   (render
    (window
     (vpanel
-     (call/key modal
+     (modal
                @modal-open
                (lambda ()
                  (:= @modal-open #f))
@@ -950,7 +950,7 @@
   (render
    (window
     (vpanel
-     (call/key modal
+     (modal
                #t
                (lambda () (void))
                (text "Modal body large")
@@ -964,7 +964,7 @@
   (render
    (window
     (vpanel
-     (call/key modal
+     (modal
                #t
                (lambda () (void))
                (text "Modal body")
@@ -1152,7 +1152,7 @@
              (lambda ()
                (:= @dialog-open #t)
                (:= @dialog-status "open")))
-     (call/key dialog
+     (dialog
                @dialog-open
                (lambda ()
                  (:= @dialog-open #f)
@@ -1197,7 +1197,7 @@
   (render
    (window
     (vpanel
-     (call/key dialog
+     (dialog
                #t
                (lambda () (void))
                (text "Small dialog")
@@ -1211,7 +1211,7 @@
   (render
    (window
     (vpanel
-     (call/key dialog
+     (dialog
                #t
                (lambda () (void))
                (text "Dialog body")
@@ -1353,7 +1353,7 @@
   (render
    (window
     (vpanel
-     (call/key input
+     (input
                @name-enter
                (lambda (new-value) (:= @name-enter new-value))
                #:on-enter (lambda () (<~ @submitted add1)))))))
@@ -1406,7 +1406,7 @@
   (render
    (window
     (vpanel
-     (call/key slider
+     (slider
                @level
                (lambda (new-value) (:= @level new-value))
                #:min 0
@@ -1429,7 +1429,7 @@
   (render
    (window
     (vpanel
-     (call/key progress @percent #:min 0 #:max 100)))))
+     (progress @percent #:min 0 #:max 100)))))
 (define progress-node (node-child (node-child (renderer-root r8) 0) 0))
 (check-equal (node-attr progress-node 'min) 0 "progress min attr")
 (check-equal (node-attr progress-node 'max) 100 "progress max attr")
@@ -1445,7 +1445,7 @@
   (render
    (window
     (vpanel
-     (call/key progress
+     (progress
                30
                #:min 0
                #:max 100
@@ -1548,7 +1548,7 @@
   (render
    (window
     (vpanel
-     (call/key table
+     (table
                '(value)
                @rows
                #:density 'normal)))))
@@ -1582,7 +1582,7 @@
   (render
    (window
     (vpanel
-     (call/key table '(k v) '(("a" 1)) #:density 'compact)))))
+     (table '(k v) '(("a" 1)) #:density 'compact)))))
 (define table-node-compact (node-child (node-child (renderer-root r14b) 0) 0))
 (check-equal (node-attr table-node-compact 'density) 'compact "table compact density attr")
 (check-equal (node-attr table-node-compact 'class) "we-table we-density-compact" "table compact density class")
@@ -1592,7 +1592,7 @@
   (render
    (window
     (vpanel
-     (call/key table
+     (table
                '(("service" left) ("status" center))
                '(("api" "ok") ("db" "warn"))
                #:density 'normal
@@ -1621,7 +1621,7 @@
   (render
    (window
     (vpanel
-     (call/key table
+     (table
                '(state value)
                '(("ok" 1) ("warn" 2) ("fail" 3))
                #:density 'normal
@@ -1645,7 +1645,7 @@
   (render
    (window
     (vpanel
-     (call/key table
+     (table
                '(type value)
                '(("alpha" 1) ("beta" 2))
                #:density 'normal
@@ -1670,7 +1670,7 @@
   (render
    (window
     (vpanel
-     (call/key table
+     (table
                '(("name" left) ("count" right) ("state" center))
                '(("alpha" 12 "ok"))
                #:density 'normal)))))
@@ -1771,7 +1771,7 @@
   (render
    (window
     (vpanel
-     (call/key image "size.png" #:width 64 #:height 32)))))
+     (image "size.png" #:width 64 #:height 32)))))
 (define image-node3 (node-child (node-child (renderer-root r19b) 0) 0))
 (check-equal (node-attr image-node3 'src) "size.png" "image sized src")
 (check-equal (node-attr image-node3 'width) 64 "image optional width attr")
@@ -1810,7 +1810,7 @@
   (render
    (window
     (vpanel
-     (call/key dropdown
+     (dropdown
                "More"
                '((open "Open"))
                (lambda (_id) (void))
@@ -1824,7 +1824,7 @@
   (render
    (window
     (vpanel
-     (call/key tooltip
+     (tooltip
                @tooltip-message
                (button "run" (lambda () (void))))))))
 (define tooltip-node (node-child (node-child (renderer-root r19tooltip) 0) 0))
@@ -1849,7 +1849,7 @@
   (render
    (window
     (vpanel
-     (call/key popover
+     (popover
                @popover-label
                (text "deploy-body")
                (button "confirm" (lambda () (void))))))))
@@ -1885,7 +1885,7 @@
   (render
    (window
     (vpanel
-     (call/key tooltip
+     (tooltip
                "left-tip"
                (button "left" (lambda () (void)))
                #:placement 'left)))))
@@ -1896,7 +1896,7 @@
   (render
    (window
     (vpanel
-     (call/key popover "Actions" (text "body") #:placement 'right)))))
+     (popover "Actions" (text "body") #:placement 'right)))))
 (define popover-right-node (node-child (node-child (renderer-root r19popover-right) 0) 0))
 (check-equal (node-attr popover-right-node 'class) "we-popover we-popover-right" "popover right placement class")
 
@@ -1907,7 +1907,7 @@
   (render
    (window
     (vpanel
-     (call/key card
+     (card
                @card-title
                @card-footer
                (text "body-line"))))))
@@ -1936,7 +1936,7 @@
   (render
    (window
     (vpanel
-     (call/key card
+     (card
                "Title"
                "Footer"
                (text "body")
@@ -2097,7 +2097,7 @@
   (render
    (window
     (vpanel
-     (call/key tab-panel
+     (tab-panel
                (@ 'a)
                (list (cons 'a (text "A"))
                      (cons 'b (text "B")))
@@ -2205,7 +2205,7 @@
      (toolbar
       (toolbar-group
        (button "a" (lambda () (void))))
-      (call/key divider #:orientation 'vertical)
+      (divider #:orientation 'vertical)
       (toolbar-group
        (button "b" (lambda () (void)))))))))
 (define toolbar-node (node-child (node-child (renderer-root r24-layout) 0) 0))
@@ -2222,7 +2222,7 @@
   (render
    (window
     (vpanel
-     (call/key input
+     (input
                "alice"
                (lambda (_v) (void))
                #:input-attrs '((placeholder "Your name")
@@ -2237,7 +2237,7 @@
   (render
    (window
     (vpanel
-     (call/key textarea
+     (textarea
                @notes
                (lambda (v) (:= @notes v))
                #:rows 4
@@ -2290,7 +2290,7 @@
   (render
    (window
     (vpanel
-     (call/key card "T" "F" (text "body") #:variants '(compact flat headerless))))))
+     (card "T" "F" (text "body") #:variants '(compact flat headerless))))))
 (define card-node-variants (node-child (node-child (renderer-root r28-card) 0) 0))
 (check-equal (node-attr card-node-variants 'class) "we-card we-card-compact we-card-flat" "card variants class")
 (check-equal (length (dom-node-children card-node-variants)) 2 "headerless card renders body + footer only")

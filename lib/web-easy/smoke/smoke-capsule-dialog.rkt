@@ -52,16 +52,17 @@
              (window
               (vpanel
                (button "open-dialog" open-dialog!)
-               (dialog @open
-                       close-escape!
-                       (list (cons 'title "Delete project?")
-                             (cons 'description "This action cannot be undone.")
-                             (cons 'tone 'primary)
-                             (cons 'tone-style 'outline)
-                             (cons 'show-close? #t))
-                       (hpanel
-                        (button "cancel" close-cancel!)
-                        (button "confirm" close-confirm!)))
+               (dialog
+                         @open
+                         close-escape!
+                         (hpanel
+                          (button "cancel" close-cancel!)
+                          (button "confirm" close-confirm!))
+                         #:title "Delete project?"
+                         #:description "This action cannot be undone."
+                         #:tone 'primary
+                         #:tone-style 'outline
+                         #:show-close? #t)
                (text (~> @status
                          (lambda (status)
                            (~a "status:" status))))))))

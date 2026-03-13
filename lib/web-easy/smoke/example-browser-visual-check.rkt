@@ -58,9 +58,19 @@
             (choice (list mode/basic mode/advanced)
                     @mode
                     (lambda (v) (:= @mode v)))
-            (slider @level (lambda (v) (:= @level v)) 0 100)
-            (progress @level 0 100)
-            (table '(item state) @rows 'compact)
+            (slider
+                      @level
+                      (lambda (v) (:= @level v))
+                      #:min 0
+                      #:max 100)
+            (progress
+                      @level
+                      #:min 0
+                      #:max 100)
+            (table
+                      '(item state)
+                      @rows
+                      #:density 'compact)
             (tab-panel @tab
                        (list (list 'overview
                                    (text (~> @name (lambda (n) (~a "overview:" n)))))

@@ -283,9 +283,8 @@ Current compatibility notes:
 
 Rationale:
 
-- Native keyword-call syntax is still constrained in WebRacket, so keyword-capable APIs use
-  syntax-layer helpers (`define/key` and `call/key`) instead of relying on direct runtime
-  keyword argument support.
+- Keyword-capable APIs are defined with `define/key` and support direct keyword-call syntax.
+  `call/key` remains available for aliased/higher-order calls.
 - Alists avoid dependence on hash APIs that are not consistently available in the current dialect/runtime.
 - The in-memory DOM model lets us validate reactive semantics and lifecycle behavior before binding to browser DOM FFI details.
 
@@ -308,7 +307,7 @@ Call forms:
 
 Limitations:
 
-- Keyword tokens are consumed by macro expansion. For non-macro callees, use `call/key` instead of raw `(f ... #:kw ...)`.
+- For aliased/higher-order callees, use `call/key` instead of raw `(f ... #:kw ...)`.
 
 ## Keyword-First API (Breaking Change)
 
@@ -320,11 +319,11 @@ Limitations:
 | `(with-class "c" (text "x"))` | `(text "x" #:class "c")` |
 | `(with-id "n" (button "ok" f))` | `(button "ok" f #:id "n")` |
 | `(with-attrs '((placeholder "name")) (input @v set!))` | `(input @v set! #:input-attrs '((placeholder "name")))` |
-| `(table cols rows 'compact)` | `(call/key table cols rows #:density 'compact)` |
-| `(table cols rows 'normal '((caption . "C") (variants . (striped))))` | `(call/key table cols rows #:density 'normal #:caption "C" #:variants '(striped))` |
-| `(progress @v 0 100 'info)` | `(call/key progress @v #:min 0 #:max 100 #:variant 'info)` |
-| `(offcanvas @open close! 'end body)` | `(call/key offcanvas @open close! body #:side 'end)` |
-| `(alert-rich body title link href 'warn '((layout . inline)))` | `(call/key alert-rich body title link href #:level 'warn #:layout 'inline)` |
+| `(table cols rows 'compact)` | `(table cols rows #:density 'compact)` |
+| `(table cols rows 'normal '((caption . "C") (variants . (striped))))` | `(table cols rows #:density 'normal #:caption "C" #:variants '(striped))` |
+| `(progress @v 0 100 'info)` | `(progress @v #:min 0 #:max 100 #:variant 'info)` |
+| `(offcanvas @open close! 'end body)` | `(offcanvas @open close! body #:side 'end)` |
+| `(alert-rich body title link href 'warn '((layout . inline)))` | `(alert-rich body title link href #:level 'warn #:layout 'inline)` |
 
 Notes:
 

@@ -57,55 +57,63 @@
                (hpanel
                 (button "open-dialog-lg" open-dialog!)
                 (button "open-modal-sm" open-modal!))
-               (tooltip "right tooltip"
-                        (button "tooltip-target" (lambda () (void)))
-                        'right)
-               (popover "popover-left"
-                        'left
-                        (text "popover body"))
+               (tooltip
+                         "right tooltip"
+                         (button "tooltip-target" (lambda () (void)))
+                         #:placement 'right)
+               (popover
+                         "popover-left"
+                         (text "popover body")
+                         #:placement 'left)
                (if-view @alert-open?
-                        (alert-rich "Server warning"
-                                    "Warning"
-                                    "Details"
-                                    "/alerts"
-                                    'warning
-                                    (list (cons 'dismiss-action dismiss-alert!)
-                                          (cons 'dismiss-label "Close warning")))
+                        (alert-rich
+                                  "Server warning"
+                                  "Warning"
+                                  "Details"
+                                  "/alerts"
+                                  #:level 'warning
+                                  #:dismiss-action dismiss-alert!
+                                  #:dismiss-label "Close warning")
                         (text "alert-closed"))
-               (card "card-title"
-                     "card-footer"
-                     (list (cons 'subtitle "card-subtitle")
-                           (cons 'media (text "card-media"))
-                           (cons 'actions (list (button "card-action" (lambda () (void))))))
-                     (text "card-body"))
-               (dropdown "dropdown-end"
+               (card
+                         "card-title"
+                         "card-footer"
+                         (text "card-body")
+                         #:subtitle "card-subtitle"
+                         #:media (text "card-media")
+                         #:actions (list (button "card-action" (lambda () (void)))))
+               (dropdown
+                         "dropdown-end"
                          '((open "Open") (close "Close"))
                          (lambda (_id) (void))
-                         'end)
-               (tab-panel @tab
-                          (list (cons 'alpha (text "alpha-tab"))
-                                (cons 'beta  (text "beta-tab")))
-                          'joined)
-               (dialog @dialog-open
-                       close-dialog!
-                       'lg
-                       (list (cons 'title "Dialog title")
-                             (cons 'description "Dialog description")
-                             (cons 'show-close? #t)
-                             (cons 'footer (button "dialog-footer-action" (lambda () (void)))))
-                       (vpanel
-                        (text "dialog-lg")
-                        (button "close-dialog" close-dialog!)))
-               (modal @modal-open
-                      close-modal!
-                      'sm
-                      (list (cons 'title "Modal title")
-                            (cons 'description "Modal description")
-                            (cons 'show-close? #t)
-                            (cons 'footer (button "modal-footer-action" (lambda () (void)))))
-                      (vpanel
-                       (text "modal-sm")
-                       (button "close-modal" close-modal!)))))))
+                         #:placement 'end)
+               (tab-panel
+                         @tab
+                         (list (cons 'alpha (text "alpha-tab"))
+                               (cons 'beta  (text "beta-tab")))
+                         #:variants 'joined)
+               (dialog
+                         @dialog-open
+                         close-dialog!
+                         (vpanel
+                          (text "dialog-lg")
+                          (button "close-dialog" close-dialog!))
+                         #:size 'lg
+                         #:title "Dialog title"
+                         #:description "Dialog description"
+                         #:show-close? #t
+                         #:footer (button "dialog-footer-action" (lambda () (void))))
+               (modal
+                         @modal-open
+                         close-modal!
+                         (vpanel
+                          (text "modal-sm")
+                          (button "close-modal" close-modal!))
+                         #:size 'sm
+                         #:title "Modal title"
+                         #:description "Modal description"
+                         #:show-close? #t
+                         #:footer (button "modal-footer-action" (lambda () (void))))))))
       (mount-renderer! surface-api-renderer root)
       (void))
 

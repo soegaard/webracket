@@ -28,7 +28,11 @@
               (vpanel
                (text (~> @value (lambda (n) (~a "value:" n))))
                (text (~> @variant (lambda (v) (~a "variant:" v))))
-               (progress @value 0 100 @variant)
+               (progress
+                         @value
+                         #:min 0
+                         #:max 100
+                         #:variant @variant)
                (hpanel
                 (button "info"
                         (lambda ()

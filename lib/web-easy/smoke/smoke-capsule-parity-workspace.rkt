@@ -149,7 +149,10 @@
                                          (:= @theme new-theme)
                                          (refresh-summary!)))))))
            (group "Workspace Summary"
-                  (table '(summary) @summary-rows)
+                  (table
+                            '(summary)
+                            @summary-rows
+                            #:density 'normal)
                   (text (~> @status
                             (lambda (status)
                               (~a "status:" status)))))

@@ -61,16 +61,17 @@
                 (button "rich-tone-info"    (lambda () (:= @rich-tone 'info)))
                 (button "rich-tone-primary" (lambda () (:= @rich-tone 'primary)))
                 (button "rich-tone-light"   (lambda () (:= @rich-tone 'light))))
-               (with-id "alert-rich-target"
-                 (alert-rich @rich-body
-                             @rich-title
-                             @rich-link
-                             "#"
-                             @rich-level
-                             (list (cons 'layout @rich-layout)
-                                   (cons 'scale @rich-scale)
-                                   (cons 'tone @rich-tone)
-                                   (cons 'dismiss-action (lambda () (void))))))))))
+               (alert-rich
+                         @rich-body
+                         @rich-title
+                         @rich-link
+                         "#"
+                         #:id "alert-rich-target"
+                         #:level @rich-level
+                         #:layout @rich-layout
+                         #:scale @rich-scale
+                         #:tone @rich-tone
+                         #:dismiss-action (lambda () (void)))))))
       (mount-renderer! alert-renderer root)
       (void))
 

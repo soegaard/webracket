@@ -28,13 +28,14 @@
                 (button "retitle"
                         (lambda ()
                           (:= @title "Deploy to staging?"))))
-               (popover "actions"
-                        (list (cons 'title @title)
-                              (cons 'footer "Esc closes this popover."))
-                        (text "Choose an action:")
-                        (hpanel
-                         (button "cancel" (lambda () (void)))
-                         (button "confirm" (lambda () (void)))))))))
+               (popover
+                         "actions"
+                         (text "Choose an action:")
+                         (hpanel
+                          (button "cancel" (lambda () (void)))
+                          (button "confirm" (lambda () (void))))
+                         #:title @title
+                         #:footer "Esc closes this popover.")))))
       (mount-renderer! popover-renderer root)
       (void))
 

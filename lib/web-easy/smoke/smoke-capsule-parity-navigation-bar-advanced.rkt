@@ -34,16 +34,19 @@
                              (case (obs-peek @orientation)
                                [(vertical)   'horizontal]
                                [else         'vertical]))))
-               (navigation-bar @orientation @collapsed 'always
-                (button "overview"
-                        (lambda ()
-                          (:= @selected 'overview)))
-                (button "deploys"
-                        (lambda ()
-                          (:= @selected 'deploys)))
-                (button "settings"
-                        (lambda ()
-                          (:= @selected 'settings))))
+               (navigation-bar
+                         (button "overview"
+                                 (lambda ()
+                                   (:= @selected 'overview)))
+                         (button "deploys"
+                                 (lambda ()
+                                   (:= @selected 'deploys)))
+                         (button "settings"
+                                 (lambda ()
+                                   (:= @selected 'settings)))
+                         #:orientation @orientation
+                         #:collapsed? @collapsed
+                         #:expand 'always)
                (text (~> @selected
                          (lambda (id)
                            (~a "parity-nav-adv:" id))))

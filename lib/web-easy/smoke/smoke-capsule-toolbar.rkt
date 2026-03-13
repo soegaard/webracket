@@ -31,7 +31,7 @@
                (toolbar
                 (toolbar-group
                  (button "refresh" (lambda () (set-status! "refresh"))))
-                (divider 'vertical)
+                (divider #:orientation 'vertical)
                 (toolbar-group
                  (button "save" (lambda () (set-status! "save")))
                  (button "publish" (lambda () (set-status! "publish")))))

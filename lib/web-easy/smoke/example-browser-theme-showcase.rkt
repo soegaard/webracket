@@ -194,46 +194,34 @@
 (define app-renderer
   (render
    (window
-    (with-class "showcase-shell"
-      (container
+    (container
        (stack
         ;;;
         ;;; TOP BAR
         ;;;
-        (with-id "theme-showcase-hero"
-          (with-class "showcase-topbar"
-            (card
-             #f
-             #f
-             (with-class "showcase-topbar-inner"
-               (inline
+        (card #f #f
+             (inline
                 ;; Brand (left)
-                (with-class "showcase-brand"
-                  (stack
-                   (with-class "showcase-brand-title"
-                     (text "web-easy Theme Showcase"))
-                   (with-class "showcase-brand-subtitle"
-                     (text "Solar-inspired style demo page (no iframes, no test harness)"))))
+                (stack
+                   (text "web-easy Theme Showcase" #:class "showcase-brand-title")
+                   (text "Solar-inspired style demo page (no iframes, no test harness)" #:class "showcase-brand-subtitle")
+                   #:class "showcase-brand")
                 (spacer)
                 ;; Controls (right)
-                (with-class "showcase-topbar-controls"
-                  (stack
+                (stack
                    ;; Label
-                   (with-class "showcase-controls-label"
-                     (text "Theme"))
+                   (text "Theme" #:class "showcase-controls-label")
                    ;; Select theme
-                   (with-class "showcase-theme-choice"
-                     (choice '((solar "Solar") (light "Light") (dark "Dark"))
+                   (choice '((solar "Solar") (light "Light") (dark "Dark"))
                              @theme
                              (lambda (next-theme)
                                (:= @theme (normalize-theme-id next-theme))
-                               (:= @theme-status (value->display-string next-theme)))))
+                               (:= @theme-status (value->display-string next-theme)))
+                             #:class "showcase-theme-choice")
                    ;; Label
-                   (with-class "showcase-controls-label"
-                     (text "Tab style"))
+                   (text "Tab style" #:class "showcase-controls-label")
                    ;; Select tab style variant
-                   (with-class "showcase-theme-choice"
-                     (choice '((connected "Connected")
+                   (choice '((connected "Connected")
                                (joined "Joined")
                                (pills "Pills")
                                (underline "Underline")
@@ -242,13 +230,13 @@
                                (cards "Cards")
                                (mono "Mono")
                                (signal "Signal")
-                               (notch "Notch"))
+                             (notch "Notch"))
                              @tab-style
                              (lambda (next-style)
-                               (:= @tab-style (normalize-tab-style-id next-style)))))
+                               (:= @tab-style (normalize-tab-style-id next-style)))
+                             #:class "showcase-theme-choice")
                    ;; Toogle the showcase specific css file on/off
-                   (with-class "showcase-controls-download-row"
-                     (inline
+                   (inline
                       (button "Toggle Showcase CSS"
                               (lambda ()
                                 (:= @showcase-css-enabled? (not (obs-peek @showcase-css-enabled?)))))
@@ -256,164 +244,171 @@
                                 (lambda (enabled?)
                                   (if enabled?
                                       "Showcase CSS: on"
-                                      "Showcase CSS: off"))))))
+                                      "Showcase CSS: off"))))
+                      #:class "showcase-controls-download-row")
                    ;; Download links
-                   (with-class "showcase-controls-download-row"
-                     (toolbar
+                   (toolbar
                       (toolbar-group
-                       (with-class "showcase-link-button"
-                         (link "Download Solar CSS" "../theme-external-solar.css" #t))
-                       (with-class "showcase-link-button"
-                         (link "Download Light CSS" "../theme-external-light.css" #t))
-                       (with-class "showcase-link-button"
-                         (link "Download Dark CSS" "../theme-external-dark.css" #t))))))))))))
+                       (link "Download Solar CSS" "../theme-external-solar.css" #t #:class "showcase-link-button")
+                       (link "Download Light CSS" "../theme-external-light.css" #t #:class "showcase-link-button")
+                       (link "Download Dark CSS" "../theme-external-dark.css" #t #:class "showcase-link-button"))
+                      #:class "showcase-controls-download-row")
+                   #:class "showcase-topbar-controls")
+                #:class "showcase-topbar-inner")
+             #:id "theme-showcase-hero"
+             #:class "showcase-topbar")
 
         ;;;
         ;;; Hero Lead
         ;;;
 
-        (with-class "showcase-hero"
-          (card
-           #f
-           #f
-           (with-class "showcase-hero-title"
-             (text "Solar Theme"))
-           (with-class "showcase-hero-lead"
-             (text
+        (card #f #f
+           (text "Solar Theme" #:class "showcase-hero-title")
+           (text
               (~a
                "This page is a user-facing component gallery inspired by the Solar Bootswatch look. "
-               "Use the theme selector above to switch between external stylesheets.")))))
+               "Use the theme selector above to switch between external stylesheets.")
+              #:class "showcase-hero-lead")
+           #:class "showcase-hero")
 
         ;;;
         ;;; Main Contents
         ;;;
 
-        (with-class "showcase-main"
-          (stack
-           (with-class "showcase-grid-row"
-             (grid 'auto
-                   (with-class "showcase-card"
-                     (card
-                      "Buttons, Alerts, Badge"
-                      #f
-                      'compact
-                      (with-class "showcase-button-row"
-                        (toolbar
-                         (toolbar-group
-                          (with-class "we-button-primary"
-                            (button "Primary"
-                                    (lambda ()
-                                      (show-toast! 'info "Buttons" "Primary clicked."))))
-                          (with-class "we-button-secondary"
-                            (button "Secondary"
-                                    (lambda ()
-                                      (show-toast! 'warn "Buttons" "Secondary clicked."))))
-                          (with-class "we-button-ghost"
-                            (button "Ghost"
-                                    (lambda ()
-                                      (show-toast! 'success "Buttons" "Ghost clicked.")))))))
-                      (alert "Info alert: configuration saved." 'info)
-                      (alert "Success alert: build finished." 'success)
-                      (alert "Warning alert: pending review." 'warn)
-                      (alert "Error alert: deploy failed." 'error)
-                      (with-class "showcase-button-row"
-                        (inline
-                         (badge "Badge" 'info)
-                         (badge "42" 'success)))))
+        (stack
+           (grid 'auto
+             (card
+               "Buttons, Alerts, Badge"
+               #f
+               'compact
+               (toolbar
+                 (toolbar-group
+                  (button "Primary"
+                            (lambda ()
+                              (show-toast! 'info "Buttons" "Primary clicked."))
+                            #:class "we-button-primary")
+                  (button "Secondary"
+                            (lambda ()
+                              (show-toast! 'warn "Buttons" "Secondary clicked."))
+                            #:class "we-button-secondary")
+                  (button "Ghost"
+                            (lambda ()
+                              (show-toast! 'success "Buttons" "Ghost clicked."))
+                            #:class "we-button-ghost"))
+                 #:class "showcase-button-row")
+               (alert "Info alert: configuration saved." 'info)
+               (alert "Success alert: build finished." 'success)
+               (alert "Warning alert: pending review." 'warn)
+               (alert "Error alert: deploy failed." 'error)
+               (inline
+                 (badge "Badge" 'info)
+                 (badge "42" 'success)
+                 #:class "showcase-button-row")
+               #:class "showcase-card")
 
-                   (with-class "showcase-card"
-                     (card
-                      "Forms & Menu"
-                      #f
-                      (with-attrs
-                        '((placeholder "Your name"))
-                        (input @name (lambda (v) (:= @name v))))
-                      (choice '("Alpha" "Beta" "Gamma")
-                              @role
-                              (lambda (v) (:= @role v)))
-                      (textarea ""
-                                (lambda (_v) (void))
-                                3
-                                '((placeholder "Notes")))
-                      (menu-bar
-                       (menu "Project"
-                             (menu-item "Open"
-                                        (lambda () (:= @menu-status "Project/Open"))
-                                        "📂")
-                             (menu-item "Save"
-                                        (lambda () (:= @menu-status "Project/Save"))
-                                        "💾")
-                             (menu-item "Close"
-                                        (lambda () (:= @menu-status "Project/Close"))
-                                        "×"))
-                       (menu "Help"
-                             (menu-item "Docs"
-                                        (lambda () (:= @menu-status "Help/Docs"))
-                                        "📘")
-                             (menu-item "FAQ"
-                                        (lambda () (:= @menu-status "Help/FAQ"))
-                                        "?"
-                                        "›")))))
+             (card
+               "Forms & Menu"
+               #f
+               (input
+                 @name
+                 (lambda (v) (:= @name v))
+                 #:attrs '((placeholder "Your name")))
+               (choice '("Alpha" "Beta" "Gamma")
+                       @role
+                       (lambda (v) (:= @role v)))
+               (textarea
+                 ""
+                 (lambda (_v) (void))
+                 3
+                 #:attrs '((placeholder "Notes")))
+               (menu-bar
+                (menu "Project"
+                      (menu-item "Open"
+                                 (lambda () (:= @menu-status "Project/Open"))
+                                 "📂")
+                      (menu-item "Save"
+                                 (lambda () (:= @menu-status "Project/Save"))
+                                 "💾")
+                      (menu-item "Close"
+                                 (lambda () (:= @menu-status "Project/Close"))
+                                 "×"))
+                (menu "Help"
+                      (menu-item "Docs"
+                                 (lambda () (:= @menu-status "Help/Docs"))
+                                 "📘")
+                      (menu-item "FAQ"
+                                 (lambda () (:= @menu-status "Help/FAQ"))
+                                 "?"
+                                 "›")))
+               #:class "showcase-card")
 
-                   (with-class "showcase-card"
-                     (card
-                      "Tabs, List Group, Table"
-                      #f
-                      (tab-panel
-                       @tab
-                       (list (cons "Overview" (text "Overview content."))
-                             (cons "Settings" (text "Settings content."))
-                             (cons "History"  (text "History content."))))
-                      (list-group '((current "Current item")
-                                    (secondary "Secondary item")
-                                    (third "Third item"))
-                                  @list-current
-                                  (lambda (v) (:= @list-current v)))
-                      (table '("Name" "Status" "ETA")
-                             @table-rows
-                             'compact)))))
+             (card
+               "Tabs, List Group, Table"
+               #f
+               (tab-panel
+                @tab
+                (list (cons "Overview" (text "Overview content."))
+                      (cons "Settings" (text "Settings content."))
+                      (cons "History"  (text "History content."))))
+               (list-group '((current "Current item")
+                             (secondary "Secondary item")
+                             (third "Third item"))
+                           @list-current
+                           (lambda (v) (:= @list-current v)))
+               (table
+                 '("Name" "Status" "ETA")
+                 @table-rows
+                 #:density 'compact)
+               #:class "showcase-card")
+             #:class "showcase-grid-row")
 
-           (with-class "showcase-grid-row"
-             (grid 'auto
-                   (with-class "showcase-card"
-                     (card
-                      "Breadcrumb, Pagination, Progress, Spinner, Toast"
+           (grid 'auto
+             (card
+               "Breadcrumb, Pagination, Progress, Spinner, Toast"
+               #f
+               (breadcrumb '((home "Home")
+                             (projects "Projects")
+                             (solar-demo "Solar Demo"))
+                           @crumb
+                           (lambda (v) (:= @crumb v)))
+               (pagination 3
+                           @page
+                           (lambda (v) (:= @page v)))
+               (progress
+                 @level
+                 #:min 0
+                 #:max 100
+                 #:variant @progress-kind)
+               (spinner "Loading activity...")
+               (toast @toast-open?
+                      (lambda () (:= @toast-open? #f))
+                      "Toast: Changes published."
+                      @toast-level
                       #f
-                      (breadcrumb '((home "Home")
-                                    (projects "Projects")
-                                    (solar-demo "Solar Demo"))
-                                  @crumb
-                                  (lambda (v) (:= @crumb v)))
-                      (pagination 3
-                                  @page
-                                  (lambda (v) (:= @page v)))
-                      (progress @level 0 100 @progress-kind)
-                      (spinner "Loading activity...")
-                      (toast @toast-open?
-                             (lambda () (:= @toast-open? #f))
-                             "Toast: Changes published."
-                             @toast-level
-                             #f
-                             #t)))
+                      #t)
+               #:class "showcase-card")
 
-                   (with-class "showcase-card"
-                     (card
-                      "Accordion"
-                      #f
-                      (accordion
-                       @accordion
-                       (list
-                        (list 'what
-                              "What is web-easy?"
-                              (text "web-easy is a web-rendered gui-easy style toolkit for WebRacket."))
-                        (list 'themes
-                              "How do themes work?"
-                              (text "Theme files override CSS tokens and widget classes only."))))
-                      (offcanvas @off-open?
-                                 (lambda () (:= @off-open? #f))
-                                 @off-side
-                                 (text "Offcanvas panel with extra context."))))))))))))
-   ))
+             (card
+               "Accordion"
+               #f
+               (accordion
+                @accordion
+                (list
+                 (list 'what
+                       "What is web-easy?"
+                       (text "web-easy is a web-rendered gui-easy style toolkit for WebRacket."))
+                 (list 'themes
+                       "How do themes work?"
+                       (text "Theme files override CSS tokens and widget classes only."))))
+               (offcanvas
+                 @off-open?
+                 (lambda () (:= @off-open? #f))
+                 (text "Offcanvas panel with extra context.")
+                 #:side @off-side)
+               #:class "showcase-card")
+             #:class "showcase-grid-row")
+           #:class "showcase-main"))
+       #:class "showcase-shell"))))
 (define theme-core-link-node     (install-theme-link! "we-theme-core-css"))
 (define theme-general-link-node  (install-theme-link! "we-theme-external-css"))
 (define theme-showcase-link-node (install-theme-link! "we-theme-showcase-css"))

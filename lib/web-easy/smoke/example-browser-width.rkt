@@ -23,9 +23,19 @@
             (choice (list "one" "two" "three")
                     @choice
                     (lambda (v) (:= @choice v)))
-            (slider @level (lambda (v) (:= @level v)) 0 100)
-            (progress @level 0 100)
+            (slider
+                      @level
+                      (lambda (v) (:= @level v))
+                      #:min 0
+                      #:max 100)
+            (progress
+                      @level
+                      #:min 0
+                      #:max 100)
             (button "noop" (lambda () (void)))
-            (table '(item state) @rows 'compact))))))
+            (table
+                      '(item state)
+                      @rows
+                      #:density 'compact))))))
 
 (mount-renderer! app-renderer)

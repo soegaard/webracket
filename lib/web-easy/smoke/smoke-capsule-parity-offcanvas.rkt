@@ -29,10 +29,11 @@
                 (button "open-start" (lambda () (:= @side 'start) (:= @open #t)))
                 (button "open-end" (lambda () (:= @side 'end) (:= @open #t)))
                 (button "close" (lambda () (:= @open #f))))
-               (offcanvas @open
-                          (lambda () (:= @open #f))
-                          @side
-                          (text "parity-offcanvas-body"))
+               (offcanvas
+                         @open
+                         (lambda () (:= @open #f))
+                         (text "parity-offcanvas-body")
+                         #:side @side)
                (text (~> @open
                          (lambda (b)
                            (~a "parity-open:" b))))

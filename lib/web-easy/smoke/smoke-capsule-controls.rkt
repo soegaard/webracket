@@ -29,23 +29,28 @@
                 [(red)   'error]
                 [else    'info]))))
       (set! controls-renderer
-        (render
-         (window
-          (vpanel
-           (choice '(red green blue)
-                   @color
-                   (lambda (new-value)
-                     (:= @color (if (symbol? new-value)
-                                    new-value
-                                    (string->symbol new-value)))))
-           (text (~> @color (lambda (s) (~a "color:" s))))
-           (slider @level
-                   (lambda (new-value)
-                     (:= @level new-value))
-                   0
-                   100)
-           (text (~> @level (lambda (n) (~a "level:" n))))
-           (progress @level 0 100 @variant)))))
+            (render
+             (window
+              (vpanel
+               (choice '(red green blue)
+                       @color
+                       (lambda (new-value)
+                         (:= @color (if (symbol? new-value)
+                                        new-value
+                                        (string->symbol new-value)))))
+               (text (~> @color (lambda (s) (~a "color:" s))))
+               (slider
+                         @level
+                         (lambda (new-value)
+                           (:= @level new-value))
+                         #:min 0
+                         #:max 100)
+               (text (~> @level (lambda (n) (~a "level:" n))))
+               (progress
+                         @level
+                         #:min 0
+                         #:max 100
+                         #:variant @variant)))))
       (mount-renderer! controls-renderer root)
       (void))
 

@@ -18,12 +18,16 @@
              (lambda (new-value)
                (:= @color (string->symbol new-value))))
      (text (~> @color (lambda (s) (~a "color:" s))))
-     (slider @level
-             (lambda (new-value)
-               (:= @level new-value))
-             0
-             100)
+     (slider
+               @level
+               (lambda (new-value)
+                 (:= @level new-value))
+               #:min 0
+               #:max 100)
      (text (~> @level (lambda (n) (~a "level:" n))))
-     (progress @level 0 100)))))
+     (progress
+               @level
+               #:min 0
+               #:max 100)))))
 
 (mount-renderer! app-renderer)

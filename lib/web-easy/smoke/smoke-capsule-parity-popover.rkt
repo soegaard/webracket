@@ -27,9 +27,11 @@
                (button "retitle"
                        (lambda ()
                          (:= @message "Preview release artifacts (updated)")))
-               (popover "preview"
-                        (text @message)
-                        (button "run" (lambda () (void))))))))
+               (popover
+                         "preview"
+                         (text @message)
+                         (button "run" (lambda () (void)))
+                         #:placement 'bottom)))))
       (mount-renderer! parity-popover-renderer root)
       (void))
 

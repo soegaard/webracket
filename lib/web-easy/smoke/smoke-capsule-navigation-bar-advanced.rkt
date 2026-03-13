@@ -34,16 +34,19 @@
                              (case (obs-peek @orientation)
                                [(vertical)   'horizontal]
                                [else         'vertical]))))
-               (navigation-bar @orientation @collapsed 'always
-                (button "home"
-                        (lambda ()
-                          (:= @selected 'home)))
-                (button "docs"
-                        (lambda ()
-                          (:= @selected 'docs)))
-                (button "about"
-                        (lambda ()
-                          (:= @selected 'about))))
+               (navigation-bar
+                         (button "home"
+                                 (lambda ()
+                                   (:= @selected 'home)))
+                         (button "docs"
+                                 (lambda ()
+                                   (:= @selected 'docs)))
+                         (button "about"
+                                 (lambda ()
+                                   (:= @selected 'about)))
+                         #:orientation @orientation
+                         #:collapsed? @collapsed
+                         #:expand 'always)
                (text (~> @selected
                          (lambda (id)
                            (~a "nav-adv:" id))))

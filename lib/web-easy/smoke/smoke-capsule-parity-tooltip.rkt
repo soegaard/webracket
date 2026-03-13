@@ -27,10 +27,12 @@
                (button "retitle"
                        (lambda ()
                          (:= @hint "Open release notes (new)")))
-               (tooltip @hint
-                        (button "details"
-                                (lambda ()
-                                  (void))))))))
+               (tooltip
+                         @hint
+                         (button "details"
+                                 (lambda ()
+                                   (void)))
+                         #:placement 'top)))))
       (mount-renderer! parity-tooltip-renderer root)
       (void))
 

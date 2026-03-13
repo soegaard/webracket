@@ -25,7 +25,7 @@
              (window
               (vpanel
                (carousel (list (list 0 "alpha" (text "slide-alpha"))
-                               (list 1 "beta"  (text "slide-beta"))
+                               (list 1 "beta" (text "slide-beta"))
                                (list 2 "gamma" (text "slide-gamma")))
                          @index
                          (lambda (next-index)

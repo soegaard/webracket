@@ -27,7 +27,11 @@
              (window
               (vpanel
                (text (~> @value (lambda (n) (~a "progress:" n))))
-               (progress @value 0 100 @variant)
+               (progress
+                         @value
+                         #:min 0
+                         #:max 100
+                         #:variant @variant)
                (hpanel
                 (button "set-success"
                         (lambda ()

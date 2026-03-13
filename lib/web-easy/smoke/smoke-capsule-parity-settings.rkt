@@ -86,7 +86,10 @@
          (window
           (vpanel
            (group "Settings"
-                  (table '(members) @rows)
+                  (table
+                            '(members)
+                            @rows
+                            #:density 'normal)
                   (text (~> @rows
                             (lambda (rows)
                               (~a "count:" (length rows)))))
