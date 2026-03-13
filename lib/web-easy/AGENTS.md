@@ -40,3 +40,7 @@ Coding guidelines for Racket/WebRacket code in `lib/web-easy`.
     - for aliased/higher-order constructor values, use `call/key`.
 27. For component calls where the first argument is a short title/label string (for example `card`, `group`, `menu`, `button`), keep that first string argument on the same line as the callee.
 28. Theme-level typography and component styling rules must be defined in the theme stylesheet (general scope), not only in showcase/page-specific selectors; showcase CSS should only contain page-layout scaffolding.
+29. Showcase pages are consumers of `web-easy`, not special-case targets:
+    - do not use showcase-only CSS/markup tricks to hide missing component capability.
+    - if a showcase need is generally useful, promote it to general `we-*` classes and/or component API.
+    - keep showcase selectors for page composition scaffolding only.
