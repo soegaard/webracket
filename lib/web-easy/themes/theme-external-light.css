@@ -282,18 +282,6 @@ html.we-theme-light .we-button-ghost:hover {
 }
 
 /* Extended semantic button variants used by demos/tests. */
-html.we-theme-light .we-button-primary {
-  background: #2f7ea0;
-  border-color: #2f7ea0;
-  color: #ffffff;
-}
-
-html.we-theme-light .we-button-secondary {
-  background: #e9eef6;
-  border-color: #91a6c4;
-  color: #2f4563;
-}
-
 html.we-theme-light .we-button-success {
   background: #3d8b5a;
   border-color: #3d8b5a;
