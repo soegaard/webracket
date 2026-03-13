@@ -34,13 +34,13 @@
   <div id="status">Running browser theme-vars assertions...</div>
   <iframe id="app-frame" src="./generated/example-browser-smoke-all.html?test=tab-panel" title="web-easy theme vars app"></iframe>
 
-  <script src="./theme-contract-helper.js"></script>
+  <script src="./themes/theme-contract-helper.js"></script>
   <script>
     const themeHelper = window.themeContractHelper;
     const THEME_LAYER_OPTIONS = {
       themeClass: "we-theme-solar2",
-      coreHref: "../web-easy-core.css",
-      themeHref: "../theme-contract-vars.css"
+      coreHref: "../themes/web-easy-core.css",
+      themeHref: "../themes/theme-contract-vars.css"
     };
 
     function setStatus(text, cls) {
@@ -71,6 +71,14 @@
     }
 
     async function loadCase(frame, src, readyFn, timeoutMs) {
+      const currentDoc = themeHelper.frameDocFrom(frame);
+      if (currentDoc) {
+        themeHelper.ensureThemeLayer(currentDoc, THEME_LAYER_OPTIONS);
+        if (readyFn(currentDoc)) {
+          return currentDoc;
+        }
+      }
+
       await new Promise((resolve, reject) => {
         const timer = setTimeout(() => reject(new Error("Timed out loading iframe: " + src)), timeoutMs);
         frame.addEventListener("load", () => {
@@ -124,22 +132,22 @@
         const progressDoc = await loadCase(
           frame,
           "./generated/example-browser-smoke-all.html?test=progress",
-          (d) => d.querySelector("progress") && Array.from(d.querySelectorAll("button")).some((b) => b.textContent.trim() === "warn"),
+          (d) => d.querySelector("progress") && Array.from(d.querySelectorAll("button")).some((b) => b.textContent.trim() === "warning"),
           20000
         );
         const progress = progressDoc.querySelector("progress");
         const warnBtn = Array.from(progressDoc.querySelectorAll("button"))
-          .find((b) => b.textContent.trim() === "warn");
+          .find((b) => b.textContent.trim() === "warning");
         themeHelper.assertTrue(!!progress, "progress present in progress capsule");
-        themeHelper.assertTrue(!!warnBtn, "warn button present in progress capsule");
+        themeHelper.assertTrue(!!warnBtn, "warning button present in progress capsule");
 
         warnBtn.click();
         await themeHelper.sleep(80);
-        progressDoc.documentElement.style.setProperty("--we-progress-warn", "rgb(18, 120, 210)");
+        progressDoc.documentElement.style.setProperty("--we-progress-warning", "rgb(18, 120, 210)");
         await themeHelper.sleep(80);
 
         const accentAfter = themeHelper.normalizedCssColor(getComputedStyle(progress).accentColor);
-        themeHelper.assertTrue(accentAfter === "rgb(18,120,210)", "progress warn accent follows --we-progress-warn");
+        themeHelper.assertTrue(accentAfter === "rgb(18,120,210)", "progress warning accent follows --we-progress-warning");
 
         setStatus(
           "PASS\nselected tab + progress styles update via CSS variables",

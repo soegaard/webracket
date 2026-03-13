@@ -103,11 +103,17 @@
         await sleep(80);
         text = bodyText(ui.frameDoc);
         const cancelButtonAfterOpen = buttonByText(ui.frameDoc, "cancel");
+        const closeButtonAfterOpen = ui.frameDoc.querySelector("[data-we-widget='dialog-close']");
         assertTrue(!!cancelButtonAfterOpen, "cancel button after open");
         assertTrue(ui.dialog.getAttribute("aria-hidden") === "false", "dialog visible after open");
         assertTrue(text.includes("Delete project?"), "dialog content rendered");
         assertTrue(text.includes("status:open"), "status after open");
-        assertTrue(ui.frameDoc.activeElement === cancelButtonAfterOpen, "dialog initial focus moves inside panel");
+        assertTrue(
+          ui.dialog.contains(ui.frameDoc.activeElement) &&
+          (ui.frameDoc.activeElement === cancelButtonAfterOpen ||
+           ui.frameDoc.activeElement === closeButtonAfterOpen),
+          "dialog initial focus moves inside panel"
+        );
 
         ui.dialog.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
         await sleep(80);

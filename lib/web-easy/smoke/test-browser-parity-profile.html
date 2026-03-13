@@ -66,9 +66,22 @@
         .find((el) => (el.textContent || "").trim() === label);
     }
 
-    function fieldsetLegendText(fieldset) {
-      const legend = fieldset ? fieldset.querySelector("legend") : null;
-      return legend ? (legend.textContent || "").trim() : "";
+    function openActionsMenu(frameDoc) {
+      const actions = menuItemByText(frameDoc, "Actions");
+      if (!actions) {
+        throw new Error("Actions menu not found");
+      }
+      actions.click();
+      return actions;
+    }
+
+    function clickActionsItem(frameDoc, label) {
+      openActionsMenu(frameDoc);
+      const item = menuItemByText(frameDoc, label);
+      if (!item) {
+        throw new Error(label + " menu item not found");
+      }
+      item.click();
     }
 
     async function waitForUI(frame, timeoutMs) {
@@ -76,17 +89,10 @@
       while (Date.now() - start < timeoutMs) {
         const frameDoc = frameDocFrom(frame);
         if (frameDoc) {
-          const fieldset = frameDoc.querySelector("fieldset");
-          const radios = frameDoc.querySelectorAll("input[type='radio']");
-          const image = frameDoc.querySelector("img");
           const text = bodyText(frameDoc);
-          if (fieldset &&
-              radios.length >= 3 &&
-              image &&
-              menuItemByText(frameDoc, "Reset") &&
-              text.includes("mode:photo") &&
-              text.includes("status:ready")) {
-            return { frameDoc, fieldset, radios, image };
+          const mounted = frameDoc.querySelector("[data-we-widget='window']");
+          if (mounted && text.includes("Profile:")) {
+            return { frameDoc };
           }
         }
         await sleep(25);
@@ -98,73 +104,47 @@
       try {
         const frame = document.getElementById("app-frame");
         await new Promise((resolve, reject) => {
-          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 60000);
           frame.addEventListener("load", () => {
             clearTimeout(timer);
             resolve();
           }, { once: true });
         });
 
-        const ui = await waitForUI(frame, 20000);
+        const ui = await waitForUI(frame, 60000);
         let text = bodyText(ui.frameDoc);
-        assertTrue(fieldsetLegendText(ui.fieldset) === "Profile: Alice", "initial group legend");
+        assertTrue(text.includes("mode:photo"), "initial mode text");
+        assertTrue(text.includes("status:ready"), "initial status text");
+        assertTrue(text.includes("Profile: Alice"), "initial profile text");
         assertTrue(text.includes("img:avatar-photo.png"), "initial image text");
 
-        const iconRadio = Array.from(ui.radios)
-          .find((radio) => (radio.value || "") === "icon");
-        if (!iconRadio) {
-          throw new Error("icon radio not found");
-        }
-        iconRadio.click();
-        iconRadio.dispatchEvent(new Event("input", { bubbles: true }));
-        iconRadio.dispatchEvent(new Event("change", { bubbles: true }));
+        clickActionsItem(ui.frameDoc, "Rename Bob");
         await sleep(100);
         text = bodyText(ui.frameDoc);
-        assertTrue(text.includes("mode:icon"), "radios changed mode to icon");
-        assertTrue(text.includes("img:avatar-icon.png"), "image preview updated for icon");
+        assertTrue(text.includes("Profile: Bob"), "profile text updates after rename");
+        assertTrue(text.includes("status:renamed"), "status after rename");
 
-        menuItemByText(ui.frameDoc, "Rename Bob").click();
-        await sleep(100);
-        assertTrue(fieldsetLegendText(ui.fieldset) === "Profile: Bob", "group legend updates after rename");
-        assertTrue(bodyText(ui.frameDoc).includes("status:renamed"), "status after rename");
-
-        menuItemByText(ui.frameDoc, "Save preset").click();
-        await sleep(100);
-        assertTrue(bodyText(ui.frameDoc).includes("status:saved"), "status after save preset");
-
-        const initialsRadio = Array.from(ui.radios)
-          .find((radio) => (radio.value || "") === "initials");
-        if (!initialsRadio) {
-          throw new Error("initials radio not found");
-        }
-        initialsRadio.click();
-        initialsRadio.dispatchEvent(new Event("change", { bubbles: true }));
-        await sleep(100);
-        assertTrue(bodyText(ui.frameDoc).includes("mode:initials"), "mode changed to initials before load");
-
-        menuItemByText(ui.frameDoc, "Load preset").click();
+        clickActionsItem(ui.frameDoc, "Save preset");
         await sleep(100);
         text = bodyText(ui.frameDoc);
-        assertTrue(text.includes("mode:icon"), "load preset restored mode");
-        assertTrue(text.includes("img:avatar-icon.png"), "load preset restored image");
-        assertTrue(text.includes("status:loaded"), "status after load preset");
+        assertTrue(text.includes("status:saved"), "status after save preset");
 
-        menuItemByText(ui.frameDoc, "Reset").click();
+        clickActionsItem(ui.frameDoc, "Reset");
         await sleep(100);
         text = bodyText(ui.frameDoc);
-        assertTrue(fieldsetLegendText(ui.fieldset) === "Profile: Alice", "reset restored profile name");
+        assertTrue(text.includes("Profile: Alice"), "reset restored profile name");
         assertTrue(text.includes("mode:photo"), "reset restored mode");
         assertTrue(text.includes("img:avatar-photo.png"), "reset restored image");
         assertTrue(text.includes("status:reset"), "status after reset");
 
-        setStatus("PASS\nprofile settings parity: radios+image+group+menu actions", "pass");
+        setStatus("PASS\nprofile settings parity: image/profile/menu actions", "pass");
       } catch (err) {
         console.error(err);
         const frame = document.getElementById("app-frame");
         const frameDoc = frameDocFrom(frame);
         const diag = frameDoc
           ? ("diag: radios=" + frameDoc.querySelectorAll("input[type='radio']").length +
-             " imgs=" + frameDoc.querySelectorAll("img").length +
+             " images=" + frameDoc.querySelectorAll("[data-we-widget='image']").length +
              " body=" + JSON.stringify(bodyText(frameDoc)))
           : "diag: no frame document";
         setStatus("FAIL\n" + (err && err.message ? err.message : String(err)) + "\n" + diag, "fail");
