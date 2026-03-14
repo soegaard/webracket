@@ -156,6 +156,15 @@
       (text "Enter an item. ")
       (text "Add the item to the list using either the Add button, or press <enter>.")
 
+      ;; TODO Experiment: how to add an on-click handler to a text element.
+      #;(text "Click me!"
+            #:attrs `((onclick
+                       ,(procedure->external
+                         (lambda (_evt)
+                           (with-handlers ([(lambda (_e) #t) (lambda (_e) (void))])
+                             (js-log "hello")))))))
+
+      
       (h2 "The List")
       (list-view @todos
                  (lambda (_key entry)
@@ -177,7 +186,7 @@
       (hpanel (button "All done!"          mark-all-done!)
               (button "Remove done items"  clear-done!))
 
-      (h2 "New item")
+      (h2 "New Item")
       (grid '(50 50)
             (vpanel
              (input @draft
