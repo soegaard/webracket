@@ -16,6 +16,7 @@
 ;;   obs-set!        Set observable value directly.
 ;;   obs-peek        Read current observable value.
 ;;   obs-map         Create a derived mapped observable.
+;;   obs-combine     Create a derived observable from many observables.
 ;;   obs-filter      Create a derived filtered observable.
 
 (define-values
@@ -28,6 +29,7 @@
    obs-set!
    obs-peek
    obs-map
+   obs-combine
    obs-filter)
   (let ()
     (struct observable (id name value observers updatable?) #:mutable #:transparent)
@@ -113,6 +115,33 @@
       (obs-observe! o update-derived)
       d)
 
+    ;; obs-combine : (-> any/c ... any/c) observable? ... -> observable?
+    ;;   Create a derived observable by applying f to values from one or more observables.
+    (define (obs-combine f . os)
+      (when (null? os)
+        (raise-arguments-error 'obs-combine
+                               "expected at least one observable"
+                               "observables"
+                               os))
+      (for-each (lambda (o)
+                  (unless (obs? o)
+                    (raise-arguments-error 'obs-combine
+                                           "expected observable argument"
+                                           "value"
+                                           o)))
+                os)
+      (define (combined-value)
+        (apply f (map obs-peek os)))
+      (define d (obs (combined-value) default-observable-name #t))
+      (define (update-derived _v)
+        (define combined (combined-value))
+        (set-observable-value! d combined)
+        (notify-observers d combined))
+      (for-each (lambda (o)
+                  (obs-observe! o update-derived))
+                os)
+      d)
+
     ;; obs-filter : observable? (-> any/c any/c) [any/c] -> observable?
     ;;   Create a derived observable that updates only when predicate f is truthy.
     (define (obs-filter o f [default #f])
@@ -136,4 +165,5 @@
             obs-set!
             obs-peek
             obs-map
+            obs-combine
             obs-filter)))

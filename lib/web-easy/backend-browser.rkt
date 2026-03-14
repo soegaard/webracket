@@ -352,20 +352,20 @@
     ;; apply-attributes! : dom-node-record? list? list? -> void?
     ;;   Apply tracked attributes to native node and handle dialog open/close transitions.
     (define (apply-attributes! n old-attrs attrs)
-      (define native (dom-node-record-native n))
-      (define tag (dom-node-record-tag n))
-      (define old-open? (dialog-open-attr? old-attrs))
-      (define new-open? (dialog-open-attr? attrs))
-      (define popover-panel? (popover-panel-attr? attrs))
+      (define native              (dom-node-record-native n))
+      (define tag                 (dom-node-record-tag n))
+      (define old-open?           (dialog-open-attr? old-attrs))
+      (define new-open?           (dialog-open-attr? attrs))
+      (define popover-panel?      (popover-panel-attr? attrs))
       (define old-popover-hidden? (popover-hidden-attr? old-attrs))
       (define new-popover-hidden? (popover-hidden-attr? attrs))
       (when (or (eq? tag 'select)
                 (eq? tag 'choice))
-        (define choices (alist-ref/default attrs 'choices '()))
+        (define choices      (alist-ref/default attrs 'choices '()))
         (define option-pairs (alist-ref/default attrs 'option-pairs '()))
         (sync-select-options! native choices option-pairs))
       (for-each (lambda (a)
-                  (define name (car a))
+                  (define name  (car a))
                   (define value (cdr a))
                   (case name
                     [(choices option-pairs columns density menu-trigger open)
@@ -382,8 +382,8 @@
                      (void)]
                     [else
                      (js-set-attribute! native
-                                                  (symbol->attr-name name)
-                                                  (value->attr-string value))]))
+                                        (symbol->attr-name name)
+                                        (value->attr-string value))]))
                 attrs)
       (when (and (eq? tag 'dialog) (not old-open?) new-open?)
         (handle-dialog-open-transition! native))
@@ -446,8 +446,8 @@
     (define (install-default-node-shape! n)
       (define native (dom-node-record-native n))
       (case (dom-node-record-tag n)
-        [(checkbox) (js-set-attribute! native attr/type "checkbox")]
-        [(slider) (js-set-attribute! native attr/type "range")]
+        [(checkbox)  (js-set-attribute! native attr/type "checkbox")]
+        [(slider)    (js-set-attribute! native attr/type "range")]
         [(menu-item) (js-set-attribute! native attr/type "button")]
         [else (void)]))
 
@@ -1049,7 +1049,7 @@
     ;;   Construct a browser-backed node and install event bridges.
     (define (dom-node tag attrs children text on-click on-change)
       (define native (js-create-element (tag->element-name tag)))
-      (define n (dom-node-record tag attrs children text on-click on-change native))
+      (define n      (dom-node-record tag attrs children text on-click on-change native))
       ;; invoke-click-callback! : any/c -> void?
       ;;   Invoke callback when present.
       (define (invoke-click-callback! callback)
