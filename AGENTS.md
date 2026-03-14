@@ -18,6 +18,15 @@ Racket primitives** faithfully.
 - The MiniScheme interpreter is used to stress test WebRacket.
 - When an error is found in WebRacket, do not code around the problem in examples.
 - Instead, create a minimal reproducible WebRacket program and work on fixing WebRacket itself.
+- Don’t work around compiler/runtime bugs in examples; make a minimal repro and fix core code.
+- For compiler pass debugging, use `--dump-passes` and `--dump-passes-limit`; prefer `--no-stdlib` when possible for smaller dumps.
+
+### Build and Publish Workflow
+
+- Unless otherwise stated, assume screenshots are from content served from `local/`.
+- During development, build scripts must write to `local/` only.
+- Do not write to `public/` from build scripts.
+- `publish.sh` is the only script that copies from `local/` to `public/`.
 
 ---
 
@@ -154,6 +163,23 @@ etc.
 - Remember `then` and `else` in if-expressions.
 - In the folded text format for WebAssembly, an if-expression does not need an `else`-clause.
   Drop the `else` in this situation `(else (nop))`.
+
+## Control-Flow Style
+- Prefer `cond` over nested `if`/`let` patterns when branching logic is non-trivial.
+- Prefer internal `define`s inside `cond` branches instead of wrapping branch bodies in `let` just to name intermediates.
+- Align right-hand-side expressions in `cond` clauses where it improves readability.
+- For consecutive `define` forms, align right-hand-side expressions where it improves readability.
+
+## Function Comment Style
+For exported and internal helper functions, add both:
+- A contract comment line:
+  - `;; name : contract -> result`
+- A purpose comment line that starts with two spaces after `;;`:
+  - `;;   Brief purpose sentence.`
+
+Example:
+- `;; char-set-member? : char-set? char? -> boolean?`
+- `;;   Check whether ch is a member of cs.`
 
 --- 
 
