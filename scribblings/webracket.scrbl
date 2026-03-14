@@ -490,7 +490,9 @@ Currently available libraries include:
 ]
 }
 
-@subsection{Keyword arguments}
+@include-section["web-easy.scrbl"]
+
+@section{Keyword arguments}
 
 @defform*/subs[[(define/key (head args) body ...+)]
                ([head id
