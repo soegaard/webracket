@@ -1,5 +1,6 @@
 #lang racket/base
 (provide ffi-file->foreigns
+         ffi-file->foreign-docs
          foreign->import
          foreign->primitive
          foreigns->primitive-names)
@@ -41,13 +42,29 @@
   (define forms (read-forms-from-file file-path))
   (for-each validate-form forms)
   (for/list ([form forms])
-    (syntax-case* form (define-foreign) literal=?
-      [(define-foreign racket-name #:module mod #:name name type)
-       (foreign (syntax-e #'racket-name)
-                (syntax-e #'mod)
-                (syntax-e #'name)
-                (argument-types #'type)
-                (result-types #'type))])))
+    (define-values (racket-name mod name type doc mdn)
+      (define-foreign-parts form))
+    (void doc mdn)
+    (foreign (syntax-e racket-name)
+             (syntax-e mod)
+             (syntax-e name)
+             (argument-types type)
+             (result-types type))))
+
+(define (ffi-file->foreign-docs file-path)
+  (define forms (read-forms-from-file file-path))
+  (for-each validate-form forms)
+  (for/list ([form forms])
+    (define-values (racket-name mod name type doc mdn)
+      (define-foreign-parts form))
+    (foreign-doc
+     (foreign (syntax-e racket-name)
+              (syntax-e mod)
+              (syntax-e name)
+              (argument-types type)
+              (result-types type))
+     (and doc (syntax-e doc))
+     (and mdn (syntax-e mdn)))))
 
 ;; The types are as follows:
 
@@ -72,6 +89,7 @@
 ;; The following are the parts needed for `ffi-file->foreigns`.
 
 (require (for-syntax racket/base)
+         (only-in racket/list last drop-right)
          "structs.rkt")
 
 
@@ -90,6 +108,56 @@
 
 (define (literal=? x y)
   (eq? (syntax-e x) (syntax-e y)))
+
+;; define-foreign-parts : syntax? ->
+;;   values racket-name-stx mod-stx name-stx type-stx maybe-doc-stx maybe-mdn-stx
+;; Supports optional keyword/value metadata pairs before the final type:
+;;   #:module <string> (required)
+;;   #:name   <string> (required)
+;;   #:doc    <string> (optional)
+;;   #:mdn    <string> (optional)
+(define (define-foreign-parts form)
+  (define who 'define-foreign)
+  (define xs (syntax->list form))
+  (unless (and xs (>= (length xs) 5))
+    (raise-syntax-error who "malformed define-foreign form" form))
+  (define head (car xs))
+  (unless (eq? (syntax-e head) 'define-foreign)
+    (raise-syntax-error who "expected a define-foreign form" form head))
+  (define racket-name (cadr xs))
+  (define tail (cddr xs))
+  (unless (pair? tail)
+    (raise-syntax-error who "missing type in define-foreign form" form))
+  (define type (last tail))
+  (define opts (drop-right tail 1))
+
+  (define mod #f)
+  (define name #f)
+  (define doc #f)
+  (define mdn #f)
+
+  (let loop ([ys opts])
+    (unless (null? ys)
+      (unless (pair? (cdr ys))
+        (raise-syntax-error who "missing value for keyword option" form (car ys)))
+      (define k (syntax-e (car ys)))
+      (define v (cadr ys))
+      (case k
+        [(#:module) (set! mod v)]
+        [(#:name)   (set! name v)]
+        [(#:doc)    (set! doc v)]
+        [(#:mdn)    (set! mdn v)]
+        [else
+         (raise-syntax-error who
+                             "unknown option in define-foreign; expected #:module, #:name, #:doc, or #:mdn"
+                             form (car ys))])
+      (loop (cddr ys))))
+
+  (unless mod
+    (raise-syntax-error who "missing required option #:module" form))
+  (unless name
+    (raise-syntax-error who "missing required option #:name" form))
+  (values racket-name mod name type doc mdn))
 
 (define (validate-base-argument-type who form type)
   (syntax-case* type (boolean string string/symbol value extern extern/raw i32 u32 f64) literal=?
@@ -141,47 +209,45 @@
 
 (define (validate-form form)
   (define who 'define-foreign)
-  (syntax-case* form (define-foreign -> void) literal=?
-    [(define-foreign racket-name #:module mod #:name name type)
-     (begin
-       (unless (identifier? #'racket-name)
-         (raise-syntax-error who
-                             "expected a symbol for the racket name"
-                             form #'racket-name))
-       
-       (unless (string? (syntax-e #'mod))
-         (raise-syntax-error who
-                             "expected a string for the module name"
-                             form #'mod))
-       (unless (string? (syntax-e #'name))
-         (raise-syntax-error who
-                             "expected a string for the host name"
-                             form #'name))
-       (syntax-case #'type (->)
-         [(-> arg-types void) ; void is the same as ()
-          (let ()
-            (validate-argument-types who form #'arg-types))]
-         [(-> arg-types result-types)
-          (let ()
-            (validate-argument-types who form #'arg-types)
-            (validate-result-types   who form #'result-types))]
-         [_
-          (raise-syntax-error who
-                              (string-append
-                               "expected a type specification of the form "
-                               "(-> (<argument-type> ...) (<result-type> ...))")
-                              form #'type)])       
-       #t)]
-    [(define-foreign . _)
-     (raise-syntax-error who
-                         (string-append
-                          "malformed define-foreign, expected:\n"
-                          "(define-foreign #:module <module> #:name <name>)\n"
-                          "where <module> and <name> are literal strings")
-                         form)]
+  (define-values (racket-name mod name type doc mdn)
+    (define-foreign-parts form))
+  (unless (identifier? racket-name)
+    (raise-syntax-error who
+                        "expected a symbol for the racket name"
+                        form racket-name))
+  (unless (string? (syntax-e mod))
+    (raise-syntax-error who
+                        "expected a string for the module name"
+                        form mod))
+  (unless (string? (syntax-e name))
+    (raise-syntax-error who
+                        "expected a string for the host name"
+                        form name))
+  (when doc
+    (unless (string? (syntax-e doc))
+      (raise-syntax-error who
+                          "expected a string for #:doc"
+                          form doc)))
+  (when mdn
+    (unless (string? (syntax-e mdn))
+      (raise-syntax-error who
+                          "expected a string for #:mdn"
+                          form mdn)))
+  (syntax-case type (->)
+    [(-> arg-types void) ; void is the same as ()
+     (let ()
+       (validate-argument-types who form #'arg-types))]
+    [(-> arg-types result-types)
+     (let ()
+       (validate-argument-types who form #'arg-types)
+       (validate-result-types   who form #'result-types))]
     [_
      (raise-syntax-error who
-                         "expected a `define-foreign` form\n")]))
+                         (string-append
+                          "expected a type specification of the form "
+                          "(-> (<argument-type> ...) (<result-type> ...))")
+                         form type)])
+  #t)
 
 ;; Note: After validation we can assume the form has the correct form.
 

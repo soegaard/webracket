@@ -26,3 +26,8 @@
                  )
   #:transparent)
 
+;; Optional documentation metadata attached to a foreign binding declaration.
+(struct foreign-doc (foreign      ; foreign structure
+                     doc          ; optional one-line description string or #f
+                     mdn)         ; optional MDN path string or #f
+  #:transparent)
