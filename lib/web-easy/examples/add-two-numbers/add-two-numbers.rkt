@@ -33,30 +33,29 @@
   (render
    (window
     (container ; used to limit the width
-     (stack    ; optional, improves spacing
-
-      (heading 2 "Add Two Numbers")
-      (text "Type two numbers to see their sum.")
-      
-      (group "Inputs"
-             (stack              
-              (text "First number")
-              (input @a-text
-                     (lambda (v)
-                       (:= @a-text v)
-                       (update-model!))
-                     #:attrs '((placeholder "e.g. 12.5")))
-              
-              (text "Second number")
-              (input @b-text
-                     (lambda (v)
-                       (:= @b-text v)
-                       (update-model!))
-                     #:attrs '((placeholder "e.g. 3.5")))))
-      
-      (group "Result"
-             (inline (text "The sum is: ")
-                     (text @s-text))))))))
+     (stack ; #:attrs '((style "width: 100%; max-width: 34rem;"))
+            (heading 2 "Add Two Numbers")
+            (text "Type two numbers to see their sum.")
+            
+            (group "Inputs"
+                   (stack              
+                    (text "First number")
+                    (input @a-text
+                           (lambda (v)
+                             (:= @a-text v)
+                             (update-model!))
+                           #:attrs '((placeholder "e.g. 12.5")))
+                    
+                    (text "Second number")
+                    (input @b-text
+                           (lambda (v)
+                             (:= @b-text v)
+                             (update-model!))
+                           #:attrs '((placeholder "e.g. 3.5")))))
+            
+            (group "Result"
+                   (inline (text "The sum is: ")
+                           (text @s-text))))))))
 
 ;;;
 ;;; Control
@@ -103,8 +102,8 @@
 (define (apply-light-theme! core-link light-link)
   (define html-node (js-ref/extern (js-document-body) "parentElement"))
   (js-set-attribute! html-node  "class" "we-theme-light")
-  (js-set-attribute! core-link  "href"  "../../../themes/web-easy-core.css")
-  (js-set-attribute! light-link "href"  "../../../themes/theme-external-light.css")
+  (js-set-attribute! core-link  "href"  "web-easy-core.css")
+  (js-set-attribute! light-link "href"  "theme-external-light.css")
   (void))
 
 (define theme-core-link-node  (install-theme-link! "we-theme-core-css"))
