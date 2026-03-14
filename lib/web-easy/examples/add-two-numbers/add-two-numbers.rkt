@@ -33,32 +33,30 @@
   (render
    (window
     (container ; used to limit the width
-     (stack (heading 2 "Add Two Numbers")
-            (text "Type two numbers to see their sum.")
-            
-            (group "Inputs"
-                   (stack
-                    
-                    (text "First number")
-                    (input @a-text
-                           (lambda (v)
-                             (:= @a-text v)
-                             (update-model!))
-                           #:attrs '((placeholder "e.g. 12.5")))
-                    
-                    (text "Second number")
-                    (input @b-text
-                           (lambda (v)
-                             (:= @b-text v)
-                             (update-model!))
-                           #:attrs '((placeholder "e.g. 3.5")))))
-            
-            (group "Result"
-                   (text @s-text #:class "we-text-strong"))))
-    
-    #;(container
-     
-     #:class "we-flow"))))
+     (stack    ; optional, improves spacing
+
+      (heading 2 "Add Two Numbers")
+      (text "Type two numbers to see their sum.")
+      
+      (group "Inputs"
+             (stack              
+              (text "First number")
+              (input @a-text
+                     (lambda (v)
+                       (:= @a-text v)
+                       (update-model!))
+                     #:attrs '((placeholder "e.g. 12.5")))
+              
+              (text "Second number")
+              (input @b-text
+                     (lambda (v)
+                       (:= @b-text v)
+                       (update-model!))
+                     #:attrs '((placeholder "e.g. 3.5")))))
+      
+      (group "Result"
+             (inline (text "The sum is: ")
+                     (text @s-text))))))))
 
 ;;;
 ;;; Control
