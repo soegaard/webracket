@@ -32,7 +32,7 @@
 (define app-renderer
   (render
    (window
-    (container
+    (container ; used to limit the width
      (stack (heading 2 "Add Two Numbers")
             (text "Type two numbers to see their sum.")
             
@@ -40,21 +40,24 @@
                    (stack
                     
                     (text "First number")
-                    (input @left-text
+                    (input @a-text
                            (lambda (v)
                              (:= @a-text v)
                              (update-model!))
                            #:attrs '((placeholder "e.g. 12.5")))
                     
                     (text "Second number")
-                    (input @right-text
+                    (input @b-text
                            (lambda (v)
                              (:= @b-text v)
                              (update-model!))
                            #:attrs '((placeholder "e.g. 3.5")))))
             
             (group "Result"
-                   (text @s-text #:class "we-text-strong")))
+                   (text @s-text #:class "we-text-strong"))))
+    
+    #;(container
+     
      #:class "we-flow"))))
 
 ;;;
@@ -83,6 +86,9 @@
 ;;; Themes
 ;;;
 
+;; Note: The paths to the theme css files assume the
+;;       web-server was started in lib/web-easy/
+
 ;; install-theme-link! : string? -> any/c
 ;;   Create and attach a stylesheet link element in <head>.
 (define (install-theme-link! link-id)
@@ -99,8 +105,8 @@
 (define (apply-light-theme! core-link light-link)
   (define html-node (js-ref/extern (js-document-body) "parentElement"))
   (js-set-attribute! html-node  "class" "we-theme-light")
-  (js-set-attribute! core-link  "href"  "../themes/web-easy-core.css")
-  (js-set-attribute! light-link "href"  "../themes/theme-external-light.css")
+  (js-set-attribute! core-link  "href"  "../../../themes/web-easy-core.css")
+  (js-set-attribute! light-link "href"  "../../../themes/theme-external-light.css")
   (void))
 
 (define theme-core-link-node  (install-theme-link! "we-theme-core-css"))
