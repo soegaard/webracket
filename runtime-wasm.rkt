@@ -11545,6 +11545,9 @@
               (local $pow   i32)
               (local $res   f64)
 
+              ;; Initialize locals
+              (local.set $frac (global.get $false))
+
               ;; Validate string argument
               (if (ref.test (ref $String) (local.get $s-raw))
                   (then (nop))
@@ -11619,20 +11622,26 @@
               (if (i32.ne (local.get $radix) (i32.const 10))
                   (then (return (global.get $false))))
 
-              ;; Parse fractional part
-              (call $string->number:parse-integer
-                    (local.get $s)
-                    (i32.add (local.get $i) (i32.const 1))
-                    (local.get $radix))
-              (local.set $m) (local.set $frac)
-              (if (ref.eq (local.get $frac) (global.get $false))
-                  (then (return (global.get $false))))
+              ;; If '.' is the last character, accept it as ".0"
+              (if (i32.eq (i32.add (local.get $i) (i32.const 1)) (local.get $len))
+                  (then
+                   (local.set $m    (i32.const 0))
+                   (local.set $frac (ref.i31 (i32.const 0))))
+                  (else
+                   ;; Parse fractional part
+                   (call $string->number:parse-integer
+                         (local.get $s)
+                         (i32.add (local.get $i) (i32.const 1))
+                         (local.get $radix))
+                   (local.set $m) (local.set $frac)
+                   (if (ref.eq (local.get $frac) (global.get $false))
+                       (then (return (global.get $false))))
 
-              ;; Require digits after '.' and consume all characters
-              (if (i32.eqz (local.get $m))
-                  (then (return (global.get $false))))
-              (if (i32.ne (i32.add (local.get $i) (i32.add (local.get $m) (i32.const 1))) (local.get $len))
-                  (then (return (global.get $false))))
+                   ;; Consume all remaining characters
+                   (if (i32.ne (i32.add (local.get $i) (i32.add (local.get $m) (i32.const 1)))
+                               (local.get $len))
+                       (then (return (global.get $false))))))
+
 
               ;; Compute result
               (local.set $acc (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $int))) (i32.const 1)))
