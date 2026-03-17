@@ -730,7 +730,7 @@
     ;; text : (or/c string? observable?) -> view?
     ;;   Construct a text view from static or observable value.
     (define/key (text s
-                      #:id [id #f]
+                      #:id    [id    #f]
                       #:class [class #f]
                       #:attrs [attrs '()])
       (apply-root-decorators
@@ -746,13 +746,13 @@
     ;;   Optional parameter spacing defaults to 'normal.
     (define/key (heading level
                          content
-                         [align 'left]
+                         [align   'left]
                          [spacing 'normal]
-                         #:align [align-kw #f]
+                         #:align   [align-kw   #f]
                          #:spacing [spacing-kw #f]
-                         #:id [id #f]
-                         #:class [class #f]
-                         #:attrs [attrs '()])
+                         #:id      [id         #f]
+                         #:class   [class      #f]
+                         #:attrs   [attrs      '()])
       (define final-align
         (if (eq? align-kw #f) align align-kw))
       (define final-spacing
@@ -1472,20 +1472,21 @@
     ;;     tone-style  -> symbol tone style: fill/outline.
     (define/key (dialog open
                         on-close
-                        #:size [size-kw #f]
-                        #:title [title #f]
+                        #:size        [size-kw     #f]
+                        #:title       [title       #f]
                         #:description [description #f]
-                        #:footer [footer #f]
+                        #:footer      [footer      #f]
                         #:show-close? [show-close? #f]
                         #:close-label [close-label "Close dialog"]
-                        #:tone [tone #f]
-                        #:tone-style [tone-style #f]
-                        #:id [id #f]
-                        #:class [class #f]
-                        #:attrs [attrs '()]
+                        #:tone        [tone        #f]
+                        #:tone-style  [tone-style  #f]
+                        #:id          [id          #f]
+                        #:class       [class       #f]
+                        #:attrs       [attrs      '()]
                         . args)
-      (define size 'md)
-      (define rest/args args)
+      
+      (define size        'md)
+      (define rest/args   args)
       (define old-options '())
       (when (and (pair? rest/args)
                  (symbol? (car rest/args))
@@ -1496,22 +1497,24 @@
                  (options-alist? (car rest/args)))
         (set! old-options (car rest/args))
         (set! rest/args (cdr rest/args)))
+      
       (define final-size
         (if (eq? size-kw #f) size size-kw))
       (define options
         (append old-options
-                (list (cons 'title title)
+                (list (cons 'title       title)
                       (cons 'description description)
-                      (cons 'footer footer)
+                      (cons 'footer      footer)
                       (cons 'show-close? show-close?)
                       (cons 'close-label close-label)
-                      (cons 'tone tone)
-                      (cons 'tone-style tone-style))))
+                      (cons 'tone        tone)
+                      (cons 'tone-style  tone-style))))
+
       (apply-root-decorators
-       (view kind/dialog (list (cons 'open open)
+       (view kind/dialog (list (cons 'open     open)
                                (cons 'on-close on-close)
-                               (cons 'size final-size)
-                               (cons 'options options))
+                               (cons 'size     final-size)
+                               (cons 'options  options))
              rest/args)
        id
        class
@@ -1531,21 +1534,23 @@
     ;;     tone-style  -> symbol tone style: fill/outline.
     (define/key (modal open
                        on-close
-                       #:size [size-kw #f]
-                       #:title [title #f]
+                       #:size        [size-kw     #f]
+                       #:title       [title       #f]
                        #:description [description #f]
-                       #:footer [footer #f]
+                       #:footer      [footer      #f]
                        #:show-close? [show-close? #f]
                        #:close-label [close-label "Close modal"]
-                       #:tone [tone #f]
-                       #:tone-style [tone-style #f]
-                       #:id [id #f]
-                       #:class [class #f]
-                       #:attrs [attrs '()]
+                       #:tone        [tone        #f]
+                       #:tone-style  [tone-style  #f]
+                       #:id          [id          #f]
+                       #:class       [class       #f]
+                       #:attrs       [attrs      '()]
                        . args)
-      (define size 'md)
-      (define rest/args args)
+      
+      (define size        'md)
+      (define rest/args   args)
       (define old-options '())
+      
       (when (and (pair? rest/args)
                  (symbol? (car rest/args))
                  (memq (car rest/args) '(sm md lg xl)))
@@ -1566,6 +1571,7 @@
                       (cons 'close-label close-label)
                       (cons 'tone tone)
                       (cons 'tone-style tone-style))))
+      
       (apply-root-decorators
        (view kind/modal (list (cons 'open open)
                               (cons 'on-close on-close)
@@ -1581,8 +1587,8 @@
     ;;   Construct a dynamic single-child view from value using make-view.
     ;;   Optional parameter equal-proc defaults to equal?.
     (define (observable-view data make-view [equal-proc equal?])
-      (view kind/observable-view (list (cons 'data data)
-                                       (cons 'make-view make-view)
+      (view kind/observable-view (list (cons 'data       data)
+                                       (cons 'make-view  make-view)
                                        (cons 'equal-proc equal-proc))
             '()))
 

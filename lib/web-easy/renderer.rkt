@@ -4472,8 +4472,10 @@
            (define raw-data    (alist-ref (view-props v) 'data       'render))
            (define make-view   (alist-ref (view-props v) 'make-view  'render))
            (define equal-proc  (alist-ref (view-props v) 'equal-proc 'render))
+
            (define node (dom-node 'div (list (cons 'data-we-widget "observable-view")
-                                             (cons 'class "we-observable-view")) '() #f #f #f))
+                                             (cons 'class          "we-observable-view"))
+                                  '() #f #f #f))
            (define last-value #f)
            (define have-last? #f)
            (define (render-from-value! value)
