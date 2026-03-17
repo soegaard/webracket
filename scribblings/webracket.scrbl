@@ -56,6 +56,7 @@
 @title{WebRacket Manual}
 @table-of-contents[]
 
+
 @section{Introduction}
 
 The WebRacket project is an attempt to bring Racket programs to the web.
@@ -73,6 +74,7 @@ This manual currently documents:
   @item{The command-line compiler driver.}
   @item{Library forms that are implemented as syntax-layer helpers.}
 ]
+
 
 @section{WebRacket at a Glance}
 
@@ -443,6 +445,7 @@ FFI and linker flags:
   @item{@shell-code{racket webracket.rkt --ffi dom --ffi standard program.rkt}}
 ]
 
+
 @section{Browser API}
 
 Bindings are listed here in reference-manual style.
@@ -473,6 +476,8 @@ These entries come from @tt{ffi/dom.ffi}.
 @(for/list ([spec (in-list dom-doc-specs)])
    (render-dom-defproc spec))
 
+@;-------------------------------------------------------------------
+
 @section{Libraries}
 
 @defform[(include-lib lib-id)]{
@@ -490,7 +495,11 @@ Currently available libraries include:
 ]
 }
 
+@;-------------------------------------------------------------------
+
 @include-section["web-easy.scrbl"]
+
+@;-------------------------------------------------------------------
 
 @section{Keyword arguments}
 
