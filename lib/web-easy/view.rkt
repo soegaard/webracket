@@ -459,7 +459,7 @@
     ;; container : view? ... -> view?
     ;;   Construct a centered width-constrained layout container view.
     (define/key (container
-                 #:id [id #f]
+                 #:id    [id    #f]
                  #:class [class #f]
                  #:attrs [attrs '()]
                  . children)
@@ -2024,9 +2024,9 @@
     ;;   Optional parameter leading-icon defaults to #f.
     ;;   Optional parameter trailing-icon defaults to #f.
     (define (menu-item label action [leading-icon #f] [trailing-icon #f])
-      (view kind/menu-item (list (cons 'label label)
-                                 (cons 'action action)
-                                 (cons 'leading-icon leading-icon)
+      (view kind/menu-item (list (cons 'label         label)
+                                 (cons 'action        action)
+                                 (cons 'leading-icon  leading-icon)
                                  (cons 'trailing-icon trailing-icon))
             '()))
 
@@ -2034,9 +2034,9 @@
     ;;   Construct a keyed dynamic list container.
     ;;   Optional parameter key defaults to values.
     (define (list-view entries make-view [key values])
-      (view kind/list-view (list (cons 'entries entries)
+      (view kind/list-view (list (cons 'entries   entries)
                                  (cons 'make-view make-view)
-                                 (cons 'key key))
+                                 (cons 'key       key))
             '()))
 
     (values view

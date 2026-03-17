@@ -63,8 +63,8 @@
       #:transparent)
 
     ;; Constants used by browser backend DOM translation.
-    (define attr/type "type") ; Attribute name for input element type.
-    (define attr/value "value") ; Attribute name for value-bearing controls.
+    (define attr/type    "type")    ; Attribute name for input element type.
+    (define attr/value   "value")   ; Attribute name for value-bearing controls.
     (define attr/checked "checked") ; Property/attribute name for checked controls.
     (define dialog-focusable-selector
       "button,[href],input,select,textarea,[tabindex]:not([tabindex='-1'])") ; CSS selector for focusable dialog controls.
@@ -72,12 +72,12 @@
       "[data-we-widget='scrollspy-section']") ; Selector used to observe scrollspy sections.
     (define scrollspy-item-selector
       ".we-scrollspy-item") ; Selector used for scrollspy keyboard roving.
-    (define dialog-focus-returns '()) ; Association list mapping dialog native nodes to return-focus targets.
-    (define scrollspy-observers '()) ; Association list mapping scrollspy container native nodes to observer handles.
-    (define scrollspy-listeners '()) ; Association list mapping scrollspy container native nodes to listener handles.
+    (define dialog-focus-returns         '()) ; Association list mapping dialog native nodes to return-focus targets.
+    (define scrollspy-observers          '()) ; Association list mapping scrollspy container native nodes to observer handles.
+    (define scrollspy-listeners          '()) ; Association list mapping scrollspy container native nodes to listener handles.
     (define scrollspy-cleanup-registered '()) ; Native nodes with registered scrollspy cleanup callbacks.
-    (define menu-typeahead-timeout-ms 700) ; Milliseconds before menu typeahead prefix resets.
-    (define menu-typeahead-state '()) ; Association list mapping popup native nodes to (cons timestamp-ms prefix).
+    (define menu-typeahead-timeout-ms    700) ; Milliseconds before menu typeahead prefix resets.
+    (define menu-typeahead-state         '()) ; Association list mapping popup native nodes to (cons timestamp-ms prefix).
 
     ;; symbol->attr-name : symbol? -> string?
     ;;   Convert attribute symbol key to browser DOM attribute name.
@@ -88,9 +88,9 @@
     ;;   Convert attribute value to browser DOM attribute string.
     (define (value->attr-string v)
       (cond
-        [(string? v) v]
-        [(symbol? v) (symbol->string v)]
-        [(number? v) (number->string v)]
+        [(string? v)  v]
+        [(symbol? v)  (symbol->string v)]
+        [(number? v)  (number->string v)]
         [(boolean? v) (if v "true" "false")]
         [(list? v)
          (let loop ([rest v] [acc ""])
@@ -162,8 +162,7 @@
       (js-send (js-window-window)
                "setTimeout"
                (vector (procedure->external
-                        (lambda ()
-                          (callback)))
+                        (lambda () (callback)))
                        duration-ms)))
 
     ;; backend-clear-timeout! : any/c -> void?
@@ -359,11 +358,13 @@
       (define popover-panel?      (popover-panel-attr? attrs))
       (define old-popover-hidden? (popover-hidden-attr? old-attrs))
       (define new-popover-hidden? (popover-hidden-attr? attrs))
+
       (when (or (eq? tag 'select)
                 (eq? tag 'choice))
         (define choices      (alist-ref/default attrs 'choices '()))
         (define option-pairs (alist-ref/default attrs 'option-pairs '()))
         (sync-select-options! native choices option-pairs))
+      
       (for-each (lambda (a)
                   (define name  (car a))
                   (define value (cdr a))
@@ -380,7 +381,7 @@
                      (js-set! native attr/checked (if value #t #f))]
                     [(on-enter-action)
                      (void)]
-                    [else
+                    [else                                          
                      (js-set-attribute! native
                                         (symbol->attr-name name)
                                         (value->attr-string value))]))
@@ -1060,6 +1061,7 @@
       (define (invoke-change-callback! callback payload)
         (when callback
           (callback payload)))
+      
       (install-default-node-shape! n)
       (apply-attributes! n '() attrs)
       (when text

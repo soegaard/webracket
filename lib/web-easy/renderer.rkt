@@ -856,6 +856,42 @@
       (backend-replace-children! parent (map caddr new-items))
       new-items)
 
+    ;; TODO: The new version of render-list-items is the one to use.
+    ;;       The new example `dynamic-counters` use the new version.
+    ;;       Before a switch we need to update the smoke tests.
+    ;; TODO: future improvement: row-local cleanup when keyed rows are removed
+    
+    ;; render-list-items : dom-node? list? list? procedure? procedure? procedure? -> list?
+    ;;   Render entries into parent using keyed node reuse.
+    ;;   Each returned item state is (list key entry item-obs child-node).
+    (define (new-render-list-items
+             parent
+             entries
+             old-items
+             key-proc
+             make-view-proc
+             register-cleanup!)
+      (define new-items
+        (for/list ([entry (in-list entries)])
+          (define key (key-proc entry))
+          (define old-item (assoc key old-items))
+          (if old-item
+              (let ([old-entry  (list-ref old-item 1)]
+                    [item-obs   (list-ref old-item 2)]
+                    [child-node (list-ref old-item 3)])
+                (unless (equal? old-entry entry)
+                  (obs-set! item-obs entry))
+                (list key entry item-obs child-node))
+              (let* ([item-obs   (obs entry)]
+                     [child-view (make-view-proc key item-obs)]
+                     [child-node (build-node child-view register-cleanup!)])
+                (list key entry item-obs child-node)))))
+      (backend-replace-children! parent
+                                 (map (lambda (item) (list-ref item 3))
+                                      new-items))
+      new-items)
+    
+
     ;; replace-with-single-child! : dom-node? view? procedure? -> void?
     ;;   Replace parent children with a single child rendered from child-view.
     (define (replace-with-single-child! parent child-view register-cleanup!)
@@ -5869,8 +5905,10 @@
            (define raw-entries (alist-ref (view-props v) 'entries   'render))
            (define key-proc    (alist-ref (view-props v) 'key       'render))
            (define make-view   (alist-ref (view-props v) 'make-view 'render))
+
            (define node (dom-node 'div (list (cons 'data-we-widget "list-view")
-                                             (cons 'class "we-list-view")) '() #f #f #f))
+                                             (cons 'class          "we-list-view"))
+                                  '() #f #f #f))
            (define items '())
            (define (render-from-entries entries)
              (set! items
