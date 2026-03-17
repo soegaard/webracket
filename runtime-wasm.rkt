@@ -7647,7 +7647,7 @@
 
 
 
-        (func $inexact->exact (type $Prim1)
+         (func $inexact->exact (type $Prim1)
               (param $z (ref eq))
               (result   (ref eq))
 
@@ -39006,6 +39006,17 @@
                                      (i32.const 1))))
 
         (func $unsafe-vector-ref (type $Prim2)
+              (param $v (ref eq))
+              (param $k (ref eq))
+              (result (ref eq))
+              (array.get $Array
+                         (struct.get $Vector $arr
+                                     (ref.cast (ref $Vector) (local.get $v)))
+                         (i32.shr_s (i31.get_s (ref.cast (ref i31)
+                                                         (local.get $k)))
+                                    (i32.const 1))))
+
+        (func $unsafe-vector*-ref (type $Prim2)
               (param $v (ref eq))
               (param $k (ref eq))
               (result (ref eq))
