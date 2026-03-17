@@ -754,7 +754,7 @@
     (define (read-syntax source [in (current-input-port)])
       (do-read in source #t))
     
-   (values read read-syntax)))
+    (values read read-syntax)))
 
 
 #;(provide token

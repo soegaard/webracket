@@ -1,14 +1,15 @@
 #lang webracket
-(include/reader "qq-and-or.rkt"   read-syntax/skip-first-line)
-(include/reader "parameters.rkt"  read-syntax/skip-first-line)
-(include/reader "ports.rkt"       read-syntax/skip-first-line)
-(include/reader "exceptions.rkt"  read-syntax/skip-first-line)
-(include/reader "writing.rkt"     read-syntax/skip-first-line)
-(include/reader "reading.rkt"     read-syntax/skip-first-line)
-(include/reader "evaluation.rkt"  read-syntax/skip-first-line)
-(include/reader "hash-code.rkt"   read-syntax/skip-first-line)
-(include/reader "intmap.rkt"      read-syntax/skip-first-line)
-;(include/reader "hash.rkt"        read-syntax/skip-first-line)
+(include/reader "qq-and-or.rkt"          read-syntax/skip-first-line)
+(include/reader "parameters.rkt"         read-syntax/skip-first-line)
+(include/reader "ports.rkt"              read-syntax/skip-first-line)
+(include/reader "exceptions.rkt"         read-syntax/skip-first-line)
+(include/reader "writing.rkt"            read-syntax/skip-first-line)
+(include/reader "reading.rkt"            read-syntax/skip-first-line)
+(include/reader "evaluation.rkt"         read-syntax/skip-first-line)
+(include/reader "hash-code.rkt"          read-syntax/skip-first-line)
+(include/reader "intmap.rkt"             read-syntax/skip-first-line)
+(include/reader "formatting-numbers.rkt" read-syntax/skip-first-line)
+;(include/reader "hash.rkt"               read-syntax/skip-first-line)
 ; Pending implementation of more primitives.
 ; Note:
 ;   TODO: change hash-ref to immutable-hash-ref in "regexp.rkt"
