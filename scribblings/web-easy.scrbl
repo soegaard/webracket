@@ -225,7 +225,7 @@ is straight forward.
 Most concrete component constructors support:
 
 @itemlist[
-  @item{@racket[#:id] to set the root DOM id}
+  @item{@racket[#:id]    to set the root DOM id}
   @item{@racket[#:class] to add one or more CSS classes}
   @item{@racket[#:attrs] to add root DOM attributes}
 ]
@@ -252,9 +252,9 @@ Build a horizontal container.
 Positional arguments: each @racket[child] is laid out left-to-right.
 }
 
-@defproc[(container [#:id id (or/c #f string? symbol?) #f]
-                    [#:class class any/c #f]
-                    [#:attrs attrs list? null]
+@defproc[(container [#:id    id    (or/c #f string? symbol?) #f]
+                    [#:class class any/c                     #f]
+                    [#:attrs attrs list?                     null]
                     [child any/c] ...)
          any/c]{
 Build a centered container with width constraints.
@@ -263,9 +263,9 @@ Positional arguments: each @racket[child] is content inside the container.
 }
 
 @defproc[(grid [columns any/c]
-               [#:id id (or/c #f string? symbol?) #f]
-               [#:class class any/c #f]
-               [#:attrs attrs list? null]
+               [#:id    id    (or/c #f string? symbol?) #f]
+               [#:class class any/c                     #f]
+               [#:attrs attrs list?                     null]
                [child any/c] ...)
          any/c]{
 Build a grid container. The first child may be a gap value (number or CSS length string).
@@ -273,9 +273,9 @@ Build a grid container. The first child may be a gap value (number or CSS length
 Positional arguments: @racket[columns] sets the column template/count; @racket[child] values are grid items.
 }
 
-@defproc[(stack [#:id id (or/c #f string? symbol?) #f]
-                [#:class class any/c #f]
-                [#:attrs attrs list? null]
+@defproc[(stack [#:id    id    (or/c #f string? symbol?) #f]
+                [#:class class any/c                     #f]
+                [#:attrs attrs list?                     null]
                 [child any/c] ...)
          any/c]{
 Build a vertical stack container.
@@ -283,9 +283,9 @@ Build a vertical stack container.
 Positional arguments: each @racket[child] is a stacked item.
 }
 
-@defproc[(inline [#:id id (or/c #f string? symbol?) #f]
-                 [#:class class any/c #f]
-                 [#:attrs attrs list? null]
+@defproc[(inline [#:id    id    (or/c #f string? symbol?) #f]
+                 [#:class class any/c                     #f]
+                 [#:attrs attrs list?                     null]
                  [child any/c] ...)
          any/c]{
 Build a horizontal inline container.
@@ -294,9 +294,9 @@ Positional arguments: each @racket[child] is an inline item.
 }
 
 @defproc[(spacer [grow (or/c number? string?) 1]
-                 [#:id id (or/c #f string? symbol?) #f]
-                 [#:class class any/c #f]
-                 [#:attrs attrs list? null])
+                 [#:id    id    (or/c #f string? symbol?) #f]
+                 [#:class class any/c                     #f]
+                 [#:attrs attrs list?                     null])
          any/c]{
 Build a flexible spacer for layout.
 
@@ -304,9 +304,9 @@ Positional arguments: @racket[grow] is the growth factor/size basis.
 }
 
 @defproc[(divider [orientation symbol? 'horizontal]
-                  [#:id id (or/c #f string? symbol?) #f]
-                  [#:class class any/c #f]
-                  [#:attrs attrs list? null])
+                  [#:id    id    (or/c #f string? symbol?) #f]
+                  [#:class class any/c                     #f]
+                  [#:attrs attrs list?                     null])
          any/c]{
 Build a horizontal or vertical divider.
 
@@ -314,14 +314,16 @@ Positional arguments: @racket[orientation] is @racket['horizontal] or @racket['v
 }
 
 @defproc[(group [label any/c]
-                [#:id id (or/c #f string? symbol?) #f]
-                [#:class class any/c #f]
-                [#:attrs attrs list? null]
+                [#:id    id    (or/c #f string? symbol?) #f]
+                [#:class class any/c                     #f]
+                [#:attrs attrs list?                     null]
                 [child any/c] ...)
          any/c]{
 Build a labeled container (fieldset-like grouping).
 
-Positional arguments: @racket[label] is the legend/title; each @racket[child] is group content.
+Positional arguments:
+@racket[label] is the legend/title;
+each @racket[child] is group content.
 }
 
 @section{Text and Content Components}
@@ -963,7 +965,10 @@ Positional arguments: @racket[columns] defines table columns and @racket[rows] i
          any/c]{
 Build a keyed dynamic list view.
 
-Positional arguments: @racket[items] is the source collection/observable; @racket[render-item] builds per-item views; @racket[key-of] extracts stable item keys.
+Positional arguments:
+@racket[items] is the source collection/observable;
+@racket[render-item] builds per-item views;
+@racket[key-of] extracts stable item keys.
 }
 
 @defproc[(card [child any/c] ...
@@ -1125,7 +1130,7 @@ each @racket[clause] maps match keys to a branch view.
 
 @defproc[(collapse [open any/c]
                    [child any/c]
-                   [#:id id (or/c #f string? symbol?) #f]
+                   [#:id    id    (or/c #f string? symbol?) #f]
                    [#:class class any/c #f]
                    [#:attrs attrs list? null])
          any/c]{
