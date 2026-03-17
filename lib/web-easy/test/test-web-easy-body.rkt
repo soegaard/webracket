@@ -73,6 +73,25 @@
              (obs-update! derived add1))
            "derived observable update")
 
+;; obs-combine derives value from multiple observables
+(define @left-sum (obs 1))
+(define @right-sum (obs 2))
+(define @sum (obs-combine + @left-sum @right-sum))
+(check-equal (obs-peek @sum) 3 "obs-combine initial value")
+(:= @left-sum 5)
+(check-equal (obs-peek @sum) 7 "obs-combine updates when first observable changes")
+(:= @right-sum -2)
+(check-equal (obs-peek @sum) 3 "obs-combine updates when second observable changes")
+(check-exn (lambda ()
+             (obs-update! @sum add1))
+           "obs-combine result is derived and read-only")
+(check-exn (lambda ()
+             (obs-combine +))
+           "obs-combine requires at least one observable")
+(check-exn (lambda ()
+             (obs-combine + @left-sum 7))
+           "obs-combine rejects non-observable arguments")
+
 ;; ~#> filters observable updates
 (define @n (@ 0))
 (define @even (~#> @n even?))
