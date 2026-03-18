@@ -34,3 +34,20 @@ Run:
 ```
 python3 tools/check-docs-standard.py
 ```
+
+check-wrapper-arity.rkt
+-----------------------
+Scans `.rkt` files and reports wrapper calls with wrong arity.
+Current checks:
+- `with-class` must have 2 arguments
+- `with-id` must have 2 arguments
+- `with-attrs` must have 2 arguments
+
+Useful for catching parenthesis drift where a wrapper accidentally swallows
+many following forms (runtime symptom: arity mismatch with large `given` count).
+
+Run:
+
+```sh
+racket tools/check-wrapper-arity.rkt lib/web-easy/smoke
+```
