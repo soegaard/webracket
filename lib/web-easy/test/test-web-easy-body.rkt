@@ -163,6 +163,23 @@
 (dom-node-click! plus-node)
 (check-equal (dom-node-text label-node) "2" "text after two clicks")
 
+;; Fragment contributes children without introducing a wrapper DOM node
+(define r-fragment
+  (render
+   (window
+    (vpanel
+     (text "Before")
+     (Fragment
+      (text "Inner A")
+      (text "Inner B"))
+     (text "After")))))
+(define fragment-panel (node-child (renderer-root r-fragment) 0))
+(check-equal (length (dom-node-children fragment-panel)) 4 "Fragment flattens children into parent")
+(check-equal (dom-node-text (node-child fragment-panel 0)) "Before" "Fragment keeps preceding sibling order")
+(check-equal (dom-node-text (node-child fragment-panel 1)) "Inner A" "Fragment first child renders")
+(check-equal (dom-node-text (node-child fragment-panel 2)) "Inner B" "Fragment second child renders")
+(check-equal (dom-node-text (node-child fragment-panel 3)) "After" "Fragment keeps following sibling order")
+
 ;; heading/display-heading/lead render semantic tags, classes, style variants, and observable updates
 (define @heading-level   (@ 2))
 (define @heading-text    (@ "Title"))

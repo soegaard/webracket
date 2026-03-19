@@ -1793,6 +1793,15 @@
     (define (build-node v register-cleanup!)
       (define kind      (view-kind v))
       (define root-node #f)
+      ;; append-view-child! : dom-node? view? -> void?
+      ;;   Append child view to parent, flattening Fragment children without wrapper nodes.
+      (define (append-view-child! parent child)
+        (if (and (view? child)
+                 (eq? (view-kind child) 'fragment))
+            (for-each (lambda (grand-child)
+                        (append-view-child! parent grand-child))
+                      (view-children child))
+            (backend-append-child! parent (build-node child register-cleanup!))))
       ;; set-dom-node-attrs! : dom-node? list? -> void?
       ;;   Set attrs, applying view-level style hooks only on this view's root node.
       (define (set-dom-node-attrs! n attrs)
@@ -1808,7 +1817,7 @@
            (define style-node (dom-node 'style '() '() shared-style-text #f #f))
            (validate-window-base-order! v)
            (for-each (lambda (child)
-                       (backend-append-child! node (build-node child register-cleanup!)))
+                       (append-view-child! node child))
                      (view-children v))
            (backend-append-child! node style-node)
            node]
@@ -1816,21 +1825,21 @@
            (define node (dom-node 'div (list (cons 'data-we-widget "vpanel")
                                              (cons 'class          "we-vpanel")) '() #f #f #f))
            (for-each (lambda (child)
-                       (backend-append-child! node (build-node child register-cleanup!)))
+                       (append-view-child! node child))
                      (view-children v))
            node]
           [(hpanel)
            (define node (dom-node 'div (list (cons 'data-we-widget "hpanel")
                                              (cons 'class          "we-hpanel")) '() #f #f #f))
            (for-each (lambda (child)
-                       (backend-append-child! node (build-node child register-cleanup!)))
+                       (append-view-child! node child))
                      (view-children v))
            node]
           [(container)
            (define node (dom-node 'div (list (cons 'data-we-widget "container")
                                              (cons 'class          "we-container")) '() #f #f #f))
            (for-each (lambda (child)
-                       (backend-append-child! node (build-node child register-cleanup!)))
+                       (append-view-child! node child))
                      (view-children v))
            node]
           [(grid)
@@ -1851,35 +1860,37 @@
                                   #f
                                   #f))
            (for-each (lambda (child)
-                       (backend-append-child! node (build-node child register-cleanup!)))
+                       (append-view-child! node child))
                      (view-children v))
            node]
           [(stack)
            (define node (dom-node 'div (list (cons 'data-we-widget "stack")
                                              (cons 'class          "we-stack")) '() #f #f #f))
            (for-each (lambda (child)
-                       (backend-append-child! node (build-node child register-cleanup!)))
+                       (append-view-child! node child))
                      (view-children v))
            node]
           [(inline)
            (define node (dom-node 'div (list (cons 'data-we-widget "inline")
                                              (cons 'class          "we-inline")) '() #f #f #f))
            (for-each (lambda (child)
-                       (backend-append-child! node (build-node child register-cleanup!)))
+                       (append-view-child! node child))
                      (view-children v))
            node]
+          [(fragment)
+           (error 'Fragment "cannot be rendered directly; use as child content")]
           [(toolbar)
            (define node (dom-node 'div (list (cons 'data-we-widget "toolbar")
                                              (cons 'class          "we-toolbar")) '() #f #f #f))
            (for-each (lambda (child)
-                       (backend-append-child! node (build-node child register-cleanup!)))
+                       (append-view-child! node child))
                      (view-children v))
            node]
           [(toolbar-group)
            (define node (dom-node 'div (list (cons 'data-we-widget "toolbar-group")
                                              (cons 'class          "we-toolbar-group")) '() #f #f #f))
            (for-each (lambda (child)
-                       (backend-append-child! node (build-node child register-cleanup!)))
+                       (append-view-child! node child))
                      (view-children v))
            node]
           [(button-group)
@@ -1889,7 +1900,7 @@
                                         (cons 'class          "we-button-group"))
                                   '() #f #f #f))
            (for-each (lambda (child)
-                       (backend-append-child! node (build-node child register-cleanup!)))
+                       (append-view-child! node child))
                      (view-children v))
            node]
           [(toggle-button-group)
@@ -2016,7 +2027,7 @@
                                         (cons 'class          "we-button-toolbar"))
                                   '() #f #f #f))
            (for-each (lambda (child)
-                       (backend-append-child! node (build-node child register-cleanup!)))
+                       (append-view-child! node child))
                      (view-children v))
            node]
           [(group)
@@ -2042,7 +2053,7 @@
               (set-label! raw-label)])
            (backend-append-child! node legend-node)
            (for-each (lambda (child)
-                       (backend-append-child! node (build-node child register-cleanup!)))
+                       (append-view-child! node child))
                      (view-children v))
            node]
           [(alert)
@@ -2627,7 +2638,7 @@
              [else
               (set-tag! raw-tag)])
            (for-each (lambda (child)
-                       (backend-append-child! node (build-node child register-cleanup!)))
+                       (append-view-child! node child))
                      (view-children v))
            (for-each
             (lambda (entry)
@@ -4209,7 +4220,7 @@
                            "Close panel")
              register-cleanup!))
            (for-each (lambda (child)
-                       (backend-append-child! panel-node (build-node child register-cleanup!)))
+                       (append-view-child! panel-node child))
                      (view-children v))
            (backend-append-child! node backdrop-node)
            (backend-append-child! node panel-node)
@@ -4428,7 +4439,7 @@
                 (when (string=? key "Escape")
                   (on-close)))))
            (for-each (lambda (child)
-                       (backend-append-child! body-node (build-node child register-cleanup!)))
+                       (append-view-child! body-node child))
                      (view-children v))
            (set! body-content-nodes (dom-node-children body-node))
            (backend-append-child! node panel-node)
@@ -4670,7 +4681,7 @@
                 (when (string=? key "Escape")
                   (on-close)))))
            (for-each (lambda (child)
-                       (backend-append-child! body-node (build-node child register-cleanup!)))
+                       (append-view-child! body-node child))
                      (view-children v))
            (set! body-content-nodes (dom-node-children body-node))
            (backend-append-child! node panel-node)
@@ -5658,7 +5669,7 @@
              [else
               (set-label! raw-label)])
            (for-each (lambda (child)
-                       (backend-append-child! panel-body-node (build-node child register-cleanup!)))
+                       (append-view-child! panel-body-node child))
                      (view-children v))
            (when (obs? raw-title)
              (define (title-listener _updated)
@@ -5815,7 +5826,7 @@
                                    (if footer-node (list footer-node) '())))
              (backend-replace-children! node nodes))
            (for-each (lambda (child)
-                       (backend-append-child! body-node (build-node child register-cleanup!)))
+                       (append-view-child! body-node child))
                      (view-children v))
            (when (obs? raw-title)
              (define (title-listener _updated)
@@ -5924,7 +5935,7 @@
                   [(obs? raw-collapsed?) (:= raw-collapsed? next-collapsed?)]
                   [else                  (set-collapsed! next-collapsed?)]))))
            (for-each (lambda (child)
-                       (backend-append-child! items-node (build-node child register-cleanup!)))
+                       (append-view-child! items-node child))
                      (view-children v))
            (when toggle-node
              (backend-append-child! node toggle-node))
@@ -5954,7 +5965,7 @@
                                   #f
                                   #f))
            (for-each (lambda (child)
-                       (backend-append-child! node (build-node child register-cleanup!)))
+                       (append-view-child! node child))
                      (view-children v))
            node]
           [(menu-bar)
@@ -5968,7 +5979,7 @@
                                   #f
                                   #f))
            (for-each (lambda (child)
-                       (backend-append-child! node (build-node child register-cleanup!)))
+                       (append-view-child! node child))
                      (view-children v))
            node]
           [(menu)

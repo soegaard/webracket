@@ -26,6 +26,7 @@
 ;;   grid           Build a grid layout container view.
 ;;   stack          Build a vertical stack layout container view.
 ;;   inline         Build a horizontal inline layout container view.
+;;   Fragment       Build a zero-wrapper composition view that contributes only children.
 ;;   group          Build a labeled container view.
 ;;   alert          Build an inline status alert view.
 ;;   alert-rich     Build a rich alert view with title/body/link parts.
@@ -216,6 +217,7 @@
    grid
    stack
    inline
+   Fragment
    group
    alert
    alert-rich
@@ -412,6 +414,7 @@
     (define kind/grid      'grid)      ; Grid layout container view.
     (define kind/stack     'stack)     ; Vertical stack layout container view.
     (define kind/inline    'inline)    ; Horizontal inline layout container view.
+    (define kind/fragment  'fragment)  ; Zero-wrapper composition view.
     (define kind/group     'group)     ; Labeled container view.
     (define kind/alert     'alert)     ; Inline status alert view.
     (define kind/alert-rich 'alert-rich) ; Rich alert view with title/body/link parts.
@@ -748,6 +751,11 @@
        class
        attrs
        'inline))
+
+    ;; Fragment : view? ... -> view?
+    ;;   Construct a composition view that contributes children without a wrapper node.
+    (define (Fragment . children)
+      (view kind/fragment '() children))
 
     ;; group : (or/c string? observable?) view? ... -> view?
     ;;   Construct a labeled container view with children.
@@ -2939,6 +2947,7 @@
             grid
             stack
             inline
+            Fragment
             group
             alert
             alert-rich

@@ -1514,6 +1514,14 @@ Build a horizontal inline container.
 Positional arguments: each @racket[child] is an inline item.
 }
 
+@defproc[(Fragment [child any/c] ...)
+         any/c]{
+Build a zero-wrapper composition view.
+
+This groups child views without introducing an extra DOM node.
+It is useful when composing compound components while preserving parent/child DOM shape.
+}
+
 @defproc[(spacer [grow (or/c number? string?) 1]
                  [#:id    id    (or/c #f string? symbol?) #f]
                  [#:class class any/c                     #f]
