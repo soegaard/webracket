@@ -45,6 +45,13 @@
 ;;   H6             Build a primitive HTML h6 element view with generic keyword attrs.
 ;;   P              Build a primitive HTML p element view with generic keyword attrs.
 ;;   Span           Build a primitive HTML span element view with generic keyword attrs.
+;;   Strong         Build a primitive HTML strong element view with generic keyword attrs.
+;;   Em             Build a primitive HTML em element view with generic keyword attrs.
+;;   Code           Build a primitive HTML code element view with generic keyword attrs.
+;;   Pre            Build a primitive HTML pre element view with generic keyword attrs.
+;;   Small          Build a primitive HTML small element view with generic keyword attrs.
+;;   Br             Build a primitive HTML br element view with generic keyword attrs.
+;;   Hr             Build a primitive HTML hr element view with generic keyword attrs.
 ;;   Img            Build a primitive HTML img element view with required #:src and generic keyword attrs.
 ;;   A              Build a primitive HTML a element view with generic keyword attrs.
 ;;   Button         Build a primitive HTML button element view with generic keyword attrs.
@@ -154,6 +161,13 @@
    H6
    P
    Span
+   Strong
+   Em
+   Code
+   Pre
+   Small
+   Br
+   Hr
    Img
    A
    Button
@@ -964,6 +978,38 @@
     ;; Span : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML span element with generic keyword attributes.
     (define/element Span html-element 'span)
+
+    ;; Strong : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML strong element with generic keyword attributes.
+    (define/element Strong html-element 'strong)
+
+    ;; Em : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML em element with generic keyword attributes.
+    (define/element Em html-element 'em)
+
+    ;; Code : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML code element with generic keyword attributes.
+    (define/element Code html-element 'code)
+
+    ;; Pre : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML pre element with generic keyword attributes.
+    (define/element Pre html-element 'pre)
+
+    ;; Small : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML small element with generic keyword attributes.
+    (define/element Small html-element 'small)
+
+    ;; Br : [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML br element with generic keyword attributes.
+    (define/element Br html-element 'br
+      #:required-keywords ()
+      #:positional-count 0)
+
+    ;; Hr : [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML hr element with generic keyword attributes.
+    (define/element Hr html-element 'hr
+      #:required-keywords ()
+      #:positional-count 0)
 
     ;; Img : [#:src any/c] [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML img element with required #:src and generic keyword attrs.
@@ -2360,6 +2406,13 @@
             H6
             P
             Span
+            Strong
+            Em
+            Code
+            Pre
+            Small
+            Br
+            Hr
             Img
             A
             Button

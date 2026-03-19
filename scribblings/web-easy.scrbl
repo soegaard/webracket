@@ -469,6 +469,78 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
+@defproc[(Strong [content text-content/c]
+                 [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<strong>} element.
+
+This marks content with strong importance (typically bold emphasis).
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Em [content text-content/c]
+             [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<em>} element.
+
+This marks emphasized content (typically stress emphasis).
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Code [content text-content/c]
+               [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<code>} element.
+
+This marks inline code or code-like text.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Pre [content text-content/c]
+              [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<pre>} element.
+
+This preserves whitespace and line breaks for preformatted text.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("pre")))}.
+}
+
+@defproc[(Small [content text-content/c]
+                [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<small>} element.
+
+This marks side comments or fine-print style text.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Br [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<br>} element.
+
+This inserts a line break. It is a leaf/void element and takes no content argument.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("br")))}.
+}
+
+@defproc[(Hr [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<hr>} element.
+
+This inserts a thematic break (horizontal rule). It is a leaf/void element and takes no content argument.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("hr")))}.
+}
+
 @defproc[(Div [#:attrs attrs (or/c #f list?) null]
               [child any/c] ...)
          view?]{
