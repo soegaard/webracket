@@ -2,6 +2,15 @@
 
 This document captures internal design decisions for `lib/web-easy/`.
 
+## Recent Changes
+
+- Added internal `define/element` support for broad primitive HTML constructor generation.
+- Expanded uppercase primitive element coverage (leaf + with-children families) with validated keyword attrs.
+- Added `Base` constraints:
+  - constructor requires at least one of `#:href` or `#:target`,
+  - conservative runtime ordering check for direct `window` children.
+- Consolidated HTML primitive tests with helper-based rejection/assertion patterns.
+
 ## `define/element` (internal)
 
 `define/element` is implemented in:
@@ -126,6 +135,7 @@ Near-term directions:
    keep the generated HTML attribute snapshot up to date and document refresh cadence/tool invocation.
 4. Base ordering validation scope:
    current check is conservative (direct `window` children only); a future enhancement is a full document-order traversal so `<base>` ordering is validated across the whole rendered view tree.
+   TODO: implement full-tree (document-order) validation mode and keep conservative mode as a fast-path fallback.
 
 ## Uppercase With-Children (Decision)
 
