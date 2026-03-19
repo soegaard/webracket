@@ -1407,17 +1407,17 @@
     ;;   Optional parameter dismissible? defaults to #t.
     ;;   Optional parameter duration-ms defaults to 0.
     ;;   Optional parameter pause-on-hover? defaults to #t.
-    (define/key (toast open
-                       on-close
-                       value
-                       [level 'info]
-                       [title #f]
-                       [dismissible? #t]
-                       [duration-ms 0]
-                       [pause-on-hover? #t]
-                       #:id [id #f]
-                       #:class [class #f]
-                       #:attrs [attrs '()])
+    (define/component toast
+      #:root-tag 'div
+      #:positional ([open]
+                    [on-close]
+                    [value]
+                    [level 'info]
+                    [title #f]
+                    [dismissible? #t]
+                    [duration-ms 0]
+                    [pause-on-hover? #t])
+      #:root-attrs attrs/final
       (define @open
         (observable-or-const open))
       (define @value
@@ -1558,22 +1558,19 @@
                                          (cons 'aria-label "Close toast")
                                          (cons 'on-click-action on-close0))))
              '())))
-      (apply-root-decorators
-       (observable-element-children
-        'div
-        @state
-        make-toast-children
-        #:after-render toast-after-render
-        #:attrs (list (cons 'role @root-role)
-                      (cons 'data-we-widget "toast")
-                      (cons 'class @root-class)
-                      (cons 'aria-live @root-aria-live)
-                      (cons 'aria-hidden @root-aria-hidden)
-                      (cons 'on-change-action toast-change-action)))
-       id
-       class
-       attrs
-       'toast))
+      (define attrs/final
+        (list (cons 'role @root-role)
+              (cons 'data-we-widget "toast")
+              (cons 'class @root-class)
+              (cons 'aria-live @root-aria-live)
+              (cons 'aria-hidden @root-aria-hidden)
+              (cons 'on-change-action toast-change-action)))
+      (observable-element-children
+       'div
+       @state
+       make-toast-children
+       #:after-render toast-after-render
+       #:attrs attrs/final))
 
     ;; close-button : (-> any/c) [(or/c string? observable?)] -> view?
     ;;   Construct a standardized close button with action, optional aria-label, and root decorators.

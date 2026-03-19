@@ -82,21 +82,28 @@
 
 ;; reject-procedure-attrs! : symbol? any/c -> void?
 ;;   Reject attribute values that are procedures (direct or observable current value).
+(define (internal-action-attr-symbol? attr-key)
+  (or (eq? attr-key 'on-click-action)
+      (eq? attr-key 'on-change-action)
+      (eq? attr-key 'on-enter-action)))
+
 (define (reject-procedure-attrs! who attrs)
   (when (list? attrs)
     (for-each
      (lambda (entry)
        (define normalized (attrs-entry->pair entry))
        (when normalized
+         (define attr-key (car normalized))
          (define value (cdr normalized))
          (define current-value
            (if (obs? value)
                (obs-peek value)
                value))
-         (when (procedure? current-value)
+         (when (and (procedure? current-value)
+                    (not (internal-action-attr-symbol? attr-key)))
            (error who
                   "attribute value cannot be procedure: ~a"
-                  (car normalized)))))
+                  attr-key))))
      attrs)))
 
 ;; parse-element-call-args : symbol? list? (or/c #f list?) -> values list? any/c any/c
@@ -410,6 +417,24 @@
 (define (component-root-attrs who forwarded-args allowed-attrs root-attrs)
   (define-values (forwarded-args/without-attrs forwarded-attrs)
     (split-forwarded-attrs-arg who forwarded-args))
+  (define forwarded-attrs/normalized
+    (cond
+      [(eq? forwarded-attrs #f)
+       '()]
+      [(list? forwarded-attrs)
+       (map (lambda (entry)
+              (define normalized
+                (attrs-entry->pair entry))
+              (if normalized
+                  normalized
+                  (error who
+                         "expected attr entry as pair? or 2-element list?"
+                         entry)))
+            forwarded-attrs)]
+      [else
+       (error who
+              "expected #:attrs as list? or #f, got ~a"
+              forwarded-attrs)]))
   (define forwarded-attr-pairs
     (filter (lambda (entry)
               (not (and (eq? (car entry) 'class)
@@ -417,12 +442,14 @@
             (forwarded-keywords->attrs who
                                        forwarded-args/without-attrs
                                        allowed-attrs)))
+  (define forwarded-merged
+    (merge-element-attrs who
+                         forwarded-attrs/normalized
+                         forwarded-attr-pairs))
   (define attrs/final
     (merge-element-attrs who
-                         (merge-element-attrs who
-                                              (if (eq? forwarded-attrs #f) '() forwarded-attrs)
-                                              forwarded-attr-pairs)
-                         root-attrs))
+                         root-attrs
+                         forwarded-merged))
   attrs/final)
 
 ;; make-component-root-attrs : symbol? list? (or/c #f list?) -> (-> list? any/c)
@@ -634,6 +661,134 @@
                                specific
                                '(data-* aria-*))))
   (syntax-case stx (quote)
+    [(_ name
+        #:root-tag (quote root-tag-sym)
+        #:component-keywords ([kw-id kw-var kw-default] ...)
+        #:rest rest-id
+        #:root-attrs root-attrs-id
+        body ...)
+     (and (identifier? #'name)
+          (symbol? (syntax-e #'root-tag-sym))
+          (identifier? #'rest-id)
+          (identifier? #'root-attrs-id)
+          (andmap keyword? (syntax->datum #'(kw-id ...)))
+          (andmap identifier? (syntax->list #'(kw-var ...))))
+     (let* ([allowed-attrs
+             (allowed-attrs-for-html-tag/component stx (syntax-e #'root-tag-sym))]
+            [root-attrs/fn-id
+             (datum->syntax stx 'root-attrs/fn stx stx)]
+            [rewritten-body
+             (rewrite-root-attrs-define/component (syntax->list #'(body ...))
+                                                  #'root-attrs-id
+                                                  root-attrs/fn-id)])
+       (with-syntax ([name/sym (datum->syntax #'name (syntax-e #'name) #'name #'name)]
+                     [positional/id (datum->syntax stx 'positional stx stx)]
+                     [forwarded-args/id (datum->syntax stx 'forwarded-args stx stx)]
+                     [component-values/id (datum->syntax stx 'component-values stx stx)]
+                     [component-allowed-attrs/id (datum->syntax stx 'component-allowed-attrs stx stx)]
+                     [allowed-attrs-stx (datum->syntax stx (list 'quote allowed-attrs) stx stx)]
+                     [root-attrs/fn-id/stx root-attrs/fn-id]
+                     [(body* ...) rewritten-body])
+         #'(define (name . all-args)
+             (define-values (positional/id forwarded-args/id component-values/id)
+               (normalize-component-call 'name/sym
+                                         all-args
+                                         (list (cons 'kw-id kw-default) ...)))
+             (define component-allowed-attrs/id allowed-attrs-stx)
+             (define kw-var (component-keyword-ref component-values/id 'kw-id))
+             ...
+             (define rest-id positional/id)
+             (define root-attrs/fn-id/stx
+               (make-component-root-attrs 'name/sym
+                                          forwarded-args/id
+                                          component-allowed-attrs/id))
+             body* ...)))]
+    [(_ name
+        #:root-tag (quote root-tag-sym)
+        #:rest rest-id
+        #:root-attrs root-attrs-id
+        body ...)
+     (and (identifier? #'name)
+          (symbol? (syntax-e #'root-tag-sym))
+          (identifier? #'rest-id)
+          (identifier? #'root-attrs-id))
+     (let* ([allowed-attrs
+             (allowed-attrs-for-html-tag/component stx (syntax-e #'root-tag-sym))]
+            [root-attrs/fn-id
+             (datum->syntax stx 'root-attrs/fn stx stx)]
+            [rewritten-body
+             (rewrite-root-attrs-define/component (syntax->list #'(body ...))
+                                                  #'root-attrs-id
+                                                  root-attrs/fn-id)])
+       (with-syntax ([name/sym (datum->syntax #'name (syntax-e #'name) #'name #'name)]
+                     [positional/id (datum->syntax stx 'positional stx stx)]
+                     [forwarded-args/id (datum->syntax stx 'forwarded-args stx stx)]
+                     [component-values/id (datum->syntax stx 'component-values stx stx)]
+                     [component-allowed-attrs/id (datum->syntax stx 'component-allowed-attrs stx stx)]
+                     [allowed-attrs-stx (datum->syntax stx (list 'quote allowed-attrs) stx stx)]
+                     [root-attrs/fn-id/stx root-attrs/fn-id]
+                     [(body* ...) rewritten-body])
+         #'(define (name . all-args)
+             (define-values (positional/id forwarded-args/id component-values/id)
+               (normalize-component-call 'name/sym all-args '()))
+             (define component-allowed-attrs/id allowed-attrs-stx)
+             (void component-values/id)
+             (define rest-id positional/id)
+             (define root-attrs/fn-id/stx
+               (make-component-root-attrs 'name/sym
+                                          forwarded-args/id
+                                          component-allowed-attrs/id))
+             body* ...)))]
+    [(_ name
+        #:root-tag (quote root-tag-sym)
+        #:component-keywords ([kw-id kw-var kw-default] ...)
+        #:rest rest-id
+        body ...)
+     (and (identifier? #'name)
+          (symbol? (syntax-e #'root-tag-sym))
+          (identifier? #'rest-id)
+          (andmap keyword? (syntax->datum #'(kw-id ...)))
+          (andmap identifier? (syntax->list #'(kw-var ...))))
+     (let ([allowed-attrs
+            (allowed-attrs-for-html-tag/component stx (syntax-e #'root-tag-sym))])
+       (with-syntax ([name/sym (datum->syntax #'name (syntax-e #'name) #'name #'name)]
+                     [positional/id (datum->syntax stx 'positional stx stx)]
+                     [forwarded-args/id (datum->syntax stx 'forwarded-args stx stx)]
+                     [component-values/id (datum->syntax stx 'component-values stx stx)]
+                     [component-allowed-attrs/id (datum->syntax stx 'component-allowed-attrs stx stx)]
+                     [allowed-attrs-stx (datum->syntax stx (list 'quote allowed-attrs) stx stx)])
+         #'(define (name . all-args)
+             (define-values (positional/id forwarded-args/id component-values/id)
+               (normalize-component-call 'name/sym
+                                         all-args
+                                         (list (cons 'kw-id kw-default) ...)))
+             (define component-allowed-attrs/id allowed-attrs-stx)
+             (define kw-var (component-keyword-ref component-values/id 'kw-id))
+             ...
+             (define rest-id positional/id)
+             body ...)))]
+    [(_ name
+        #:root-tag (quote root-tag-sym)
+        #:rest rest-id
+        body ...)
+     (and (identifier? #'name)
+          (symbol? (syntax-e #'root-tag-sym))
+          (identifier? #'rest-id))
+     (let ([allowed-attrs
+            (allowed-attrs-for-html-tag/component stx (syntax-e #'root-tag-sym))])
+       (with-syntax ([name/sym (datum->syntax #'name (syntax-e #'name) #'name #'name)]
+                     [positional/id (datum->syntax stx 'positional stx stx)]
+                     [forwarded-args/id (datum->syntax stx 'forwarded-args stx stx)]
+                     [component-values/id (datum->syntax stx 'component-values stx stx)]
+                     [component-allowed-attrs/id (datum->syntax stx 'component-allowed-attrs stx stx)]
+                     [allowed-attrs-stx (datum->syntax stx (list 'quote allowed-attrs) stx stx)])
+         #'(define (name . all-args)
+             (define-values (positional/id forwarded-args/id component-values/id)
+               (normalize-component-call 'name/sym all-args '()))
+             (define component-allowed-attrs/id allowed-attrs-stx)
+             (void component-values/id)
+             (define rest-id positional/id)
+             body ...)))]
     [(_ name
         #:root-tag (quote root-tag-sym)
         #:positional (pos-entry ...)
