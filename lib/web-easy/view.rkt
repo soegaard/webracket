@@ -417,10 +417,7 @@
     (define kind/fragment  'fragment)  ; Zero-wrapper composition view.
     (define kind/html-element 'html-element) ; Primitive HTML element leaf view.
     (define kind/html-element-children 'html-element-children) ; Primitive HTML element container view.
-    (define kind/observable-view 'observable-view) ; Dynamic single-child view.
     (define kind/observable-element-children 'observable-element-children) ; Dynamic multi-child primitive element view.
-    (define kind/table     'table)     ; Minimal tabular data view.
-    (define kind/list-view 'list-view) ; Dynamic keyed list container.
 
     ;; view-props-ref/default : list? symbol? any/c -> any/c
     ;;   Return property value for key in props, else default-value.
@@ -4295,10 +4292,14 @@
     ;;   Construct a dynamic single-child view from value using make-view.
     ;;   Optional parameter equal-proc defaults to equal?.
     (define (observable-view data make-view [equal-proc equal?])
-      (view kind/observable-view (list (cons 'data       data)
-                                       (cons 'make-view  make-view)
-                                       (cons 'equal-proc equal-proc))
-            '()))
+      (observable-element-children
+       'div
+       data
+       (lambda (value)
+         (list (make-view value)))
+       equal-proc
+       #:attrs (list (cons 'data-we-widget "observable-view")
+                     (cons 'class "we-observable-view"))))
 
     ;; observable-element-children : symbol? (or/c any/c observable?) (-> any/c list?) [(-> any/c any/c boolean?)] [list?] [(or/c #f procedure?)] -> view?
     ;;   Construct a primitive element view with dynamic children and stable root identity.
@@ -4646,6 +4647,116 @@
               (cons 'class @class)))
       (Hr #:attrs attrs/final))
 
+    ;; normalize-table-density/internal : any/c -> symbol?
+    ;;   Normalize table density to normal/compact.
+    (define (normalize-table-density/internal density)
+      (if (symbol? density)
+          (case density
+            [(normal compact) density]
+            [else             'normal])
+          'normal))
+
+    ;; normalize-table-align/internal : any/c -> symbol?
+    ;;   Normalize table alignment to left/center/right.
+    (define (normalize-table-align/internal align)
+      (if (symbol? align)
+          (case align
+            [(left center right) align]
+            [else                'left])
+          'left))
+
+    ;; normalize-table-column/internal : any/c -> list?
+    ;;   Normalize column specification to (list label align).
+    (define (normalize-table-column/internal column)
+      (if (and (list? column)
+               (>= (length column) 2))
+          (list (list-ref column 0)
+                (normalize-table-align/internal (list-ref column 1)))
+          (list column 'left)))
+
+    ;; density-class/internal : symbol? -> string?
+    ;;   Return CSS class token for table density.
+    (define (density-class/internal density)
+      (case density
+        [(compact) "we-density-compact"]
+        [else      "we-density-normal"]))
+
+    ;; normalize-table-variants/internal : any/c -> list?
+    ;;   Normalize table variants to accepted symbols.
+    (define (normalize-table-variants/internal raw)
+      (define (allowed-variant? v)
+        (and (symbol? v)
+             (case v
+               [(striped hover borderless sm) #t]
+               [else #f])))
+      (define (loop xs)
+        (cond
+          [(null? xs) '()]
+          [(allowed-variant? (car xs))
+           (cons (car xs) (loop (cdr xs)))]
+          [else
+           (loop (cdr xs))]))
+      (cond
+        [(allowed-variant? raw)
+         (list raw)]
+        [(list? raw)
+         (loop raw)]
+        [else
+         '()]))
+
+    ;; table-variant-class/internal : list? -> string?
+    ;;   Build CSS class fragment from table variants.
+    (define (table-variant-class/internal variants)
+      (define striped?    (contains-equal/internal variants 'striped))
+      (define hover?      (contains-equal/internal variants 'hover))
+      (define borderless? (contains-equal/internal variants 'borderless))
+      (define small?      (contains-equal/internal variants 'sm))
+      (string-append
+       (if striped? " we-table-striped" "")
+       (if hover? " we-table-hover" "")
+       (if borderless? " we-table-borderless" "")
+       (if small? " we-table-sm" "")))
+
+    ;; normalize-table-row-variant/internal : any/c -> any/c
+    ;;   Normalize row variant to accepted symbol or #f.
+    (define (normalize-table-row-variant/internal raw)
+      (if (symbol? raw)
+          (case raw
+            [(active primary secondary success danger warning info light dark) raw]
+            [else #f])
+          #f))
+
+    ;; normalize-table-row-variants/internal : any/c -> list?
+    ;;   Normalize row-variants option to list.
+    (define (normalize-table-row-variants/internal raw)
+      (if (list? raw)
+          (map normalize-table-row-variant/internal raw)
+          '()))
+
+    ;; normalize-table-row-header-column/internal : any/c -> any/c
+    ;;   Normalize row-header-column to non-negative index or #f.
+    (define (normalize-table-row-header-column/internal raw)
+      (if (and (number? raw)
+               (exact-integer? raw)
+               (>= raw 0))
+          raw
+          #f))
+
+    ;; table-row-variant-class/internal : any/c -> string?
+    ;;   Return CSS class token for row variant or empty string.
+    (define (table-row-variant-class/internal variant)
+      (if variant
+          (string-append "we-table-row-" (symbol->string variant))
+          ""))
+
+    ;; table-align-class/internal : symbol? -> string?
+    ;;   Convert normalized alignment symbol to CSS class token.
+    (define (table-align-class/internal align)
+      (case align
+        [(center) "we-align-center"]
+        [(right)  "we-align-right"]
+        [else     "we-align-left"]))
+
     ;; table : list? (or/c list? observable?) [symbol?] [list?] -> view?
     ;;   Construct a table view with columns/rows, optional spacing density, and optional options alist.
     ;;   Column entries can be plain labels or (list label align) where align is left/center/right.
@@ -4697,16 +4808,168 @@
               (cons 'row-header-column (if (eq? row-header-column #f)
                                            old-row-header-column
                                            row-header-column))))
-      (apply-root-decorators
-       (view kind/table (list (cons 'columns columns)
-                              (cons 'rows rows)
-                              (cons 'density final-density)
-                              (cons 'options options))
-             '())
-       id
-       class
-       attrs
-       'table))
+      (define raw-caption
+        (options-ref/internal options 'caption #f))
+      (define raw-variants
+        (options-ref/internal options 'variants #f))
+      (define raw-row-variants
+        (options-ref/internal options 'row-variants '()))
+      (define raw-row-header-column
+        (options-ref/internal options 'row-header-column #f))
+      (define normalized-columns
+        (map normalize-table-column/internal columns))
+      (define @rows
+        (observable-or-const rows))
+      (define @caption
+        (observable-or-const raw-caption))
+      (define @variants
+        (~> (observable-or-const raw-variants)
+            normalize-table-variants/internal))
+      (define @row-variants
+        (~> (observable-or-const raw-row-variants)
+            normalize-table-row-variants/internal))
+      (define @row-header-column
+        (~> (observable-or-const raw-row-header-column)
+            normalize-table-row-header-column/internal))
+      (define @density
+        (~> (observable-or-const final-density)
+            normalize-table-density/internal))
+      (define @root-class
+        (obs-combine
+         (lambda (density0 variants0)
+           (string-append "we-table "
+                          (density-class/internal density0)
+                          (table-variant-class/internal variants0)))
+         @density
+         @variants))
+      (define @state
+        (obs-combine list
+                     @rows
+                     @caption
+                     @density
+                     @row-variants
+                     @row-header-column))
+      (define (make-table-children state)
+        (define rows0
+          (ensure-list/internal (list-ref state 0) 'table "rows"))
+        (define caption0
+          (list-ref state 1))
+        (define density0
+          (list-ref state 2))
+        (define row-variants0
+          (list-ref state 3))
+        (define row-header-column0
+          (list-ref state 4))
+        (define density-css
+          (density-class/internal density0))
+        (define caption-node
+          (if (eq? caption0 #f)
+              '()
+              (list (html-element 'caption
+                                  caption0
+                                  #:attrs (list (cons 'data-we-widget "table-caption")
+                                                (cons 'class "we-table-caption"))))))
+        (define header-row
+          (if (null? normalized-columns)
+              '()
+              (list
+               (apply html-element-children
+                      (append
+                       (list 'tr)
+                       (map (lambda (column-spec)
+                              (define align-css
+                                (table-align-class/internal
+                                 (list-ref column-spec 1)))
+                              (html-element 'th
+                                            (list-ref column-spec 0)
+                                            #:attrs (list (cons 'data-we-widget "table-header-cell")
+                                                          (cons 'class
+                                                                (string-append
+                                                                 "we-table-header-cell "
+                                                                 density-css
+                                                                 " "
+                                                                 align-css)))))
+                            normalized-columns)
+                       (list #:attrs (list (cons 'data-we-widget "table-row"))))))))
+        (define (row-values row)
+          (if (list? row)
+              row
+              (list row)))
+        (define (row-node row0 row-index)
+          (define row-variant
+            (if (< row-index (length row-variants0))
+                (list-ref row-variants0 row-index)
+                #f))
+          (define variant-css
+            (table-row-variant-class/internal row-variant))
+          (define row-attrs
+            (if (string=? variant-css "")
+                (list (cons 'data-we-widget "table-row"))
+                (list (cons 'data-we-widget "table-row")
+                      (cons 'class variant-css))))
+          (define (cells-loop cells cell-index)
+            (cond
+              [(null? cells)
+               '()]
+              [else
+               (define cell-value (car cells))
+               (define align
+                 (if (< cell-index (length normalized-columns))
+                     (list-ref (list-ref normalized-columns cell-index) 1)
+                     'left))
+               (define align-css (table-align-class/internal align))
+               (define cell-node
+                 (if (and row-header-column0
+                          (= cell-index row-header-column0))
+                     (html-element
+                      'th
+                      cell-value
+                      #:attrs (list (cons 'data-we-widget "table-row-header-cell")
+                                    (cons 'scope "row")
+                                    (cons 'class
+                                          (string-append "we-table-data-cell "
+                                                         density-css
+                                                         " "
+                                                         align-css))))
+                     (html-element
+                      'td
+                      cell-value
+                      #:attrs (list (cons 'data-we-widget "table-data-cell")
+                                    (cons 'class
+                                          (string-append "we-table-data-cell "
+                                                         density-css
+                                                         " "
+                                                         align-css))))))
+               (cons cell-node
+                     (cells-loop (cdr cells) (add1 cell-index)))]))
+          (apply html-element-children
+                 (append (list 'tr)
+                         (cells-loop (row-values row0) 0)
+                         (list #:attrs row-attrs))))
+        (define data-rows
+          (let loop ([remaining rows0]
+                     [row-index 0])
+            (cond
+              [(null? remaining)
+               '()]
+              [else
+               (cons (row-node (car remaining) row-index)
+                     (loop (cdr remaining) (add1 row-index)))])))
+        (append caption-node header-row data-rows))
+      (define table-view
+        (observable-element-children
+         'table
+         @state
+         make-table-children
+         #:attrs (list (cons 'data-we-widget "table")
+                       (cons 'columns columns)
+                       (cons 'variants @variants)
+                       (cons 'row-variants @row-variants)
+                       (cons 'row-header-column @row-header-column)
+                       (cons 'caption @caption)
+                       (cons 'density @density)
+                       (cons 'class @root-class))))
+      (apply-root-decorators table-view id class attrs 'table))
 
     ;; radios : list? (or/c any/c observable?) (-> any/c any/c) -> view?
     ;;   Construct a radio-choice control with choices and selected value.
@@ -6100,10 +6363,39 @@
     ;;   Construct a keyed dynamic list container.
     ;;   Optional parameter key defaults to values.
     (define (list-view entries make-view [key values])
-      (view kind/list-view (list (cons 'entries   entries)
-                                 (cons 'make-view make-view)
-                                 (cons 'key       key))
-            '()))
+      (define items '())
+      (define (list-view-after-render node entries0 register-cleanup! api)
+        (define backend-replace-children!/api
+          (cdr (assq 'backend-replace-children! api)))
+        (define build-node/api
+          (cdr (assq 'build-node api)))
+        (define normalized-entries
+          (ensure-list/internal entries0 'list-view "entries"))
+        (define new-items
+          (map (lambda (entry)
+                 (define entry-key
+                   (key entry))
+                 (define old-item
+                   (assoc entry-key items))
+                 (if (and old-item
+                          (equal? (list-ref old-item 1) entry))
+                     (list entry-key
+                           entry
+                           (list-ref old-item 2))
+                     (list entry-key
+                           entry
+                           (build-node/api (make-view entry-key entry)))))
+               normalized-entries))
+        (set! items new-items)
+        (backend-replace-children!/api node (map (lambda (item) (list-ref item 2))
+                                                 new-items)))
+      (observable-element-children
+       'div
+       entries
+       (lambda (_value) '())
+       #:attrs (list (cons 'data-we-widget "list-view")
+                     (cons 'class "we-list-view"))
+       #:after-render list-view-after-render))
 
     (values view
             view?

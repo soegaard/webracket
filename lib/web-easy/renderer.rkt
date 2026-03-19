@@ -108,9 +108,6 @@
     ;; Constants for node attributes and fallbacks.
     (define attr/role             'role)      ; Attribute key for semantic role.
     (define text/fallback         "#<value>") ; Fallback when value cannot be rendered as text.
-    (define table/density-normal  'normal)    ; Default table spacing density.
-    (define table/density-compact 'compact)   ; Compact table spacing density.
-    (define dialog-body-counter   0)          ; Monotonic counter for dialog body ids.
 
     ;; Legacy visual style constants (kept for reference during migration).
     ;; These are intentionally not injected by renderer. Visual styling is theme-owned.
@@ -818,79 +815,6 @@
           attrs/merged
           (attr-set attrs/merged 'class final-class)))
 
-    ;; normalize-dialog-size : any/c -> symbol?
-    ;;   Normalize dialog/modal size to one of sm/md/lg/xl.
-    (define (normalize-dialog-size raw-size)
-      (define s (if (obs? raw-size) (obs-peek raw-size) raw-size))
-      (if (memq s '(sm md lg xl))
-          s
-          'md))
-
-    ;; next-dialog-body-id : -> string?
-    ;;   Allocate a unique id string for dialog descriptive text.
-    (define (next-dialog-body-id)
-      (set! dialog-body-counter (add1 dialog-body-counter))
-      (string-append "dialog-body-" (number->string dialog-body-counter)))
-
-    ;; render-list-items : dom-node? list? list? procedure? procedure? procedure? -> list?
-    ;;   Render entries into parent using keyed node reuse and return new item state.
-    (define (render-list-items parent entries old-items key-proc make-view-proc register-cleanup!)
-      (define new-items
-        (map (lambda (entry)
-               (define key      (key-proc entry))
-               (define old-item (assoc key old-items))
-               (cond
-                 [(and old-item (equal? (cadr old-item) entry))
-                  (list key entry (caddr old-item))]
-                 [else
-                  (define child-view (make-view-proc key entry))
-                  (define child-node (build-node child-view register-cleanup!))
-                  (list key entry child-node)]))
-             entries))
-      (backend-replace-children! parent (map caddr new-items))
-      new-items)
-
-    ;; TODO: The new version of render-list-items is the one to use.
-    ;;       The new example `dynamic-counters` use the new version.
-    ;;       Before a switch we need to update the smoke tests.
-    ;; TODO: future improvement: row-local cleanup when keyed rows are removed
-    
-    ;; render-list-items : dom-node? list? list? procedure? procedure? procedure? -> list?
-    ;;   Render entries into parent using keyed node reuse.
-    ;;   Each returned item state is (list key entry item-obs child-node).
-    (define (new-render-list-items
-             parent
-             entries
-             old-items
-             key-proc
-             make-view-proc
-             register-cleanup!)
-      (define new-items
-        (for/list ([entry (in-list entries)])
-          (define key (key-proc entry))
-          (define old-item (assoc key old-items))
-          (if old-item
-              (let ([old-entry  (list-ref old-item 1)]
-                    [item-obs   (list-ref old-item 2)]
-                    [child-node (list-ref old-item 3)])
-                (unless (equal? old-entry entry)
-                  (obs-set! item-obs entry))
-                (list key entry item-obs child-node))
-              (let* ([item-obs   (obs entry)]
-                     [child-view (make-view-proc key item-obs)]
-                     [child-node (build-node child-view register-cleanup!)])
-                (list key entry item-obs child-node)))))
-      (backend-replace-children! parent
-                                 (map (lambda (item) (list-ref item 3))
-                                      new-items))
-      new-items)
-    
-
-    ;; replace-with-single-child! : dom-node? view? procedure? -> void?
-    ;;   Replace parent children with a single child rendered from child-view.
-    (define (replace-with-single-child! parent child-view register-cleanup!)
-      (backend-set-single-child! parent (build-node child-view register-cleanup!)))
-
     ;; maybe-observable-value : any/c -> any/c
     ;;   Read observable content when v is observable, otherwise return v.
     (define (maybe-observable-value v)
@@ -964,42 +888,6 @@
                          (primitive-view-has-url-attrs? child))
                 (set! seen-url-bearing-child? #t))]))
          (view-children window-view))))
-
-    ;; options-ref : any/c symbol? any/c -> any/c
-    ;;   Read option key from options alist, returning default when missing.
-    (define (options-ref options key default)
-      (if (list? options)
-          (let ([p (assq key options)])
-            (if p (cdr p) default))
-          default))
-
-    ;; normalize-table-density : any/c -> symbol?
-    ;;   Normalize density to 'normal or 'compact.
-    (define (normalize-table-density density)
-      (if (symbol? density)
-          (case density
-            [(normal compact) density]
-            [else             table/density-normal])
-          table/density-normal))
-
-    ;; normalize-table-align : any/c -> symbol?
-    ;;   Normalize alignment to left/center/right.
-    (define (normalize-table-align align)
-      (if (symbol? align)
-          (case align
-            [(left center right) align]
-            [else                'left])
-          'left))
-
-    ;; normalize-table-column : any/c -> list?
-    ;;   Normalize column spec to (list label align).
-    (define (normalize-table-column column)
-      (cond
-        [(and (list? column) (= (length column) 2))
-         (list (list-ref column 0)
-               (normalize-table-align (list-ref column 1)))]
-        [else
-         (list column 'left)]))
 
     ;; positive-number-list? : any/c -> boolean?
     ;;   Check whether v is a non-empty list of positive numbers.
@@ -1203,109 +1091,6 @@
         [else
          1]))
 
-    ;; normalize-heading-align : any/c -> symbol?
-    ;;   Normalize heading text alignment style to left/center/right.
-    (define (normalize-heading-align align)
-      (if (symbol? align)
-          (case align
-            [(left center right) align]
-            [else                'left])
-          'left))
-
-    ;; normalize-heading-spacing : any/c -> symbol?
-    ;;   Normalize heading spacing style to compact/normal/loose.
-    (define (normalize-heading-spacing spacing)
-      (if (symbol? spacing)
-          (case spacing
-            [(compact normal loose) spacing]
-            [else                   'normal])
-          'normal))
-
-    ;; heading-align-class : string? symbol? -> string?
-    ;;   Build alignment class token for heading class prefix.
-    (define (heading-align-class prefix align)
-      (string-append prefix "-align-" (symbol->string (normalize-heading-align align))))
-
-    ;; heading-spacing-class : string? symbol? -> string?
-    ;;   Build spacing class token for heading class prefix.
-    (define (heading-spacing-class prefix spacing)
-      (string-append prefix "-space-" (symbol->string (normalize-heading-spacing spacing))))
-
-    ;; density-class : symbol? -> string?
-    ;;   Return CSS class for table density variants.
-    (define (density-class density)
-      (case density
-        [(compact) "we-density-compact"]
-        [else      "we-density-normal"]))
-
-    ;; normalize-table-variants : any/c -> list?
-    ;;   Normalize variant value to accepted table variant symbols.
-    (define (normalize-table-variants raw)
-      (define (allowed-variant? v)
-        (and (symbol? v)
-             (case v
-               [(striped hover borderless sm) #t]
-               [else #f])))
-      (define (loop xs)
-        (cond
-          [(null? xs) '()]
-          [(allowed-variant? (car xs))
-           (cons (car xs) (loop (cdr xs)))]
-          [else
-           (loop (cdr xs))]))
-      (cond
-        [(allowed-variant? raw)
-         (list raw)]
-        [(list? raw)
-         (loop raw)]
-        [else
-         '()]))
-
-    ;; table-variant-class : list? -> string?
-    ;;   Build CSS class fragment for table variants.
-    (define (table-variant-class variants)
-      (define striped?    (contains-equal? variants 'striped))
-      (define hover?      (contains-equal? variants 'hover))
-      (define borderless? (contains-equal? variants 'borderless))
-      (define small?      (contains-equal? variants 'sm))
-      (string-append
-       (if striped? " we-table-striped" "")
-       (if hover? " we-table-hover" "")
-       (if borderless? " we-table-borderless" "")
-       (if small? " we-table-sm" "")))
-
-    ;; normalize-table-row-variant : any/c -> symbol?
-    ;;   Normalize table row variant to accepted symbols or #f.
-    (define (normalize-table-row-variant raw)
-      (if (symbol? raw)
-          (case raw
-            [(active primary secondary success danger warning info light dark) raw]
-            [else #f])
-          #f))
-
-    ;; normalize-table-row-variants : any/c -> list?
-    ;;   Normalize row-variants option to a list aligned with data rows.
-    (define (normalize-table-row-variants raw)
-      (cond
-        [(list? raw)
-         (map normalize-table-row-variant raw)]
-        [else
-         '()]))
-
-    ;; normalize-table-row-header-column : any/c -> any/c
-    ;;   Normalize row-header-column to non-negative integer index or #f.
-    (define (normalize-table-row-header-column raw)
-      (cond
-        [(and (number? raw) (exact-integer? raw) (>= raw 0)) raw]
-        [else #f]))
-
-    ;; table-row-variant-class : any/c -> string?
-    ;;   Return CSS class for a normalized table row variant.
-    (define (table-row-variant-class variant)
-      (if variant
-          (string-append "we-table-row-" (symbol->string variant))
-          ""))
-
     ;; icon-node : string? string? -> dom-node?
     ;;   Construct icon span node with data-we-widget/class and text content.
     (define (icon-node widget class-name icon-text)
@@ -1317,107 +1102,6 @@
                 icon-text
                 #f
                 #f))
-
-    ;; render-table-rows! : dom-node? list? list? symbol? any/c list? any/c -> void?
-    ;;   Replace table rows with optional caption, a header row, and data rows.
-    (define (render-table-rows! table-node columns rows density caption row-variants row-header-column)
-      (define normalized-rows (ensure-list rows 'table "rows"))
-      (define normalized-columns (map normalize-table-column columns))
-      (define normalized-caption
-        (let ([value (maybe-observable-value caption)])
-          (if (eq? value #f)
-              #f
-              (value->text value))))
-      (define (align-class align)
-        (case align
-          [(center) "we-align-center"]
-          [(right)  "we-align-right"]
-          [else     "we-align-left"]))
-      (define caption-row
-        (if normalized-caption
-            (list (dom-node 'caption
-                            (list (cons 'data-we-widget "table-caption")
-                                  (cons 'class "we-table-caption"))
-                            '()
-                            normalized-caption
-                            #f
-                            #f))
-            '()))
-      (define (header-cell column-spec)
-        (define density-css (density-class density))
-        (define align (list-ref column-spec 1))
-        (define align-css (align-class align))
-        (dom-node 'th
-                  (list (cons 'data-we-widget "table-header-cell")
-                        (cons 'class (string-append "we-table-header-cell " density-css " " align-css)))
-                  '()
-                  (value->text (list-ref column-spec 0))
-                  #f
-                  #f))
-      (define (data-cell index cell-value)
-        (define density-css (density-class density))
-        (define align
-          (if (< index (length normalized-columns))
-              (list-ref (list-ref normalized-columns index) 1)
-              'left))
-        (define align-css (align-class align))
-        (if (and row-header-column (= index row-header-column))
-            (dom-node 'th
-                      (list (cons 'data-we-widget "table-row-header-cell")
-                            (cons 'scope "row")
-                            (cons 'class (string-append "we-table-data-cell " density-css " " align-css)))
-                      '()
-                      (value->text cell-value)
-                      #f
-                      #f)
-            (dom-node 'td
-                      (list (cons 'data-we-widget "table-data-cell")
-                            (cons 'class (string-append "we-table-data-cell " density-css " " align-css)))
-                      '()
-                      (value->text cell-value)
-                      #f
-                      #f)))
-      (define (row-values row)
-        (if (list? row)
-            row
-            (list row)))
-      (define (build-row cell-values build-cell)
-        (define row-node (dom-node 'tr (list (cons 'data-we-widget "table-row")) '() #f #f #f))
-        (backend-replace-children! row-node (map build-cell cell-values))
-        row-node)
-      (define (build-data-row row index)
-        (define row-variant
-          (if (< index (length row-variants))
-              (list-ref row-variants index)
-              #f))
-        (define variant-css (table-row-variant-class row-variant))
-        (define row-attrs
-          (if (equal? variant-css "")
-              (list (cons 'data-we-widget "table-row"))
-              (list (cons 'data-we-widget "table-row")
-                    (cons 'class variant-css))))
-        (define row-node (dom-node 'tr row-attrs '() #f #f #f))
-        (define cells
-          (let loop ([rest (row-values row)]
-                     [index 0])
-            (if (null? rest)
-                '()
-                (cons (data-cell index (car rest))
-                      (loop (cdr rest) (add1 index))))))
-        (backend-replace-children! row-node cells)
-        row-node)
-      (define header-row
-        (if (null? normalized-columns)
-            '()
-            (list (build-row normalized-columns header-cell))))
-      (define data-rows
-        (let loop ([rest normalized-rows]
-                   [index 0])
-          (if (null? rest)
-              '()
-              (cons (build-data-row (car rest) index)
-                    (loop (cdr rest) (add1 index))))))
-      (backend-replace-children! table-node (append caption-row header-row data-rows)))
 
     ;; build-node : view? (-> (-> void?) void?) -> dom-node?
     ;;   Build a dom-node tree from v and register lifecycle cleanups.
@@ -1641,31 +1325,6 @@
                 (register-cleanup! (lambda () (obs-unobserve! attr-obs attr-listener)))))
             extra-attrs/raw)
            node]
-          [(observable-view)
-           (define raw-data    (alist-ref (view-props v) 'data       'render))
-           (define make-view   (alist-ref (view-props v) 'make-view  'render))
-           (define equal-proc  (alist-ref (view-props v) 'equal-proc 'render))
-
-           (define node (dom-node 'div (list (cons 'data-we-widget "observable-view")
-                                             (cons 'class          "we-observable-view"))
-                                  '() #f #f #f))
-           (define last-value #f)
-           (define have-last? #f)
-           (define (render-from-value! value)
-             (set! have-last? #t)
-             (set! last-value value)
-             (replace-with-single-child! node (make-view value) register-cleanup!))
-           (cond
-             [(obs? raw-data)
-              (render-from-value! (obs-peek raw-data))
-              (define (listener updated)
-                (unless (and have-last? (equal-proc updated last-value))
-                  (render-from-value! updated)))
-              (obs-observe! raw-data listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-data listener)))]
-             [else
-              (render-from-value! raw-data)])
-           node]
           [(observable-element-children)
            (define raw-tag (alist-ref (view-props v) 'tag 'render))
            (define raw-data (alist-ref (view-props v) 'data 'render))
@@ -1711,6 +1370,10 @@
                    (cons 'dom-node-children dom-node-children)
                    (cons 'dom-node-on-click dom-node-on-click)
                    (cons 'set-dom-node-on-click! set-dom-node-on-click!)
+                   (cons 'backend-replace-children! backend-replace-children!)
+                   (cons 'build-node
+                         (lambda (child)
+                           (build-node child register-cleanup!)))
                    (cons 'backend-set-timeout! backend-set-timeout!)
                    (cons 'backend-clear-timeout! backend-clear-timeout!)
                    (cons 'backend-scrollspy-observe-scroll! backend-scrollspy-observe-scroll!)
@@ -1784,86 +1447,6 @@
                 (obs-observe! attr-obs attr-listener)
                 (register-cleanup! (lambda () (obs-unobserve! attr-obs attr-listener)))))
             extra-attrs/raw)
-           node]
-          [(table)
-           (define columns (ensure-list (alist-ref (view-props v) 'columns 'render)
-                                        'table
-                                        "columns"))
-           (define raw-rows     (alist-ref (view-props v) 'rows    'render))
-           (define raw-density  (alist-ref (view-props v) 'density 'render))
-           (define raw-options  (alist-ref (view-props v) 'options 'render))
-           (define options      (if (list? raw-options) raw-options '()))
-           (define raw-caption
-             (let ([p (assq 'caption options)])
-               (if p (cdr p) #f)))
-           (define raw-variants
-             (let ([p (assq 'variants options)])
-               (if p (cdr p) '())))
-           (define raw-row-variants
-             (let ([p (assq 'row-variants options)])
-               (if p (cdr p) '())))
-           (define raw-row-header-column
-             (let ([p (assq 'row-header-column options)])
-               (if p (cdr p) #f)))
-           (define variants     (normalize-table-variants (maybe-observable-value raw-variants)))
-           (define row-variants (normalize-table-row-variants (maybe-observable-value raw-row-variants)))
-           (define row-header-column
-             (normalize-table-row-header-column (maybe-observable-value raw-row-header-column)))
-           (define density      (normalize-table-density (maybe-observable-value raw-density)))
-           (define density-css  (density-class density))
-           (define variant-css  (table-variant-class variants))
-           (define caption-value
-             (let ([v (maybe-observable-value raw-caption)])
-               (if (eq? v #f) #f (value->text v))))
-           (define node (dom-node 'table
-                                  (list (cons 'data-we-widget "table")
-                                        (cons 'columns columns)
-                                        (cons 'variants variants)
-                                        (cons 'row-variants row-variants)
-                                        (cons 'row-header-column row-header-column)
-                                        (cons 'caption caption-value)
-                                        (cons 'density density)
-                                        (cons 'class (string-append "we-table " density-css variant-css)))
-                                  '()
-                                  #f
-                                  #f
-                                  #f))
-           (cond
-             [(obs? raw-rows)
-              (render-table-rows! node columns (obs-peek raw-rows) density raw-caption row-variants row-header-column)
-              (define (listener updated)
-                (render-table-rows! node columns updated density raw-caption row-variants row-header-column))
-              (obs-observe! raw-rows listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-rows listener)))]
-             [else
-              (render-table-rows! node columns raw-rows density raw-caption row-variants row-header-column)])
-           node]
-          [(list-view)
-           (define raw-entries (alist-ref (view-props v) 'entries   'render))
-           (define key-proc    (alist-ref (view-props v) 'key       'render))
-           (define make-view   (alist-ref (view-props v) 'make-view 'render))
-
-           (define node (dom-node 'div (list (cons 'data-we-widget "list-view")
-                                             (cons 'class          "we-list-view"))
-                                  '() #f #f #f))
-           (define items '())
-           (define (render-from-entries entries)
-             (set! items
-                   (render-list-items node
-                                      (ensure-list entries 'list-view "entries")
-                                      items
-                                      key-proc
-                                      make-view
-                                      register-cleanup!)))
-           (cond
-             [(obs? raw-entries)
-              (render-from-entries (obs-peek raw-entries))
-              (define (listener updated-entries)
-                (render-from-entries updated-entries))
-              (obs-observe! raw-entries listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-entries listener)))]
-             [else
-              (render-from-entries raw-entries)])
            node]
           [else
            (raise-arguments-error 'render

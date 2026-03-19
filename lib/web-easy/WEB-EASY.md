@@ -157,13 +157,21 @@ Current conventions:
 - Current users:
   - `carousel` (autoplay timeout bridge),
   - `scrollspy` (scroll observer + scroll-into-view bridge).
+  - `list-view` (keyed child reuse/reorder without a dedicated renderer branch).
+- Current internal API includes:
+  - `dom-node-attr-ref`, `find-node-by-widget`, `dom-node-children`,
+  - `dom-node-on-click`, `set-dom-node-on-click!`,
+  - `backend-replace-children!`, `build-node`,
+  - `backend-set-timeout!`, `backend-clear-timeout!`,
+  - `backend-scrollspy-observe-scroll!`, `backend-scrollspy-scroll-into-view!`,
+  - `backend-scrollspy-active-id`.
 - Contract status:
   - internal-only,
   - not part of public API/docs stability guarantees.
 
 ### Primitive Composition Status
 
-`offcanvas`, `dialog`, `modal`, `menu-bar`, `menu`, `menu-item`, `tab-panel`, `accordion`, `card`, `tooltip`, `popover`, `if-view`, `cond-view`, and `case-view` are now view-level primitive compositions.
+`offcanvas`, `dialog`, `modal`, `menu-bar`, `menu`, `menu-item`, `tab-panel`, `accordion`, `card`, `tooltip`, `popover`, `if-view`, `cond-view`, `case-view`, `observable-view`, `table`, and `list-view` are now view-level primitive compositions.
 
 - They no longer require dedicated renderer kind branches.
 - Root semantics are expressed through primitive attrs (`role`, `aria-*`, `on-change-action`, widget classes).
