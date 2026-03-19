@@ -162,6 +162,22 @@
 (check-equal (dom-node-text label-node) "1" "text after one click")
 (dom-node-click! plus-node)
 (check-equal (dom-node-text label-node) "2" "text after two clicks")
+(define r-text-attrs
+  (render
+   (window
+    (text "Label"
+          #:lang "en"
+          #:data-track "t1"))))
+(define text-attrs-node (node-child (renderer-root r-text-attrs) 0))
+(check-equal (dom-node-tag text-attrs-node) 'span "text root tag is span")
+(check-equal (node-attr text-attrs-node 'lang) "en" "text forwards global attrs")
+(check-equal (node-attr text-attrs-node 'data-track) "t1" "text forwards data-* attrs")
+(check-exn (lambda () (text "Bad keyword" #:foo "x"))
+           "text rejects unknown keyword attrs")
+(check-exn (lambda () (text))
+           "text enforces required positional content")
+(check-exn (lambda () (text "a" "b"))
+           "text rejects extra positional content")
 
 ;; Fragment contributes children without introducing a wrapper DOM node
 (define r-fragment
@@ -237,6 +253,52 @@
 (check-equal (node-attr display-heading-node 'class)
              "we-display-heading we-display-heading-4 we-display-heading-align-center we-display-heading-space-loose"
              "display-heading class reflects updated style variants")
+(define r-heading-attrs
+  (render
+   (window
+    (vpanel
+     (heading 2 "Attrs heading" #:lang "en" #:data-track "h1")
+     (display-heading 3 "Attrs display" #:lang "da" #:data-track "h2")))))
+(define heading-attrs-panel (node-child (renderer-root r-heading-attrs) 0))
+(define heading-attrs-node (node-child heading-attrs-panel 0))
+(define display-heading-attrs-node (node-child heading-attrs-panel 1))
+(check-equal (node-attr heading-attrs-node 'lang) "en" "heading forwards global attrs")
+(check-equal (node-attr heading-attrs-node 'data-track) "h1" "heading forwards data-* attrs")
+(check-equal (node-attr display-heading-attrs-node 'lang) "da" "display-heading forwards global attrs")
+(check-equal (node-attr display-heading-attrs-node 'data-track) "h2" "display-heading forwards data-* attrs")
+(check-exn (lambda () (heading 2 "Bad" #:foo "x"))
+           "heading rejects unknown keyword attrs")
+(check-exn (lambda () (display-heading 2 "Bad" #:foo "x"))
+           "display-heading rejects unknown keyword attrs")
+(check-exn (lambda () (heading 2))
+           "heading enforces required positional arguments")
+(check-exn (lambda () (display-heading 2))
+           "display-heading enforces required positional arguments")
+(check-exn (lambda () (heading 1 "x" 'left 'normal 'extra))
+           "heading rejects too many positional arguments")
+(check-exn (lambda () (display-heading 1 "x" 'left 'normal 'extra))
+           "display-heading rejects too many positional arguments")
+
+;; lead accepts global attrs on root p and rejects unknown keywords
+(define r-lead-attrs
+  (render
+   (window
+    (lead "Lead copy"
+          #:id "lead-id"
+          #:class "lead-user"
+          #:lang "en"
+          #:data-probe "lead"))))
+(define lead-attrs-node (node-child (renderer-root r-lead-attrs) 0))
+(check-equal (dom-node-tag lead-attrs-node) 'p "lead root tag is p")
+(check-equal (node-attr lead-attrs-node 'id) "lead-id" "lead forwards #:id")
+(check-equal (node-attr lead-attrs-node 'lang) "en" "lead forwards global attrs")
+(check-equal (node-attr lead-attrs-node 'data-probe) "lead" "lead forwards data-* attrs")
+(check-equal (node-class-contains? lead-attrs-node "we-lead") #t "lead keeps internal class")
+(check-equal (node-class-contains? lead-attrs-node "lead-user") #t "lead merges user class")
+(check-exn (lambda () (lead "bad" #:foo "x"))
+           "lead rejects unknown keyword attrs")
+(check-exn (lambda () (lead))
+           "lead enforces required positional content")
 
 ;; blockquote renders semantic structure and optional attribution
 (define @quote-text (@ "Quote body"))
@@ -279,6 +341,28 @@
 (:= @quote-attrib "Attribution restored")
 (check-equal (length (dom-node-children blockquote-node)) 2 "blockquote restores attribution when non-#f")
 (check-equal (dom-node-text (node-child blockquote-node 1)) "Attribution restored" "blockquote attribution observable update")
+
+;; blockquote accepts global attrs on root figure and rejects unknown keywords
+(define r-blockquote-attrs
+  (render
+   (window
+    (blockquote "Decorated quote"
+                #:id "bq-id"
+                #:class "user-quote"
+                #:lang "en"
+                #:data-probe "bq"))))
+(define blockquote-attrs-node (node-child (renderer-root r-blockquote-attrs) 0))
+(check-equal (node-attr blockquote-attrs-node 'id) "bq-id" "blockquote forwards #:id to root figure")
+(check-equal (node-attr blockquote-attrs-node 'lang) "en" "blockquote forwards global attrs to root figure")
+(check-equal (node-attr blockquote-attrs-node 'data-probe) "bq" "blockquote forwards data-* attrs to root figure")
+(check-equal (node-class-contains? blockquote-attrs-node "we-blockquote") #t "blockquote keeps internal root class")
+(check-equal (node-class-contains? blockquote-attrs-node "user-quote") #t "blockquote merges user class into root class")
+(check-exn (lambda () (blockquote "Bad keyword" #:foo "x"))
+           "blockquote rejects unknown keyword attrs")
+(check-exn (lambda () (blockquote))
+           "blockquote enforces required positional quote")
+(check-exn (lambda () (blockquote "a" "b" "c"))
+           "blockquote rejects too many positional arguments")
 
 ;; h1..h6 and display-1..display-6 wrappers map to fixed heading levels
 (define r-heading-wrappers
@@ -553,6 +637,18 @@
 (check-equal (node-attr placeholder-node 'class) "we-placeholder we-placeholder-text" "placeholder initial class")
 (:= @placeholder-shape 'circle)
 (check-equal (node-attr placeholder-node 'class) "we-placeholder we-placeholder-circle" "placeholder circle class")
+(define r-placeholder-attrs
+  (render
+   (window
+    (placeholder 'rect "12ch"
+                 #:lang "en"
+                 #:data-track "ph1"))))
+(define placeholder-attrs-node (node-child (renderer-root r-placeholder-attrs) 0))
+(check-equal (dom-node-tag placeholder-attrs-node) 'span "placeholder root tag is span")
+(check-equal (node-attr placeholder-attrs-node 'lang) "en" "placeholder forwards global attrs")
+(check-equal (node-attr placeholder-attrs-node 'data-track) "ph1" "placeholder forwards data-* attrs")
+(check-exn (lambda () (placeholder 'text #f #:foo "x"))
+           "placeholder rejects unknown keyword attrs")
 
 ;; offcanvas toggles open class and side class from observables
 (define @off-open (@ #f))
@@ -770,6 +866,18 @@
 (check-equal (node-attr alert-decorated-node 'id) "alert-decorated" "alert decorator id")
 (check-equal (node-class-contains? alert-decorated-node "alert-extra") #t "alert decorator class")
 (check-equal (node-attr alert-decorated-node 'data-probe) "alert" "alert decorator attrs")
+(define r-alert-attrs
+  (render
+   (window
+    (alert "Alert attrs"
+           'warning
+           #:lang "en"
+           #:data-track "a1"))))
+(define alert-attrs-node (node-child (renderer-root r-alert-attrs) 0))
+(check-equal (node-attr alert-attrs-node 'lang) "en" "alert forwards global attrs")
+(check-equal (node-attr alert-attrs-node 'data-track) "a1" "alert forwards data-* attrs")
+(check-exn (lambda () (alert "Bad keyword" 'info #:foo "x"))
+           "alert rejects unknown keyword attrs")
 
 ;; alert-rich renders title/body/link and updates classes/children from observables
 (define @alert-rich-body      (@ "Your plan is active."))
@@ -892,6 +1000,25 @@
 (:= @badge-level 'warning)
 (check-equal (node-attr badge-node 'class) "we-badge we-badge-warning" "badge legacy warning alias class")
 
+;; badge accepts global attrs on root span and rejects unknown keywords
+(define r-badge-attrs
+  (render
+   (window
+    (badge "Stable"
+           #:id "badge-id"
+           #:class "badge-user"
+           #:lang "en"
+           #:data-probe "badge"))))
+(define badge-attrs-node (node-child (renderer-root r-badge-attrs) 0))
+(check-equal (dom-node-tag badge-attrs-node) 'span "badge root tag is span")
+(check-equal (node-attr badge-attrs-node 'id) "badge-id" "badge forwards #:id")
+(check-equal (node-attr badge-attrs-node 'lang) "en" "badge forwards global attrs")
+(check-equal (node-attr badge-attrs-node 'data-probe) "badge" "badge forwards data-* attrs")
+(check-equal (node-class-contains? badge-attrs-node "we-badge") #t "badge keeps internal class")
+(check-equal (node-class-contains? badge-attrs-node "badge-user") #t "badge merges user class")
+(check-exn (lambda () (badge "bad" #:foo "x"))
+           "badge rejects unknown keyword attrs")
+
 ;; spinner renders icon/label and updates observable label text
 (define @spinner-label (@ "Loading..."))
 (define r-spinner
@@ -922,6 +1049,19 @@
 (check-equal (node-attr spinner-decorated-node 'id) "spinner-decorated" "spinner decorator id")
 (check-equal (node-class-contains? spinner-decorated-node "spinner-extra") #t "spinner decorator class")
 (check-equal (node-attr spinner-decorated-node 'data-probe) "spinner" "spinner decorator attrs")
+(define r-spinner-attrs
+  (render
+   (window
+    (spinner "Attr spinner"
+             #:lang "en"
+             #:data-track "sp1"))))
+(define spinner-attrs-node (node-child (renderer-root r-spinner-attrs) 0))
+(check-equal (node-attr spinner-attrs-node 'lang) "en" "spinner forwards global attrs")
+(check-equal (node-attr spinner-attrs-node 'data-track) "sp1" "spinner forwards data-* attrs")
+(check-exn (lambda () (spinner "Bad keyword" #:foo "x"))
+           "spinner rejects unknown keyword attrs")
+(check-exn (lambda () (spinner "a" "b"))
+           "spinner rejects too many positional arguments")
 
 ;; toast renders as non-modal notification and closes via dismiss action
 (define @toast-open (@ #t))
@@ -1613,14 +1753,14 @@
 (:= @mode 'z)
 (check-equal (dom-node-text (node-child case-container 0)) "mode-other" "case-view else fallback")
 
-;; spacer renders as an empty spacer node
+;; spacer renders as a primitive span-based spacer node
 (define r13
   (render
    (window
     (vpanel
      (spacer)))))
 (define spacer-node (node-child (node-child (renderer-root r13) 0) 0))
-(check-equal (dom-node-tag spacer-node) 'spacer "spacer node tag")
+(check-equal (dom-node-tag spacer-node) 'span "spacer node tag")
 (check-equal (node-attr spacer-node 'data-we-widget) "spacer" "spacer data-we-widget attr")
 
 ;; table supports static columns and reactive row updates
@@ -2277,6 +2417,18 @@
 (check-equal (node-attr link-node 'download) "download" "link download attr")
 (check-equal (node-attr link-node 'target) "_blank" "link target attr")
 (check-equal (dom-node-text link-node) "download" "link label text")
+(define r23-link-attrs
+  (render
+   (window
+    (link "Docs" "/docs"
+          #:lang "en"
+          #:data-track "lnk1"))))
+(define link-attrs-node (node-child (renderer-root r23-link-attrs) 0))
+(check-equal (dom-node-tag link-attrs-node) 'a "link root tag is a")
+(check-equal (node-attr link-attrs-node 'lang) "en" "link forwards global attrs")
+(check-equal (node-attr link-attrs-node 'data-track) "lnk1" "link forwards data-* attrs")
+(check-exn (lambda () (link "Bad" "/x" #:foo "x"))
+           "link rejects unknown keyword attrs")
 
 ;; toolbar/toolbar-group/divider render expected classes and attrs
 (define r24-layout
@@ -2295,8 +2447,33 @@
 (check-equal (node-attr toolbar-node 'data-we-widget) "toolbar" "toolbar data-we-widget attr")
 (check-equal (node-attr toolbar-node 'class) "we-toolbar" "toolbar class")
 (check-equal (node-attr toolbar-group-left 'data-we-widget) "toolbar-group" "toolbar-group data-we-widget attr")
+(check-equal (dom-node-tag divider-node) 'hr "divider primitive tag")
 (check-equal (node-attr divider-node 'data-we-widget) "divider" "divider data-we-widget attr")
 (check-equal (node-attr divider-node 'aria-orientation) "vertical" "divider vertical orientation")
+
+;; spacer/divider forward global attrs and reject unknown keyword attrs
+(define r24b-layout-primitives
+  (render
+   (window
+    (vpanel
+     (spacer #:id "s1" #:lang "en" #:grow 2)
+     (divider #:orientation 'horizontal #:id "d1" #:lang "en")))))
+(define spacer-attrs-node (node-child (node-child (renderer-root r24b-layout-primitives) 0) 0))
+(define divider-attrs-node (node-child (node-child (renderer-root r24b-layout-primitives) 0) 1))
+(check-equal (dom-node-tag spacer-attrs-node) 'span "spacer primitive tag")
+(check-equal (node-attr spacer-attrs-node 'id) "s1" "spacer forwards id")
+(check-equal (node-attr spacer-attrs-node 'lang) "en" "spacer forwards global attr")
+(check-equal (node-attr spacer-attrs-node 'style) "flex-grow:2;" "spacer grow style via component")
+(check-equal (node-attr divider-attrs-node 'id) "d1" "divider forwards id")
+(check-equal (node-attr divider-attrs-node 'lang) "en" "divider forwards global attr")
+(check-exn (lambda () (spacer #:foo "x"))
+           "spacer rejects unknown keyword attrs")
+(check-exn (lambda () (divider #:foo "x"))
+           "divider rejects unknown keyword attrs")
+(check-exn (lambda () (spacer 1 2))
+           "spacer enforces positional arity")
+(check-exn (lambda () (divider 'horizontal 'vertical))
+           "divider enforces positional arity")
 
 ;; input supports direct attrs list on constructor
 (define r25-input

@@ -416,24 +416,12 @@
     (define kind/inline    'inline)    ; Horizontal inline layout container view.
     (define kind/fragment  'fragment)  ; Zero-wrapper composition view.
     (define kind/group     'group)     ; Labeled container view.
-    (define kind/alert     'alert)     ; Inline status alert view.
     (define kind/alert-rich 'alert-rich) ; Rich alert view with title/body/link parts.
     (define kind/toast     'toast)     ; Non-modal toast notification view.
     (define kind/close-button 'close-button) ; Standardized close button view.
-    (define kind/badge     'badge)     ; Compact inline badge view.
-    (define kind/spinner   'spinner)   ; Loading spinner view.
-    (define kind/placeholder 'placeholder) ; Placeholder/skeleton view.
-    (define kind/text      'text)      ; Text label view.
     (define kind/html-element 'html-element) ; Primitive HTML element leaf view.
     (define kind/html-element-children 'html-element-children) ; Primitive HTML element container view.
-    (define kind/heading   'heading)   ; Semantic heading text view.
-    (define kind/display-heading 'display-heading) ; Semantic heading with display style.
-    (define kind/heading-with-subtitle 'heading-with-subtitle) ; Semantic heading with muted subtitle.
-    (define kind/display-heading-with-subtitle 'display-heading-with-subtitle) ; Display heading with muted subtitle.
-    (define kind/lead      'lead)      ; Lead paragraph text view.
-    (define kind/blockquote 'blockquote) ; Semantic blockquote view with optional attribution.
     (define kind/button    'button)    ; Clickable action view.
-    (define kind/link      'link)      ; Link view.
     (define kind/button-group 'button-group) ; Grouped button container view.
     (define kind/toggle-button-group 'toggle-button-group) ; Toggle button group view.
     (define kind/button-toolbar 'button-toolbar) ; Horizontal toolbar for button groups.
@@ -458,8 +446,6 @@
     (define kind/dialog 'dialog) ; Modal dialog container view.
     (define kind/modal 'modal) ; Modal container view.
     (define kind/observable-view 'observable-view) ; Dynamic single-child view.
-    (define kind/spacer    'spacer)    ; Empty layout spacer view.
-    (define kind/divider   'divider)   ; Horizontal/vertical divider view.
     (define kind/table     'table)     ; Minimal tabular data view.
     (define kind/list-view 'list-view) ; Dynamic keyed list container.
     (define kind/radios    'radios)    ; Radio-choice control view.
@@ -578,6 +564,60 @@
                                 "expected #:align as one of 'left, 'center, or 'right"
                                 "align"
                                 align)]))
+
+    ;; normalize-alert-level/internal : any/c -> symbol?
+    ;;   Normalize alert level to supported semantic/tone variants.
+    (define (normalize-alert-level/internal level)
+      (if (symbol? level)
+          (case level
+            [(warning)                                'warning]
+            [(danger)                                 'danger]
+            [(info success warning danger
+                   primary secondary light dark)      level]
+            [else                                     'info])
+          'info))
+
+    ;; alert-level-class/internal : symbol? -> string?
+    ;;   Return CSS class suffix for alert level.
+    (define (alert-level-class/internal level)
+      (case level
+        [(primary)   "we-alert-primary"]
+        [(secondary) "we-alert-secondary"]
+        [(success)   "we-alert-success"]
+        [(warning)   "we-alert-warning"]
+        [(danger)    "we-alert-danger"]
+        [(light)     "we-alert-light"]
+        [(dark)      "we-alert-dark"]
+        [else        "we-alert-info"]))
+
+    ;; alert-level-role/internal : symbol? -> symbol?
+    ;;   Return semantic role for alert level severity.
+    (define (alert-level-role/internal level)
+      (case level
+        [(warning danger) 'alert]
+        [else             'status]))
+
+    ;; normalize-badge-level/internal : any/c -> symbol?
+    ;;   Normalize badge level to supported variants.
+    (define (normalize-badge-level/internal level)
+      (if (symbol? level)
+          (case level
+            [(primary secondary success info warning danger light dark) level]
+            [else                                                      'info])
+          'info))
+
+    ;; badge-level-class/internal : symbol? -> string?
+    ;;   Return CSS class suffix for badge level.
+    (define (badge-level-class/internal level)
+      (case level
+        [(primary)   "we-badge-primary"]
+        [(secondary) "we-badge-secondary"]
+        [(success)   "we-badge-success"]
+        [(warning)   "we-badge-warning"]
+        [(danger)    "we-badge-danger"]
+        [(light)     "we-badge-light"]
+        [(dark)      "we-badge-dark"]
+        [else        "we-badge-info"]))
 
     ;; grid-gap-value? : any/c -> boolean?
     ;;   Return #t when v can be interpreted as a grid gap value.
@@ -772,21 +812,37 @@
        'group))
 
     ;; alert : (or/c string? observable?) [(or/c symbol? observable?)] -> view?
-    ;;   Construct an inline alert/status view with optional severity level and root decorators.
+    ;;   Construct an inline alert/status view with optional severity level.
     ;;   Optional parameter level defaults to 'info.
-    (define/key (alert value
-                       [level 'info]
-                       #:id [id #f]
-                       #:class [class #f]
-                       #:attrs [attrs '()])
-      (apply-root-decorators
-       (view kind/alert (list (cons 'value value)
-                              (cons 'level level))
-             '())
-       id
-       class
-       attrs
-       'alert))
+    ;;   Accepts global HTML attributes for the root <div> via keyword arguments.
+    (define/component alert
+      #:root-tag 'div
+      #:positional ([value]
+                    [level 'info])
+      #:root-attrs attrs/final
+      (define @level
+        (observable-or-const level))
+      (define @normalized-level
+        (~> @level normalize-alert-level/internal))
+      (define @role
+        (~> @normalized-level alert-level-role/internal))
+      (define @aria-live
+        (~> @role (lambda (role0)
+                    (if (eq? role0 'alert)
+                        "assertive"
+                        "polite"))))
+      (define @class
+        (~> @normalized-level
+            (lambda (level0)
+              (string-append "we-alert "
+                             (alert-level-class/internal level0)))))
+      (define attrs/final
+        (list (cons 'role @role)
+              (cons 'data-we-widget "alert")
+              (cons 'class @class)
+              (cons 'aria-live @aria-live)))
+      (apply html-element
+             (list 'div value '#:attrs attrs/final)))
 
     ;; options-alist? : any/c -> boolean?
     ;;   Check whether value is an options alist with symbol keys.
@@ -908,71 +964,104 @@
     ;; badge : (or/c string? observable?) [(or/c symbol? observable?)] -> view?
     ;;   Construct a compact inline badge with optional severity level.
     ;;   Optional parameter level defaults to 'info.
-    (define/key (badge value
-                       [level 'info]
-                       #:id [id #f]
-                       #:class [class #f]
-                       #:attrs [attrs '()])
-      (apply-root-decorators
-       (view kind/badge (list (cons 'value value)
-                              (cons 'level level))
-             '())
-       id
-       class
-       attrs
-       'badge))
+    ;;   Accepts global HTML attributes for the root <span> via keyword arguments.
+    (define/component badge
+      #:root-tag 'span
+      #:positional ([value]
+                    [level/positional 'info])
+      #:component-keywords ([#:level level-kw #f])
+      #:root-attrs attrs/final
+      (define final-level
+        (if (eq? level-kw #f)
+            level/positional
+            level-kw))
+      (define @level
+        (observable-or-const final-level))
+      (define @normalized-level
+        (~> @level normalize-badge-level/internal))
+      (define @class
+        (~> @normalized-level
+            (lambda (level0)
+              (string-append "we-badge "
+                             (badge-level-class/internal level0)))))
+      (define attrs/final
+        (list (cons 'data-we-widget "badge")
+              (cons 'class @class)))
+      (Span value
+            #:attrs attrs/final))
 
     ;; spinner : [(or/c string? observable? false/c)] -> view?
-    ;;   Construct a loading spinner with optional label text and root decorators.
+    ;;   Construct a loading spinner with optional label text.
     ;;   Optional parameter label defaults to "Loading...".
-    (define/key (spinner [label "Loading..."]
-                         #:id [id #f]
-                         #:class [class #f]
-                         #:attrs [attrs '()])
-      (apply-root-decorators
-       (view kind/spinner (list (cons 'label label))
-             '())
-       id
-       class
-       attrs
-       'spinner))
+    ;;   Accepts global HTML attributes for the root <div> via keyword arguments.
+    (define/component spinner
+      #:root-tag 'div
+      #:positional ([label "Loading..."])
+      #:root-attrs attrs/final
+      (define attrs/final
+        (list (cons 'role 'status)
+              (cons 'data-we-widget "spinner")
+              (cons 'class "we-spinner")
+              (cons 'aria-live "polite")))
+      (Div (Span ""
+                 #:data-we-widget "spinner-icon"
+                 #:class "we-spinner-icon"
+                 #:aria-hidden "true")
+           (Span label
+                 #:data-we-widget "spinner-label"
+                 #:class "we-spinner-label")
+           #:attrs attrs/final))
 
     ;; placeholder : [(or/c symbol? observable?)] [(or/c any/c observable?)] -> view?
     ;;   Construct a placeholder/skeleton block with optional shape and width.
     ;;   Optional parameter shape defaults to 'text.
     ;;   Optional parameter width defaults to #f.
-    (define/key (placeholder [shape 'text]
-                             [width #f]
-                             #:shape [shape-kw #f]
-                             #:width [width-kw #f]
-                             #:id [id #f]
-                             #:class [class #f]
-                             #:attrs [attrs '()])
+    ;;   Accepts global HTML attributes for the root <span> via keyword arguments.
+    (define/component placeholder
+      #:root-tag 'span
+      #:positional ([shape/positional 'text]
+                    [width/positional #f])
+      #:component-keywords ([#:shape shape-kw #f]
+                            [#:width width-kw #f])
+      #:root-attrs attrs/final
       (define final-shape
-        (if (eq? shape-kw #f) shape shape-kw))
+        (if (eq? shape-kw #f) shape/positional shape-kw))
       (define final-width
-        (if (eq? width-kw #f) width width-kw))
-      (apply-root-decorators
-       (view kind/placeholder (list (cons 'shape final-shape)
-                                    (cons 'width final-width))
-             '())
-       id
-       class
-       attrs
-       'placeholder))
+        (if (eq? width-kw #f) width/positional width-kw))
+      (define @shape
+        (observable-or-const final-shape))
+      (define @width
+        (observable-or-const final-width))
+      (define @shape-class
+        (~> @shape
+            (lambda (shape0)
+              (case shape0
+                [(rect)   "we-placeholder-rect"]
+                [(circle) "we-placeholder-circle"]
+                [else     "we-placeholder-text"]))))
+      (define @class
+        (~> @shape-class
+            (lambda (shape-class)
+              (string-append "we-placeholder " shape-class))))
+      (define attrs/final
+        (list (cons 'data-we-widget "placeholder")
+              (cons 'class @class)
+              (cons 'aria-hidden "true")
+              (cons 'width @width)))
+      (Span ""
+            #:attrs attrs/final))
 
     ;; text : (or/c string? observable?) -> view?
     ;;   Construct a text view from static or observable value.
-    (define/key (text s
-                      #:id    [id    #f]
-                      #:class [class #f]
-                      #:attrs [attrs '()])
-      (apply-root-decorators
-       (view kind/text (list (cons 'value s)) '())
-       id
-       class
-       attrs
-       'text))
+    ;;   Accepts global HTML attributes for the root <span> via keyword arguments.
+    (define/component text
+      #:root-tag 'span
+      #:positional ([s])
+      #:root-attrs attrs/final
+      (define attrs/final
+        (list (cons 'data-we-widget "text")))
+      (Span s
+            #:attrs attrs/final))
 
     ;; html-element : symbol? (or/c string? observable?) -> view?
     ;;   Construct a primitive HTML leaf element view from tag and content.
@@ -1067,30 +1156,44 @@
     ;;   Construct a semantic heading view with level normalized to 1..6 and optional align/spacing style variants.
     ;;   Optional parameter align defaults to 'left.
     ;;   Optional parameter spacing defaults to 'normal.
-    (define/key (heading level
-                         content
-                         [align   'left]
-                         [spacing 'normal]
-                         #:align   [align-kw   #f]
-                         #:spacing [spacing-kw #f]
-                         #:id      [id         #f]
-                         #:class   [class      #f]
-                         #:attrs   [attrs      '()])
+    ;;   Accepts global HTML attributes for the root <h1..h6> via keyword arguments.
+    (define/component heading
+      #:root-tag 'h1
+      #:positional ([level]
+                    [content]
+                    [align/positional 'left]
+                    [spacing/positional 'normal])
+      #:component-keywords ([#:align align-kw #f]
+                            [#:spacing spacing-kw #f])
+      #:root-attrs attrs/final
       (define final-align
-        (if (eq? align-kw #f) align align-kw))
+        (if (eq? align-kw #f) align/positional align-kw))
       (define final-spacing
-        (if (eq? spacing-kw #f) spacing spacing-kw))
-      (apply-root-decorators
-       (view kind/heading
-             (list (cons 'level level)
-                   (cons 'value content)
-                   (cons 'align final-align)
-                   (cons 'spacing final-spacing))
-             '())
-       id
-       class
-       attrs
-       'heading))
+        (if (eq? spacing-kw #f) spacing/positional spacing-kw))
+      (define @level   (observable-or-const level))
+      (define @align   (observable-or-const final-align))
+      (define @spacing (observable-or-const final-spacing))
+      (define @normalized-level
+        (~> @level normalize-heading-level/internal))
+      (define @normalized-align
+        (~> @align normalize-heading-align/internal))
+      (define @normalized-spacing
+        (~> @spacing normalize-heading-spacing/internal))
+      (define @tag
+        (~> @normalized-level heading-tag-for-level/internal))
+      (define @class
+        (obs-combine
+         (lambda (level0 align0 spacing0)
+           (heading-class-for/internal level0 align0 spacing0))
+         @normalized-level
+         @normalized-align
+         @normalized-spacing))
+      (define attrs/final
+        (list (cons 'data-we-widget "heading")
+              (cons 'class @class)))
+      (html-element @tag
+                    content
+                    #:attrs attrs/final))
 
     ;; h1 : (or/c string? observable?) -> view?
     ;;   Construct a semantic level-1 heading view with optional root decorators.
@@ -1720,29 +1823,48 @@
     ;;   Construct a semantic heading view with display style, level normalized to 1..6, and optional align/spacing style variants.
     ;;   Optional parameter align defaults to 'left.
     ;;   Optional parameter spacing defaults to 'normal.
-    (define/key (display-heading level
-                                 content
-                                 [align 'left]
-                                 [spacing 'normal]
-                                 #:align [align-kw #f]
-                                 #:spacing [spacing-kw #f]
-                                 #:id [id #f]
-                                 #:class [class #f]
-                                 #:attrs [attrs '()])
+    (define/component display-heading
+      #:root-tag 'h1
+      #:positional ([level]
+                    [content]
+                    [align/positional 'left]
+                    [spacing/positional 'normal])
+      #:component-keywords ([#:align align-kw #f]
+                            [#:spacing spacing-kw #f])
+      #:root-attrs attrs/final
       (define final-align
-        (if (eq? align-kw #f) align align-kw))
+        (if (eq? align-kw #f) align/positional align-kw))
       (define final-spacing
-        (if (eq? spacing-kw #f) spacing spacing-kw))
-      (apply-root-decorators
-       (view kind/display-heading (list (cons 'level level)
-                                        (cons 'value content)
-                                        (cons 'align final-align)
-                                        (cons 'spacing final-spacing))
-             '())
-       id
-       class
-       attrs
-       'display-heading))
+        (if (eq? spacing-kw #f) spacing/positional spacing-kw))
+      (define @level   (observable-or-const level))
+      (define @align   (observable-or-const final-align))
+      (define @spacing (observable-or-const final-spacing))
+      (define @normalized-level
+        (~> @level normalize-heading-level/internal))
+      (define @normalized-align
+        (~> @align normalize-heading-align/internal))
+      (define @normalized-spacing
+        (~> @spacing normalize-heading-spacing/internal))
+      (define @tag
+        (~> @normalized-level heading-tag-for-level/internal))
+      (define @class
+        (obs-combine
+         (lambda (level0 align0 spacing0)
+           (string-append "we-display-heading we-display-heading-"
+                          (number->string level0)
+                          " we-display-heading-align-"
+                          (symbol->string align0)
+                          " we-display-heading-space-"
+                          (symbol->string spacing0)))
+         @normalized-level
+         @normalized-align
+         @normalized-spacing))
+      (define attrs/final
+        (list (cons 'data-we-widget "display-heading")
+              (cons 'class @class)))
+      (html-element @tag
+                    content
+                    #:attrs attrs/final))
 
     ;; display-1 : (or/c string? observable?) -> view?
     ;;   Construct a semantic display level-1 heading view with optional root decorators.
@@ -1828,14 +1950,40 @@
         (if (eq? align-kw #f) align align-kw))
       (define final-spacing
         (if (eq? spacing-kw #f) spacing spacing-kw))
+      (define @level   (observable-or-const level))
+      (define @align   (observable-or-const final-align))
+      (define @spacing (observable-or-const final-spacing))
+      (define @normalized-level
+        (~> @level normalize-heading-level/internal))
+      (define @normalized-align
+        (~> @align normalize-heading-align/internal))
+      (define @normalized-spacing
+        (~> @spacing normalize-heading-spacing/internal))
+      (define @tag
+        (~> @normalized-level heading-tag-for-level/internal))
+      (define @class
+        (obs-combine
+         (lambda (level0 align0 spacing0)
+           (string-append "we-heading-with-subtitle we-heading-with-subtitle-"
+                          (number->string level0)
+                          " we-heading-with-subtitle-align-"
+                          (symbol->string align0)
+                          " we-heading-with-subtitle-space-"
+                          (symbol->string spacing0)))
+         @normalized-level
+         @normalized-align
+         @normalized-spacing))
       (apply-root-decorators
-       (view kind/heading-with-subtitle
-             (list (cons 'level level)
-                   (cons 'value content)
-                   (cons 'subtitle subtitle)
-                   (cons 'align final-align)
-                   (cons 'spacing final-spacing))
-             '())
+       (html-element-children
+        @tag
+        (Span content
+              #:data-we-widget "heading-title"
+              #:class "we-heading-title")
+        (Small subtitle
+               #:data-we-widget "heading-subtitle"
+               #:class "we-heading-subtitle")
+        #:attrs (list (cons 'data-we-widget "heading-with-subtitle")
+                      (cons 'class @class)))
        id
        class
        attrs
@@ -1859,14 +2007,40 @@
         (if (eq? align-kw #f) align align-kw))
       (define final-spacing
         (if (eq? spacing-kw #f) spacing spacing-kw))
+      (define @level   (observable-or-const level))
+      (define @align   (observable-or-const final-align))
+      (define @spacing (observable-or-const final-spacing))
+      (define @normalized-level
+        (~> @level normalize-heading-level/internal))
+      (define @normalized-align
+        (~> @align normalize-heading-align/internal))
+      (define @normalized-spacing
+        (~> @spacing normalize-heading-spacing/internal))
+      (define @tag
+        (~> @normalized-level heading-tag-for-level/internal))
+      (define @class
+        (obs-combine
+         (lambda (level0 align0 spacing0)
+           (string-append "we-display-heading-with-subtitle we-display-heading-with-subtitle-"
+                          (number->string level0)
+                          " we-display-heading-with-subtitle-align-"
+                          (symbol->string align0)
+                          " we-display-heading-with-subtitle-space-"
+                          (symbol->string spacing0)))
+         @normalized-level
+         @normalized-align
+         @normalized-spacing))
       (apply-root-decorators
-       (view kind/display-heading-with-subtitle
-             (list (cons 'level level)
-                   (cons 'value content)
-                   (cons 'subtitle subtitle)
-                   (cons 'align final-align)
-                   (cons 'spacing final-spacing))
-             '())
+       (html-element-children
+        @tag
+        (Span content
+              #:data-we-widget "heading-title"
+              #:class "we-heading-title")
+        (Small subtitle
+               #:data-we-widget "heading-subtitle"
+               #:class "we-heading-subtitle")
+        #:attrs (list (cons 'data-we-widget "display-heading-with-subtitle")
+                      (cons 'class @class)))
        id
        class
        attrs
@@ -1874,33 +2048,27 @@
 
     ;; lead : (or/c string? observable?) -> view?
     ;;   Construct a lead paragraph view from static or observable value.
-    (define/key (lead content
-                      #:id [id #f]
-                      #:class [class #f]
-                      #:attrs [attrs '()])
+    ;;   Accepts global HTML attributes for the root <p> via keyword arguments.
+    (define/component lead
+      #:root-tag 'p
+      #:positional ([content])
+      #:root-attrs attrs/final
       (define attrs/final
-        (append attrs
-                (list (cons 'data-we-widget "lead")
-                      (cons 'class "we-lead"))))
-      (apply P
-             (append (list content)
-                     (if (eq? id #f)
-                         '()
-                         (list '#:id id))
-                     (if (eq? class #f)
-                         '()
-                         (list '#:class class))
-                     (list '#:attrs attrs/final))))
+        (list (cons 'data-we-widget "lead")
+              (cons 'class "we-lead")))
+      (P content
+         #:attrs attrs/final))
 
     ;; blockquote : (or/c string? observable?) [(or/c string? observable? false/c)] -> view?
     ;;   Construct a semantic blockquote with optional attribution footer and alignment.
     ;;   Optional parameter attribution defaults to #f.
-    (define/key (blockquote content
-                            [attribution #f]
-                            #:align [align 'left]
-                            #:id [id #f]
-                            #:class [class #f]
-                            #:attrs [attrs '()])
+    ;;   Accepts global HTML attributes for the root <figure> via keyword arguments.
+    (define/component blockquote
+      #:root-tag 'figure
+      #:positional ([content]
+                    [attribution #f])
+      #:component-keywords ([#:align align 'left])
+      #:root-attrs root-attrs
       (define final-align
         (normalize-blockquote-align align 'blockquote))
       (define align-class
@@ -1945,16 +2113,12 @@
                              (cons 'class "we-blockquote-attrib")
                              (cons 'hidden attribution-hidden))))
              '())))
-      (apply-root-decorators
-       (apply Figure
-              (append
-               (list '#:data-we-widget "blockquote"
-                     '#:class root-class)
-               children))
-       id
-       class
-       attrs
-       'blockquote))
+      (define root-attrs
+        (list (cons 'data-we-widget "blockquote")
+              (cons 'class root-class)))
+      (apply Figure
+             (append children
+                     (list '#:attrs root-attrs))))
 
     ;; button : (or/c string? observable?) (-> any/c) [any/c] [any/c] -> view?
     ;;   Construct a button view with optional leading/trailing icon labels.
@@ -1982,29 +2146,35 @@
     ;;   Construct a link view with href and optional download/target attributes.
     ;;   Optional parameter download? defaults to #f.
     ;;   Optional parameter target defaults to #f.
-    (define/key (link label
-                      href
-                      [download? #f]
-                      [target #f]
-                      #:download? [download?-kw #f]
-                      #:target [target-kw #f]
-                      #:id [id #f]
-                      #:class [class #f]
-                      #:attrs [attrs '()])
+    ;;   Accepts global HTML attributes for the root <a> via keyword arguments.
+    (define/component link
+      #:root-tag 'a
+      #:positional ([label]
+                    [href]
+                    [download?/positional #f]
+                    [target/positional #f])
+      #:component-keywords ([#:download? download?-kw #f]
+                            [#:target target-kw #f])
+      #:root-attrs attrs/final
       (define final-download?
-        (if (eq? download?-kw #f) download? download?-kw))
+        (if (eq? download?-kw #f) download?/positional download?-kw))
       (define final-target
-        (if (eq? target-kw #f) target target-kw))
-      (apply-root-decorators
-       (view kind/link (list (cons 'label label)
-                             (cons 'href href)
-                             (cons 'download final-download?)
-                             (cons 'target final-target))
-             '())
-       id
-       class
-       attrs
-       'link))
+        (if (eq? target-kw #f) target/positional target-kw))
+      (define @download?
+        (observable-or-const final-download?))
+      (define @target
+        (observable-or-const final-target))
+      (define attrs/final
+        (list (cons 'role 'link)
+              (cons 'data-we-widget "link")
+              (cons 'class "we-link")
+              (cons 'href href)
+              (cons 'download (~> @download?
+                                  (lambda (download?)
+                                    (if download? "download" #f))))
+              (cons 'target @target)))
+      (A label
+         #:attrs attrs/final))
 
     ;; button-group : view? ... -> view?
     ;;   Construct a grouped button container view.
@@ -2524,39 +2694,77 @@
                                        (cons 'equal-proc equal-proc))
             '()))
 
+    ;; normalize-spacer-grow/internal : any/c -> number?
+    ;;   Normalize spacer grow factor to a positive numeric value.
+    (define (normalize-spacer-grow/internal grow)
+      (cond
+        [(and (number? grow) (> grow 0)) grow]
+        [else 1]))
+
+    ;; normalize-divider-orientation/internal : any/c -> symbol?
+    ;;   Normalize divider orientation to 'horizontal or 'vertical.
+    (define (normalize-divider-orientation/internal orientation)
+      (if (symbol? orientation)
+          (case orientation
+            [(horizontal vertical) orientation]
+            [else 'horizontal])
+          'horizontal))
+
     ;; spacer : [number?] -> view?
     ;;   Construct an empty spacer view with optional grow factor.
     ;;   Optional parameter grow defaults to 1.
-    (define/key (spacer [grow 1]
-                        #:grow [grow-kw #f]
-                        #:id [id #f]
-                        #:class [class #f]
-                        #:attrs [attrs '()])
-      (define final-grow
-        (if (eq? grow-kw #f) grow grow-kw))
-      (apply-root-decorators
-       (view kind/spacer (list (cons 'grow final-grow)) '())
-       id
-       class
-       attrs
-       'spacer))
+    ;;   Accepts global HTML attributes for the root <span> via keyword arguments.
+    (define/component spacer
+      #:root-tag 'span
+      #:positional ([grow 1])
+      #:component-keywords ([#:grow grow-kw #f])
+      #:root-attrs attrs/final
+      (define final-grow (if (eq? grow-kw #f) grow grow-kw))
+      (define @grow (observable-or-const final-grow))
+      (define @style
+        (~> @grow
+            (lambda (grow0)
+              (string-append "flex-grow:"
+                             (number->string (normalize-spacer-grow/internal grow0))
+                             ";"))))
+      (define attrs/final
+        (list (cons 'data-we-widget "spacer")
+              (cons 'class "we-spacer")
+              (cons 'style @style)))
+      (Span ""
+            #:attrs attrs/final))
 
     ;; divider : [symbol?] -> view?
     ;;   Construct a divider with orientation 'horizontal or 'vertical.
     ;;   Optional parameter orientation defaults to 'horizontal.
-    (define/key (divider [orientation 'horizontal]
-                         #:orientation [orientation-kw #f]
-                         #:id [id #f]
-                         #:class [class #f]
-                         #:attrs [attrs '()])
-      (define final-orientation
-        (if (eq? orientation-kw #f) orientation orientation-kw))
-      (apply-root-decorators
-       (view kind/divider (list (cons 'orientation final-orientation)) '())
-       id
-       class
-       attrs
-       'divider))
+    ;;   Accepts global HTML attributes for the root <hr> via keyword arguments.
+    (define/component divider
+      #:root-tag 'hr
+      #:positional ([orientation 'horizontal])
+      #:component-keywords ([#:orientation orientation-kw #f])
+      #:root-attrs attrs/final
+      (define final-orientation (if (eq? orientation-kw #f) orientation orientation-kw))
+      (define @orientation (observable-or-const final-orientation))
+      (define @normalized-orientation
+        (~> @orientation normalize-divider-orientation/internal))
+      (define @aria-orientation
+        (~> @normalized-orientation
+            (lambda (orientation0)
+              (if (eq? orientation0 'vertical)
+                  "vertical"
+                  "horizontal"))))
+      (define @class
+        (~> @normalized-orientation
+            (lambda (orientation0)
+              (if (eq? orientation0 'vertical)
+                  "we-divider we-divider-vertical"
+                  "we-divider we-divider-horizontal"))))
+      (define attrs/final
+        (list (cons 'role 'separator)
+              (cons 'data-we-widget "divider")
+              (cons 'aria-orientation @aria-orientation)
+              (cons 'class @class)))
+      (Hr #:attrs attrs/final))
 
     ;; table : list? (or/c list? observable?) [symbol?] [list?] -> view?
     ;;   Construct a table view with columns/rows, optional spacing density, and optional options alist.

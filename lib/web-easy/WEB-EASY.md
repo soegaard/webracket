@@ -123,6 +123,47 @@ Current constructor/runtime constraints implemented for primitive HTML elements:
    in direct `window` children, `Base` must appear before URL-bearing primitive elements.
    URL-bearing detection currently treats empty-string URL attrs as absent.
 
+## `define/component` (internal)
+
+`define/component` lives in:
+
+- `lib/web-easy/define-element.rkt`
+
+Current conventions:
+
+1. Positional arguments use `#:positional`:
+   - required positional entries: `[id]`
+   - optional positional entries with defaults: `[id default]`
+   - required entries must come before defaulted entries.
+2. `#:positional-count` is optional when `#:positional` is present:
+   - inferred arity is `required..total`,
+   - if provided explicitly, it must match inferred arity.
+3. Root attrs use identifier-style `#:root-attrs`:
+   - use `#:root-attrs attrs/final`,
+   - define `(define attrs/final (list ...))` in the component body,
+   - macro rewrites this binding to merge forwarded/global attrs through generated root-attrs helper.
+4. Body style:
+   - prefer plain body-level `define`s,
+   - avoid `let*`/`let` wrappers unless lexical scoping is required.
+
+Example style:
+
+```racket
+(define/component spacer
+  #:root-tag 'span
+  #:positional ([grow 1])
+  #:component-keywords ([#:grow grow-kw #f])
+  #:root-attrs attrs/final
+  (define final-grow (if (eq? grow-kw #f) grow grow-kw))
+  (define @grow (observable-or-const final-grow))
+  (define @style (~> @grow (lambda (grow0) ...)))
+  (define attrs/final
+    (list (cons 'data-we-widget "spacer")
+          (cons 'class "we-spacer")
+          (cons 'style @style)))
+  (Span "" #:attrs attrs/final))
+```
+
 ## Roadmap
 
 Near-term directions:
