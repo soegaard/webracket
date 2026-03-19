@@ -348,6 +348,12 @@ Print timing information:
 racket webracket.rkt --timings program.rkt
 }
 
+Write pretty-formatted WAT (default is non-pretty):
+
+@shellblock{
+racket webracket.rkt --pretty-wat program.rkt
+}
+
 Include one or more @tt{.ffi} files:
 
 @shellblock{
@@ -416,6 +422,8 @@ Debug and inspection options:
   @item{@tt{--dump-passes <dir>}: Write per-pass dumps to @tt{<dir>}.}
   @item{@tt{--dump-passes-limit <n>}: Limit pass dumps; @tt{0} means no dumps.}
   @item{@tt{--timings}: Print timing breakdown for compilation stages.}
+  @item{@tt{--no-pretty-wat}: Write @tt{.wat} without pretty formatting (default).}
+  @item{@tt{--pretty-wat}: Write @tt{.wat} with pretty formatting.}
 ]
 
 Standard library inclusion:
@@ -442,6 +450,7 @@ FFI and linker flags:
   @item{@shell-code{racket webracket.rkt --no-stdlib program.rkt}}
   @item{@shell-code{racket webracket.rkt --dump-passes tmp/passes --dump-passes-limit 25 program.rkt}}
   @item{@shell-code{racket webracket.rkt --timings program.rkt}}
+  @item{@shell-code{racket webracket.rkt --pretty-wat program.rkt}}
   @item{@shell-code{racket webracket.rkt --ffi dom --ffi standard program.rkt}}
 ]
 

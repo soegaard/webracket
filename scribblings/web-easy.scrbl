@@ -1,6 +1,46 @@
 #lang scribble/manual
 @(require scribble-tools
-          "webracket-scribble-utils.rkt")
+          "webracket-scribble-utils.rkt"
+          racket/base
+          racket/file
+          racket/list
+          racket/runtime-path
+          racket/string)
+
+@(define-runtime-path web-easy-attrs-spec-path "../lib/web-easy/spec/html-element-attributes.sexp")
+
+@(define (load-html-element-attrs-table)
+   (define datum (call-with-input-file web-easy-attrs-spec-path read))
+   (unless (and (list? datum)
+                (pair? datum)
+                (eq? (car datum) 'html-element-attributes))
+     (error 'web-easy-docs "malformed html-element-attributes spec"))
+   (define table-entry (assq 'table (cdr datum)))
+   (unless (and table-entry (list? table-entry))
+     (error 'web-easy-docs "missing table in html-element-attributes spec"))
+   (define ht (make-hash))
+   (for ([row (in-list (cdr table-entry))])
+     (when (and (list? row)
+                (= (length row) 2)
+                (string? (car row))
+                (list? (cadr row)))
+       (hash-set! ht (car row) (filter string? (cadr row)))))
+   ht)
+
+@(define web-easy-html-element-attrs-table
+   (load-html-element-attrs-table))
+
+@(define (attrs-for-tags tags)
+   (sort (remove-duplicates
+          (append-map (lambda (tag)
+                        (hash-ref web-easy-html-element-attrs-table tag '()))
+                      tags))
+         string<?))
+
+@(define (attrs->keyword-string attrs)
+   (string-join (map (lambda (a) (string-append "#:" a)) attrs)
+                ", "
+                #:before-last ", and "))
 
 @title{Library: @racketid[web-easy]}
 
@@ -233,6 +273,315 @@ Most concrete component constructors support:
 Composition forms such as @racket[window], @racket[vpanel], and
 @racket[hpanel] keep positional-only contracts.
 
+
+@section{Primitive HTML Leaf Elements}
+
+The uppercase constructors below map directly to primitive HTML elements.
+They accept:
+
+@itemlist[
+  @item{@racket[content] as text/observable content}
+  @item{@racket[#:attrs] as an optional attribute list (@racket[list?] or @racket[#f])}
+  @item{keyword attributes corresponding to HTML attributes for the specific element
+        (plus global attributes and @tt{data-*}/@tt{aria-*})}
+]
+
+Attribute-list entries in @racket[#:attrs] must be either:
+
+@itemlist[
+  @item{a pair: @racket['(attr-key . value)] or @racket[(cons 'attr-key value)]}
+  @item{a 2-element list: @racket['(attr-key value)]}
+]
+
+Example:
+
+@racketblock[
+(H1 "Title"
+    #:attrs '((id "hero")
+              (title "Welcome")
+              (class "big")))
+]
+
+Even though the signatures below list @racket[#:attrs], direct keyword
+attributes are also available for all allowed HTML attributes (global +
+element-specific + @tt{data-*}/@tt{aria-*}).
+
+Example:
+
+@racketblock[
+(H1 "Title"
+    #:id "hero"
+    #:lang "en"
+    #:title "Welcome"
+    #:data-testid "hero-1"
+    #:aria-label "Main heading")
+]
+
+Unknown keyword attributes are rejected, and observable attribute values are supported.
+
+Example with direct keywords and @racket[#:attrs]:
+
+@racketblock[
+(window
+ (container
+  (H1 "Profile"
+      #:id "profile-title"
+      #:lang "en"
+      #:attrs '((data-testid "title-1")))
+  (P "Welcome to the profile page."
+     #:class "lead")
+  (Span "beta"
+        #:attrs '((aria-label "beta label")
+                  (style "font-style: italic;")))))
+]
+
+In this section, @em{leaf} means the constructor takes one content value
+and produces a single HTML node (as opposed to container-style constructors
+that are built from child view arguments).
+
+@defproc*[
+([(H1 [content any/c]
+      [#:align align any/c #f]
+      [#:attrs attrs (or/c #f list?) null])
+  view?]
+ [(H2 [content any/c]
+      [#:align align any/c #f]
+      [#:attrs attrs (or/c #f list?) null])
+  view?]
+ [(H3 [content any/c]
+      [#:align align any/c #f]
+      [#:attrs attrs (or/c #f list?) null])
+  view?]
+ [(H4 [content any/c]
+      [#:align align any/c #f]
+      [#:attrs attrs (or/c #f list?) null])
+  view?]
+ [(H5 [content any/c]
+      [#:align align any/c #f]
+      [#:attrs attrs (or/c #f list?) null])
+  view?]
+ [(H6 [content any/c]
+      [#:align align any/c #f]
+      [#:attrs attrs (or/c #f list?) null])
+  view?])]{Build primitive @tt{<h1>} ... @tt{<h6>} elements.
+
+These elements represent headings of different levels.
+@racket[H1] is the most important heading level, and @racket[H6] is the least important.
+
+For @racket[H1] through @racket[H6], @racket[#:align] maps to the HTML
+@tt{align} attribute. Typical values are @racket["left"], @racket["center"],
+@racket["right"], and @racket["justify"].
+@racketid[web-easy] currently passes the value through to the attribute
+without validating it.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("h1" "h2" "h3" "h4" "h5" "h6")))}.
+}
+
+@defproc[(P [content any/c]
+            [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<p>} element.
+
+This is a paragraph element, typically used for ordinary text content.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("p")))}.
+}
+
+@defproc[(A [content any/c]
+            [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<a>} element.
+
+This is an anchor/link element, typically used for navigation.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("a")))}.
+}
+
+@defproc[(Img [#:src src any/c]
+              [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<img>} element.
+
+@racket[#:src] is required.
+Use this for images and decorative/illustrative media.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("img")))}.
+}
+
+@defproc[(Button [content any/c]
+                 [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<button>} element.
+
+This is a native button element for actions and form submission.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("button")))}.
+}
+
+@defproc[(Span [content any/c]
+               [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<span>} element.
+
+This is an inline text container, typically used to style or annotate part of a line.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Div [#:attrs attrs (or/c #f list?) null]
+              [child any/c] ...)
+         view?]{
+Build a primitive @tt{<div>} element with children.
+
+This is a generic block-level container element.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("div")))}.
+}
+
+@defproc[(Section [#:attrs attrs (or/c #f list?) null]
+                  [child any/c] ...)
+         view?]{
+Build a primitive @tt{<section>} element with children.
+
+This is a thematic/semantic section container element.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Article [#:attrs attrs (or/c #f list?) null]
+                  [child any/c] ...)
+         view?]{
+Build a primitive @tt{<article>} element with children.
+
+This is a self-contained composition container (for example, a blog post card).
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Nav [#:attrs attrs (or/c #f list?) null]
+              [child any/c] ...)
+         view?]{
+Build a primitive @tt{<nav>} element with children.
+
+This is a navigation landmark/container element.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Main [#:attrs attrs (or/c #f list?) null]
+               [child any/c] ...)
+         view?]{
+Build a primitive @tt{<main>} element with children.
+
+This is the main content landmark/container element.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Header [#:attrs attrs (or/c #f list?) null]
+                 [child any/c] ...)
+         view?]{
+Build a primitive @tt{<header>} element with children.
+
+This is a header landmark/container element.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Footer [#:attrs attrs (or/c #f list?) null]
+                 [child any/c] ...)
+         view?]{
+Build a primitive @tt{<footer>} element with children.
+
+This is a footer landmark/container element.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Aside [#:attrs attrs (or/c #f list?) null]
+                [child any/c] ...)
+         view?]{
+Build a primitive @tt{<aside>} element with children.
+
+This is a complementary/sidebar landmark/container element.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Form [#:attrs attrs (or/c #f list?) null]
+               [child any/c] ...)
+         view?]{
+Build a primitive @tt{<form>} element with children.
+
+This is a native form container for controls and submission behavior.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("form")))}.
+}
+
+@defproc[(Label [content any/c]
+                [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<label>} element.
+
+This is a native label element for naming form controls.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("label")))}.
+}
+
+Example:
+
+@racketblock[
+(Form
+ #:action "/submit"
+ #:method "post"
+ (Label "Name" #:for "name-input")
+ (input "" (lambda (_v) (void)) #:id "name-input")
+ (Button "Save" #:type "submit"))
+]
+
+@defproc[(Ul [#:attrs attrs (or/c #f list?) null]
+             [child any/c] ...)
+         view?]{
+Build a primitive @tt{<ul>} element with children.
+
+This is an unordered list container element.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("ul")))}.
+}
+
+@defproc[(Ol [#:attrs attrs (or/c #f list?) null]
+             [child any/c] ...)
+         view?]{
+Build a primitive @tt{<ol>} element with children.
+
+This is an ordered list container element.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("ol")))}.
+}
+
+@defproc[(Li [#:attrs attrs (or/c #f list?) null]
+             [child any/c] ...)
+         view?]{
+Build a primitive @tt{<li>} element with children.
+
+This is a list-item element used inside @tt{<ul>} or @tt{<ol>}.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("li")))}.
+}
+
+
+
+
+
+
 @section{Layout Components}
 
 @defproc[(window [child any/c] ...) any/c]{
@@ -414,6 +763,7 @@ Build a level-6 heading.
 
 Positional arguments: @racket[content] is heading text/content.
 }
+
 
 @defproc[(display-heading [level (integer-in 1 6)]
                           [content any/c]
