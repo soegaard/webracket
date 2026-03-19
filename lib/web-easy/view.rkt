@@ -1184,22 +1184,39 @@
     ;;     layout         -> 'stack (default) or 'inline body arrangement.
     ;;     scale          -> 'normal (default) or 'major title emphasis.
     ;;     tone           -> symbol/observable tone override (primary/secondary/success/info/warning/danger/light/dark).
-    (define/key (alert-rich body
-                            title
-                            link-text
-                            link-href
-                            [level 'info]
-                            [options '()]
-                            #:level [level-kw #f]
-                            #:dismiss-action [dismiss-action keyword-not-given]
-                            #:dismiss-label [dismiss-label keyword-not-given]
-                            #:layout [layout keyword-not-given]
-                            #:inline-segments [inline-segments keyword-not-given]
-                            #:scale [scale keyword-not-given]
-                            #:tone [tone keyword-not-given]
-                            #:id [id #f]
-                            #:class [class #f]
-                            #:attrs [attrs '()])
+    (define/component alert-rich
+      #:root-tag 'div
+      #:component-keywords ([#:level level-kw #f]
+                            [#:dismiss-action dismiss-action keyword-not-given]
+                            [#:dismiss-label dismiss-label keyword-not-given]
+                            [#:layout layout keyword-not-given]
+                            [#:inline-segments inline-segments keyword-not-given]
+                            [#:scale scale keyword-not-given]
+                            [#:tone tone keyword-not-given])
+      #:rest all-positional
+      #:root-attrs attrs/final
+      (define positional-count
+        (length all-positional))
+      (when (or (< positional-count 4) (> positional-count 6))
+        (error 'alert-rich
+               "wrong number of positional arguments (expected 4 to 6, got ~a)"
+               positional-count))
+      (define body
+        (list-ref all-positional 0))
+      (define title
+        (list-ref all-positional 1))
+      (define link-text
+        (list-ref all-positional 2))
+      (define link-href
+        (list-ref all-positional 3))
+      (define level
+        (if (>= positional-count 5)
+            (list-ref all-positional 4)
+            'info))
+      (define options
+        (if (>= positional-count 6)
+            (list-ref all-positional 5)
+            '()))
       (define (non-empty-text? value)
         (and (not (eq? value #f))
              (not (string=? (format "~a" value) ""))))
@@ -1372,19 +1389,16 @@
                                          (cons 'class "we-alert-dismiss")
                                          (cons 'on-click-action dismiss-action0))))
              '())))
-      (apply-root-decorators
-       (observable-element-children
-        'div
-        @state
-        make-alert-rich-children
-        #:attrs (list (cons 'role @root-role)
-                      (cons 'data-we-widget "alert")
-                      (cons 'class @root-class)
-                      (cons 'aria-live @root-aria-live)))
-       id
-       class
-       attrs
-       'alert-rich))
+      (define attrs/final
+        (list (cons 'role @root-role)
+              (cons 'data-we-widget "alert")
+              (cons 'class @root-class)
+              (cons 'aria-live @root-aria-live)))
+      (observable-element-children
+       'div
+       @state
+       make-alert-rich-children
+       #:attrs attrs/final))
 
     ;; toast : (or/c boolean? observable?) (-> any/c) (or/c string? observable?) [(or/c symbol? observable?)] [(or/c string? observable? false/c)] [(or/c boolean? observable?)] [number?] [boolean?] -> view?
     ;;   Construct a non-modal toast with open flag, close action, message, optional title/dismiss control, optional auto-hide duration, pause-on-hover, and root decorators.
@@ -3472,13 +3486,13 @@
     ;; tab-panel : (or/c any/c observable?) (listof (cons any/c view?)) [any/c] -> view?
     ;;   Construct a selected-tab branch view keyed by tab id, with optional style variants.
     ;;   Optional parameter variants defaults to 'default.
-    (define/key (tab-panel selected
-                           tabs
-                           [variants 'default]
-                           #:variants [variants-kw #f]
-                           #:id [id #f]
-                           #:class [class #f]
-                           #:attrs [attrs '()])
+    (define/component tab-panel
+      #:root-tag 'tab-panel
+      #:positional ([selected]
+                    [tabs]
+                    [variants 'default])
+      #:component-keywords ([#:variants variants-kw #f])
+      #:root-attrs attrs/final
       (define final-variants
         (if (eq? variants-kw #f) variants variants-kw))
       (define @selected
@@ -3676,18 +3690,15 @@
                        (cons 'data-we-widget "tab-content")
                        (cons 'aria-labelledby @labelledby)
                        (cons 'class "we-tab-content"))))
-      (apply-root-decorators
-       (html-element-children
-        'tab-panel
-        tablist-view
-        content-view
-        #:attrs (list (cons 'selected @selected)
-                      (cons 'data-we-widget "tab-panel")
-                      (cons 'class tab-panel-class)))
-       id
-       class
-       attrs
-       'tab-panel))
+      (define attrs/final
+        (list (cons 'selected @selected)
+              (cons 'data-we-widget "tab-panel")
+              (cons 'class tab-panel-class)))
+      (html-element-children
+       'tab-panel
+       tablist-view
+       content-view
+       #:attrs attrs/final))
 
     ;; collapse : (or/c boolean? observable?) view? -> view?
     ;;   Construct a container view that shows child only when open is true.
@@ -3720,11 +3731,11 @@
 
     ;; accordion : (or/c any/c observable?) list? -> view?
     ;;   Construct a single-open accordion from section rows: (list id label view).
-    (define/key (accordion selected
-                           sections
-                           #:id [id #f]
-                           #:class [class #f]
-                           #:attrs [attrs '()])
+    (define/component accordion
+      #:root-tag 'div
+      #:positional ([selected]
+                    [sections])
+      #:root-attrs attrs/final
       (define sections/raw
         (ensure-list/internal sections 'accordion "sections"))
       (define sections/normalized
@@ -3770,11 +3781,13 @@
           (define next-index (modulo (+ index delta count) count))
           (define next-id (list-ref section-ids next-index))
           (select-section!/internal next-id)))
-      (apply-root-decorators
-       (apply Div
-              (append
-               (map
-                (lambda (section-entry)
+      (define attrs/final
+        (list (cons 'data-we-widget "accordion")
+              (cons 'class "we-accordion")))
+      (apply Div
+             (append
+              (map
+               (lambda (section-entry)
                   (define section-id (list-ref section-entry 0))
                   (define section-label (list-ref section-entry 1))
                   (define section-view (list-ref section-entry 2))
@@ -3845,24 +3858,27 @@
                                       (cons 'aria-hidden @collapse-hidden)))
                    #:attrs (list (cons 'data-we-widget "accordion-section")
                                  (cons 'class "we-accordion-section"))))
-                sections/normalized)
-               (list #:attrs (list (cons 'data-we-widget "accordion")
-                                   (cons 'class "we-accordion")))))
-       id
-       class
-       attrs
-       'accordion))
+               sections/normalized)
+              (list #:attrs attrs/final))))
 
     ;; offcanvas : (or/c boolean? observable?) (-> any/c) [(or/c symbol? observable?)] view? ... -> view?
     ;;   Construct an offcanvas side panel with open flag, close action, and optional side.
     ;;   Optional parameter side defaults to 'end.
-    (define/key (offcanvas open
-                           on-close
-                           #:side [side-kw #f]
-                           #:id [id #f]
-                           #:class [class #f]
-                           #:attrs [attrs '()]
-                           . args)
+    (define/component offcanvas
+      #:root-tag 'div
+      #:component-keywords ([#:side side-kw #f])
+      #:rest all-positional
+      #:root-attrs attrs/final
+      (when (< (length all-positional) 2)
+        (error 'offcanvas
+               "wrong number of positional arguments (expected at least 2, got ~a)"
+               (length all-positional)))
+      (define open
+        (list-ref all-positional 0))
+      (define on-close
+        (list-ref all-positional 1))
+      (define args
+        (cddr all-positional))
       (define parsed
         (parse-offcanvas-args/internal args side-kw))
       (define raw-side
@@ -3909,23 +3925,20 @@
                           (list #:attrs (list (cons 'data-we-widget "offcanvas-panel")
                                               (cons 'class @panel-class)
                                               (cons 'tabindex -1))))))))
-      (apply-root-decorators
-       (observable-element-children
-        'div
-        @side
-        make-offcanvas-children
-        #:attrs (list (cons 'role 'dialog)
-                      (cons 'data-we-widget "offcanvas")
-                      (cons 'open @open)
-                      (cons 'class @root-class)
-                      (cons 'tabindex -1)
-                      (cons 'aria-modal "true")
-                      (cons 'aria-hidden @root-aria-hidden)
-                      (cons 'on-change-action offcanvas-change-action)))
-       id
-       class
-       attrs
-       'offcanvas))
+      (define attrs/final
+        (list (cons 'role 'dialog)
+              (cons 'data-we-widget "offcanvas")
+              (cons 'open @open)
+              (cons 'class @root-class)
+              (cons 'tabindex -1)
+              (cons 'aria-modal "true")
+              (cons 'aria-hidden @root-aria-hidden)
+              (cons 'on-change-action offcanvas-change-action)))
+      (observable-element-children
+       'div
+       @side
+       make-offcanvas-children
+       #:attrs attrs/final))
 
     ;; dialog : (or/c boolean? observable?) (-> any/c) [symbol?] [list?] view? ... -> view?
     ;;   Construct a modal dialog that is visible when open is true and closes via on-close.
@@ -3938,20 +3951,28 @@
     ;;     close-label -> string/observable aria-label for close button.
     ;;     tone        -> symbol tone: primary/secondary/success/danger/warning/info/light/dark.
     ;;     tone-style  -> symbol tone style: fill/outline.
-    (define/key (dialog open
-                        on-close
-                        #:size        [size-kw     #f]
-                        #:title       [title       #f]
-                        #:description [description #f]
-                        #:footer      [footer      #f]
-                        #:show-close? [show-close? #f]
-                        #:close-label [close-label "Close dialog"]
-                        #:tone        [tone        #f]
-                        #:tone-style  [tone-style  #f]
-                        #:id          [id          #f]
-                        #:class       [class       #f]
-                        #:attrs       [attrs      '()]
-                        . args)
+    (define/component dialog
+      #:root-tag 'dialog
+      #:component-keywords ([#:size size-kw #f]
+                            [#:title title #f]
+                            [#:description description #f]
+                            [#:footer footer #f]
+                            [#:show-close? show-close? #f]
+                            [#:close-label close-label "Close dialog"]
+                            [#:tone tone #f]
+                            [#:tone-style tone-style #f])
+      #:rest all-positional
+      #:root-attrs attrs/final
+      (when (< (length all-positional) 2)
+        (error 'dialog
+               "wrong number of positional arguments (expected at least 2, got ~a)"
+               (length all-positional)))
+      (define open
+        (list-ref all-positional 0))
+      (define on-close
+        (list-ref all-positional 1))
+      (define args
+        (cddr all-positional))
       
       (define parsed
         (parse-dialog-options/internal args
@@ -4117,23 +4138,20 @@
                                             (list #:data-we-widget "dialog-footer"
                                                   #:class "we-dialog-footer")))))
                    (list #:attrs panel-attrs))))))
-      (apply-root-decorators
-       (observable-element-children
-        'dialog
-        @state
-        make-dialog-children
-        #:attrs (list (cons 'role 'dialog)
-                      (cons 'data-we-widget "dialog")
-                      (cons 'open @open)
-                      (cons 'class @root-class)
-                      (cons 'tabindex -1)
-                      (cons 'aria-modal "true")
-                      (cons 'aria-hidden @root-aria-hidden)
-                      (cons 'on-change-action dialog-change-action)))
-       id
-       class
-       attrs
-       'dialog))
+      (define attrs/final
+        (list (cons 'role 'dialog)
+              (cons 'data-we-widget "dialog")
+              (cons 'open @open)
+              (cons 'class @root-class)
+              (cons 'tabindex -1)
+              (cons 'aria-modal "true")
+              (cons 'aria-hidden @root-aria-hidden)
+              (cons 'on-change-action dialog-change-action)))
+      (observable-element-children
+       'dialog
+       @state
+       make-dialog-children
+       #:attrs attrs/final))
 
     ;; modal : (or/c boolean? observable?) (-> any/c) [symbol?] [list?] view? ... -> view?
     ;;   Construct a modal container that mirrors dialog behavior.
@@ -4146,20 +4164,28 @@
     ;;     close-label -> string/observable aria-label for close button.
     ;;     tone        -> symbol tone: primary/secondary/success/danger/warning/info/light/dark.
     ;;     tone-style  -> symbol tone style: fill/outline.
-    (define/key (modal open
-                       on-close
-                       #:size        [size-kw     #f]
-                       #:title       [title       #f]
-                       #:description [description #f]
-                       #:footer      [footer      #f]
-                       #:show-close? [show-close? #f]
-                       #:close-label [close-label "Close modal"]
-                       #:tone        [tone        #f]
-                       #:tone-style  [tone-style  #f]
-                       #:id          [id          #f]
-                       #:class       [class       #f]
-                       #:attrs       [attrs      '()]
-                       . args)
+    (define/component modal
+      #:root-tag 'dialog
+      #:component-keywords ([#:size size-kw #f]
+                            [#:title title #f]
+                            [#:description description #f]
+                            [#:footer footer #f]
+                            [#:show-close? show-close? #f]
+                            [#:close-label close-label "Close modal"]
+                            [#:tone tone #f]
+                            [#:tone-style tone-style #f])
+      #:rest all-positional
+      #:root-attrs attrs/final
+      (when (< (length all-positional) 2)
+        (error 'modal
+               "wrong number of positional arguments (expected at least 2, got ~a)"
+               (length all-positional)))
+      (define open
+        (list-ref all-positional 0))
+      (define on-close
+        (list-ref all-positional 1))
+      (define args
+        (cddr all-positional))
       
       (define parsed
         (parse-dialog-options/internal args
@@ -4325,23 +4351,20 @@
                                             (list #:data-we-widget "modal-footer"
                                                   #:class "we-modal-footer")))))
                    (list #:attrs panel-attrs))))))
-      (apply-root-decorators
-       (observable-element-children
-        'dialog
-        @state
-        make-modal-children
-        #:attrs (list (cons 'role 'dialog)
-                      (cons 'data-we-widget "modal")
-                      (cons 'open @open)
-                      (cons 'class @root-class)
-                      (cons 'tabindex -1)
-                      (cons 'aria-modal "true")
-                      (cons 'aria-hidden @root-aria-hidden)
-                      (cons 'on-change-action modal-change-action)))
-       id
-       class
-       attrs
-       'modal))
+      (define attrs/final
+        (list (cons 'role 'dialog)
+              (cons 'data-we-widget "modal")
+              (cons 'open @open)
+              (cons 'class @root-class)
+              (cons 'tabindex -1)
+              (cons 'aria-modal "true")
+              (cons 'aria-hidden @root-aria-hidden)
+              (cons 'on-change-action modal-change-action)))
+      (observable-element-children
+       'dialog
+       @state
+       make-modal-children
+       #:attrs attrs/final))
 
     ;; observable-view : (or/c any/c observable?) (-> any/c view?) [(-> any/c any/c boolean?)] -> view?
     ;;   Construct a dynamic single-child view from value using make-view.
@@ -4822,18 +4845,18 @@
     ;;     row-variants -> list of symbols per data row:
     ;;                     active/primary/secondary/success/danger/warning/info/light/dark.
     ;;     row-header-column -> non-negative column index rendered as <th scope=\"row\"> in data rows.
-    (define/key (table columns
-                       rows
-                       [density 'normal]
-                       [options-pos '()]
-                       #:density [density-kw #f]
-                       #:caption [caption #f]
-                       #:variants [variants #f]
-                       #:row-variants [row-variants #f]
-                       #:row-header-column [row-header-column #f]
-                       #:id [id #f]
-                       #:class [class #f]
-                       #:attrs [attrs '()])
+    (define/component table
+      #:root-tag 'table
+      #:positional ([columns]
+                    [rows]
+                    [density 'normal]
+                    [options-pos '()])
+      #:component-keywords ([#:density density-kw #f]
+                            [#:caption caption #f]
+                            [#:variants variants #f]
+                            [#:row-variants row-variants #f]
+                            [#:row-header-column row-header-column #f])
+      #:root-attrs attrs/final
       (define final-density
         (if (eq? density-kw #f) density density-kw))
       (define old-caption
@@ -5011,20 +5034,20 @@
                (cons (row-node (car remaining) row-index)
                      (loop (cdr remaining) (add1 row-index)))])))
         (append caption-node header-row data-rows))
-      (define table-view
-        (observable-element-children
-         'table
-         @state
-         make-table-children
-         #:attrs (list (cons 'data-we-widget "table")
-                       (cons 'columns columns)
-                       (cons 'variants @variants)
-                       (cons 'row-variants @row-variants)
-                       (cons 'row-header-column @row-header-column)
-                       (cons 'caption @caption)
-                       (cons 'density @density)
-                       (cons 'class @root-class))))
-      (apply-root-decorators table-view id class attrs 'table))
+      (define attrs/final
+        (list (cons 'data-we-widget "table")
+              (cons 'columns columns)
+              (cons 'variants @variants)
+              (cons 'row-variants @row-variants)
+              (cons 'row-header-column @row-header-column)
+              (cons 'caption @caption)
+              (cons 'density @density)
+              (cons 'class @root-class)))
+      (observable-element-children
+       'table
+       @state
+       make-table-children
+       #:attrs attrs/final))
 
     ;; radios : list? (or/c any/c observable?) (-> any/c any/c) -> view?
     ;;   Construct a radio-choice control with choices and selected value.
@@ -5682,15 +5705,23 @@
     ;;   Optional parameter options defaults to '() and accepts:
     ;;     title  -> string/observable heading shown above message.
     ;;     footer -> string/observable text shown below message.
-    (define/key (tooltip message
-                         child
-                         #:placement [placement-kw #f]
-                         #:title [title #f]
-                         #:footer [footer #f]
-                         #:id [id #f]
-                         #:class [class #f]
-                         #:attrs [attrs '()]
-                         . args)
+    (define/component tooltip
+      #:root-tag 'div
+      #:component-keywords ([#:placement placement-kw #f]
+                            [#:title title #f]
+                            [#:footer footer #f])
+      #:rest all-positional
+      #:root-attrs attrs/final
+      (when (< (length all-positional) 2)
+        (error 'tooltip
+               "wrong number of positional arguments (expected at least 2, got ~a)"
+               (length all-positional)))
+      (define message
+        (list-ref all-positional 0))
+      (define child
+        (list-ref all-positional 1))
+      (define args
+        (cddr all-positional))
       (define placement 'top)
       (define old-options '())
       (when (and (pair? args)
@@ -5764,23 +5795,23 @@
                        (cons 'data-we-widget "tooltip-bubble")
                        (cons 'class "we-tooltip-bubble")
                        (cons 'aria-hidden @bubble-aria-hidden))))
-      (define tooltip-view
+      (define attrs/final
+        (list (cons 'data-we-widget "tooltip")
+              (cons 'class @root-class)
+              (cons 'on-change-action tooltip-change-action)))
+      (html-element-children
+       'div
+       (html-element-children
+        'div
         (html-element-children
          'div
-         (html-element-children
-          'div
-          (html-element-children
-           'div
-           child
-           #:attrs (list (cons 'aria-describedby bubble-id)))
-          #:attrs (list (cons 'data-we-widget "tooltip-trigger")
-                        (cons 'class "we-tooltip-trigger")
-                        (cons 'on-change-action tooltip-change-action)))
-         bubble-view
-         #:attrs (list (cons 'data-we-widget "tooltip")
-                       (cons 'class @root-class)
-                       (cons 'on-change-action tooltip-change-action))))
-      (apply-root-decorators tooltip-view id class attrs 'tooltip))
+         child
+         #:attrs (list (cons 'aria-describedby bubble-id)))
+        #:attrs (list (cons 'data-we-widget "tooltip-trigger")
+                      (cons 'class "we-tooltip-trigger")
+                      (cons 'on-change-action tooltip-change-action)))
+       bubble-view
+       #:attrs attrs/final))
 
     ;; popover : (or/c string? observable?) [symbol?] [list?] view? ... -> view?
     ;;   Construct a click-toggle popover with trigger label, optional placement, optional options, and body children.
@@ -5788,14 +5819,20 @@
     ;;   Optional parameter options defaults to '() and accepts:
     ;;     title  -> string/observable heading shown above body.
     ;;     footer -> string/observable text shown below body.
-    (define/key (popover label
-                         #:placement [placement-kw #f]
-                         #:title [title #f]
-                         #:footer [footer #f]
-                         #:id [id #f]
-                         #:class [class #f]
-                         #:attrs [attrs '()]
-                         . args)
+    (define/component popover
+      #:root-tag 'div
+      #:component-keywords ([#:placement placement-kw #f]
+                            [#:title title #f]
+                            [#:footer footer #f])
+      #:rest all-positional
+      #:root-attrs attrs/final
+      (when (null? all-positional)
+        (error 'popover
+               "wrong number of positional arguments (expected at least 1, got 0)"))
+      (define label
+        (car all-positional))
+      (define args
+        (cdr all-positional))
       (define placement 'bottom)
       (define old-options '())
       (define children args)
@@ -5858,81 +5895,81 @@
                   "we-popover-backdrop"))))
       (define (set-open! next-open?)
         (:= @open (not (not next-open?))))
-      (define popover-view
-        (html-element-children
+      (define attrs/final
+        (list (cons 'data-we-widget "popover")
+              (cons 'class (string-append "we-popover we-popover-"
+                                          (symbol->string final-placement)))))
+      (html-element-children
+       'div
+       (html-element
+        'button
+        @label
+        #:attrs (list (cons 'role 'button)
+                      (cons 'data-we-widget "popover-trigger")
+                      (cons 'class "we-popover-trigger")
+                      (cons 'tabindex 0)
+                      (cons 'aria-haspopup "dialog")
+                      (cons 'aria-controls panel-id)
+                      (cons 'aria-expanded @trigger-aria-expanded)
+                      (cons 'on-click-action
+                            (lambda ()
+                              (set-open! (not (obs-peek @open)))))
+                      (cons 'on-change-action
+                            (lambda (key)
+                              (case (string->symbol key)
+                                [(Escape)
+                                 (set-open! #f)]
+                                [else
+                                 (void)])))))
+       (html-element
+        'div
+        ""
+        #:attrs (list (cons 'data-we-widget "popover-backdrop")
+                      (cons 'aria-hidden @backdrop-aria-hidden)
+                      (cons 'class @backdrop-class)
+                      (cons 'on-click-action
+                            (lambda ()
+                              (set-open! #f)))))
+       (html-element-children
+        'div
+        (html-element
          'div
-         (html-element
-          'button
-          @label
-          #:attrs (list (cons 'role 'button)
-                        (cons 'data-we-widget "popover-trigger")
-                        (cons 'class "we-popover-trigger")
-                        (cons 'tabindex 0)
-                        (cons 'aria-haspopup "dialog")
-                        (cons 'aria-controls panel-id)
-                        (cons 'aria-expanded @trigger-aria-expanded)
-                        (cons 'on-click-action
-                              (lambda ()
-                                (set-open! (not (obs-peek @open)))))
-                        (cons 'on-change-action
-                              (lambda (key)
-                                (case (string->symbol key)
-                                  [(Escape)
-                                   (set-open! #f)]
-                                  [else
-                                   (void)])))))
-         (html-element
-          'div
-          ""
-          #:attrs (list (cons 'data-we-widget "popover-backdrop")
-                        (cons 'aria-hidden @backdrop-aria-hidden)
-                        (cons 'class @backdrop-class)
-                        (cons 'on-click-action
-                              (lambda ()
-                                (set-open! #f)))))
-         (html-element-children
-          'div
-          (html-element
-           'div
-           (~> @title
-               (lambda (title0)
-                 (if (eq? title0 #f) "" title0)))
-           #:attrs (list (cons 'data-we-widget "popover-header")
-                         (cons 'class "we-popover-header")
-                         (cons 'hidden (~> @title
-                                           (lambda (title0)
-                                             (if (eq? title0 #f) "hidden" #f))))))
-          (apply Div
-                 (append children
-                         (list #:data-we-widget "popover-body"
-                               #:class "we-popover-body")))
-          (html-element
-           'div
-           (~> @footer
-               (lambda (footer0)
-                 (if (eq? footer0 #f) "" footer0)))
-           #:attrs (list (cons 'data-we-widget "popover-footer")
-                         (cons 'class "we-popover-footer")
-                         (cons 'hidden (~> @footer
-                                           (lambda (footer0)
-                                             (if (eq? footer0 #f) "hidden" #f))))))
-          #:attrs (list (cons 'role 'dialog)
-                        (cons 'id panel-id)
-                        (cons 'tabindex -1)
-                        (cons 'aria-hidden @panel-aria-hidden)
-                        (cons 'data-we-widget "popover-panel")
-                        (cons 'class @panel-class)
-                        (cons 'on-change-action
-                              (lambda (key)
-                                (case (string->symbol key)
-                                  [(Escape)
-                                   (set-open! #f)]
-                                  [else
-                                   (void)])))))
-         #:attrs (list (cons 'data-we-widget "popover")
-                       (cons 'class (string-append "we-popover we-popover-"
-                                                   (symbol->string final-placement))))))
-      (apply-root-decorators popover-view id class attrs 'popover))
+         (~> @title
+             (lambda (title0)
+               (if (eq? title0 #f) "" title0)))
+         #:attrs (list (cons 'data-we-widget "popover-header")
+                       (cons 'class "we-popover-header")
+                       (cons 'hidden (~> @title
+                                         (lambda (title0)
+                                           (if (eq? title0 #f) "hidden" #f))))))
+        (apply Div
+               (append children
+                       (list #:data-we-widget "popover-body"
+                             #:class "we-popover-body")))
+        (html-element
+         'div
+         (~> @footer
+             (lambda (footer0)
+               (if (eq? footer0 #f) "" footer0)))
+         #:attrs (list (cons 'data-we-widget "popover-footer")
+                       (cons 'class "we-popover-footer")
+                       (cons 'hidden (~> @footer
+                                         (lambda (footer0)
+                                           (if (eq? footer0 #f) "hidden" #f))))))
+        #:attrs (list (cons 'role 'dialog)
+                      (cons 'id panel-id)
+                      (cons 'tabindex -1)
+                      (cons 'aria-hidden @panel-aria-hidden)
+                      (cons 'data-we-widget "popover-panel")
+                      (cons 'class @panel-class)
+                      (cons 'on-change-action
+                            (lambda (key)
+                              (case (string->symbol key)
+                                [(Escape)
+                                 (set-open! #f)]
+                                [else
+                                 (void)])))))
+       #:attrs attrs/final))
 
     ;; card : [(or/c string? observable? false/c)] [(or/c string? observable? false/c)] [any/c] [list?] any/c ... -> view?
     ;;   Construct a card with optional title/footer, optional variant(s), and body children.
@@ -5944,18 +5981,31 @@
     ;;     actions  -> list of view values rendered in a card action row.
     ;;     tone     -> symbol color tone: primary/secondary/success/danger/warning/info/light/dark.
     ;;     tone-style -> symbol tone style: fill/outline.
-    (define/key (card [title #f]
-                      [footer #f]
-                      #:variants [variants-kw #f]
-                      #:subtitle [subtitle #f]
-                      #:media [media #f]
-                      #:actions [actions #f]
-                      #:tone [tone #f]
-                      #:tone-style [tone-style #f]
-                      #:id [id #f]
-                      #:class [class #f]
-                      #:attrs [attrs '()]
-                      . args)
+    (define/component card
+      #:root-tag 'div
+      #:component-keywords ([#:variants variants-kw #f]
+                            [#:subtitle subtitle #f]
+                            [#:media media #f]
+                            [#:actions actions #f]
+                            [#:tone tone #f]
+                            [#:tone-style tone-style #f])
+      #:rest all-positional
+      #:root-attrs attrs/final
+      (define positional-count
+        (length all-positional))
+      (define title
+        (if (>= positional-count 1)
+            (list-ref all-positional 0)
+            #f))
+      (define footer
+        (if (>= positional-count 2)
+            (list-ref all-positional 1)
+            #f))
+      (define args
+        (cond
+          [(>= positional-count 2) (cddr all-positional)]
+          [(>= positional-count 1) (cdr all-positional)]
+          [else '()]))
       (define (all-symbols? xs)
         (cond
           [(null? xs) #t]
@@ -6121,18 +6171,15 @@
                                  footer0
                                  #:attrs (list (cons 'data-we-widget "card-footer")
                                                (cons 'class "we-card-footer")))))))
-      (apply-root-decorators
-       (observable-element-children
-        'div
-        @state
-        make-card-children
-        #:attrs (list (cons 'role 'group)
-                      (cons 'data-we-widget "card")
-                      (cons 'class @root-class)))
-       id
-       class
-       attrs
-       'card))
+      (define attrs/final
+        (list (cons 'role 'group)
+              (cons 'data-we-widget "card")
+              (cons 'class @root-class)))
+      (observable-element-children
+       'div
+       @state
+       make-card-children
+       #:attrs attrs/final))
 
     ;; top-bar : view? ... -> view?
     ;;   Construct a top bar container for page-level header content.
