@@ -50,7 +50,26 @@
 ;;   Code           Build a primitive HTML code element view with generic keyword attrs.
 ;;   Pre            Build a primitive HTML pre element view with generic keyword attrs.
 ;;   Small          Build a primitive HTML small element view with generic keyword attrs.
+;;   B              Build a primitive HTML b element view with generic keyword attrs.
+;;   I              Build a primitive HTML i element view with generic keyword attrs.
+;;   U              Build a primitive HTML u element view with generic keyword attrs.
+;;   S              Build a primitive HTML s element view with generic keyword attrs.
+;;   Mark           Build a primitive HTML mark element view with generic keyword attrs.
+;;   Sub            Build a primitive HTML sub element view with generic keyword attrs.
+;;   Sup            Build a primitive HTML sup element view with generic keyword attrs.
+;;   Kbd            Build a primitive HTML kbd element view with generic keyword attrs.
+;;   Samp           Build a primitive HTML samp element view with generic keyword attrs.
+;;   Var            Build a primitive HTML var element view with generic keyword attrs.
+;;   Q              Build a primitive HTML q element view with generic keyword attrs.
+;;   Cite           Build a primitive HTML cite element view with generic keyword attrs.
+;;   Dfn            Build a primitive HTML dfn element view with generic keyword attrs.
+;;   Abbr           Build a primitive HTML abbr element view with generic keyword attrs.
+;;   Time           Build a primitive HTML time element view with generic keyword attrs.
+;;   Data           Build a primitive HTML data element view with generic keyword attrs.
+;;   Del            Build a primitive HTML del element view with generic keyword attrs.
+;;   Ins            Build a primitive HTML ins element view with generic keyword attrs.
 ;;   Br             Build a primitive HTML br element view with generic keyword attrs.
+;;   Wbr            Build a primitive HTML wbr element view with generic keyword attrs.
 ;;   Hr             Build a primitive HTML hr element view with generic keyword attrs.
 ;;   Img            Build a primitive HTML img element view with required #:src and generic keyword attrs.
 ;;   A              Build a primitive HTML a element view with generic keyword attrs.
@@ -68,6 +87,57 @@
 ;;   Ul             Build a primitive HTML ul element view with children and generic keyword attrs.
 ;;   Ol             Build a primitive HTML ol element view with children and generic keyword attrs.
 ;;   Li             Build a primitive HTML li element view with children and generic keyword attrs.
+;;   Dl             Build a primitive HTML dl element view with children and generic keyword attrs.
+;;   Dt             Build a primitive HTML dt element view with children and generic keyword attrs.
+;;   Dd             Build a primitive HTML dd element view with children and generic keyword attrs.
+;;   Table          Build a primitive HTML table element view with children and generic keyword attrs.
+;;   Caption        Build a primitive HTML caption element view with children and generic keyword attrs.
+;;   Thead          Build a primitive HTML thead element view with children and generic keyword attrs.
+;;   Tbody          Build a primitive HTML tbody element view with children and generic keyword attrs.
+;;   Tfoot          Build a primitive HTML tfoot element view with children and generic keyword attrs.
+;;   Tr             Build a primitive HTML tr element view with children and generic keyword attrs.
+;;   Th             Build a primitive HTML th element view with children and generic keyword attrs.
+;;   Td             Build a primitive HTML td element view with children and generic keyword attrs.
+;;   Audio          Build a primitive HTML audio element view with children and generic keyword attrs.
+;;   Video          Build a primitive HTML video element view with children and generic keyword attrs.
+;;   Source         Build a primitive HTML source element view with generic keyword attrs.
+;;   Track          Build a primitive HTML track element view with generic keyword attrs.
+;;   Canvas         Build a primitive HTML canvas element view with children and generic keyword attrs.
+;;   Iframe         Build a primitive HTML iframe element view with children and generic keyword attrs.
+;;   Embed          Build a primitive HTML embed element view with generic keyword attrs.
+;;   Input          Build a primitive HTML input element view with generic keyword attrs.
+;;   Select         Build a primitive HTML select element view with children and generic keyword attrs.
+;;   Option         Build a primitive HTML option element view with children and generic keyword attrs.
+;;   Textarea       Build a primitive HTML textarea element view with generic keyword attrs.
+;;   Details        Build a primitive HTML details element view with children and generic keyword attrs.
+;;   Summary        Build a primitive HTML summary element view with children and generic keyword attrs.
+;;   Figure         Build a primitive HTML figure element view with children and generic keyword attrs.
+;;   Figcaption     Build a primitive HTML figcaption element view with children and generic keyword attrs.
+;;   Hgroup         Build a primitive HTML hgroup element view with children and generic keyword attrs.
+;;   Address        Build a primitive HTML address element view with children and generic keyword attrs.
+;;   Blockquote     Build a primitive HTML blockquote element view with children and generic keyword attrs.
+;;   Ruby           Build a primitive HTML ruby element view with children and generic keyword attrs.
+;;   Rt             Build a primitive HTML rt element view with children and generic keyword attrs.
+;;   Rp             Build a primitive HTML rp element view with children and generic keyword attrs.
+;;   Bdi            Build a primitive HTML bdi element view with children and generic keyword attrs.
+;;   Bdo            Build a primitive HTML bdo element view with children and generic keyword attrs.
+;;   Progress       Build a primitive HTML progress element view with children and generic keyword attrs.
+;;   Meter          Build a primitive HTML meter element view with children and generic keyword attrs.
+;;   Output         Build a primitive HTML output element view with children and generic keyword attrs.
+;;   Fieldset       Build a primitive HTML fieldset element view with children and generic keyword attrs.
+;;   Legend         Build a primitive HTML legend element view with children and generic keyword attrs.
+;;   Datalist       Build a primitive HTML datalist element view with children and generic keyword attrs.
+;;   Optgroup       Build a primitive HTML optgroup element view with children and generic keyword attrs.
+;;   Colgroup       Build a primitive HTML colgroup element view with children and generic keyword attrs.
+;;   Col            Build a primitive HTML col element view with generic keyword attrs.
+;;   Map            Build a primitive HTML map element view with children and generic keyword attrs.
+;;   Area           Build a primitive HTML area element view with generic keyword attrs.
+;;   Script         Build a primitive HTML script element view with generic keyword attrs.
+;;   Link           Build a primitive HTML link element view with generic keyword attrs.
+;;   Meta           Build a primitive HTML meta element view with generic keyword attrs.
+;;   Title          Build a primitive HTML title element view with generic keyword attrs.
+;;   Base           Build a primitive HTML base element view with generic keyword attrs.
+;;   Style          Build a primitive HTML style element view with generic keyword attrs.
 ;;   h2             Build a semantic level-2 heading view.
 ;;   h3             Build a semantic level-3 heading view.
 ;;   h4             Build a semantic level-4 heading view.
@@ -166,7 +236,26 @@
    Code
    Pre
    Small
+   B
+   I
+   U
+   S
+   Mark
+   Sub
+   Sup
+   Kbd
+   Samp
+   Var
+   Q
+   Cite
+   Dfn
+   Abbr
+   Time
+   Data
+   Del
+   Ins
    Br
+   Wbr
    Hr
    Img
    A
@@ -184,6 +273,57 @@
    Ul
    Ol
    Li
+   Dl
+   Dt
+   Dd
+   Table
+   Caption
+   Thead
+   Tbody
+   Tfoot
+   Tr
+   Th
+   Td
+   Audio
+   Video
+   Source
+   Track
+   Canvas
+   Iframe
+   Embed
+   Input
+   Select
+   Option
+   Textarea
+   Details
+   Summary
+   Figure
+   Figcaption
+   Hgroup
+   Address
+   Blockquote
+   Ruby
+   Rt
+   Rp
+   Bdi
+   Bdo
+   Progress
+   Meter
+   Output
+   Fieldset
+   Legend
+   Datalist
+   Optgroup
+   Colgroup
+   Col
+   Map
+   Area
+   Script
+   Link
+   Meta
+   Title
+   Base
+   Style
    h2
    h3
    h4
@@ -999,9 +1139,87 @@
     ;;   Construct a primitive HTML small element with generic keyword attributes.
     (define/element Small html-element 'small)
 
+    ;; B : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML b element with generic keyword attributes.
+    (define/element B html-element 'b)
+
+    ;; I : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML i element with generic keyword attributes.
+    (define/element I html-element 'i)
+
+    ;; U : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML u element with generic keyword attributes.
+    (define/element U html-element 'u)
+
+    ;; S : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML s element with generic keyword attributes.
+    (define/element S html-element 's)
+
+    ;; Mark : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML mark element with generic keyword attributes.
+    (define/element Mark html-element 'mark)
+
+    ;; Sub : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML sub element with generic keyword attributes.
+    (define/element Sub html-element 'sub)
+
+    ;; Sup : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML sup element with generic keyword attributes.
+    (define/element Sup html-element 'sup)
+
+    ;; Kbd : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML kbd element with generic keyword attributes.
+    (define/element Kbd html-element 'kbd)
+
+    ;; Samp : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML samp element with generic keyword attributes.
+    (define/element Samp html-element 'samp)
+
+    ;; Var : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML var element with generic keyword attributes.
+    (define/element Var html-element 'var)
+
+    ;; Q : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML q element with generic keyword attributes.
+    (define/element Q html-element 'q)
+
+    ;; Cite : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML cite element with generic keyword attributes.
+    (define/element Cite html-element 'cite)
+
+    ;; Dfn : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML dfn element with generic keyword attributes.
+    (define/element Dfn html-element 'dfn)
+
+    ;; Abbr : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML abbr element with generic keyword attributes.
+    (define/element Abbr html-element 'abbr)
+
+    ;; Time : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML time element with generic keyword attributes.
+    (define/element Time html-element 'time)
+
+    ;; Data : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML data element with generic keyword attributes.
+    (define/element Data html-element 'data)
+
+    ;; Del : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML del element with generic keyword attributes.
+    (define/element Del html-element 'del)
+
+    ;; Ins : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML ins element with generic keyword attributes.
+    (define/element Ins html-element 'ins)
+
     ;; Br : [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML br element with generic keyword attributes.
     (define/element Br html-element 'br
+      #:required-keywords ()
+      #:positional-count 0)
+
+    ;; Wbr : [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML wbr element with generic keyword attributes.
+    (define/element Wbr html-element 'wbr
       #:required-keywords ()
       #:positional-count 0)
 
@@ -1100,6 +1318,308 @@
     (define/element Li html-element-children 'li
       #:required-keywords ()
       #:positional-count any)
+
+    ;; Dl : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML dl element with children and generic keyword attrs.
+    (define/element Dl html-element-children 'dl
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Dt : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML dt element with children and generic keyword attrs.
+    (define/element Dt html-element-children 'dt
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Dd : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML dd element with children and generic keyword attrs.
+    (define/element Dd html-element-children 'dd
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Table : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML table element with children and generic keyword attrs.
+    (define/element Table html-element-children 'table
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Caption : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML caption element with children and generic keyword attrs.
+    (define/element Caption html-element-children 'caption
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Thead : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML thead element with children and generic keyword attrs.
+    (define/element Thead html-element-children 'thead
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Tbody : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML tbody element with children and generic keyword attrs.
+    (define/element Tbody html-element-children 'tbody
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Tfoot : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML tfoot element with children and generic keyword attrs.
+    (define/element Tfoot html-element-children 'tfoot
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Tr : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML tr element with children and generic keyword attrs.
+    (define/element Tr html-element-children 'tr
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Th : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML th element with children and generic keyword attrs.
+    (define/element Th html-element-children 'th
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Td : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML td element with children and generic keyword attrs.
+    (define/element Td html-element-children 'td
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Audio : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML audio element with children and generic keyword attrs.
+    (define/element Audio html-element-children 'audio
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Video : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML video element with children and generic keyword attrs.
+    (define/element Video html-element-children 'video
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Source : [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML source element with generic keyword attrs.
+    (define/element Source html-element 'source
+      #:required-keywords ()
+      #:positional-count 0)
+
+    ;; Track : [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML track element with generic keyword attrs.
+    (define/element Track html-element 'track
+      #:required-keywords ()
+      #:positional-count 0)
+
+    ;; Canvas : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML canvas element with children and generic keyword attrs.
+    (define/element Canvas html-element-children 'canvas
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Iframe : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML iframe element with children and generic keyword attrs.
+    (define/element Iframe html-element-children 'iframe
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Embed : [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML embed element with generic keyword attrs.
+    (define/element Embed html-element 'embed
+      #:required-keywords ()
+      #:positional-count 0)
+
+    ;; Input : [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML input element with generic keyword attrs.
+    (define/element Input html-element 'input
+      #:required-keywords ()
+      #:positional-count 0)
+
+    ;; Select : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML select element with children and generic keyword attrs.
+    (define/element Select html-element-children 'select
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Option : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML option element with children and generic keyword attrs.
+    (define/element Option html-element-children 'option
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Textarea : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML textarea element with generic keyword attrs.
+    (define/element Textarea html-element 'textarea)
+
+    ;; Details : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML details element with children and generic keyword attrs.
+    (define/element Details html-element-children 'details
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Summary : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML summary element with children and generic keyword attrs.
+    (define/element Summary html-element-children 'summary
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Figure : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML figure element with children and generic keyword attrs.
+    (define/element Figure html-element-children 'figure
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Figcaption : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML figcaption element with children and generic keyword attrs.
+    (define/element Figcaption html-element-children 'figcaption
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Hgroup : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML hgroup element with children and generic keyword attrs.
+    (define/element Hgroup html-element-children 'hgroup
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Address : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML address element with children and generic keyword attrs.
+    (define/element Address html-element-children 'address
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Blockquote : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML blockquote element with children and generic keyword attrs.
+    (define/element Blockquote html-element-children 'blockquote
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Ruby : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML ruby element with children and generic keyword attrs.
+    (define/element Ruby html-element-children 'ruby
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Rt : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML rt element with children and generic keyword attrs.
+    (define/element Rt html-element-children 'rt
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Rp : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML rp element with children and generic keyword attrs.
+    (define/element Rp html-element-children 'rp
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Bdi : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML bdi element with children and generic keyword attrs.
+    (define/element Bdi html-element-children 'bdi
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Bdo : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML bdo element with children and generic keyword attrs.
+    (define/element Bdo html-element-children 'bdo
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Progress : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML progress element with children and generic keyword attrs.
+    (define/element Progress html-element-children 'progress
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Meter : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML meter element with children and generic keyword attrs.
+    (define/element Meter html-element-children 'meter
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Output : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML output element with children and generic keyword attrs.
+    (define/element Output html-element-children 'output
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Fieldset : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML fieldset element with children and generic keyword attrs.
+    (define/element Fieldset html-element-children 'fieldset
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Legend : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML legend element with children and generic keyword attrs.
+    (define/element Legend html-element-children 'legend
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Datalist : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML datalist element with children and generic keyword attrs.
+    (define/element Datalist html-element-children 'datalist
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Optgroup : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML optgroup element with children and generic keyword attrs.
+    (define/element Optgroup html-element-children 'optgroup
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Colgroup : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML colgroup element with children and generic keyword attrs.
+    (define/element Colgroup html-element-children 'colgroup
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Col : [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML col element with generic keyword attrs.
+    (define/element Col html-element 'col
+      #:required-keywords ()
+      #:positional-count 0)
+
+    ;; Map : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML map element with children and generic keyword attrs.
+    (define/element Map html-element-children 'map
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Area : [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML area element with generic keyword attrs.
+    (define/element Area html-element 'area
+      #:required-keywords ()
+      #:positional-count 0)
+
+    ;; Script : [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML script element with generic keyword attrs.
+    (define/element Script html-element 'script
+      #:required-keywords ()
+      #:positional-count 0)
+
+    ;; Link : [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML link element with generic keyword attrs.
+    (define/element Link html-element 'link
+      #:required-keywords ()
+      #:positional-count 0)
+
+    ;; Meta : [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML meta element with generic keyword attrs.
+    (define/element Meta html-element 'meta
+      #:required-keywords ()
+      #:positional-count 0)
+
+    ;; Title : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML title element with generic keyword attrs.
+    (define/element Title html-element 'title)
+
+    ;; Base : [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML base element with generic keyword attrs.
+    ;;   Requires at least one of #:href or #:target.
+    (define/element Base html-element 'base
+      #:required-keywords ()
+      #:required-any-keywords (#:href #:target)
+      #:positional-count 0)
+
+    ;; Style : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML style element with generic keyword attrs.
+    (define/element Style html-element 'style)
 
     ;; h2 : (or/c string? observable?) -> view?
     ;;   Construct a semantic level-2 heading view with optional root decorators.
@@ -2411,7 +2931,26 @@
             Code
             Pre
             Small
+            B
+            I
+            U
+            S
+            Mark
+            Sub
+            Sup
+            Kbd
+            Samp
+            Var
+            Q
+            Cite
+            Dfn
+            Abbr
+            Time
+            Data
+            Del
+            Ins
             Br
+            Wbr
             Hr
             Img
             A
@@ -2429,6 +2968,57 @@
             Ul
             Ol
             Li
+            Dl
+            Dt
+            Dd
+            Table
+            Caption
+            Thead
+            Tbody
+            Tfoot
+            Tr
+            Th
+            Td
+            Audio
+            Video
+            Source
+            Track
+            Canvas
+            Iframe
+            Embed
+            Input
+            Select
+            Option
+            Textarea
+            Details
+            Summary
+            Figure
+            Figcaption
+            Hgroup
+            Address
+            Blockquote
+            Ruby
+            Rt
+            Rp
+            Bdi
+            Bdo
+            Progress
+            Meter
+            Output
+            Fieldset
+            Legend
+            Datalist
+            Optgroup
+            Colgroup
+            Col
+            Map
+            Area
+            Script
+            Link
+            Meta
+            Title
+            Base
+            Style
             h2
             h3
             h4

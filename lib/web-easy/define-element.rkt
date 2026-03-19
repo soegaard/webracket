@@ -1,6 +1,7 @@
 #lang webracket
 
-(require (for-syntax racket/base
+(require racket/list
+         (for-syntax racket/base
                      racket/list
                      racket/path))
 
@@ -153,9 +154,9 @@
     [else
      (error who "expected #:attrs as list? or #f, got ~a" attrs)]))
 
-;; normalize-element-call : symbol? list? (or/c natural? 'any) (or/c #f list?) list? -> values list? any/c
+;; normalize-element-call : symbol? list? (or/c natural? 'any) (or/c #f list?) list? list? -> values list? any/c
 ;;   Parse constructor call payload into positional args and merged attrs.
-(define (normalize-element-call who all-args expected-positional-count allowed-attrs required-keywords)
+(define (normalize-element-call who all-args expected-positional-count allowed-attrs required-keywords required-any-keywords)
   (define (keyword-count+ counts kw)
     (cond
       [(null? counts)
@@ -173,6 +174,8 @@
       [else (keyword-count-ref (cdr counts) kw)]))
   (define-values (positional-rev attrs extra-attrs-rev)
     (parse-element-call-args who all-args allowed-attrs))
+  (define required-target-kws
+    (remove-duplicates (append required-keywords required-any-keywords)))
   (define required-counts
     (let loop ([rest all-args]
                [counts '()])
@@ -180,7 +183,7 @@
         [(null? rest) counts]
         [(keyword? (car rest))
          (define kw (car rest))
-         (if (memq kw required-keywords)
+         (if (memq kw required-target-kws)
              (loop (cddr rest) (keyword-count+ counts kw))
              (loop (cddr rest) counts))]
         [else
@@ -191,6 +194,19 @@
      (unless (= count 1)
        (error who "expected exactly one ~a keyword argument" required-kw)))
    required-keywords)
+  (unless (null? required-any-keywords)
+    (define any-count
+      (let loop ([rest required-any-keywords]
+                 [sum 0])
+        (cond
+          [(null? rest) sum]
+          [else
+           (loop (cdr rest)
+                 (+ sum (keyword-count-ref required-counts (car rest))))])))
+    (when (= any-count 0)
+      (error who
+             "expected at least one of keyword arguments: ~a"
+             required-any-keywords)))
   (define positional (reverse positional-rev))
   (validate-positional-count! who positional expected-positional-count)
   (define extra-attrs (reverse extra-attrs-rev))
@@ -277,6 +293,84 @@
   (syntax-case stx ()
     [(_ name base fixed ...
         #:required-keywords (required-kw ...)
+        #:required-any-keywords (required-any-kw ...)
+        #:positional-count positional-count)
+     (identifier? #'name)
+     (let* ([base-sym (syntax-e #'base)]
+            [fixed-list (syntax->list #'(fixed ...))]
+            [required-kws (syntax->datum #'(required-kw ...))]
+            [required-any-kws (syntax->datum #'(required-any-kw ...))]
+            [count-datum/raw (syntax-e #'positional-count)]
+            [count-datum (if (eq? count-datum/raw 'any)
+                             'any
+                             count-datum/raw)]
+            [_ (unless (or (eq? count-datum 'any)
+                           (and (integer? count-datum) (>= count-datum 0)))
+                 (raise-syntax-error who
+                                     "expected non-negative integer or `any` for #:positional-count"
+                                     stx
+                                     #'positional-count))]
+            [allowed-attrs
+             (if (or (eq? base-sym 'html-element)
+                     (eq? base-sym 'html-element-children))
+                 (let ()
+                   (unless (and fixed-list (= (length fixed-list) 1))
+                     (raise-syntax-error who
+                                         "html-element wrappers must provide exactly one fixed tag literal"
+                                         stx
+                                         #'(fixed ...)))
+                   (define fixed0 (car fixed-list))
+                   (syntax-case fixed0 (quote)
+                     [(quote tag-sym)
+                      (if (symbol? (syntax-e #'tag-sym))
+                          (allowed-attrs-for-html-tag stx (syntax-e #'tag-sym))
+                          (raise-syntax-error who
+                                              "expected quoted symbol tag in html-element wrapper"
+                                              stx
+                                              fixed0))]
+                     [_
+                      (raise-syntax-error who
+                                          "expected quoted symbol tag in html-element wrapper"
+                                          stx
+                                          fixed0)]))
+                 #f)])
+       (define count-expr-datum
+         (if (eq? count-datum 'any)
+             '(quote any)
+             count-datum))
+       (with-syntax ([name/sym (datum->syntax #'name (syntax-e #'name) #'name #'name)]
+                     [allowed-attrs-stx (datum->syntax stx (list 'quote allowed-attrs) stx stx)]
+                     [required-kws-stx (datum->syntax stx (list 'quote required-kws) stx stx)]
+                     [required-any-kws-stx (datum->syntax stx (list 'quote required-any-kws) stx stx)]
+                     [expected-count-stx (datum->syntax stx count-expr-datum stx stx)])
+         (cond
+           [(and (eq? base-sym 'html-element) (equal? count-datum 0))
+            #'(define (name . all-args)
+                (define-values (positional attrs)
+                  (normalize-element-call 'name/sym
+                                          all-args
+                                          expected-count-stx
+                                          allowed-attrs-stx
+                                          required-kws-stx
+                                          required-any-kws-stx))
+                (base fixed ...
+                      ""
+                      #:attrs attrs))]
+           [else
+            #'(define (name . all-args)
+                (define-values (positional attrs)
+                  (normalize-element-call 'name/sym
+                                          all-args
+                                          expected-count-stx
+                                          allowed-attrs-stx
+                                          required-kws-stx
+                                          required-any-kws-stx))
+                (apply base
+                       (append (list fixed ...)
+                               positional
+                               (list #:attrs attrs))))])))]
+    [(_ name base fixed ...
+        #:required-keywords (required-kw ...)
         #:positional-count positional-count)
      (identifier? #'name)
      (let* ([base-sym (syntax-e #'base)]
@@ -332,7 +426,8 @@
                                           all-args
                                           expected-count-stx
                                           allowed-attrs-stx
-                                          required-kws-stx))
+                                          required-kws-stx
+                                          '()))
                 (base fixed ...
                       ""
                       #:attrs attrs))]
@@ -343,7 +438,8 @@
                                           all-args
                                           expected-count-stx
                                           allowed-attrs-stx
-                                          required-kws-stx))
+                                          required-kws-stx
+                                          '()))
                 (apply base
                        (append (list fixed ...)
                                positional
@@ -380,7 +476,7 @@
                      [allowed-attrs-stx (datum->syntax stx (list 'quote allowed-attrs) stx stx)])
          #'(define (name . all-args)
              (define-values (positional attrs)
-               (normalize-element-call 'name/sym all-args 1 allowed-attrs-stx '()))
+               (normalize-element-call 'name/sym all-args 1 allowed-attrs-stx '() '()))
              (base fixed ...
                    (car positional)
                    #:attrs attrs))))]

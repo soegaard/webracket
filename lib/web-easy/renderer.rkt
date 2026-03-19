@@ -987,6 +987,75 @@
     (define (maybe-observable-value v)
       (if (obs? v) (obs-peek v) v))
 
+    ;; base-order/url-attr-keys : list?
+    ;;   Attribute keys treated as URL-bearing for conservative Base ordering checks.
+    (define base-order/url-attr-keys
+      '(href src srcset action formaction cite poster data usemap ping imagesrcset longdesc))
+
+    ;; primitive-html-view-tag : any/c -> (or/c symbol? #f)
+    ;;   Return primitive HTML tag symbol for html-element/html-element-children views.
+    (define (primitive-html-view-tag child)
+      (if (view? child)
+          (let ([kind (view-kind child)])
+            (if (or (eq? kind 'html-element)
+                    (eq? kind 'html-element-children))
+                (let ([tag-pair (assq 'tag (view-props child))])
+                  (if tag-pair
+                      (let ([tag-value (maybe-observable-value (cdr tag-pair))])
+                        (if (symbol? tag-value) tag-value #f))
+                      #f))
+                #f))
+          #f))
+
+    ;; primitive-view-has-url-attrs? : any/c -> boolean?
+    ;;   Check whether primitive HTML view carries URL-bearing root attributes.
+    (define (primitive-view-has-url-attrs? child)
+      (define (url-attr-value-present? attr-value)
+        (cond
+          [(eq? attr-value #f) #f]
+          [(and (string? attr-value)
+                (string=? attr-value ""))
+           #f]
+          [else #t]))
+      (if (view? child)
+          (let ([attrs (props-extra-attrs (view-props child))])
+            (let loop ([rest attrs])
+              (cond
+                [(null? rest) #f]
+                [else
+                 (define attr-key (caar rest))
+                 (define attr-value (maybe-observable-value (cdar rest)))
+                 (if (and (memq attr-key base-order/url-attr-keys)
+                          (url-attr-value-present? attr-value))
+                     #t
+                     (loop (cdr rest)))])))
+          #f))
+
+    ;; validate-window-base-order! : view? -> void?
+    ;;   Enforce conservative Base ordering among direct window children.
+    (define (validate-window-base-order! window-view)
+      (define has-base?
+        (let loop ([rest (view-children window-view)])
+          (cond
+            [(null? rest) #f]
+            [(eq? (primitive-html-view-tag (car rest)) 'base) #t]
+            [else (loop (cdr rest))])))
+      (when has-base?
+        (define seen-url-bearing-child? #f)
+        (for-each
+         (lambda (child)
+           (define tag (primitive-html-view-tag child))
+           (cond
+             [(eq? tag 'base)
+              (when seen-url-bearing-child?
+                (error 'Base
+                       "must appear before URL-bearing primitive elements in direct window children"))]
+             [else
+              (when (and tag
+                         (primitive-view-has-url-attrs? child))
+                (set! seen-url-bearing-child? #t))]))
+         (view-children window-view))))
+
     ;; options-ref : any/c symbol? any/c -> any/c
     ;;   Read option key from options alist, returning default when missing.
     (define (options-ref options key default)
@@ -1737,6 +1806,7 @@
            (define node       (dom-node 'div (list (cons attr/role 'window)
                                                    (cons 'data-we-widget "window")) '() #f #f #f))
            (define style-node (dom-node 'style '() '() shared-style-text #f #f))
+           (validate-window-base-order! v)
            (for-each (lambda (child)
                        (backend-append-child! node (build-node child register-cleanup!)))
                      (view-children v))
