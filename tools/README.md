@@ -3,7 +3,7 @@ Tools
 
 This folder holds various useful tools.
 
-For now, there is one tool here.
+For now, there are a few tools here.
 
 
 pretty.rkt
@@ -50,4 +50,23 @@ Run:
 
 ```sh
 racket tools/check-wrapper-arity.rkt lib/web-easy/smoke
+```
+
+fetch-html-element-attributes.mjs
+---------------------------------
+One-off generator for a machine-readable HTML element/attribute snapshot.
+It fetches the `html-element-attributes` package source and writes:
+- `lib/web-easy/generated/html-element-attributes.json`
+- `lib/web-easy/spec/html-element-attributes.sexp`
+
+Run:
+
+```sh
+node tools/fetch-html-element-attributes.mjs
+```
+
+Optional:
+
+```sh
+node tools/fetch-html-element-attributes.mjs --version 3.1.0
 ```

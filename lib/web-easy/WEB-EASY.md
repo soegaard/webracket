@@ -1,0 +1,138 @@
+# WEB-EASY
+
+This document captures internal design decisions for `lib/web-easy/`.
+
+## `define/element` (internal)
+
+`define/element` is implemented in:
+
+- `lib/web-easy/define-element.rkt`
+
+and included by:
+
+- `lib/web-easy/main.rkt`
+- `lib/web-easy/main-browser.rkt`
+
+with:
+
+```racket
+(include/reader "define-element.rkt" read-syntax/skip-first-line)
+```
+
+### Constructor shape
+
+Current shape:
+
+```racket
+(define/element Name Base fixed-positional ...)
+```
+
+Example:
+
+```racket
+(define/element H1 html-element 'h1)
+```
+
+### Attribute validation
+
+For `html-element` wrappers:
+
+- attribute keywords are validated against
+  - global attrs (`"*"` row),
+  - element-specific attrs,
+  - wildcard prefixes `data-*` and `aria-*`.
+- unknown attrs are rejected early.
+
+Validation is based on generated data:
+
+- `lib/web-easy/spec/html-element-attributes.sexp`
+
+### Wildcard Attr Matching Rules
+
+`define/element` supports wildcard prefixes:
+
+- `data-*`
+- `aria-*`
+
+Matching is prefix-based and requires the `-` separator.
+
+Examples:
+
+- `#:data-testid` allowed
+- `#:aria-label` allowed
+- `#:datatest` rejected
+- `#:arialabel` rejected
+
+### `#:attrs` escape hatch
+
+Constructors also support `#:attrs` (list of attr pairs), merged with keyword attrs.
+
+- `#:attrs #f` is allowed.
+- keyword attrs and `#:attrs` are combined.
+
+### Class merge semantics
+
+`#:class` keeps web-easy merge/dedupe behavior:
+
+- classes from base attrs, `#:class`, and `#:attrs` are merged,
+- duplicate class tokens are removed,
+- order is stable by first occurrence.
+
+### Reactive attrs (primitive html-element)
+
+Primitive `html-element` supports observable attrs.
+
+- scalar attrs update reactively,
+- `data-*` and `aria-*` update reactively,
+- `class` merge updates reactively,
+- `style` updates reactively,
+- tag can be observable (used by semantic `heading` delegation).
+
+### Procedure-valued attrs
+
+Policy:
+
+- construction-time procedure-valued attrs are rejected,
+- observable updates that become procedure-valued are ignored,
+- a warning is emitted through `current-web-easy-warning-handler`,
+- last valid value is kept.
+
+You can replace the warning sink with:
+
+- `set-current-web-easy-warning-handler!`
+- `call-with-web-easy-warning-handler`
+
+This keeps attr channels data-only and avoids runtime crashes from invalid updates.
+
+## Roadmap
+
+Near-term directions:
+
+1. Event attrs policy:
+   keep primitive attr channels data-only for now, and decide if/when to introduce explicit event hooks.
+2. Warning sink evolution:
+   current warning-handler hook is intentionally simple; we can later layer structured logging/categories on top.
+3. Spec refresh flow:
+   keep the generated HTML attribute snapshot up to date and document refresh cadence/tool invocation.
+
+## Uppercase With-Children (Decision)
+
+First target elements:
+
+- `Div`
+- `Section`
+
+Proposed constructor shape:
+
+```racket
+(Div child ... [#:attrs attrs] [#:* html-attrs])
+(Section child ... [#:attrs attrs] [#:* html-attrs])
+```
+
+Notes:
+
+- these are uppercase primitive HTML constructors with children;
+- children are variadic view arguments;
+- HTML attributes follow the same validation model as current leaf uppercase elements
+  (global + element-specific + `data-*`/`aria-*`, plus `#:attrs` merge behavior);
+- class merge/reactive behavior should match existing primitive HTML element behavior.
