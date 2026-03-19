@@ -11,6 +11,9 @@
 ;;   render                  Render a view into runtime nodes.
 ;;   renderer-root           Return renderer root node.
 ;;   renderer-destroy        Destroy renderer and run cleanups.
+;;   current-web-easy-warning-handler  Current warning sink procedure.
+;;   set-current-web-easy-warning-handler!  Replace warning sink procedure.
+;;   call-with-web-easy-warning-handler  Run thunk with temporary warning sink.
 ;;   dom-node-click!         Invoke node click callback when present.
 ;;   dom-node-change!        Invoke node change callback when present.
 ;;   dom-node-toggle!        Toggle checkbox state and invoke change callback.
@@ -46,6 +49,9 @@
    render
    renderer-root
    renderer-destroy
+   current-web-easy-warning-handler
+   set-current-web-easy-warning-handler!
+   call-with-web-easy-warning-handler
    dom-node-click!
    dom-node-change!
    dom-node-toggle!
@@ -55,6 +61,49 @@
    dom-node-keydown!)
   (let ()
     (struct renderer-state (root cleanups destroyed?) #:mutable #:transparent)
+
+    ;; current-web-easy-warning-handler : (-> string? any/c)
+    ;;   Procedure controlling where non-fatal web-easy warnings are sent.
+    (define current-web-easy-warning-handler displayln)
+
+    ;; set-current-web-easy-warning-handler! : (-> string? any/c) -> void?
+    ;;   Replace warning sink procedure for non-fatal web-easy warnings.
+    (define (set-current-web-easy-warning-handler! handler)
+      (unless (procedure? handler)
+        (raise-arguments-error 'set-current-web-easy-warning-handler!
+                               "expected procedure?"
+                               "handler"
+                               handler))
+      (set! current-web-easy-warning-handler handler)
+      (void))
+
+    ;; call-with-web-easy-warning-handler : (-> string? any/c) (-> any/c) -> any/c
+    ;;   Run thunk while temporarily overriding warning sink; always restore previous sink.
+    (define (call-with-web-easy-warning-handler handler thunk)
+      (unless (procedure? handler)
+        (raise-arguments-error 'call-with-web-easy-warning-handler
+                               "expected handler as procedure?"
+                               "handler"
+                               handler))
+      (unless (procedure? thunk)
+        (raise-arguments-error 'call-with-web-easy-warning-handler
+                               "expected thunk as procedure?"
+                               "thunk"
+                               thunk))
+      (define old-handler current-web-easy-warning-handler)
+      (set-current-web-easy-warning-handler! handler)
+      (with-handlers ([exn:fail?
+                       (lambda (e)
+                         (set-current-web-easy-warning-handler! old-handler)
+                         (raise e))])
+        (define result (thunk))
+        (set-current-web-easy-warning-handler! old-handler)
+        result))
+
+    ;; emit-web-easy-warning! : string? -> void?
+    ;;   Send warning message through current warning handler.
+    (define (emit-web-easy-warning! msg)
+      (current-web-easy-warning-handler msg))
 
     ;; Constants for node attributes and fallbacks.
     (define attr/role             'role)      ; Attribute key for semantic role.
@@ -699,8 +748,22 @@
     (define (merge-root-extra-attrs v attrs)
       (define props (view-props v))
       (define base-class-pair (assq 'class attrs))
+      (define (valid-attr-value? attr-key attr-value)
+        (if (procedure? attr-value)
+            (begin
+              (emit-web-easy-warning!
+               (string-append "web-easy: ignored procedure-valued attribute "
+                              (symbol->string attr-key)))
+              #f)
+            #t))
+      (define base-class-value
+        (if base-class-pair
+            (maybe-observable-value (cdr base-class-pair))
+            #f))
       (define base-classes (if base-class-pair
-                               (class-value->list (cdr base-class-pair))
+                               (if (valid-attr-value? 'class base-class-value)
+                                   (class-value->list base-class-value)
+                                   '())
                                '()))
       (define extra-attrs/raw (props-extra-attrs props))
       (define extra-class-from-attrs
@@ -708,7 +771,10 @@
           (cond
             [(null? remaining) '()]
             [(eq? (caar remaining) 'class)
-             (append (class-value->list (cdar remaining))
+             (define class-value (maybe-observable-value (cdar remaining)))
+             (append (if (valid-attr-value? 'class class-value)
+                         (class-value->list class-value)
+                         '())
                      (loop (cdr remaining)))]
             [else
              (loop (cdr remaining))])))
@@ -721,12 +787,26 @@
                    [acc attrs/without-class])
           (cond
             [(null? remaining) acc]
-            [(or (eq? (caar remaining) 'class)
-                 (eq? (caar remaining) 'data-we-widget))
+            [(eq? (caar remaining) 'class)
              (loop (cdr remaining) acc)]
+            [(eq? (caar remaining) 'data-we-widget)
+             (if (assq 'data-we-widget attrs)
+                 (loop (cdr remaining) acc)
+                 (let ([widget-value (maybe-observable-value (cdar remaining))])
+                   (loop (cdr remaining)
+                         (if (valid-attr-value? 'data-we-widget widget-value)
+                             (attr-set acc
+                                       'data-we-widget
+                                       widget-value)
+                             acc))))]
             [else
+             (define attr-value (maybe-observable-value (cdar remaining)))
              (loop (cdr remaining)
-                   (attr-set acc (caar remaining) (cdar remaining)))])))
+                   (if (valid-attr-value? (caar remaining) attr-value)
+                       (attr-set acc
+                                 (caar remaining)
+                                 attr-value)
+                       acc))])))
       (define final-class (merge-class-values base-classes extra-classes))
       (if (string=? final-class "")
           attrs/merged
@@ -2387,6 +2467,111 @@
               (register-cleanup! (lambda () (obs-unobserve! raw listener)))]
              [else
               (set-dom-node-text! node (value->text raw))])
+           node]
+          [(html-element)
+           (define raw-tag   (alist-ref (view-props v) 'tag 'render))
+           (define raw-value (alist-ref (view-props v) 'value 'render))
+           (define initial-tag
+             (let ([v0 (maybe-observable-value raw-tag)])
+               (if (symbol? v0) v0 'div)))
+           (define node (dom-node initial-tag '() '() "" #f #f))
+           (define extra-attrs/raw (props-extra-attrs (view-props v)))
+           (define (valid-observable-attr-update? attr-key updated-value)
+             (if (procedure? updated-value)
+                 (begin
+                   (emit-web-easy-warning!
+                    (string-append "web-easy: ignored procedure-valued observable attribute update "
+                                   (symbol->string attr-key)))
+                   #f)
+                 #t))
+           (define (refresh-root-attrs!)
+             (set-dom-node-attrs! node (attr-remove-key (dom-node-attrs node) 'class)))
+           (define (set-tag! tag-value)
+             (set-dom-node-tag! node
+                                (if (symbol? tag-value)
+                                    tag-value
+                                    'div)))
+           (define (set-text! value0)
+             (set-dom-node-text! node (value->text value0)))
+           (cond
+             [(obs? raw-tag)
+              (set-tag! (obs-peek raw-tag))
+              (define (tag-listener updated-tag)
+                (set-tag! updated-tag))
+              (obs-observe! raw-tag tag-listener)
+              (register-cleanup! (lambda () (obs-unobserve! raw-tag tag-listener)))]
+             [else
+              (set-tag! raw-tag)])
+           (cond
+             [(obs? raw-value)
+              (set-text! (obs-peek raw-value))
+              (define (listener updated)
+                (set-text! updated))
+              (obs-observe! raw-value listener)
+              (register-cleanup! (lambda () (obs-unobserve! raw-value listener)))]
+             [else
+              (set-text! raw-value)])
+           (for-each
+            (lambda (entry)
+              (when (and (pair? entry)
+                         (symbol? (car entry))
+                         (obs? (cdr entry)))
+                (define attr-obs (cdr entry))
+                (define (attr-listener _updated)
+                  (if (valid-observable-attr-update? (car entry) _updated)
+                      (refresh-root-attrs!)
+                      (void)))
+                (obs-observe! attr-obs attr-listener)
+                (register-cleanup! (lambda () (obs-unobserve! attr-obs attr-listener)))))
+            extra-attrs/raw)
+           node]
+          [(html-element-children)
+           (define raw-tag (alist-ref (view-props v) 'tag 'render))
+           (define initial-tag
+             (let ([v0 (maybe-observable-value raw-tag)])
+               (if (symbol? v0) v0 'div)))
+           (define node (dom-node initial-tag '() '() #f #f #f))
+           (define extra-attrs/raw (props-extra-attrs (view-props v)))
+           (define (valid-observable-attr-update? attr-key updated-value)
+             (if (procedure? updated-value)
+                 (begin
+                   (emit-web-easy-warning!
+                    (string-append "web-easy: ignored procedure-valued observable attribute update "
+                                   (symbol->string attr-key)))
+                   #f)
+                 #t))
+           (define (refresh-root-attrs!)
+             (set-dom-node-attrs! node (attr-remove-key (dom-node-attrs node) 'class)))
+           (define (set-tag! tag-value)
+             (set-dom-node-tag! node
+                                (if (symbol? tag-value)
+                                    tag-value
+                                    'div)))
+           (cond
+             [(obs? raw-tag)
+              (set-tag! (obs-peek raw-tag))
+              (define (tag-listener updated-tag)
+                (set-tag! updated-tag))
+              (obs-observe! raw-tag tag-listener)
+              (register-cleanup! (lambda () (obs-unobserve! raw-tag tag-listener)))]
+             [else
+              (set-tag! raw-tag)])
+           (for-each (lambda (child)
+                       (backend-append-child! node (build-node child register-cleanup!)))
+                     (view-children v))
+           (for-each
+            (lambda (entry)
+              (when (and (pair? entry)
+                         (symbol? (car entry))
+                         (obs? (cdr entry)))
+                (define attr-obs (cdr entry))
+                (define (attr-listener updated)
+                  (if (valid-observable-attr-update? (car entry) updated)
+                      (refresh-root-attrs!)
+                      (void)))
+                (obs-observe! attr-obs attr-listener)
+                (register-cleanup! (lambda () (obs-unobserve! attr-obs attr-listener)))))
+            extra-attrs/raw)
            node]
           [(heading)
            (define raw-level        (alist-ref (view-props v) 'level 'render))
@@ -5960,6 +6145,9 @@
             render
             renderer-root
             renderer-destroy
+            current-web-easy-warning-handler
+            set-current-web-easy-warning-handler!
+            call-with-web-easy-warning-handler
             dom-node-click!
             dom-node-change!
             dom-node-toggle!

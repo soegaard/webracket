@@ -36,6 +36,30 @@
 ;;   text           Build a text label view.
 ;;   heading        Build a semantic heading view (h1..h6).
 ;;   h1             Build a semantic level-1 heading view.
+;;   H1             Build a primitive HTML h1 element view with generic keyword attrs.
+;;   H2             Build a primitive HTML h2 element view with generic keyword attrs.
+;;   H3             Build a primitive HTML h3 element view with generic keyword attrs.
+;;   H4             Build a primitive HTML h4 element view with generic keyword attrs.
+;;   H5             Build a primitive HTML h5 element view with generic keyword attrs.
+;;   H6             Build a primitive HTML h6 element view with generic keyword attrs.
+;;   P              Build a primitive HTML p element view with generic keyword attrs.
+;;   Span           Build a primitive HTML span element view with generic keyword attrs.
+;;   Img            Build a primitive HTML img element view with required #:src and generic keyword attrs.
+;;   A              Build a primitive HTML a element view with generic keyword attrs.
+;;   Button         Build a primitive HTML button element view with generic keyword attrs.
+;;   Div            Build a primitive HTML div element view with children and generic keyword attrs.
+;;   Section        Build a primitive HTML section element view with children and generic keyword attrs.
+;;   Article        Build a primitive HTML article element view with children and generic keyword attrs.
+;;   Nav            Build a primitive HTML nav element view with children and generic keyword attrs.
+;;   Main           Build a primitive HTML main element view with children and generic keyword attrs.
+;;   Header         Build a primitive HTML header element view with children and generic keyword attrs.
+;;   Footer         Build a primitive HTML footer element view with children and generic keyword attrs.
+;;   Aside          Build a primitive HTML aside element view with children and generic keyword attrs.
+;;   Form           Build a primitive HTML form element view with children and generic keyword attrs.
+;;   Label          Build a primitive HTML label element view with generic keyword attrs.
+;;   Ul             Build a primitive HTML ul element view with children and generic keyword attrs.
+;;   Ol             Build a primitive HTML ol element view with children and generic keyword attrs.
+;;   Li             Build a primitive HTML li element view with children and generic keyword attrs.
 ;;   h2             Build a semantic level-2 heading view.
 ;;   h3             Build a semantic level-3 heading view.
 ;;   h4             Build a semantic level-4 heading view.
@@ -120,6 +144,30 @@
    text
    heading
    h1
+   H1
+   H2
+   H3
+   H4
+   H5
+   H6
+   P
+   Span
+   Img
+   A
+   Button
+   Div
+   Section
+   Article
+   Nav
+   Main
+   Header
+   Footer
+   Aside
+   Form
+   Label
+   Ul
+   Ol
+   Li
    h2
    h3
    h4
@@ -199,6 +247,8 @@
     (define kind/spinner   'spinner)   ; Loading spinner view.
     (define kind/placeholder 'placeholder) ; Placeholder/skeleton view.
     (define kind/text      'text)      ; Text label view.
+    (define kind/html-element 'html-element) ; Primitive HTML element leaf view.
+    (define kind/html-element-children 'html-element-children) ; Primitive HTML element container view.
     (define kind/heading   'heading)   ; Semantic heading text view.
     (define kind/display-heading 'display-heading) ; Semantic heading with display style.
     (define kind/heading-with-subtitle 'heading-with-subtitle) ; Semantic heading with muted subtitle.
@@ -382,7 +432,8 @@
         (let loop ([remaining normalized])
           (cond
             [(null? remaining) '()]
-            [(eq? (caar remaining) 'class)
+            [(and (eq? (caar remaining) 'class)
+                  (not (obs? (cdar remaining))))
              (loop (cdr remaining))]
             [else
              (cons (car remaining)
@@ -391,7 +442,8 @@
         (let loop ([remaining normalized])
           (cond
             [(null? remaining) '()]
-            [(eq? (caar remaining) 'class)
+            [(and (eq? (caar remaining) 'class)
+                  (not (obs? (cdar remaining))))
              (append (normalize-class-list (cdar remaining) 'apply-root-decorators)
                      (loop (cdr remaining)))]
             [else
@@ -740,6 +792,95 @@
        attrs
        'text))
 
+    ;; html-element : symbol? (or/c string? observable?) -> view?
+    ;;   Construct a primitive HTML leaf element view from tag and content.
+    (define/key (html-element tag
+                              content
+                              #:id    [id    #f]
+                              #:class [class #f]
+                              #:attrs [attrs '()])
+      (apply-root-decorators
+       (view kind/html-element
+             (list (cons 'tag   tag)
+                   (cons 'value content))
+             '())
+       id
+       class
+       attrs
+       'html-element))
+
+    ;; html-element-children : symbol? view? ... -> view?
+    ;;   Construct a primitive HTML element view with children.
+    (define/key (html-element-children tag
+                                       #:attrs [attrs '()]
+                                       . children)
+      (apply-root-decorators
+       (view kind/html-element-children
+             (list (cons 'tag tag))
+             children)
+       #f
+       #f
+       attrs
+       'html-element-children))
+
+    ;; normalize-heading-level/internal : any/c -> number?
+    ;;   Normalize heading level to integer in the closed interval 1..6.
+    (define (normalize-heading-level/internal level)
+      (cond
+        [(and (number? level)
+              (integer? level)
+              (>= level 1)
+              (<= level 6))
+         level]
+        [else
+         1]))
+
+    ;; normalize-heading-align/internal : any/c -> symbol?
+    ;;   Normalize heading alignment to one of 'left, 'center, or 'right.
+    (define (normalize-heading-align/internal align)
+      (if (symbol? align)
+          (case align
+            [(left center right) align]
+            [else                'left])
+          'left))
+
+    ;; normalize-heading-spacing/internal : any/c -> symbol?
+    ;;   Normalize heading spacing to one of 'compact, 'normal, or 'loose.
+    (define (normalize-heading-spacing/internal spacing)
+      (if (symbol? spacing)
+          (case spacing
+            [(compact normal loose) spacing]
+            [else                   'normal])
+          'normal))
+
+    ;; heading-tag-for-level/internal : any/c -> symbol?
+    ;;   Convert level to normalized heading tag symbol ('h1..'h6).
+    (define (heading-tag-for-level/internal level)
+      (string->symbol
+       (string-append "h"
+                      (number->string
+                       (normalize-heading-level/internal level)))))
+
+    ;; heading-class-for/internal : any/c any/c any/c -> string?
+    ;;   Build semantic heading class string from level/align/spacing.
+    (define (heading-class-for/internal level align spacing)
+      (define normalized-level   (normalize-heading-level/internal level))
+      (define normalized-align   (normalize-heading-align/internal align))
+      (define normalized-spacing (normalize-heading-spacing/internal spacing))
+      (string-append "we-heading we-heading-"
+                     (number->string normalized-level)
+                     " we-heading-align-"
+                     (symbol->string normalized-align)
+                     " we-heading-space-"
+                     (symbol->string normalized-spacing)))
+
+    ;; observable-or-const : any/c -> observable?
+    ;;   Return v when observable, else wrap v in a constant observable.
+    (define (observable-or-const v)
+      (if (obs? v)
+          v
+          (obs v)))
+
     ;; heading : (or/c number? observable?) (or/c string? observable?) [symbol?] [symbol?] -> view?
     ;;   Construct a semantic heading view with level normalized to 1..6 and optional align/spacing style variants.
     ;;   Optional parameter align defaults to 'left.
@@ -758,10 +899,11 @@
       (define final-spacing
         (if (eq? spacing-kw #f) spacing spacing-kw))
       (apply-root-decorators
-       (view kind/heading (list (cons 'level level)
-                                (cons 'value content)
-                                (cons 'align final-align)
-                                (cons 'spacing final-spacing))
+       (view kind/heading
+             (list (cons 'level level)
+                   (cons 'value content)
+                   (cons 'align final-align)
+                   (cons 'spacing final-spacing))
              '())
        id
        class
@@ -778,6 +920,128 @@
                #:id id
                #:class class
                #:attrs attrs))
+
+    ;; H1 : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML level-1 heading element with generic keyword attributes.
+    (define/element H1 html-element 'h1)
+
+    ;; H2 : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML level-2 heading element with generic keyword attributes.
+    (define/element H2 html-element 'h2)
+
+    ;; H3 : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML level-3 heading element with generic keyword attributes.
+    (define/element H3 html-element 'h3)
+
+    ;; H4 : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML level-4 heading element with generic keyword attributes.
+    (define/element H4 html-element 'h4)
+
+    ;; H5 : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML level-5 heading element with generic keyword attributes.
+    (define/element H5 html-element 'h5)
+
+    ;; H6 : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML level-6 heading element with generic keyword attributes.
+    (define/element H6 html-element 'h6)
+
+    ;; P : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML paragraph element with generic keyword attributes.
+    (define/element P html-element 'p)
+
+    ;; Span : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML span element with generic keyword attributes.
+    (define/element Span html-element 'span)
+
+    ;; Img : [#:src any/c] [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML img element with required #:src and generic keyword attrs.
+    (define/element Img html-element 'img
+      #:required-keywords (#:src)
+      #:positional-count 0)
+
+    ;; A : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML anchor element with generic keyword attributes.
+    (define/element A html-element 'a)
+
+    ;; Button : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML button element with generic keyword attributes.
+    (define/element Button html-element 'button)
+
+    ;; Div : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML div element with children and generic keyword attrs.
+    (define/element Div html-element-children 'div
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Section : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML section element with children and generic keyword attrs.
+    (define/element Section html-element-children 'section
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Article : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML article element with children and generic keyword attrs.
+    (define/element Article html-element-children 'article
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Nav : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML nav element with children and generic keyword attrs.
+    (define/element Nav html-element-children 'nav
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Main : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML main element with children and generic keyword attrs.
+    (define/element Main html-element-children 'main
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Header : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML header element with children and generic keyword attrs.
+    (define/element Header html-element-children 'header
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Footer : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML footer element with children and generic keyword attrs.
+    (define/element Footer html-element-children 'footer
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Aside : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML aside element with children and generic keyword attrs.
+    (define/element Aside html-element-children 'aside
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Form : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML form element with children and generic keyword attrs.
+    (define/element Form html-element-children 'form
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Label : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML label element with generic keyword attrs.
+    (define/element Label html-element 'label)
+
+    ;; Ul : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML ul element with children and generic keyword attrs.
+    (define/element Ul html-element-children 'ul
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Ol : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML ol element with children and generic keyword attrs.
+    (define/element Ol html-element-children 'ol
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Li : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML li element with children and generic keyword attrs.
+    (define/element Li html-element-children 'li
+      #:required-keywords ()
+      #:positional-count any)
 
     ;; h2 : (or/c string? observable?) -> view?
     ;;   Construct a semantic level-2 heading view with optional root decorators.
@@ -996,12 +1260,19 @@
                       #:id [id #f]
                       #:class [class #f]
                       #:attrs [attrs '()])
-      (apply-root-decorators
-       (view kind/lead (list (cons 'value content)) '())
-       id
-       class
-       attrs
-       'lead))
+      (define attrs/final
+        (append attrs
+                (list (cons 'data-we-widget "lead")
+                      (cons 'class "we-lead"))))
+      (apply P
+             (append (list content)
+                     (if (eq? id #f)
+                         '()
+                         (list '#:id id))
+                     (if (eq? class #f)
+                         '()
+                         (list '#:class class))
+                     (list '#:attrs attrs/final))))
 
     ;; blockquote : (or/c string? observable?) [(or/c string? observable? false/c)] -> view?
     ;;   Construct a semantic blockquote with optional attribution footer and alignment.
@@ -2068,6 +2339,30 @@
             text
             heading
             h1
+            H1
+            H2
+            H3
+            H4
+            H5
+            H6
+            P
+            Span
+            Img
+            A
+            Button
+            Div
+            Section
+            Article
+            Nav
+            Main
+            Header
+            Footer
+            Aside
+            Form
+            Label
+            Ul
+            Ol
+            Li
             h2
             h3
             h4

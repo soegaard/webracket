@@ -46,6 +46,7 @@
 (include/reader "smoke-capsule-parity-close-button.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-placeholder.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-headings.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-parity-primitive-tags.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-hero.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-carousel.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-carousel-advanced.rkt" read-syntax/skip-first-line)
@@ -207,6 +208,10 @@
               (list parity-headings-make-page
                     parity-headings-run-test
                     parity-headings-cleanup))
+        (cons 'parity-primitive-tags
+              (list parity-primitive-tags-make-page
+                    parity-primitive-tags-run-test
+                    parity-primitive-tags-cleanup))
         (cons 'parity-hero
               (list parity-hero-make-page
                     parity-hero-run-test
