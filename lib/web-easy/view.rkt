@@ -410,10 +410,6 @@
     (define kind/window    'window)    ; Root container view.
     (define kind/vpanel    'vpanel)    ; Vertical container view.
     (define kind/hpanel    'hpanel)    ; Horizontal container view.
-    (define kind/container 'container) ; Centered width-constrained container view.
-    (define kind/grid      'grid)      ; Grid layout container view.
-    (define kind/stack     'stack)     ; Vertical stack layout container view.
-    (define kind/inline    'inline)    ; Horizontal inline layout container view.
     (define kind/fragment  'fragment)  ; Zero-wrapper composition view.
     (define kind/html-element 'html-element) ; Primitive HTML element leaf view.
     (define kind/html-element-children 'html-element-children) ; Primitive HTML element container view.
@@ -594,6 +590,54 @@
     (define (grid-gap-value? v)
       (or (number? v) (string? v)))
 
+    ;; positive-number-list?/internal : any/c -> boolean?
+    ;;   Check whether v is a non-empty list of positive numbers.
+    (define (positive-number-list?/internal v)
+      (cond
+        [(not (list? v)) #f]
+        [(null? v)       #f]
+        [else
+         (let loop ([xs v])
+           (cond
+             [(null? xs) #t]
+             [(and (number? (car xs)) (> (car xs) 0))
+              (loop (cdr xs))]
+             [else #f]))]))
+
+    ;; grid-columns-template/internal : any/c -> string?
+    ;;   Normalize grid columns value to CSS template expression string.
+    (define (grid-columns-template/internal columns)
+      (cond
+        [(or (eq? columns 'auto) (eq? columns 'responsive))
+         "repeat(auto-fit,minmax(320px,1fr))"]
+        [(number? columns)
+         (if (> columns 0)
+             (string-append "repeat(" (number->string columns) ",minmax(0,1fr))")
+             "repeat(auto-fit,minmax(320px,1fr))")]
+        [(positive-number-list?/internal columns)
+         (let loop ([xs columns] [acc ""])
+           (if (null? xs)
+               acc
+               (let ([part (string-append "minmax(0," (number->string (car xs)) "fr)")])
+                 (loop (cdr xs)
+                       (if (string=? acc "")
+                           part
+                           (string-append acc " " part))))))]
+        [(string? columns) columns]
+        [else
+         "repeat(auto-fit,minmax(320px,1fr))"]))
+
+    ;; grid-gap-template/internal : any/c -> string?
+    ;;   Normalize grid gap value to CSS length expression string.
+    (define (grid-gap-template/internal gap)
+      (cond
+        [(number? gap)
+         (if (>= gap 0)
+             (string-append (number->string gap) "px")
+             "12px")]
+        [(string? gap) gap]
+        [else "12px"]))
+
     ;; view-with-props : view? list? -> view?
     ;;   Rebuild original view with replacement props.
     (define (view-with-props v props)
@@ -697,70 +741,85 @@
 
     ;; container : view? ... -> view?
     ;;   Construct a centered width-constrained layout container view.
-    (define/key (container
-                 #:id    [id    #f]
-                 #:class [class #f]
-                 #:attrs [attrs '()]
-                 . children)
-      (apply-root-decorators
-       (view kind/container '() children)
-       id
-       class
-       attrs
-       'container))
+    (define/component container
+      #:root-tag 'div
+      #:rest children
+      #:root-attrs attrs/final
+      (define attrs/final
+        (list (cons 'data-we-widget "container")
+              (cons 'class "we-container")))
+      (apply Div
+             (append children
+                     (list #:attrs attrs/final))))
 
     ;; grid : any/c view? ... -> view?
     ;;   Construct a grid layout container with columns specification and children.
     ;;   Columns can be count (e.g. 2), responsive symbol ('auto/'responsive),
     ;;   CSS template string, or weighted list (e.g. '(70 30)).
     ;;   Optional first child can be a gap value (number px or CSS length string).
-    (define/key (grid columns
-                      #:id [id #f]
-                      #:class [class #f]
-                      #:attrs [attrs '()]
-                      . children0)
+    (define/component grid
+      #:root-tag 'div
+      #:rest args
+      #:root-attrs attrs/final
+      (when (null? args)
+        (error 'grid "wrong number of positional arguments (expected at least 1, got 0)"))
+      (define columns
+        (car args))
+      (define children0
+        (cdr args))
       (define gap #f)
       (define children children0)
       (when (and (pair? children)
                  (grid-gap-value? (car children)))
         (set! gap (car children))
         (set! children (cdr children)))
-      (apply-root-decorators
-       (view kind/grid (list (cons 'columns columns)
-                             (cons 'gap gap))
-             children)
-       id
-       class
-       attrs
-       'grid))
+      (define @columns
+        (observable-or-const columns))
+      (define @gap
+        (observable-or-const gap))
+      (define @style
+        (obs-combine
+         (lambda (columns0 gap0)
+           (string-append "--we-grid-columns:"
+                          (grid-columns-template/internal columns0)
+                          ";--we-grid-gap:"
+                          (grid-gap-template/internal gap0)
+                          ";"))
+         @columns
+         @gap))
+      (define attrs/final
+        (list (cons 'data-we-widget "grid")
+              (cons 'class "we-grid")
+              (cons 'style @style)))
+      (apply Div
+             (append children
+                     (list #:attrs attrs/final))))
 
     ;; stack : view? ... -> view?
     ;;   Construct a vertical stack layout container view.
-    (define/key (stack
-                 #:id [id #f]
-                 #:class [class #f]
-                 #:attrs [attrs '()]
-                 . children)
-      (apply-root-decorators
-       (view kind/stack '() children)
-       id
-       class
-       attrs
-       'stack))
+    (define/component stack
+      #:root-tag 'div
+      #:rest children
+      #:root-attrs attrs/final
+      (define attrs/final
+        (list (cons 'data-we-widget "stack")
+              (cons 'class "we-stack")))
+      (apply Div
+             (append children
+                     (list #:attrs attrs/final))))
 
     ;; inline : view? ... -> view?
     ;;   Construct a horizontal inline layout container view.
-    (define/key (inline
-                 #:id [id #f]
-                 #:class [class #f]
-                 #:attrs [attrs '()]
-                 . children)
-      (apply-root-decorators
-       (view kind/inline '() children)
-       id
-       class
-       attrs
-       'inline))
+    (define/component inline
+      #:root-tag 'div
+      #:rest children
+      #:root-attrs attrs/final
+      (define attrs/final
+        (list (cons 'data-we-widget "inline")
+              (cons 'class "we-inline")))
+      (apply Div
+             (append children
+                     (list #:attrs attrs/final))))
 
     ;; Fragment : view? ... -> view?
     ;;   Construct a composition view that contributes children without a wrapper node.
@@ -769,25 +828,27 @@
 
     ;; group : (or/c string? observable?) view? ... -> view?
     ;;   Construct a labeled container view with children.
-    (define/key (group label
-                       #:id [id #f]
-                       #:class [class #f]
-                       #:attrs [attrs '()]
-                       . children)
-      (apply-root-decorators
-       (apply Fieldset
-               (append
-               (list (html-element 'legend
-                                   label
-                                   #:attrs (list (cons 'data-we-widget "group-legend")
-                                                 (cons 'class "we-group-legend"))))
-               children
-               (list #:data-we-widget "group"
-                     #:class "we-group")))
-       id
-       class
-       attrs
-       'group))
+    (define/component group
+      #:root-tag 'fieldset
+      #:rest args
+      #:root-attrs attrs/final
+      (when (null? args)
+        (error 'group "wrong number of positional arguments (expected at least 1, got 0)"))
+      (define label
+        (car args))
+      (define children
+        (cdr args))
+      (define attrs/final
+        (list (cons 'data-we-widget "group")
+              (cons 'class "we-group")))
+      (apply Fieldset
+             (append
+              (list (html-element 'legend
+                                  label
+                                  #:attrs (list (cons 'data-we-widget "group-legend")
+                                                (cons 'class "we-group-legend"))))
+              children
+              (list #:attrs attrs/final))))
 
     ;; alert : (or/c string? observable?) [(or/c symbol? observable?)] -> view?
     ;;   Construct an inline alert/status view with optional severity level.
@@ -2700,13 +2761,13 @@
     ;;   Construct a button view with optional leading/trailing icon labels.
     ;;   Optional parameter leading-icon defaults to #f.
     ;;   Optional parameter trailing-icon defaults to #f.
-    (define/key (button label
-                        action
-                        [leading-icon #f]
-                        [trailing-icon #f]
-                        #:id [id #f]
-                        #:class [class #f]
-                        #:attrs [attrs '()])
+    (define/component button
+      #:root-tag 'button
+      #:positional ([label]
+                    [action]
+                    [leading-icon #f]
+                    [trailing-icon #f])
+      #:root-attrs attrs/final
       (define @label
         (observable-or-const label))
       (define @leading-icon
@@ -2736,18 +2797,15 @@
              (list (Span trailing-icon0
                          #:data-we-widget "button-icon"
                          #:class "we-button-icon we-button-icon-trailing")))))
-      (apply-root-decorators
-       (observable-element-children
-        'button
-        @state
-        make-button-children
-        #:attrs (list (cons 'data-we-widget "button")
-                      (cons 'class "we-button")
-                      (cons 'on-click-action action)))
-       id
-       class
-       attrs
-       'button))
+      (define attrs/final
+        (list (cons 'data-we-widget "button")
+              (cons 'class "we-button")
+              (cons 'on-click-action action)))
+      (observable-element-children
+       'button
+       @state
+       make-button-children
+       #:attrs attrs/final))
 
     ;; link : (or/c string? observable?) (or/c string? observable?) [boolean?] [any/c] -> view?
     ;;   Construct a link view with href and optional download/target attributes.
@@ -2800,13 +2858,13 @@
 
     ;; toggle-button-group : symbol? list? (or/c any/c observable?) (-> any/c any/c) -> view?
     ;;   Construct an exclusive/non-exclusive toggle button group.
-    (define/key (toggle-button-group mode
-                                     choices
-                                     selected
-                                     action
-                                     #:id [id #f]
-                                     #:class [class #f]
-                                     #:attrs [attrs '()])
+    (define/component toggle-button-group
+      #:root-tag 'div
+      #:positional ([mode]
+                    [choices]
+                    [selected]
+                    [action])
+      #:root-attrs attrs/final
       (define mode/radio
         'radio)
       (define mode/checkbox
@@ -2874,23 +2932,20 @@
                                                                      (obs-peek @selected)
                                                                      choice-id)))))))
              choices0))
-      (apply-root-decorators
-       (observable-element-children
-        'div
-        @structure
-        make-toggle-children
-        #:attrs (list (cons 'role 'group)
-                      (cons 'data-we-widget "toggle-button-group")
-                      (cons 'class "we-toggle-button-group")
-                      (cons 'mode (~> @mode
-                                      (lambda (mode0)
-                                        (if (eq? mode0 mode/checkbox)
-                                            mode/checkbox
-                                            mode/radio))))))
-       id
-       class
-       attrs
-       'toggle-button-group))
+      (define attrs/final
+        (list (cons 'role 'group)
+              (cons 'data-we-widget "toggle-button-group")
+              (cons 'class "we-toggle-button-group")
+              (cons 'mode (~> @mode
+                              (lambda (mode0)
+                                (if (eq? mode0 mode/checkbox)
+                                    mode/checkbox
+                                    mode/radio))))))
+      (observable-element-children
+       'div
+       @structure
+       make-toggle-children
+       #:attrs attrs/final))
 
     ;; button-toolbar : view? ... -> view?
     ;;   Construct a horizontal toolbar of grouped button controls.
@@ -5131,14 +5186,14 @@
     ;; dropdown : (or/c string? observable?) list? (-> any/c any/c) [symbol?] -> view?
     ;;   Construct a dropdown menu from a label and entry rows: (list id label).
     ;;   Optional parameter placement defaults to 'down.
-    (define/key (dropdown label
-                          entries
-                          action
-                          [placement 'down]
-                          #:placement [placement-kw #f]
-                          #:id [id #f]
-                          #:class [class #f]
-                          #:attrs [attrs '()])
+    (define/component dropdown
+      #:root-tag 'div
+      #:positional ([label]
+                    [entries]
+                    [action]
+                    [placement 'down])
+      #:component-keywords ([#:placement placement-kw #f])
+      #:root-attrs attrs/final
       (define final-placement
         (if (eq? placement-kw #f) placement placement-kw))
       (define normalized-placement
@@ -5166,27 +5221,27 @@
                     (cons label menu-items))
              #:attrs (list (cons 'data-we-widget "dropdown")
                            (cons 'class dropdown-class))))
-      (apply-root-decorators
-       dropdown-view
-       id
-       class
-       attrs
-       'dropdown))
+      (define attrs/final
+        (list (cons 'data-we-widget "dropdown")
+              (cons 'class dropdown-class)))
+      (Div (apply menu
+                  (cons label menu-items))
+           #:attrs attrs/final))
 
     ;; carousel : list? (or/c number? observable?) (-> any/c any/c) [boolean?] [boolean?] -> view?
     ;;   Construct a carousel from item rows, current index, and index-change action with optional wrap and autoplay flags.
     ;;   Optional parameter wrap? defaults to #t.
     ;;   Optional parameter autoplay? defaults to #f.
-    (define/key (carousel items
-                          current-index
-                          action
-                          [wrap? #t]
-                          [autoplay? #f]
-                          #:wrap? [wrap-kw keyword-not-given]
-                          #:autoplay? [autoplay-kw keyword-not-given]
-                          #:id [id #f]
-                          #:class [class #f]
-                          #:attrs [attrs '()])
+    (define/component carousel
+      #:root-tag 'div
+      #:positional ([items]
+                    [current-index]
+                    [action]
+                    [wrap? #t]
+                    [autoplay? #f])
+      #:component-keywords ([#:wrap? wrap-kw keyword-not-given]
+                            [#:autoplay? autoplay-kw keyword-not-given])
+      #:root-attrs attrs/final
       (define final-wrap?
         (if (keyword-given? wrap-kw) wrap-kw wrap?))
       (define final-autoplay?
@@ -5468,12 +5523,17 @@
                        (cons 'class "we-carousel")
                        (cons 'tabindex 0)
                        (cons 'on-change-action carousel-keydown!))))
-      (apply-root-decorators
-       carousel-view
-       id
-       class
-       attrs
-       'carousel))
+      (define attrs/final
+        (list (cons 'data-we-widget "carousel")
+              (cons 'class "we-carousel")
+              (cons 'tabindex 0)
+              (cons 'on-change-action carousel-keydown!)))
+      (observable-element-children
+       'div
+       @state
+       make-carousel-children
+       #:after-render carousel-after-render
+       #:attrs attrs/final))
 
     ;; scrollspy : list? (or/c any/c observable?) (-> any/c any/c) -> view?
     ;;   Construct scroll-tracking section navigation from rows: (list id label [content-view]).
@@ -6094,14 +6154,13 @@
     ;;   Optional parameter orientation defaults to 'horizontal.
     ;;   Optional parameter collapsed? defaults to #f.
     ;;   Optional parameter expand defaults to 'never.
-    (define/key (navigation-bar
-                 #:orientation [orientation-kw #f]
-                 #:collapsed? [collapsed?-kw #f]
-                 #:expand [expand-kw #f]
-                 #:id [id #f]
-                 #:class [class #f]
-                 #:attrs [attrs '()]
-                 . args)
+    (define/component navigation-bar
+      #:root-tag 'nav
+      #:component-keywords ([#:orientation orientation-kw #f]
+                            [#:collapsed? collapsed?-kw #f]
+                            [#:expand expand-kw #f])
+      #:rest args
+      #:root-attrs attrs/final
       (define orientation 'horizontal)
       (define collapsed? #f)
       (define expand 'never)
@@ -6152,33 +6211,28 @@
         (define next-collapsed?
           (not (not (obs-peek @collapsed-state))))
         (:= @collapsed-state (not next-collapsed?)))
-      (define nav-view
-        (apply html-element-children
-               (append
-                (list 'nav)
-                (if show-toggle?
-                    (list (html-element 'button
-                                        "Menu"
-                                        #:attrs (list (cons 'role 'button)
-                                                      (cons 'data-we-widget "navigation-bar-toggle")
-                                                      (cons 'class "we-button we-navigation-bar-toggle")
-                                                      (cons 'aria-expanded @toggle-aria-expanded)
-                                                      (cons 'aria-label "Toggle navigation")
-                                                      (cons 'on-click-action toggle-navigation!))))
-                    '())
-                (list (apply Div
-                             (append children
-                                     (list #:data-we-widget "navigation-bar-items"
-                                           #:class "we-navigation-bar-items"))))
-                (list #:attrs (list (cons 'role 'navigation)
-                                    (cons 'data-we-widget "navigation-bar")
-                                    (cons 'class @root-class))))))
-      (apply-root-decorators
-       nav-view
-       id
-       class
-       attrs
-       'navigation-bar))
+      (define attrs/final
+        (list (cons 'role 'navigation)
+              (cons 'data-we-widget "navigation-bar")
+              (cons 'class @root-class)))
+      (apply html-element-children
+             (append
+              (list 'nav)
+              (if show-toggle?
+                  (list (html-element 'button
+                                      "Menu"
+                                      #:attrs (list (cons 'role 'button)
+                                                    (cons 'data-we-widget "navigation-bar-toggle")
+                                                    (cons 'class "we-button we-navigation-bar-toggle")
+                                                    (cons 'aria-expanded @toggle-aria-expanded)
+                                                    (cons 'aria-label "Toggle navigation")
+                                                    (cons 'on-click-action toggle-navigation!))))
+                  '())
+              (list (apply Div
+                           (append children
+                                   (list #:data-we-widget "navigation-bar-items"
+                                         #:class "we-navigation-bar-items"))))
+              (list #:attrs attrs/final))))
 
     ;; menu-bar : view? ... -> view?
     ;;   Construct a menu bar containing menu children.

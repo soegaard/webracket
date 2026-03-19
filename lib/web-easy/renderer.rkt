@@ -889,54 +889,6 @@
                 (set! seen-url-bearing-child? #t))]))
          (view-children window-view))))
 
-    ;; positive-number-list? : any/c -> boolean?
-    ;;   Check whether v is a non-empty list of positive numbers.
-    (define (positive-number-list? v)
-      (cond
-        [(not (list? v)) #f]
-        [(null? v)       #f]
-        [else
-         (let loop ([xs v])
-           (cond
-             [(null? xs) #t]
-             [(and (number? (car xs)) (> (car xs) 0))
-              (loop (cdr xs))]
-             [else #f]))]))
-
-    ;; grid-columns-template : any/c -> string?
-    ;;   Normalize grid columns value to CSS template expression string.
-    (define (grid-columns-template columns)
-      (cond
-        [(or (eq? columns 'auto) (eq? columns 'responsive))
-         "repeat(auto-fit,minmax(320px,1fr))"]
-        [(number? columns)
-         (if (> columns 0)
-             (string-append "repeat(" (number->string columns) ",minmax(0,1fr))")
-             "repeat(auto-fit,minmax(320px,1fr))")]
-        [(positive-number-list? columns)
-         (let loop ([xs columns] [acc ""])
-           (if (null? xs)
-               acc
-               (let ([part (string-append "minmax(0," (number->string (car xs)) "fr)")])
-                 (loop (cdr xs)
-                       (if (string=? acc "")
-                           part
-                           (string-append acc " " part))))))]
-        [(string? columns) columns]
-        [else
-         "repeat(auto-fit,minmax(320px,1fr))"]))
-
-    ;; grid-gap-template : any/c -> string?
-    ;;   Normalize grid gap value to CSS length expression string.
-    (define (grid-gap-template gap)
-      (cond
-        [(number? gap)
-         (if (>= gap 0)
-             (string-append (number->string gap) "px")
-             "12px")]
-        [(string? gap) gap]
-        [else "12px"]))
-
     ;; normalize-alert-level : any/c -> symbol?
     ;;   Normalize alert level to supported semantic/tone variants.
     (define (normalize-alert-level level)
@@ -1146,48 +1098,6 @@
           [(hpanel)
            (define node (dom-node 'div (list (cons 'data-we-widget "hpanel")
                                              (cons 'class          "we-hpanel")) '() #f #f #f))
-           (for-each (lambda (child)
-                       (append-view-child! node child))
-                     (view-children v))
-           node]
-          [(container)
-           (define node (dom-node 'div (list (cons 'data-we-widget "container")
-                                             (cons 'class          "we-container")) '() #f #f #f))
-           (for-each (lambda (child)
-                       (append-view-child! node child))
-                     (view-children v))
-           node]
-          [(grid)
-           (define raw-columns      (alist-ref (view-props v) 'columns 'render))
-           (define raw-gap          (alist-ref (view-props v) 'gap #f))
-           (define columns-template (grid-columns-template (maybe-observable-value raw-columns)))
-           (define gap-template
-             (grid-gap-template (maybe-observable-value raw-gap)))
-           (define node (dom-node 'div (list (cons 'data-we-widget "grid")
-                                             (cons 'class "we-grid")
-                                             (cons 'style (string-append "--we-grid-columns:"
-                                                                         columns-template
-                                                                         ";--we-grid-gap:"
-                                                                         gap-template
-                                                                         ";")))
-                                  '()
-                                  #f
-                                  #f
-                                  #f))
-           (for-each (lambda (child)
-                       (append-view-child! node child))
-                     (view-children v))
-           node]
-          [(stack)
-           (define node (dom-node 'div (list (cons 'data-we-widget "stack")
-                                             (cons 'class          "we-stack")) '() #f #f #f))
-           (for-each (lambda (child)
-                       (append-view-child! node child))
-                     (view-children v))
-           node]
-          [(inline)
-           (define node (dom-node 'div (list (cons 'data-we-widget "inline")
-                                             (cons 'class          "we-inline")) '() #f #f #f))
            (for-each (lambda (child)
                        (append-view-child! node child))
                      (view-children v))
