@@ -1903,11 +1903,54 @@
                             #:attrs [attrs '()])
       (define final-align
         (normalize-blockquote-align align 'blockquote))
+      (define align-class
+        (case final-align
+          [(left)   #f]
+          [(center) "we-blockquote-align-center"]
+          [(right)  "we-blockquote-align-right"]
+          [else     #f]))
+      (define root-class
+        (if align-class
+            (string-append "we-blockquote " align-class)
+            "we-blockquote"))
+      (define quote-text-node
+        (P content
+           #:data-we-widget "blockquote-text"
+           #:class "we-blockquote-text"))
+      (define quote-node
+        (Blockquote
+         #:data-we-widget "blockquote-quote"
+         #:class "we-blockquote-quote"
+         quote-text-node))
+      (define has-attribution-static?
+        (and (not (obs? attribution))
+             (not (eq? attribution #f))))
+      (define attribution-hidden
+        (if (obs? attribution)
+            (~> attribution (lambda (v) (eq? v #f)))
+            #f))
+      (define attribution-value
+        (if (obs? attribution)
+            (~> attribution (lambda (v) (if (eq? v #f) "" v)))
+            attribution))
+      (define children
+        (append
+         (list quote-node)
+         (if (or (obs? attribution) has-attribution-static?)
+             (list
+              (html-element
+               'figcaption
+               attribution-value
+               #:attrs (list (cons 'data-we-widget "blockquote-attrib")
+                             (cons 'class "we-blockquote-attrib")
+                             (cons 'hidden attribution-hidden))))
+             '())))
       (apply-root-decorators
-       (view kind/blockquote (list (cons 'value content)
-                                   (cons 'attribution attribution)
-                                   (cons 'align final-align))
-             '())
+       (apply Figure
+              (append
+               (list '#:data-we-widget "blockquote"
+                     '#:class root-class)
+               children))
        id
        class
        attrs
