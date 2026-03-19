@@ -415,12 +415,8 @@
     (define kind/stack     'stack)     ; Vertical stack layout container view.
     (define kind/inline    'inline)    ; Horizontal inline layout container view.
     (define kind/fragment  'fragment)  ; Zero-wrapper composition view.
-    (define kind/alert-rich 'alert-rich) ; Rich alert view with title/body/link parts.
-    (define kind/toast     'toast)     ; Non-modal toast notification view.
     (define kind/html-element 'html-element) ; Primitive HTML element leaf view.
     (define kind/html-element-children 'html-element-children) ; Primitive HTML element container view.
-    (define kind/button    'button)    ; Clickable action view.
-    (define kind/toggle-button-group 'toggle-button-group) ; Toggle button group view.
     (define kind/if-view   'if-view)   ; Conditional branch view.
     (define kind/cond-view 'cond-view) ; Multi-branch conditional view.
     (define kind/case-view 'case-view) ; Equality-based conditional view.
@@ -849,8 +845,56 @@
                [(null? rest) #t]
                [(and (pair? (car rest))
                      (symbol? (caar rest)))
-                (loop (cdr rest))]
+               (loop (cdr rest))]
                [else #f]))))
+
+    ;; options-ref/internal : list? symbol? any/c -> any/c
+    ;;   Read option key from alist options with default fallback.
+    (define (options-ref/internal options key default)
+      (define p
+        (and (list? options)
+             (assq key options)))
+      (if p
+          (cdr p)
+          default))
+
+    ;; normalize-alert-layout/internal : any/c -> symbol?
+    ;;   Normalize alert layout mode to 'stack or 'inline.
+    (define (normalize-alert-layout/internal value)
+      (if (symbol? value)
+          (case value
+            [(inline) 'inline]
+            [else 'stack])
+          'stack))
+
+    ;; normalize-alert-scale/internal : any/c -> symbol?
+    ;;   Normalize alert scale mode to 'normal or 'major.
+    (define (normalize-alert-scale/internal value)
+      (if (symbol? value)
+          (case value
+            [(major) 'major]
+            [else 'normal])
+          'normal))
+
+    ;; toast-level-class/internal : symbol? -> string?
+    ;;   Return CSS class suffix for toast severity.
+    (define (toast-level-class/internal level)
+      (case level
+        [(success) "we-toast-success"]
+        [(warning) "we-toast-warning"]
+        [(danger)  "we-toast-danger"]
+        [else      "we-toast-info"]))
+
+    ;; normalize-toast-duration/internal : any/c -> number?
+    ;;   Normalize toast auto-hide duration to non-negative integer milliseconds.
+    (define (normalize-toast-duration/internal duration-ms)
+      (cond
+        [(and (number? duration-ms)
+              (integer? duration-ms)
+              (> duration-ms 0))
+         duration-ms]
+        [else
+         0]))
 
     ;; alert-rich : (or/c string? observable?) (or/c string? observable? false/c) (or/c string? observable? false/c) (or/c string? observable? false/c) [(or/c symbol? observable?)] [list?] -> view?
     ;;   Construct a rich alert with required body and optional title/link text/link href.
@@ -877,6 +921,9 @@
                             #:id [id #f]
                             #:class [class #f]
                             #:attrs [attrs '()])
+      (define (non-empty-text? value)
+        (and (not (eq? value #f))
+             (not (string=? (format "~a" value) ""))))
       (define final-level
         (if (eq? level-kw #f) level level-kw))
       (define final-options
@@ -893,15 +940,168 @@
                 (option-given-pair 'inline-segments inline-segments)
                 (option-given-pair 'scale scale)
                 (option-given-pair 'tone tone)))
-      (apply-root-decorators
-       (view kind/alert-rich
-             (list (cons 'body body)
-                   (cons 'title title)
-                   (cons 'link-text link-text)
-                   (cons 'link-href link-href)
-                   (cons 'level final-level)
-                   (cons 'options options-with-keywords))
+      (define raw-dismiss-action
+        (options-ref/internal options-with-keywords 'dismiss-action #f))
+      (define raw-dismiss-label
+        (options-ref/internal options-with-keywords 'dismiss-label "Dismiss"))
+      (define raw-layout
+        (options-ref/internal options-with-keywords 'layout 'stack))
+      (define raw-inline-segments
+        (options-ref/internal options-with-keywords 'inline-segments #f))
+      (define raw-scale
+        (options-ref/internal options-with-keywords 'scale 'normal))
+      (define raw-tone
+        (options-ref/internal options-with-keywords 'tone #f))
+      (define @body
+        (observable-or-const body))
+      (define @title
+        (observable-or-const title))
+      (define @link-text
+        (observable-or-const link-text))
+      (define @link-href
+        (observable-or-const link-href))
+      (define @level
+        (observable-or-const final-level))
+      (define @dismiss-action
+        (observable-or-const raw-dismiss-action))
+      (define @dismiss-label
+        (observable-or-const raw-dismiss-label))
+      (define @layout
+        (observable-or-const raw-layout))
+      (define @inline-segments
+        (observable-or-const raw-inline-segments))
+      (define @scale
+        (observable-or-const raw-scale))
+      (define @tone
+        (observable-or-const raw-tone))
+      (define @state
+        (obs-combine list
+                     @body
+                     @title
+                     @link-text
+                     @link-href
+                     @level
+                     @dismiss-action
+                     @dismiss-label
+                     @layout
+                     @inline-segments
+                     @scale
+                     @tone))
+      (define (inline-segment-view segment)
+        (cond
+          [(and (list? segment)
+                (= (length segment) 2)
+                (eq? (car segment) 'text))
+           (Span (list-ref segment 1)
+                 #:data-we-widget "alert-body"
+                 #:class "we-alert-body")]
+          [(and (list? segment)
+                (= (length segment) 3)
+                (eq? (car segment) 'link))
+           (A (list-ref segment 1)
+              #:href (list-ref segment 2)
+              #:data-we-widget "alert-link"
+              #:class "we-alert-link")]
+          [else
+           #f]))
+      (define (alert-rich-root-role state)
+        (define level0
+          (normalize-alert-level/internal (list-ref state 4)))
+        (alert-level-role/internal level0))
+      (define @root-role
+        (~> @state alert-rich-root-role))
+      (define @root-aria-live
+        (~> @root-role
+            (lambda (role0)
+              (if (eq? role0 'alert)
+                  "assertive"
+                  "polite"))))
+      (define @root-class
+        (~> @state
+            (lambda (state)
+              (define level0
+                (normalize-alert-level/internal (list-ref state 4)))
+              (define layout0
+                (normalize-alert-layout/internal (list-ref state 7)))
+              (define scale0
+                (normalize-alert-scale/internal (list-ref state 9)))
+              (define tone0
+                (normalize-alert-level/internal
+                 (if (eq? (list-ref state 10) #f)
+                     level0
+                     (list-ref state 10))))
+              (string-append
+               "we-alert "
+               (alert-level-class/internal tone0)
+               (if (eq? layout0 'inline)
+                   " we-alert-layout-inline"
+                   "")
+               (if (eq? scale0 'major)
+                   " we-alert-scale-major"
+                   "")))))
+      (define (make-alert-rich-children state)
+        (define title0
+          (list-ref state 1))
+        (define link-text0
+          (list-ref state 2))
+        (define link-href0
+          (list-ref state 3))
+        (define body0
+          (list-ref state 0))
+        (define dismiss-action0
+          (list-ref state 5))
+        (define dismiss-label0
+          (list-ref state 6))
+        (define inline-segments0
+          (list-ref state 8))
+        (define inline-segment-views
+          (if (and (list? inline-segments0)
+                   (pair? inline-segments0))
+              (let loop ([segments inline-segments0])
+                (cond
+                  [(null? segments)
+                   '()]
+                  [else
+                   (define maybe-view
+                     (inline-segment-view (car segments)))
+                   (if maybe-view
+                       (cons maybe-view (loop (cdr segments)))
+                       (loop (cdr segments)))]))
+              '()))
+        (append
+         (if (non-empty-text? title0)
+             (list (Strong title0
+                           #:data-we-widget "alert-title"
+                           #:class "we-alert-title"))
              '())
+         (if (pair? inline-segment-views)
+             inline-segment-views
+             (append (list (Span body0
+                                 #:data-we-widget "alert-body"
+                                 #:class "we-alert-body"))
+                     (if (and (non-empty-text? link-text0)
+                              (non-empty-text? link-href0))
+                         (list (A link-text0
+                                  #:href link-href0
+                                  #:data-we-widget "alert-link"
+                                  #:class "we-alert-link"))
+                         '())))
+         (if (procedure? dismiss-action0)
+             (list (Button "×"
+                           #:attrs (list (cons 'aria-label dismiss-label0)
+                                         (cons 'data-we-widget "alert-dismiss")
+                                         (cons 'class "we-alert-dismiss")
+                                         (cons 'on-click-action dismiss-action0))))
+             '())))
+      (apply-root-decorators
+       (observable-element-children
+        'div
+        @state
+        make-alert-rich-children
+        #:attrs (list (cons 'role @root-role)
+                      (cons 'data-we-widget "alert")
+                      (cons 'class @root-class)
+                      (cons 'aria-live @root-aria-live)))
        id
        class
        attrs
@@ -925,16 +1125,158 @@
                        #:id [id #f]
                        #:class [class #f]
                        #:attrs [attrs '()])
+      (define @open
+        (observable-or-const open))
+      (define @value
+        (observable-or-const value))
+      (define @level
+        (observable-or-const level))
+      (define @title
+        (observable-or-const title))
+      (define @dismissible?
+        (observable-or-const dismissible?))
+      (define @duration-ms
+        (observable-or-const duration-ms))
+      (define @pause-on-hover?
+        (observable-or-const pause-on-hover?))
+      (define @on-close
+        (observable-or-const on-close))
+      (define @hovered
+        (@ #f))
+      (define @state
+        (obs-combine list
+                     @open
+                     @value
+                     @level
+                     @title
+                     @dismissible?
+                     @duration-ms
+                     @pause-on-hover?
+                     @hovered
+                     @on-close))
+      (define toast-timeout-handle #f)
+      (define toast-cleanup-registered? #f)
+      (define (clear-toast-timeout! backend-clear-timeout!)
+        (when toast-timeout-handle
+          (backend-clear-timeout! toast-timeout-handle)
+          (set! toast-timeout-handle #f)))
+      (define (toast-after-render _root-node state register-cleanup! api)
+        (define (api-proc key)
+          (define p (assq key api))
+          (if (and p (procedure? (cdr p)))
+              (cdr p)
+              (raise-arguments-error 'toast-after-render
+                                     "missing callback API procedure"
+                                     "key"
+                                     key)))
+        (define backend-set-timeout!
+          (api-proc 'backend-set-timeout!))
+        (define backend-clear-timeout!
+          (api-proc 'backend-clear-timeout!))
+        (unless toast-cleanup-registered?
+          (set! toast-cleanup-registered? #t)
+          (register-cleanup!
+           (lambda ()
+             (clear-toast-timeout! backend-clear-timeout!))))
+        (clear-toast-timeout! backend-clear-timeout!)
+        (define open?
+          (not (eq? (car state) #f)))
+        (define duration0
+          (normalize-toast-duration/internal (list-ref state 5)))
+        (define pause-on-hover0?
+          (not (eq? (list-ref state 6) #f)))
+        (define hovered0?
+          (not (eq? (list-ref state 7) #f)))
+        (define on-close0
+          (list-ref state 8))
+        (when (and open?
+                   (> duration0 0)
+                   (procedure? on-close0)
+                   (or (not pause-on-hover0?)
+                       (not hovered0?)))
+          (set! toast-timeout-handle
+                (backend-set-timeout!
+                 duration0
+                 (lambda ()
+                   (set! toast-timeout-handle #f)
+                   (on-close0))))))
+      (define (toast-root-role state)
+        (define level0
+          (normalize-alert-level/internal (list-ref state 2)))
+        (alert-level-role/internal level0))
+      (define @root-role
+        (~> @state toast-root-role))
+      (define @root-aria-live
+        (~> @root-role
+            (lambda (role0)
+              (if (eq? role0 'alert)
+                  "assertive"
+                  "polite"))))
+      (define @root-aria-hidden
+        (~> @open
+            (lambda (open0)
+              (if (eq? open0 #f)
+                  "true"
+                  "false"))))
+      (define @root-class
+        (~> @state
+            (lambda (state)
+              (define level0
+                (normalize-alert-level/internal (list-ref state 2)))
+              (define open0
+                (list-ref state 0))
+              (string-append
+               "we-toast "
+               (toast-level-class/internal level0)
+               (if (eq? open0 #f)
+                   ""
+                   " is-open")))))
+      (define (toast-change-action event-key)
+        (case (string->symbol event-key)
+          [(mouseenter)
+           (:= @hovered #t)]
+          [(mouseleave)
+           (:= @hovered #f)]
+          [else
+           (void)]))
+      (define (make-toast-children state)
+        (define title0
+          (list-ref state 3))
+        (define message0
+          (list-ref state 1))
+        (define dismissible0?
+          (not (eq? (list-ref state 4) #f)))
+        (define on-close0
+          (list-ref state 8))
+        (append
+         (if (eq? title0 #f)
+             '()
+             (list (Span title0
+                         #:data-we-widget "toast-title"
+                         #:class "we-toast-title")))
+         (list (Span message0
+                     #:data-we-widget "toast-message"
+                     #:class "we-toast-message"))
+         (if dismissible0?
+             (list (Button "×"
+                           #:attrs (list (cons 'role 'button)
+                                         (cons 'data-we-widget "toast-close")
+                                         (cons 'class "we-close-button we-toast-close")
+                                         (cons 'aria-label "Close toast")
+                                         (cons 'on-click-action on-close0))))
+             '())))
       (apply-root-decorators
-       (view kind/toast (list (cons 'open open)
-                              (cons 'on-close on-close)
-                              (cons 'value value)
-                              (cons 'level level)
-                              (cons 'title title)
-                              (cons 'dismissible? dismissible?)
-                              (cons 'duration-ms duration-ms)
-                              (cons 'pause-on-hover? pause-on-hover?))
-             '())
+       (observable-element-children
+        'div
+        @state
+        make-toast-children
+        #:after-render toast-after-render
+        #:attrs (list (cons 'role @root-role)
+                      (cons 'data-we-widget "toast")
+                      (cons 'class @root-class)
+                      (cons 'aria-live @root-aria-live)
+                      (cons 'aria-hidden @root-aria-hidden)
+                      (cons 'on-change-action toast-change-action)))
        id
        class
        attrs
@@ -2140,12 +2482,43 @@
                         #:id [id #f]
                         #:class [class #f]
                         #:attrs [attrs '()])
+      (define @label
+        (observable-or-const label))
+      (define @leading-icon
+        (observable-or-const leading-icon))
+      (define @trailing-icon
+        (observable-or-const trailing-icon))
+      (define @state
+        (obs-combine list @label @leading-icon @trailing-icon))
+      (define (make-button-children state)
+        (define label0
+          (car state))
+        (define leading-icon0
+          (cadr state))
+        (define trailing-icon0
+          (caddr state))
+        (append
+         (if (eq? leading-icon0 #f)
+             '()
+             (list (Span leading-icon0
+                         #:data-we-widget "button-icon"
+                         #:class "we-button-icon we-button-icon-leading")))
+         (list (Span label0
+                     #:data-we-widget "button-label"
+                     #:class "we-button-label"))
+         (if (eq? trailing-icon0 #f)
+             '()
+             (list (Span trailing-icon0
+                         #:data-we-widget "button-icon"
+                         #:class "we-button-icon we-button-icon-trailing")))))
       (apply-root-decorators
-       (view kind/button (list (cons 'label label)
-                               (cons 'action action)
-                               (cons 'leading-icon leading-icon)
-                               (cons 'trailing-icon trailing-icon))
-             '())
+       (observable-element-children
+        'button
+        @state
+        make-button-children
+        #:attrs (list (cons 'data-we-widget "button")
+                      (cons 'class "we-button")
+                      (cons 'on-click-action action)))
        id
        class
        attrs
@@ -2209,12 +2582,86 @@
                                      #:id [id #f]
                                      #:class [class #f]
                                      #:attrs [attrs '()])
+      (define mode/radio
+        'radio)
+      (define mode/checkbox
+        'checkbox)
+      (define @mode
+        (observable-or-const mode))
+      (define @choices
+        (observable-or-const choices))
+      (define @selected
+        (observable-or-const selected))
+      (define @structure
+        (obs-combine list @mode @choices))
+      (define (selected?/selection mode0 selection item-id)
+        (case mode0
+          [(checkbox)
+           (and (list? selection)
+                (member item-id selection))]
+          [else
+           (equal? selection item-id)]))
+      (define (toggle-class mode0 selection item-id)
+        (if (selected?/selection mode0 selection item-id)
+            "we-button is-active"
+            "we-button"))
+      (define (next-selection mode0 selection item-id)
+        (case mode0
+          [(checkbox)
+           (cond
+             [(not (list? selection))
+              (list item-id)]
+             [(member item-id selection)
+              (let loop ([xs selection])
+                (cond
+                  [(null? xs)
+                   '()]
+                  [(equal? (car xs) item-id)
+                   (loop (cdr xs))]
+                  [else
+                   (cons (car xs)
+                         (loop (cdr xs)))]))]
+             [else
+              (append selection (list item-id))])]
+          [else
+           item-id]))
+      (define (make-toggle-children state)
+        (define mode0
+          (car state))
+        (define choices0
+          (cadr state))
+        (map (lambda (choice)
+               (define choice-id
+                 (list-ref choice 0))
+               (define choice-label
+                 (list-ref choice 1))
+               (define @choice-class
+                 (~> @selected
+                     (lambda (selected0)
+                       (toggle-class mode0 selected0 choice-id))))
+               (Button choice-label
+                       #:attrs (list (cons 'role 'button)
+                                     (cons 'data-we-widget "button")
+                                     (cons 'class @choice-class)
+                                     (cons 'on-click-action
+                                           (lambda ()
+                                             (action (next-selection (obs-peek @mode)
+                                                                     (obs-peek @selected)
+                                                                     choice-id)))))))
+             choices0))
       (apply-root-decorators
-       (view kind/toggle-button-group (list (cons 'mode mode)
-                                            (cons 'choices choices)
-                                            (cons 'selected selected)
-                                            (cons 'action action))
-             '())
+       (observable-element-children
+        'div
+        @structure
+        make-toggle-children
+        #:attrs (list (cons 'role 'group)
+                      (cons 'data-we-widget "toggle-button-group")
+                      (cons 'class "we-toggle-button-group")
+                      (cons 'mode (~> @mode
+                                      (lambda (mode0)
+                                        (if (eq? mode0 mode/checkbox)
+                                            mode/checkbox
+                                            mode/radio))))))
        id
        class
        attrs
