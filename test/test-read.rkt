@@ -38,6 +38,8 @@
                     ;; symbols
                     (equal? (read (open-input-string "hello")) 'hello)
                     (equal? (read (open-input-string "#%app")) '#%app)
+                    (equal? (read (open-input-string "(div .myClass)"))
+                            '(div .myClass))
 
                     ;; keywords
                     (equal? (read (open-input-string "#:apple")) '#:apple)

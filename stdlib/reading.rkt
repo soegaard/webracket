@@ -88,7 +88,7 @@
     (define (delimiter-char? ch)
       (or (eof-object? ch)
           (char-whitespace? ch)
-          (member ch '(#\( #\) #\[ #\] #\{ #\} #\" #\, #\' #\` #\; #\.))))
+          (member ch '(#\( #\) #\[ #\] #\{ #\} #\" #\, #\' #\` #\;))))
 
     ;; ------------------------------ Skipper ----------------------------------
     (define (skip-space+comments L)
@@ -463,26 +463,6 @@
                                   (safe-make-srcloc (object-name in) #f #f #f 0)))
               (write-char (read-char in) out)
               (loop #f)]
-             ;; Treat '.' as part of a number when appropriate
-             [(char=? ch #\.)
-              (define s2 (peek-string 2 0 in))
-              (define sofar (get-output-string out))
-              (define prev-digit? (and (positive? (string-length sofar))
-                                       (char-numeric?
-                                        (string-ref
-                                         sofar (sub1 (string-length sofar))))))
-              (cond
-                ;; leading . followed by digit → number like .5
-                [(and (string? s2)
-                      (= (string-length s2) 2)
-                      (char=? (string-ref s2 0) #\.)
-                      (char-numeric? (string-ref s2 1)))
-                 (read-char in) (write-char #\. out) (loop #f)]
-                ;; trailing dot after digits → number like 3.
-                [prev-digit?
-                 (read-char in) (write-char #\. out) (loop #f)]
-                ;; else delimiter: end bareword
-                [else (get-output-string out)])]
              [(delimiter-char? ch)
               (get-output-string out)]
              [else
@@ -523,10 +503,10 @@
          (if (and (string? s2)
                   (= (string-length s2) 2)
                   (char=? (string-ref s2 0) #\.)
-                  (char-numeric? (string-ref s2 1)))
-             (scan-bareword L)
-             (scan-delim-or-dot L))]
-        [(memq ch '(#\( #\) #\[ #\] #\{ #\} #\.)) (scan-delim-or-dot L)]
+                  (delimiter-char? (string-ref s2 1)))
+             (scan-delim-or-dot L)
+             (scan-bareword L))]
+        [(memq ch '(#\( #\) #\[ #\] #\{ #\})) (scan-delim-or-dot L)]
         [(memq ch '(#\' #\` #\,)) (scan-quote-like L)]
         [(char=? ch #\#) (scan-sharp-dispatch L)]
         [else (scan-bareword L)]))
