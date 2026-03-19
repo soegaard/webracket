@@ -42,6 +42,30 @@
 ;; Core Heading/Text Primitive Coverage
 ;; -------------------------------------------------------------------
 
+;; Spec snapshot guard (constructor-level):
+;; these calls intentionally exercise core tag/attr pairs sourced from
+;; `spec/html-element-attributes.sexp`, so snapshot regressions fail clearly.
+(define r-spec-guard
+  (render
+   (window
+    (vpanel
+     (H1 "Spec guard heading" #:align "left")
+     (Img #:src "guard.png" #:alt "guard")
+     (Base #:href "https://example.test/")
+     (Base #:target "_blank")))))
+(define spec-guard-panel (node-child (renderer-root r-spec-guard) 0))
+(define spec-guard-h1-node (node-child spec-guard-panel 0))
+(define spec-guard-img-node (node-child spec-guard-panel 1))
+(define spec-guard-base-href-node (node-child spec-guard-panel 2))
+(define spec-guard-base-target-node (node-child spec-guard-panel 3))
+(check-equal (dom-node-tag spec-guard-h1-node) 'h1 "spec guard: H1 tag available")
+(check-equal (dom-node-tag spec-guard-img-node) 'img "spec guard: Img tag available")
+(check-equal (dom-node-tag spec-guard-base-href-node) 'base "spec guard: Base tag available")
+(check-node-attrs spec-guard-h1-node '((align "left")) "SpecGuard/H1")
+(check-node-attrs spec-guard-img-node '((src "guard.png")) "SpecGuard/Img")
+(check-node-attrs spec-guard-base-href-node '((href "https://example.test/")) "SpecGuard/BaseHref")
+(check-node-attrs spec-guard-base-target-node '((target "_blank")) "SpecGuard/BaseTarget")
+
 ;; Regression: primitive html-element constructors render their real tag on initial render
 ;; (not fallback div) for leaf and container primitives.
 (define r-primitive-initial-tags

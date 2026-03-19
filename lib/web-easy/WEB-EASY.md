@@ -133,6 +133,8 @@ Near-term directions:
    current warning-handler hook is intentionally simple; we can later layer structured logging/categories on top.
 3. Spec refresh flow:
    keep the generated HTML attribute snapshot up to date and document refresh cadence/tool invocation.
+   Refresh command:
+   `node tools/fetch-html-element-attributes.mjs --version 3.1.0`
 4. Base ordering validation scope:
    current check is conservative (direct `window` children only); a future enhancement is a full document-order traversal so `<base>` ordering is validated across the whole rendered view tree.
    TODO: implement full-tree (document-order) validation mode and keep conservative mode as a fast-path fallback.

@@ -54,19 +54,30 @@ racket tools/check-wrapper-arity.rkt lib/web-easy/smoke
 
 fetch-html-element-attributes.mjs
 ---------------------------------
-One-off generator for a machine-readable HTML element/attribute snapshot.
+Generator for a machine-readable HTML element/attribute snapshot.
 It fetches the `html-element-attributes` package source and writes:
 - `lib/web-easy/generated/html-element-attributes.json`
 - `lib/web-easy/spec/html-element-attributes.sexp`
 
-Run:
+Inputs:
+- package version (`--version`, default `3.1.0`)
+- source URL (optional override via `--source-url`)
 
-```sh
-node tools/fetch-html-element-attributes.mjs
-```
+Output paths:
+- JSON snapshot: `lib/web-easy/generated/html-element-attributes.json`
+- S-expression snapshot: `lib/web-easy/spec/html-element-attributes.sexp`
 
-Optional:
+Refresh command (pinned/default version):
 
 ```sh
 node tools/fetch-html-element-attributes.mjs --version 3.1.0
+```
+
+Optional explicit outputs:
+
+```sh
+node tools/fetch-html-element-attributes.mjs \
+  --version 3.1.0 \
+  --out-json lib/web-easy/generated/html-element-attributes.json \
+  --out-sexp lib/web-easy/spec/html-element-attributes.sexp
 ```
