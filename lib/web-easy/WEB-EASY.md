@@ -10,6 +10,7 @@ This document captures internal design decisions for `lib/web-easy/`.
   - constructor requires at least one of `#:href` or `#:target`,
   - conservative runtime ordering check for direct `window` children.
 - Consolidated HTML primitive tests with helper-based rejection/assertion patterns.
+- Removed obsolete renderer branches and renderer-only helpers for `tab-panel`, `accordion`, and `card` after their view-level primitive-composition migrations.
 
 ## `define/element` (internal)
 
@@ -159,6 +160,16 @@ Current conventions:
 - Contract status:
   - internal-only,
   - not part of public API/docs stability guarantees.
+
+### Primitive Composition Status
+
+`offcanvas`, `dialog`, `modal`, `menu-bar`, `menu`, `menu-item`, `tab-panel`, `accordion`, `card`, `tooltip`, `popover`, `if-view`, `cond-view`, and `case-view` are now view-level primitive compositions.
+
+- They no longer require dedicated renderer kind branches.
+- Root semantics are expressed through primitive attrs (`role`, `aria-*`, `on-change-action`, widget classes).
+- Close callbacks are bridged from primitive events and support both callback shapes:
+  - arity-0: `(lambda () ...)`
+  - arity-1: `(lambda (reason) ...)`, where reason is one of `'escape`, `'button`, or `'backdrop` (offcanvas).
 
 Example style:
 

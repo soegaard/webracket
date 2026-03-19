@@ -417,21 +417,10 @@
     (define kind/fragment  'fragment)  ; Zero-wrapper composition view.
     (define kind/html-element 'html-element) ; Primitive HTML element leaf view.
     (define kind/html-element-children 'html-element-children) ; Primitive HTML element container view.
-    (define kind/if-view   'if-view)   ; Conditional branch view.
-    (define kind/cond-view 'cond-view) ; Multi-branch conditional view.
-    (define kind/case-view 'case-view) ; Equality-based conditional view.
-    (define kind/tab-panel 'tab-panel) ; Selected-tab conditional view.
-    (define kind/accordion 'accordion) ; Single-open section accordion view.
-    (define kind/offcanvas 'offcanvas) ; Side-sheet/offcanvas panel view.
-    (define kind/dialog 'dialog) ; Modal dialog container view.
-    (define kind/modal 'modal) ; Modal container view.
     (define kind/observable-view 'observable-view) ; Dynamic single-child view.
     (define kind/observable-element-children 'observable-element-children) ; Dynamic multi-child primitive element view.
     (define kind/table     'table)     ; Minimal tabular data view.
     (define kind/list-view 'list-view) ; Dynamic keyed list container.
-    (define kind/tooltip   'tooltip)   ; Tooltip container view.
-    (define kind/popover   'popover)   ; Popover container view.
-    (define kind/card      'card)      ; Card container view.
 
     ;; view-props-ref/default : list? symbol? any/c -> any/c
     ;;   Return property value for key in props, else default-value.
@@ -857,6 +846,238 @@
       (if p
           (cdr p)
           default))
+
+    ;; normalize-dialog-size/internal : any/c -> symbol?
+    ;;   Normalize dialog/modal size to one of sm/md/lg/xl.
+    (define (normalize-dialog-size/internal raw-size)
+      (if (memq raw-size '(sm md lg xl))
+          raw-size
+          'md))
+
+    ;; normalize-card-tone/internal : any/c -> any/c
+    ;;   Normalize tone option to accepted symbols or #f.
+    (define (normalize-card-tone/internal raw)
+      (if (symbol? raw)
+          (case raw
+            [(primary secondary success danger warning info light dark) raw]
+            [else #f])
+          #f))
+
+    ;; normalize-card-tone-style/internal : any/c -> any/c
+    ;;   Normalize tone-style option to fill/outline or #f.
+    (define (normalize-card-tone-style/internal raw)
+      (if (symbol? raw)
+          (case raw
+            [(fill outline) raw]
+            [else #f])
+          #f))
+
+    ;; normalize-tab-variants/internal : any/c -> list?
+    ;;   Normalize tab variants to a list of symbols.
+    (define (normalize-tab-variants/internal raw-variants)
+      (cond
+        [(symbol? raw-variants)
+         (list raw-variants)]
+        [(list? raw-variants)
+         (let loop ([xs raw-variants] [acc '()])
+           (cond
+             [(null? xs) (reverse acc)]
+             [else
+              (define x (car xs))
+              (loop (cdr xs)
+                    (if (symbol? x) (cons x acc) acc))]))]
+        [else '(default)]))
+
+    ;; tab-variant-class/internal : list? -> string?
+    ;;   Build tab-panel class suffix from normalized variants.
+    (define (tab-variant-class/internal tab-variants)
+      (let loop ([rest tab-variants] [acc ""])
+        (cond
+          [(null? rest) acc]
+          [else
+           (define variant-class
+             (if (eq? (car rest) 'default)
+                 "we-tab-style-default"
+                 (string-append "we-tab-style-" (symbol->string (car rest)))))
+           (loop (cdr rest)
+                 (if (string=? acc "")
+                     variant-class
+                     (string-append acc " " variant-class)))])))
+
+    ;; normalize-tab-entry/internal : any/c -> list?
+    ;;   Normalize tab entry to (list id view disabled?) supporting pair or list forms.
+    (define (normalize-tab-entry/internal tab)
+      (cond
+        [(list? tab)
+         (define n (length tab))
+         (cond
+           [(= n 2)
+            (list (list-ref tab 0) (list-ref tab 1) #f)]
+           [(= n 3)
+            (list (list-ref tab 0) (list-ref tab 1) (not (eq? (list-ref tab 2) #f)))]
+           [else
+            (raise-arguments-error 'tab-panel
+                                   "expected tab entry of arity 2 or 3"
+                                   "tab"
+                                   tab)])]
+        [(pair? tab)
+         (list (car tab) (cdr tab) #f)]
+        [else
+         (raise-arguments-error 'tab-panel
+                                "expected pair? or list?"
+                                "tab"
+                                tab)]))
+
+    ;; tab-panel-counter/internal : number?
+    ;;   Monotonic counter for generated tab-panel id values.
+    (define tab-panel-counter/internal 0)
+
+    ;; next-tab-panel-id/internal : -> string?
+    ;;   Allocate a unique id string for tab-panel content region.
+    (define (next-tab-panel-id/internal)
+      (set! tab-panel-counter/internal (add1 tab-panel-counter/internal))
+      (string-append "tab-panel-" (number->string tab-panel-counter/internal)))
+
+    ;; accordion-panel-counter/internal : number?
+    ;;   Monotonic counter for generated accordion panel ids.
+    (define accordion-panel-counter/internal 0)
+
+    ;; next-accordion-panel-id/internal : -> string?
+    ;;   Allocate a unique id string for accordion content panel region.
+    (define (next-accordion-panel-id/internal)
+      (set! accordion-panel-counter/internal
+            (add1 accordion-panel-counter/internal))
+      (string-append "accordion-panel-" (number->string accordion-panel-counter/internal)))
+
+    ;; normalize-card-variants/internal : any/c -> list?
+    ;;   Normalize variant value to accepted card variant symbols.
+    (define (normalize-card-variants/internal raw)
+      (define (allowed-variant? v)
+        (and (symbol? v)
+             (case v
+               [(default compact flat headerless) #t]
+               [else #f])))
+      (define (loop xs)
+        (cond
+          [(null? xs) '()]
+          [(allowed-variant? (car xs))
+           (cons (car xs) (loop (cdr xs)))]
+          [else
+           (loop (cdr xs))]))
+      (cond
+        [(allowed-variant? raw)
+         (list raw)]
+        [(list? raw)
+         (loop raw)]
+        [else
+         (list 'default)]))
+
+    ;; card-variant-class/internal : list? -> string?
+    ;;   Build card class string from variant symbols.
+    (define (card-variant-class/internal variants)
+      (define compact? (contains-equal/internal variants 'compact))
+      (define flat?    (contains-equal/internal variants 'flat))
+      (string-append
+       "we-card"
+       (if compact? " we-card-compact" "")
+       (if flat? " we-card-flat" "")))
+
+    ;; dialog-body-counter/internal : number?
+    ;;   Monotonic counter for generated dialog/modal description ids.
+    (define dialog-body-counter/internal 0)
+
+    ;; next-dialog-body-id/internal : -> string?
+    ;;   Allocate a unique id for dialog/modal descriptive body content.
+    (define (next-dialog-body-id/internal)
+      (set! dialog-body-counter/internal
+            (add1 dialog-body-counter/internal))
+      (string-append "dialog-body-"
+                     (number->string dialog-body-counter/internal)))
+
+    ;; invoke-close-callback/internal : any/c symbol? -> void?
+    ;;   Call close callback with reason when arity allows, else call without args.
+    (define (invoke-close-callback/internal on-close reason)
+      (when (procedure? on-close)
+        (if (procedure-arity-includes? on-close 1)
+            (on-close reason)
+            (on-close))))
+
+    ;; text-view?/internal : any/c -> boolean?
+    ;;   Check whether v is a text constructor view suitable for aria-describedby id forwarding.
+    (define (text-view?/internal v)
+      (and (view? v)
+           (eq? (view-kind v) kind/html-element)
+           (let* ([props (view-props v)]
+                  [extra (view-props-ref/default props 'extra-attrs #f)]
+                  [widget-pair (and (list? extra) (assq 'data-we-widget extra))])
+             (and widget-pair
+                  (equal? (cdr widget-pair) "text")))))
+
+    ;; parse-offcanvas-args/internal : list? any/c -> list?
+    ;;   Parse optional legacy side positional argument and merge with #:side when present.
+    (define (normalize-offcanvas-side/internal side)
+      (if (symbol? side)
+          (case side
+            [(start end) side]
+            [else        'end])
+          'end))
+
+    (define (parse-offcanvas-args/internal args side-kw)
+      (define side 'end)
+      (define children args)
+      (when (and (pair? children)
+                 (or (symbol? (car children))
+                     (obs? (car children))))
+        (set! side (car children))
+        (set! children (cdr children)))
+      (list (if (eq? side-kw #f) side side-kw)
+            children))
+
+    ;; parse-dialog-options/internal : list? any/c any/c any/c any/c any/c any/c any/c any/c any/c string? -> list?
+    ;;   Parse legacy dialog/modal optional args and merged options into normalized fields.
+    (define (parse-dialog-options/internal args
+                                           size-kw
+                                           title
+                                           description
+                                           footer
+                                           show-close?
+                                           close-label
+                                           tone
+                                           tone-style
+                                           default-close-label)
+      (define size 'md)
+      (define rest/args args)
+      (define old-options '())
+      (when (and (pair? rest/args)
+                 (symbol? (car rest/args))
+                 (memq (car rest/args) '(sm md lg xl)))
+        (set! size (car rest/args))
+        (set! rest/args (cdr rest/args)))
+      (when (and (pair? rest/args)
+                 (options-alist? (car rest/args)))
+        (set! old-options (car rest/args))
+        (set! rest/args (cdr rest/args)))
+      (define final-size
+        (normalize-dialog-size/internal
+         (if (eq? size-kw #f) size size-kw)))
+      (define options
+        (append old-options
+                (list (cons 'title title)
+                      (cons 'description description)
+                      (cons 'footer footer)
+                      (cons 'show-close? show-close?)
+                      (cons 'close-label close-label)
+                      (cons 'tone tone)
+                      (cons 'tone-style tone-style))))
+      (list final-size
+            rest/args
+            (options-ref/internal options 'title #f)
+            (options-ref/internal options 'description #f)
+            (options-ref/internal options 'footer #f)
+            (options-ref/internal options 'show-close? #f)
+            (options-ref/internal options 'close-label default-close-label)
+            (options-ref/internal options 'tone #f)
+            (options-ref/internal options 'tone-style #f)))
 
     ;; normalize-alert-layout/internal : any/c -> symbol?
     ;;   Normalize alert layout mode to 'stack or 'inline.
@@ -1494,6 +1715,13 @@
       (if (obs? v)
           v
           (obs v)))
+
+    ;; cond-clause-active/internal : any/c -> boolean?
+    ;;   Treat #f as false and all other values as true for conditional views.
+    (define (cond-clause-active/internal v)
+      (if (boolean? v)
+          v
+          (not (eq? v #f))))
 
     ;; heading : (or/c number? observable?) (or/c string? observable?) [symbol?] [symbol?] -> view?
     ;;   Construct a semantic heading view with level normalized to 1..6 and optional align/spacing style variants.
@@ -3121,25 +3349,73 @@
     ;; if-view : (or/c any/c observable?) view? view? -> view?
     ;;   Construct a conditional view that selects then-view or else-view.
     (define (if-view cond-value then-view else-view)
-      (view kind/if-view (list (cons 'cond cond-value)
-                               (cons 'then then-view)
-                               (cons 'else else-view))
-            '()))
+      (define @cond
+        (observable-or-const cond-value))
+      (observable-element-children
+       'div
+       @cond
+       (lambda (cond0)
+         (list (if (cond-clause-active/internal cond0)
+                   then-view
+                   else-view)))
+       #:attrs (list (cons 'data-we-widget "if-view")
+                     (cons 'class "we-if-view"))))
 
     ;; cond-view : (listof (cons (or/c any/c observable?) view?)) view? -> view?
     ;;   Construct a multi-branch conditional view with explicit else-view.
     (define (cond-view clauses else-view)
-      (view kind/cond-view (list (cons 'clauses clauses)
-                                 (cons 'else else-view))
-            '()))
+      (define clause-tests
+        (map car clauses))
+      (define clause-views
+        (map cdr clauses))
+      (define test-observables
+        (map observable-or-const clause-tests))
+      (define @test-values
+        (if (null? test-observables)
+            (obs '())
+            (apply obs-combine list test-observables)))
+      (define (choose-view test-values)
+        (let loop ([tests test-values]
+                   [views clause-views])
+          (cond
+            [(or (null? tests) (null? views))
+             else-view]
+            [(cond-clause-active/internal (car tests))
+             (car views)]
+            [else
+             (loop (cdr tests) (cdr views))])))
+      (observable-element-children
+       'div
+       @test-values
+       (lambda (test-values)
+         (list (choose-view test-values)))
+       #:attrs (list (cons 'data-we-widget "cond-view")
+                     (cons 'class "we-cond-view"))))
 
     ;; case-view : (or/c any/c observable?) (listof (cons list? view?)) view? -> view?
     ;;   Construct an equality-based branch view with explicit else-view.
     (define (case-view value clauses else-view)
-      (view kind/case-view (list (cons 'value value)
-                                 (cons 'clauses clauses)
-                                 (cons 'else else-view))
-            '()))
+      (define @value
+        (observable-or-const value))
+      (define (choose-view value0)
+        (let loop ([remaining clauses])
+          (cond
+            [(null? remaining)
+             else-view]
+            [else
+             (define clause (car remaining))
+             (define literals
+               (ensure-list/internal (car clause) 'case-view "clause literals"))
+             (if (member value0 literals)
+                 (cdr clause)
+                 (loop (cdr remaining)))])))
+      (observable-element-children
+       'div
+       @value
+       (lambda (value0)
+         (list (choose-view value0)))
+       #:attrs (list (cons 'data-we-widget "case-view")
+                     (cons 'class "we-case-view"))))
 
     ;; tab-panel : (or/c any/c observable?) (listof (cons any/c view?)) [any/c] -> view?
     ;;   Construct a selected-tab branch view keyed by tab id, with optional style variants.
@@ -3153,11 +3429,209 @@
                            #:attrs [attrs '()])
       (define final-variants
         (if (eq? variants-kw #f) variants variants-kw))
+      (define @selected
+        (observable-or-const selected))
+      (define tabs/raw
+        (ensure-list/internal tabs 'tab-panel "tabs"))
+      (define tabs/normalized
+        (map normalize-tab-entry/internal tabs/raw))
+      (define panel-id
+        (next-tab-panel-id/internal))
+      (define enabled-tab-ids
+        (map car
+             (filter (lambda (tab-entry)
+                       (not (list-ref tab-entry 2)))
+                     tabs/normalized)))
+      (define tab-variants
+        (normalize-tab-variants/internal final-variants))
+      (define tab-variant-class
+        (tab-variant-class/internal tab-variants))
+      (define tab-panel-class
+        (string-append
+         "we-tab-panel"
+         (if (string=? tab-variant-class "")
+             ""
+             (string-append " " tab-variant-class))))
+      (define (selected-derived/internal proc)
+        (if (obs? @selected)
+            (~> @selected proc)
+            (proc @selected)))
+      (define (tab-disabled?/internal tab-id)
+        (let loop ([ts tabs/normalized])
+          (cond
+            [(null? ts) #t]
+            [else
+             (define tab-entry (car ts))
+             (if (equal? (car tab-entry) tab-id)
+                 (list-ref tab-entry 2)
+                 (loop (cdr ts)))])))
+      (define (index-of-enabled/internal selected0)
+        (let loop ([i 0]
+                   [ids enabled-tab-ids])
+          (cond
+            [(null? ids) 0]
+            [(equal? (car ids) selected0) i]
+            [else (loop (add1 i) (cdr ids))])))
+      (define (enabled-at/internal idx)
+        (list-ref enabled-tab-ids idx))
+      (define (next-enabled/internal selected0)
+        (if (null? enabled-tab-ids)
+            #f
+            (let* ([count (length enabled-tab-ids)]
+                   [i (index-of-enabled/internal selected0)]
+                   [j (modulo (+ i 1) count)])
+              (enabled-at/internal j))))
+      (define (prev-enabled/internal selected0)
+        (if (null? enabled-tab-ids)
+            #f
+            (let* ([count (length enabled-tab-ids)]
+                   [i (index-of-enabled/internal selected0)]
+                   [j (modulo (+ i (- count 1)) count)])
+              (enabled-at/internal j))))
+      (define (first-enabled/internal)
+        (if (null? enabled-tab-ids) #f (car enabled-tab-ids)))
+      (define (last-enabled/internal)
+        (if (null? enabled-tab-ids)
+            #f
+            (list-ref enabled-tab-ids (- (length enabled-tab-ids) 1))))
+      (define (choose-tab-view/internal selected0)
+        (define selected-view
+          (let loop ([ts tabs/normalized])
+            (cond
+              [(null? ts) #f]
+              [else
+               (define tab-entry (car ts))
+               (if (and (equal? (car tab-entry) selected0)
+                        (not (list-ref tab-entry 2)))
+                   (list-ref tab-entry 1)
+                   (loop (cdr ts)))])))
+        (cond
+          [selected-view selected-view]
+          [(null? enabled-tab-ids)
+           (if (null? tabs/normalized)
+               (spacer)
+               (list-ref (car tabs/normalized) 1))]
+          [else
+           (let loop ([ts tabs/normalized])
+             (define tab-entry (car ts))
+             (if (equal? (car tab-entry) (car enabled-tab-ids))
+                 (list-ref tab-entry 1)
+                 (loop (cdr ts))))]))
+      (define (selected-button-id/internal selected0)
+        (let loop ([entries tabs/normalized]
+                   [idx 0])
+          (cond
+            [(null? entries) ""]
+            [else
+             (define tab-entry (car entries))
+             (if (and (equal? (car tab-entry) selected0)
+                      (not (list-ref tab-entry 2)))
+                 (string-append panel-id "-tab-" (number->string idx))
+                 (loop (cdr entries) (add1 idx)))])))
+      (define (select-if-possible/internal selected0 tab-id)
+        (when (and tab-id
+                   (obs? @selected)
+                   (not (tab-disabled?/internal tab-id)))
+          (obs-set! @selected tab-id)))
+      (define tab-buttons
+        (let loop ([entries tabs/normalized]
+                   [idx 0])
+          (cond
+            [(null? entries)
+             '()]
+            [else
+             (define tab-entry (car entries))
+             (define tab-id (list-ref tab-entry 0))
+             (define tab-disabled? (list-ref tab-entry 2))
+             (define button-id
+               (string-append panel-id "-tab-" (number->string idx)))
+             (define @selected?
+               (selected-derived/internal
+                (lambda (selected0)
+                  (and (equal? tab-id selected0)
+                       (not tab-disabled?)))))
+             (define @tabindex
+               (selected-derived/internal
+                (lambda (selected0)
+                  (if (and (equal? tab-id selected0)
+                           (not tab-disabled?))
+                      0
+                      -1))))
+             (define @class
+               (selected-derived/internal
+                (lambda (selected0)
+                  (cond
+                    [tab-disabled? "we-tab-btn is-disabled"]
+                    [(equal? tab-id selected0) "we-tab-btn is-selected"]
+                    [else "we-tab-btn"]))))
+             (define button-attrs
+               (list (cons 'tab-id tab-id)
+                     (cons 'id button-id)
+                     (cons 'role 'tab)
+                     (cons 'data-we-widget "tab-button")
+                     (cons 'aria-controls panel-id)
+                     (cons 'aria-disabled tab-disabled?)
+                     (cons 'aria-selected @selected?)
+                     (cons 'tabindex @tabindex)
+                     (cons 'class @class)))
+             (define dynamic-button-attrs
+               (if (obs? selected)
+                   (list (cons 'on-click-action
+                               (lambda ()
+                                 (unless tab-disabled?
+                                   (obs-set! selected tab-id))))
+                         (cons 'on-change-action
+                               (lambda (key)
+                                 (unless tab-disabled?
+                                   (define selected0 (obs-peek selected))
+                                   (case (string->symbol key)
+                                     [(ArrowRight)
+                                      (select-if-possible/internal selected0
+                                                                   (next-enabled/internal selected0))]
+                                     [(ArrowLeft)
+                                      (select-if-possible/internal selected0
+                                                                   (prev-enabled/internal selected0))]
+                                     [(Home)
+                                      (select-if-possible/internal selected0
+                                                                   (first-enabled/internal))]
+                                     [(End)
+                                      (select-if-possible/internal selected0
+                                                                   (last-enabled/internal))]
+                                     [else
+                                      (void)])))))
+                   '()))
+             (define button-attrs/final
+               (append button-attrs dynamic-button-attrs))
+             (cons (Button tab-id
+                           #:attrs button-attrs/final)
+                   (loop (cdr entries) (add1 idx)))])))
+      (define tablist-view
+        (apply Div
+               (append tab-buttons
+                       (list #:attrs (list (cons 'role 'tablist)
+                                           (cons 'data-we-widget "tab-list")
+                                           (cons 'class "we-tab-list"))))))
+      (define @labelledby
+        (selected-derived/internal selected-button-id/internal))
+      (define content-view
+        (observable-element-children
+         'div
+         @selected
+         (lambda (selected0)
+           (list (choose-tab-view/internal selected0)))
+         #:attrs (list (cons 'role 'tabpanel)
+                       (cons 'id panel-id)
+                       (cons 'data-we-widget "tab-content")
+                       (cons 'aria-labelledby @labelledby)
+                       (cons 'class "we-tab-content"))))
       (apply-root-decorators
-       (view kind/tab-panel (list (cons 'selected selected)
-                                  (cons 'tabs tabs)
-                                  (cons 'variants final-variants))
-             '())
+       (html-element-children
+        'tab-panel
+        tablist-view
+        content-view
+        #:attrs (list (cons 'selected @selected)
+                      (cons 'data-we-widget "tab-panel")
+                      (cons 'class tab-panel-class)))
        id
        class
        attrs
@@ -3199,10 +3673,129 @@
                            #:id [id #f]
                            #:class [class #f]
                            #:attrs [attrs '()])
+      (define sections/raw
+        (ensure-list/internal sections 'accordion "sections"))
+      (define sections/normalized
+        (map (lambda (section)
+               (unless (list? section)
+                 (raise-arguments-error 'accordion
+                                        "expected section row as list"
+                                        "section"
+                                        section))
+               (unless (= (length section) 3)
+                 (raise-arguments-error 'accordion
+                                        "expected section row of arity 3: (list id label view)"
+                                        "section"
+                                        section))
+               (list (list-ref section 0)
+                     (list-ref section 1)
+                     (list-ref section 2)
+                     (next-accordion-panel-id/internal)))
+             sections/raw))
+      (define section-ids
+        (map car sections/normalized))
+      (define (select-section!/internal section-id)
+        (when (obs? selected)
+          (obs-set! selected section-id)))
+      (define (toggle-section!/internal section-id)
+        (when (obs? selected)
+          (if (equal? (obs-peek selected) section-id)
+              (obs-set! selected #f)
+              (obs-set! selected section-id))))
+      (define (move-selection!/internal section-id delta)
+        (when (and (obs? selected)
+                   (pair? section-ids))
+          (define selected0
+            (obs-peek selected))
+          (define index
+            (let loop ([ids section-ids]
+                       [i 0])
+              (cond
+                [(null? ids) 0]
+                [(equal? (car ids) selected0) i]
+                [else (loop (cdr ids) (add1 i))])))
+          (define count (length section-ids))
+          (define next-index (modulo (+ index delta count) count))
+          (define next-id (list-ref section-ids next-index))
+          (select-section!/internal next-id)))
       (apply-root-decorators
-       (view kind/accordion (list (cons 'selected selected)
-                                  (cons 'sections sections))
-             '())
+       (apply Div
+              (append
+               (map
+                (lambda (section-entry)
+                  (define section-id (list-ref section-entry 0))
+                  (define section-label (list-ref section-entry 1))
+                  (define section-view (list-ref section-entry 2))
+                  (define panel-id (list-ref section-entry 3))
+                  (define open-state
+                    (if (obs? selected)
+                        (~> selected
+                            (lambda (selected0)
+                              (equal? selected0 section-id)))
+                        (equal? selected section-id)))
+                  (define @expanded
+                    (~> (observable-or-const open-state)
+                        (lambda (open0)
+                          (if open0 "true" "false"))))
+                  (define @trigger-class
+                    (~> (observable-or-const open-state)
+                        (lambda (open0)
+                          (if open0
+                              "we-accordion-trigger is-open"
+                              "we-accordion-trigger"))))
+                  (define @collapse-class
+                    (~> (observable-or-const open-state)
+                        (lambda (open0)
+                          (if open0
+                              "we-collapse is-open we-accordion-content"
+                              "we-collapse we-accordion-content"))))
+                  (define @collapse-hidden
+                    (~> (observable-or-const open-state)
+                        (lambda (open0)
+                          (if open0 "false" "true"))))
+                  (define trigger-attrs
+                    (list (cons 'role 'button)
+                          (cons 'data-we-widget "accordion-trigger")
+                          (cons 'aria-controls panel-id)
+                          (cons 'aria-expanded @expanded)
+                          (cons 'class @trigger-class)))
+                  (define trigger-attrs/final
+                    (if (obs? selected)
+                        (append trigger-attrs
+                                (list (cons 'on-click-action
+                                            (lambda ()
+                                              (toggle-section!/internal section-id)))
+                                      (cons 'on-change-action
+                                            (lambda (key)
+                                              (case (string->symbol key)
+                                                [(ArrowDown)
+                                                 (move-selection!/internal section-id 1)]
+                                                [(ArrowUp)
+                                                 (move-selection!/internal section-id -1)]
+                                                [(Home)
+                                                 (when (pair? section-ids)
+                                                   (select-section!/internal (car section-ids)))]
+                                                [(End)
+                                                 (when (pair? section-ids)
+                                                   (select-section!/internal
+                                                    (list-ref section-ids
+                                                              (- (length section-ids) 1))))]
+                                                [else
+                                                 (void)])))))
+                        trigger-attrs))
+                  (Div
+                   (Button section-label
+                           #:attrs trigger-attrs/final)
+                   (Div section-view
+                        #:attrs (list (cons 'id panel-id)
+                                      (cons 'data-we-widget "collapse")
+                                      (cons 'class @collapse-class)
+                                      (cons 'aria-hidden @collapse-hidden)))
+                   #:attrs (list (cons 'data-we-widget "accordion-section")
+                                 (cons 'class "we-accordion-section"))))
+                sections/normalized)
+               (list #:attrs (list (cons 'data-we-widget "accordion")
+                                   (cons 'class "we-accordion")))))
        id
        class
        attrs
@@ -3218,20 +3811,65 @@
                            #:class [class #f]
                            #:attrs [attrs '()]
                            . args)
-      (define side 'end)
-      (define children args)
-      (when (and (pair? children)
-                 (or (symbol? (car children))
-                     (obs? (car children))))
-        (set! side (car children))
-        (set! children (cdr children)))
-      (define final-side
-        (if (eq? side-kw #f) side side-kw))
+      (define parsed
+        (parse-offcanvas-args/internal args side-kw))
+      (define raw-side
+        (list-ref parsed 0))
+      (define children
+        (list-ref parsed 1))
+      (define @open
+        (observable-or-const open))
+      (define @side
+        (observable-or-const raw-side))
+      (define @root-class
+        (~> @open
+            (lambda (open0)
+              (if (eq? open0 #f)
+                  "we-offcanvas"
+                  "we-offcanvas is-open"))))
+      (define @root-aria-hidden
+        (~> @open
+            (lambda (open0)
+              (if (eq? open0 #f)
+                  "true"
+                  "false"))))
+      (define @panel-class
+        (~> @side
+            (lambda (side0)
+              (define final-side
+                (normalize-offcanvas-side/internal side0))
+              (string-append "we-offcanvas-panel is-" (symbol->string final-side)))))
+      (define offcanvas-change-action
+        (lambda (key)
+          (when (string=? key "Escape")
+            (invoke-close-callback/internal on-close 'escape))))
+      (define make-offcanvas-children
+        (lambda (_state)
+          (list
+           (apply Div
+                  (list #:attrs (list (cons 'data-we-widget "offcanvas-backdrop")
+                                      (cons 'class "we-offcanvas-backdrop")
+                                      (cons 'on-click-action
+                                            (lambda ()
+                                              (invoke-close-callback/internal on-close 'backdrop))))))
+           (apply Div
+                  (append children
+                          (list #:attrs (list (cons 'data-we-widget "offcanvas-panel")
+                                              (cons 'class @panel-class)
+                                              (cons 'tabindex -1))))))))
       (apply-root-decorators
-       (view kind/offcanvas (list (cons 'open open)
-                                  (cons 'on-close on-close)
-                                  (cons 'side final-side))
-             children)
+       (observable-element-children
+        'div
+        @side
+        make-offcanvas-children
+        #:attrs (list (cons 'role 'dialog)
+                      (cons 'data-we-widget "offcanvas")
+                      (cons 'open @open)
+                      (cons 'class @root-class)
+                      (cons 'tabindex -1)
+                      (cons 'aria-modal "true")
+                      (cons 'aria-hidden @root-aria-hidden)
+                      (cons 'on-change-action offcanvas-change-action)))
        id
        class
        attrs
@@ -3263,37 +3901,183 @@
                         #:attrs       [attrs      '()]
                         . args)
       
-      (define size        'md)
-      (define rest/args   args)
-      (define old-options '())
-      (when (and (pair? rest/args)
-                 (symbol? (car rest/args))
-                 (memq (car rest/args) '(sm md lg xl)))
-        (set! size (car rest/args))
-        (set! rest/args (cdr rest/args)))
-      (when (and (pair? rest/args)
-                 (options-alist? (car rest/args)))
-        (set! old-options (car rest/args))
-        (set! rest/args (cdr rest/args)))
-      
-      (define final-size
-        (if (eq? size-kw #f) size size-kw))
-      (define options
-        (append old-options
-                (list (cons 'title       title)
-                      (cons 'description description)
-                      (cons 'footer      footer)
-                      (cons 'show-close? show-close?)
-                      (cons 'close-label close-label)
-                      (cons 'tone        tone)
-                      (cons 'tone-style  tone-style))))
-
+      (define parsed
+        (parse-dialog-options/internal args
+                                       size-kw
+                                       title
+                                       description
+                                       footer
+                                       show-close?
+                                       close-label
+                                       tone
+                                       tone-style
+                                       "Close dialog"))
+      (define final-size      (list-ref parsed 0))
+      (define rest/args       (list-ref parsed 1))
+      (define raw-title       (list-ref parsed 2))
+      (define raw-description (list-ref parsed 3))
+      (define raw-footer      (list-ref parsed 4))
+      (define raw-show-close? (list-ref parsed 5))
+      (define raw-close-label (list-ref parsed 6))
+      (define raw-tone        (list-ref parsed 7))
+      (define raw-tone-style  (list-ref parsed 8))
+      (define @open
+        (observable-or-const open))
+      (define @title
+        (observable-or-const raw-title))
+      (define @description
+        (observable-or-const raw-description))
+      (define @footer
+        (observable-or-const raw-footer))
+      (define @show-close?
+        (observable-or-const raw-show-close?))
+      (define @close-label
+        (observable-or-const raw-close-label))
+      (define @tone
+        (observable-or-const raw-tone))
+      (define @tone-style
+        (observable-or-const raw-tone-style))
+      (define @state
+        (obs-combine list
+                     @open
+                     @title
+                     @description
+                     @footer
+                     @show-close?
+                     @close-label
+                     @tone
+                     @tone-style))
+      (define @root-class
+        (~> @open
+            (lambda (open0)
+              (if (eq? open0 #f)
+                  "we-dialog"
+                  "we-dialog is-open"))))
+      (define @root-aria-hidden
+        (~> @open
+            (lambda (open0)
+              (if (eq? open0 #f)
+                  "true"
+                  "false"))))
+      (define dialog-change-action
+        (lambda (key)
+          (when (string=? key "Escape")
+            (invoke-close-callback/internal on-close 'escape))))
+      (define make-dialog-children
+        (lambda (state)
+        (define title0
+          (list-ref state 1))
+        (define description0
+          (list-ref state 2))
+        (define footer0
+          (list-ref state 3))
+        (define show-close?0
+          (not (eq? (list-ref state 4) #f)))
+        (define close-label0
+          (list-ref state 5))
+        (define tone0
+          (normalize-card-tone/internal (list-ref state 6)))
+        (define tone-style0
+          (normalize-card-tone-style/internal (list-ref state 7)))
+        (define panel-class
+          (string-append
+           "we-dialog-panel we-dialog-size-" (symbol->string final-size)
+           (if tone0
+               (string-append " we-dialog-tone-" (symbol->string tone0))
+               "")
+           (if tone-style0
+               (string-append " we-dialog-tone-" (symbol->string tone-style0))
+               "")))
+        (define dialog-desc-id #f)
+        (define body-content
+          (if (and (eq? description0 #f)
+                   (pair? rest/args)
+                   (text-view?/internal (car rest/args)))
+              (begin
+                (set! dialog-desc-id (next-dialog-body-id/internal))
+                (cons (apply-extra-attrs/internal (car rest/args)
+                                                  (list (cons 'id dialog-desc-id)))
+                      (cdr rest/args)))
+              rest/args))
+        (define body-children
+          (append
+           (if (eq? description0 #f)
+               '()
+               (begin
+                 (set! dialog-desc-id (next-dialog-body-id/internal))
+                 (list (P description0
+                          #:id dialog-desc-id
+                          #:data-we-widget "dialog-description"
+                          #:class "we-dialog-description"))))
+           body-content))
+        (define header-children
+          (append
+           (if (eq? title0 #f)
+               '()
+               (list (H2 title0
+                         #:data-we-widget "dialog-title"
+                         #:class "we-dialog-title")))
+           (if show-close?0
+               (list
+                (Button "×"
+                        #:attrs (list (cons 'role 'button)
+                                      (cons 'data-we-widget "dialog-close")
+                                      (cons 'class "we-close-button we-dialog-close")
+                                      (cons 'aria-label close-label0)
+                                      (cons 'on-click-action
+                                            (lambda ()
+                                              (invoke-close-callback/internal on-close 'button))))))
+               '())))
+        (define footer-children
+          (cond
+            [(eq? footer0 #f)
+             '()]
+            [(view? footer0)
+             (list footer0)]
+            [else
+             (list (Span footer0
+                         #:data-we-widget "dialog-footer-text"
+                         #:class "we-dialog-footer-text"))]))
+        (define panel-attrs
+          (append (list (cons 'class panel-class)
+                        (cons 'data-we-widget "dialog-panel")
+                        (cons 'tabindex -1))
+                  (if dialog-desc-id
+                      (list (cons 'aria-describedby dialog-desc-id))
+                      '())))
+          (list
+           (apply Div
+                  (append
+                   (if (null? header-children)
+                       '()
+                       (list (apply Div
+                                    (append header-children
+                                            (list #:data-we-widget "dialog-header"
+                                                  #:class "we-dialog-header")))))
+                   (list (apply Div
+                                (append body-children
+                                        (list #:data-we-widget "dialog-body"
+                                              #:class "we-dialog-body"))))
+                   (if (null? footer-children)
+                       '()
+                       (list (apply Div
+                                    (append footer-children
+                                            (list #:data-we-widget "dialog-footer"
+                                                  #:class "we-dialog-footer")))))
+                   (list #:attrs panel-attrs))))))
       (apply-root-decorators
-       (view kind/dialog (list (cons 'open     open)
-                               (cons 'on-close on-close)
-                               (cons 'size     final-size)
-                               (cons 'options  options))
-             rest/args)
+       (observable-element-children
+        'dialog
+        @state
+        make-dialog-children
+        #:attrs (list (cons 'role 'dialog)
+                      (cons 'data-we-widget "dialog")
+                      (cons 'open @open)
+                      (cons 'class @root-class)
+                      (cons 'tabindex -1)
+                      (cons 'aria-modal "true")
+                      (cons 'aria-hidden @root-aria-hidden)
+                      (cons 'on-change-action dialog-change-action)))
        id
        class
        attrs
@@ -3325,37 +4109,183 @@
                        #:attrs       [attrs      '()]
                        . args)
       
-      (define size        'md)
-      (define rest/args   args)
-      (define old-options '())
-      
-      (when (and (pair? rest/args)
-                 (symbol? (car rest/args))
-                 (memq (car rest/args) '(sm md lg xl)))
-        (set! size (car rest/args))
-        (set! rest/args (cdr rest/args)))
-      (when (and (pair? rest/args)
-                 (options-alist? (car rest/args)))
-        (set! old-options (car rest/args))
-        (set! rest/args (cdr rest/args)))
-      (define final-size
-        (if (eq? size-kw #f) size size-kw))
-      (define options
-        (append old-options
-                (list (cons 'title title)
-                      (cons 'description description)
-                      (cons 'footer footer)
-                      (cons 'show-close? show-close?)
-                      (cons 'close-label close-label)
-                      (cons 'tone tone)
-                      (cons 'tone-style tone-style))))
-      
+      (define parsed
+        (parse-dialog-options/internal args
+                                       size-kw
+                                       title
+                                       description
+                                       footer
+                                       show-close?
+                                       close-label
+                                       tone
+                                       tone-style
+                                       "Close modal"))
+      (define final-size      (list-ref parsed 0))
+      (define rest/args       (list-ref parsed 1))
+      (define raw-title       (list-ref parsed 2))
+      (define raw-description (list-ref parsed 3))
+      (define raw-footer      (list-ref parsed 4))
+      (define raw-show-close? (list-ref parsed 5))
+      (define raw-close-label (list-ref parsed 6))
+      (define raw-tone        (list-ref parsed 7))
+      (define raw-tone-style  (list-ref parsed 8))
+      (define @open
+        (observable-or-const open))
+      (define @title
+        (observable-or-const raw-title))
+      (define @description
+        (observable-or-const raw-description))
+      (define @footer
+        (observable-or-const raw-footer))
+      (define @show-close?
+        (observable-or-const raw-show-close?))
+      (define @close-label
+        (observable-or-const raw-close-label))
+      (define @tone
+        (observable-or-const raw-tone))
+      (define @tone-style
+        (observable-or-const raw-tone-style))
+      (define @state
+        (obs-combine list
+                     @open
+                     @title
+                     @description
+                     @footer
+                     @show-close?
+                     @close-label
+                     @tone
+                     @tone-style))
+      (define @root-class
+        (~> @open
+            (lambda (open0)
+              (if (eq? open0 #f)
+                  "we-modal"
+                  "we-modal is-open"))))
+      (define @root-aria-hidden
+        (~> @open
+            (lambda (open0)
+              (if (eq? open0 #f)
+                  "true"
+                  "false"))))
+      (define modal-change-action
+        (lambda (key)
+          (when (string=? key "Escape")
+            (invoke-close-callback/internal on-close 'escape))))
+      (define make-modal-children
+        (lambda (state)
+        (define title0
+          (list-ref state 1))
+        (define description0
+          (list-ref state 2))
+        (define footer0
+          (list-ref state 3))
+        (define show-close?0
+          (not (eq? (list-ref state 4) #f)))
+        (define close-label0
+          (list-ref state 5))
+        (define tone0
+          (normalize-card-tone/internal (list-ref state 6)))
+        (define tone-style0
+          (normalize-card-tone-style/internal (list-ref state 7)))
+        (define panel-class
+          (string-append
+           "we-dialog-panel we-dialog-size-" (symbol->string final-size)
+           (if tone0
+               (string-append " we-dialog-tone-" (symbol->string tone0))
+               "")
+           (if tone-style0
+               (string-append " we-dialog-tone-" (symbol->string tone-style0))
+               "")))
+        (define modal-desc-id #f)
+        (define body-content
+          (if (and (eq? description0 #f)
+                   (pair? rest/args)
+                   (text-view?/internal (car rest/args)))
+              (begin
+                (set! modal-desc-id (next-dialog-body-id/internal))
+                (cons (apply-extra-attrs/internal (car rest/args)
+                                                  (list (cons 'id modal-desc-id)))
+                      (cdr rest/args)))
+              rest/args))
+        (define body-children
+          (append
+           (if (eq? description0 #f)
+               '()
+               (begin
+                 (set! modal-desc-id (next-dialog-body-id/internal))
+                 (list (P description0
+                          #:id modal-desc-id
+                          #:data-we-widget "modal-description"
+                          #:class "we-modal-description"))))
+           body-content))
+        (define header-children
+          (append
+           (if (eq? title0 #f)
+               '()
+               (list (H2 title0
+                         #:data-we-widget "modal-title"
+                         #:class "we-modal-title")))
+           (if show-close?0
+               (list
+                (Button "×"
+                        #:attrs (list (cons 'role 'button)
+                                      (cons 'data-we-widget "modal-close")
+                                      (cons 'class "we-close-button we-modal-close")
+                                      (cons 'aria-label close-label0)
+                                      (cons 'on-click-action
+                                            (lambda ()
+                                              (invoke-close-callback/internal on-close 'button))))))
+               '())))
+        (define footer-children
+          (cond
+            [(eq? footer0 #f)
+             '()]
+            [(view? footer0)
+             (list footer0)]
+            [else
+             (list (Span footer0
+                         #:data-we-widget "modal-footer-text"
+                         #:class "we-modal-footer-text"))]))
+        (define panel-attrs
+          (append (list (cons 'class panel-class)
+                        (cons 'data-we-widget "modal-panel")
+                        (cons 'tabindex -1))
+                  (if modal-desc-id
+                      (list (cons 'aria-describedby modal-desc-id))
+                      '())))
+          (list
+           (apply Div
+                  (append
+                   (if (null? header-children)
+                       '()
+                       (list (apply Div
+                                    (append header-children
+                                            (list #:data-we-widget "modal-header"
+                                                  #:class "we-modal-header")))))
+                   (list (apply Div
+                                (append body-children
+                                        (list #:data-we-widget "modal-body"
+                                              #:class "we-modal-body"))))
+                   (if (null? footer-children)
+                       '()
+                       (list (apply Div
+                                    (append footer-children
+                                            (list #:data-we-widget "modal-footer"
+                                                  #:class "we-modal-footer")))))
+                   (list #:attrs panel-attrs))))))
       (apply-root-decorators
-       (view kind/modal (list (cons 'open open)
-                              (cons 'on-close on-close)
-                              (cons 'size final-size)
-                              (cons 'options options))
-             rest/args)
+       (observable-element-children
+        'dialog
+        @state
+        make-modal-children
+        #:attrs (list (cons 'role 'dialog)
+                      (cons 'data-we-widget "modal")
+                      (cons 'open @open)
+                      (cons 'class @root-class)
+                      (cons 'tabindex -1)
+                      (cons 'aria-modal "true")
+                      (cons 'aria-hidden @root-aria-hidden)
+                      (cons 'on-change-action modal-change-action)))
        id
        class
        attrs
@@ -3410,6 +4340,14 @@
     ;;   Monotonic counter for menu popup ids.
     (define menu-popup-counter/internal 0)
 
+    ;; tooltip-counter/internal : number?
+    ;;   Monotonic counter for tooltip bubble ids.
+    (define tooltip-counter/internal 0)
+
+    ;; popover-panel-counter/internal : number?
+    ;;   Monotonic counter for popover panel ids.
+    (define popover-panel-counter/internal 0)
+
     ;; active-menu-close/internal : (or/c #f (-> void?))
     ;;   Thunk closing currently open popup menu.
     (define active-menu-close/internal #f)
@@ -3421,6 +4359,22 @@
             (add1 menu-popup-counter/internal))
       (string-append "menu-popup-"
                      (number->string menu-popup-counter/internal)))
+
+    ;; next-tooltip-id/internal : -> string?
+    ;;   Allocate a unique id for tooltip bubble element.
+    (define (next-tooltip-id/internal)
+      (set! tooltip-counter/internal
+            (add1 tooltip-counter/internal))
+      (string-append "tooltip-"
+                     (number->string tooltip-counter/internal)))
+
+    ;; next-popover-panel-id/internal : -> string?
+    ;;   Allocate a unique id for popover panel element.
+    (define (next-popover-panel-id/internal)
+      (set! popover-panel-counter/internal
+            (add1 popover-panel-counter/internal))
+      (string-append "popover-panel-"
+                     (number->string popover-panel-counter/internal)))
 
     ;; close-active-menu/internal : -> void?
     ;;   Close currently open menu popup when available.
@@ -3445,6 +4399,17 @@
             [(down up start end) raw-placement]
             [else                'down])
           'down))
+
+    ;; normalize-overlay-placement/internal : any/c symbol? -> symbol?
+    ;;   Normalize tooltip/popover placement symbols, with provided default.
+    (define (normalize-overlay-placement/internal raw-placement default-placement)
+      (define placement0
+        (if (obs? raw-placement)
+            (obs-peek raw-placement)
+            raw-placement))
+      (if (memq placement0 '(top right bottom left))
+          placement0
+          default-placement))
 
     ;; normalized-option-pairs/internal : list? -> list?
     ;;   Normalize option rows to (cons id label) pairs.
@@ -4415,20 +5380,84 @@
         (set! old-options (car args))
         (set! args (cdr args)))
       (define final-placement
-        (if (eq? placement-kw #f) placement placement-kw))
-      (define options
-        (append old-options
-                (list (cons 'title title)
-                      (cons 'footer footer))))
-      (apply-root-decorators
-       (view kind/tooltip (list (cons 'message message)
-                                (cons 'placement final-placement)
-                                (cons 'options options))
-             (list child))
-       id
-       class
-       attrs
-       'tooltip))
+        (normalize-overlay-placement/internal
+         (if (eq? placement-kw #f) placement placement-kw)
+         'top))
+      (define old-title
+        (let ([p (assq 'title old-options)])
+          (if p (cdr p) #f)))
+      (define old-footer
+        (let ([p (assq 'footer old-options)])
+          (if p (cdr p) #f)))
+      (define final-title
+        (if (eq? title #f) old-title title))
+      (define final-footer
+        (if (eq? footer #f) old-footer footer))
+      (define bubble-id
+        (next-tooltip-id/internal))
+      (define @open
+        (obs #f))
+      (define @message
+        (observable-or-const message))
+      (define @title
+        (observable-or-const final-title))
+      (define @footer
+        (observable-or-const final-footer))
+      (define @root-class
+        (~> @open
+            (lambda (open0)
+              (string-append
+               "we-tooltip we-tooltip-"
+               (symbol->string final-placement)
+               (if open0 " is-open" "")))))
+      (define @bubble-aria-hidden
+        (~> @open
+            (lambda (open0)
+              (if open0 "false" "true"))))
+      (define @bubble-text
+        (obs-combine
+         (lambda (title0 message0 footer0)
+           (string-append
+            (if (eq? title0 #f) "" (string-append (format "~a" title0) " "))
+            (format "~a" message0)
+            (if (eq? footer0 #f) "" (string-append " " (format "~a" footer0)))))
+         @title
+         @message
+         @footer))
+      (define (tooltip-change-action key)
+        (case (string->symbol key)
+          [(mouseenter)
+           (:= @open #t)]
+          [(mouseleave focusout Escape)
+           (:= @open #f)]
+          [else
+           (void)]))
+      (define bubble-view
+        (html-element
+         'span
+         @bubble-text
+         #:attrs (list (cons 'role 'tooltip)
+                       (cons 'id bubble-id)
+                       (cons 'data-we-widget "tooltip-bubble")
+                       (cons 'class "we-tooltip-bubble")
+                       (cons 'aria-hidden @bubble-aria-hidden))))
+      (define tooltip-view
+        (html-element-children
+         'div
+         (html-element-children
+          'div
+          (html-element-children
+           'div
+           child
+           #:attrs (list (cons 'aria-describedby bubble-id)))
+          #:attrs (list (cons 'data-we-widget "tooltip-trigger")
+                        (cons 'class "we-tooltip-trigger")
+                        (cons 'on-change-action tooltip-change-action)))
+         bubble-view
+         #:attrs (list (cons 'data-we-widget "tooltip")
+                       (cons 'class @root-class)
+                       (cons 'on-change-action tooltip-change-action))))
+      (apply-root-decorators tooltip-view id class attrs 'tooltip))
 
     ;; popover : (or/c string? observable?) [symbol?] [list?] view? ... -> view?
     ;;   Construct a click-toggle popover with trigger label, optional placement, optional options, and body children.
@@ -4457,20 +5486,130 @@
         (set! old-options (car children))
         (set! children (cdr children)))
       (define final-placement
-        (if (eq? placement-kw #f) placement placement-kw))
-      (define options
-        (append old-options
-                (list (cons 'title title)
-                      (cons 'footer footer))))
-      (apply-root-decorators
-       (view kind/popover (list (cons 'label label)
-                                (cons 'placement final-placement)
-                                (cons 'options options))
-             children)
-       id
-       class
-       attrs
-       'popover))
+        (normalize-overlay-placement/internal
+         (if (eq? placement-kw #f) placement placement-kw)
+         'bottom))
+      (define old-title
+        (let ([p (assq 'title old-options)])
+          (if p (cdr p) #f)))
+      (define old-footer
+        (let ([p (assq 'footer old-options)])
+          (if p (cdr p) #f)))
+      (define final-title
+        (if (eq? title #f) old-title title))
+      (define final-footer
+        (if (eq? footer #f) old-footer footer))
+      (define panel-id
+        (next-popover-panel-id/internal))
+      (define @open
+        (obs #f))
+      (define @label
+        (observable-or-const label))
+      (define @title
+        (observable-or-const final-title))
+      (define @footer
+        (observable-or-const final-footer))
+      (define @trigger-aria-expanded
+        (~> @open
+            (lambda (open0)
+              (if open0 "true" "false"))))
+      (define @panel-aria-hidden
+        (~> @open
+            (lambda (open0)
+              (if open0 "false" "true"))))
+      (define @backdrop-aria-hidden
+        (~> @open
+            (lambda (open0)
+              (if open0 "false" "true"))))
+      (define @panel-class
+        (~> @open
+            (lambda (open0)
+              (if open0
+                  "we-popover-panel is-open"
+                  "we-popover-panel"))))
+      (define @backdrop-class
+        (~> @open
+            (lambda (open0)
+              (if open0
+                  "we-popover-backdrop is-open"
+                  "we-popover-backdrop"))))
+      (define (set-open! next-open?)
+        (:= @open (not (not next-open?))))
+      (define popover-view
+        (html-element-children
+         'div
+         (html-element
+          'button
+          @label
+          #:attrs (list (cons 'role 'button)
+                        (cons 'data-we-widget "popover-trigger")
+                        (cons 'class "we-popover-trigger")
+                        (cons 'tabindex 0)
+                        (cons 'aria-haspopup "dialog")
+                        (cons 'aria-controls panel-id)
+                        (cons 'aria-expanded @trigger-aria-expanded)
+                        (cons 'on-click-action
+                              (lambda ()
+                                (set-open! (not (obs-peek @open)))))
+                        (cons 'on-change-action
+                              (lambda (key)
+                                (case (string->symbol key)
+                                  [(Escape)
+                                   (set-open! #f)]
+                                  [else
+                                   (void)])))))
+         (html-element
+          'div
+          ""
+          #:attrs (list (cons 'data-we-widget "popover-backdrop")
+                        (cons 'aria-hidden @backdrop-aria-hidden)
+                        (cons 'class @backdrop-class)
+                        (cons 'on-click-action
+                              (lambda ()
+                                (set-open! #f)))))
+         (html-element-children
+          'div
+          (html-element
+           'div
+           (~> @title
+               (lambda (title0)
+                 (if (eq? title0 #f) "" title0)))
+           #:attrs (list (cons 'data-we-widget "popover-header")
+                         (cons 'class "we-popover-header")
+                         (cons 'hidden (~> @title
+                                           (lambda (title0)
+                                             (if (eq? title0 #f) "hidden" #f))))))
+          (apply Div
+                 (append children
+                         (list #:data-we-widget "popover-body"
+                               #:class "we-popover-body")))
+          (html-element
+           'div
+           (~> @footer
+               (lambda (footer0)
+                 (if (eq? footer0 #f) "" footer0)))
+           #:attrs (list (cons 'data-we-widget "popover-footer")
+                         (cons 'class "we-popover-footer")
+                         (cons 'hidden (~> @footer
+                                           (lambda (footer0)
+                                             (if (eq? footer0 #f) "hidden" #f))))))
+          #:attrs (list (cons 'role 'dialog)
+                        (cons 'id panel-id)
+                        (cons 'tabindex -1)
+                        (cons 'aria-hidden @panel-aria-hidden)
+                        (cons 'data-we-widget "popover-panel")
+                        (cons 'class @panel-class)
+                        (cons 'on-change-action
+                              (lambda (key)
+                                (case (string->symbol key)
+                                  [(Escape)
+                                   (set-open! #f)]
+                                  [else
+                                   (void)])))))
+         #:attrs (list (cons 'data-we-widget "popover")
+                       (cons 'class (string-append "we-popover we-popover-"
+                                                   (symbol->string final-placement))))))
+      (apply-root-decorators popover-view id class attrs 'popover))
 
     ;; card : [(or/c string? observable? false/c)] [(or/c string? observable? false/c)] [any/c] [list?] any/c ... -> view?
     ;;   Construct a card with optional title/footer, optional variant(s), and body children.
@@ -4539,12 +5678,134 @@
                       (cons 'actions (if (eq? actions #f) old-actions actions))
                       (cons 'tone (if (eq? tone #f) old-tone tone))
                       (cons 'tone-style (if (eq? tone-style #f) old-tone-style tone-style)))))
+      (define raw-subtitle
+        (options-ref/internal options 'subtitle #f))
+      (define raw-media
+        (options-ref/internal options 'media #f))
+      (define raw-actions
+        (options-ref/internal options 'actions '()))
+      (define raw-tone
+        (options-ref/internal options 'tone #f))
+      (define raw-tone-style
+        (options-ref/internal options 'tone-style #f))
+      (define @title
+        (observable-or-const title))
+      (define @footer
+        (observable-or-const footer))
+      (define @subtitle
+        (observable-or-const raw-subtitle))
+      (define @media
+        (observable-or-const raw-media))
+      (define @actions
+        (observable-or-const raw-actions))
+      (define @variants
+        (observable-or-const final-variants))
+      (define @tone
+        (observable-or-const raw-tone))
+      (define @tone-style
+        (observable-or-const raw-tone-style))
+      (define @state
+        (obs-combine list
+                     @title
+                     @footer
+                     @subtitle
+                     @media
+                     @actions
+                     @variants
+                     @tone
+                     @tone-style))
+      (define @root-class
+        (~> @state
+            (lambda (state)
+              (define variants0
+                (normalize-card-variants/internal (list-ref state 5)))
+              (define tone0
+                (normalize-card-tone/internal (list-ref state 6)))
+              (define tone-style0
+                (normalize-card-tone-style/internal (list-ref state 7)))
+              (string-append
+               (card-variant-class/internal variants0)
+               (if tone0
+                   (string-append " we-card-tone-" (symbol->string tone0))
+                   "")
+               (if tone-style0
+                   (string-append " we-card-tone-" (symbol->string tone-style0))
+                   "")))))
+      (define (card-action-view action0)
+        (if (view? action0)
+            action0
+            (Span action0
+                  #:data-we-widget "card-action-text"
+                  #:class "we-card-action-text")))
+      (define (make-card-children state)
+        (define title0
+          (list-ref state 0))
+        (define footer0
+          (list-ref state 1))
+        (define subtitle0
+          (list-ref state 2))
+        (define media0
+          (list-ref state 3))
+        (define actions0
+          (list-ref state 4))
+        (define variants0
+          (normalize-card-variants/internal (list-ref state 5)))
+        (define headerless?
+          (contains-equal/internal variants0 'headerless))
+        (define media-children
+          (cond
+            [(eq? media0 #f)
+             '()]
+            [(view? media0)
+             (list media0)]
+            [else
+             (list (Span media0
+                         #:data-we-widget "card-media-text"
+                         #:class "we-card-media-text"))]))
+        (define action-list0
+          (if (list? actions0) actions0 '()))
+        (append
+         (if (or headerless? (eq? title0 #f))
+             '()
+             (list (html-element 'div
+                                 title0
+                                 #:attrs (list (cons 'data-we-widget "card-header")
+                                               (cons 'class "we-card-header")))))
+         (if (or headerless? (eq? subtitle0 #f))
+             '()
+             (list (Small subtitle0
+                          #:data-we-widget "card-subtitle"
+                          #:class "we-card-subtitle")))
+         (if (null? media-children)
+             '()
+             (list (apply Div
+                          (append media-children
+                                  (list #:attrs (list (cons 'data-we-widget "card-media")
+                                                      (cons 'class "we-card-media")))))))
+         (list (apply Div
+                      (append rest/args
+                              (list #:attrs (list (cons 'data-we-widget "card-body")
+                                                  (cons 'class "we-card-body"))))))
+         (if (null? action-list0)
+             '()
+             (list (apply Div
+                          (append (map card-action-view action-list0)
+                                  (list #:attrs (list (cons 'data-we-widget "card-actions")
+                                                      (cons 'class "we-card-actions")))))))
+         (if (eq? footer0 #f)
+             '()
+             (list (html-element 'div
+                                 footer0
+                                 #:attrs (list (cons 'data-we-widget "card-footer")
+                                               (cons 'class "we-card-footer")))))))
       (apply-root-decorators
-       (view kind/card (list (cons 'title title)
-                             (cons 'footer footer)
-                             (cons 'variants final-variants)
-                             (cons 'options options))
-             rest/args)
+       (observable-element-children
+        'div
+        @state
+        make-card-children
+        #:attrs (list (cons 'role 'group)
+                      (cons 'data-we-widget "card")
+                      (cons 'class @root-class)))
        id
        class
        attrs
@@ -4658,18 +5919,34 @@
 
     ;; menu-bar : view? ... -> view?
     ;;   Construct a menu bar containing menu children.
-    (define (menu-bar . children)
+    ;;   Accepts global HTML attributes for the root <menu-bar> via keyword arguments.
+    (define/component menu-bar
+      #:root-tag 'menu-bar
+      #:rest children
+      #:root-attrs attrs/final
+      (define attrs/final
+        (list (cons 'class "we-menu-bar")
+              (cons 'data-we-widget "menu-bar")
+              (cons 'role 'menubar)
+              (cons 'aria-orientation "horizontal")))
       (apply html-element-children
              (append (list 'menu-bar)
                      children
-                     (list #:attrs (list (cons 'class "we-menu-bar")
-                                         (cons 'data-we-widget "menu-bar")
-                                         (cons 'role 'menubar)
-                                         (cons 'aria-orientation "horizontal"))))))
+                     (list #:attrs attrs/final))))
 
     ;; menu : (or/c string? observable?) view? ... -> view?
     ;;   Construct a labeled menu containing menu-item children.
-    (define (menu label . children)
+    ;;   Accepts global HTML attributes for the root <menu> via keyword arguments.
+    (define/component menu
+      #:root-tag 'menu
+      #:rest args
+      #:root-attrs attrs/final
+      (unless (pair? args)
+        (error 'menu
+               "wrong number of positional arguments (expected at least 1, got ~a)"
+               0))
+      (define label (car args))
+      (define children (cdr args))
       (define popup-id
         (next-menu-popup-id/internal))
       (define @open
@@ -4697,6 +5974,9 @@
               (if open0
                   "we-menu-popup is-open"
                   "we-menu-popup"))))
+      (define attrs/final
+        (list (cons 'class "we-menu")
+              (cons 'data-we-widget "menu")))
       (html-element-children
        'menu
        (html-element 'button
@@ -4732,14 +6012,26 @@
                                           (cons 'id popup-id)
                                           (cons 'data-we-widget "menu-popup")
                                           (cons 'class @popup-class)))))
-       #:attrs (list (cons 'class "we-menu")
-                     (cons 'data-we-widget "menu"))))
+       #:attrs attrs/final))
 
     ;; menu-item : (or/c string? observable?) (-> any/c) [any/c] [any/c] -> view?
     ;;   Construct a menu item with optional leading/trailing icon labels.
     ;;   Optional parameter leading-icon defaults to #f.
     ;;   Optional parameter trailing-icon defaults to #f.
-    (define (menu-item label action [leading-icon #f] [trailing-icon #f])
+    ;;   Accepts global HTML attributes for the root <menu-item> via keyword arguments.
+    (define/component menu-item
+      #:root-tag 'menu-item
+      #:rest args
+      #:root-attrs attrs/final
+      (unless (and (>= (length args) 2)
+                   (<= (length args) 4))
+        (error 'menu-item
+               "wrong number of positional arguments (expected 2 to 4, got ~a)"
+               (length args)))
+      (define label (list-ref args 0))
+      (define action (list-ref args 1))
+      (define leading-icon (if (>= (length args) 3) (list-ref args 2) #f))
+      (define trailing-icon (if (>= (length args) 4) (list-ref args 3) #f))
       (define attrs/final
         (list (cons 'role 'menuitem)
               (cons 'class "we-menu-item")
