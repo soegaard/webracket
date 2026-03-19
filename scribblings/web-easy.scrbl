@@ -523,6 +523,199 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
+@defproc[(B [content text-content/c]
+            [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<b>} element.
+
+This offsets text stylistically without implying extra semantic importance.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(I [content text-content/c]
+            [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<i>} element.
+
+This offsets text in an alternate voice or mood (often rendered in italics).
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(U [content text-content/c]
+            [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<u>} element.
+
+This marks non-textual annotation text (often rendered underlined).
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(S [content text-content/c]
+            [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<s>} element.
+
+This marks text that is no longer accurate or relevant.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Mark [content text-content/c]
+               [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<mark>} element.
+
+This marks text that should be highlighted for reference.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Sub [content text-content/c]
+              [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<sub>} element.
+
+This marks subscript text.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Sup [content text-content/c]
+              [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<sup>} element.
+
+This marks superscript text.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Kbd [content text-content/c]
+              [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<kbd>} element.
+
+This marks user input text, such as keyboard shortcuts.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Samp [content text-content/c]
+               [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<samp>} element.
+
+This marks sample output text from a program or system.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Var [content text-content/c]
+              [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<var>} element.
+
+This marks a variable name or placeholder.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Q [content text-content/c]
+            [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<q>} element.
+
+This marks an inline quotation.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("q")))}.
+}
+
+@defproc[(Cite [content text-content/c]
+               [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<cite>} element.
+
+This marks the title of a cited creative work.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Dfn [content text-content/c]
+              [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<dfn>} element.
+
+This marks a term being defined.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Abbr [content text-content/c]
+               [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<abbr>} element.
+
+This marks an abbreviation or acronym.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Time [content text-content/c]
+               [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<time>} element.
+
+This marks a date/time value in text.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("time")))}.
+}
+
+@defproc[(Data [content text-content/c]
+               [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<data>} element.
+
+This associates human-readable text with a machine-readable value.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("data")))}.
+}
+
+@defproc[(Del [content text-content/c]
+              [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<del>} element.
+
+This marks content that has been removed.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("del")))}.
+}
+
+@defproc[(Ins [content text-content/c]
+              [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<ins>} element.
+
+This marks content that has been inserted.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("ins")))}.
+}
+
 @defproc[(Br [#:attrs attrs (or/c #f list?) null])
          view?]{
 Build a primitive @tt{<br>} element.
@@ -530,6 +723,16 @@ Build a primitive @tt{<br>} element.
 This inserts a line break. It is a leaf/void element and takes no content argument.
 
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("br")))}.
+}
+
+@defproc[(Wbr [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<wbr>} element.
+
+This inserts an optional line-break opportunity. It is a leaf/void element and takes no content argument.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
 }
 
 @defproc[(Hr [#:attrs attrs (or/c #f list?) null])
@@ -693,6 +896,523 @@ Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags
 
 
 
+
+@defproc[(Dl [#:attrs attrs (or/c #f list?) null]
+             [child any/c] ...)
+         view?]{
+Build a primitive @tt{<dl>} element with children.
+
+This is a description list container for term/description pairs.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("dl")))}.
+}
+
+@defproc[(Dt [#:attrs attrs (or/c #f list?) null]
+             [child any/c] ...)
+         view?]{
+Build a primitive @tt{<dt>} element with children.
+
+This is a term/name element used inside @tt{<dl>}.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Dd [#:attrs attrs (or/c #f list?) null]
+             [child any/c] ...)
+         view?]{
+Build a primitive @tt{<dd>} element with children.
+
+This is a description/value element used inside @tt{<dl>}.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Table [#:attrs attrs (or/c #f list?) null]
+                [child any/c] ...)
+         view?]{
+Build a primitive @tt{<table>} element with children.
+
+This is a table container element for tabular data.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("table")))}.
+}
+
+@defproc[(Caption [#:attrs attrs (or/c #f list?) null]
+                  [child any/c] ...)
+         view?]{
+Build a primitive @tt{<caption>} element with children.
+
+This is a caption/title element for a @tt{<table>}.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("caption")))}.
+}
+
+@defproc[(Thead [#:attrs attrs (or/c #f list?) null]
+                [child any/c] ...)
+         view?]{
+Build a primitive @tt{<thead>} element with children.
+
+This groups header rows in a @tt{<table>}.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("thead")))}.
+}
+
+@defproc[(Tbody [#:attrs attrs (or/c #f list?) null]
+                [child any/c] ...)
+         view?]{
+Build a primitive @tt{<tbody>} element with children.
+
+This groups body rows in a @tt{<table>}.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("tbody")))}.
+}
+
+@defproc[(Tfoot [#:attrs attrs (or/c #f list?) null]
+                [child any/c] ...)
+         view?]{
+Build a primitive @tt{<tfoot>} element with children.
+
+This groups footer rows in a @tt{<table>}.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("tfoot")))}.
+}
+
+@defproc[(Tr [#:attrs attrs (or/c #f list?) null]
+             [child any/c] ...)
+         view?]{
+Build a primitive @tt{<tr>} element with children.
+
+This is a row element used inside table section containers.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("tr")))}.
+}
+
+@defproc[(Th [#:attrs attrs (or/c #f list?) null]
+             [child any/c] ...)
+         view?]{
+Build a primitive @tt{<th>} element with children.
+
+This is a header cell element in a table row.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("th")))}.
+}
+
+@defproc[(Td [#:attrs attrs (or/c #f list?) null]
+             [child any/c] ...)
+         view?]{
+Build a primitive @tt{<td>} element with children.
+
+This is a data cell element in a table row.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("td")))}.
+}
+
+@defproc[(Audio [#:attrs attrs (or/c #f list?) null]
+                [child any/c] ...)
+         view?]{
+Build a primitive @tt{<audio>} element with children.
+
+This embeds sound content and can include nested @tt{<source>} and @tt{<track>} elements.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("audio")))}.
+}
+
+@defproc[(Video [#:attrs attrs (or/c #f list?) null]
+                [child any/c] ...)
+         view?]{
+Build a primitive @tt{<video>} element with children.
+
+This embeds video content and can include nested @tt{<source>} and @tt{<track>} elements.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("video")))}.
+}
+
+@defproc[(Source [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<source>} element.
+
+This is a leaf/void media source element used inside media containers.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("source")))}.
+}
+
+@defproc[(Track [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<track>} element.
+
+This is a leaf/void timed-text track element used for captions/subtitles.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("track")))}.
+}
+
+@defproc[(Canvas [#:attrs attrs (or/c #f list?) null]
+                 [child any/c] ...)
+         view?]{
+Build a primitive @tt{<canvas>} element with children.
+
+This embeds script-driven drawing content and may include fallback child content.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("canvas")))}.
+}
+
+@defproc[(Iframe [#:attrs attrs (or/c #f list?) null]
+                 [child any/c] ...)
+         view?]{
+Build a primitive @tt{<iframe>} element with children.
+
+This embeds another page/document and may include fallback child content.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("iframe")))}.
+}
+
+@defproc[(Embed [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<embed>} element.
+
+This is a leaf/void embedded-content element for external resources.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("embed")))}.
+}
+
+@defproc[(Input [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<input>} element.
+
+This is a leaf/void form input element.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("input")))}.
+}
+
+@defproc[(Select [#:attrs attrs (or/c #f list?) null]
+                 [child any/c] ...)
+         view?]{
+Build a primitive @tt{<select>} element with children.
+
+This is a form selection control, typically containing @tt{<option>} children.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("select")))}.
+}
+
+@defproc[(Option [#:attrs attrs (or/c #f list?) null]
+                 [child any/c] ...)
+         view?]{
+Build a primitive @tt{<option>} element with children.
+
+This is an option item used inside @tt{<select>}.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("option")))}.
+}
+
+@defproc[(Textarea [content text-content/c]
+                   [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<textarea>} element.
+
+This is a multi-line text form control.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("textarea")))}.
+}
+
+@defproc[(Details [#:attrs attrs (or/c #f list?) null]
+                  [child any/c] ...)
+         view?]{
+Build a primitive @tt{<details>} element with children.
+
+This is a disclosure container that can be toggled open/closed.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("details")))}.
+}
+
+@defproc[(Summary [#:attrs attrs (or/c #f list?) null]
+                  [child any/c] ...)
+         view?]{
+Build a primitive @tt{<summary>} element with children.
+
+This is the summary/label element for a @tt{<details>} container.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Figure [#:attrs attrs (or/c #f list?) null]
+                 [child any/c] ...)
+         view?]{
+Build a primitive @tt{<figure>} element with children.
+
+This groups self-contained media/content, often with a caption.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Figcaption [#:attrs attrs (or/c #f list?) null]
+                     [child any/c] ...)
+         view?]{
+Build a primitive @tt{<figcaption>} element with children.
+
+This is a caption/legend element for a @tt{<figure>}.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Hgroup [#:attrs attrs (or/c #f list?) null]
+                 [child any/c] ...)
+         view?]{
+Build a primitive @tt{<hgroup>} element with children.
+
+This groups one or more heading elements and optional subtitle content.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Address [#:attrs attrs (or/c #f list?) null]
+                  [child any/c] ...)
+         view?]{
+Build a primitive @tt{<address>} element with children.
+
+This marks contact information for an article or page.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Blockquote [#:attrs attrs (or/c #f list?) null]
+                     [child any/c] ...)
+         view?]{
+Build a primitive @tt{<blockquote>} element with children.
+
+This is the primitive block quotation container element.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("blockquote")))}.
+}
+
+@defproc[(Ruby [#:attrs attrs (or/c #f list?) null]
+               [child any/c] ...)
+         view?]{
+Build a primitive @tt{<ruby>} element with children.
+
+This marks ruby annotation text runs.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Rt [#:attrs attrs (or/c #f list?) null]
+             [child any/c] ...)
+         view?]{
+Build a primitive @tt{<rt>} element with children.
+
+This marks ruby annotation text associated with base text.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Rp [#:attrs attrs (or/c #f list?) null]
+             [child any/c] ...)
+         view?]{
+Build a primitive @tt{<rp>} element with children.
+
+This provides fallback punctuation for ruby annotations.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Bdi [#:attrs attrs (or/c #f list?) null]
+              [child any/c] ...)
+         view?]{
+Build a primitive @tt{<bdi>} element with children.
+
+This isolates bidirectional text runs from surrounding text direction.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Bdo [#:attrs attrs (or/c #f list?) null]
+              [child any/c] ...)
+         view?]{
+Build a primitive @tt{<bdo>} element with children.
+
+This overrides bidirectional text direction for its content.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Progress [#:attrs attrs (or/c #f list?) null]
+                   [child any/c] ...)
+         view?]{
+Build a primitive @tt{<progress>} element with children.
+
+This represents task completion progress.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("progress")))}.
+}
+
+@defproc[(Meter [#:attrs attrs (or/c #f list?) null]
+                [child any/c] ...)
+         view?]{
+Build a primitive @tt{<meter>} element with children.
+
+This represents a scalar measurement within a known range.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("meter")))}.
+}
+
+@defproc[(Output [#:attrs attrs (or/c #f list?) null]
+                 [child any/c] ...)
+         view?]{
+Build a primitive @tt{<output>} element with children.
+
+This represents the result of a calculation or user action.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("output")))}.
+}
+
+@defproc[(Fieldset [#:attrs attrs (or/c #f list?) null]
+                   [child any/c] ...)
+         view?]{
+Build a primitive @tt{<fieldset>} element with children.
+
+This groups related form controls and labels.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("fieldset")))}.
+}
+
+@defproc[(Legend [#:attrs attrs (or/c #f list?) null]
+                 [child any/c] ...)
+         view?]{
+Build a primitive @tt{<legend>} element with children.
+
+This is a caption/title for a @tt{<fieldset>}.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("legend")))}.
+}
+
+@defproc[(Datalist [#:attrs attrs (or/c #f list?) null]
+                   [child any/c] ...)
+         view?]{
+Build a primitive @tt{<datalist>} element with children.
+
+This provides predefined options for compatible form controls.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Optgroup [#:attrs attrs (or/c #f list?) null]
+                   [child any/c] ...)
+         view?]{
+Build a primitive @tt{<optgroup>} element with children.
+
+This groups related @tt{<option>} elements inside @tt{<select>}.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("optgroup")))}.
+}
+
+@defproc[(Colgroup [#:attrs attrs (or/c #f list?) null]
+                   [child any/c] ...)
+         view?]{
+Build a primitive @tt{<colgroup>} element with children.
+
+This groups @tt{<col>} elements for shared table column formatting.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("colgroup")))}.
+}
+
+@defproc[(Col [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<col>} element.
+
+This is a leaf/void table column formatting element.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("col")))}.
+}
+
+@defproc[(Map [#:attrs attrs (or/c #f list?) null]
+              [child any/c] ...)
+         view?]{
+Build a primitive @tt{<map>} element with children.
+
+This defines an image map container for clickable regions.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("map")))}.
+}
+
+@defproc[(Area [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<area>} element.
+
+This is a leaf/void clickable region element used inside @tt{<map>}.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("area")))}.
+}
+
+@defproc[(Script [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<script>} element.
+
+This is a leaf/void script resource element.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("script")))}.
+}
+
+@defproc[(Link [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<link>} element.
+
+This is a leaf/void external resource link element.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("link")))}.
+}
+
+@defproc[(Meta [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<meta>} element.
+
+This is a leaf/void metadata element.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("meta")))}.
+}
+
+@defproc[(Title [content text-content/c]
+                [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<title>} element.
+
+This sets the document title text.
+
+Element-specific keyword attributes: none beyond global attributes
+(plus @tt{data-*}/@tt{aria-*}).
+}
+
+@defproc[(Base [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<base>} element.
+
+This is a leaf/void base-URL/target element for relative links.
+At least one of @racket[#:href] or @racket[#:target] must be provided.
+web-easy also enforces a conservative ordering check: among direct @racket[window]
+children, @tt{<base>} must appear before URL-bearing primitive elements.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("base")))}.
+}
+
+@defproc[(Style [content text-content/c]
+                [#:attrs attrs (or/c #f list?) null])
+         view?]{
+Build a primitive @tt{<style>} element.
+
+This defines inline style-sheet text.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("style")))}.
+}
 
 @section{Layout Components}
 
