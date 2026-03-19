@@ -18,6 +18,7 @@
 ;;   view-kind      Access the view kind tag.
 ;;   view-props     Access the view property alist.
 ;;   view-children  Access the view child list.
+;;   text-content/c Predicate for text-like content (including observable text-like values).
 ;;   window         Build a root window view.
 ;;   vpanel         Build a vertical panel view.
 ;;   hpanel         Build a horizontal panel view.
@@ -126,6 +127,7 @@
    view-kind
    view-props
    view-children
+   text-content/c
    window
    vpanel
    hpanel
@@ -229,6 +231,16 @@
    menu-item)
   (let ()
     (struct view (kind props children) #:transparent)
+
+    ;; text-content/c : any/c -> boolean?
+    ;;   Predicate for text-like values accepted by text-bearing constructors.
+    (define (text-content/c v)
+      (or (string? v)
+          (symbol? v)
+          (number? v)
+          (boolean? v)
+          (char? v)
+          (obs? v)))
 
     ;; Constants for view kind tags.
     (define kind/window    'window)    ; Root container view.
@@ -2321,6 +2333,7 @@
             view-kind
             view-props
             view-children
+            text-content/c
             window
             vpanel
             hpanel

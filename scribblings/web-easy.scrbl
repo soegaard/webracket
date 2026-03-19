@@ -260,7 +260,7 @@ is straight forward.
 
 
 
-@section{Common Keywords}
+@section{Common Keywords and Contracts}
 
 Most concrete component constructors support:
 
@@ -273,6 +273,46 @@ Most concrete component constructors support:
 Composition forms such as @racket[window], @racket[vpanel], and
 @racket[hpanel] keep positional-only contracts.
 
+@defthing[text-content/c any/c]{
+Predicate for values accepted by text-bearing constructors:
+strings, symbols, numbers, booleans, characters, or observables whose
+current value is one of those.
+}
+
+@section{Low-Level HTML Constructors}
+
+The constructors below are low-level building blocks.
+Most users should prefer the uppercase primitive constructors
+(@racket[H1], @racket[P], @racket[Span], @racket[Div], and so on).
+
+@defproc[(html-element [tag (or/c symbol? observable?)]
+                       [content any/c]
+                       [#:id id (or/c #f string? symbol?) #f]
+                       [#:class class any/c #f]
+                       [#:attrs attrs list? null])
+         view?]{
+Build a low-level primitive HTML leaf element from a tag and content.
+
+Positional arguments:
+@racket[tag] is the element tag (for example @racket['h1], @racket['p], @racket['span]),
+and @racket[content] is text/content.
+}
+
+@defproc[(html-element-children [tag (or/c symbol? observable?)]
+                                [#:attrs attrs list? null]
+                                [child any/c] ...)
+         view?]{
+Build a low-level primitive HTML container element from a tag and child views.
+
+Positional arguments:
+@racket[tag] is the element tag (for example @racket['div], @racket['section]),
+and each @racket[child] is rendered as a child view.
+}
+
+For dynamic tag use with @racket[html-element] and @racket[html-element-children],
+tag changes are handled with remount semantics: when the tag changes, the underlying DOM
+node is replaced (similar to React/Angular element-type changes), rather than mutated in place.
+This means DOM identity can change across tag updates.
 
 @section{Primitive HTML Leaf Elements}
 
@@ -340,27 +380,27 @@ and produces a single HTML node (as opposed to container-style constructors
 that are built from child view arguments).
 
 @defproc*[
-([(H1 [content any/c]
+([(H1 [content text-content/c]
       [#:align align any/c #f]
       [#:attrs attrs (or/c #f list?) null])
   view?]
- [(H2 [content any/c]
+ [(H2 [content text-content/c]
       [#:align align any/c #f]
       [#:attrs attrs (or/c #f list?) null])
   view?]
- [(H3 [content any/c]
+ [(H3 [content text-content/c]
       [#:align align any/c #f]
       [#:attrs attrs (or/c #f list?) null])
   view?]
- [(H4 [content any/c]
+ [(H4 [content text-content/c]
       [#:align align any/c #f]
       [#:attrs attrs (or/c #f list?) null])
   view?]
- [(H5 [content any/c]
+ [(H5 [content text-content/c]
       [#:align align any/c #f]
       [#:attrs attrs (or/c #f list?) null])
   view?]
- [(H6 [content any/c]
+ [(H6 [content text-content/c]
       [#:align align any/c #f]
       [#:attrs attrs (or/c #f list?) null])
   view?])]{Build primitive @tt{<h1>} ... @tt{<h6>} elements.
@@ -377,7 +417,7 @@ without validating it.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("h1" "h2" "h3" "h4" "h5" "h6")))}.
 }
 
-@defproc[(P [content any/c]
+@defproc[(P [content text-content/c]
             [#:attrs attrs (or/c #f list?) null])
          view?]{
 Build a primitive @tt{<p>} element.
@@ -387,7 +427,7 @@ This is a paragraph element, typically used for ordinary text content.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("p")))}.
 }
 
-@defproc[(A [content any/c]
+@defproc[(A [content text-content/c]
             [#:attrs attrs (or/c #f list?) null])
          view?]{
 Build a primitive @tt{<a>} element.
@@ -408,7 +448,7 @@ Use this for images and decorative/illustrative media.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("img")))}.
 }
 
-@defproc[(Button [content any/c]
+@defproc[(Button [content text-content/c]
                  [#:attrs attrs (or/c #f list?) null])
          view?]{
 Build a primitive @tt{<button>} element.
@@ -418,7 +458,7 @@ This is a native button element for actions and form submission.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("button")))}.
 }
 
-@defproc[(Span [content any/c]
+@defproc[(Span [content text-content/c]
                [#:attrs attrs (or/c #f list?) null])
          view?]{
 Build a primitive @tt{<span>} element.
@@ -677,7 +717,7 @@ each @racket[child] is group content.
 
 @section{Text and Content Components}
 
-@defproc[(text [value any/c]
+@defproc[(text [value text-content/c]
                [#:id id (or/c #f string? symbol?) #f]
                [#:class class any/c #f]
                [#:attrs attrs list? null])
@@ -688,7 +728,7 @@ Positional arguments: @racket[value] is the displayed text value.
 }
 
 @defproc[(heading [level (integer-in 1 6)]
-                  [content any/c]
+                  [content text-content/c]
                   [align symbol? 'left]
                   [spacing symbol? 'normal]
                   [#:id id (or/c #f string? symbol?) #f]
@@ -704,7 +744,7 @@ Positional arguments:
 @racket[spacing] controls heading spacing style.
 }
 
-@defproc[(h1 [content any/c]
+@defproc[(h1 [content text-content/c]
              [#:id id (or/c #f string? symbol?) #f]
              [#:class class any/c #f]
              [#:attrs attrs list? null])
@@ -714,7 +754,7 @@ Build a level-1 heading.
 Positional arguments: @racket[content] is heading text/content.
 }
 
-@defproc[(h2 [content any/c]
+@defproc[(h2 [content text-content/c]
              [#:id id (or/c #f string? symbol?) #f]
              [#:class class any/c #f]
              [#:attrs attrs list? null])
@@ -724,7 +764,7 @@ Build a level-2 heading.
 Positional arguments: @racket[content] is heading text/content.
 }
 
-@defproc[(h3 [content any/c]
+@defproc[(h3 [content text-content/c]
              [#:id id (or/c #f string? symbol?) #f]
              [#:class class any/c #f]
              [#:attrs attrs list? null])
@@ -734,7 +774,7 @@ Build a level-3 heading.
 Positional arguments: @racket[content] is heading text/content.
 }
 
-@defproc[(h4 [content any/c]
+@defproc[(h4 [content text-content/c]
              [#:id id (or/c #f string? symbol?) #f]
              [#:class class any/c #f]
              [#:attrs attrs list? null])
@@ -744,7 +784,7 @@ Build a level-4 heading.
 Positional arguments: @racket[content] is heading text/content.
 }
 
-@defproc[(h5 [content any/c]
+@defproc[(h5 [content text-content/c]
              [#:id id (or/c #f string? symbol?) #f]
              [#:class class any/c #f]
              [#:attrs attrs list? null])
@@ -754,7 +794,7 @@ Build a level-5 heading.
 Positional arguments: @racket[content] is heading text/content.
 }
 
-@defproc[(h6 [content any/c]
+@defproc[(h6 [content text-content/c]
              [#:id id (or/c #f string? symbol?) #f]
              [#:class class any/c #f]
              [#:attrs attrs list? null])
@@ -766,7 +806,7 @@ Positional arguments: @racket[content] is heading text/content.
 
 
 @defproc[(display-heading [level (integer-in 1 6)]
-                          [content any/c]
+                          [content text-content/c]
                           [#:id id (or/c #f string? symbol?) #f]
                           [#:class class any/c #f]
                           [#:attrs attrs list? null])
@@ -778,7 +818,7 @@ Positional arguments:
 @racket[content] is heading text/content.
 }
 
-@defproc[(display-1 [content any/c]
+@defproc[(display-1 [content text-content/c]
                     [#:id id (or/c #f string? symbol?) #f]
                     [#:class class any/c #f]
                     [#:attrs attrs list? null])
@@ -788,7 +828,7 @@ Build a level-1 display heading.
 Positional arguments: @racket[content] is heading text/content.
 }
 
-@defproc[(display-2 [content any/c]
+@defproc[(display-2 [content text-content/c]
                     [#:id id (or/c #f string? symbol?) #f]
                     [#:class class any/c #f]
                     [#:attrs attrs list? null])
@@ -798,7 +838,7 @@ Build a level-2 display heading.
 Positional arguments: @racket[content] is heading text/content.
 }
 
-@defproc[(display-3 [content any/c]
+@defproc[(display-3 [content text-content/c]
                     [#:id id (or/c #f string? symbol?) #f]
                     [#:class class any/c #f]
                     [#:attrs attrs list? null])
@@ -808,7 +848,7 @@ Build a level-3 display heading.
 Positional arguments: @racket[content] is heading text/content.
 }
 
-@defproc[(display-4 [content any/c]
+@defproc[(display-4 [content text-content/c]
                     [#:id id (or/c #f string? symbol?) #f]
                     [#:class class any/c #f]
                     [#:attrs attrs list? null])
@@ -818,7 +858,7 @@ Build a level-4 display heading.
 Positional arguments: @racket[content] is heading text/content.
 }
 
-@defproc[(display-5 [content any/c]
+@defproc[(display-5 [content text-content/c]
                     [#:id id (or/c #f string? symbol?) #f]
                     [#:class class any/c #f]
                     [#:attrs attrs list? null])
@@ -828,7 +868,7 @@ Build a level-5 display heading.
 Positional arguments: @racket[content] is heading text/content.
 }
 
-@defproc[(display-6 [content any/c]
+@defproc[(display-6 [content text-content/c]
                     [#:id id (or/c #f string? symbol?) #f]
                     [#:class class any/c #f]
                     [#:attrs attrs list? null])
@@ -839,8 +879,8 @@ Positional arguments: @racket[content] is heading text/content.
 }
 
 @defproc[(heading-with-subtitle [level (integer-in 1 6)]
-                                [title any/c]
-                                [subtitle any/c]
+                                [title text-content/c]
+                                [subtitle text-content/c]
                                 [#:id id (or/c #f string? symbol?) #f]
                                 [#:class class any/c #f]
                                 [#:attrs attrs list? null])
@@ -854,8 +894,8 @@ Positional arguments:
 }
 
 @defproc[(display-heading-with-subtitle [level (integer-in 1 6)]
-                                        [title any/c]
-                                        [subtitle any/c]
+                                        [title text-content/c]
+                                        [subtitle text-content/c]
                                         [#:id id (or/c #f string? symbol?) #f]
                                         [#:class class any/c #f]
                                         [#:attrs attrs list? null])
@@ -868,7 +908,7 @@ Positional arguments:
 @racket[subtitle] is secondary text.
 }
 
-@defproc[(lead [content any/c]
+@defproc[(lead [content text-content/c]
                [#:id id (or/c #f string? symbol?) #f]
                [#:class class any/c #f]
                [#:attrs attrs list? null])

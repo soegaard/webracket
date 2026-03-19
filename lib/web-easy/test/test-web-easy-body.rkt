@@ -338,6 +338,7 @@
              "we-heading-with-subtitle we-heading-with-subtitle-3 we-heading-with-subtitle-align-left we-heading-with-subtitle-space-normal"
              "heading-with-subtitle initial class")
 (check-equal (dom-node-tag heading-subtitle-node) 'h3 "heading-with-subtitle initial tag")
+(check-equal (length (dom-node-children heading-subtitle-node)) 2 "heading-with-subtitle initial child count")
 (check-equal (node-attr heading-title-node 'data-we-widget) "heading-title" "heading title node widget")
 (check-equal (node-attr heading-subtitle-text-node 'data-we-widget) "heading-subtitle" "heading subtitle node widget")
 (check-equal (dom-node-text heading-title-node) "Release Notes" "heading-with-subtitle initial title text")
@@ -347,6 +348,7 @@
              "we-display-heading-with-subtitle we-display-heading-with-subtitle-3 we-display-heading-with-subtitle-align-left we-display-heading-with-subtitle-space-normal"
              "display-heading-with-subtitle initial class")
 (check-equal (dom-node-tag display-heading-subtitle-node) 'h3 "display-heading-with-subtitle initial tag")
+(check-equal (length (dom-node-children display-heading-subtitle-node)) 2 "display-heading-with-subtitle initial child count")
 (check-equal (dom-node-text display-heading-title-node) "Release Notes" "display-heading-with-subtitle initial title text")
 (check-equal (dom-node-text display-heading-subtitle-text-node) "Updated 2026-03-06" "display-heading-with-subtitle initial subtitle text")
 (:= @subtitle-level 5)
@@ -358,12 +360,14 @@
              "we-heading-with-subtitle we-heading-with-subtitle-5 we-heading-with-subtitle-align-center we-heading-with-subtitle-space-loose"
              "heading-with-subtitle updated class")
 (check-equal (dom-node-tag heading-subtitle-node) 'h5 "heading-with-subtitle updated tag")
+(check-equal (length (dom-node-children heading-subtitle-node)) 2 "heading-with-subtitle preserves child count after level update")
 (check-equal (dom-node-text heading-title-node) "Patch Notes" "heading-with-subtitle updated title text")
 (check-equal (dom-node-text heading-subtitle-text-node) "Updated 2026-03-07" "heading-with-subtitle updated subtitle text")
 (check-equal (node-attr display-heading-subtitle-node 'class)
              "we-display-heading-with-subtitle we-display-heading-with-subtitle-5 we-display-heading-with-subtitle-align-center we-display-heading-with-subtitle-space-loose"
              "display-heading-with-subtitle updated class")
 (check-equal (dom-node-tag display-heading-subtitle-node) 'h5 "display-heading-with-subtitle updated tag")
+(check-equal (length (dom-node-children display-heading-subtitle-node)) 2 "display-heading-with-subtitle preserves child count after level update")
 (check-equal (dom-node-text display-heading-title-node) "Patch Notes" "display-heading-with-subtitle updated title text")
 (check-equal (dom-node-text display-heading-subtitle-text-node) "Updated 2026-03-07" "display-heading-with-subtitle updated subtitle text")
 
