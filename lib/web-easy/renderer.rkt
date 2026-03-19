@@ -112,12 +112,9 @@
     (define table/density-compact 'compact)   ; Compact table spacing density.
     (define tab-panel-counter     0)          ; Monotonic counter for tab-panel ids.
     (define accordion-panel-counter 0)        ; Monotonic counter for accordion panel ids.
-    (define menu-popup-counter    0)          ; Monotonic counter for menu popup ids.
     (define tooltip-counter       0)          ; Monotonic counter for tooltip ids.
     (define popover-panel-counter 0)          ; Monotonic counter for popover panel ids.
     (define dialog-body-counter   0)          ; Monotonic counter for dialog body ids.
-    (define radio-group-counter   0)          ; Monotonic counter for radio group names.
-    (define active-menu-close     #f)         ; Thunk closing currently open popup menu.
 
     ;; Legacy visual style constants (kept for reference during migration).
     ;; These are intentionally not injected by renderer. Visual styling is theme-owned.
@@ -745,26 +742,37 @@
 
     ;; merge-root-extra-attrs : view? list? -> list?
     ;;   Merge with-attrs/with-class props into base root attrs.
+    (define (internal-action-attr-key? attr-key)
+      (or (eq? attr-key 'on-click-action)
+          (eq? attr-key 'on-change-action)))
+
+    (define (procedure-allowed-attr-key? attr-key)
+      (or (internal-action-attr-key? attr-key)
+          (eq? attr-key 'on-enter-action)))
+
     (define (merge-root-extra-attrs v attrs)
       (define props (view-props v))
-      (define base-class-pair (assq 'class attrs))
       (define (valid-attr-value? attr-key attr-value)
-        (if (procedure? attr-value)
+        (if (and (procedure? attr-value)
+                 (not (procedure-allowed-attr-key? attr-key)))
             (begin
               (emit-web-easy-warning!
-               (string-append "web-easy: ignored procedure-valued attribute "
-                              (symbol->string attr-key)))
+              (string-append "web-easy: ignored procedure-valued attribute "
+                             (symbol->string attr-key)))
               #f)
             #t))
-      (define base-class-value
-        (if base-class-pair
-            (maybe-observable-value (cdr base-class-pair))
-            #f))
-      (define base-classes (if base-class-pair
-                               (if (valid-attr-value? 'class base-class-value)
-                                   (class-value->list base-class-value)
-                                   '())
-                               '()))
+      (define base-classes
+        (let loop ([remaining attrs])
+          (cond
+            [(null? remaining) '()]
+            [(eq? (caar remaining) 'class)
+             (define class-value (maybe-observable-value (cdar remaining)))
+             (append (if (valid-attr-value? 'class class-value)
+                         (class-value->list class-value)
+                         '())
+                     (loop (cdr remaining)))]
+            [else
+             (loop (cdr remaining))])))
       (define extra-attrs/raw (props-extra-attrs props))
       (define extra-class-from-attrs
         (let loop ([remaining extra-attrs/raw])
@@ -779,8 +787,8 @@
             [else
              (loop (cdr remaining))])))
       (define extra-classes
-        (append (props-extra-classes props)
-                extra-class-from-attrs))
+        (append extra-class-from-attrs
+                (props-extra-classes props)))
       (define attrs/without-class (attr-remove-key attrs 'class))
       (define attrs/merged
         (let loop ([remaining extra-attrs/raw]
@@ -799,6 +807,8 @@
                                        'data-we-widget
                                        widget-value)
                              acc))))]
+            [(internal-action-attr-key? (caar remaining))
+             (loop (cdr remaining) acc)]
             [else
              (define attr-value (maybe-observable-value (cdar remaining)))
              (loop (cdr remaining)
@@ -824,12 +834,6 @@
       (set! accordion-panel-counter (add1 accordion-panel-counter))
       (string-append "accordion-panel-" (number->string accordion-panel-counter)))
 
-    ;; next-menu-popup-id : -> string?
-    ;;   Allocate a unique id string for menu popup region.
-    (define (next-menu-popup-id)
-      (set! menu-popup-counter (add1 menu-popup-counter))
-      (string-append "menu-popup-" (number->string menu-popup-counter)))
-
     ;; next-tooltip-id : -> string?
     ;;   Allocate a unique id string for tooltip bubble region.
     (define (next-tooltip-id)
@@ -849,14 +853,6 @@
       (if (memq p '(top right bottom left))
           p
           default-placement))
-
-    ;; normalize-dropdown-placement : any/c -> symbol?
-    ;;   Normalize dropdown placement to one of down/up/start/end.
-    (define (normalize-dropdown-placement raw-placement)
-      (define p (if (obs? raw-placement) (obs-peek raw-placement) raw-placement))
-      (if (memq p '(down up start end))
-          p
-          'down))
 
     ;; normalize-dialog-size : any/c -> symbol?
     ;;   Normalize dialog/modal size to one of sm/md/lg/xl.
@@ -887,12 +883,6 @@
     (define (next-dialog-body-id)
       (set! dialog-body-counter (add1 dialog-body-counter))
       (string-append "dialog-body-" (number->string dialog-body-counter)))
-
-    ;; next-radio-group-name : -> string?
-    ;;   Allocate a unique name string for radio input grouping.
-    (define (next-radio-group-name)
-      (set! radio-group-counter (add1 radio-group-counter))
-      (string-append "radio-group-" (number->string radio-group-counter)))
 
     ;; normalize-tab-entry : any/c -> list?
     ;;   Normalize tab entry to (list id view disabled?) supporting pair or list forms.
@@ -1140,13 +1130,6 @@
         [(string? gap) gap]
         [else "12px"]))
 
-    ;; normalize-spacer-grow : any/c -> number?
-    ;;   Normalize spacer grow factor to positive numeric value.
-    (define (normalize-spacer-grow grow)
-      (cond
-        [(and (number? grow) (> grow 0)) grow]
-        [else 1]))
-
     ;; normalize-alert-level : any/c -> symbol?
     ;;   Normalize alert level to supported semantic/tone variants.
     (define (normalize-alert-level level)
@@ -1214,15 +1197,6 @@
         [(danger)  "we-toast-danger"]
         [else      "we-toast-info"]))
 
-    ;; progress-level-class : symbol? -> string?
-    ;;   Return CSS class suffix for progress variant level.
-    (define (progress-level-class level)
-      (case level
-        [(success) "we-progress-success"]
-        [(warning) "we-progress-warning"]
-        [(danger)  "we-progress-danger"]
-        [else      "we-progress-info"]))
-
     ;; normalize-badge-level : any/c -> symbol?
     ;;   Normalize badge level to supported variants.
     (define (normalize-badge-level level)
@@ -1245,23 +1219,6 @@
         [(dark)      "we-badge-dark"]
         [else        "we-badge-info"]))
 
-    ;; normalize-page-count : any/c -> number?
-    ;;   Normalize page-count to a positive integer.
-    (define (normalize-page-count page-count)
-      (if (and (number? page-count)
-               (integer? page-count)
-               (> page-count 0))
-          page-count
-          1))
-
-    ;; clamp-current-page : any/c number? -> number?
-    ;;   Clamp current page to [1, page-count].
-    (define (clamp-current-page current-page page-count)
-      (if (and (number? current-page)
-               (integer? current-page))
-          (min page-count (max 1 current-page))
-          1))
-
     ;; contains-equal? : list? any/c -> boolean?
     ;;   Check whether xs contains v using equal?.
     (define (contains-equal? xs v)
@@ -1272,77 +1229,6 @@
              #t
              (contains-equal? (cdr xs) v))]))
 
-    ;; unique-sorted-numbers : list? -> list?
-    ;;   Sort numeric values and remove duplicates.
-    (define (unique-sorted-numbers nums)
-      (define sorted
-        (sort (filter number? nums) <))
-      (let loop ([rest sorted]
-                 [acc '()])
-        (cond
-          [(null? rest)
-           (reverse acc)]
-          [else
-           (define n (car rest))
-           (if (contains-equal? acc n)
-               (loop (cdr rest) acc)
-               (loop (cdr rest) (cons n acc)))])))
-
-    ;; pagination-visible-pages : number? number? -> list?
-    ;;   Return page number list with 'ellipsis markers for compact rendering.
-    (define (pagination-visible-pages page-count current-page)
-      (if (<= page-count 7)
-          (let loop ([n 1])
-            (if (> n page-count)
-                '()
-                (cons n (loop (add1 n)))))
-          (let* ([base-pages (unique-sorted-numbers
-                              (list 1
-                                    page-count
-                                    (- current-page 1)
-                                    current-page
-                                    (+ current-page 1)))]
-                 [bounded-pages (filter (lambda (n)
-                                          (and (>= n 1)
-                                               (<= n page-count)))
-                                        base-pages)])
-            (let loop ([rest bounded-pages]
-                       [prev #f]
-                       [acc '()])
-              (cond
-                [(null? rest)
-                 (reverse acc)]
-                [else
-                 (define n (car rest))
-                 (define next-acc
-                   (cond
-                     [(eq? prev #f)
-                      (cons n acc)]
-                     [(= n (+ prev 1))
-                      (cons n acc)]
-                     [else
-                      (cons n (cons 'ellipsis acc))]))
-                 (loop (cdr rest) n next-acc)])))))
-
-    ;; breadcrumb-id : any/c -> any/c
-    ;;   Extract breadcrumb entry id from (list id label) row.
-    (define (breadcrumb-id entry)
-      (car (ensure-list entry 'breadcrumb "entry")))
-
-    ;; breadcrumb-label : any/c -> any/c
-    ;;   Extract breadcrumb entry label from (list id label) row.
-    (define (breadcrumb-label entry)
-      (cadr (ensure-list entry 'breadcrumb "entry")))
-
-    ;; list-group-id : any/c -> any/c
-    ;;   Extract list-group entry id from (list id label) row.
-    (define (list-group-id entry)
-      (car (ensure-list entry 'list-group "entry")))
-
-    ;; list-group-label : any/c -> any/c
-    ;;   Extract list-group entry label from (list id label) row.
-    (define (list-group-label entry)
-      (cadr (ensure-list entry 'list-group "entry")))
 
     ;; choice-entry-id : any/c -> any/c
     ;;   Extract selectable entry id from scalar, pair, or 2-element list.
@@ -1365,111 +1251,6 @@
          (cdr entry)]
         [else
          entry]))
-
-    ;; normalized-option-pairs : list? -> list?
-    ;;   Convert choices/entries rows into (cons id label) pairs.
-    (define (normalized-option-pairs rows)
-      (map (lambda (row)
-             (cons (choice-entry-id row)
-                   (choice-entry-label row)))
-           rows))
-
-    ;; radio-entry-disabled? : any/c -> boolean?
-    ;;   Extract optional disabled flag from (list id label disabled?) radio row.
-    (define (radio-entry-disabled? entry)
-      (cond
-        [(and (list? entry) (pair? entry) (pair? (cdr entry)) (pair? (cddr entry)))
-         (not (not (caddr entry)))]
-        [else
-         #f]))
-
-    ;; normalized-radio-entries : list? -> list?
-    ;;   Convert radio rows into (list id label disabled?) entries.
-    (define (normalized-radio-entries rows)
-      (map (lambda (row)
-             (list (choice-entry-id row)
-                   (choice-entry-label row)
-                   (radio-entry-disabled? row)))
-           rows))
-
-    ;; option-pairs->value-choices : list? -> list?
-    ;;   Convert option pairs into serialized id choices.
-    (define (option-pairs->value-choices option-pairs)
-      (map (lambda (entry)
-             (value->text (car entry)))
-           option-pairs))
-
-    ;; option-pairs->dom-option-pairs : list? -> list?
-    ;;   Convert option pairs into DOM option rows: (value-string . label-string).
-    (define (option-pairs->dom-option-pairs option-pairs)
-      (map (lambda (entry)
-             (cons (value->text (car entry))
-                   (value->text (cdr entry))))
-           option-pairs))
-
-    ;; decode-option-selection : list? any/c -> any/c
-    ;;   Decode selected DOM value back to original option id.
-    (define (decode-option-selection option-pairs selected)
-      (define selected-text
-        (if (string? selected)
-            selected
-            (value->text selected)))
-      (let loop ([remaining option-pairs])
-        (cond
-          [(null? remaining)
-           selected]
-          [(string=? (value->text (caar remaining)) selected-text)
-           (caar remaining)]
-          [else
-           (loop (cdr remaining))])))
-
-    ;; carousel-item-id : any/c -> any/c
-    ;;   Extract carousel item id from (list id label view) row.
-    (define (carousel-item-id entry)
-      (car (ensure-list entry 'carousel "entry")))
-
-    ;; carousel-item-label : any/c -> any/c
-    ;;   Extract carousel item label from (list id label view) row.
-    (define (carousel-item-label entry)
-      (cadr (ensure-list entry 'carousel "entry")))
-
-    ;; carousel-item-view : any/c -> view?
-    ;;   Extract carousel item view from (list id label view) row.
-    (define (carousel-item-view entry)
-      (caddr (ensure-list entry 'carousel "entry")))
-
-    ;; scrollspy-section-id : any/c -> any/c
-    ;;   Extract scrollspy section id from (list id label) row.
-    (define (scrollspy-section-id entry)
-      (car (ensure-list entry 'scrollspy "section")))
-
-    ;; scrollspy-section-label : any/c -> any/c
-    ;;   Extract scrollspy section label from (list id label) row.
-    (define (scrollspy-section-label entry)
-      (cadr (ensure-list entry 'scrollspy "section")))
-
-    ;; scrollspy-section-content : any/c -> view?
-    ;;   Extract optional scrollspy section view from (list id label [view]); fallback to text label.
-    (define (scrollspy-section-content entry)
-      (define section (ensure-list entry 'scrollspy "section"))
-      (if (and (list? section)
-               (pair? (cddr section)))
-          (let ([content (caddr section)])
-            (if (view? content)
-                content
-                (text content)))
-          (text (scrollspy-section-label entry))))
-
-    ;; scrollspy-section-dom-id : any/c -> string?
-    ;;   Build deterministic DOM id for a scrollspy section identifier.
-    (define (scrollspy-section-dom-id section-id)
-      (define section-text
-        (cond
-          [(string? section-id) section-id]
-          [(symbol? section-id) (symbol->string section-id)]
-          [(number? section-id) (number->string section-id)]
-          [else                text/fallback]))
-      (string-append "we-scrollspy-section-" section-text))
 
     ;; normalize-placeholder-shape : any/c -> symbol?
     ;;   Normalize placeholder shape to text/rect/circle.
@@ -1499,15 +1280,6 @@
          duration-ms]
         [else
          0]))
-
-    ;; normalize-nav-orientation : any/c -> symbol?
-    ;;   Normalize navigation-bar orientation to horizontal/vertical.
-    (define (normalize-nav-orientation orientation)
-      (if (symbol? orientation)
-          (case orientation
-            [(horizontal vertical) orientation]
-            [else                  'horizontal])
-          'horizontal))
 
     ;; normalize-heading-level : any/c -> number?
     ;;   Normalize heading level to integer in the closed interval 1..6.
@@ -1879,30 +1651,6 @@
            node]
           [(fragment)
            (error 'Fragment "cannot be rendered directly; use as child content")]
-          [(toolbar)
-           (define node (dom-node 'div (list (cons 'data-we-widget "toolbar")
-                                             (cons 'class          "we-toolbar")) '() #f #f #f))
-           (for-each (lambda (child)
-                       (append-view-child! node child))
-                     (view-children v))
-           node]
-          [(toolbar-group)
-           (define node (dom-node 'div (list (cons 'data-we-widget "toolbar-group")
-                                             (cons 'class          "we-toolbar-group")) '() #f #f #f))
-           (for-each (lambda (child)
-                       (append-view-child! node child))
-                     (view-children v))
-           node]
-          [(button-group)
-           (define node (dom-node 'div
-                                  (list (cons attr/role 'group)
-                                        (cons 'data-we-widget "button-group")
-                                        (cons 'class          "we-button-group"))
-                                  '() #f #f #f))
-           (for-each (lambda (child)
-                       (append-view-child! node child))
-                     (view-children v))
-           node]
           [(toggle-button-group)
            (define raw-mode     (alist-ref (view-props v) 'mode     'render))
            (define raw-choices  (alist-ref (view-props v) 'choices  'render))
@@ -2019,77 +1767,6 @@
              [else
               (void)])
            (refresh-toggle!)
-           node]
-          [(button-toolbar)
-           (define node (dom-node 'div
-                                  (list (cons attr/role 'toolbar)
-                                        (cons 'data-we-widget "button-toolbar")
-                                        (cons 'class          "we-button-toolbar"))
-                                  '() #f #f #f))
-           (for-each (lambda (child)
-                       (append-view-child! node child))
-                     (view-children v))
-           node]
-          [(group)
-           (define raw-label (alist-ref (view-props v) 'label 'render))
-           (define node (dom-node 'group
-                                  (list (cons 'data-we-widget "group")
-                                        (cons 'class          "we-group"))
-                                  '() #f #f #f))
-           (define legend-node (dom-node 'legend
-                                         (list (cons 'data-we-widget "group-legend")
-                                               (cons 'class          "we-group-legend"))
-                                         '() "" #f #f))
-           (define (set-label! label-value)
-             (set-dom-node-text! legend-node (value->text label-value)))
-           (cond
-             [(obs? raw-label)
-              (set-label! (obs-peek raw-label))
-              (define (listener updated)
-                (set-label! updated))
-              (obs-observe! raw-label listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-label listener)))]
-             [else
-              (set-label! raw-label)])
-           (backend-append-child! node legend-node)
-           (for-each (lambda (child)
-                       (append-view-child! node child))
-                     (view-children v))
-           node]
-          [(alert)
-           (define raw-value (alist-ref (view-props v) 'value 'render))
-           (define raw-level (alist-ref (view-props v) 'level 'render))
-           (define node (dom-node 'div
-                                  (list (cons attr/role 'status)
-                                        (cons 'data-we-widget "alert")
-                                        (cons 'class          "we-alert we-alert-info")
-                                        (cons 'aria-live      "polite"))
-                                  '()
-                                  ""
-                                  #f
-                                  #f))
-           (define (render-alert!)
-             (define level (normalize-alert-level (maybe-observable-value raw-level)))
-             (define role  (alert-level-role level))
-             (define live  (if (eq? role 'alert) "assertive" "polite"))
-             (set-dom-node-attrs!
-              node
-              (list (cons attr/role role)
-                    (cons 'data-we-widget "alert")
-                    (cons 'class (string-append "we-alert " (alert-level-class level)))
-                    (cons 'aria-live live)))
-             (set-dom-node-text! node (value->text (maybe-observable-value raw-value))))
-           (when (obs? raw-value)
-             (define (value-listener _updated)
-               (render-alert!))
-             (obs-observe! raw-value value-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-value value-listener))))
-           (when (obs? raw-level)
-             (define (level-listener _updated)
-               (render-alert!))
-             (obs-observe! raw-level level-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-level level-listener))))
-           (render-alert!)
            node]
           [(alert-rich)
            (define raw-body      (alist-ref (view-props v) 'body 'render))
@@ -2437,118 +2114,6 @@
            (register-cleanup! (lambda () (clear-toast-timeout!)))
            (render-toast!)
            node]
-          [(badge)
-           (define raw-value (alist-ref (view-props v) 'value 'render))
-           (define raw-level (alist-ref (view-props v) 'level 'render))
-           (define node (dom-node 'span
-                                  (list (cons 'data-we-widget "badge")
-                                        (cons 'class "we-badge we-badge-info"))
-                                  '()
-                                  ""
-                                  #f
-                                  #f))
-           (define (render-badge!)
-             (define level (normalize-badge-level (maybe-observable-value raw-level)))
-             (set-dom-node-attrs!
-              node
-              (list (cons 'data-we-widget "badge")
-                    (cons 'class (string-append "we-badge " (badge-level-class level)))))
-             (set-dom-node-text! node (value->text (maybe-observable-value raw-value))))
-           (when (obs? raw-value)
-             (define (value-listener _updated)
-               (render-badge!))
-             (obs-observe! raw-value value-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-value value-listener))))
-           (when (obs? raw-level)
-             (define (level-listener _updated)
-               (render-badge!))
-             (obs-observe! raw-level level-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-level level-listener))))
-           (render-badge!)
-           node]
-          [(spinner)
-           (define raw-label (alist-ref (view-props v) 'label 'render))
-           (define node (dom-node 'div
-                                  (list (cons attr/role 'status)
-                                        (cons 'data-we-widget "spinner")
-                                        (cons 'class          "we-spinner")
-                                        (cons 'aria-live      "polite"))
-                                  '() #f #f #f))
-           (define icon-node
-             (dom-node 'span
-                       (list (cons 'data-we-widget "spinner-icon")
-                             (cons 'class          "we-spinner-icon")
-                             (cons 'aria-hidden    "true"))
-                       '() "" #f #f))
-           (define label-node
-             (dom-node 'span
-                       (list (cons 'data-we-widget "spinner-label")
-                             (cons 'class          "we-spinner-label"))
-                       '() "" #f #f))
-           (backend-append-child! node icon-node)
-           (backend-append-child! node label-node)
-           (define (render-spinner!)
-             (set-dom-node-text! label-node (value->text (maybe-observable-value raw-label))))
-           (when (obs? raw-label)
-             (define (label-listener _updated)
-               (render-spinner!))
-             (obs-observe! raw-label label-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-label label-listener))))
-           (render-spinner!)
-           node]
-          [(placeholder)
-           (define raw-shape (alist-ref (view-props v) 'shape 'render))
-           (define raw-width (alist-ref (view-props v) 'width 'render))
-           (define node
-             (dom-node 'span
-                       (list (cons 'data-we-widget "placeholder")
-                             (cons 'class          "we-placeholder we-placeholder-text")
-                             (cons 'aria-hidden    "true"))
-                       '() "" #f #f))
-           (define (set-placeholder-attrs! shape0 width0)
-             (define shape-class
-               (case (normalize-placeholder-shape shape0)
-                 [(rect)   "we-placeholder-rect"]
-                 [(circle) "we-placeholder-circle"]
-                 [else     "we-placeholder-text"]))
-             (define attrs/base
-               (list (cons 'data-we-widget "placeholder")
-                     (cons 'class          (string-append "we-placeholder " shape-class))
-                     (cons 'aria-hidden    "true")))
-             (set-dom-node-attrs!
-              node
-              (if (eq? width0 #f)
-                  attrs/base
-                  (append attrs/base
-                          (list (cons 'width (value->text width0)))))))
-           (define (render-placeholder!)
-             (set-placeholder-attrs! (maybe-observable-value raw-shape)
-                                     (maybe-observable-value raw-width)))
-           (when (obs? raw-shape)
-             (define (shape-listener _updated)
-               (render-placeholder!))
-             (obs-observe! raw-shape shape-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-shape shape-listener))))
-           (when (obs? raw-width)
-             (define (width-listener _updated)
-               (render-placeholder!))
-             (obs-observe! raw-width width-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-width width-listener))))
-           (render-placeholder!)
-           node]
-          [(text)
-           (define raw  (alist-ref (view-props v) 'value 'render))
-           (define node (dom-node 'span (list (cons 'data-we-widget "text")) '() "" #f #f))
-           (cond
-             [(obs? raw)
-              (set-dom-node-text! node (value->text (obs-peek raw)))
-              (define (listener updated)
-                (set-dom-node-text! node (value->text updated)))
-              (obs-observe! raw listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw listener)))]
-             [else
-              (set-dom-node-text! node (value->text raw))])
-           node]
           [(html-element)
            (define raw-tag   (alist-ref (view-props v) 'tag 'render))
            (define raw-value (alist-ref (view-props v) 'value 'render))
@@ -2557,8 +2122,15 @@
                (if (symbol? v0) v0 'div)))
            (define node (dom-node initial-tag '() '() "" #f #f))
            (define extra-attrs/raw (props-extra-attrs (view-props v)))
+          (define (callback-from-action-attr attr-key)
+            (define p (assq attr-key extra-attrs/raw))
+            (if p
+                (let ([v0 (maybe-observable-value (cdr p))])
+                  (if (procedure? v0) v0 #f))
+                #f))
            (define (valid-observable-attr-update? attr-key updated-value)
-             (if (procedure? updated-value)
+             (if (and (procedure? updated-value)
+                      (not (procedure-allowed-attr-key? attr-key)))
                  (begin
                    (emit-web-easy-warning!
                     (string-append "web-easy: ignored procedure-valued observable attribute update "
@@ -2592,6 +2164,12 @@
               (register-cleanup! (lambda () (obs-unobserve! raw-value listener)))]
              [else
               (set-text! raw-value)])
+           (define on-click-callback (callback-from-action-attr 'on-click-action))
+           (define on-change-callback (callback-from-action-attr 'on-change-action))
+           (when on-click-callback
+             (set-dom-node-on-click! node on-click-callback))
+           (when on-change-callback
+             (set-dom-node-on-change! node on-change-callback))
            (for-each
             (lambda (entry)
               (when (and (pair? entry)
@@ -2613,8 +2191,15 @@
                (if (symbol? v0) v0 'div)))
            (define node (dom-node initial-tag '() '() #f #f #f))
            (define extra-attrs/raw (props-extra-attrs (view-props v)))
+           (define (callback-from-action-attr attr-key)
+             (define p (assq attr-key extra-attrs/raw))
+             (if p
+                 (let ([v0 (maybe-observable-value (cdr p))])
+                   (if (procedure? v0) v0 #f))
+                 #f))
            (define (valid-observable-attr-update? attr-key updated-value)
-             (if (procedure? updated-value)
+             (if (and (procedure? updated-value)
+                      (not (procedure-allowed-attr-key? attr-key)))
                  (begin
                    (emit-web-easy-warning!
                     (string-append "web-easy: ignored procedure-valued observable attribute update "
@@ -2640,6 +2225,12 @@
            (for-each (lambda (child)
                        (append-view-child! node child))
                      (view-children v))
+           (define on-click-callback (callback-from-action-attr 'on-click-action))
+           (define on-change-callback (callback-from-action-attr 'on-change-action))
+           (when on-click-callback
+             (set-dom-node-on-click! node on-click-callback))
+           (when on-change-callback
+             (set-dom-node-on-change! node on-change-callback))
            (for-each
             (lambda (entry)
               (when (and (pair? entry)
@@ -2653,390 +2244,6 @@
                 (obs-observe! attr-obs attr-listener)
                 (register-cleanup! (lambda () (obs-unobserve! attr-obs attr-listener)))))
             extra-attrs/raw)
-           node]
-          [(heading)
-           (define raw-level        (alist-ref (view-props v) 'level 'render))
-           (define raw-value        (alist-ref (view-props v) 'value 'render))
-           (define raw-align-pair   (assq 'align (view-props v)))
-           (define raw-align        (if raw-align-pair (cdr raw-align-pair) 'left))
-           (define raw-spacing-pair (assq 'spacing (view-props v)))
-           (define raw-spacing      (if raw-spacing-pair (cdr raw-spacing-pair) 'normal))
-           (define level
-             (normalize-heading-level (maybe-observable-value raw-level)))
-           (define align   (normalize-heading-align   (maybe-observable-value raw-align)))
-           (define spacing (normalize-heading-spacing (maybe-observable-value raw-spacing)))
-           (define node
-             (dom-node (string->symbol (string-append "h" (number->string level)))
-                       (list (cons 'data-we-widget "heading")
-                             (cons 'class (string-append "we-heading we-heading-" (number->string level)
-                                                         " " (heading-align-class   "we-heading" align)
-                                                         " " (heading-spacing-class "we-heading" spacing))))
-                       '() "" #f #f))
-           (define (set-text! value0)
-             (set-dom-node-text! node (value->text value0)))
-           (define (set-heading-style! level0 align0 spacing0)
-             (define normalized-level   (normalize-heading-level   level0))
-             (define normalized-align   (normalize-heading-align   align0))
-             (define normalized-spacing (normalize-heading-spacing spacing0))
-             (set-dom-node-tag! node (string->symbol (string-append "h" (number->string normalized-level))))
-             (set-dom-node-attrs!
-              node
-              (list (cons 'data-we-widget "heading")
-                    (cons 'class (string-append "we-heading we-heading-" (number->string normalized-level)
-                                                " " (heading-align-class "we-heading" normalized-align)
-                                                " " (heading-spacing-class "we-heading" normalized-spacing))))))
-           (when (obs? raw-level)
-             (define (level-listener updated)
-               (set-heading-style! updated
-                                   (maybe-observable-value raw-align)
-                                   (maybe-observable-value raw-spacing)))
-             (obs-observe! raw-level level-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-level level-listener))))
-           (when (obs? raw-align)
-             (define (align-listener updated)
-               (set-heading-style! (maybe-observable-value raw-level)
-                                   updated
-                                   (maybe-observable-value raw-spacing)))
-             (obs-observe! raw-align align-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-align align-listener))))
-           (when (obs? raw-spacing)
-             (define (spacing-listener updated)
-               (set-heading-style! (maybe-observable-value raw-level)
-                                   (maybe-observable-value raw-align)
-                                   updated))
-             (obs-observe! raw-spacing spacing-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-spacing spacing-listener))))
-           (cond
-             [(obs? raw-value)
-              (set-text! (obs-peek raw-value))
-              (define (value-listener updated)
-                (set-text! updated))
-              (obs-observe! raw-value value-listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-value value-listener)))]
-             [else
-              (set-text! raw-value)])
-           node]
-          [(display-heading)
-           (define raw-level        (alist-ref (view-props v) 'level 'render))
-           (define raw-value        (alist-ref (view-props v) 'value 'render))
-           (define raw-align-pair   (assq 'align (view-props v)))
-           (define raw-align        (if raw-align-pair (cdr raw-align-pair) 'left))
-           (define raw-spacing-pair (assq 'spacing (view-props v)))
-           (define raw-spacing      (if raw-spacing-pair (cdr raw-spacing-pair) 'normal))
-           
-           (define level   (normalize-heading-level (maybe-observable-value raw-level)))
-           (define align   (normalize-heading-align (maybe-observable-value raw-align)))
-           (define spacing (normalize-heading-spacing (maybe-observable-value raw-spacing)))
-           (define node
-             (dom-node (string->symbol (string-append "h" (number->string level)))
-                       (list (cons 'data-we-widget "display-heading")
-                             (cons 'class (string-append "we-display-heading we-display-heading-" (number->string level)
-                                                         " " (heading-align-class   "we-display-heading" align)
-                                                         " " (heading-spacing-class "we-display-heading" spacing))))
-                       '() "" #f #f))
-           (define (set-text! value0)
-             (set-dom-node-text! node (value->text value0)))
-           (define (set-heading-style! level0 align0 spacing0)
-             (define normalized-level   (normalize-heading-level level0))
-             (define normalized-align   (normalize-heading-align align0))
-             (define normalized-spacing (normalize-heading-spacing spacing0))
-             (set-dom-node-tag! node (string->symbol (string-append "h" (number->string normalized-level))))
-             (set-dom-node-attrs!
-              node
-              (list (cons 'data-we-widget "display-heading")
-                    (cons 'class (string-append "we-display-heading we-display-heading-" (number->string normalized-level)
-                                                " " (heading-align-class   "we-display-heading" normalized-align)
-                                                " " (heading-spacing-class "we-display-heading" normalized-spacing))))))
-           (when (obs? raw-level)
-             (define (level-listener updated)
-               (set-heading-style! updated
-                                   (maybe-observable-value raw-align)
-                                   (maybe-observable-value raw-spacing)))
-             (obs-observe! raw-level level-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-level level-listener))))
-           (when (obs? raw-align)
-             (define (align-listener updated)
-               (set-heading-style! (maybe-observable-value raw-level)
-                                   updated
-                                   (maybe-observable-value raw-spacing)))
-             (obs-observe! raw-align align-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-align align-listener))))
-           (when (obs? raw-spacing)
-             (define (spacing-listener updated)
-               (set-heading-style! (maybe-observable-value raw-level)
-                                   (maybe-observable-value raw-align)
-                                   updated))
-             (obs-observe! raw-spacing spacing-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-spacing spacing-listener))))
-           (cond
-             [(obs? raw-value)
-              (set-text! (obs-peek raw-value))
-              (define (value-listener updated)
-                (set-text! updated))
-              (obs-observe! raw-value value-listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-value value-listener)))]
-             [else
-              (set-text! raw-value)])
-           node]
-          [(heading-with-subtitle)
-           (define raw-level        (alist-ref (view-props v) 'level 'render))
-           (define raw-value        (alist-ref (view-props v) 'value 'render))
-           (define raw-subtitle     (alist-ref (view-props v) 'subtitle 'render))
-           (define raw-align-pair   (assq 'align (view-props v)))
-           (define raw-align        (if raw-align-pair (cdr raw-align-pair) 'left))
-           (define raw-spacing-pair (assq 'spacing (view-props v)))
-           (define raw-spacing      (if raw-spacing-pair (cdr raw-spacing-pair) 'normal))
-           
-           (define level
-             (normalize-heading-level (maybe-observable-value raw-level)))
-           (define align (normalize-heading-align (maybe-observable-value raw-align)))
-           (define spacing (normalize-heading-spacing (maybe-observable-value raw-spacing)))
-           (define title-node
-             (dom-node 'span
-                       (list (cons 'data-we-widget "heading-title")
-                             (cons 'class          "we-heading-title"))
-                       '() "" #f #f))
-           (define subtitle-node
-             (dom-node 'small
-                       (list (cons 'data-we-widget "heading-subtitle")
-                             (cons 'class          "we-heading-subtitle"))
-                       '() "" #f #f))
-           (define node
-             (dom-node (string->symbol (string-append "h" (number->string level)))
-                       (list (cons 'data-we-widget "heading-with-subtitle")
-                             (cons 'class (string-append "we-heading-with-subtitle we-heading-with-subtitle-" (number->string level)
-                                                         " " (heading-align-class "we-heading-with-subtitle" align)
-                                                         " " (heading-spacing-class "we-heading-with-subtitle" spacing))))
-                       '() #f #f #f))
-           (backend-replace-children! node (list title-node subtitle-node))
-           (define (set-heading-style! level0 align0 spacing0)
-             (define normalized-level   (normalize-heading-level   level0))
-             (define normalized-align   (normalize-heading-align   align0))
-             (define normalized-spacing (normalize-heading-spacing spacing0))
-             (set-dom-node-tag! node (string->symbol (string-append "h" (number->string normalized-level))))
-             (set-dom-node-attrs!
-              node
-              (list (cons 'data-we-widget "heading-with-subtitle")
-                    (cons 'class (string-append "we-heading-with-subtitle we-heading-with-subtitle-" (number->string normalized-level)
-                                                " " (heading-align-class   "we-heading-with-subtitle" normalized-align)
-                                                " " (heading-spacing-class "we-heading-with-subtitle" normalized-spacing))))))
-           (define (set-title! value0)
-             (set-dom-node-text! title-node (value->text value0)))
-           (define (set-subtitle! value0)
-             (set-dom-node-text! subtitle-node (value->text value0)))
-           (when (obs? raw-level)
-             (define (level-listener updated)
-               (set-heading-style! updated
-                                   (maybe-observable-value raw-align)
-                                   (maybe-observable-value raw-spacing)))
-             (obs-observe! raw-level level-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-level level-listener))))
-           (when (obs? raw-align)
-             (define (align-listener updated)
-               (set-heading-style! (maybe-observable-value raw-level)
-                                   updated
-                                   (maybe-observable-value raw-spacing)))
-             (obs-observe! raw-align align-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-align align-listener))))
-           (when (obs? raw-spacing)
-             (define (spacing-listener updated)
-               (set-heading-style! (maybe-observable-value raw-level)
-                                   (maybe-observable-value raw-align)
-                                   updated))
-             (obs-observe! raw-spacing spacing-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-spacing spacing-listener))))
-           (cond
-             [(obs? raw-value)
-              (set-title! (obs-peek raw-value))
-              (define (value-listener updated)
-                (set-title! updated))
-              (obs-observe! raw-value value-listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-value value-listener)))]
-             [else
-              (set-title! raw-value)])
-           (cond
-             [(obs? raw-subtitle)
-              (set-subtitle! (obs-peek raw-subtitle))
-              (define (subtitle-listener updated)
-                (set-subtitle! updated))
-              (obs-observe! raw-subtitle subtitle-listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-subtitle subtitle-listener)))]
-             [else
-              (set-subtitle! raw-subtitle)])
-           node]
-          [(display-heading-with-subtitle)
-           (define raw-level (alist-ref (view-props v) 'level 'render))
-           (define raw-value (alist-ref (view-props v) 'value 'render))
-           (define raw-subtitle (alist-ref (view-props v) 'subtitle 'render))
-           (define raw-align-pair (assq 'align (view-props v)))
-           (define raw-align (if raw-align-pair (cdr raw-align-pair) 'left))
-           (define raw-spacing-pair (assq 'spacing (view-props v)))
-           (define raw-spacing (if raw-spacing-pair (cdr raw-spacing-pair) 'normal))
-           (define level
-             (normalize-heading-level (maybe-observable-value raw-level)))
-           (define align (normalize-heading-align (maybe-observable-value raw-align)))
-           (define spacing (normalize-heading-spacing (maybe-observable-value raw-spacing)))
-           (define title-node
-             (dom-node 'span
-                       (list (cons 'data-we-widget "heading-title")
-                             (cons 'class "we-heading-title"))
-                       '()
-                       ""
-                       #f
-                       #f))
-           (define subtitle-node
-             (dom-node 'small
-                       (list (cons 'data-we-widget "heading-subtitle")
-                             (cons 'class "we-heading-subtitle"))
-                       '()
-                       ""
-                       #f
-                       #f))
-           (define node
-             (dom-node (string->symbol (string-append "h" (number->string level)))
-                       (list (cons 'data-we-widget "display-heading-with-subtitle")
-                             (cons 'class (string-append "we-display-heading-with-subtitle we-display-heading-with-subtitle-" (number->string level)
-                                                         " " (heading-align-class "we-display-heading-with-subtitle" align)
-                                                         " " (heading-spacing-class "we-display-heading-with-subtitle" spacing))))
-                       '()
-                       #f
-                       #f
-                       #f))
-           (backend-replace-children! node (list title-node subtitle-node))
-           (define (set-heading-style! level0 align0 spacing0)
-             (define normalized-level (normalize-heading-level level0))
-             (define normalized-align (normalize-heading-align align0))
-             (define normalized-spacing (normalize-heading-spacing spacing0))
-             (set-dom-node-tag! node (string->symbol (string-append "h" (number->string normalized-level))))
-             (set-dom-node-attrs!
-              node
-              (list (cons 'data-we-widget "display-heading-with-subtitle")
-                    (cons 'class (string-append "we-display-heading-with-subtitle we-display-heading-with-subtitle-" (number->string normalized-level)
-                                                " " (heading-align-class "we-display-heading-with-subtitle" normalized-align)
-                                                " " (heading-spacing-class "we-display-heading-with-subtitle" normalized-spacing))))))
-           (define (set-title! value0)
-             (set-dom-node-text! title-node (value->text value0)))
-           (define (set-subtitle! value0)
-             (set-dom-node-text! subtitle-node (value->text value0)))
-           (when (obs? raw-level)
-             (define (level-listener updated)
-               (set-heading-style! updated
-                                   (maybe-observable-value raw-align)
-                                   (maybe-observable-value raw-spacing)))
-             (obs-observe! raw-level level-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-level level-listener))))
-           (when (obs? raw-align)
-             (define (align-listener updated)
-               (set-heading-style! (maybe-observable-value raw-level)
-                                   updated
-                                   (maybe-observable-value raw-spacing)))
-             (obs-observe! raw-align align-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-align align-listener))))
-           (when (obs? raw-spacing)
-             (define (spacing-listener updated)
-               (set-heading-style! (maybe-observable-value raw-level)
-                                   (maybe-observable-value raw-align)
-                                   updated))
-             (obs-observe! raw-spacing spacing-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-spacing spacing-listener))))
-           (cond
-             [(obs? raw-value)
-              (set-title! (obs-peek raw-value))
-              (define (value-listener updated)
-                (set-title! updated))
-              (obs-observe! raw-value value-listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-value value-listener)))]
-             [else
-              (set-title! raw-value)])
-           (cond
-             [(obs? raw-subtitle)
-              (set-subtitle! (obs-peek raw-subtitle))
-              (define (subtitle-listener updated)
-                (set-subtitle! updated))
-              (obs-observe! raw-subtitle subtitle-listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-subtitle subtitle-listener)))]
-             [else
-              (set-subtitle! raw-subtitle)])
-           node]
-          [(lead)
-           (define raw-value (alist-ref (view-props v) 'value 'render))
-           (define node
-             (dom-node 'p
-                       (list (cons 'data-we-widget "lead")
-                             (cons 'class "we-lead"))
-                       '()
-                       ""
-                       #f
-                       #f))
-           (cond
-             [(obs? raw-value)
-              (set-dom-node-text! node (value->text (obs-peek raw-value)))
-              (define (value-listener updated)
-                (set-dom-node-text! node (value->text updated)))
-              (obs-observe! raw-value value-listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-value value-listener)))]
-             [else
-              (set-dom-node-text! node (value->text raw-value))])
-           node]
-          [(blockquote)
-           (define raw-value       (alist-ref (view-props v) 'value       'render))
-           (define raw-attribution (alist-ref (view-props v) 'attribution #f))
-           (define align
-             (alist-ref (view-props v) 'align 'left))
-           (define align-class
-             (case align
-               [(left)   #f]
-               [(center) "we-blockquote-align-center"]
-               [(right)  "we-blockquote-align-right"]
-               [else     #f]))
-           (define node-class
-             (if align-class
-                 (string-append "we-blockquote " align-class)
-                 "we-blockquote"))
-           (define node
-             (dom-node 'figure
-                       (list (cons 'data-we-widget "blockquote")
-                             (cons 'class node-class))
-                       '() #f #f #f))
-           (define quote-text-node
-             (dom-node 'p
-                       (list (cons 'data-we-widget "blockquote-text")
-                             (cons 'class          "we-blockquote-text"))
-                       '() "" #f #f))
-           (define quote-node
-             (dom-node 'blockquote
-                       (list (cons 'data-we-widget "blockquote-quote")
-                             (cons 'class          "we-blockquote-quote"))
-                       '()
-                       #f
-                       #f
-                       #f))
-           (backend-append-child! quote-node quote-text-node)
-           (define attrib-node
-             (dom-node 'figcaption
-                       (list (cons 'data-we-widget "blockquote-attrib")
-                             (cons 'class "we-blockquote-attrib"))
-                       '() "" #f #f))
-           (define (render-blockquote!)
-             (define value0  (maybe-observable-value raw-value))
-             (define attrib0 (maybe-observable-value raw-attribution))
-             (set-dom-node-text! quote-text-node (value->text value0))
-             (if (eq? attrib0 #f)
-                 (backend-replace-children! node (list quote-node))
-                 (begin
-                   (set-dom-node-text! attrib-node (value->text attrib0))
-                   (backend-replace-children! node (list quote-node attrib-node)))))
-           (when (obs? raw-value)
-             (define (value-listener _updated)
-               (render-blockquote!))
-             (obs-observe! raw-value value-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-value value-listener))))
-           (when (obs? raw-attribution)
-             (define (attribution-listener _updated)
-               (render-blockquote!))
-             (obs-observe! raw-attribution attribution-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-attribution attribution-listener))))
-           (render-blockquote!)
            node]
           [(button)
            (define label  (alist-ref (view-props v) 'label  'render))
@@ -3102,575 +2309,6 @@
              (obs-observe! raw-trailing-icon trailing-icon-listener)
              (register-cleanup! (lambda () (obs-unobserve! raw-trailing-icon trailing-icon-listener))))
            (refresh-button-children!)
-           node]
-          [(link)
-           (define raw-label    (alist-ref (view-props v) 'label 'render))
-           (define raw-href     (alist-ref (view-props v) 'href 'render))
-           (define raw-download (alist-ref (view-props v) 'download 'render))
-           (define raw-target   (alist-ref (view-props v) 'target 'render))
-           (define node (dom-node 'a
-                                  (list (cons attr/role 'link)
-                                        (cons 'data-we-widget "link")
-                                        (cons 'class "we-link")
-                                        (cons 'href "#"))
-                                  '()
-                                  ""
-                                  #f
-                                  #f))
-           (define (refresh-link!)
-             (define href (maybe-observable-value raw-href))
-             (define download? (maybe-observable-value raw-download))
-             (define target (maybe-observable-value raw-target))
-             (set-dom-node-attrs!
-              node
-              (append
-               (list (cons attr/role 'link)
-                     (cons 'data-we-widget "link")
-                     (cons 'class "we-link")
-                     (cons 'href (value->text href)))
-               (if download?
-                   (list (cons 'download "download"))
-                   '())
-               (if (eq? target #f)
-                   '()
-                   (list (cons 'target (value->text target)))))))
-           (define (set-link-label! v0)
-             (set-dom-node-text! node (value->text v0)))
-           (cond
-             [(obs? raw-label)
-              (set-link-label! (obs-peek raw-label))
-              (define (label-listener updated)
-                (set-link-label! updated))
-              (obs-observe! raw-label label-listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-label label-listener)))]
-             [else
-              (set-link-label! raw-label)])
-           (when (obs? raw-href)
-             (define (href-listener _updated) (refresh-link!))
-             (obs-observe! raw-href href-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-href href-listener))))
-           (when (obs? raw-download)
-             (define (download-listener _updated) (refresh-link!))
-             (obs-observe! raw-download download-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-download download-listener))))
-           (when (obs? raw-target)
-             (define (target-listener _updated) (refresh-link!))
-             (obs-observe! raw-target target-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-target target-listener))))
-           (refresh-link!)
-           node]
-          [(close-button)
-           (define action (alist-ref (view-props v) 'action 'render))
-           (define raw-aria-label (alist-ref (view-props v) 'aria-label 'render))
-           (define node
-             (dom-node 'button
-                       (list (cons attr/role 'button)
-                             (cons 'data-we-widget "close-button")
-                             (cons 'class "we-close-button")
-                             (cons 'aria-label "Close"))
-                       '()
-                       #f
-                       action
-                       #f))
-           (define icon-node
-             (dom-node 'span
-                       (list (cons 'data-we-widget "close-button-icon")
-                             (cons 'class "we-close-button-icon")
-                             (cons 'aria-hidden "true"))
-                       '()
-                       #f
-                       #f
-                       #f))
-           (backend-set-single-child! node icon-node)
-           (define (set-aria-label! v0)
-             (set-dom-node-attrs!
-              node
-              (list (cons attr/role 'button)
-                    (cons 'data-we-widget "close-button")
-                    (cons 'class "we-close-button")
-                    (cons 'aria-label (value->text v0)))))
-           (cond
-             [(obs? raw-aria-label)
-              (set-aria-label! (obs-peek raw-aria-label))
-              (define (listener updated)
-                (set-aria-label! updated))
-              (obs-observe! raw-aria-label listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-aria-label listener)))]
-             [else
-              (set-aria-label! raw-aria-label)])
-           node]
-          [(input)
-           (define raw-value (alist-ref (view-props v) 'value    'render))
-           (define action    (alist-ref (view-props v) 'action   'render))
-           (define on-enter  (alist-ref (view-props v) 'on-enter 'render))
-           (define input-attrs/raw (alist-ref (view-props v) 'attrs 'render))
-           (define input-attrs
-             (if (list? input-attrs/raw)
-                 input-attrs/raw
-                 '()))
-           (define node (dom-node 'input
-                                  (list (cons 'value "")
-                                        (cons 'data-we-widget "input")
-                                        (cons 'class "we-input")
-                                        (cons 'on-enter-action on-enter))
-                                  '()
-                                  #f
-                                  #f
-                                  #f))
-           (set-dom-node-on-change! node (lambda (new-value) (action new-value)))
-           (define (with-input-extra-attrs attrs)
-             (let loop ([remaining input-attrs]
-                        [acc attrs])
-               (cond
-                 [(null? remaining) acc]
-                 [(and (list? (car remaining))
-                       (= (length (car remaining)) 2)
-                       (symbol? (car (car remaining))))
-                  (loop (cdr remaining)
-                        (attr-set acc
-                                  (car (car remaining))
-                                  (cadr (car remaining))))]
-                 [(and (pair? (car remaining))
-                       (symbol? (caar remaining)))
-                  (loop (cdr remaining)
-                        (attr-set acc (caar remaining) (cdar remaining)))]
-                 [else
-                  (loop (cdr remaining) acc)])))
-           (define (set-input-value! value)
-             (set-dom-node-attrs!
-              node
-              (with-input-extra-attrs
-                (list (cons 'value (value->text value))
-                      (cons 'data-we-widget "input")
-                      (cons 'class "we-input")
-                      (cons 'on-enter-action on-enter)))))
-           (cond
-             [(obs? raw-value)
-              (set-input-value! (obs-peek raw-value))
-              (define (listener updated)
-                (set-input-value! updated))
-              (obs-observe! raw-value listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-value listener)))]
-             [else
-              (set-input-value! raw-value)])
-           node]
-          [(textarea)
-           (define raw-value (alist-ref (view-props v) 'value 'render))
-           (define action    (alist-ref (view-props v) 'action 'render))
-           (define raw-rows  (alist-ref (view-props v) 'rows 'render))
-           (define textarea-attrs/raw (alist-ref (view-props v) 'attrs 'render))
-           (define textarea-attrs
-             (if (list? textarea-attrs/raw)
-                 textarea-attrs/raw
-                 '()))
-           (define rows-value
-             (if (number? raw-rows)
-                 raw-rows
-                 3))
-           (define node (dom-node 'textarea
-                                  (list (cons 'value "")
-                                        (cons 'rows rows-value)
-                                        (cons 'data-we-widget "textarea")
-                                        (cons 'class "we-textarea"))
-                                  '()
-                                  #f
-                                  #f
-                                  #f))
-           (set-dom-node-on-change! node (lambda (new-value) (action new-value)))
-           (define (with-textarea-extra-attrs attrs)
-             (let loop ([remaining textarea-attrs]
-                        [acc attrs])
-               (cond
-                 [(null? remaining) acc]
-                 [(and (list? (car remaining))
-                       (= (length (car remaining)) 2)
-                       (symbol? (car (car remaining))))
-                  (loop (cdr remaining)
-                        (attr-set acc
-                                  (car (car remaining))
-                                  (cadr (car remaining))))]
-                 [(and (pair? (car remaining))
-                       (symbol? (caar remaining)))
-                  (loop (cdr remaining)
-                        (attr-set acc (caar remaining) (cdar remaining)))]
-                 [else
-                  (loop (cdr remaining) acc)])))
-           (define (set-textarea-value! value)
-             (set-dom-node-attrs!
-              node
-              (with-textarea-extra-attrs
-                (list (cons 'value (value->text value))
-                      (cons 'rows rows-value)
-                      (cons 'data-we-widget "textarea")
-                      (cons 'class "we-textarea")))))
-           (cond
-             [(obs? raw-value)
-              (set-textarea-value! (obs-peek raw-value))
-              (define (listener updated)
-                (set-textarea-value! updated))
-              (obs-observe! raw-value listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-value listener)))]
-             [else
-              (set-textarea-value! raw-value)])
-           node]
-          [(checkbox)
-           (define raw-value (alist-ref (view-props v) 'value  'render))
-           (define action    (alist-ref (view-props v) 'action 'render))
-           (define node (dom-node 'checkbox
-                                  (list (cons 'checked #f)
-                                        (cons 'data-we-widget "checkbox")
-                                        (cons 'class "we-checkbox"))
-                                  '()
-                                  #f
-                                  #f
-                                  #f))
-           (set-dom-node-on-change! node (lambda (new-checked) (action (not (not new-checked)))))
-           (define (set-checked! v)
-             (set-dom-node-attrs! node (list (cons 'checked (not (not v)))
-                                             (cons 'data-we-widget "checkbox")
-                                             (cons 'class "we-checkbox"))))
-           (cond
-             [(obs? raw-value)
-              (set-checked! (obs-peek raw-value))
-              (define (listener updated)
-                (set-checked! updated))
-              (obs-observe! raw-value listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-value listener)))]
-             [else
-              (set-checked! raw-value)])
-           node]
-          [(choice)
-           (define choice-rows  (ensure-list (alist-ref (view-props v) 'choices 'render)
-                                             'choice
-                                             "choices"))
-           (define option-pairs (normalized-option-pairs choice-rows))
-           (define choices      (option-pairs->value-choices option-pairs))
-           (define dom-option-pairs (option-pairs->dom-option-pairs option-pairs))
-           (define raw-selected (alist-ref (view-props v) 'selected 'render))
-           (define action       (alist-ref (view-props v) 'action   'render))
-           (define node (dom-node 'select
-                                  (list (cons 'choices choices)
-                                        (cons 'option-pairs dom-option-pairs)
-                                        (cons 'data-we-widget "choice")
-                                        (cons 'class "we-choice")
-                                        (cons 'selected #f))
-                                  '()
-                                  #f
-                                  #f
-                                  #f))
-           (set-dom-node-on-change!
-            node
-            (lambda (new-selected)
-              (action (decode-option-selection option-pairs new-selected))))
-           (define (set-selected! v)
-             (set-dom-node-attrs!
-              node
-              (list (cons 'choices  choices)
-                    (cons 'option-pairs dom-option-pairs)
-                    (cons 'data-we-widget "choice")
-                    (cons 'class    "we-choice")
-                    (cons 'selected v))))
-           (cond
-             [(obs? raw-selected)
-              (set-selected! (obs-peek raw-selected))
-              (define (listener updated)
-                (set-selected! updated))
-              (obs-observe! raw-selected listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-selected listener)))]
-             [else
-              (set-selected! raw-selected)])
-           node]
-          [(slider)
-           (define raw-value (alist-ref (view-props v) 'value  'render))
-           (define action    (alist-ref (view-props v) 'action 'render))
-           (define min-value (alist-ref (view-props v) 'min    'render))
-           (define max-value (alist-ref (view-props v) 'max    'render))
-           (define node (dom-node 'slider
-                                  (list (cons 'min   min-value)
-                                        (cons 'max   max-value)
-                                        (cons 'data-we-widget "slider")
-                                        (cons 'class "we-slider")
-                                        (cons 'value 0))
-                                  '()
-                                  #f
-                                  #f
-                                  #f))
-           (set-dom-node-on-change! node (lambda (new-value) (action new-value)))
-           (define (set-slider-value! v)
-             (set-dom-node-attrs!
-              node
-              (list (cons 'min min-value)
-                    (cons 'max max-value)
-                    (cons 'data-we-widget "slider")
-                    (cons 'class "we-slider")
-                    (cons 'value v))))
-           (cond
-             [(obs? raw-value)
-              (set-slider-value! (obs-peek raw-value))
-              (define (listener updated)
-                (set-slider-value! updated))
-              (obs-observe! raw-value listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-value listener)))]
-             [else
-              (set-slider-value! raw-value)])
-           node]
-          [(progress)
-           (define raw-value (alist-ref (view-props v) 'value 'render))
-           (define min-value (alist-ref (view-props v) 'min   'render))
-           (define max-value (alist-ref (view-props v) 'max   'render))
-           (define raw-variant (alist-ref (view-props v) 'variant 'render))
-           (define node (dom-node 'progress
-                                  (list (cons 'min   min-value)
-                                        (cons 'max   max-value)
-                                        (cons 'data-we-widget "progress")
-                                        (cons 'class "we-progress we-progress-info")
-                                        (cons 'value 0))
-                                  '()
-                                  #f
-                                  #f
-                                  #f))
-           (define (set-progress-value! v)
-             (define variant (normalize-alert-level (maybe-observable-value raw-variant)))
-             (set-dom-node-attrs!
-              node
-              (list (cons 'min   min-value)
-                    (cons 'max   max-value)
-                    (cons 'data-we-widget "progress")
-                    (cons 'class (string-append "we-progress "
-                                                (progress-level-class variant)))
-                    (cons 'value v))))
-           (cond
-             [(obs? raw-value)
-              (set-progress-value! (obs-peek raw-value))
-              (define (listener updated)
-                (set-progress-value! updated))
-              (obs-observe! raw-value listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-value listener)))]
-             [else
-              (set-progress-value! raw-value)])
-           (when (obs? raw-variant)
-             (define (variant-listener _updated)
-               (set-progress-value! (maybe-observable-value raw-value)))
-             (obs-observe! raw-variant variant-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-variant variant-listener))))
-           node]
-          [(pagination)
-           (define raw-page-count   (alist-ref (view-props v) 'page-count   'render))
-           (define raw-current-page (alist-ref (view-props v) 'current-page 'render))
-           (define action           (alist-ref (view-props v) 'action       'render))
-           (define node (dom-node 'nav
-                                  (list (cons attr/role 'navigation)
-                                        (cons 'data-we-widget "pagination")
-                                        (cons 'class "we-pagination"))
-                                  '()
-                                  #f
-                                  #f
-                                  #f))
-           ;; make-page-button : string? number? boolean? boolean? -> dom-node?
-           ;;   Construct a pagination button node with disabled/current states.
-           (define (make-page-button label target-page disabled? current?)
-             (define button-node
-               (dom-node 'button
-                         (list (cons attr/role       'button)
-                               (cons 'data-we-widget "page-button")
-                               (cons 'aria-current   (if current?  "page" "false"))
-                               (cons 'aria-disabled  (if disabled? "true" "false"))
-                               (cons 'class          (cond
-                                                       [disabled? "we-page-btn is-disabled"]
-                                                       [current?  "we-page-btn is-current"]
-                                                       [else      "we-page-btn"])))
-                         '()
-                         label
-                         #f
-                         #f))
-             (unless disabled?
-               (set-dom-node-on-click!
-                button-node
-                (lambda ()
-                  (action target-page))))
-             button-node)
-           ;; render-pagination! : -> void?
-           ;;   Rebuild pagination controls from current count/page values.
-           (define (render-pagination!)
-             (define page-count (normalize-page-count (maybe-observable-value raw-page-count)))
-             (define current-page (clamp-current-page (maybe-observable-value raw-current-page)
-                                                      page-count))
-             (define first-disabled? (<= current-page 1))
-             (define prev-disabled? (<= current-page 1))
-             (define next-disabled? (>= current-page page-count))
-             (define last-disabled? (>= current-page page-count))
-             (define page-items (pagination-visible-pages page-count current-page))
-             (define page-buttons
-               (map (lambda (item)
-                      (if (eq? item 'ellipsis)
-                          (dom-node 'span
-                                    (list (cons 'data-we-widget "page-ellipsis")
-                                          (cons 'class "we-page-ellipsis")
-                                          (cons 'aria-hidden "true"))
-                                    '()
-                                    "..."
-                                    #f
-                                    #f)
-                          (make-page-button (number->string item)
-                                            item
-                                            #f
-                                            (= item current-page))))
-                    page-items))
-             (backend-replace-children!
-              node
-              (append (list (make-page-button "First" 1 first-disabled? #f)
-                            (make-page-button "Prev" (max 1 (- current-page 1)) prev-disabled? #f))
-                      page-buttons
-                      (list (make-page-button "Next" (min page-count (+ current-page 1)) next-disabled? #f)
-                            (make-page-button "Last" page-count last-disabled? #f)))))
-           (when (obs? raw-page-count)
-             (define (page-count-listener _updated)
-               (render-pagination!))
-             (obs-observe! raw-page-count page-count-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-page-count page-count-listener))))
-           (when (obs? raw-current-page)
-             (define (current-page-listener _updated)
-               (render-pagination!))
-             (obs-observe! raw-current-page current-page-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-current-page current-page-listener))))
-           (render-pagination!)
-           node]
-          [(breadcrumb)
-           (define raw-entries (alist-ref (view-props v) 'entries 'render))
-           (define raw-current (alist-ref (view-props v) 'current 'render))
-           (define action (alist-ref (view-props v) 'action 'render))
-           (define node (dom-node 'nav
-                                  (list (cons attr/role 'navigation)
-                                        (cons 'data-we-widget "breadcrumb")
-                                        (cons 'class "we-breadcrumb"))
-                                  '()
-                                  #f
-                                  #f
-                                  #f))
-           ;; make-separator-node : -> dom-node?
-           ;;   Build a breadcrumb separator node.
-           (define (make-separator-node)
-             (dom-node 'span
-                       (list (cons 'data-we-widget "breadcrumb-sep")
-                             (cons 'class "we-breadcrumb-sep")
-                             (cons 'aria-hidden "true"))
-                       '()
-                       "/"
-                       #f
-                       #f))
-           ;; make-item-node : any/c any/c boolean? -> dom-node?
-           ;;   Build a breadcrumb item node as current label or clickable action.
-           (define (make-item-node item-id item-label current?)
-             (if current?
-                 (dom-node 'span
-                           (list (cons 'data-we-widget "breadcrumb-item")
-                                 (cons 'class "we-breadcrumb-item is-current")
-                                 (cons 'aria-current "page"))
-                           '()
-                           (value->text item-label)
-                           #f
-                           #f)
-                 (dom-node 'button
-                           (list (cons attr/role 'button)
-                                 (cons 'data-we-widget "breadcrumb-item")
-                                 (cons 'class "we-breadcrumb-item"))
-                           '()
-                           (value->text item-label)
-                           (lambda ()
-                             (action item-id))
-                           #f)))
-           ;; render-breadcrumb! : -> void?
-           ;;   Rebuild breadcrumb controls from current entries/current id values.
-           (define (render-breadcrumb!)
-             (define entries (ensure-list (maybe-observable-value raw-entries) 'breadcrumb "entries"))
-             (define current (maybe-observable-value raw-current))
-             (define children
-               (let loop ([es entries]
-                          [acc '()])
-                 (cond
-                   [(null? es)
-                    (reverse acc)]
-                   [else
-                    (define entry       (car es))
-                    (define item-id     (breadcrumb-id entry))
-                    (define item-label  (breadcrumb-label entry))
-                    (define current?    (equal? item-id current))
-                    (define item-node   (make-item-node item-id item-label current?))
-                    (define next-acc    (cons item-node acc))
-                    (loop (cdr es)
-                          (if (null? (cdr es))
-                              next-acc
-                              (cons (make-separator-node) next-acc)))])))
-             (backend-replace-children! node children))
-           (when (obs? raw-entries)
-             (define (entries-listener _updated)
-               (render-breadcrumb!))
-             (obs-observe! raw-entries entries-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-entries entries-listener))))
-           (when (obs? raw-current)
-             (define (current-listener _updated)
-               (render-breadcrumb!))
-             (obs-observe! raw-current current-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-current current-listener))))
-           (render-breadcrumb!)
-           node]
-          [(list-group)
-           (define raw-entries (alist-ref (view-props v) 'entries 'render))
-           (define raw-current (alist-ref (view-props v) 'current 'render))
-           (define action (alist-ref (view-props v) 'action 'render))
-           (define node (dom-node 'div
-                                  (list (cons attr/role 'list)
-                                        (cons 'data-we-widget "list-group")
-                                        (cons 'class "we-list-group"))
-                                  '()
-                                  #f
-                                  #f
-                                  #f))
-           ;; make-list-item-node : any/c any/c boolean? -> dom-node?
-           ;;   Build one list-group row node with current-state marker.
-           (define (make-list-item-node item-id item-label current?)
-             (define item-node
-               (dom-node 'button
-                         (list (cons attr/role 'listitem)
-                               (cons 'data-we-widget "list-group-item")
-                               (cons 'class (if current?
-                                                "we-list-group-item is-current"
-                                                "we-list-group-item"))
-                               (cons 'aria-current (if current? "true" "false")))
-                         '()
-                         (value->text item-label)
-                         #f
-                         #f))
-             (unless current?
-               (set-dom-node-on-click!
-                item-node
-                (lambda ()
-                  (action item-id))))
-             item-node)
-           ;; render-list-group! : -> void?
-           ;;   Rebuild list-group controls from current entries/current id values.
-           (define (render-list-group!)
-             (define entries (ensure-list (maybe-observable-value raw-entries) 'list-group "entries"))
-             (define current (maybe-observable-value raw-current))
-             (define children
-               (map (lambda (entry)
-                      (define item-id    (list-group-id entry))
-                      (define item-label (list-group-label entry))
-                      (define current?   (equal? item-id current))
-                      (make-list-item-node item-id item-label current?))
-                    entries))
-             (backend-replace-children! node children))
-           (when (obs? raw-entries)
-             (define (entries-listener _updated)
-               (render-list-group!))
-             (obs-observe! raw-entries entries-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-entries entries-listener))))
-           (when (obs? raw-current)
-             (define (current-listener _updated)
-               (render-list-group!))
-             (obs-observe! raw-current current-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-current current-listener))))
-           (render-list-group!)
            node]
           [(if-view)
            (define raw-cond  (alist-ref (view-props v) 'cond 'render))
@@ -3965,41 +2603,6 @@
               (register-cleanup! (lambda () (obs-unobserve! raw-selected listener)))]
              [else
               (render-tab! raw-selected)])
-           node]
-          [(collapse)
-           (define raw-open (alist-ref (view-props v) 'open 'render))
-           (define child-view
-             (if (null? (view-children v))
-                 (spacer)
-                 (car (view-children v))))
-           (define node
-             (dom-node 'div
-                       (list (cons 'data-we-widget "collapse")
-                             (cons 'class "we-collapse")
-                             (cons 'aria-hidden "true"))
-                       '()
-                       #f
-                       #f
-                       #f))
-           (backend-set-single-child! node (build-node child-view register-cleanup!))
-           (define (set-open! open-value)
-             (define open? (not (not open-value)))
-             (set-dom-node-attrs!
-              node
-              (merge-root-extra-attrs
-               v
-               (list (cons 'data-we-widget "collapse")
-                     (cons 'class (if open? "we-collapse is-open" "we-collapse"))
-                     (cons 'aria-hidden (if open? "false" "true"))))))
-           (cond
-             [(obs? raw-open)
-              (set-open! (obs-peek raw-open))
-              (define (listener updated)
-                (set-open! updated))
-              (obs-observe! raw-open listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-open listener)))]
-             [else
-              (set-open! raw-open)])
            node]
           [(accordion)
            (define raw-selected (alist-ref (view-props v) 'selected 'render))
@@ -4759,36 +3362,125 @@
              [else
               (render-from-value! raw-data)])
            node]
-          [(spacer)
-           (define raw-grow   (alist-ref (view-props v) 'grow 'render))
-           (define grow-value (normalize-spacer-grow (maybe-observable-value raw-grow)))
-           (dom-node 'spacer (list (cons 'data-we-widget "spacer")
-                                   (cons 'class "we-spacer")
-                                   (cons 'style (string-append "flex-grow:" (number->string grow-value) ";")))
-                     '()
-                     #f
-                     #f
-                     #f)]
-          [(divider)
-           (define raw-orientation (alist-ref (view-props v) 'orientation 'render))
-           (define orientation
-             (if (symbol? raw-orientation)
-                 (case raw-orientation
-                   [(horizontal vertical) raw-orientation]
-                   [else 'horizontal])
-                 'horizontal))
-           (dom-node 'hr (list (cons attr/role 'separator)
-                               (cons 'data-we-widget "divider")
-                               (cons 'aria-orientation (if (eq? orientation 'vertical)
-                                                           "vertical"
-                                                           "horizontal"))
-                               (cons 'class (if (eq? orientation 'vertical)
-                                                "we-divider we-divider-vertical"
-                                                "we-divider we-divider-horizontal")))
-                     '()
-                     #f
-                     #f
-                     #f)]
+          [(observable-element-children)
+           (define raw-tag (alist-ref (view-props v) 'tag 'render))
+           (define raw-data (alist-ref (view-props v) 'data 'render))
+           (define make-children (alist-ref (view-props v) 'make-children 'render))
+           (define equal-proc (alist-ref (view-props v) 'equal-proc 'render))
+           (define raw-after-render (alist-ref (view-props v) 'after-render 'render))
+           (define initial-tag
+             (let ([v0 (maybe-observable-value raw-tag)])
+               (if (symbol? v0) v0 'div)))
+           (define node (dom-node initial-tag '() '() #f #f #f))
+           (define extra-attrs/raw (props-extra-attrs (view-props v)))
+           (define (callback-from-action-attr attr-key)
+             (define p (assq attr-key extra-attrs/raw))
+             (if p
+                 (let ([v0 (maybe-observable-value (cdr p))])
+                   (if (procedure? v0) v0 #f))
+                 #f))
+           (define (dom-node-attr-ref n key [default #f])
+             (define p (assq key (dom-node-attrs n)))
+             (if p
+                 (cdr p)
+                 default))
+           (define (find-node-by-widget root widget-name)
+             (if (equal? (dom-node-attr-ref root 'data-we-widget #f)
+                         widget-name)
+                 root
+                 (let loop ([rest (dom-node-children root)])
+                   (cond
+                     [(null? rest)
+                      #f]
+                     [else
+                      (define found
+                        (find-node-by-widget (car rest) widget-name))
+                     (if found
+                          found
+                          (loop (cdr rest)))]))))
+           (define after-render
+             (let ([v0 (maybe-observable-value raw-after-render)])
+               (if (procedure? v0) v0 #f)))
+           (define after-render-api
+             (list (cons 'dom-node-attr-ref dom-node-attr-ref)
+                   (cons 'find-node-by-widget find-node-by-widget)
+                   (cons 'dom-node-children dom-node-children)
+                   (cons 'dom-node-on-click dom-node-on-click)
+                   (cons 'set-dom-node-on-click! set-dom-node-on-click!)
+                   (cons 'backend-set-timeout! backend-set-timeout!)
+                   (cons 'backend-clear-timeout! backend-clear-timeout!)
+                   (cons 'backend-scrollspy-observe-scroll! backend-scrollspy-observe-scroll!)
+                   (cons 'backend-scrollspy-scroll-into-view! backend-scrollspy-scroll-into-view!)
+                   (cons 'backend-scrollspy-active-id backend-scrollspy-active-id)))
+           (define (valid-observable-attr-update? attr-key updated-value)
+             (if (and (procedure? updated-value)
+                      (not (procedure-allowed-attr-key? attr-key)))
+                 (begin
+                   (emit-web-easy-warning!
+                    (string-append "web-easy: ignored procedure-valued observable attribute update "
+                                   (symbol->string attr-key)))
+                   #f)
+                 #t))
+           (define (refresh-root-attrs!)
+             (set-dom-node-attrs! node (attr-remove-key (dom-node-attrs node) 'class)))
+           (define (set-tag! tag-value)
+             (set-dom-node-tag! node
+                                (if (symbol? tag-value)
+                                    tag-value
+                                    'div)))
+           (define on-click-callback (callback-from-action-attr 'on-click-action))
+           (define on-change-callback (callback-from-action-attr 'on-change-action))
+           (when on-click-callback
+             (set-dom-node-on-click! node on-click-callback))
+           (when on-change-callback
+             (set-dom-node-on-change! node on-change-callback))
+           (define last-value #f)
+           (define have-last? #f)
+           (define (render-from-value! value)
+             (set! have-last? #t)
+             (set! last-value value)
+             (define children
+               (map (lambda (child)
+                      (build-node child register-cleanup!))
+                    (ensure-list (make-children value)
+                                 'observable-element-children
+                                 "children")))
+             (backend-replace-children! node children)
+             (when after-render
+               (after-render node value register-cleanup! after-render-api)))
+           (cond
+             [(obs? raw-tag)
+              (set-tag! (obs-peek raw-tag))
+              (define (tag-listener updated-tag)
+                (set-tag! updated-tag))
+              (obs-observe! raw-tag tag-listener)
+              (register-cleanup! (lambda () (obs-unobserve! raw-tag tag-listener)))]
+             [else
+              (set-tag! raw-tag)])
+           (cond
+             [(obs? raw-data)
+              (render-from-value! (obs-peek raw-data))
+              (define (listener updated)
+                (unless (and have-last? (equal-proc updated last-value))
+                  (render-from-value! updated)))
+              (obs-observe! raw-data listener)
+              (register-cleanup! (lambda () (obs-unobserve! raw-data listener)))]
+             [else
+              (render-from-value! raw-data)])
+           (for-each
+            (lambda (entry)
+              (when (and (pair? entry)
+                         (symbol? (car entry))
+                         (obs? (cdr entry)))
+                (define attr-obs (cdr entry))
+                (define (attr-listener updated)
+                  (if (valid-observable-attr-update? (car entry) updated)
+                      (refresh-root-attrs!)
+                      (void)))
+                (obs-observe! attr-obs attr-listener)
+                (register-cleanup! (lambda () (obs-unobserve! attr-obs attr-listener)))))
+            extra-attrs/raw)
+           node]
           [(table)
            (define columns (ensure-list (alist-ref (view-props v) 'columns 'render)
                                         'table
@@ -4841,550 +3533,6 @@
               (register-cleanup! (lambda () (obs-unobserve! raw-rows listener)))]
              [else
               (render-table-rows! node columns raw-rows density raw-caption row-variants row-header-column)])
-           node]
-          [(radios)
-           (define rows         (ensure-list (alist-ref (view-props v) 'choices 'render)
-                                             'radios
-                                             "choices"))
-           (define radio-entries (normalized-radio-entries rows))
-           (define option-pairs
-             (map (lambda (entry)
-                    (cons (car entry) (cadr entry)))
-                  radio-entries))
-           (define raw-selected (alist-ref (view-props v) 'selected 'render))
-           (define action       (alist-ref (view-props v) 'action   'render))
-           (define group-name   (next-radio-group-name))
-           (define node
-             (dom-node 'radios
-                       (list (cons 'data-we-widget "radios")
-                             (cons 'choices rows)
-                             (cons 'class "we-radios")
-                             (cons 'selected #f))
-                       '()
-                       #f
-                       #f
-                       #f))
-           ;; Constants for radio DOM nodes.
-           (define radio-inputs '()) ; Per-option triples: (input-node encoded-id disabled?).
-           ;; rebuild-radio-children! : -> void?
-           ;;   Recreate radio input rows from option pairs and wire change callbacks.
-           (define (rebuild-radio-children!)
-             (set! radio-inputs '())
-             (define children
-               (map (lambda (entry)
-                      (define id-value     (list-ref entry 0))
-                      (define label-value  (list-ref entry 1))
-                      (define disabled?    (list-ref entry 2))
-                      (define encoded-id (value->text id-value))
-                      (define input-node
-                        (dom-node 'input
-                                  (append (list (cons 'type "radio")
-                                                (cons 'name group-name)
-                                                (cons 'value encoded-id)
-                                                (cons 'checked #f)
-                                                (cons 'class "we-radio-input"))
-                                          (if disabled?
-                                              (list (cons 'disabled #t))
-                                              '()))
-                                  '()
-                                  #f
-                                  #f
-                                  (lambda (raw-value)
-                                    (action (decode-option-selection option-pairs raw-value)))))
-                      (define label-node
-                        (dom-node 'span
-                                  (list (cons 'data-we-widget "text")
-                                        (cons 'class "we-text"))
-                                  '()
-                                  (value->text label-value)
-                                  #f
-                                  #f))
-                      (set! radio-inputs
-                            (append radio-inputs (list (list input-node encoded-id disabled?))))
-                      (define option-node
-                        (dom-node 'label
-                                  (list (cons 'data-we-widget "radio-option")
-                                        (cons 'class "we-radio-option"))
-                                  '()
-                                  #f
-                                  #f
-                                  #f))
-                      (backend-append-child! option-node input-node)
-                      (backend-append-child! option-node label-node)
-                      option-node)
-                    radio-entries))
-             (backend-replace-children! node children))
-           ;; set-selected! : any/c -> void?
-           ;;   Mark the matching radio input checked by comparing encoded ids.
-           (define (set-selected! selected)
-             (define selected-text (value->text selected))
-             (define matched? #f)
-             (set-dom-node-attrs!
-              node
-              (list (cons 'data-we-widget "radios")
-                    (cons 'choices rows)
-                    (cons 'class "we-radios")
-                    (cons 'selected selected)))
-             (for-each
-              (lambda (triple)
-                (define input-node (list-ref triple 0))
-                (define input-value (list-ref triple 1))
-                (define disabled?   (list-ref triple 2))
-                (define checked?
-                  (and (not disabled?)
-                       (string=? input-value selected-text)))
-                (when checked?
-                  (set! matched? #t))
-                (set-dom-node-attrs!
-                 input-node
-                 (append (list (cons 'type "radio")
-                               (cons 'name group-name)
-                               (cons 'value input-value)
-                               (cons 'checked checked?)
-                               (cons 'class "we-radio-input"))
-                         (if disabled?
-                             (list (cons 'disabled #t))
-                             '()))))
-              radio-inputs)
-             (when (not matched?)
-               (let loop ([remaining radio-inputs])
-                 (unless (null? remaining)
-                   (define triple     (car remaining))
-                   (define input-node (list-ref triple 0))
-                   (define input-value (list-ref triple 1))
-                   (define disabled?   (list-ref triple 2))
-                   (if disabled?
-                       (loop (cdr remaining))
-                       (set-dom-node-attrs!
-                        input-node
-                        (list (cons 'type "radio")
-                              (cons 'name group-name)
-                              (cons 'value input-value)
-                              (cons 'checked #t)
-                              (cons 'class "we-radio-input")))))))
-             (void))
-           (rebuild-radio-children!)
-           (cond
-             [(obs? raw-selected)
-              (set-selected! (obs-peek raw-selected))
-              (define (listener updated)
-                (set-selected! updated))
-              (obs-observe! raw-selected listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-selected listener)))]
-             [else
-              (set-selected! raw-selected)])
-           (set-dom-node-on-change!
-            node
-            (lambda (selected)
-              (action selected)))
-           node]
-          [(image)
-           (define raw-src    (alist-ref (view-props v) 'src    'render))
-           (define raw-width  (alist-ref (view-props v) 'width  'render))
-           (define raw-height (alist-ref (view-props v) 'height 'render))
-           (define node (dom-node 'image
-                                  (list (cons 'src "")
-                                        (cons 'data-we-widget "image")
-                                        (cons 'class "we-image"))
-                                  '()
-                                  #f
-                                  #f
-                                  #f))
-           (define (with-optional-attr attrs key value)
-             (if (eq? value #f)
-                 attrs
-                 (append attrs (list (cons key value)))))
-           (define (current-value v)
-             (if (obs? v) (obs-peek v) v))
-           (define (set-image-attrs! src width height)
-             (define attrs/base (list (cons 'src   (value->text src))
-                                      (cons 'data-we-widget "image")
-                                      (cons 'class "we-image")))
-             (define attrs/width (with-optional-attr attrs/base  'width  width))
-             (define attrs/final (with-optional-attr attrs/width 'height height))
-             (set-dom-node-attrs! node attrs/final))
-           (define (refresh-image!)
-             (set-image-attrs! (current-value raw-src)
-                               (current-value raw-width)
-                               (current-value raw-height)))
-           (refresh-image!)
-           (when (obs? raw-src)
-             (define (src-listener _updated)
-               (refresh-image!))
-             (obs-observe! raw-src src-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-src src-listener))))
-           (when (obs? raw-width)
-             (define (width-listener _updated)
-               (refresh-image!))
-             (obs-observe! raw-width width-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-width width-listener))))
-           (when (obs? raw-height)
-             (define (height-listener _updated)
-               (refresh-image!))
-             (obs-observe! raw-height height-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-height height-listener))))
-           node]
-          [(dropdown)
-           (define raw-label (alist-ref (view-props v) 'label 'render))
-           (define rows      (ensure-list (alist-ref (view-props v) 'entries 'render)
-                                          'dropdown
-                                          "entries"))
-           (define placement
-             (normalize-dropdown-placement
-              (alist-ref (view-props v) 'placement 'render)))
-           (define dropdown-class
-             (string-append "we-dropdown"
-                            (if (eq? placement 'down)
-                                ""
-                                (string-append " we-dropdown-" (symbol->string placement)))))
-           (define option-pairs (normalized-option-pairs rows))
-           (define action    (alist-ref (view-props v) 'action 'render))
-           (define node (dom-node 'div
-                                  (list (cons 'data-we-widget "dropdown")
-                                        (cons 'class dropdown-class))
-                                  '()
-                                  #f
-                                  #f
-                                  #f))
-           (define menu-items
-             (map (lambda (entry)
-                    (define entry-id    (car entry))
-                    (define entry-label (cdr entry))
-                    (menu-item entry-label
-                               (lambda ()
-                                 (action entry-id))))
-                  option-pairs))
-           (define menu-view (apply menu (cons raw-label menu-items)))
-           (backend-set-single-child! node (build-node menu-view register-cleanup!))
-           node]
-          [(carousel)
-           (define raw-items (alist-ref (view-props v) 'items 'render))
-           (define raw-current-index (alist-ref (view-props v) 'current-index 'render))
-           (define action (alist-ref (view-props v) 'action 'render))
-           (define raw-wrap? (alist-ref (view-props v) 'wrap? 'render))
-           (define raw-autoplay? (alist-ref (view-props v) 'autoplay? 'render))
-           (define node
-             (dom-node 'div
-                       (list (cons 'data-we-widget "carousel")
-                             (cons 'class "we-carousel")
-                             (cons 'tabindex 0))
-                       '()
-                       #f
-                       #f
-                       #f))
-           (define viewport-node
-             (dom-node 'div
-                       (list (cons 'data-we-widget "carousel-viewport")
-                             (cons 'class "we-carousel-viewport"))
-                       '()
-                       #f
-                       #f
-                       #f))
-           (define controls-node
-             (dom-node 'div
-                       (list (cons 'data-we-widget "carousel-controls")
-                             (cons 'class "we-carousel-controls"))
-                       '()
-                       #f
-                       #f
-                       #f))
-           (define indicators-node
-             (dom-node 'div
-                       (list (cons 'data-we-widget "carousel-indicators")
-                             (cons 'class "we-carousel-indicators"))
-                       '()
-                       #f
-                       #f
-                       #f))
-           (define prev-node
-             (dom-node 'button
-                       (list (cons attr/role 'button)
-                             (cons 'data-we-widget "carousel-prev")
-                             (cons 'class "we-button we-carousel-nav we-carousel-prev"))
-                       '()
-                       "Prev"
-                       #f
-                       #f))
-           (define next-node
-             (dom-node 'button
-                       (list (cons attr/role 'button)
-                             (cons 'data-we-widget "carousel-next")
-                             (cons 'class "we-button we-carousel-nav we-carousel-next"))
-                       '()
-                       "Next"
-                       #f
-                       #f))
-           (backend-append-child! controls-node prev-node)
-           (backend-append-child! controls-node indicators-node)
-           (backend-append-child! controls-node next-node)
-           (backend-append-child! node viewport-node)
-           (backend-append-child! node controls-node)
-           ;; Constants for carousel runtime state.
-           (define carousel-timeout-handle #f) ; Backend timeout handle for autoplay.
-           ;; clear-carousel-timeout! : -> void?
-           ;;   Clear any pending autoplay timeout.
-           (define (clear-carousel-timeout!)
-             (when carousel-timeout-handle
-               (backend-clear-timeout! carousel-timeout-handle)
-               (set! carousel-timeout-handle #f)))
-           (define (refresh-carousel!)
-             (define items (ensure-list (maybe-observable-value raw-items) 'carousel "items"))
-             (define count (length items))
-             (define current-index/raw (maybe-observable-value raw-current-index))
-             (define wrap? (not (eq? (maybe-observable-value raw-wrap?) #f)))
-             (define autoplay? (not (eq? (maybe-observable-value raw-autoplay?) #f)))
-             (define current-index
-               (if (and (number? current-index/raw)
-                        (integer? current-index/raw)
-                        (> count 0))
-                   (min (- count 1) (max 0 current-index/raw))
-                   0))
-             (define has-items? (> count 0))
-             (define min-index 0)
-             (define max-index (if has-items? (- count 1) 0))
-             (define at-first? (or (not has-items?) (<= current-index min-index)))
-             (define at-last? (or (not has-items?) (>= current-index max-index)))
-             (define prev-disabled? (or (not has-items?)
-                                        (and (not wrap?) at-first?)))
-             (define next-disabled? (or (not has-items?)
-                                        (and (not wrap?) at-last?)))
-             ;; normalize-index : number? -> number?
-             ;;   Normalize or clamp target index based on wrap mode and item count.
-             (define (normalize-index idx)
-               (cond
-                 [(not has-items?) 0]
-                 [wrap? (modulo (+ idx count) count)]
-                 [else  (min max-index (max min-index idx))]))
-             (define (set-index! next-index)
-               (when has-items?
-                 (define normalized (normalize-index next-index))
-                 (unless (= normalized current-index)
-                   (action normalized))))
-             (set-dom-node-on-click! prev-node
-                                     (lambda ()
-                                       (unless prev-disabled?
-                                         (set-index! (- current-index 1)))))
-             (set-dom-node-on-click! next-node
-                                     (lambda ()
-                                       (unless next-disabled?
-                                         (set-index! (+ current-index 1)))))
-             (set-dom-node-on-change!
-              node
-              (lambda (event-key)
-                (case (string->symbol event-key)
-                  [(ArrowLeft)
-                   (unless prev-disabled?
-                     (set-index! (- current-index 1)))]
-                  [(ArrowRight)
-                   (unless next-disabled?
-                     (set-index! (+ current-index 1)))]
-                  [(Home)
-                   (unless at-first?
-                     (set-index! min-index))]
-                  [(End)
-                   (unless at-last?
-                     (set-index! max-index))]
-                  [else
-                   (void)])))
-             (set-dom-node-attrs!
-              prev-node
-              (append
-               (list (cons attr/role 'button)
-                     (cons 'data-we-widget "carousel-prev")
-                     (cons 'class (string-append "we-button we-carousel-nav we-carousel-prev"
-                                                 (if prev-disabled? " is-disabled" "")))
-                     (cons 'aria-disabled (if prev-disabled? "true" "false")))
-               (if prev-disabled?
-                   (list (cons 'disabled #t))
-                   '())))
-             (set-dom-node-attrs!
-              next-node
-              (append
-               (list (cons attr/role 'button)
-                     (cons 'data-we-widget "carousel-next")
-                     (cons 'class (string-append "we-button we-carousel-nav we-carousel-next"
-                                                 (if next-disabled? " is-disabled" "")))
-                     (cons 'aria-disabled (if next-disabled? "true" "false")))
-               (if next-disabled?
-                   (list (cons 'disabled #t))
-                   '())))
-             (if has-items?
-                 (replace-with-single-child! viewport-node
-                                             (carousel-item-view (list-ref items current-index))
-                                             register-cleanup!)
-                 (backend-replace-children! viewport-node
-                                            (list (dom-node 'span
-                                                            (list (cons 'data-we-widget "carousel-empty"))
-                                                            '()
-                                                            "No slides"
-                                                            #f
-                                                            #f))))
-             (define indicator-nodes
-               (let loop ([i 0]
-                          [rest items])
-                 (if (null? rest)
-                     '()
-                     (let* ([entry (car rest)]
-                            [label (value->text (carousel-item-label entry))]
-                            [is-current (= i current-index)]
-                            [node/indicator
-                             (dom-node 'button
-                                       (list (cons attr/role 'button)
-                                             (cons 'data-we-widget "carousel-indicator")
-                                             (cons 'class (string-append "we-carousel-indicator"
-                                                                         (if is-current " is-current" "")))
-                                             (cons 'aria-label label))
-                                       '()
-                                       ""
-                                       (lambda ()
-                                         (action i))
-                                       #f)])
-                       (cons node/indicator
-                             (loop (add1 i) (cdr rest)))))))
-             (backend-replace-children! indicators-node indicator-nodes)
-             (clear-carousel-timeout!)
-             (when (and autoplay?
-                        has-items?
-                        (> count 1)
-                        (or wrap? (not at-last?)))
-               (set! carousel-timeout-handle
-                     (backend-set-timeout! 2500
-                                           (lambda ()
-                                             (set! carousel-timeout-handle #f)
-                                             (set-index! (+ current-index 1)))))))
-           (when (obs? raw-items)
-             (define (items-listener _updated)
-               (refresh-carousel!))
-             (obs-observe! raw-items items-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-items items-listener))))
-           (when (obs? raw-current-index)
-             (define (index-listener _updated)
-               (refresh-carousel!))
-             (obs-observe! raw-current-index index-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-current-index index-listener))))
-           (when (obs? raw-wrap?)
-             (define (wrap-listener _updated)
-               (refresh-carousel!))
-             (obs-observe! raw-wrap? wrap-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-wrap? wrap-listener))))
-           (when (obs? raw-autoplay?)
-             (define (autoplay-listener _updated)
-               (refresh-carousel!))
-             (obs-observe! raw-autoplay? autoplay-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-autoplay? autoplay-listener))))
-           (register-cleanup! (lambda () (clear-carousel-timeout!)))
-           (refresh-carousel!)
-           node]
-          [(scrollspy)
-           (define raw-sections (alist-ref (view-props v) 'sections 'render))
-           (define raw-current (alist-ref (view-props v) 'current 'render))
-           (define action (alist-ref (view-props v) 'action 'render))
-           (define node
-             (dom-node 'div
-                       (list (cons attr/role 'navigation)
-                             (cons 'data-we-widget "scrollspy")
-                             (cons 'class "we-scrollspy"))
-                       '()
-                       #f
-                       #f
-                       #f))
-           (define nav-node
-             (dom-node 'nav
-                       (list (cons 'data-we-widget "scrollspy-nav")
-                             (cons 'class "we-scrollspy-nav"))
-                       '()
-                       #f
-                       #f
-                       #f))
-           (define sections-node
-             (dom-node 'div
-                       (list (cons 'data-we-widget "scrollspy-sections")
-                             (cons 'class "we-scrollspy-sections"))
-                       '()
-                       #f
-                       #f
-                       #f))
-           (backend-replace-children! node (list nav-node sections-node))
-           ;; Constants for scrollspy runtime state.
-           (define section-bindings '()) ; Association list mapping section id to dom-node section.
-           ;; find-scrollspy-section-node : any/c -> (or/c dom-node? false/c)
-           ;;   Return section node for section-id or #f when absent.
-           (define (find-scrollspy-section-node section-id)
-             (define pair (assq section-id section-bindings))
-             (if pair (cdr pair) #f))
-           ;; scroll-to-section-id! : any/c -> void?
-           ;;   Scroll matched section into view in the active backend.
-           (define (scroll-to-section-id! section-id)
-             (define target-node (find-scrollspy-section-node section-id))
-             (when target-node
-               (backend-scrollspy-scroll-into-view! target-node)))
-           ;; sync-current-from-scroll! : void? -> void?
-           ;;   Update current section id from scroll position in section container.
-           (define (sync-current-from-scroll!)
-             (define active-id (backend-scrollspy-active-id section-bindings))
-             (define current (maybe-observable-value raw-current))
-             (when (and active-id (not (equal? active-id current)))
-               (action active-id)))
-           (define (refresh-scrollspy!)
-             (define sections (ensure-list (maybe-observable-value raw-sections) 'scrollspy "sections"))
-             (define current (maybe-observable-value raw-current))
-             (define nav-items
-               (map (lambda (entry)
-                      (define section-id (scrollspy-section-id entry))
-                      (define label (scrollspy-section-label entry))
-                      (define current? (equal? section-id current))
-                      (dom-node 'button
-                                (list (cons attr/role 'button)
-                                      (cons 'data-we-widget "scrollspy-item")
-                                      (cons 'aria-current (if current? "true" "false"))
-                                      (cons 'class (string-append "we-scrollspy-item"
-                                                                  (if current? " is-current" ""))))
-                                '()
-                                (value->text label)
-                                (lambda ()
-                                  (action section-id)
-                                  (scroll-to-section-id! section-id))
-                                #f))
-                    sections))
-             (define section-nodes
-               (map (lambda (entry)
-                      (define section-id (scrollspy-section-id entry))
-                      (define section-view (scrollspy-section-content entry))
-                      (define section-node
-                        (dom-node 'section
-                                  (list (cons 'data-we-widget "scrollspy-section")
-                                        (cons 'class "we-scrollspy-section")
-                                        (cons 'id (scrollspy-section-dom-id section-id)))
-                                  '()
-                                  #f
-                                  #f
-                                  #f))
-                      (backend-set-single-child! section-node (build-node section-view register-cleanup!))
-                      section-node)
-                    sections))
-             (set! section-bindings
-                   (map (lambda (entry section-node)
-                          (cons (scrollspy-section-id entry) section-node))
-                        sections
-                        section-nodes))
-             (backend-replace-children! nav-node nav-items)
-             (backend-replace-children! sections-node section-nodes)
-             (backend-scrollspy-observe-scroll!
-              sections-node
-              sync-current-from-scroll!
-              register-cleanup!))
-           (when (obs? raw-sections)
-             (define (sections-listener _updated)
-               (refresh-scrollspy!))
-             (obs-observe! raw-sections sections-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-sections sections-listener))))
-           (when (obs? raw-current)
-             (define (current-listener _updated)
-               (refresh-scrollspy!))
-             (obs-observe! raw-current current-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-current current-listener))))
-           (refresh-scrollspy!)
-           (sync-current-from-scroll!)
            node]
           [(tooltip)
            (define raw-message (alist-ref (view-props v) 'message 'render))
@@ -5864,310 +4012,6 @@
              (obs-observe! raw-tone-style tone-style-listener)
              (register-cleanup! (lambda () (obs-unobserve! raw-tone-style tone-style-listener))))
            (refresh-card-structure!)
-           node]
-          [(navigation-bar)
-           (define raw-orientation (alist-ref (view-props v) 'orientation 'render))
-           (define raw-collapsed? (alist-ref (view-props v) 'collapsed? 'render))
-           (define raw-expand (alist-ref (view-props v) 'expand 'render))
-           (define node (dom-node 'nav
-                                  (list (cons attr/role 'navigation)
-                                        (cons 'data-we-widget "navigation-bar")
-                                        (cons 'class "we-navigation-bar"))
-                                  '()
-                                  #f
-                                  #f
-                                  #f))
-           (define show-toggle?
-             (case (maybe-observable-value raw-expand)
-               [(always) #t]
-               [else     #f]))
-           (define toggle-node
-             (if show-toggle?
-                 (dom-node 'button
-                           (list (cons attr/role 'button)
-                                 (cons 'data-we-widget "navigation-bar-toggle")
-                                 (cons 'class "we-button we-navigation-bar-toggle")
-                                 (cons 'aria-expanded "false")
-                                 (cons 'aria-label "Toggle navigation"))
-                           '()
-                           "Menu"
-                           #f
-                           #f)
-                 #f))
-           (define items-node
-             (dom-node 'div
-                       (list (cons 'data-we-widget "navigation-bar-items")
-                             (cons 'class "we-navigation-bar-items"))
-                       '()
-                       #f
-                       #f
-                       #f))
-           ;; Constants for navigation-bar runtime state.
-           (define nav-collapsed? #f) ; Current collapsed state (mirrors observable/initial value).
-           ;; set-collapsed! : boolean? -> void?
-           ;;   Apply collapsed/expanded classes and toggle aria-expanded.
-           (define (set-collapsed! collapsed?)
-             (set! nav-collapsed? (not (not collapsed?)))
-             (define orientation (normalize-nav-orientation (maybe-observable-value raw-orientation)))
-             (define base-class
-               (string-append "we-navigation-bar"
-                              (if (eq? orientation 'vertical) " is-vertical" "")
-                              (if nav-collapsed? " is-collapsed" "")))
-             (set-dom-node-attrs!
-              node
-              (list (cons attr/role 'navigation)
-                    (cons 'data-we-widget "navigation-bar")
-                    (cons 'class base-class)))
-             (when toggle-node
-               (set-dom-node-attrs!
-                toggle-node
-                (list (cons attr/role 'button)
-                      (cons 'data-we-widget "navigation-bar-toggle")
-                      (cons 'class "we-button we-navigation-bar-toggle")
-                      (cons 'aria-expanded (if nav-collapsed? "false" "true"))
-                      (cons 'aria-label "Toggle navigation")))))
-           (when toggle-node
-             (set-dom-node-on-click!
-              toggle-node
-              (lambda ()
-                (define next-collapsed? (not nav-collapsed?))
-                (cond
-                  [(obs? raw-collapsed?) (:= raw-collapsed? next-collapsed?)]
-                  [else                  (set-collapsed! next-collapsed?)]))))
-           (for-each (lambda (child)
-                       (append-view-child! items-node child))
-                     (view-children v))
-           (when toggle-node
-             (backend-append-child! node toggle-node))
-           (backend-append-child! node items-node)
-           (when (obs? raw-orientation)
-             (define (orientation-listener _updated)
-               (set-collapsed! nav-collapsed?))
-             (obs-observe! raw-orientation orientation-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-orientation orientation-listener))))
-           (cond
-             [(obs? raw-collapsed?)
-              (set-collapsed! (obs-peek raw-collapsed?))
-              (define (collapsed-listener updated)
-                (set-collapsed! updated))
-              (obs-observe! raw-collapsed? collapsed-listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-collapsed? collapsed-listener)))]
-             [else
-              (set-collapsed! (maybe-observable-value raw-collapsed?))])
-           node]
-          [(top-bar)
-           (define node (dom-node 'header
-                                  (list (cons attr/role 'banner)
-                                        (cons 'data-we-widget "top-bar")
-                                        (cons 'class "we-top-bar"))
-                                  '()
-                                  #f
-                                  #f
-                                  #f))
-           (for-each (lambda (child)
-                       (append-view-child! node child))
-                     (view-children v))
-           node]
-          [(menu-bar)
-           (define node (dom-node 'menu-bar
-                                  (list (cons 'class "we-menu-bar")
-                                        (cons 'data-we-widget "menu-bar")
-                                        (cons attr/role 'menubar)
-                                        (cons 'aria-orientation "horizontal"))
-                                  '()
-                                  #f
-                                  #f
-                                  #f))
-           (for-each (lambda (child)
-                       (append-view-child! node child))
-                     (view-children v))
-           node]
-          [(menu)
-           (define raw-label (alist-ref (view-props v) 'label 'render))
-           (define popup-id (next-menu-popup-id))
-           (define open? #f)
-           (define node (dom-node 'menu
-                                  (list (cons 'class "we-menu")
-                                        (cons 'data-we-widget "menu"))
-                                  '()
-                                  #f
-                                  #f
-                                  #f))
-           (define label-node (dom-node 'button
-                                        (list (cons attr/role 'button)
-                                              (cons 'class "we-menu-label")
-                                              (cons 'data-we-widget "menu-label")
-                                              (cons 'menu-trigger #t)
-                                              (cons 'tabindex 0)
-                                              (cons 'aria-haspopup "menu")
-                                              (cons 'aria-controls popup-id)
-                                              (cons 'aria-expanded "false"))
-                                        '()
-                                        ""
-                                        (lambda ()
-                                          (set-open! (not open?)))
-                                        (lambda (key)
-                                          (case (string->symbol key)
-                                            [(ArrowDown)
-                                             (set-open! #t)]
-                                            [(ArrowUp)
-                                             (set-open! #t)]
-                                            [(mouseenter)
-                                             (when (and active-menu-close
-                                                        (not open?))
-                                               (set-open! #t))]
-                                            [(focusout)
-                                             (set-open! #f)]
-                                            [(Escape)
-                                             (set-open! #f)]
-                                            [else
-                                             (void)]))))
-           (define popup-node (dom-node 'vpanel
-                                        (list (cons attr/role 'menu)
-                                              (cons 'id popup-id)
-                                              (cons 'data-we-widget "menu-popup")
-                                              (cons 'class "we-menu-popup"))
-                                        '()
-                                        #f
-                                        #f
-                                        #f))
-           (define close-self!
-             (lambda ()
-               (set-open! #f)))
-           ;; set-open! : boolean? -> void?
-           ;;   Toggle popup visibility and update menu trigger aria state.
-           (define (set-open! next-open?)
-             (when (and next-open?
-                        active-menu-close
-                        (not (eq? active-menu-close close-self!)))
-               (active-menu-close))
-             (set! open? (not (not next-open?)))
-             (when open?
-               (set! active-menu-close close-self!))
-             (when (and (not open?)
-                        active-menu-close
-                        (eq? active-menu-close close-self!))
-               (set! active-menu-close #f))
-             (set-dom-node-attrs!
-              label-node
-              (list (cons attr/role 'button)
-                    (cons 'class "we-menu-label")
-                    (cons 'data-we-widget "menu-label")
-                    (cons 'menu-trigger #t)
-                    (cons 'tabindex 0)
-                    (cons 'aria-haspopup "menu")
-                    (cons 'aria-controls popup-id)
-                    (cons 'aria-expanded (if open? "true" "false"))))
-             (set-dom-node-attrs!
-              popup-node
-              (list (cons attr/role 'menu)
-                    (cons 'id popup-id)
-                    (cons 'data-we-widget "menu-popup")
-                    (cons 'class (if open? "we-menu-popup is-open" "we-menu-popup")))))
-           (define (set-label! label-value)
-             (set-dom-node-text! label-node (value->text label-value)))
-           (cond
-             [(obs? raw-label)
-              (set-label! (obs-peek raw-label))
-              (define (listener updated)
-                (set-label! updated))
-              (obs-observe! raw-label listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-label listener)))]
-             [else
-              (set-label! raw-label)])
-           (backend-append-child! node label-node)
-           (backend-append-child! node popup-node)
-           (for-each (lambda (child)
-                       (define child-node (build-node child register-cleanup!))
-                       (when (eq? (dom-node-tag child-node) 'menu-item)
-                         (define on-click (dom-node-on-click child-node))
-                         (when on-click
-                           (set-dom-node-on-click!
-                            child-node
-                            (lambda ()
-                              (on-click)
-                              (set-open! #f))))
-                         (set-dom-node-on-change!
-                          child-node
-                          (lambda (key)
-                            (case (string->symbol key)
-                              [(focusout)
-                               (set-open! #f)]
-                              [(Escape)
-                               (set-open! #f)]
-                              [else
-                               (void)]))))
-                       (backend-append-child! popup-node child-node))
-                     (view-children v))
-           node]
-          [(menu-item)
-           (define raw-label (alist-ref (view-props v) 'label  'render))
-           (define action    (alist-ref (view-props v) 'action 'render))
-           (define raw-leading-icon (alist-ref (view-props v) 'leading-icon 'render))
-           (define raw-trailing-icon (alist-ref (view-props v) 'trailing-icon 'render))
-           (define node (dom-node 'menu-item
-                                  (list (cons attr/role 'menuitem)
-                                        (cons 'class    "we-menu-item")
-                                        (cons 'data-we-widget "menu-item")
-                                        (cons 'tabindex 0))
-                                  '()
-                                  ""
-                                  action
-                                  #f))
-           (define label-node
-             (dom-node 'span
-                       (list (cons 'data-we-widget "menu-item-label")
-                             (cons 'class "we-menu-item-label"))
-                       '()
-                       ""
-                       #f
-                       #f))
-           (define (refresh-menu-item-children!)
-             (define leading-icon (maybe-observable-value raw-leading-icon))
-             (define trailing-icon (maybe-observable-value raw-trailing-icon))
-             (if (and (eq? leading-icon #f) (eq? trailing-icon #f))
-                 (begin
-                   (backend-replace-children! node '())
-                   (set-dom-node-text! node (value->text (if (obs? raw-label) (obs-peek raw-label) raw-label))))
-                 (let ([children
-                        (append
-                         (if (eq? leading-icon #f)
-                             '()
-                             (list (icon-node "menu-item-icon"
-                                              "we-menu-item-icon we-menu-item-icon-leading"
-                                              (value->text leading-icon))))
-                         (list label-node)
-                         (if (eq? trailing-icon #f)
-                             '()
-                             (list (icon-node "menu-item-icon"
-                                              "we-menu-item-icon we-menu-item-icon-trailing"
-                                              (value->text trailing-icon)))))])
-                   (set-dom-node-text! node #f)
-                   (backend-replace-children! node children))))
-           (define (set-menu-item-label! v0)
-             (set-dom-node-text! label-node (value->text v0))
-             (when (null? (dom-node-children node))
-               (set-dom-node-text! node (value->text v0))))
-           (cond
-             [(obs? raw-label)
-              (set-menu-item-label! (obs-peek raw-label))
-              (define (listener updated)
-                (set-menu-item-label! updated))
-              (obs-observe! raw-label listener)
-              (register-cleanup! (lambda () (obs-unobserve! raw-label listener)))]
-             [else
-              (set-menu-item-label! raw-label)])
-           (when (obs? raw-leading-icon)
-             (define (leading-icon-listener _updated)
-               (refresh-menu-item-children!))
-             (obs-observe! raw-leading-icon leading-icon-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-leading-icon leading-icon-listener))))
-           (when (obs? raw-trailing-icon)
-             (define (trailing-icon-listener _updated)
-               (refresh-menu-item-children!))
-             (obs-observe! raw-trailing-icon trailing-icon-listener)
-             (register-cleanup! (lambda () (obs-unobserve! raw-trailing-icon trailing-icon-listener))))
-           (refresh-menu-item-children!)
            node]
           [(list-view)
            (define raw-entries (alist-ref (view-props v) 'entries   'render))

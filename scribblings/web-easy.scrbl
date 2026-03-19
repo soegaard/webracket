@@ -309,10 +309,32 @@ Positional arguments:
 and each @racket[child] is rendered as a child view.
 }
 
+Internal note:
+the related internal constructor @racket[observable-element-children]
+supports an internal keyword @racket[#:after-render] used by some
+compound components for backend bridging after child rebuilds.
+This hook is internal and not part of the public stability contract.
+
 For dynamic tag use with @racket[html-element] and @racket[html-element-children],
 tag changes are handled with remount semantics: when the tag changes, the underlying DOM
 node is replaced (similar to React/Angular element-type changes), rather than mutated in place.
 This means DOM identity can change across tag updates.
+
+For internal component authoring in @tt{web-easy}, @racket[define/component]
+supports variadic children with @racket[#:rest], including together with
+@racket[#:root-attrs].
+
+@racketblock[
+(define/component Example
+  #:root-tag 'div
+  #:rest children
+  #:root-attrs attrs/final
+  (define attrs/final
+    (list (cons 'class "example")))
+  (apply Div
+         (append children
+                 (list #:attrs attrs/final))))
+]
 
 @section{Primitive HTML Leaf Elements}
 

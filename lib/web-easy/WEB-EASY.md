@@ -146,6 +146,20 @@ Current conventions:
    - prefer plain body-level `define`s,
    - avoid `let*`/`let` wrappers unless lexical scoping is required.
 
+## `observable-element-children` internal hook
+
+`observable-element-children` has an internal optional `#:after-render` hook.
+
+- Purpose:
+  - allow component-specific backend wiring after dynamic child rebuilds,
+  - keep renderer generic (no widget-name special-casing).
+- Current users:
+  - `carousel` (autoplay timeout bridge),
+  - `scrollspy` (scroll observer + scroll-into-view bridge).
+- Contract status:
+  - internal-only,
+  - not part of public API/docs stability guarantees.
+
 Example style:
 
 ```racket

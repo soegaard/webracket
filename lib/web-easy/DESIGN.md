@@ -68,6 +68,9 @@ These are semantic contracts. Desktop widget classes and interfaces are implemen
 2. **View IR Layer (`web-easy` internal)**
    - Normalize user view constructors into a backend-neutral representation.
    - Encode static props, dynamic props (observable-backed), event handlers, and keyed children.
+   - Internal dynamic children primitive (`observable-element-children`) supports
+     an optional `after-render` callback so component-specific backend wiring can
+     live in view code instead of renderer widget-name branches.
 
 3. **DOM Renderer Layer**
    - Convert IR nodes into DOM nodes.
@@ -357,7 +360,7 @@ Current status snapshot (March 1, 2026):
 | Core layout/views | `window`, `hpanel`, `vpanel`, `group`, `button-group`, `toggle-button-group`, `button-toolbar`, `card`, `navigation-bar`, `spacer`, `collapse`, `accordion`, `dialog` | Implemented | Core tests + smoke | Uses DOM container mapping; `accordion` is composed from `button` + `collapse` with keyboard navigation. |
 | Basic controls | `text`, `spinner`, `alert`, `badge`, `toast`, `button`, `input`, `checkbox`, `choice`, `slider`, `progress`, `pagination`, `breadcrumb`, `list-group`, `radios`, `image`, `tooltip`, `popover` | Implemented | Core tests + smoke | Browser behavior validated in dedicated smoke pages. |
 | Dynamic composition | `if-view`, `cond-view`, `case-view`, `observable-view`, `list-view` | Implemented | Core tests + smoke | Keyed reconciliation and branch switching covered. |
-| Menus | `dropdown`, `menu-bar`, `menu`, `menu-item` | Implemented (web-adapted MVP) | Core tests + smoke | `dropdown` is a single-trigger menu container over shared menu semantics. |
+| Menus | `dropdown`, `menu-bar`, `menu`, `menu-item` | Implemented (web-adapted MVP) | Core tests + smoke | `dropdown` is a single-trigger menu container over shared menu semantics. Loose end: `menu-bar` is currently a plain constructor (not yet `define/component` keyword-validated). |
 | Tabs | `tab-panel` | Implemented | Core tests + smoke | Includes keyboard navigation, disabled tabs, and focus tracking checks. |
 | Observables core | `obs?`, `obs`, `obs-name`, `obs-observe!`, `obs-unobserve!`, `obs-update!`, `obs-set!`, `obs-peek`, `obs-map`, `obs-filter` | Implemented | Core tests | Compatible MVP surface. |
 | Operators | `@`, `:=`, `<~`, `λ<~`, `~>`, `~#>` | Implemented | Core tests + smoke | Operator smoke covers filter + thunk behavior in browser runtime. |

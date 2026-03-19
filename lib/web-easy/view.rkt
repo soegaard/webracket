@@ -415,52 +415,27 @@
     (define kind/stack     'stack)     ; Vertical stack layout container view.
     (define kind/inline    'inline)    ; Horizontal inline layout container view.
     (define kind/fragment  'fragment)  ; Zero-wrapper composition view.
-    (define kind/group     'group)     ; Labeled container view.
     (define kind/alert-rich 'alert-rich) ; Rich alert view with title/body/link parts.
     (define kind/toast     'toast)     ; Non-modal toast notification view.
-    (define kind/close-button 'close-button) ; Standardized close button view.
     (define kind/html-element 'html-element) ; Primitive HTML element leaf view.
     (define kind/html-element-children 'html-element-children) ; Primitive HTML element container view.
     (define kind/button    'button)    ; Clickable action view.
-    (define kind/button-group 'button-group) ; Grouped button container view.
     (define kind/toggle-button-group 'toggle-button-group) ; Toggle button group view.
-    (define kind/button-toolbar 'button-toolbar) ; Horizontal toolbar for button groups.
-    (define kind/toolbar   'toolbar)   ; Generic horizontal toolbar container.
-    (define kind/toolbar-group 'toolbar-group) ; Grouped toolbar section container.
-    (define kind/input     'input)     ; Text input view.
-    (define kind/textarea  'textarea)  ; Multi-line text input view.
-    (define kind/checkbox  'checkbox)  ; Checkbox input view.
-    (define kind/choice    'choice)    ; Single select input view.
-    (define kind/slider    'slider)    ; Numeric slider input view.
-    (define kind/progress  'progress)  ; Numeric progress display view.
-    (define kind/pagination 'pagination) ; Page navigation control view.
-    (define kind/breadcrumb 'breadcrumb) ; Breadcrumb navigation view.
-    (define kind/list-group 'list-group) ; Selectable list-group navigation view.
     (define kind/if-view   'if-view)   ; Conditional branch view.
     (define kind/cond-view 'cond-view) ; Multi-branch conditional view.
     (define kind/case-view 'case-view) ; Equality-based conditional view.
     (define kind/tab-panel 'tab-panel) ; Selected-tab conditional view.
-    (define kind/collapse 'collapse) ; Conditional visibility view.
     (define kind/accordion 'accordion) ; Single-open section accordion view.
     (define kind/offcanvas 'offcanvas) ; Side-sheet/offcanvas panel view.
     (define kind/dialog 'dialog) ; Modal dialog container view.
     (define kind/modal 'modal) ; Modal container view.
     (define kind/observable-view 'observable-view) ; Dynamic single-child view.
+    (define kind/observable-element-children 'observable-element-children) ; Dynamic multi-child primitive element view.
     (define kind/table     'table)     ; Minimal tabular data view.
     (define kind/list-view 'list-view) ; Dynamic keyed list container.
-    (define kind/radios    'radios)    ; Radio-choice control view.
-    (define kind/image     'image)     ; Image display view.
-    (define kind/dropdown  'dropdown)  ; Dropdown menu view.
-    (define kind/carousel  'carousel)  ; Carousel control view.
-    (define kind/scrollspy 'scrollspy) ; Active section navigation view.
     (define kind/tooltip   'tooltip)   ; Tooltip container view.
     (define kind/popover   'popover)   ; Popover container view.
     (define kind/card      'card)      ; Card container view.
-    (define kind/top-bar   'top-bar)   ; Top bar container view.
-    (define kind/navigation-bar 'navigation-bar) ; Navigation bar container view.
-    (define kind/menu-bar  'menu-bar)  ; Menu bar container view.
-    (define kind/menu      'menu)      ; Menu container view.
-    (define kind/menu-item 'menu-item) ; Menu item action view.
 
     ;; view-props-ref/default : list? symbol? any/c -> any/c
     ;;   Return property value for key in props, else default-value.
@@ -618,6 +593,19 @@
         [(light)     "we-badge-light"]
         [(dark)      "we-badge-dark"]
         [else        "we-badge-info"]))
+
+    ;; progress-level-class/internal : symbol? -> string?
+    ;;   Return CSS class suffix for progress variant level.
+    (define (progress-level-class/internal level)
+      (case level
+        [(primary)   "we-progress-primary"]
+        [(secondary) "we-progress-secondary"]
+        [(success)   "we-progress-success"]
+        [(warning)   "we-progress-warning"]
+        [(danger)    "we-progress-danger"]
+        [(light)     "we-progress-light"]
+        [(dark)      "we-progress-dark"]
+        [else        "we-progress-info"]))
 
     ;; grid-gap-value? : any/c -> boolean?
     ;;   Return #t when v can be interpreted as a grid gap value.
@@ -805,7 +793,15 @@
                        #:attrs [attrs '()]
                        . children)
       (apply-root-decorators
-       (view kind/group (list (cons 'label label)) children)
+       (apply Fieldset
+               (append
+               (list (html-element 'legend
+                                   label
+                                   #:attrs (list (cons 'data-we-widget "group-legend")
+                                                 (cons 'class "we-group-legend"))))
+               children
+               (list #:data-we-widget "group"
+                     #:class "we-group")))
        id
        class
        attrs
@@ -947,19 +943,24 @@
     ;; close-button : (-> any/c) [(or/c string? observable?)] -> view?
     ;;   Construct a standardized close button with action, optional aria-label, and root decorators.
     ;;   Optional parameter aria-label defaults to "Close".
-    (define/key (close-button action
-                              [aria-label "Close"]
-                              #:id [id #f]
-                              #:class [class #f]
-                              #:attrs [attrs '()])
-      (apply-root-decorators
-       (view kind/close-button (list (cons 'action action)
-                                     (cons 'aria-label aria-label))
-             '())
-       id
-       class
-       attrs
-       'close-button))
+    (define/component close-button
+      #:root-tag 'button
+      #:positional ([action]
+                    [aria-label "Close"])
+      #:root-attrs attrs/final
+      (define attrs/final
+        (list (cons 'role 'button)
+              (cons 'data-we-widget "close-button")
+              (cons 'class "we-close-button")
+              (cons 'aria-label aria-label)
+              (cons 'on-click-action action)))
+      (html-element-children
+       'button
+       (Span ""
+             #:data-we-widget "close-button-icon"
+             #:class "we-close-button-icon"
+             #:aria-hidden "true")
+       #:attrs attrs/final))
 
     ;; badge : (or/c string? observable?) [(or/c symbol? observable?)] -> view?
     ;;   Construct a compact inline badge with optional severity level.
@@ -1196,15 +1197,16 @@
                     #:attrs attrs/final))
 
     ;; h1 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic level-1 heading view with optional root decorators.
-    (define/key (h1 content
-                    #:id [id #f]
-                    #:class [class #f]
-                    #:attrs [attrs '()])
-      (heading 1 content
-               #:id id
-               #:class class
-               #:attrs attrs))
+    ;;   Construct a semantic level-1 heading view.
+    ;;   Accepts global HTML attributes for the root <h1> via keyword arguments.
+    (define/component h1
+      #:root-tag 'h1
+      #:positional ([content])
+      #:root-attrs attrs/final
+      (define attrs/final '())
+      (apply heading
+             (append (list 1 content)
+                     forwarded-args)))
 
     ;; H1 : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML level-1 heading element with generic keyword attributes.
@@ -1765,59 +1767,64 @@
       #:positional-count any)
 
     ;; h2 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic level-2 heading view with optional root decorators.
-    (define/key (h2 content
-                    #:id [id #f]
-                    #:class [class #f]
-                    #:attrs [attrs '()])
-      (heading 2 content
-               #:id id
-               #:class class
-               #:attrs attrs))
+    ;;   Construct a semantic level-2 heading view.
+    ;;   Accepts global HTML attributes for the root <h2> via keyword arguments.
+    (define/component h2
+      #:root-tag 'h2
+      #:positional ([content])
+      #:root-attrs attrs/final
+      (define attrs/final '())
+      (apply heading
+             (append (list 2 content)
+                     forwarded-args)))
 
     ;; h3 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic level-3 heading view with optional root decorators.
-    (define/key (h3 content
-                    #:id [id #f]
-                    #:class [class #f]
-                    #:attrs [attrs '()])
-      (heading 3 content
-               #:id id
-               #:class class
-               #:attrs attrs))
+    ;;   Construct a semantic level-3 heading view.
+    ;;   Accepts global HTML attributes for the root <h3> via keyword arguments.
+    (define/component h3
+      #:root-tag 'h3
+      #:positional ([content])
+      #:root-attrs attrs/final
+      (define attrs/final '())
+      (apply heading
+             (append (list 3 content)
+                     forwarded-args)))
 
     ;; h4 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic level-4 heading view with optional root decorators.
-    (define/key (h4 content
-                    #:id [id #f]
-                    #:class [class #f]
-                    #:attrs [attrs '()])
-      (heading 4 content
-               #:id id
-               #:class class
-               #:attrs attrs))
+    ;;   Construct a semantic level-4 heading view.
+    ;;   Accepts global HTML attributes for the root <h4> via keyword arguments.
+    (define/component h4
+      #:root-tag 'h4
+      #:positional ([content])
+      #:root-attrs attrs/final
+      (define attrs/final '())
+      (apply heading
+             (append (list 4 content)
+                     forwarded-args)))
 
     ;; h5 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic level-5 heading view with optional root decorators.
-    (define/key (h5 content
-                    #:id [id #f]
-                    #:class [class #f]
-                    #:attrs [attrs '()])
-      (heading 5 content
-               #:id id
-               #:class class
-               #:attrs attrs))
+    ;;   Construct a semantic level-5 heading view.
+    ;;   Accepts global HTML attributes for the root <h5> via keyword arguments.
+    (define/component h5
+      #:root-tag 'h5
+      #:positional ([content])
+      #:root-attrs attrs/final
+      (define attrs/final '())
+      (apply heading
+             (append (list 5 content)
+                     forwarded-args)))
 
     ;; h6 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic level-6 heading view with optional root decorators.
-    (define/key (h6 content
-                    #:id [id #f]
-                    #:class [class #f]
-                    #:attrs [attrs '()])
-      (heading 6 content
-               #:id id
-               #:class class
-               #:attrs attrs))
+    ;;   Construct a semantic level-6 heading view.
+    ;;   Accepts global HTML attributes for the root <h6> via keyword arguments.
+    (define/component h6
+      #:root-tag 'h6
+      #:positional ([content])
+      #:root-attrs attrs/final
+      (define attrs/final '())
+      (apply heading
+             (append (list 6 content)
+                     forwarded-args)))
 
     ;; display-heading : (or/c number? observable?) (or/c string? observable?) [symbol?] [symbol?] -> view?
     ;;   Construct a semantic heading view with display style, level normalized to 1..6, and optional align/spacing style variants.
@@ -1867,89 +1874,96 @@
                     #:attrs attrs/final))
 
     ;; display-1 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic display level-1 heading view with optional root decorators.
-    (define/key (display-1 content
-                           #:id [id #f]
-                           #:class [class #f]
-                           #:attrs [attrs '()])
-      (display-heading 1 content
-                       #:id id
-                       #:class class
-                       #:attrs attrs))
+    ;;   Construct a semantic display level-1 heading view.
+    ;;   Accepts global HTML attributes for the root <h1> via keyword arguments.
+    (define/component display-1
+      #:root-tag 'h1
+      #:positional ([content])
+      #:root-attrs attrs/final
+      (define attrs/final '())
+      (apply display-heading
+             (append (list 1 content)
+                     forwarded-args)))
 
     ;; display-2 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic display level-2 heading view with optional root decorators.
-    (define/key (display-2 content
-                           #:id [id #f]
-                           #:class [class #f]
-                           #:attrs [attrs '()])
-      (display-heading 2 content
-                       #:id id
-                       #:class class
-                       #:attrs attrs))
+    ;;   Construct a semantic display level-2 heading view.
+    ;;   Accepts global HTML attributes for the root <h2> via keyword arguments.
+    (define/component display-2
+      #:root-tag 'h2
+      #:positional ([content])
+      #:root-attrs attrs/final
+      (define attrs/final '())
+      (apply display-heading
+             (append (list 2 content)
+                     forwarded-args)))
 
     ;; display-3 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic display level-3 heading view with optional root decorators.
-    (define/key (display-3 content
-                           #:id [id #f]
-                           #:class [class #f]
-                           #:attrs [attrs '()])
-      (display-heading 3 content
-                       #:id id
-                       #:class class
-                       #:attrs attrs))
+    ;;   Construct a semantic display level-3 heading view.
+    ;;   Accepts global HTML attributes for the root <h3> via keyword arguments.
+    (define/component display-3
+      #:root-tag 'h3
+      #:positional ([content])
+      #:root-attrs attrs/final
+      (define attrs/final '())
+      (apply display-heading
+             (append (list 3 content)
+                     forwarded-args)))
 
     ;; display-4 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic display level-4 heading view with optional root decorators.
-    (define/key (display-4 content
-                           #:id [id #f]
-                           #:class [class #f]
-                           #:attrs [attrs '()])
-      (display-heading 4 content
-                       #:id id
-                       #:class class
-                       #:attrs attrs))
+    ;;   Construct a semantic display level-4 heading view.
+    ;;   Accepts global HTML attributes for the root <h4> via keyword arguments.
+    (define/component display-4
+      #:root-tag 'h4
+      #:positional ([content])
+      #:root-attrs attrs/final
+      (define attrs/final '())
+      (apply display-heading
+             (append (list 4 content)
+                     forwarded-args)))
 
     ;; display-5 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic display level-5 heading view with optional root decorators.
-    (define/key (display-5 content
-                           #:id [id #f]
-                           #:class [class #f]
-                           #:attrs [attrs '()])
-      (display-heading 5 content
-                       #:id id
-                       #:class class
-                       #:attrs attrs))
+    ;;   Construct a semantic display level-5 heading view.
+    ;;   Accepts global HTML attributes for the root <h5> via keyword arguments.
+    (define/component display-5
+      #:root-tag 'h5
+      #:positional ([content])
+      #:root-attrs attrs/final
+      (define attrs/final '())
+      (apply display-heading
+             (append (list 5 content)
+                     forwarded-args)))
 
     ;; display-6 : (or/c string? observable?) -> view?
-    ;;   Construct a semantic display level-6 heading view with optional root decorators.
-    (define/key (display-6 content
-                           #:id [id #f]
-                           #:class [class #f]
-                           #:attrs [attrs '()])
-      (display-heading 6 content
-                       #:id id
-                       #:class class
-                       #:attrs attrs))
+    ;;   Construct a semantic display level-6 heading view.
+    ;;   Accepts global HTML attributes for the root <h6> via keyword arguments.
+    (define/component display-6
+      #:root-tag 'h6
+      #:positional ([content])
+      #:root-attrs attrs/final
+      (define attrs/final '())
+      (apply display-heading
+             (append (list 6 content)
+                     forwarded-args)))
 
     ;; heading-with-subtitle : (or/c number? observable?) (or/c string? observable?) (or/c string? observable?) [symbol?] [symbol?] -> view?
     ;;   Construct a semantic heading view with muted subtitle text and optional align/spacing style variants.
     ;;   Optional parameter align defaults to 'left.
     ;;   Optional parameter spacing defaults to 'normal.
-    (define/key (heading-with-subtitle level
-                                       content
-                                       subtitle
-                                       [align 'left]
-                                       [spacing 'normal]
-                                       #:align [align-kw #f]
-                                       #:spacing [spacing-kw #f]
-                                       #:id [id #f]
-                                       #:class [class #f]
-                                       #:attrs [attrs '()])
+    ;;   Accepts global HTML attributes for the root <h1..h6> via keyword arguments.
+    (define/component heading-with-subtitle
+      #:root-tag 'h1
+      #:positional ([level]
+                    [content]
+                    [subtitle]
+                    [align/positional 'left]
+                    [spacing/positional 'normal])
+      #:component-keywords ([#:align align-kw #f]
+                            [#:spacing spacing-kw #f])
+      #:root-attrs attrs/final
       (define final-align
-        (if (eq? align-kw #f) align align-kw))
+        (if (eq? align-kw #f) align/positional align-kw))
       (define final-spacing
-        (if (eq? spacing-kw #f) spacing spacing-kw))
+        (if (eq? spacing-kw #f) spacing/positional spacing-kw))
       (define @level   (observable-or-const level))
       (define @align   (observable-or-const final-align))
       (define @spacing (observable-or-const final-spacing))
@@ -1973,40 +1987,38 @@
          @normalized-level
          @normalized-align
          @normalized-spacing))
-      (apply-root-decorators
-       (html-element-children
-        @tag
-        (Span content
-              #:data-we-widget "heading-title"
-              #:class "we-heading-title")
-        (Small subtitle
-               #:data-we-widget "heading-subtitle"
-               #:class "we-heading-subtitle")
-        #:attrs (list (cons 'data-we-widget "heading-with-subtitle")
-                      (cons 'class @class)))
-       id
-       class
-       attrs
-       'heading-with-subtitle))
+      (define attrs/final
+        (list (cons 'data-we-widget "heading-with-subtitle")
+              (cons 'class @class)))
+      (html-element-children
+       @tag
+       (Span content
+             #:data-we-widget "heading-title"
+             #:class "we-heading-title")
+       (Small subtitle
+              #:data-we-widget "heading-subtitle"
+              #:class "we-heading-subtitle")
+       #:attrs attrs/final))
 
     ;; display-heading-with-subtitle : (or/c number? observable?) (or/c string? observable?) (or/c string? observable?) [symbol?] [symbol?] -> view?
     ;;   Construct a semantic display heading view with muted subtitle text and optional align/spacing style variants.
     ;;   Optional parameter align defaults to 'left.
     ;;   Optional parameter spacing defaults to 'normal.
-    (define/key (display-heading-with-subtitle level
-                                               content
-                                               subtitle
-                                               [align 'left]
-                                               [spacing 'normal]
-                                               #:align [align-kw #f]
-                                               #:spacing [spacing-kw #f]
-                                               #:id [id #f]
-                                               #:class [class #f]
-                                               #:attrs [attrs '()])
+    ;;   Accepts global HTML attributes for the root <h1..h6> via keyword arguments.
+    (define/component display-heading-with-subtitle
+      #:root-tag 'h1
+      #:positional ([level]
+                    [content]
+                    [subtitle]
+                    [align/positional 'left]
+                    [spacing/positional 'normal])
+      #:component-keywords ([#:align align-kw #f]
+                            [#:spacing spacing-kw #f])
+      #:root-attrs attrs/final
       (define final-align
-        (if (eq? align-kw #f) align align-kw))
+        (if (eq? align-kw #f) align/positional align-kw))
       (define final-spacing
-        (if (eq? spacing-kw #f) spacing spacing-kw))
+        (if (eq? spacing-kw #f) spacing/positional spacing-kw))
       (define @level   (observable-or-const level))
       (define @align   (observable-or-const final-align))
       (define @spacing (observable-or-const final-spacing))
@@ -2030,21 +2042,18 @@
          @normalized-level
          @normalized-align
          @normalized-spacing))
-      (apply-root-decorators
-       (html-element-children
-        @tag
-        (Span content
-              #:data-we-widget "heading-title"
-              #:class "we-heading-title")
-        (Small subtitle
-               #:data-we-widget "heading-subtitle"
-               #:class "we-heading-subtitle")
-        #:attrs (list (cons 'data-we-widget "display-heading-with-subtitle")
-                      (cons 'class @class)))
-       id
-       class
-       attrs
-       'display-heading-with-subtitle))
+      (define attrs/final
+        (list (cons 'data-we-widget "display-heading-with-subtitle")
+              (cons 'class @class)))
+      (html-element-children
+       @tag
+       (Span content
+             #:data-we-widget "heading-title"
+             #:class "we-heading-title")
+       (Small subtitle
+              #:data-we-widget "heading-subtitle"
+              #:class "we-heading-subtitle")
+       #:attrs attrs/final))
 
     ;; lead : (or/c string? observable?) -> view?
     ;;   Construct a lead paragraph view from static or observable value.
@@ -2178,17 +2187,18 @@
 
     ;; button-group : view? ... -> view?
     ;;   Construct a grouped button container view.
-    (define/key (button-group
-                 #:id [id #f]
-                 #:class [class #f]
-                 #:attrs [attrs '()]
-                 . children)
-      (apply-root-decorators
-       (view kind/button-group '() children)
-       id
-       class
-       attrs
-       'button-group))
+    ;;   Accepts global HTML attributes for the root <div> via keyword arguments.
+    (define/component button-group
+      #:root-tag 'div
+      #:rest children
+      #:root-attrs attrs/final
+      (define attrs/final
+        (list (cons 'role 'group)
+              (cons 'data-we-widget "button-group")
+              (cons 'class "we-button-group")))
+      (apply Div
+             (append children
+                     (list #:attrs attrs/final))))
 
     ;; toggle-button-group : symbol? list? (or/c any/c observable?) (-> any/c any/c) -> view?
     ;;   Construct an exclusive/non-exclusive toggle button group.
@@ -2212,249 +2222,454 @@
 
     ;; button-toolbar : view? ... -> view?
     ;;   Construct a horizontal toolbar of grouped button controls.
-    (define/key (button-toolbar
-                 #:id [id #f]
-                 #:class [class #f]
-                 #:attrs [attrs '()]
-                 . children)
-      (apply-root-decorators
-       (view kind/button-toolbar '() children)
-       id
-       class
-       attrs
-       'button-toolbar))
+    ;;   Accepts global HTML attributes for the root <div> via keyword arguments.
+    (define/component button-toolbar
+      #:root-tag 'div
+      #:rest children
+      #:root-attrs attrs/final
+      (define attrs/final
+        (list (cons 'role 'toolbar)
+              (cons 'data-we-widget "button-toolbar")
+              (cons 'class "we-button-toolbar")))
+      (apply Div
+             (append children
+                     (list #:attrs attrs/final))))
 
     ;; toolbar : view? ... -> view?
     ;;   Construct a generic horizontal toolbar container.
-    (define/key (toolbar
-                 #:id [id #f]
-                 #:class [class #f]
-                 #:attrs [attrs '()]
-                 . children)
-      (apply-root-decorators
-       (view kind/toolbar '() children)
-       id
-       class
-       attrs
-       'toolbar))
+    ;;   Accepts global HTML attributes for the root <div> via keyword arguments.
+    (define/component toolbar
+      #:root-tag 'div
+      #:rest children
+      #:root-attrs attrs/final
+      (define attrs/final
+        (list (cons 'data-we-widget "toolbar")
+              (cons 'class "we-toolbar")))
+      (apply Div
+             (append children
+                     (list #:attrs attrs/final))))
 
     ;; toolbar-group : view? ... -> view?
     ;;   Construct a grouped toolbar section container.
-    (define/key (toolbar-group
-                 #:id [id #f]
-                 #:class [class #f]
-                 #:attrs [attrs '()]
-                 . children)
-      (apply-root-decorators
-       (view kind/toolbar-group '() children)
-       id
-       class
-       attrs
-       'toolbar-group))
+    ;;   Accepts global HTML attributes for the root <div> via keyword arguments.
+    (define/component toolbar-group
+      #:root-tag 'div
+      #:rest children
+      #:root-attrs attrs/final
+      (define attrs/final
+        (list (cons 'data-we-widget "toolbar-group")
+              (cons 'class "we-toolbar-group")))
+      (apply Div
+             (append children
+                     (list #:attrs attrs/final))))
 
     ;; input : (or/c string? observable?) (-> any/c any/c) [(or/c (-> any/c) false/c)] [list?] -> view?
     ;;   Construct an input view with current value, change action, optional Enter action, and attrs.
     ;;   Optional parameter on-enter defaults to #f.
     ;;   Optional parameter attrs defaults to '().
-    (define/key (input value
-                       action
-                       [on-enter #f]
-                       [input-attrs '()]
-                       #:on-enter [on-enter-kw #f]
-                       #:input-attrs [input-attrs-kw #f]
-                       #:id [id #f]
-                       #:class [class #f]
-                       #:attrs [attrs '()])
+    ;;   Accepts global HTML attributes for the root <input> via keyword arguments.
+    (define/component input
+      #:root-tag 'input
+      #:positional ([value]
+                    [action]
+                    [on-enter/positional #f]
+                    [input-attrs/positional '()])
+      #:component-keywords ([#:on-enter on-enter-kw #f]
+                            [#:input-attrs input-attrs-kw #f])
+      #:root-attrs attrs/final
       (define final-on-enter
-        (if (eq? on-enter-kw #f) on-enter on-enter-kw))
+        (if (eq? on-enter-kw #f) on-enter/positional on-enter-kw))
       (define final-input-attrs
-        (if (eq? input-attrs-kw #f) input-attrs input-attrs-kw))
-      (apply-root-decorators
-       (view kind/input (list (cons 'value value)
-                              (cons 'action action)
-                              (cons 'on-enter final-on-enter)
-                              (cons 'attrs final-input-attrs))
-             '())
-       id
-       class
-       attrs
-       'input))
+        (if (eq? input-attrs-kw #f) input-attrs/positional input-attrs-kw))
+      (define attrs/final
+        (append (if (list? final-input-attrs) final-input-attrs '())
+                (list (cons 'value value)
+                      (cons 'data-we-widget "input")
+                      (cons 'class "we-input")
+                      (cons 'on-enter-action final-on-enter)
+                      (cons 'on-change-action
+                            (lambda (new-value)
+                              (action new-value))))))
+      (Input #:attrs attrs/final))
 
     ;; textarea : (or/c string? observable?) (-> any/c any/c) [number?] [list?] -> view?
     ;;   Construct a textarea view with current value, change action, optional rows, and attrs.
     ;;   Optional parameter rows defaults to 3.
     ;;   Optional parameter attrs defaults to '().
-    (define/key (textarea value
-                          action
-                          [rows 3]
-                          [textarea-attrs '()]
-                          #:rows [rows-kw #f]
-                          #:textarea-attrs [textarea-attrs-kw #f]
-                          #:id [id #f]
-                          #:class [class #f]
-                          #:attrs [attrs '()])
+    ;;   Accepts global HTML attributes for the root <textarea> via keyword arguments.
+    (define/component textarea
+      #:root-tag 'textarea
+      #:positional ([value]
+                    [action]
+                    [rows/positional 3]
+                    [textarea-attrs/positional '()])
+      #:component-keywords ([#:rows rows-kw #f]
+                            [#:textarea-attrs textarea-attrs-kw #f])
+      #:root-attrs attrs/final
       (define final-rows
-        (if (eq? rows-kw #f) rows rows-kw))
+        (if (eq? rows-kw #f) rows/positional rows-kw))
       (define final-textarea-attrs
-        (if (eq? textarea-attrs-kw #f) textarea-attrs textarea-attrs-kw))
-      (apply-root-decorators
-       (view kind/textarea (list (cons 'value value)
-                                 (cons 'action action)
-                                 (cons 'rows final-rows)
-                                 (cons 'attrs final-textarea-attrs))
-             '())
-       id
-       class
-       attrs
-       'textarea))
+        (if (eq? textarea-attrs-kw #f) textarea-attrs/positional textarea-attrs-kw))
+      (define attrs/final
+        (append (if (list? final-textarea-attrs) final-textarea-attrs '())
+                (list (cons 'value value)
+                      (cons 'rows final-rows)
+                      (cons 'data-we-widget "textarea")
+                      (cons 'class "we-textarea")
+                      (cons 'on-change-action
+                            (lambda (new-value)
+                              (action new-value))))))
+      (Textarea value
+                #:attrs attrs/final))
 
     ;; checkbox : (or/c boolean? observable?) (-> any/c any/c) -> view?
     ;;   Construct a checkbox view with current state and toggle action.
-    (define/key (checkbox value
-                          action
-                          #:id [id #f]
-                          #:class [class #f]
-                          #:attrs [attrs '()])
-      (apply-root-decorators
-       (view kind/checkbox (list (cons 'value value)
-                                 (cons 'action action))
-             '())
-       id
-       class
-       attrs
-       'checkbox))
+    ;;   Accepts global HTML attributes for the root <input> via keyword arguments.
+    (define/component checkbox
+      #:root-tag 'input
+      #:positional ([value]
+                    [action])
+      #:root-attrs attrs/final
+      (define attrs/final
+        (list (cons 'type "checkbox")
+              (cons 'checked value)
+              (cons 'data-we-widget "checkbox")
+              (cons 'class "we-checkbox")
+              (cons 'on-change-action
+                    (lambda (new-checked)
+                      (action (not (not new-checked)))))))
+      (Input #:attrs attrs/final))
 
     ;; choice : list? (or/c any/c observable?) (-> any/c any/c) -> view?
     ;;   Construct a choice view with options, selected value, and action.
-    (define/key (choice choices
-                        selected
-                        action
-                        #:id [id #f]
-                        #:class [class #f]
-                        #:attrs [attrs '()])
-      (apply-root-decorators
-       (view kind/choice (list (cons 'choices choices)
-                               (cons 'selected selected)
-                               (cons 'action action))
-             '())
-       id
-       class
-       attrs
-       'choice))
+    ;;   Accepts global HTML attributes for the root <select> via keyword arguments.
+    (define/component choice
+      #:root-tag 'select
+      #:positional ([choices]
+                    [selected]
+                    [action])
+      #:root-attrs attrs/final
+      (define (choice-entry-id/internal entry)
+        (cond
+          [(and (list? entry)
+                (pair? entry)
+                (pair? (cdr entry)))
+           (car entry)]
+          [(pair? entry)
+           (car entry)]
+          [else
+           entry]))
+      (define (choice-entry-label/internal entry)
+        (cond
+          [(and (list? entry)
+                (pair? entry)
+                (pair? (cdr entry)))
+           (cadr entry)]
+          [(pair? entry)
+           (cdr entry)]
+          [else
+           entry]))
+      (define option-pairs
+        (map (lambda (row)
+               (cons (choice-entry-id/internal row)
+                     (choice-entry-label/internal row)))
+             choices))
+      (define choices/encoded
+        (map (lambda (entry)
+               (format "~a" (car entry)))
+             option-pairs))
+      (define option-pairs/encoded
+        (map (lambda (entry)
+               (cons (format "~a" (car entry))
+                     (format "~a" (cdr entry))))
+             option-pairs))
+      (define (decode-selection selected0)
+        (define selected-text
+          (if (string? selected0)
+              selected0
+              (format "~a" selected0)))
+        (let loop ([remaining option-pairs])
+          (cond
+            [(null? remaining)
+             selected0]
+            [(string=? (format "~a" (caar remaining))
+                       selected-text)
+             (caar remaining)]
+            [else
+             (loop (cdr remaining))])))
+      (define attrs/final
+        (list (cons 'choices choices/encoded)
+              (cons 'option-pairs option-pairs/encoded)
+              (cons 'data-we-widget "choice")
+              (cons 'class "we-choice")
+              (cons 'selected selected)
+              (cons 'on-change-action
+                    (lambda (new-selected)
+                      (action (decode-selection new-selected))))))
+      (Select #:attrs attrs/final))
 
     ;; slider : (or/c number? observable?) (-> any/c any/c) [number?] [number?] -> view?
     ;;   Construct a slider with value, action, and optional min/max bounds.
     ;;   Optional parameter min defaults to 0.
     ;;   Optional parameter max defaults to 100.
-    (define/key (slider value
-                        action
-                        [min 0]
-                        [max 100]
-                        #:min [min-kw #f]
-                        #:max [max-kw #f]
-                        #:id [id #f]
-                        #:class [class #f]
-                        #:attrs [attrs '()])
+    ;;   Accepts global HTML attributes for the root <input> via keyword arguments.
+    (define/component slider
+      #:root-tag 'input
+      #:positional ([value]
+                    [action]
+                    [min/positional 0]
+                    [max/positional 100])
+      #:component-keywords ([#:min min-kw #f]
+                            [#:max max-kw #f])
+      #:root-attrs attrs/final
       (define final-min
-        (if (eq? min-kw #f) min min-kw))
+        (if (eq? min-kw #f) min/positional min-kw))
       (define final-max
-        (if (eq? max-kw #f) max max-kw))
-      (apply-root-decorators
-       (view kind/slider (list (cons 'value value)
-                               (cons 'action action)
-                               (cons 'min final-min)
-                               (cons 'max final-max))
-             '())
-       id
-       class
-       attrs
-       'slider))
+        (if (eq? max-kw #f) max/positional max-kw))
+      (define (decode-slider-value v0)
+        (cond
+          [(number? v0) v0]
+          [(string? v0)
+           (define n (string->number v0))
+           (if n n v0)]
+          [else v0]))
+      (define attrs/final
+        (list (cons 'min final-min)
+              (cons 'max final-max)
+              (cons 'data-we-widget "slider")
+              (cons 'class "we-slider")
+              (cons 'value value)
+              (cons 'on-change-action
+                    (lambda (new-value)
+                      (action (decode-slider-value new-value))))))
+      (Input #:type "range"
+             #:attrs attrs/final))
 
     ;; progress : (or/c number? observable?) [number?] [number?] [(or/c symbol? observable?)] -> view?
     ;;   Construct a progress display with optional min/max bounds and variant.
     ;;   Optional parameter min defaults to 0.
     ;;   Optional parameter max defaults to 100.
     ;;   Optional parameter variant defaults to 'info.
-    (define/key (progress value
-                          [min 0]
-                          [max 100]
-                          [variant 'info]
-                          #:min [min-kw #f]
-                          #:max [max-kw #f]
-                          #:variant [variant-kw #f]
-                          #:id [id #f]
-                          #:class [class #f]
-                          #:attrs [attrs '()])
+    ;;   Accepts global HTML attributes for the root <progress> via keyword arguments.
+    (define/component progress
+      #:root-tag 'progress
+      #:positional ([value]
+                    [min/positional 0]
+                    [max/positional 100]
+                    [variant/positional 'info])
+      #:component-keywords ([#:min min-kw #f]
+                            [#:max max-kw #f]
+                            [#:variant variant-kw #f])
+      #:root-attrs attrs/final
       (define final-min
-        (if (eq? min-kw #f) min min-kw))
+        (if (eq? min-kw #f) min/positional min-kw))
       (define final-max
-        (if (eq? max-kw #f) max max-kw))
+        (if (eq? max-kw #f) max/positional max-kw))
       (define final-variant
-        (if (eq? variant-kw #f) variant variant-kw))
-      (apply-root-decorators
-       (view kind/progress (list (cons 'value value)
-                                 (cons 'min final-min)
-                                 (cons 'max final-max)
-                                 (cons 'variant final-variant))
-             '())
-       id
-       class
-       attrs
-       'progress))
+        (if (eq? variant-kw #f) variant/positional variant-kw))
+      (define @variant
+        (observable-or-const final-variant))
+      (define @normalized-variant
+        (~> @variant normalize-badge-level/internal))
+      (define @class
+        (~> @normalized-variant
+            (lambda (variant0)
+              (string-append "we-progress "
+                             (progress-level-class/internal variant0)))))
+      (define attrs/final
+        (list (cons 'data-we-widget "progress")
+              (cons 'class @class)
+              (cons 'min final-min)
+              (cons 'max final-max)
+              (cons 'value value)))
+      (Progress #:attrs attrs/final))
 
     ;; pagination : (or/c number? observable?) (or/c number? observable?) (-> any/c any/c) -> view?
     ;;   Construct a pagination control for page-count, current page, and page-change action.
-    (define/key (pagination page-count
-                            current-page
-                            action
-                            #:id [id #f]
-                            #:class [class #f]
-                            #:attrs [attrs '()])
-      (apply-root-decorators
-       (view kind/pagination (list (cons 'page-count page-count)
-                                   (cons 'current-page current-page)
-                                   (cons 'action action))
-             '())
-       id
-       class
-       attrs
-       'pagination))
+    ;;   Accepts global HTML attributes for the root <nav> via keyword arguments.
+    (define/component pagination
+      #:root-tag 'nav
+      #:positional ([page-count]
+                    [current-page]
+                    [action])
+      #:root-attrs attrs/final
+      (define @page-count
+        (observable-or-const page-count))
+      (define @current-page
+        (observable-or-const current-page))
+      (define @state
+        (obs-combine list @page-count @current-page))
+      (define (make-page-button label target-page disabled? current?)
+        (define button-attrs
+          (list (cons 'role 'button)
+                (cons 'data-we-widget "page-button")
+                (cons 'aria-current (if current? "page" "false"))
+                (cons 'aria-disabled (if disabled? "true" "false"))
+                (cons 'class (cond
+                               [disabled? "we-page-btn is-disabled"]
+                               [current?  "we-page-btn is-current"]
+                               [else      "we-page-btn"]))))
+        (define button-attrs/final
+          (if disabled?
+              button-attrs
+              (append button-attrs
+                      (list (cons 'on-click-action
+                                  (lambda ()
+                                    (action target-page)))))))
+        (Button label
+                #:attrs button-attrs/final))
+      (define (make-page-children state)
+        (define page-count0
+          (normalize-page-count/internal (car state)))
+        (define current-page0
+          (clamp-current-page/internal (cadr state) page-count0))
+        (define first-disabled? (<= current-page0 1))
+        (define prev-disabled? (<= current-page0 1))
+        (define next-disabled? (>= current-page0 page-count0))
+        (define last-disabled? (>= current-page0 page-count0))
+        (define page-items
+          (pagination-visible-pages/internal page-count0 current-page0))
+        (define page-buttons
+          (map (lambda (item)
+                 (if (eq? item 'ellipsis)
+                     (Span "..."
+                           #:data-we-widget "page-ellipsis"
+                           #:class "we-page-ellipsis"
+                           #:aria-hidden "true")
+                     (make-page-button (number->string item)
+                                       item
+                                       #f
+                                       (= item current-page0))))
+               page-items))
+        (append (list (make-page-button "First" 1 first-disabled? #f)
+                      (make-page-button "Prev" (max 1 (- current-page0 1)) prev-disabled? #f))
+                page-buttons
+                (list (make-page-button "Next" (min page-count0 (+ current-page0 1)) next-disabled? #f)
+                      (make-page-button "Last" page-count0 last-disabled? #f))))
+      (define attrs/final
+        (list (cons 'role 'navigation)
+              (cons 'data-we-widget "pagination")
+              (cons 'class "we-pagination")))
+      (observable-element-children 'nav
+                                   @state
+                                   make-page-children
+                                   #:attrs attrs/final))
 
     ;; breadcrumb : list? (or/c any/c observable?) (-> any/c any/c) -> view?
     ;;   Construct a breadcrumb control for entries, current id, and navigation action.
-    (define/key (breadcrumb entries
-                            current
-                            action
-                            #:id [id #f]
-                            #:class [class #f]
-                            #:attrs [attrs '()])
-      (apply-root-decorators
-       (view kind/breadcrumb (list (cons 'entries entries)
-                                   (cons 'current current)
-                                   (cons 'action action))
-             '())
-       id
-       class
-       attrs
-       'breadcrumb))
+    ;;   Accepts global HTML attributes for the root <nav> via keyword arguments.
+    (define/component breadcrumb
+      #:root-tag 'nav
+      #:positional ([entries]
+                    [current]
+                    [action])
+      #:root-attrs attrs/final
+      (define @entries
+        (observable-or-const entries))
+      (define @current
+        (observable-or-const current))
+      (define @state
+        (obs-combine list @entries @current))
+      (define (make-item-view item-id item-label current?)
+        (if current?
+            (Span item-label
+                  #:data-we-widget "breadcrumb-item"
+                  #:class "we-breadcrumb-item is-current"
+                  #:aria-current "page")
+            (Button item-label
+                    #:attrs
+                    (list (cons 'role 'button)
+                          (cons 'data-we-widget "breadcrumb-item")
+                          (cons 'class "we-breadcrumb-item")
+                          (cons 'on-click-action
+                                (lambda ()
+                                  (action item-id)))))))
+      (define (make-breadcrumb-children state)
+        (define entries0
+          (ensure-list/internal (car state) 'breadcrumb "entries"))
+        (define current0
+          (cadr state))
+        (let loop ([remaining entries0]
+                   [acc '()])
+          (cond
+            [(null? remaining)
+             (reverse acc)]
+            [else
+             (define entry (car remaining))
+             (define item-id (breadcrumb-id/internal entry))
+             (define item-label (breadcrumb-label/internal entry))
+             (define current? (equal? item-id current0))
+             (define next-acc
+               (cons (make-item-view item-id item-label current?) acc))
+             (if (null? (cdr remaining))
+                 (loop (cdr remaining) next-acc)
+                 (loop (cdr remaining)
+                       (cons (Span "/"
+                                   #:data-we-widget "breadcrumb-sep"
+                                   #:class "we-breadcrumb-sep"
+                                   #:aria-hidden "true")
+                             next-acc)))])))
+      (define attrs/final
+        (list (cons 'role 'navigation)
+              (cons 'data-we-widget "breadcrumb")
+              (cons 'class "we-breadcrumb")))
+      (observable-element-children 'nav
+                                   @state
+                                   make-breadcrumb-children
+                                   #:attrs attrs/final))
 
     ;; list-group : list? (or/c any/c observable?) (-> any/c any/c) -> view?
     ;;   Construct a selectable list-group from entries, current id, and selection action.
-    (define/key (list-group entries
-                            current
-                            action
-                            #:id [id #f]
-                            #:class [class #f]
-                            #:attrs [attrs '()])
-      (apply-root-decorators
-       (view kind/list-group (list (cons 'entries entries)
-                                   (cons 'current current)
-                                   (cons 'action action))
-             '())
-       id
-       class
-       attrs
-       'list-group))
+    ;;   Accepts global HTML attributes for the root <div> via keyword arguments.
+    (define/component list-group
+      #:root-tag 'div
+      #:positional ([entries]
+                    [current]
+                    [action])
+      #:root-attrs attrs/final
+      (define @entries
+        (observable-or-const entries))
+      (define @current
+        (observable-or-const current))
+      (define @state
+        (obs-combine list @entries @current))
+      (define (make-list-group-children state)
+        (define entries0
+          (ensure-list/internal (car state) 'list-group "entries"))
+        (define current0
+          (cadr state))
+        (map (lambda (entry)
+               (define item-id
+                 (list-group-id/internal entry))
+               (define item-label
+                 (list-group-label/internal entry))
+               (define current?
+                 (equal? item-id current0))
+               (define attrs0
+                 (list (cons 'role 'listitem)
+                       (cons 'data-we-widget "list-group-item")
+                       (cons 'class (if current?
+                                        "we-list-group-item is-current"
+                                        "we-list-group-item"))
+                       (cons 'aria-current (if current? "true" "false"))))
+               (define attrs/final0
+                 (if current?
+                     attrs0
+                     (append attrs0
+                             (list (cons 'on-click-action
+                                         (lambda ()
+                                           (action item-id)))))))
+               (Button item-label
+                       #:attrs attrs/final0))
+             entries0))
+      (define attrs/final
+        (list (cons 'role 'list)
+              (cons 'data-we-widget "list-group")
+              (cons 'class "we-list-group")))
+      (observable-element-children 'div
+                                   @state
+                                   make-list-group-children
+                                   #:attrs attrs/final))
 
     ;; if-view : (or/c any/c observable?) view? view? -> view?
     ;;   Construct a conditional view that selects then-view or else-view.
@@ -2503,18 +2718,32 @@
 
     ;; collapse : (or/c boolean? observable?) view? -> view?
     ;;   Construct a container view that shows child only when open is true.
-    (define/key (collapse open
-                          child
-                          #:id [id #f]
-                          #:class [class #f]
-                          #:attrs [attrs '()])
-      (apply-root-decorators
-       (view kind/collapse (list (cons 'open open))
-             (list child))
-       id
-       class
-       attrs
-       'collapse))
+    ;;   Accepts global HTML attributes for the root <div> via keyword arguments.
+    (define/component collapse
+      #:root-tag 'div
+      #:positional ([open]
+                    [child])
+      #:root-attrs attrs/final
+      (define @open
+        (observable-or-const open))
+      (define @class
+        (~> @open
+            (lambda (open0)
+              (if (eq? open0 #f)
+                  "we-collapse"
+                  "we-collapse is-open"))))
+      (define @aria-hidden
+        (~> @open
+            (lambda (open0)
+              (if (eq? open0 #f)
+                  "true"
+                  "false"))))
+      (define attrs/final
+        (list (cons 'data-we-widget "collapse")
+              (cons 'class @class)
+              (cons 'aria-hidden @aria-hidden)))
+      (Div child
+           #:attrs attrs/final))
 
     ;; accordion : (or/c any/c observable?) list? -> view?
     ;;   Construct a single-open accordion from section rows: (list id label view).
@@ -2694,6 +2923,26 @@
                                        (cons 'equal-proc equal-proc))
             '()))
 
+    ;; observable-element-children : symbol? (or/c any/c observable?) (-> any/c list?) [(-> any/c any/c boolean?)] [list?] [(or/c #f procedure?)] -> view?
+    ;;   Construct a primitive element view with dynamic children and stable root identity.
+    ;;   Optional parameter equal-proc defaults to equal?.
+    ;;   Optional parameter attrs defaults to '().
+    ;;   Optional parameter after-render defaults to #f and is invoked by renderer after each children update.
+    (define/key (observable-element-children tag
+                                             data
+                                             make-children
+                                             [equal-proc equal?]
+                                             #:attrs [attrs '()]
+                                             #:after-render [after-render #f])
+      (view kind/observable-element-children
+            (list (cons 'tag tag)
+                  (cons 'data data)
+                  (cons 'make-children make-children)
+                  (cons 'equal-proc equal-proc)
+                  (cons 'after-render after-render)
+                  (cons 'extra-attrs attrs))
+            '()))
+
     ;; normalize-spacer-grow/internal : any/c -> number?
     ;;   Normalize spacer grow factor to a positive numeric value.
     (define (normalize-spacer-grow/internal grow)
@@ -2709,6 +2958,225 @@
             [(horizontal vertical) orientation]
             [else 'horizontal])
           'horizontal))
+
+    ;; menu-popup-counter/internal : number?
+    ;;   Monotonic counter for menu popup ids.
+    (define menu-popup-counter/internal 0)
+
+    ;; active-menu-close/internal : (or/c #f (-> void?))
+    ;;   Thunk closing currently open popup menu.
+    (define active-menu-close/internal #f)
+
+    ;; next-menu-popup-id/internal : -> string?
+    ;;   Allocate a unique id for menu popup element.
+    (define (next-menu-popup-id/internal)
+      (set! menu-popup-counter/internal
+            (add1 menu-popup-counter/internal))
+      (string-append "menu-popup-"
+                     (number->string menu-popup-counter/internal)))
+
+    ;; close-active-menu/internal : -> void?
+    ;;   Close currently open menu popup when available.
+    (define (close-active-menu/internal)
+      (when active-menu-close/internal
+        (active-menu-close/internal)))
+
+    ;; normalize-nav-orientation/internal : any/c -> symbol?
+    ;;   Normalize navigation-bar orientation to horizontal/vertical.
+    (define (normalize-nav-orientation/internal orientation)
+      (if (symbol? orientation)
+          (case orientation
+            [(horizontal vertical) orientation]
+            [else                  'horizontal])
+          'horizontal))
+
+    ;; normalize-dropdown-placement/internal : any/c -> symbol?
+    ;;   Normalize dropdown placement to one of down/up/start/end.
+    (define (normalize-dropdown-placement/internal raw-placement)
+      (if (symbol? raw-placement)
+          (case raw-placement
+            [(down up start end) raw-placement]
+            [else                'down])
+          'down))
+
+    ;; normalized-option-pairs/internal : list? -> list?
+    ;;   Normalize option rows to (cons id label) pairs.
+    (define (normalized-option-pairs/internal rows)
+      (map (lambda (row)
+             (define id
+               (cond
+                 [(and (list? row)
+                       (pair? row)
+                       (pair? (cdr row)))
+                  (car row)]
+                 [(pair? row)
+                  (car row)]
+                 [else
+                  row]))
+             (define label
+               (cond
+                 [(and (list? row)
+                       (pair? row)
+                       (pair? (cdr row)))
+                  (cadr row)]
+                 [(pair? row)
+                  (cdr row)]
+                 [else
+                  row]))
+             (cons id label))
+           rows))
+
+    ;; carousel-item-label/internal : any/c -> any/c
+    ;;   Extract carousel item label from (list id label view) row.
+    (define (carousel-item-label/internal entry)
+      (cadr (ensure-list/internal entry 'carousel "entry")))
+
+    ;; carousel-item-view/internal : any/c -> view?
+    ;;   Extract carousel item view from (list id label view) row.
+    (define (carousel-item-view/internal entry)
+      (caddr (ensure-list/internal entry 'carousel "entry")))
+
+    ;; scrollspy-section-id/internal : any/c -> any/c
+    ;;   Extract scrollspy section id from (list id label) row.
+    (define (scrollspy-section-id/internal entry)
+      (car (ensure-list/internal entry 'scrollspy "section")))
+
+    ;; scrollspy-section-label/internal : any/c -> any/c
+    ;;   Extract scrollspy section label from (list id label) row.
+    (define (scrollspy-section-label/internal entry)
+      (cadr (ensure-list/internal entry 'scrollspy "section")))
+
+    ;; scrollspy-section-content/internal : any/c -> view?
+    ;;   Extract optional section view from (list id label [view]); fallback to text label.
+    (define (scrollspy-section-content/internal entry)
+      (define section (ensure-list/internal entry 'scrollspy "section"))
+      (cond
+        [(>= (length section) 3)
+         (define maybe-view (caddr section))
+         (if (view? maybe-view)
+             maybe-view
+             (text (scrollspy-section-label/internal entry)))]
+        [else
+         (text (scrollspy-section-label/internal entry))]))
+
+    ;; scrollspy-section-dom-id/internal : any/c -> string?
+    ;;   Build deterministic DOM id for a scrollspy section identifier.
+    (define (scrollspy-section-dom-id/internal section-id)
+      (define section-text
+        (cond
+          [(symbol? section-id) (symbol->string section-id)]
+          [(string? section-id) section-id]
+          [else                 (format "~a" section-id)]))
+      (string-append "we-scrollspy-section-" section-text))
+
+    ;; ensure-list/internal : any/c symbol? string? -> list?
+    ;;   Ensure v is a list, otherwise raise an argument error for who/what.
+    (define (ensure-list/internal v who what)
+      (if (list? v)
+          v
+          (raise-arguments-error who
+                                 (string-append "expected list? for " what)
+                                 what
+                                 v)))
+
+    ;; normalize-page-count/internal : any/c -> number?
+    ;;   Normalize page-count to a positive integer.
+    (define (normalize-page-count/internal page-count)
+      (if (and (number? page-count)
+               (integer? page-count)
+               (> page-count 0))
+          page-count
+          1))
+
+    ;; clamp-current-page/internal : any/c number? -> number?
+    ;;   Clamp current page to [1, page-count].
+    (define (clamp-current-page/internal current-page page-count)
+      (if (and (number? current-page)
+               (integer? current-page))
+          (min page-count (max 1 current-page))
+          1))
+
+    ;; contains-equal/internal : list? any/c -> boolean?
+    ;;   Check whether xs contains v using equal?.
+    (define (contains-equal/internal xs v)
+      (cond
+        [(null? xs) #f]
+        [else
+         (if (equal? (car xs) v)
+             #t
+             (contains-equal/internal (cdr xs) v))]))
+
+    ;; unique-sorted-numbers/internal : list? -> list?
+    ;;   Sort numeric values and remove duplicates.
+    (define (unique-sorted-numbers/internal nums)
+      (define sorted
+        (sort (filter number? nums) <))
+      (let loop ([rest sorted]
+                 [acc '()])
+        (cond
+          [(null? rest)
+           (reverse acc)]
+          [else
+           (define n (car rest))
+           (if (contains-equal/internal acc n)
+               (loop (cdr rest) acc)
+               (loop (cdr rest) (cons n acc)))])))
+
+    ;; pagination-visible-pages/internal : number? number? -> list?
+    ;;   Return page number list with 'ellipsis markers for compact rendering.
+    (define (pagination-visible-pages/internal page-count current-page)
+      (if (<= page-count 7)
+          (let loop ([n 1])
+            (if (> n page-count)
+                '()
+                (cons n (loop (add1 n)))))
+          (let* ([base-pages (unique-sorted-numbers/internal
+                              (list 1
+                                    page-count
+                                    (- current-page 1)
+                                    current-page
+                                    (+ current-page 1)))]
+                 [bounded-pages (filter (lambda (n)
+                                          (and (>= n 1)
+                                               (<= n page-count)))
+                                        base-pages)])
+            (let loop ([rest bounded-pages]
+                       [prev #f]
+                       [acc '()])
+              (cond
+                [(null? rest)
+                 (reverse acc)]
+                [else
+                 (define n (car rest))
+                 (define next-acc
+                   (cond
+                     [(eq? prev #f)
+                      (cons n acc)]
+                     [(= n (+ prev 1))
+                      (cons n acc)]
+                     [else
+                      (cons n (cons 'ellipsis acc))]))
+                 (loop (cdr rest) n next-acc)])))))
+
+    ;; list-group-id/internal : any/c -> any/c
+    ;;   Extract list-group entry id from (list id label) row.
+    (define (list-group-id/internal entry)
+      (car (ensure-list/internal entry 'list-group "entry")))
+
+    ;; list-group-label/internal : any/c -> any/c
+    ;;   Extract list-group entry label from (list id label) row.
+    (define (list-group-label/internal entry)
+      (cadr (ensure-list/internal entry 'list-group "entry")))
+
+    ;; breadcrumb-id/internal : any/c -> any/c
+    ;;   Extract breadcrumb entry id from (list id label) row.
+    (define (breadcrumb-id/internal entry)
+      (car (ensure-list/internal entry 'breadcrumb "entry")))
+
+    ;; breadcrumb-label/internal : any/c -> any/c
+    ;;   Extract breadcrumb entry label from (list id label) row.
+    (define (breadcrumb-label/internal entry)
+      (cadr (ensure-list/internal entry 'breadcrumb "entry")))
 
     ;; spacer : [number?] -> view?
     ;;   Construct an empty spacer view with optional grow factor.
@@ -2830,47 +3298,160 @@
 
     ;; radios : list? (or/c any/c observable?) (-> any/c any/c) -> view?
     ;;   Construct a radio-choice control with choices and selected value.
-    (define/key (radios choices
-                        selected
-                        action
-                        #:id [id #f]
-                        #:class [class #f]
-                        #:attrs [attrs '()])
-      (apply-root-decorators
-       (view kind/radios (list (cons 'choices choices)
-                               (cons 'selected selected)
-                               (cons 'action action))
-             '())
-       id
-       class
-       attrs
-       'radios))
+    ;;   Accepts global HTML attributes for the root container via keyword arguments.
+    (define/component radios
+      #:root-tag 'div
+      #:positional ([choices]
+                    [selected]
+                    [action])
+      #:root-attrs attrs/final
+      (define radio-entries
+        (map (lambda (row)
+               (define id-value
+                 (if (and (list? row) (pair? row))
+                     (car row)
+                     row))
+               (define label-value
+                 (if (and (list? row)
+                          (pair? row)
+                          (pair? (cdr row)))
+                     (cadr row)
+                     row))
+               (define disabled?
+                 (if (and (list? row)
+                          (pair? row)
+                          (pair? (cdr row))
+                          (pair? (cddr row)))
+                     (not (not (caddr row)))
+                     #f))
+               (list id-value label-value disabled?))
+             choices))
+      (define (radio-text v)
+        (format "~a" v))
+      (define encoded->id
+        (map (lambda (entry)
+               (cons (radio-text (list-ref entry 0))
+                     (list-ref entry 0)))
+             radio-entries))
+      (define first-enabled-id
+        (let loop ([remaining radio-entries])
+          (cond
+            [(null? remaining) #f]
+            [(list-ref (car remaining) 2)
+             (loop (cdr remaining))]
+            [else
+             (list-ref (car remaining) 0)])))
+      (define (decode-selection selected0)
+        (define selected-text
+          (if (string? selected0)
+              selected0
+              (radio-text selected0)))
+        (define p (assoc selected-text encoded->id))
+        (if p
+            (cdr p)
+            selected0))
+      (define @selected
+        (observable-or-const selected))
+      (define @effective-selected
+        (~> @selected
+            (lambda (selected0)
+              (define selected-text (radio-text selected0))
+              (define matches-enabled?
+                (let loop ([remaining radio-entries])
+                  (cond
+                    [(null? remaining) #f]
+                    [else
+                     (define entry (car remaining))
+                     (define entry-id (list-ref entry 0))
+                     (define disabled? (list-ref entry 2))
+                     (if (and (not disabled?)
+                              (string=? selected-text (radio-text entry-id)))
+                         #t
+                         (loop (cdr remaining)))])))
+              (if matches-enabled?
+                  selected0
+                  first-enabled-id))))
+      (define group-name
+        (symbol->string (gensym 'we-radios-group-)))
+      (define attrs/final
+        (list (cons 'data-we-widget "radios")
+              (cons 'class "we-radios")
+              (cons 'choices choices)
+              (cons 'selected @effective-selected)
+              (cons 'on-change-action
+                    (lambda (new-selected)
+                      (action (decode-selection new-selected))))))
+      (define option-views
+        (map (lambda (entry)
+               (define id-value (list-ref entry 0))
+               (define label-value (list-ref entry 1))
+               (define disabled? (list-ref entry 2))
+               (define encoded-id (radio-text id-value))
+               (define @checked
+                 (~> @effective-selected
+                     (lambda (selected0)
+                       (and (not disabled?)
+                            (string=? encoded-id
+                                      (radio-text selected0))))))
+               (define input-attrs
+                 (list (cons 'class "we-radio-input")
+                       (cons 'on-change-action
+                             (lambda (new-selected)
+                               (action (decode-selection new-selected))))))
+               (define input-attrs/final
+                 (if disabled?
+                     (cons (cons 'disabled #t) input-attrs)
+                     input-attrs))
+               (Div (Input #:type "radio"
+                           #:name group-name
+                           #:value encoded-id
+                           #:checked @checked
+                           #:attrs input-attrs/final)
+                    (Span label-value
+                          #:data-we-widget "text"
+                          #:class "we-text")
+                    #:data-we-widget "radio-option"
+                    #:class "we-radio-option"))
+             radio-entries))
+      (apply Div (append option-views
+                         (list #:attrs attrs/final))))
 
     ;; image : (or/c string? observable?) [any/c] [any/c] -> view?
     ;;   Construct an image view from a source path/string with optional width/height attrs.
     ;;   Optional parameter width defaults to #f.
     ;;   Optional parameter height defaults to #f.
-    (define/key (image src
-                       [width #f]
-                       [height #f]
-                       #:width [width-kw #f]
-                       #:height [height-kw #f]
-                       #:id [id #f]
-                       #:class [class #f]
-                       #:attrs [attrs '()])
-      (define final-width
-        (if (eq? width-kw #f) width width-kw))
-      (define final-height
-        (if (eq? height-kw #f) height height-kw))
-      (apply-root-decorators
-       (view kind/image (list (cons 'src src)
-                              (cons 'width final-width)
-                              (cons 'height final-height))
-             '())
-       id
-       class
-       attrs
-       'image))
+    ;;   Accepts global and img-specific HTML attributes for the root <img> via keyword arguments.
+    (define/component image
+      #:root-tag 'img
+      #:positional ([src]
+                    [width #f]
+                    [height #f])
+      #:component-keywords ([#:width width-kw #f]
+                            [#:height height-kw #f])
+      #:root-attrs attrs/final
+      (define final-width (if (eq? width-kw #f) width width-kw))
+      (define final-height (if (eq? height-kw #f) height height-kw))
+      (define attrs/final
+        (list (cons 'data-we-widget "image")
+              (cons 'class "we-image")))
+      (cond
+        [(and (eq? final-width #f)
+              (eq? final-height #f))
+         (Img #:src src
+              #:attrs attrs/final)]
+        [(eq? final-height #f)
+         (Img #:src src
+              #:width final-width
+              #:attrs attrs/final)]
+        [(eq? final-width #f)
+         (Img #:src src
+              #:height final-height
+              #:attrs attrs/final)]
+        [else
+         (Img #:src src
+              #:width final-width
+              #:height final-height
+              #:attrs attrs/final)]))
 
     ;; dropdown : (or/c string? observable?) list? (-> any/c any/c) [symbol?] -> view?
     ;;   Construct a dropdown menu from a label and entry rows: (list id label).
@@ -2885,12 +3466,33 @@
                           #:attrs [attrs '()])
       (define final-placement
         (if (eq? placement-kw #f) placement placement-kw))
+      (define normalized-placement
+        (normalize-dropdown-placement/internal final-placement))
+      (define dropdown-class
+        (string-append "we-dropdown"
+                       (if (eq? normalized-placement 'down)
+                           ""
+                           (string-append " we-dropdown-"
+                                          (symbol->string normalized-placement)))))
+      (define rows
+        (ensure-list/internal entries 'dropdown "entries"))
+      (define option-pairs
+        (normalized-option-pairs/internal rows))
+      (define menu-items
+        (map (lambda (entry)
+               (define entry-id (car entry))
+               (define entry-label (cdr entry))
+               (menu-item entry-label
+                          (lambda ()
+                            (action entry-id))))
+             option-pairs))
+      (define dropdown-view
+        (Div (apply menu
+                    (cons label menu-items))
+             #:attrs (list (cons 'data-we-widget "dropdown")
+                           (cons 'class dropdown-class))))
       (apply-root-decorators
-       (view kind/dropdown (list (cons 'label label)
-                                 (cons 'entries entries)
-                                 (cons 'action action)
-                                 (cons 'placement final-placement))
-             '())
+       dropdown-view
        id
        class
        attrs
@@ -2914,13 +3516,285 @@
         (if (keyword-given? wrap-kw) wrap-kw wrap?))
       (define final-autoplay?
         (if (keyword-given? autoplay-kw) autoplay-kw autoplay?))
+      (define @items
+        (observable-or-const items))
+      (define @current-index
+        (observable-or-const current-index))
+      (define @wrap?
+        (observable-or-const final-wrap?))
+      (define @autoplay?
+        (observable-or-const final-autoplay?))
+      (define (normalize-carousel-state items0 current-index0 wrap?0 autoplay?0)
+        (define items/list
+          (ensure-list/internal items0 'carousel "items"))
+        (define count
+          (length items/list))
+        (define has-items?
+          (> count 0))
+        (define min-index 0)
+        (define max-index
+          (if has-items? (- count 1) 0))
+        (define wrap?/normalized
+          (not (eq? wrap?0 #f)))
+        (define autoplay?/normalized
+          (not (eq? autoplay?0 #f)))
+        (define current-index/normalized
+          (if (and (number? current-index0)
+                   (integer? current-index0)
+                   has-items?)
+              (min max-index (max min-index current-index0))
+              0))
+        (define at-first?
+          (or (not has-items?)
+              (<= current-index/normalized min-index)))
+        (define at-last?
+          (or (not has-items?)
+              (>= current-index/normalized max-index)))
+        (define prev-disabled?
+          (or (not has-items?)
+              (and (not wrap?/normalized) at-first?)))
+        (define next-disabled?
+          (or (not has-items?)
+              (and (not wrap?/normalized) at-last?)))
+        (list (cons 'items items/list)
+              (cons 'count count)
+              (cons 'has-items? has-items?)
+              (cons 'current-index current-index/normalized)
+              (cons 'min-index min-index)
+              (cons 'max-index max-index)
+              (cons 'wrap? wrap?/normalized)
+              (cons 'autoplay? autoplay?/normalized)
+              (cons 'at-first? at-first?)
+              (cons 'at-last? at-last?)
+              (cons 'prev-disabled? prev-disabled?)
+              (cons 'next-disabled? next-disabled?)))
+      (define (carousel-state-ref state key)
+        (define p (assq key state))
+        (if p
+            (cdr p)
+            (error 'carousel "missing carousel state key: ~a" key)))
+      (define @state
+        (obs-combine
+         normalize-carousel-state
+         @items
+         @current-index
+         @wrap?
+         @autoplay?))
+      (define (normalize-next-index state next-index)
+        (define has-items?
+          (carousel-state-ref state 'has-items?))
+        (define wrap?/normalized
+          (carousel-state-ref state 'wrap?))
+        (define min-index
+          (carousel-state-ref state 'min-index))
+        (define max-index
+          (carousel-state-ref state 'max-index))
+        (define count
+          (carousel-state-ref state 'count))
+        (cond
+          [(not has-items?) 0]
+          [wrap?/normalized
+           (modulo (+ next-index count) count)]
+          [else
+           (min max-index (max min-index next-index))]))
+      (define (set-carousel-index! next-index)
+        (define state
+          (obs-peek @state))
+        (define has-items?
+          (carousel-state-ref state 'has-items?))
+        (when has-items?
+          (define current-index/normalized
+            (carousel-state-ref state 'current-index))
+          (define normalized-index
+            (normalize-next-index state next-index))
+          (unless (= normalized-index current-index/normalized)
+            (action normalized-index))))
+      (define (carousel-keydown! event-key)
+        (define state
+          (obs-peek @state))
+        (define prev-disabled?
+          (carousel-state-ref state 'prev-disabled?))
+        (define next-disabled?
+          (carousel-state-ref state 'next-disabled?))
+        (define at-first?
+          (carousel-state-ref state 'at-first?))
+        (define at-last?
+          (carousel-state-ref state 'at-last?))
+        (define current-index/normalized
+          (carousel-state-ref state 'current-index))
+        (define min-index
+          (carousel-state-ref state 'min-index))
+        (define max-index
+          (carousel-state-ref state 'max-index))
+        (case (string->symbol event-key)
+          [(ArrowLeft)
+           (unless prev-disabled?
+             (set-carousel-index! (- current-index/normalized 1)))]
+          [(ArrowRight)
+           (unless next-disabled?
+             (set-carousel-index! (+ current-index/normalized 1)))]
+          [(Home)
+           (unless at-first?
+             (set-carousel-index! min-index))]
+          [(End)
+           (unless at-last?
+             (set-carousel-index! max-index))]
+          [else
+           (void)]))
+      (define (make-carousel-children state)
+        (define items/list
+          (carousel-state-ref state 'items))
+        (define has-items?
+          (carousel-state-ref state 'has-items?))
+        (define current-index/normalized
+          (carousel-state-ref state 'current-index))
+        (define prev-disabled?
+          (carousel-state-ref state 'prev-disabled?))
+        (define next-disabled?
+          (carousel-state-ref state 'next-disabled?))
+        (define viewport
+          (if has-items?
+              (carousel-item-view/internal
+               (list-ref items/list current-index/normalized))
+              (Span "No slides"
+                    #:data-we-widget "carousel-empty")))
+        (define indicators
+          (let loop ([idx 0]
+                     [rest items/list])
+            (if (null? rest)
+                '()
+                (let ()
+                  (define entry
+                    (car rest))
+                  (define label/text
+                    (format "~a" (carousel-item-label/internal entry)))
+                  (define is-current
+                    (= idx current-index/normalized))
+                  (define indicator-node
+                    (html-element 'button
+                                  ""
+                                  #:attrs (append
+                                           (list (cons 'role 'button)
+                                                 (cons 'data-we-widget "carousel-indicator")
+                                                 (cons 'class (string-append "we-carousel-indicator"
+                                                                             (if is-current " is-current" "")))
+                                                 (cons 'aria-label label/text)
+                                                 (cons 'on-click-action
+                                                       (lambda ()
+                                                         (action idx))))
+                                           '())))
+                  (cons indicator-node
+                        (loop (add1 idx) (cdr rest)))))))
+        (define prev-node
+          (html-element 'button
+                        "Prev"
+                        #:attrs (append
+                                 (list (cons 'role 'button)
+                                       (cons 'data-we-widget "carousel-prev")
+                                       (cons 'class (string-append "we-button we-carousel-nav we-carousel-prev"
+                                                                   (if prev-disabled? " is-disabled" "")))
+                                       (cons 'aria-disabled (if prev-disabled? "true" "false"))
+                                       (cons 'on-click-action
+                                             (lambda ()
+                                               (unless prev-disabled?
+                                                 (set-carousel-index! (- current-index/normalized 1))))))
+                                 (if prev-disabled?
+                                     (list (cons 'disabled #t))
+                                     '()))))
+        (define next-node
+          (html-element 'button
+                        "Next"
+                        #:attrs (append
+                                 (list (cons 'role 'button)
+                                       (cons 'data-we-widget "carousel-next")
+                                       (cons 'class (string-append "we-button we-carousel-nav we-carousel-next"
+                                                                   (if next-disabled? " is-disabled" "")))
+                                       (cons 'aria-disabled (if next-disabled? "true" "false"))
+                                       (cons 'on-click-action
+                                             (lambda ()
+                                               (unless next-disabled?
+                                                 (set-carousel-index! (+ current-index/normalized 1))))))
+                                 (if next-disabled?
+                                     (list (cons 'disabled #t))
+                                     '()))))
+        (list (Div viewport
+                   #:data-we-widget "carousel-viewport"
+                   #:class "we-carousel-viewport")
+              (Div prev-node
+                   (apply Div
+                          (append indicators
+                                  (list #:data-we-widget "carousel-indicators"
+                                        #:class "we-carousel-indicators")))
+                   next-node
+                   #:data-we-widget "carousel-controls"
+                   #:class "we-carousel-controls")))
+      (define carousel-timeout-handle #f)
+      (define carousel-cleanup-registered? #f)
+      (define (carousel-after-render root-node state register-cleanup! api)
+        (define (api-proc key)
+          (define p (assq key api))
+          (if (and p (procedure? (cdr p)))
+              (cdr p)
+              (raise-arguments-error 'carousel-after-render
+                                     "missing callback API procedure"
+                                     "key"
+                                     key)))
+        (define find-node-by-widget
+          (api-proc 'find-node-by-widget))
+        (define dom-node-on-click
+          (api-proc 'dom-node-on-click))
+        (define backend-set-timeout!
+          (api-proc 'backend-set-timeout!))
+        (define backend-clear-timeout!
+          (api-proc 'backend-clear-timeout!))
+        (define (clear-carousel-timeout!)
+          (when carousel-timeout-handle
+            (backend-clear-timeout! carousel-timeout-handle)
+            (set! carousel-timeout-handle #f)))
+        (unless carousel-cleanup-registered?
+          (set! carousel-cleanup-registered? #t)
+          (register-cleanup!
+           (lambda ()
+             (clear-carousel-timeout!))))
+        (clear-carousel-timeout!)
+        (define autoplay?
+          (not (eq? (carousel-state-ref state 'autoplay?) #f)))
+        (define has-items?
+          (not (eq? (carousel-state-ref state 'has-items?) #f)))
+        (define count
+          (carousel-state-ref state 'count))
+        (define wrap?
+          (not (eq? (carousel-state-ref state 'wrap?) #f)))
+        (define at-last?
+          (not (eq? (carousel-state-ref state 'at-last?) #f)))
+        (when (and autoplay?
+                   has-items?
+                   (> count 1)
+                   (or wrap? (not at-last?)))
+          (set! carousel-timeout-handle
+                (backend-set-timeout!
+                 2500
+                 (lambda ()
+                   (set! carousel-timeout-handle #f)
+                   (define next-node
+                     (find-node-by-widget root-node "carousel-next"))
+                   (when next-node
+                     (define on-click
+                       (dom-node-on-click next-node))
+                     (when on-click
+                       (on-click))))))))
+      (define carousel-view
+        (observable-element-children
+         'div
+         @state
+         make-carousel-children
+         #:after-render carousel-after-render
+         #:attrs (list (cons 'data-we-widget "carousel")
+                       (cons 'class "we-carousel")
+                       (cons 'tabindex 0)
+                       (cons 'on-change-action carousel-keydown!))))
       (apply-root-decorators
-       (view kind/carousel (list (cons 'items items)
-                                 (cons 'current-index current-index)
-                                 (cons 'action action)
-                                 (cons 'wrap? final-wrap?)
-                                 (cons 'autoplay? final-autoplay?))
-             '())
+       carousel-view
        id
        class
        attrs
@@ -2929,10 +3803,143 @@
     ;; scrollspy : list? (or/c any/c observable?) (-> any/c any/c) -> view?
     ;;   Construct scroll-tracking section navigation from rows: (list id label [content-view]).
     (define (scrollspy sections current action)
-      (view kind/scrollspy (list (cons 'sections sections)
-                                 (cons 'current current)
-                                 (cons 'action action))
-            '()))
+      (define @sections
+        (observable-or-const sections))
+      (define @current
+        (observable-or-const current))
+      (define @state
+        (obs-combine list @sections @current))
+      (define (scrollspy-after-render root-node state register-cleanup! api)
+        (define (api-proc key)
+          (define p (assq key api))
+          (if (and p (procedure? (cdr p)))
+              (cdr p)
+              (raise-arguments-error 'scrollspy-after-render
+                                     "missing callback API procedure"
+                                     "key"
+                                     key)))
+        (define find-node-by-widget
+          (api-proc 'find-node-by-widget))
+        (define dom-node-attr-ref
+          (api-proc 'dom-node-attr-ref))
+        (define dom-node-children
+          (api-proc 'dom-node-children))
+        (define dom-node-on-click
+          (api-proc 'dom-node-on-click))
+        (define set-dom-node-on-click!
+          (api-proc 'set-dom-node-on-click!))
+        (define backend-scrollspy-scroll-into-view!
+          (api-proc 'backend-scrollspy-scroll-into-view!))
+        (define backend-scrollspy-active-id
+          (api-proc 'backend-scrollspy-active-id))
+        (define backend-scrollspy-observe-scroll!
+          (api-proc 'backend-scrollspy-observe-scroll!))
+        (define sections-node
+          (find-node-by-widget root-node "scrollspy-sections"))
+        (define nav-node
+          (find-node-by-widget root-node "scrollspy-nav"))
+        (when (and sections-node nav-node)
+          (define section-bindings
+            (map (lambda (section-node)
+                   (cons (dom-node-attr-ref section-node
+                                            'data-we-scrollspy-id
+                                            #f)
+                         section-node))
+                 (dom-node-children sections-node)))
+          (define nav-action-bindings '())
+          (for-each
+           (lambda (nav-item)
+             (define section-id
+               (dom-node-attr-ref nav-item 'data-we-scrollspy-id #f))
+             (define section-node-pair
+               (assq section-id section-bindings))
+             (define section-node
+               (if section-node-pair
+                   (cdr section-node-pair)
+                   #f))
+             (define on-click0
+               (dom-node-on-click nav-item))
+             (when on-click0
+               (set! nav-action-bindings
+                     (cons (cons section-id on-click0)
+                           nav-action-bindings))
+               (set-dom-node-on-click!
+                nav-item
+                (lambda ()
+                  (on-click0)
+                  (when section-node
+                    (backend-scrollspy-scroll-into-view! section-node))))))
+           (dom-node-children nav-node))
+          (define current-id
+            (if (and (list? state)
+                     (pair? (cdr state)))
+                (cadr state)
+                #f))
+          (define (sync-current-from-scroll!)
+            (define active-id
+              (backend-scrollspy-active-id section-bindings))
+            (when (and active-id
+                       (not (equal? active-id current-id)))
+              (define p
+                (assq active-id nav-action-bindings))
+              (when p
+                ((cdr p)))))
+          (backend-scrollspy-observe-scroll!
+           sections-node
+           sync-current-from-scroll!
+           register-cleanup!)
+          (when (eq? current-id #f)
+            (sync-current-from-scroll!))))
+      (define (make-scrollspy-children state)
+        (define sections/list
+          (ensure-list/internal (car state) 'scrollspy "sections"))
+        (define current/value
+          (cadr state))
+        (define nav-items
+          (map (lambda (entry)
+                 (define section-id
+                   (scrollspy-section-id/internal entry))
+                 (define label
+                   (scrollspy-section-label/internal entry))
+                 (define current?
+                   (equal? section-id current/value))
+                 (html-element 'button
+                               (format "~a" label)
+                               #:attrs (list (cons 'role 'button)
+                                             (cons 'data-we-widget "scrollspy-item")
+                                             (cons 'data-we-scrollspy-id section-id)
+                                             (cons 'aria-current (if current? "true" "false"))
+                                             (cons 'class (string-append "we-scrollspy-item"
+                                                                         (if current? " is-current" "")))
+                                             (cons 'on-click-action
+                                                   (lambda ()
+                                                     (action section-id))))))
+               sections/list))
+        (define section-nodes
+          (map (lambda (entry)
+                 (Section (scrollspy-section-content/internal entry)
+                          #:data-we-widget "scrollspy-section"
+                          #:data-we-scrollspy-id (scrollspy-section-id/internal entry)
+                          #:class "we-scrollspy-section"
+                          #:id (scrollspy-section-dom-id/internal
+                                (scrollspy-section-id/internal entry))))
+               sections/list))
+        (list (apply Nav
+                     (append nav-items
+                             (list #:data-we-widget "scrollspy-nav"
+                                   #:class "we-scrollspy-nav")))
+              (apply Div
+                     (append section-nodes
+                             (list #:data-we-widget "scrollspy-sections"
+                                   #:class "we-scrollspy-sections")))))
+      (observable-element-children
+       'div
+       @state
+       make-scrollspy-children
+       #:after-render scrollspy-after-render
+       #:attrs (list (cons 'role 'navigation)
+                     (cons 'data-we-widget "scrollspy")
+                     (cons 'class "we-scrollspy"))))
 
     ;; tooltip : (or/c string? observable?) view? [symbol?] [list?] -> view?
     ;;   Construct a tooltip container with message, trigger child view, optional placement, and optional options.
@@ -3098,17 +4105,18 @@
 
     ;; top-bar : view? ... -> view?
     ;;   Construct a top bar container for page-level header content.
-    (define/key (top-bar
-                 #:id [id #f]
-                 #:class [class #f]
-                 #:attrs [attrs '()]
-                 . children)
-      (apply-root-decorators
-       (view kind/top-bar '() children)
-       id
-       class
-       attrs
-       'top-bar))
+    ;;   Accepts global HTML attributes for the root <header> via keyword arguments.
+    (define/component top-bar
+      #:root-tag 'header
+      #:rest children
+      #:root-attrs attrs/final
+      (define attrs/final
+        (list (cons 'role 'banner)
+              (cons 'data-we-widget "top-bar")
+              (cons 'class "we-top-bar")))
+      (apply Header
+             (append children
+                     (list #:attrs attrs/final))))
 
     ;; navigation-bar : [(or/c symbol? observable?)] [(or/c boolean? observable?)] [symbol?] view? ... -> view?
     ;;   Construct a navigation bar with optional orientation/collapsed/expand props and children.
@@ -3144,12 +4152,58 @@
       (define final-orientation (if (eq? orientation-kw #f) orientation orientation-kw))
       (define final-collapsed?  (if (eq? collapsed?-kw #f) collapsed? collapsed?-kw))
       (define final-expand      (if (eq? expand-kw #f) expand expand-kw))
+      (define @orientation
+        (observable-or-const final-orientation))
+      (define @collapsed-state
+        (if (obs? final-collapsed?)
+            final-collapsed?
+            (obs (not (not final-collapsed?)))))
+      (define @root-class
+        (obs-combine
+         (lambda (orientation0 collapsed0)
+           (define normalized-orientation
+             (normalize-nav-orientation/internal orientation0))
+           (string-append "we-navigation-bar"
+                          (if (eq? normalized-orientation 'vertical) " is-vertical" "")
+                          (if (not (not collapsed0)) " is-collapsed" "")))
+         @orientation
+         @collapsed-state))
+      (define @toggle-aria-expanded
+        (~> @collapsed-state
+            (lambda (collapsed0)
+              (if (not (not collapsed0)) "false" "true"))))
+      (define show-toggle?
+        (eq? (if (obs? final-expand)
+                 (obs-peek final-expand)
+                 final-expand)
+             'always))
+      (define (toggle-navigation!)
+        (define next-collapsed?
+          (not (not (obs-peek @collapsed-state))))
+        (:= @collapsed-state (not next-collapsed?)))
+      (define nav-view
+        (apply html-element-children
+               (append
+                (list 'nav)
+                (if show-toggle?
+                    (list (html-element 'button
+                                        "Menu"
+                                        #:attrs (list (cons 'role 'button)
+                                                      (cons 'data-we-widget "navigation-bar-toggle")
+                                                      (cons 'class "we-button we-navigation-bar-toggle")
+                                                      (cons 'aria-expanded @toggle-aria-expanded)
+                                                      (cons 'aria-label "Toggle navigation")
+                                                      (cons 'on-click-action toggle-navigation!))))
+                    '())
+                (list (apply Div
+                             (append children
+                                     (list #:data-we-widget "navigation-bar-items"
+                                           #:class "we-navigation-bar-items"))))
+                (list #:attrs (list (cons 'role 'navigation)
+                                    (cons 'data-we-widget "navigation-bar")
+                                    (cons 'class @root-class))))))
       (apply-root-decorators
-       (view kind/navigation-bar
-             (list (cons 'orientation final-orientation)
-                   (cons 'collapsed? final-collapsed?)
-                   (cons 'expand final-expand))
-             children)
+       nav-view
        id
        class
        attrs
@@ -3158,23 +4212,150 @@
     ;; menu-bar : view? ... -> view?
     ;;   Construct a menu bar containing menu children.
     (define (menu-bar . children)
-      (view kind/menu-bar '() children))
+      (apply html-element-children
+             (append (list 'menu-bar)
+                     children
+                     (list #:attrs (list (cons 'class "we-menu-bar")
+                                         (cons 'data-we-widget "menu-bar")
+                                         (cons 'role 'menubar)
+                                         (cons 'aria-orientation "horizontal"))))))
 
     ;; menu : (or/c string? observable?) view? ... -> view?
     ;;   Construct a labeled menu containing menu-item children.
     (define (menu label . children)
-      (view kind/menu (list (cons 'label label)) children))
+      (define popup-id
+        (next-menu-popup-id/internal))
+      (define @open
+        (obs #f))
+      (define (set-open! next-open?)
+        (when (and next-open?
+                   active-menu-close/internal
+                   (not (eq? active-menu-close/internal close-self!)))
+          (active-menu-close/internal))
+        (:= @open (not (not next-open?)))
+        (if next-open?
+            (set! active-menu-close/internal close-self!)
+            (when (and active-menu-close/internal
+                       (eq? active-menu-close/internal close-self!))
+              (set! active-menu-close/internal #f))))
+      (define (close-self!)
+        (set-open! #f))
+      (define @aria-expanded
+        (~> @open
+            (lambda (open0)
+              (if open0 "true" "false"))))
+      (define @popup-class
+        (~> @open
+            (lambda (open0)
+              (if open0
+                  "we-menu-popup is-open"
+                  "we-menu-popup"))))
+      (html-element-children
+       'menu
+       (html-element 'button
+                     label
+                     #:attrs (list (cons 'role 'button)
+                                   (cons 'class "we-menu-label")
+                                   (cons 'data-we-widget "menu-label")
+                                   (cons 'menu-trigger #t)
+                                   (cons 'tabindex 0)
+                                   (cons 'aria-haspopup "menu")
+                                   (cons 'aria-controls popup-id)
+                                   (cons 'aria-expanded @aria-expanded)
+                                   (cons 'on-click-action
+                                         (lambda ()
+                                           (set-open! (not (obs-peek @open)))))
+                                   (cons 'on-change-action
+                                         (lambda (key)
+                                           (case (string->symbol key)
+                                             [(ArrowDown ArrowUp)
+                                              (set-open! #t)]
+                                             [(mouseenter)
+                                              (when (and active-menu-close/internal
+                                                         (not (obs-peek @open)))
+                                                (set-open! #t))]
+                                             [(focusout Escape)
+                                              (set-open! #f)]
+                                             [else
+                                              (void)])))))
+       (apply html-element-children
+              (append (list 'vpanel)
+                      children
+                      (list #:attrs (list (cons 'role 'menu)
+                                          (cons 'id popup-id)
+                                          (cons 'data-we-widget "menu-popup")
+                                          (cons 'class @popup-class)))))
+       #:attrs (list (cons 'class "we-menu")
+                     (cons 'data-we-widget "menu"))))
 
     ;; menu-item : (or/c string? observable?) (-> any/c) [any/c] [any/c] -> view?
     ;;   Construct a menu item with optional leading/trailing icon labels.
     ;;   Optional parameter leading-icon defaults to #f.
     ;;   Optional parameter trailing-icon defaults to #f.
     (define (menu-item label action [leading-icon #f] [trailing-icon #f])
-      (view kind/menu-item (list (cons 'label         label)
-                                 (cons 'action        action)
-                                 (cons 'leading-icon  leading-icon)
-                                 (cons 'trailing-icon trailing-icon))
-            '()))
+      (define attrs/final
+        (list (cons 'role 'menuitem)
+              (cons 'class "we-menu-item")
+              (cons 'data-we-widget "menu-item")
+              (cons 'tabindex 0)
+              (cons 'on-click-action
+                    (lambda ()
+                      (action)
+                      (close-active-menu/internal)))
+              (cons 'on-change-action
+                    (lambda (key)
+                      (case (string->symbol key)
+                        [(focusout Escape)
+                         (close-active-menu/internal)]
+                        [else
+                         (void)])))))
+      (define iconized?
+        (or (obs? leading-icon)
+            (obs? trailing-icon)
+            (not (eq? leading-icon #f))
+            (not (eq? trailing-icon #f))))
+      (if (eq? iconized? #f)
+          (html-element 'menu-item label #:attrs attrs/final)
+          (let ()
+            (define leading-view
+              (if (obs? leading-icon)
+                  (Span (~> leading-icon
+                            (lambda (v)
+                              (if (eq? v #f) "" v)))
+                        #:data-we-widget "menu-item-icon"
+                        #:class "we-menu-item-icon we-menu-item-icon-leading"
+                        #:hidden (~> leading-icon
+                                    (lambda (v)
+                                      (if (eq? v #f) "hidden" #f))))
+                  (if (eq? leading-icon #f)
+                      #f
+                      (Span leading-icon
+                            #:data-we-widget "menu-item-icon"
+                            #:class "we-menu-item-icon we-menu-item-icon-leading"))))
+            (define trailing-view
+              (if (obs? trailing-icon)
+                  (Span (~> trailing-icon
+                            (lambda (v)
+                              (if (eq? v #f) "" v)))
+                        #:data-we-widget "menu-item-icon"
+                        #:class "we-menu-item-icon we-menu-item-icon-trailing"
+                        #:hidden (~> trailing-icon
+                                    (lambda (v)
+                                      (if (eq? v #f) "hidden" #f))))
+                  (if (eq? trailing-icon #f)
+                      #f
+                      (Span trailing-icon
+                            #:data-we-widget "menu-item-icon"
+                            #:class "we-menu-item-icon we-menu-item-icon-trailing"))))
+            (apply html-element-children
+                   (append
+                    (list 'menu-item)
+                    (if (eq? leading-view #f) '() (list leading-view))
+                    (list (Span label
+                                #:data-we-widget "menu-item-label"
+                                #:class "we-menu-item-label"))
+                    (if (eq? trailing-view #f) '() (list trailing-view))
+                    (list #:attrs attrs/final))))))
 
     ;; list-view : (or/c list? observable?) (-> any/c any/c view?) [(-> any/c any/c)] -> view?
     ;;   Construct a keyed dynamic list container.
