@@ -324,6 +324,12 @@ For internal component authoring in @tt{web-easy}, @racket[define/component]
 supports variadic children with @racket[#:rest], including together with
 @racket[#:root-attrs].
 
+Internal status note:
+built-in semantic/compound constructors are implemented with
+@racket[define/component]; only @racket[html-element],
+@racket[html-element-children], and internal
+@racket[observable-element-children] remain on @racket[define/key].
+
 @racketblock[
 (define/component Example
   #:root-tag 'div

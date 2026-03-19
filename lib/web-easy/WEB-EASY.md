@@ -171,7 +171,12 @@ Current conventions:
 
 ### Primitive Composition Status
 
-`offcanvas`, `dialog`, `modal`, `menu-bar`, `menu`, `menu-item`, `tab-panel`, `accordion`, `card`, `tooltip`, `popover`, `if-view`, `cond-view`, `case-view`, `observable-view`, `table`, and `list-view` are now view-level primitive compositions.
+All built-in semantic/compound constructors are now view-level primitive compositions built with `define/component`.
+Only low-level constructors remain on `define/key`:
+
+- `html-element`
+- `html-element-children`
+- internal `observable-element-children`
 
 - They no longer require dedicated renderer kind branches.
 - Root semantics are expressed through primitive attrs (`role`, `aria-*`, `on-change-action`, widget classes).

@@ -472,6 +472,23 @@
 (check-equal (length (dom-node-children display-heading-subtitle-node)) 2 "display-heading-with-subtitle preserves child count after level update")
 (check-equal (dom-node-text display-heading-title-node) "Patch Notes" "display-heading-with-subtitle updated title text")
 (check-equal (dom-node-text display-heading-subtitle-text-node) "Updated 2026-03-07" "display-heading-with-subtitle updated subtitle text")
+(define r-heading-subtitle-attrs
+  (render
+   (window
+    (vpanel
+     (heading-with-subtitle 2 "Title" "Subtitle" #:lang "en" #:data-track "hs1")
+     (display-heading-with-subtitle 2 "Title" "Subtitle" #:lang "da" #:data-track "dhs1")))))
+(define heading-subtitle-attrs-panel (node-child (renderer-root r-heading-subtitle-attrs) 0))
+(define heading-subtitle-attrs-node (node-child heading-subtitle-attrs-panel 0))
+(define display-heading-subtitle-attrs-node (node-child heading-subtitle-attrs-panel 1))
+(check-equal (node-attr heading-subtitle-attrs-node 'lang) "en" "heading-with-subtitle forwards global attrs")
+(check-equal (node-attr heading-subtitle-attrs-node 'data-track) "hs1" "heading-with-subtitle forwards data-* attrs")
+(check-equal (node-attr display-heading-subtitle-attrs-node 'lang) "da" "display-heading-with-subtitle forwards global attrs")
+(check-equal (node-attr display-heading-subtitle-attrs-node 'data-track) "dhs1" "display-heading-with-subtitle forwards data-* attrs")
+(check-exn (lambda () (heading-with-subtitle 2 "T" "S" #:foo "x"))
+           "heading-with-subtitle rejects unknown keyword attrs")
+(check-exn (lambda () (display-heading-with-subtitle 2 "T" "S" #:foo "x"))
+           "display-heading-with-subtitle rejects unknown keyword attrs")
 
 ;; λ<~ can be used directly as a button action
 (define @count-lambda (@ 0))
@@ -623,6 +640,26 @@
 (check-equal (node-class-contains? close-button-decorated-node "close-extra") #t "close-button decorator class")
 (check-equal (node-attr close-button-decorated-node 'data-probe) "close" "close-button decorator attrs")
 
+;; define/component root-attrs forwarding normalizes #:attrs entries given
+;; as 2-element lists and pairs.
+(define r-close-button-attrs-normalized
+  (render
+   (window
+    (vpanel
+     (close-button
+               (lambda () (void))
+               "Close normalize"
+               #:attrs '((data-probe "list-form")
+                         (data-probe-2 . "pair-form")))))))
+(define close-button-attrs-normalized-node
+  (node-child (node-child (renderer-root r-close-button-attrs-normalized) 0) 0))
+(check-equal (node-attr close-button-attrs-normalized-node 'data-probe)
+             "list-form"
+             "define/component #:attrs list-form entry normalized")
+(check-equal (node-attr close-button-attrs-normalized-node 'data-probe-2)
+             "pair-form"
+             "define/component #:attrs pair-form entry normalized")
+
 ;; placeholder renders shape classes and width attribute from observables
 (define @placeholder-shape (@ 'text))
 (define @placeholder-width (@ "10em"))
@@ -671,6 +708,36 @@
 (check-equal (node-attr off-root-node 'class) "we-offcanvas is-open" "offcanvas open class")
 (:= @off-side 'start)
 (check-equal (node-attr off-panel-node 'class) "we-offcanvas-panel is-start" "offcanvas panel start side")
+
+;; offcanvas callback bridge supports arity-0 and arity-1 callbacks
+(define @off-close-count (@ 0))
+(define @off-close-reason (@ 'none))
+(define r-offcanvas-callbacks
+  (render
+   (window
+    (vpanel
+     (offcanvas
+               #t
+               (lambda (reason)
+                 (:= @off-close-reason reason))
+               (text "body"))
+     (offcanvas
+               #t
+               (lambda ()
+                 (:= @off-close-count (+ (obs-peek @off-close-count) 1)))
+               (text "body"))))))
+(define offcallbacks-parent (node-child (renderer-root r-offcanvas-callbacks) 0))
+(define offcallbacks-reason-node (node-child offcallbacks-parent 0))
+(define offcallbacks-count-node (node-child offcallbacks-parent 1))
+(define offcallbacks-reason-backdrop (node-child-by-widget offcallbacks-reason-node "offcanvas-backdrop"))
+(define offcallbacks-count-backdrop (node-child-by-widget offcallbacks-count-node "offcanvas-backdrop"))
+(dom-node-keydown! offcallbacks-reason-node "Escape")
+(check-equal (obs-peek @off-close-reason) 'escape "offcanvas arity-1 callback receives Escape reason")
+(dom-node-click! offcallbacks-reason-backdrop)
+(check-equal (obs-peek @off-close-reason) 'backdrop "offcanvas arity-1 callback receives backdrop reason")
+(dom-node-keydown! offcallbacks-count-node "Escape")
+(dom-node-click! offcallbacks-count-backdrop)
+(check-equal (obs-peek @off-close-count) 2 "offcanvas arity-0 callback is invoked for Escape and backdrop")
 
 ;; carousel updates index via prev/next button actions
 (define @carousel-index (@ 0))
@@ -1204,6 +1271,42 @@
 (check-equal (node-attr modal-structured-footer 'data-we-widget) "modal-footer" "modal structured footer widget")
 (check-equal (node-attr (node-child modal-structured-header 1) 'data-we-widget) "modal-close" "modal structured close widget")
 
+;; modal callback bridge supports arity-0 and arity-1 callbacks
+(define @modal-close-count (@ 0))
+(define @modal-close-reason (@ 'none))
+(define r-modal-callbacks
+  (render
+   (window
+    (vpanel
+     (modal
+               #t
+               (lambda (reason)
+                 (:= @modal-close-reason reason))
+               (text "Modal reason")
+               #:show-close? #t)
+     (modal
+               #t
+               (lambda ()
+                 (:= @modal-close-count (+ (obs-peek @modal-close-count) 1)))
+               (text "Modal count")
+               #:show-close? #t)))))
+(define modalcallbacks-parent (node-child (renderer-root r-modal-callbacks) 0))
+(define modalcallbacks-reason-node (node-child modalcallbacks-parent 0))
+(define modalcallbacks-count-node (node-child modalcallbacks-parent 1))
+(define modalcallbacks-reason-panel (node-child modalcallbacks-reason-node 0))
+(define modalcallbacks-count-panel (node-child modalcallbacks-count-node 0))
+(define modalcallbacks-reason-header (node-child-by-widget modalcallbacks-reason-panel "modal-header"))
+(define modalcallbacks-count-header (node-child-by-widget modalcallbacks-count-panel "modal-header"))
+(define modalcallbacks-reason-close (node-child-by-widget modalcallbacks-reason-header "modal-close"))
+(define modalcallbacks-count-close (node-child-by-widget modalcallbacks-count-header "modal-close"))
+(dom-node-keydown! modalcallbacks-reason-node "Escape")
+(check-equal (obs-peek @modal-close-reason) 'escape "modal arity-1 callback receives Escape reason")
+(dom-node-click! modalcallbacks-reason-close)
+(check-equal (obs-peek @modal-close-reason) 'button "modal arity-1 callback receives close-button reason")
+(dom-node-keydown! modalcallbacks-count-node "Escape")
+(dom-node-click! modalcallbacks-count-close)
+(check-equal (obs-peek @modal-close-count) 2 "modal arity-0 callback is invoked for Escape and close button")
+
 ;; pagination renders page buttons and updates current page on click
 (define @page (@ 2))
 (define r-pagination
@@ -1451,6 +1554,42 @@
 (check-equal (node-attr dialog-structured-footer 'data-we-widget) "dialog-footer" "dialog structured footer widget")
 (check-equal (node-attr (node-child dialog-structured-header 1) 'data-we-widget) "dialog-close" "dialog structured close widget")
 
+;; dialog callback bridge supports arity-0 and arity-1 callbacks
+(define @dialog-close-count (@ 0))
+(define @dialog-close-reason (@ 'none))
+(define r-dialog-callbacks
+  (render
+   (window
+    (vpanel
+     (dialog
+               #t
+               (lambda (reason)
+                 (:= @dialog-close-reason reason))
+               (text "Dialog reason")
+               #:show-close? #t)
+     (dialog
+               #t
+               (lambda ()
+                 (:= @dialog-close-count (+ (obs-peek @dialog-close-count) 1)))
+               (text "Dialog count")
+               #:show-close? #t)))))
+(define dialogcallbacks-parent (node-child (renderer-root r-dialog-callbacks) 0))
+(define dialogcallbacks-reason-node (node-child dialogcallbacks-parent 0))
+(define dialogcallbacks-count-node (node-child dialogcallbacks-parent 1))
+(define dialogcallbacks-reason-panel (node-child dialogcallbacks-reason-node 0))
+(define dialogcallbacks-count-panel (node-child dialogcallbacks-count-node 0))
+(define dialogcallbacks-reason-header (node-child-by-widget dialogcallbacks-reason-panel "dialog-header"))
+(define dialogcallbacks-count-header (node-child-by-widget dialogcallbacks-count-panel "dialog-header"))
+(define dialogcallbacks-reason-close (node-child-by-widget dialogcallbacks-reason-header "dialog-close"))
+(define dialogcallbacks-count-close (node-child-by-widget dialogcallbacks-count-header "dialog-close"))
+(dom-node-keydown! dialogcallbacks-reason-node "Escape")
+(check-equal (obs-peek @dialog-close-reason) 'escape "dialog arity-1 callback receives Escape reason")
+(dom-node-click! dialogcallbacks-reason-close)
+(check-equal (obs-peek @dialog-close-reason) 'button "dialog arity-1 callback receives close-button reason")
+(dom-node-keydown! dialogcallbacks-count-node "Escape")
+(dom-node-click! dialogcallbacks-count-close)
+(check-equal (obs-peek @dialog-close-count) 2 "dialog arity-0 callback is invoked for Escape and close button")
+
 ;; renderer-destroy stops future updates
 (define @count2 (@ 0))
 (define r2
@@ -1689,7 +1828,7 @@
 (define group-node (node-child (node-child (renderer-root r9) 0) 0))
 (define group-legend-node (node-child group-node 0))
 (define group-content-node (node-child group-node 1))
-(check-equal (dom-node-tag group-node) 'group "group node tag")
+(check-equal (dom-node-tag group-node) 'fieldset "group node tag")
 (check-equal (node-attr group-node 'data-we-widget) "group" "group data-we-widget attr")
 (check-equal (node-attr group-node 'class) "we-group" "group base class")
 (check-equal (dom-node-tag group-legend-node) 'legend "group legend node tag")
@@ -1954,7 +2093,7 @@
              @radio
              (lambda (new-value) (:= @radio new-value)))))))
 (define radios-node (node-child (node-child (renderer-root r17) 0) 0))
-(check-equal (dom-node-tag radios-node) 'radios "radios node tag")
+(check-equal (dom-node-tag radios-node) 'div "radios node tag")
 (check-equal (node-attr radios-node 'selected) 'left "radios initial selected")
 (check-equal (node-attr radios-node 'data-we-widget) "radios" "radios data-we-widget attr")
 (check-equal (node-attr radios-node 'class) "we-radios" "radios base class")
@@ -1971,7 +2110,7 @@
     (vpanel
      (image "a.png")))))
 (define image-node1 (node-child (node-child (renderer-root r18) 0) 0))
-(check-equal (dom-node-tag image-node1) 'image "image node tag")
+(check-equal (dom-node-tag image-node1) 'img "image node tag")
 (check-equal (node-attr image-node1 'src) "a.png" "image static src")
 (check-equal (node-attr image-node1 'data-we-widget) "image" "image data-we-widget attr")
 (check-equal (node-attr image-node1 'class) "we-image" "image base class")
@@ -2254,6 +2393,62 @@
 (check-equal (node-attr menu-label-node 'aria-expanded) "false" "menu-item Escape closes popup")
 (check-equal (node-attr menu-popup-node 'class) "we-menu-popup" "menu popup class after menu-item Escape")
 
+;; menu-bar supports root decorators/global attrs and rejects unknown attrs
+(define r20-decorated
+  (render
+   (window
+    (vpanel
+     (menu-bar
+      (menu "Help"
+            (menu-item "About" (lambda () (void))))
+      #:id "menu-main"
+      #:class "extra-menu-bar"
+      #:lang "en"
+      #:data-track "mb1")))))
+(define menu-bar-decorated-node (node-child (node-child (renderer-root r20-decorated) 0) 0))
+(check-equal (node-attr menu-bar-decorated-node 'id) "menu-main" "menu-bar decorator id")
+(check-equal (node-class-contains? menu-bar-decorated-node "we-menu-bar") #t "menu-bar keeps base class when decorated")
+(check-equal (node-class-contains? menu-bar-decorated-node "extra-menu-bar") #t "menu-bar merges decorator class")
+(check-equal (node-attr menu-bar-decorated-node 'lang) "en" "menu-bar forwards global lang attr")
+(check-equal (node-attr menu-bar-decorated-node 'data-track) "mb1" "menu-bar forwards data-* attrs")
+(check-exn (lambda ()
+             (menu-bar #:foo "x"))
+           "menu-bar rejects unknown keyword attrs")
+
+;; menu and menu-item support root decorators/global attrs and reject unknown attrs
+(define r20-menu-decorated
+  (render
+   (window
+    (vpanel
+     (menu-bar
+      (menu "Tools"
+            (menu-item "Run"
+                       (lambda () (void))
+                       #:id "menu-item-run"
+                       #:class "menu-item-extra"
+                       #:lang "en")
+            #:id "menu-tools"
+            #:class "menu-extra"
+            #:lang "da"))))))
+(define menu-decorated-bar-node (node-child (node-child (renderer-root r20-menu-decorated) 0) 0))
+(define menu-decorated-node (node-child menu-decorated-bar-node 0))
+(define menu-decorated-popup (node-child menu-decorated-node 1))
+(define menu-decorated-item (node-child menu-decorated-popup 0))
+(check-equal (node-attr menu-decorated-node 'id) "menu-tools" "menu decorator id")
+(check-equal (node-class-contains? menu-decorated-node "we-menu") #t "menu keeps base class when decorated")
+(check-equal (node-class-contains? menu-decorated-node "menu-extra") #t "menu merges decorator class")
+(check-equal (node-attr menu-decorated-node 'lang) "da" "menu forwards global lang attr")
+(check-equal (node-attr menu-decorated-item 'id) "menu-item-run" "menu-item decorator id")
+(check-equal (node-class-contains? menu-decorated-item "we-menu-item") #t "menu-item keeps base class when decorated")
+(check-equal (node-class-contains? menu-decorated-item "menu-item-extra") #t "menu-item merges decorator class")
+(check-equal (node-attr menu-decorated-item 'lang) "en" "menu-item forwards global lang attr")
+(check-exn (lambda ()
+             (menu "Tools" #:foo "x"))
+           "menu rejects unknown keyword attrs")
+(check-exn (lambda ()
+             (menu-item "Run" (lambda () (void)) #:foo "x"))
+           "menu-item rejects unknown keyword attrs")
+
 ;; case-view handles repeated transitions among matching and fallback clauses
 (:= @mode 'b)
 (check-equal (dom-node-text (node-child case-container 0)) "mode-bc" "case-view transition to b")
@@ -2474,6 +2669,42 @@
            "spacer enforces positional arity")
 (check-exn (lambda () (divider 'horizontal 'vertical))
            "divider enforces positional arity")
+(check-exn (lambda () (toolbar #:foo "x" (text "bad")))
+           "toolbar rejects unknown keyword attrs")
+(check-exn (lambda () (toolbar-group #:foo "x" (text "bad")))
+           "toolbar-group rejects unknown keyword attrs")
+(check-exn (lambda () (button-group #:foo "x" (button "x" (lambda () (void)))))
+           "button-group rejects unknown keyword attrs")
+(check-exn (lambda () (button-toolbar #:foo "x" (button-group (button "x" (lambda () (void))))))
+           "button-toolbar rejects unknown keyword attrs")
+(check-exn (lambda () (top-bar #:foo "x" (text "bad")))
+           "top-bar rejects unknown keyword attrs")
+
+;; migrated #:rest + #:root-attrs wrappers forward global attrs and merge classes
+(define r24c-rest-root-attrs
+  (render
+   (window
+    (vpanel
+     (top-bar #:id "tb1" #:lang "en" #:class "outer-top" (text "Brand"))
+     (toolbar #:id "t1" #:lang "da" #:class "outer-toolbar"
+              (toolbar-group (button "x" (lambda () (void)))))
+     (button-group #:id "bg1" #:lang "fr" #:class "outer-group"
+                   (button "x" (lambda () (void))))))))
+(define top-bar-attrs-node (node-child (node-child (renderer-root r24c-rest-root-attrs) 0) 0))
+(define toolbar-attrs-node2 (node-child (node-child (renderer-root r24c-rest-root-attrs) 0) 1))
+(define button-group-attrs-node2 (node-child (node-child (renderer-root r24c-rest-root-attrs) 0) 2))
+(check-equal (dom-node-tag top-bar-attrs-node) 'header "top-bar primitive header tag")
+(check-equal (node-attr top-bar-attrs-node 'id) "tb1" "top-bar forwards id")
+(check-equal (node-attr top-bar-attrs-node 'lang) "en" "top-bar forwards global attr")
+(check-equal (node-attr top-bar-attrs-node 'class) "we-top-bar outer-top" "top-bar merges base and forwarded class")
+(check-equal (node-attr top-bar-attrs-node 'role) 'banner "top-bar preserves role")
+(check-equal (node-attr toolbar-attrs-node2 'id) "t1" "toolbar forwards id")
+(check-equal (node-attr toolbar-attrs-node2 'lang) "da" "toolbar forwards global attr")
+(check-equal (node-attr toolbar-attrs-node2 'class) "we-toolbar outer-toolbar" "toolbar merges base and forwarded class")
+(check-equal (node-attr button-group-attrs-node2 'id) "bg1" "button-group forwards id")
+(check-equal (node-attr button-group-attrs-node2 'lang) "fr" "button-group forwards global attr")
+(check-equal (node-attr button-group-attrs-node2 'class) "we-button-group outer-group" "button-group merges base and forwarded class")
+(check-equal (node-attr button-group-attrs-node2 'role) 'group "button-group preserves role")
 
 ;; input supports direct attrs list on constructor
 (define r25-input
