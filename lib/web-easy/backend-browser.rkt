@@ -439,8 +439,22 @@
         [(td) "td"]
         [(menu-bar) "nav"]
         [(menu) "div"]
+        [(div) "div"]
+        [(section) "section"]
+        [(article) "article"]
+        [(nav) "nav"]
+        [(main) "main"]
+        [(header) "header"]
+        [(footer) "footer"]
+        [(aside) "aside"]
+        [(form) "form"]
+        [(ul) "ul"]
+        [(ol) "ol"]
+        [(li) "li"]
+        [(img) "img"]
         [(image) "img"]
-        [else "div"]))
+        ;; Allow primitive html-element tags that are not explicitly listed above.
+        [else (symbol->string tag)]))
 
     ;; install-default-node-shape! : dom-node-record? -> void?
     ;;   Apply default browser attributes based on node tag.
@@ -1296,9 +1310,36 @@
       (dom-node-record-on-change n))
 
     ;; set-dom-node-tag! : dom-node? symbol? -> void?
-    ;;   Mutate tag in record; native element kind is unchanged.
+    ;;   Remount node with a new native element when tag changes.
     (define (set-dom-node-tag! n tag)
-      (set-dom-node-record-tag! n tag))
+      (define old-tag (dom-node-record-tag n))
+      (unless (eq? old-tag tag)
+        (define old-native (dom-node-record-native n))
+        (define old-parent (js-ref/extern old-native "parentElement"))
+        (define replacement
+          (dom-node tag
+                    (dom-node-record-attrs n)
+                    (dom-node-record-children n)
+                    (dom-node-record-text n)
+                    (dom-node-record-on-click n)
+                    (dom-node-record-on-change n)))
+        (define new-native (dom-node-record-native replacement))
+        (define children (dom-node-record-children n))
+        (when (pair? children)
+          (define fragment (js-create-document-fragment))
+          (for-each (lambda (child)
+                      (js-append-child! fragment (dom-node-record-native child)))
+                    children)
+          (js-replace-children! new-native fragment))
+        (when (and old-parent (not (extern-nullish? old-parent)))
+          (js-send old-parent "replaceChild" (vector new-native old-native)))
+        (set-dom-node-record-tag! n tag)
+        (set-dom-node-record-attrs! n (dom-node-record-attrs replacement))
+        (set-dom-node-record-children! n children)
+        (set-dom-node-record-text! n (dom-node-record-text replacement))
+        (set-dom-node-record-on-click! n (dom-node-record-on-click replacement))
+        (set-dom-node-record-on-change! n (dom-node-record-on-change replacement))
+        (set-dom-node-record-native! n new-native)))
 
     ;; set-dom-node-attrs! : dom-node? list? -> void?
     ;;   Replace tracked attributes and sync native DOM attributes.

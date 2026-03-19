@@ -27,9 +27,17 @@
         const displayWithSubtitle = () => doc.querySelector("[data-we-widget='display-heading-with-subtitle']");
         const lead = () => doc.querySelector("[data-we-widget='lead']");
         H.assertEqual((title().textContent || "").trim(), "Parity Heading", "initial parity heading text");
+        H.assertEqual(title().tagName.toLowerCase(), "h4", "initial parity heading tag");
         H.assertEqual((display().textContent || "").trim(), "Parity Display", "initial parity display heading text");
+        H.assertEqual(display().tagName.toLowerCase(), "h4", "initial parity display heading tag");
         H.assertTrue(!!displayWithSubtitle(), "parity display-heading-with-subtitle node present");
+        H.assertEqual(displayWithSubtitle().tagName.toLowerCase(), "h4", "initial parity display-heading-with-subtitle tag");
         H.assertEqual((lead().textContent || "").trim(), "Parity lead text", "initial parity lead text");
+        Array.from(doc.querySelectorAll("button")).find((b) => (b.textContent || "").trim() === "set-level-2").click();
+        await H.sleep(80);
+        H.assertEqual(title().tagName.toLowerCase(), "h2", "parity heading tag remounts to h2 after level change");
+        H.assertEqual(display().tagName.toLowerCase(), "h2", "parity display heading tag remounts to h2 after level change");
+        H.assertEqual(displayWithSubtitle().tagName.toLowerCase(), "h2", "parity display heading with subtitle tag remounts to h2 after level change");
         Array.from(doc.querySelectorAll("button")).find((b) => (b.textContent || "").trim() === "set-title").click();
         await H.sleep(80);
         H.assertEqual((title().textContent || "").trim(), "Parity Updated Heading", "updated parity heading text");

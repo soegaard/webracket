@@ -130,6 +130,12 @@ Popup item behavior:
 - scrollspy exposes stable nav/item hooks
 - scrolling section content updates the current item class deterministically
 
+## Headings Contract Semantics
+
+- semantic `heading`/`display-heading` nodes render as true heading tags (`h1`..`h6`) from level
+- when level changes, heading nodes remount to the new tag (React/Angular-style replace, not in-place retag)
+- lead renders as paragraph semantics (`p`) with stable widget/class hooks
+
 ## Dropdown Contract Semantics
 
 - dropdown trigger exposes menu semantics (`aria-haspopup="menu"`, `aria-expanded`)
@@ -196,6 +202,8 @@ Popup item behavior:
 - `PASS carousel contract:`
 - `PASS scrollspy contract:`
 - `PASS scrollspy deep keyboard:`
+- `PASS heading/display-heading/lead render and update`
+- `PASS primitive tags contract`
 
 ## Expected PASS Prefixes (Parity)
 
@@ -236,6 +244,8 @@ Popup item behavior:
 - `PASS parity carousel contract:`
 - `PASS parity scrollspy contract:`
 - `PASS parity scrollspy deep keyboard:`
+- `PASS parity heading/display-heading/lead render and update`
+- `PASS parity primitive tags contract`
 
 ## Guard Self-Test Expectation
 
