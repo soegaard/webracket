@@ -872,6 +872,16 @@ This is an unordered list container element.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("ul")))}.
 }
 
+@defproc[(Menu [#:attrs attrs (or/c #f list?) null]
+               [child any/c] ...)
+         view?]{
+Build a primitive @tt{<menu>} element with children.
+
+This is a menu/list container element.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("menu")))}.
+}
+
 @defproc[(Ol [#:attrs attrs (or/c #f list?) null]
              [child any/c] ...)
          view?]{
@@ -1076,6 +1086,16 @@ This is a leaf/void embedded-content element for external resources.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("embed")))}.
 }
 
+@defproc[(Object [#:attrs attrs (or/c #f list?) null]
+                 [child any/c] ...)
+         view?]{
+Build a primitive @tt{<object>} element with children.
+
+This embeds external resources and may include fallback child content.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("object")))}.
+}
+
 @defproc[(Input [#:attrs attrs (or/c #f list?) null])
          view?]{
 Build a primitive @tt{<input>} element.
@@ -1123,6 +1143,16 @@ Build a primitive @tt{<details>} element with children.
 This is a disclosure container that can be toggled open/closed.
 
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("details")))}.
+}
+
+@defproc[(Dialog [#:attrs attrs (or/c #f list?) null]
+                 [child any/c] ...)
+         view?]{
+Build a primitive @tt{<dialog>} element with children.
+
+This is a dialog/modal container element.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("dialog")))}.
 }
 
 @defproc[(Summary [#:attrs attrs (or/c #f list?) null]
@@ -1412,6 +1442,16 @@ Build a primitive @tt{<style>} element.
 This defines inline style-sheet text.
 
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("style")))}.
+}
+
+@defproc[(Slot [#:attrs attrs (or/c #f list?) null]
+               [child any/c] ...)
+         view?]{
+Build a primitive @tt{<slot>} element with children.
+
+This defines a Web Components slot insertion point and may include fallback content.
+
+Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("slot")))}.
 }
 
 @section{Layout Components}

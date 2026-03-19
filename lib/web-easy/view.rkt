@@ -85,6 +85,7 @@
 ;;   Form           Build a primitive HTML form element view with children and generic keyword attrs.
 ;;   Label          Build a primitive HTML label element view with generic keyword attrs.
 ;;   Ul             Build a primitive HTML ul element view with children and generic keyword attrs.
+;;   Menu           Build a primitive HTML menu element view with children and generic keyword attrs.
 ;;   Ol             Build a primitive HTML ol element view with children and generic keyword attrs.
 ;;   Li             Build a primitive HTML li element view with children and generic keyword attrs.
 ;;   Dl             Build a primitive HTML dl element view with children and generic keyword attrs.
@@ -105,11 +106,13 @@
 ;;   Canvas         Build a primitive HTML canvas element view with children and generic keyword attrs.
 ;;   Iframe         Build a primitive HTML iframe element view with children and generic keyword attrs.
 ;;   Embed          Build a primitive HTML embed element view with generic keyword attrs.
+;;   Object         Build a primitive HTML object element view with children and generic keyword attrs.
 ;;   Input          Build a primitive HTML input element view with generic keyword attrs.
 ;;   Select         Build a primitive HTML select element view with children and generic keyword attrs.
 ;;   Option         Build a primitive HTML option element view with children and generic keyword attrs.
 ;;   Textarea       Build a primitive HTML textarea element view with generic keyword attrs.
 ;;   Details        Build a primitive HTML details element view with children and generic keyword attrs.
+;;   Dialog         Build a primitive HTML dialog element view with children and generic keyword attrs.
 ;;   Summary        Build a primitive HTML summary element view with children and generic keyword attrs.
 ;;   Figure         Build a primitive HTML figure element view with children and generic keyword attrs.
 ;;   Figcaption     Build a primitive HTML figcaption element view with children and generic keyword attrs.
@@ -138,6 +141,7 @@
 ;;   Title          Build a primitive HTML title element view with generic keyword attrs.
 ;;   Base           Build a primitive HTML base element view with generic keyword attrs.
 ;;   Style          Build a primitive HTML style element view with generic keyword attrs.
+;;   Slot           Build a primitive HTML slot element view with children and generic keyword attrs.
 ;;   h2             Build a semantic level-2 heading view.
 ;;   h3             Build a semantic level-3 heading view.
 ;;   h4             Build a semantic level-4 heading view.
@@ -271,6 +275,7 @@
    Form
    Label
    Ul
+   Menu
    Ol
    Li
    Dl
@@ -291,11 +296,13 @@
    Canvas
    Iframe
    Embed
+   Object
    Input
    Select
    Option
    Textarea
    Details
+   Dialog
    Summary
    Figure
    Figcaption
@@ -324,6 +331,7 @@
    Title
    Base
    Style
+   Slot
    h2
    h3
    h4
@@ -1307,6 +1315,12 @@
       #:required-keywords ()
       #:positional-count any)
 
+    ;; Menu : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML menu element with children and generic keyword attrs.
+    (define/element Menu html-element-children 'menu
+      #:required-keywords ()
+      #:positional-count any)
+
     ;; Ol : view? ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML ol element with children and generic keyword attrs.
     (define/element Ol html-element-children 'ol
@@ -1427,6 +1441,12 @@
       #:required-keywords ()
       #:positional-count 0)
 
+    ;; Object : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML object element with children and generic keyword attrs.
+    (define/element Object html-element-children 'object
+      #:required-keywords ()
+      #:positional-count any)
+
     ;; Input : [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML input element with generic keyword attrs.
     (define/element Input html-element 'input
@@ -1452,6 +1472,12 @@
     ;; Details : view? ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML details element with children and generic keyword attrs.
     (define/element Details html-element-children 'details
+      #:required-keywords ()
+      #:positional-count any)
+
+    ;; Dialog : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML dialog element with children and generic keyword attrs.
+    (define/element Dialog html-element-children 'dialog
       #:required-keywords ()
       #:positional-count any)
 
@@ -1620,6 +1646,12 @@
     ;; Style : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML style element with generic keyword attrs.
     (define/element Style html-element 'style)
+
+    ;; Slot : view? ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML slot element with children and generic keyword attrs.
+    (define/element Slot html-element-children 'slot
+      #:required-keywords ()
+      #:positional-count any)
 
     ;; h2 : (or/c string? observable?) -> view?
     ;;   Construct a semantic level-2 heading view with optional root decorators.
@@ -2963,10 +2995,11 @@
             Header
             Footer
             Aside
-            Form
-            Label
-            Ul
-            Ol
+   Form
+   Label
+   Ul
+   Menu
+   Ol
             Li
             Dl
             Dt
@@ -2986,11 +3019,13 @@
             Canvas
             Iframe
             Embed
+            Object
             Input
             Select
             Option
             Textarea
             Details
+            Dialog
             Summary
             Figure
             Figcaption
@@ -3016,10 +3051,11 @@
             Script
             Link
             Meta
-            Title
-            Base
-            Style
-            h2
+   Title
+   Base
+   Style
+   Slot
+   h2
             h3
             h4
             h5

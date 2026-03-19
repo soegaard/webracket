@@ -1138,6 +1138,52 @@
 (check-call-rejected (Figcaption #:foo "x" (Span "bad"))
                      "Figcaption rejects unknown attrs")
 
+;; Dialog/Menu/Object/Slot primitives
+(define r-dialog-menu-object-slot
+  (render
+   (window
+    (vpanel
+     (Dialog
+      #:open #t
+      (P "Dialog body"))
+     (Menu
+      #:compact #t
+      (Li (Span "Menu item")))
+     (Object
+      #:data "/movie.bin"
+      #:type "application/octet-stream"
+      (P "Object fallback"))
+     (Slot
+      #:name "hero"
+      (Span "Slot fallback"))))))
+(define dmos-panel (node-child (renderer-root r-dialog-menu-object-slot) 0))
+(define dialog-node-2 (node-child dmos-panel 0))
+(define menu-prim-node (node-child dmos-panel 1))
+(define object-node (node-child dmos-panel 2))
+(define slot-node (node-child dmos-panel 3))
+(check-equal (dom-node-tag dialog-node-2) 'dialog "Dialog primitive tag is dialog")
+(check-node-attrs dialog-node-2 '((open #t)))
+(check-equal (dom-node-text (node-child dialog-node-2 0)) "Dialog body" "Dialog child text renders")
+(check-equal (dom-node-tag menu-prim-node) 'menu "Menu primitive tag is menu")
+(check-node-attrs menu-prim-node '((compact #t)))
+(check-equal (dom-node-tag (node-child menu-prim-node 0)) 'li "Menu child Li renders")
+(check-equal (dom-node-tag object-node) 'object "Object primitive tag is object")
+(check-node-attrs object-node
+                  '((data "/movie.bin")
+                    (type "application/octet-stream")))
+(check-equal (dom-node-text (node-child object-node 0)) "Object fallback" "Object fallback child text renders")
+(check-equal (dom-node-tag slot-node) 'slot "Slot primitive tag is slot")
+(check-node-attrs slot-node '((name "hero")))
+(check-equal (dom-node-text (node-child slot-node 0)) "Slot fallback" "Slot fallback child text renders")
+(check-call-rejected (Dialog #:foo "x" (P "bad"))
+                     "Dialog rejects unknown attrs")
+(check-call-rejected (Menu #:foo "x" (Li (Span "bad")))
+                     "Menu rejects unknown attrs")
+(check-call-rejected (Object #:foo "x" (P "bad"))
+                     "Object rejects unknown attrs")
+(check-call-rejected (Slot #:foo "x" (Span "bad"))
+                     "Slot rejects unknown attrs")
+
 ;; Hgroup/Address/Blockquote primitives
 (define r-group-address-quote-primitives
   (render
