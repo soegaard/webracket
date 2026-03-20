@@ -384,6 +384,103 @@
 (define (set-disjoint? s1 s2)
   (set-empty? (set-intersection s1 s2)))
 
+(module+ test
+  (let ()
+    ;; mkvar : symbol? -> variable?
+    ;;   Construct a fresh variable wrapper for symbol s.
+    (define (mkvar s)
+      (variable (datum->syntax #f s)))
+
+    ;; set-size : id-set? -> exact-nonnegative-integer?
+    ;;   Number of variables stored in id-set s.
+    (define (set-size s)
+      (length (id-set->list s)))
+    ;; set-has-name-string? : id-set? string? -> boolean?
+    ;;   Check whether some variable in s has printed symbol name name.
+    (define (set-has-name-string? s name)
+      (for/or ([v (in-list (id-set->list s))])
+        (define x (syntax-e (variable-id v)))
+        (and (symbol? x)
+             (string=? (symbol->string x) name))))
+    ;; set-has-name-symbol/eq? : id-set? symbol? -> boolean?
+    ;;   Name membership check using eq? on symbols (intentionally strict).
+    (define (set-has-name-symbol/eq? s sym)
+      (for/or ([v (in-list (id-set->list s))])
+        (define x (syntax-e (variable-id v)))
+        (and (symbol? x) (eq? x sym))))
+
+    (define x  (mkvar 'x))
+    (define x2 (mkvar 'x))
+    (define y  (mkvar 'y))
+    (define z  (mkvar 'z))
+
+    (check-true (set-empty? empty-set))
+    (check-equal? (set-size empty-set) 0)
+
+    ;; Deduplicate same free identifier.
+    (define sx (set-add empty-set x))
+    (define sxx (set-add sx x2))
+    (check-true (set-in? x sx))
+    (check-true (set-in? x2 sx))
+    (check-equal? (set-size sx) 1)
+    (check-equal? (set-size sxx) 1)
+
+    ;; Basic add/remove operations.
+    (define sxy (set-add sx y))
+    (check-true (set-in? x sxy))
+    (check-true (set-in? y sxy))
+    (check-equal? (set-size sxy) 2)
+    (define sy (set-remove sxy x))
+    (check-false (set-in? x sy))
+    (check-true (set-in? y sy))
+    (check-equal? (set-size sy) 1)
+    (check-equal? (set-size (set-remove sy z)) 1)
+
+    ;; make-id-set / ids->id-set dedupe.
+    (define s/make (make-id-set x x2 y))
+    (define s/ids (ids->id-set (list x x2 y)))
+    (check-equal? (set-size s/make) 2)
+    (check-equal? (set-size s/ids) 2)
+    (check-true (set-in? x s/make))
+    (check-true (set-in? y s/make))
+
+    ;; Union, intersection, difference, disjoint.
+    (define sxz (make-id-set x z))
+    (define syz (make-id-set y z))
+    (define su (set-union sxz syz))
+    (check-equal? (set-size su) 3)
+    (check-true (set-in? x su))
+    (check-true (set-in? y su))
+    (check-true (set-in? z su))
+    (check-equal? (set-size (set-union sxz sxz)) 2)
+
+    (define si (set-intersection sxz syz))
+    (check-equal? (set-size si) 1)
+    (check-true (set-in? z si))
+    (check-false (set-in? x si))
+
+    (define sd (set-difference su syz))
+    (check-equal? (set-size sd) 1)
+    (check-true (set-in? x sd))
+    (check-false (set-in? y sd))
+    (check-false (set-in? z sd))
+
+    (check-true (set-disjoint? (make-id-set x) (make-id-set y)))
+    (check-false (set-disjoint? (make-id-set x z) (make-id-set y z)))
+
+    ;; Union over many sets.
+    (define su* (set-union* (list (make-id-set x) (make-id-set y) (make-id-set z x2))))
+    (check-equal? (set-size su*) 3)
+    (check-true (set-in? x su*))
+    (check-true (set-in? y su*))
+    (check-true (set-in? z su*))
+
+    ;; Regression guard: printed-name lookup is robust for uninterned symbols.
+    (define error.59/uninterned (mkvar (string->uninterned-symbol "error.59")))
+    (define se (set-add empty-set error.59/uninterned))
+    (check-true (set-has-name-string? se "error.59"))
+    (check-false (set-has-name-symbol/eq? se 'error.59))))
+
 
 ;;;
 ;;; DATUMS AND CONSTANTS
@@ -2804,16 +2901,22 @@
     [(topmodule ,s ,mn ,mp ,mf ...) (ModuleLevelForm* mf xs)]
     [,g                             (GeneralTopLevelForm g xs)])
   (ModuleLevelForm : ModuleLevelForm (M xs) -> * (xs)
-    [(#%provide ,rps ...)           empty-set]
+    [(#%provide ,rps ...)
+     ;; Preserve accumulator: this pass threads one running set across forms.
+     ;; Returning empty-set here would erase mutable vars seen earlier.
+     xs]
     [,g                             (GeneralTopLevelForm g xs)])
   (GeneralTopLevelForm : GeneralTopLevelForm (G xs) -> * (xs)
     [,e                                 (Expr e xs)]
     ; until we implement namespace, top-level variables are boxed
-    [(define-values   ,s (,x ...) ,e)   (if assignment-convertsion-for-top-level-vars?
-                                            (Expr e (set-union (ids->id-set x) xs))
-                                            (Expr e xs))]
+    [(define-values   ,s (,x ...) ,e)
+     (if assignment-convertsion-for-top-level-vars?
+         (Expr e (set-union (ids->id-set x) xs))
+         (Expr e xs))]
     [(define-syntaxes ,s (,x ...) ,e)   (Expr e xs)]
-    [(#%require       ,s ,rrs ...)      empty-set])
+    [(#%require       ,s ,rrs ...)
+     ;; Preserve accumulator for the same reason as #%provide above.
+     xs])
 
   (RawProvideSpec : RawProvideSpec (RPS rps) -> * (rps)
     #;(for-meta   phase-level ps ...)
@@ -2949,7 +3052,8 @@
   ; more convenient to use assignment-conversion than
   ; calling collect-assignable-variables and box-mutables in order
   ; (since  assignment-conversion has type T -> T)
-  (box-mutables T (collect-assignable-variables T)))
+  (define ms (collect-assignable-variables T))
+  (box-mutables T ms))
 
 (module+ test
   (let ()
