@@ -73,6 +73,7 @@
     (define scrollspy-item-selector
       ".we-scrollspy-item") ; Selector used for scrollspy keyboard roving.
     (define dialog-focus-returns         '()) ; Association list mapping dialog native nodes to return-focus targets.
+    (define dialog-focus-timeouts        '()) ; Association list mapping dialog native nodes to pending focus timeout handles.
     (define scrollspy-observers          '()) ; Association list mapping scrollspy container native nodes to observer handles.
     (define scrollspy-listeners          '()) ; Association list mapping scrollspy container native nodes to listener handles.
     (define scrollspy-cleanup-registered '()) ; Native nodes with registered scrollspy cleanup callbacks.
@@ -198,6 +199,41 @@
                 [(eq? (caar pairs) dialog-native) (cdr pairs)]
                 [else (cons (car pairs) (loop (cdr pairs)))]))))
 
+    ;; dialog-focus-timeout-set! : any/c any/c -> void?
+    ;;   Track pending focus timeout handle for dialog-native.
+    (define (dialog-focus-timeout-set! dialog-native handle)
+      (set! dialog-focus-timeouts
+            (cons (cons dialog-native handle)
+                  (let loop ([pairs dialog-focus-timeouts])
+                    (cond
+                      [(null? pairs) '()]
+                      [(eq? (caar pairs) dialog-native) (cdr pairs)]
+                      [else (cons (car pairs) (loop (cdr pairs)))])))))
+
+    ;; dialog-focus-timeout-ref : any/c -> any/c
+    ;;   Return pending focus timeout handle for dialog-native or #f.
+    (define (dialog-focus-timeout-ref dialog-native)
+      (define p (assq dialog-native dialog-focus-timeouts))
+      (if p (cdr p) #f))
+
+    ;; dialog-focus-timeout-remove! : any/c -> void?
+    ;;   Remove pending focus timeout mapping for dialog-native.
+    (define (dialog-focus-timeout-remove! dialog-native)
+      (set! dialog-focus-timeouts
+            (let loop ([pairs dialog-focus-timeouts])
+              (cond
+                [(null? pairs) '()]
+                [(eq? (caar pairs) dialog-native) (cdr pairs)]
+                [else (cons (car pairs) (loop (cdr pairs)))]))))
+
+    ;; clear-pending-dialog-focus-timeout! : any/c -> void?
+    ;;   Clear and forget pending deferred focus timer for dialog-native.
+    (define (clear-pending-dialog-focus-timeout! dialog-native)
+      (define handle (dialog-focus-timeout-ref dialog-native))
+      (when handle
+        (backend-clear-timeout! handle))
+      (dialog-focus-timeout-remove! dialog-native))
+
     ;; native-mapping-ref : list? any/c -> any/c
     ;;   Lookup native key in mappings and return value or #f when missing.
     (define (native-mapping-ref mappings native)
@@ -320,11 +356,19 @@
             #f
             active*))
       (dialog-focus-return-set! dialog-native active)
-      (focus-first-dialog-target! dialog-native))
+      (clear-pending-dialog-focus-timeout! dialog-native)
+      (dialog-focus-timeout-set!
+       dialog-native
+       (backend-set-timeout!
+        0
+        (lambda ()
+          (dialog-focus-timeout-remove! dialog-native)
+          (focus-first-dialog-target! dialog-native)))))
 
     ;; handle-dialog-close-transition! : any/c -> void?
     ;;   Restore focus to tracked return target when available.
     (define (handle-dialog-close-transition! dialog-native)
+      (clear-pending-dialog-focus-timeout! dialog-native)
       (define target (dialog-focus-return-ref dialog-native))
       (when (and target (not (extern-nullish? target)))
         (js-send target "focus" (vector)))
@@ -369,8 +413,11 @@
                   (define name  (car a))
                   (define value (cdr a))
                   (case name
-                    [(choices option-pairs columns density menu-trigger open)
+                    [(choices option-pairs columns density menu-trigger)
                      (void)]
+                    [(open)
+                     (when (eq? tag 'dialog)
+                       (js-set! native "open" (if value #t #f)))]
                     [(selected)
                      (when (or (eq? tag 'select)
                                (eq? tag 'choice))
@@ -479,9 +526,21 @@
         [(slider)
          (define raw
            (js-value->string
-            (js-ref/extern native "value")))
+           (js-ref/extern native "value")))
          (define parsed (string->number raw))
          (if parsed parsed 0)]
+        [(input)
+         (define type-pair
+           (assq 'type (dom-node-record-attrs n)))
+         (if (and type-pair
+                  (string? (cdr type-pair))
+                  (string=? (cdr type-pair) "checkbox"))
+             (let ([checked-string
+                    (js-value->string
+                     (js-ref/extern native attr/checked))])
+               (if (string=? checked-string "true") #t #f))
+             (js-value->string
+              (js-ref/extern native "value")))]
         [else
          (js-value->string
           (js-ref/extern native "value"))]))
@@ -904,6 +963,13 @@
            (extern-bool-true?
             (js-send/extern/nullish a "isSameNode" (vector b)))))
 
+    ;; extern-node-matches-selector? : any/c string? -> boolean?
+    ;;   Check whether node matches CSS selector sel.
+    (define (extern-node-matches-selector? node sel)
+      (and (extern-present? node)
+           (extern-bool-true?
+            (js-send/extern/nullish node "matches" (vector sel)))))
+
     ;; nodelist-index-of-node : any/c any/c -> integer?
     ;;   Return index of node in node-list, or -1 when not present.
     (define (nodelist-index-of-node node-list node)
@@ -1270,7 +1336,12 @@
                        menu-container
                        "contains"
                        (vector related)))))
-              (unless still-inside?
+              (define related-menu-control?
+                (and related
+                     (or (extern-node-matches-selector? related ".we-menu-label[role='button']")
+                         (extern-node-matches-selector? related ".we-menu-item[role='menuitem']"))))
+              (unless (or still-inside?
+                          related-menu-control?)
                 (invoke-change-callback! callback "focusout")))))))
       n)
 
@@ -1442,10 +1513,10 @@
                (not (extern-nullish? observer-ctor*))
                (not (extern-nullish? reflect*))))
         (if io-supported?
-            (let* ([io-callback
-                    (procedure->external
+                (let* ([io-callback
+                        (procedure->external
                      (lambda (_entries _observer)
-                       (invoke-scrollspy-callback! "io-observer")))]
+                       (void)))]
                    [observer
                     (js-send/extern/nullish
                      reflect*
@@ -1483,7 +1554,7 @@
                           (when (and section-native (not (extern-nullish? section-native)))
                             (js-send observer "observe" (vector section-native)))
                           (loop (add1 i)))))
-                    (invoke-scrollspy-callback! "io-initial-sync"))))
+                    (void))))
             (let ([listener
                    (procedure->external
                     (lambda (_evt)
