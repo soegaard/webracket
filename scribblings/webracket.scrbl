@@ -620,6 +620,10 @@ tokens, so @racket[call/key] is usually optional.
 
 @;-------------------------------------------------------------------
 
+@include-section["special-forms.scrbl"]
+
+@;-------------------------------------------------------------------
+
 @include-section["implemented-primitives.scrbl"]
 
 @;-------------------------------------------------------------------
