@@ -652,6 +652,11 @@ html.we-theme-solar2 .showcase-toast-bottom-left.we-toast {
 }
 
 /* Solar showcase: list-group and cards section variant rows/cards. */
+html.we-theme-solar2 .we-list-group {
+  overflow-x: visible !important;
+  overflow-y: visible !important;
+}
+
 html.we-theme-solar2 .showcase-list-variant .we-list-group-item {
   border-left-width: 1px;
 }

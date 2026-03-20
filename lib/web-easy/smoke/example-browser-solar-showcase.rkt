@@ -9,8 +9,8 @@
 (include/reader    "smoke-format.rkt" read-syntax/skip-first-line)
 
 ;; Constants for page state.
-(define @theme              (@ 'light))
-(define @theme-status       (@ "light"))
+(define @theme              (@ 'solar2))
+(define @theme-status       (@ "solar2"))
 (define @selected-1         (@ 'home))
 (define @selected-2         (@ 'home))
 (define @selected-3         (@ 'home))
