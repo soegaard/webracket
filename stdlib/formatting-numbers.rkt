@@ -7,35 +7,16 @@
 ;; This file is prepared for the day, WebRacket gets support for
 ;; keyword arguments.
 
-
 (define (~r/precision x precision)
-  (js-log "~r/precision")
-  (js-log x)
-  (js-log precision)
-  #;(unless (number? x)
+  (unless (number? x)
     (error '~r/precision
            (format "expected a number as first argument, got: ~a" x)))
-  #;(unless (number? precision)
+  (unless (integer? precision)
     (error '~r/precision
-           (format "expected a number as second argument, got: ~a" precision)))
+           (format "expected an integer as second argument, got: ~a" precision)))
   
-  (~r/all x
-          #f
-          #f
-          precision       
-          #f
-          #f
-          #f
-          #f
-          #f
-          #f
-          #f))
+  (~r/all x #f #f precision #f #f #f #f #f #f #f))
 
-;; (define old-inexact->exact inexact->exact)
-
-;; (define (inexact->exact x)
-;;   (js-log (format "log med tilde-a: ~a" x))
-;;   (old-inexact->exact x))
 
 ;; (define (~r x
 ;;             #:sign            [sign            #f]
@@ -77,9 +58,9 @@
         (values base        #f)))
 
   (define (digit->char d)
-    (cond [(< d 10)    (integer->char (+ d (char->integer #\0)))]
-          [upper-case? (integer->char (+ (- d 10) (char->integer #\A)))]
-          [else        (integer->char (+ (- d 10) (char->integer #\a)))]))
+    (cond [(< d 10)     (integer->char (+ d (char->integer #\0)))]
+          [upper-case?  (integer->char (+ (- d 10) (char->integer #\A)))]
+          [else         (integer->char (+ (- d 10) (char->integer #\a)))]))
 
   (define (nat->digits-base10 n)
     (if (zero? n) "0"
@@ -196,8 +177,8 @@
                     [e0   (inexact->exact (floor lg))]
                     [sig0 (/ (exact->inexact abs-x) (exact->inexact (expt base-int e0)))])
                (cond [(>= sig0 base-int) (+ e0 1)]
-                     [(< sig0 1)         (- e0 1)]
-                     [else               e0]))]))
+                     [(<  sig0 1)        (- e0 1)]
+                     [else                  e0]))]))
 
     (define sig-raw (/ (exact->inexact abs-x) (exact->inexact (expt base-int e-raw))))
 
