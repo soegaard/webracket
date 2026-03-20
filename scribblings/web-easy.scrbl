@@ -1,6 +1,24 @@
 #lang scribble/manual
 @(require scribble-tools
           "webracket-scribble-utils.rkt"
+          (for-label (only-in (lib "core.rkt" "webracket")
+                              define define-values lambda λ
+                              if cond case and or when unless
+                              begin begin0 set!
+                              let let* letrec local
+                              let-values let*-values letrec-values
+                              case-lambda with-handlers
+                              for for*
+                              for/list for*/list
+                              for/vector for*/vector
+                              for/sum for*/sum
+                              for/fold for*/fold
+                              for/or for*/or
+                              for/and for*/and
+                              for/first for*/first
+                              quasiquote unquote unquote-splicing))
+          (for-label (only-in (prefix-in racket: racket/base)
+                              racket:define racket:define-values racket:lambda racket:for/list))
           (for-label (lib "scribblings/primitives-labels.rkt" "webracket"))
           (for-label (lib "scribblings/web-easy-labels.rkt" "webracket"))
           racket/base
