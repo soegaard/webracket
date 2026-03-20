@@ -34,7 +34,7 @@
          (only-in racket/system     system*)
          #;(only-in "lang/reader.rkt" read-syntax)
          (only-in "assembler.rkt"   run wat->wasm runtime)
-         (only-in racket/list       append*)
+         (only-in racket/list       append* remove-duplicates)
          (only-in "parameters.rkt"  current-ffi-foreigns
                                     current-ffi-imports-wat
                                     current-ffi-funcs-wat)
@@ -44,6 +44,33 @@
          racket/syntax
          "compiler.rkt"
          "define-foreign.rkt")
+
+;; resolve-ffi-files! : symbol? (listof path-string?) -> (listof path-string?)
+;;   Resolve ffi-files to existing paths and fail if any are missing.
+(define (resolve-ffi-files! who ffi-files)
+  (for/list ([ffi-filename ffi-files])
+    (define resolved (resolve-ffi-filename ffi-filename))
+    (unless resolved
+      (error who
+             (~a "ffi file not found: " ffi-filename)))
+    resolved))
+
+;; list-available-primitives : [#:ffi-files (listof path-string?)] -> (listof symbol?)
+;;   Return a sorted list of known primitives, optionally extended with FFI primitives.
+(define (list-available-primitives #:ffi-files [ffi-files '()])
+  (define resolved-ffi-files
+    (resolve-ffi-files! 'list-available-primitives ffi-files))
+  (define requested-ffi-primitives
+    (append*
+     (for/list ([ffi-filename resolved-ffi-files])
+       (foreigns->primitive-names (ffi-file->foreigns ffi-filename)))))
+  ; `primitives` may already include previously registered ffi primitives.
+  ; Keep core primitives stable, then add only explicitly requested ffi primitives.
+  (define core-primitives
+    (filter (λ (sym) (not (memq sym ffi-primitives)))
+            primitives))
+  (sort (remove-duplicates (append core-primitives requested-ffi-primitives))
+        symbol<?))
 
 ;;;
 ;;; THE MAIN DRIVER
@@ -69,12 +96,7 @@
   
   ; 0. Handle ffi-files
   (define resolved-ffi-files
-    (for/list ([ffi-filename ffi-files])
-      (define resolved (resolve-ffi-filename ffi-filename))
-      (unless resolved
-        (error 'drive-compilation
-               (~a "ffi file not found: " ffi-filename)))
-      resolved))
+    (resolve-ffi-files! 'drive-compilation ffi-files))
 
   (define ffi-foreigns  '()) ; list of `foreign` structures
   (define ffi-imports   '()) ; list of wat

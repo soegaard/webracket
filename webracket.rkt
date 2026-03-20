@@ -23,6 +23,7 @@
 (define dump-passes-limit (make-parameter #f))
 (define timings?        (make-parameter #f))
 (define pretty-wat?     (make-parameter #f))
+(define list-primitives? (make-parameter #f))
 
 (define browser         (make-parameter #f))
 (define nodejs          (make-parameter #t))   ; default
@@ -34,7 +35,7 @@
 
 (define stdlib?         (make-parameter #t))   ; include standard library by default
 
-(define file-to-compile
+(define positional-filenames
   (command-line
    #:program "webracket"
 
@@ -67,6 +68,8 @@
                      (pretty-wat? #t)]
    [("--no-pretty-wat") "Write .wat without pretty formatting (default)"
                         (pretty-wat? #f)]
+   [("--list-primitives") "Print the list of all primitives and exit"
+                          (list-primitives? #t)]
    [("--stdlib")             "Include the standard library (default)"
                              (stdlib? #t)]
    [("--no-stdlib")          "Do not include the standard library"
@@ -91,9 +94,20 @@
               "Add .ffi file"
               (ffi-files (cons ffi-file (ffi-files)))]
    
-   #:args (filename) ; expect one command-line argument: <filename>
-   ; return the argument as a filename to compile
-   (source-filename filename)))
+   #:args filenames
+   filenames))
+
+(cond
+  [(list-primitives?)
+   (for ([name (in-list (list-available-primitives #:ffi-files (ffi-files)))])
+     (displayln name))
+   (exit 0)]
+  [else
+   (unless (= (length positional-filenames) 1)
+     (error 'webracket
+            (format "expected exactly one source filename, got ~a"
+                    (length positional-filenames))))
+   (source-filename (car positional-filenames))])
 
 ;; In the case that -r is used to run the program directly,
 ;; we propagate the exit code from `node`.
