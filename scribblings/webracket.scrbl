@@ -499,7 +499,7 @@ same library in the same module has no additional effect.
 Currently available libraries include:
 
 @itemlist[
-  @item{@racket[(include-lib define)] to make @racket[define/key] and
+  @item{@racket[(require-lib define)] to make @racket[define/key] and
         @racket[call/key] available.}
 ]
 }
@@ -522,7 +522,7 @@ Currently available libraries include:
                      (code:line keyword arg-id)
                      (code:line keyword [arg-id default-expr])])]{
 
-This form is provided by @racket[(include-lib define)].
+This form is provided by @racket[(require-lib define)].
 
 The form creates a transformer binding for @racket[id].
 The binding behaves as follows:
@@ -548,7 +548,7 @@ Runtime calls raise exceptions for positional arity mismatches and missing
 required keyword arguments.
 
 @racketblock[
-(include-lib define)
+(require-lib define)
 
 (define/key (f x #:k k)
   (+ x k))
@@ -568,7 +568,7 @@ required keyword arguments.
 
 @defform[(call/key f arg ...)]{
 
-This form is provided by @racket[(include-lib define)].
+This form is provided by @racket[(require-lib define)].
 
 Calls @racket[f] while allowing keyword-call surface syntax in argument
 position. Each keyword token in @racket[arg ...] is rewritten as a keyword
@@ -579,7 +579,7 @@ In current @tt{#lang webracket}, direct applications already rewrite keyword
 tokens, so @racket[call/key] is usually optional.
 
 @racketblock[
-(include-lib define)
+(require-lib define)
 
 (define/key (greet who #:style style)
   (string-append who ":" style))

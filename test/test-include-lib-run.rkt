@@ -6,7 +6,7 @@
          racket/system)
 
 ;; test-include-lib-run : -> void
-;;   Ensure `(include-lib define)` works in `webracket.rkt -r` flow
+;;   Ensure `(require-lib define)` works in `webracket.rkt -r` flow
 ;;   for the main/include chain repro.
 (define (test-include-lib-run)
   (define repo-root (simplify-path (build-path (current-directory) "..")))
@@ -61,7 +61,7 @@
     (lambda ()
       (call-with-output-file kw-main
         (lambda (out)
-          (displayln "(include-lib define)" out)
+          (displayln "(require-lib define)" out)
           (displayln "(define/key (f x #:id [id #f]) x)" out)
           (displayln "(f 1 #:id \"x\")" out))
         #:exists 'truncate/replace)

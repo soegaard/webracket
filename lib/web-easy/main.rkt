@@ -6,7 +6,7 @@
 
 ;; Entry point that assembles web-easy by including the component source files.
 
-(include-lib define)
+(require-lib define)
 
 (include/reader "define-element.rkt" read-syntax/skip-first-line)
 (include/reader "observable.rkt" read-syntax/skip-first-line)

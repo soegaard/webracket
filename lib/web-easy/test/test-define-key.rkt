@@ -6,7 +6,7 @@
 
 ;; Focused tests for `define/key`.
 
-(include-lib define)
+(require-lib define)
 
 (define (check-equal got want label)
   (unless (equal? got want)

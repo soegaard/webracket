@@ -1,5 +1,5 @@
 #lang webracket
 
 (define (f)
-  (include-lib define)
+  (require-lib define)
   0)

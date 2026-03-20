@@ -66,10 +66,10 @@
     [(_ . _)
      (raise-syntax-error '#%app "bad application form" stx)]))
 
-;; include-lib : (include-lib lib-id) -> require form
+;; require-lib : (require-lib lib-id) -> require form
 ;;   Require `webracket/libs/<lib-id>` at top level.
-(define-syntax (include-lib stx)
-  (define who 'include-lib)
+(define-syntax (require-lib stx)
+  (define who 'require-lib)
   (define context (syntax-local-context))
   (unless (memq context '(module top-level))
     (raise-syntax-error who "may only be used at top level" stx))
@@ -99,6 +99,38 @@
        (with-syntax ([module-id mod-id])
          (syntax/loc stx
            (require module-id))))]
+    [_
+     (raise-syntax-error who "expected `(require-lib lib-id)`" stx)]))
+
+;; include-lib : (include-lib lib-id) -> include/reader form
+;;   Include `webracket/libs/<lib-id>.rkt` by source inclusion.
+(define-syntax (include-lib stx)
+  (define who 'include-lib)
+  (define context (syntax-local-context))
+  (unless (memq context '(module top-level))
+    (raise-syntax-error who "may only be used at top level" stx))
+  (syntax-case stx ()
+    [(_ lib-id)
+     (begin
+       (unless (identifier? #'lib-id)
+         (raise-syntax-error who "expected a library identifier" stx #'lib-id))
+       (define lib-sym (syntax-e #'lib-id))
+       (unless (symbol? lib-sym)
+         (raise-syntax-error who "expected a library identifier" stx #'lib-id))
+       (define collection-main (collection-file-path "main.rkt" "webracket"))
+       (define collection-dir (or (path-only collection-main) (current-directory)))
+       (define lib-file-name (string-append (symbol->string lib-sym) ".rkt"))
+       (define include-path  (build-path "libs" lib-file-name))
+       (define lib-path (build-path collection-dir "libs" lib-file-name))
+       (unless (file-exists? lib-path)
+         (raise-syntax-error
+          who
+          (string-append "unknown library `" (symbol->string lib-sym) "`")
+          stx
+          #'lib-id))
+       (with-syntax ([lib-file (datum->syntax stx (path->string include-path))])
+         (syntax/loc stx
+           (include/reader lib-file read-syntax/skip-first-line))))]
     [_
      (raise-syntax-error who "expected `(include-lib lib-id)`" stx)]))
 
@@ -174,7 +206,7 @@
 ; (require (only-in racket/base define))
 (provide define define-values)
 ; define-values provided from `fully`
-(provide include-lib)
+(provide include-lib require-lib)
 
 ;; 3.15 Sequencing: begin, begin0
 ;;   Provided form `fully`.

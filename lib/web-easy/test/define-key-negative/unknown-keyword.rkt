@@ -1,5 +1,5 @@
 #lang webracket
-(include-lib define)
+(require-lib define)
 
 (define/key (bad-unknown x #:a [a 1])
   (+ x a))

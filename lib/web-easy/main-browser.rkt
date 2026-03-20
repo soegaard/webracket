@@ -4,7 +4,7 @@
 
 ;; Browser entry point that assembles web-easy with the browser backend.
 
-(include-lib define)
+(require-lib define)
 
 (include/reader "define-element.rkt" read-syntax/skip-first-line)
 (include/reader "observable.rkt"      read-syntax/skip-first-line)

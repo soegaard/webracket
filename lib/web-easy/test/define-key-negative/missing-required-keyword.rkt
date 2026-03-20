@@ -1,5 +1,5 @@
 #lang webracket
-(include-lib define)
+(require-lib define)
 
 (define/key (bad-required x #:k k)
   (+ x k))
