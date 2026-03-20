@@ -1,5 +1,5 @@
 ;;;
-;;;7 GUI - Temperature Converter
+;;; 7 GUI - Temperature Converter
 ;;;
 
 ;; https://eugenkiss.github.io/7guis/tasks#counter
@@ -9,44 +9,40 @@
 (define (F->C f) (* (- f 32) 5/9))
 (define (C->F c) (+ (* c 9/5) 32))
 
-(define (one-digit x) (/ (flround (* 10. x)) 10.))
-(define (~one x)      (number->string (one-digit x)))
-; (define (~one x)      (number->string x))
+(define (~one x) (~r/precision x 1))
 
-; TODO: Make this work. There is a problem with ~r/precision
-;       when called from this file.
-;       the test suite in stdlib/test/ passes.
-#;(define (~one x)
-  ; (js-log "~one")
-  ; (js-log x)
-  (with-handlers ([(lambda _ #t) (lambda _ "exn: ~one")])
-    (cond
-      [(number? x)
-       ; (js-log "A")
-       (define out (~r/precision x 1))
-       ; (js-log "B")
-       ; (js-log out)
-       out]
-      [else
-       "bad"])))
-
-(define @background (@ "lightblue"))
 (define @tempC      (@ 26))
 (define @tempF      (@tempC . ~> . C->F))
 
-(define @input      (@ "26"))      ; text in last edited field 
-(define @source     (@ "Celsius")) ; label for last edited field
 
-(define (~background color)
-  (if color color ""))
+(define (~background color) (or color ""))
+(define (~a x)              (format "~a" x))
 
-(define (temp label @value convert-to-C)
+;; We will never change the field value,
+;; where the user is actively editing.
+(define @source     (@ "Celsius"))                 ; label for last edited field
+
+(define (temp label @temp convert-to-C)
+  ;; State for the <input> element
+  (define @input       (@ (~a (obs-peek @temp))))  ; text in last edited field, initial value from @temp
+  (define @background  (@ #f))                     ; current background color, #f means none
+  ;; Derived state
+  (define @input-style                             ; the style (red when the input value is invalid)
+    (@background . ~> .
+                 (lambda (bg)
+                   (format "background-color: ~a;" (~background bg)))))
+  (define @input-value                       ; the current input text
+    (obs-combine (λ (temp input source)
+                   (cond
+                     [(equal? source label)  ; if the user is editing,
+                      input]                 ;   keep the current value
+                     [else                   ; else,
+                      (:= @background #f)    ;   clear the background,
+                      (~one temp)]))         ;   and use the model value.
+                 @temp @input @source))
+  ;; The view
   (hpanel          
-   (input (obs-combine (λ (value input source bgcolor)
-                         (if (equal? source label)
-                             input
-                             (~one value)))
-                       @value @input @source @background)
+   (input @input-value
           (λ (new-text)
             (:= @input  new-text)
             (:= @source label)
@@ -56,8 +52,7 @@
                         (:= @background #f)]
               [else     (js-log "red")
                         (:= @background "red")]))
-          #:attrs `((style ,(format "background-color: ~a;"
-                                    (~background (obs-peek @background))))))
+          #:style @input-style)
    (text label)))
 
 (define 7gui-temperature-converter-app
