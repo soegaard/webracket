@@ -616,3 +616,10 @@ tokens, so @racket[call/key] is usually optional.
 (call/key g "Ada" #:style "formal")
 ]
 }
+
+
+@;-------------------------------------------------------------------
+
+@include-section["implemented-primitives.scrbl"]
+
+@;-------------------------------------------------------------------

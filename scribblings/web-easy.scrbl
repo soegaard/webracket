@@ -1,6 +1,8 @@
 #lang scribble/manual
 @(require scribble-tools
           "webracket-scribble-utils.rkt"
+          (for-label (lib "scribblings/primitives-labels.rkt" "webracket"))
+          (for-label (lib "scribblings/web-easy-labels.rkt" "webracket"))
           racket/base
           racket/file
           racket/list
@@ -43,6 +45,7 @@
                 #:before-last ", and "))
 
 @title{Library: @racketid[web-easy]}
+@declare-exporting[(lib "scribblings/web-easy-labels.rkt" "webracket")]
 
 @section{Introduction}
 
@@ -1505,7 +1508,7 @@ Positional arguments: each @racket[child] is laid out left-to-right.
                     [#:class class any/c                     #f]
                     [#:attrs attrs list?                     null]
                     [child any/c] ...)
-         any/c]{
+         view?]{
 Build a centered container with width constraints.
 
 Positional arguments: each @racket[child] is content inside the container.
@@ -1516,7 +1519,7 @@ Positional arguments: each @racket[child] is content inside the container.
                [#:class class any/c                     #f]
                [#:attrs attrs list?                     null]
                [child any/c] ...)
-         any/c]{
+         view?]{
 Build a grid container. The first child may be a gap value (number or CSS length string).
 
 Positional arguments: @racket[columns] sets the column template/count; @racket[child] values are grid items.
@@ -1526,7 +1529,7 @@ Positional arguments: @racket[columns] sets the column template/count; @racket[c
                 [#:class class any/c                     #f]
                 [#:attrs attrs list?                     null]
                 [child any/c] ...)
-         any/c]{
+         view?]{
 Build a vertical stack container.
 
 Positional arguments: each @racket[child] is a stacked item.
@@ -1536,14 +1539,14 @@ Positional arguments: each @racket[child] is a stacked item.
                  [#:class class any/c                     #f]
                  [#:attrs attrs list?                     null]
                  [child any/c] ...)
-         any/c]{
+         view?]{
 Build a horizontal inline container.
 
 Positional arguments: each @racket[child] is an inline item.
 }
 
 @defproc[(Fragment [child any/c] ...)
-         any/c]{
+         view?]{
 Build a zero-wrapper composition view.
 
 This groups child views without introducing an extra DOM node.
@@ -1554,7 +1557,7 @@ It is useful when composing compound components while preserving parent/child DO
                  [#:id    id    (or/c #f string? symbol?) #f]
                  [#:class class any/c                     #f]
                  [#:attrs attrs list?                     null])
-         any/c]{
+         view?]{
 Build a flexible spacer for layout.
 
 Positional arguments: @racket[grow] is the growth factor/size basis.
@@ -1564,7 +1567,7 @@ Positional arguments: @racket[grow] is the growth factor/size basis.
                   [#:id    id    (or/c #f string? symbol?) #f]
                   [#:class class any/c                     #f]
                   [#:attrs attrs list?                     null])
-         any/c]{
+         view?]{
 Build a horizontal or vertical divider.
 
 Positional arguments: @racket[orientation] is @racket['horizontal] or @racket['vertical].
@@ -1575,7 +1578,7 @@ Positional arguments: @racket[orientation] is @racket['horizontal] or @racket['v
                 [#:class class any/c                     #f]
                 [#:attrs attrs list?                     null]
                 [child any/c] ...)
-         any/c]{
+         view?]{
 Build a labeled container (fieldset-like grouping).
 
 Positional arguments:
@@ -1589,7 +1592,7 @@ each @racket[child] is group content.
                [#:id id (or/c #f string? symbol?) #f]
                [#:class class any/c #f]
                [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a text node view.
 
 Positional arguments: @racket[value] is the displayed text value.
@@ -1602,7 +1605,7 @@ Positional arguments: @racket[value] is the displayed text value.
                   [#:id id (or/c #f string? symbol?) #f]
                   [#:class class any/c #f]
                   [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a semantic heading.
 
 Positional arguments:
@@ -1616,7 +1619,7 @@ Positional arguments:
              [#:id id (or/c #f string? symbol?) #f]
              [#:class class any/c #f]
              [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a level-1 heading.
 
 Positional arguments: @racket[content] is heading text/content.
@@ -1626,7 +1629,7 @@ Positional arguments: @racket[content] is heading text/content.
              [#:id id (or/c #f string? symbol?) #f]
              [#:class class any/c #f]
              [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a level-2 heading.
 
 Positional arguments: @racket[content] is heading text/content.
@@ -1636,7 +1639,7 @@ Positional arguments: @racket[content] is heading text/content.
              [#:id id (or/c #f string? symbol?) #f]
              [#:class class any/c #f]
              [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a level-3 heading.
 
 Positional arguments: @racket[content] is heading text/content.
@@ -1646,7 +1649,7 @@ Positional arguments: @racket[content] is heading text/content.
              [#:id id (or/c #f string? symbol?) #f]
              [#:class class any/c #f]
              [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a level-4 heading.
 
 Positional arguments: @racket[content] is heading text/content.
@@ -1656,7 +1659,7 @@ Positional arguments: @racket[content] is heading text/content.
              [#:id id (or/c #f string? symbol?) #f]
              [#:class class any/c #f]
              [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a level-5 heading.
 
 Positional arguments: @racket[content] is heading text/content.
@@ -1666,7 +1669,7 @@ Positional arguments: @racket[content] is heading text/content.
              [#:id id (or/c #f string? symbol?) #f]
              [#:class class any/c #f]
              [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a level-6 heading.
 
 Positional arguments: @racket[content] is heading text/content.
@@ -1678,7 +1681,7 @@ Positional arguments: @racket[content] is heading text/content.
                           [#:id id (or/c #f string? symbol?) #f]
                           [#:class class any/c #f]
                           [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a display-style heading.
 
 Positional arguments:
@@ -1690,7 +1693,7 @@ Positional arguments:
                     [#:id id (or/c #f string? symbol?) #f]
                     [#:class class any/c #f]
                     [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a level-1 display heading.
 
 Positional arguments: @racket[content] is heading text/content.
@@ -1700,7 +1703,7 @@ Positional arguments: @racket[content] is heading text/content.
                     [#:id id (or/c #f string? symbol?) #f]
                     [#:class class any/c #f]
                     [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a level-2 display heading.
 
 Positional arguments: @racket[content] is heading text/content.
@@ -1710,7 +1713,7 @@ Positional arguments: @racket[content] is heading text/content.
                     [#:id id (or/c #f string? symbol?) #f]
                     [#:class class any/c #f]
                     [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a level-3 display heading.
 
 Positional arguments: @racket[content] is heading text/content.
@@ -1720,7 +1723,7 @@ Positional arguments: @racket[content] is heading text/content.
                     [#:id id (or/c #f string? symbol?) #f]
                     [#:class class any/c #f]
                     [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a level-4 display heading.
 
 Positional arguments: @racket[content] is heading text/content.
@@ -1730,7 +1733,7 @@ Positional arguments: @racket[content] is heading text/content.
                     [#:id id (or/c #f string? symbol?) #f]
                     [#:class class any/c #f]
                     [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a level-5 display heading.
 
 Positional arguments: @racket[content] is heading text/content.
@@ -1740,7 +1743,7 @@ Positional arguments: @racket[content] is heading text/content.
                     [#:id id (or/c #f string? symbol?) #f]
                     [#:class class any/c #f]
                     [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a level-6 display heading.
 
 Positional arguments: @racket[content] is heading text/content.
@@ -1752,7 +1755,7 @@ Positional arguments: @racket[content] is heading text/content.
                                 [#:id id (or/c #f string? symbol?) #f]
                                 [#:class class any/c #f]
                                 [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a heading with subtitle text.
 
 Positional arguments:
@@ -1767,7 +1770,7 @@ Positional arguments:
                                         [#:id id (or/c #f string? symbol?) #f]
                                         [#:class class any/c #f]
                                         [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a display heading with subtitle text.
 
 Positional arguments:
@@ -1780,37 +1783,46 @@ Positional arguments:
                [#:id id (or/c #f string? symbol?) #f]
                [#:class class any/c #f]
                [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build lead paragraph text.
 
 Positional arguments: @racket[content] is lead text/content.
 }
 
-@defproc[(blockquote [quote any/c]
-                     [attrib any/c #f]
-                     [align symbol? 'left]
+@defproc[(blockquote [content any/c]
+                     [attribution any/c #f]
+                     [#:align align symbol? 'left]
                      [#:id id (or/c #f string? symbol?) #f]
                      [#:class class any/c #f]
                      [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a blockquote with optional attribution and alignment.
 
 Positional arguments:
-@racket[quote] is quote text/content;
-@racket[attrib] is optional attribution text;
+@racket[content] is quote text/content;
+@racket[attribution] is optional attribution text;
 @racket[align] is quote alignment.
+This constructor also accepts global HTML keyword attributes for its root
+@tt{<figure>} element.
 }
 
 @defproc[(image [src any/c]
-                [alt any/c ""]
+                [width any/c #f]
+                [height any/c #f]
+                [#:width width-kw any/c #f]
+                [#:height height-kw any/c #f]
                 [#:id id (or/c #f string? symbol?) #f]
                 [#:class class any/c #f]
                 [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build an image view.
 
 Positional arguments:
-@racket[src] is the image URL/source and @racket[alt] is alt text.
+@racket[src] is the image URL/source and @racket[width]/@racket[height]
+are optional dimensions. Keyword @racket[#:width] and @racket[#:height]
+override the optional positional width/height when provided.
+This constructor also accepts global and @tt{<img>}-specific HTML keyword
+attributes for the root element.
 }
 
 @defproc[(link [label any/c]
@@ -1818,12 +1830,14 @@ Positional arguments:
                [#:id id (or/c #f string? symbol?) #f]
                [#:class class any/c #f]
                [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a hyperlink view.
 
 Positional arguments:
 @racket[label] is link text/content and
 @racket[href] is the target URL.
+This constructor also accepts global HTML keyword attributes for its root
+@tt{<a>} element.
 }
 
 @section{Action and Input Components}
@@ -1833,12 +1847,14 @@ Positional arguments:
                  [#:id id (or/c #f string? symbol?) #f]
                  [#:class class any/c #f]
                  [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a clickable button.
 
 Positional arguments:
 @racket[label] is the button caption and
 @racket[action] is called on click.
+This constructor also accepts global HTML keyword attributes for its root
+@tt{<button>} element.
 }
 
 @defproc[(close-button [action procedure?]
@@ -1846,23 +1862,27 @@ Positional arguments:
                        [#:id id (or/c #f string? symbol?) #f]
                        [#:class class any/c #f]
                        [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a standardized close button.
 
 Positional arguments:
 @racket[action] is called when pressed and
 @racket[aria-label] sets accessible label text.
+This constructor also accepts global HTML keyword attributes for its root
+@tt{<button>} element.
 }
 
 @defproc[(button-group [child any/c] ...
                        [#:id id (or/c #f string? symbol?) #f]
                        [#:class class any/c #f]
                        [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a grouped button container.
 
 Positional arguments:
 each @racket[child] is typically a button view in the group.
+This constructor also accepts global HTML keyword attributes for its root
+@tt{<div>} element.
 }
 
 @defproc[(toggle-button-group [items list?]
@@ -1872,45 +1892,53 @@ each @racket[child] is typically a button view in the group.
                               [#:id id (or/c #f string? symbol?) #f]
                               [#:class class any/c #f]
                               [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a toggle button group (single or multiple select).
 
 Positional arguments:
 @racket[items] is the toggle option list;
 @racket[selected] is current selection;
 @racket[on-change] receives new selection values.
+This constructor also accepts global HTML keyword attributes for its root
+@tt{<div>} element.
 }
 
 @defproc[(button-toolbar [group any/c] ...
                          [#:id id (or/c #f string? symbol?) #f]
                          [#:class class any/c #f]
                          [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a toolbar composed of button groups.
 
 Positional arguments:
 each @racket[group] is a toolbar group or button-group view.
+This constructor also accepts global HTML keyword attributes for its root
+@tt{<div>} element.
 }
 
 @defproc[(toolbar [child any/c] ...
                   [#:id id (or/c #f string? symbol?) #f]
                   [#:class class any/c #f]
                   [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a generic horizontal toolbar.
 
 Positional arguments:
 each @racket[child] is a toolbar item view.
+This constructor also accepts global HTML keyword attributes for its root
+@tt{<div>} element.
 }
 
 @defproc[(toolbar-group [child any/c] ...
                         [#:id id (or/c #f string? symbol?) #f]
                         [#:class class any/c #f]
                         [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a grouped toolbar section.
 
 Positional arguments: each @racket[child] is an item in one toolbar group.
+This constructor also accepts global HTML keyword attributes for its root
+@tt{<div>} element.
 }
 
 @defproc[(input [value any/c]
@@ -1919,10 +1947,12 @@ Positional arguments: each @racket[child] is an item in one toolbar group.
                 [#:id id (or/c #f string? symbol?) #f]
                 [#:class class any/c #f]
                 [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a text input.
 
 Positional arguments: @racket[value] is current input value and @racket[on-change] receives updates.
+This constructor also accepts global and @tt{<input>}-specific HTML keyword
+attributes for the root element.
 }
 
 @defproc[(textarea [value any/c]
@@ -1931,10 +1961,12 @@ Positional arguments: @racket[value] is current input value and @racket[on-chang
                    [#:id id (or/c #f string? symbol?) #f]
                    [#:class class any/c #f]
                    [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a textarea input.
 
 Positional arguments: @racket[value] is current text and @racket[on-change] receives updates.
+This constructor also accepts global and @tt{<textarea>}-specific HTML keyword
+attributes for the root element.
 }
 
 @defproc[(checkbox [checked any/c]
@@ -1942,10 +1974,12 @@ Positional arguments: @racket[value] is current text and @racket[on-change] rece
                    [#:id id (or/c #f string? symbol?) #f]
                    [#:class class any/c #f]
                    [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a checkbox input.
 
 Positional arguments: @racket[checked] is current checked state and @racket[on-toggle] receives updates.
+This constructor also accepts global and @tt{<label>}-specific HTML keyword
+attributes for the root element.
 }
 
 @defproc[(radios [options list?]
@@ -1954,13 +1988,15 @@ Positional arguments: @racket[checked] is current checked state and @racket[on-t
                  [#:id id (or/c #f string? symbol?) #f]
                  [#:class class any/c #f]
                  [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a radio-choice input.
 
 Positional arguments:
 @racket[options] is radio option data;
 @racket[selected] is current value;
 @racket[on-select] receives selected value.
+This constructor also accepts global HTML keyword attributes for its root
+@tt{<div>} element.
 }
 
 @defproc[(choice [options list?]
@@ -1969,13 +2005,15 @@ Positional arguments:
                  [#:id id (or/c #f string? symbol?) #f]
                  [#:class class any/c #f]
                  [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a single-select dropdown.
 
 Positional arguments:
 @racket[options] is selectable options;
 @racket[selected] is current value;
 @racket[on-select] receives selected value.
+This constructor also accepts global HTML keyword attributes for its root
+@tt{<label>} element.
 }
 
 @defproc[(slider [value any/c]
@@ -1986,13 +2024,15 @@ Positional arguments:
                  [#:id id (or/c #f string? symbol?) #f]
                  [#:class class any/c #f]
                  [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a range slider.
 
 Positional arguments:
 @racket[value] is current numeric value;
 @racket[on-change] receives updates;
 @racket[min] and @racket[max] set range bounds.
+This constructor also accepts global HTML keyword attributes for its root
+@tt{<label>} element.
 }
 
 @defproc[(pagination [items list?]
@@ -2001,7 +2041,7 @@ Positional arguments:
                      [#:id id (or/c #f string? symbol?) #f]
                      [#:class class any/c #f]
                      [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a pagination control.
 
 Positional arguments:
@@ -2016,7 +2056,7 @@ Positional arguments:
                      [#:id id (or/c #f string? symbol?) #f]
                      [#:class class any/c #f]
                      [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build breadcrumb navigation.
 
 Positional arguments:
@@ -2032,7 +2072,7 @@ Positional arguments:
                 [#:id id (or/c #f string? symbol?) #f]
                 [#:class class any/c #f]
                 [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build an inline alert.
 
 Positional arguments:
@@ -2048,7 +2088,7 @@ Positional arguments:
                      [#:id id (or/c #f string? symbol?) #f]
                      [#:class class any/c #f]
                      [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a richer alert with title and optional link parts.
 
 Positional arguments:
@@ -2065,7 +2105,7 @@ Positional arguments:
                 [#:id id (or/c #f string? symbol?) #f]
                 [#:class class any/c #f]
                 [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a toast notification.
 
 Positional arguments:
@@ -2080,7 +2120,7 @@ Positional arguments:
                 [#:id id (or/c #f string? symbol?) #f]
                 [#:class class any/c #f]
                 [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a badge label.
 
 Positional arguments:
@@ -2091,7 +2131,7 @@ Positional arguments:
                   [#:id id (or/c #f string? symbol?) #f]
                   [#:class class any/c #f]
                   [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a spinner indicator.
                 
 Positional arguments:
@@ -2103,7 +2143,7 @@ Positional arguments:
                    [#:id id (or/c #f string? symbol?) #f]
                    [#:class class any/c #f]
                    [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a progress indicator.
 
 Positional arguments:
@@ -2115,7 +2155,7 @@ Positional arguments:
                       [#:id id (or/c #f string? symbol?) #f]
                       [#:class class any/c #f]
                       [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a placeholder/skeleton block.
 
 Positional arguments:
@@ -2130,7 +2170,7 @@ Positional arguments:
                      [#:id id (or/c #f string? symbol?) #f]
                      [#:class class any/c #f]
                      [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a selectable list group.
 
 Positional arguments: @racket[items] is item data;
@@ -2144,7 +2184,7 @@ Positional arguments: @racket[items] is item data;
                     [#:id id (or/c #f string? symbol?) #f]
                     [#:class class any/c #f]
                     [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a tab panel.
 
 Positional arguments:
@@ -2154,41 +2194,56 @@ Positional arguments:
 }
 
 @defproc[(dropdown [label any/c]
-                   [items list?]
+                   [entries list?]
+                   [action procedure?]
+                   [placement symbol? 'down]
+                   [#:placement placement-kw (or/c #f symbol?) #f]
                    [#:id id (or/c #f string? symbol?) #f]
                    [#:class class any/c #f]
                    [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a dropdown component.
 
 Positional arguments:
-@racket[label] is dropdown trigger label and @racket[items] is menu item data.
+@racket[label] is dropdown trigger label;
+@racket[entries] is menu item data;
+@racket[action] receives the selected item key;
+@racket[placement] is optional placement.
+Keyword @racket[#:placement] overrides positional placement when provided.
+This constructor also accepts global HTML keyword attributes for its root
+@tt{<div>} element.
 }
 
-@defproc[(menu-bar [menu any/c] ...) any/c]{
+@defproc[(menu-bar [menu any/c] ...) view?]{
 Build a horizontal menu bar.
 
 Positional arguments: each @racket[menu] is a @racket[menu] view.
+This constructor also accepts global HTML keyword attributes for its root
+@tt{<menu-bar>} element.
 }
 
-@defproc[(menu [label any/c] [item any/c] ...) any/c]{
+@defproc[(menu [label any/c] [item any/c] ...) view?]{
 Build a menu in a menu bar.
 
 Positional arguments:
 @racket[label] is menu title and each @racket[item] is usually a @racket[menu-item] or divider.
+This constructor also accepts global HTML keyword attributes for its root
+@tt{<menu>} element.
 }
 
-@defproc[(menu-item [label any/c] [action procedure?]) any/c]{
+@defproc[(menu-item [label any/c] [action procedure?]) view?]{
 Build a menu item.
 
 Positional arguments: @racket[label] is item text and @racket[action] is called on activation.
+This constructor also accepts global HTML keyword attributes for its root
+@tt{<menu-item>} element.
 }
 
 @defproc[(navigation-bar [item any/c] ...
                          [#:id id (or/c #f string? symbol?) #f]
                          [#:class class any/c #f]
                          [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a navigation bar.
 
 Positional arguments: each @racket[item] is navbar content (brand, links, controls, menus, etc.).
@@ -2198,7 +2253,7 @@ Positional arguments: each @racket[item] is navbar content (brand, links, contro
                   [#:id id (or/c #f string? symbol?) #f]
                   [#:class class any/c #f]
                   [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a top bar container.
 
 Positional arguments: each @racket[item] is top-bar content.
@@ -2211,7 +2266,7 @@ Positional arguments: each @racket[item] is top-bar content.
                 [#:id id (or/c #f string? symbol?) #f]
                 [#:class class any/c #f]
                 [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a table view.
 
 Positional arguments: @racket[columns] defines table columns and @racket[rows] is row data.
@@ -2233,7 +2288,7 @@ Positional arguments:
                [#:id id (or/c #f string? symbol?) #f]
                [#:class class any/c #f]
                [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a card container.
 
 Positional arguments: each @racket[child] is card content.
@@ -2245,7 +2300,7 @@ Positional arguments: each @racket[child] is card content.
                     [#:id id (or/c #f string? symbol?) #f]
                     [#:class class any/c #f]
                     [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build an accordion with one open section.
 
 Positional arguments:
@@ -2260,7 +2315,7 @@ Positional arguments:
                    [#:id id (or/c #f string? symbol?) #f]
                    [#:class class any/c #f]
                    [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a carousel.
 
 Positional arguments:
@@ -2275,7 +2330,7 @@ Positional arguments:
                     [#:id id (or/c #f string? symbol?) #f]
                     [#:class class any/c #f]
                     [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a scrollspy navigation component.
 
 Positional arguments:
@@ -2288,71 +2343,104 @@ Positional arguments:
 
 @defproc[(dialog [open any/c]
                  [on-close procedure?]
+                 [#:size size (or/c #f symbol?) #f]
+                 [#:title title any/c #f]
+                 [#:description description any/c #f]
+                 [#:footer footer any/c #f]
+                 [#:show-close? show-close? any/c #f]
+                 [#:close-label close-label any/c "Close dialog"]
+                 [#:tone tone any/c #f]
+                 [#:tone-style tone-style any/c #f]
                  [child any/c] ...
                  [#:id id (or/c #f string? symbol?) #f]
                  [#:class class any/c #f]
                  [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a dialog.
 
 Positional arguments:
 @racket[open] controls visibility;
 @racket[on-close] handles close requests;
 each @racket[child] is dialog content.
+This constructor also accepts global HTML keyword attributes for its root
+@tt{<dialog>} element.
 }
 
 @defproc[(modal [open any/c]
                 [on-close procedure?]
+                [#:size size (or/c #f symbol?) #f]
+                [#:title title any/c #f]
+                [#:description description any/c #f]
+                [#:footer footer any/c #f]
+                [#:show-close? show-close? any/c #f]
+                [#:close-label close-label any/c "Close modal"]
+                [#:tone tone any/c #f]
+                [#:tone-style tone-style any/c #f]
                 [child any/c] ...
                 [#:id id (or/c #f string? symbol?) #f]
                 [#:class class any/c #f]
                 [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a modal overlay.
 
 Positional arguments:
 @racket[open] controls visibility;
 @racket[on-close] handles close requests;
 each @racket[child] is modal content.
+This constructor also accepts global HTML keyword attributes for its root
+@tt{<dialog>} element.
 }
 
 @defproc[(offcanvas [open any/c]
                     [on-close procedure?]
+                    [#:side side (or/c #f symbol?) #f]
                     [child any/c] ...
                     [#:id id (or/c #f string? symbol?) #f]
                     [#:class class any/c #f]
                     [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build an offcanvas panel.
 
 Positional arguments:
 @racket[open] controls visibility;
 @racket[on-close] handles close requests;
 each @racket[child] is panel content.
+This constructor also accepts global HTML keyword attributes for its root
+@tt{<div>} element.
 }
 
-@defproc[(tooltip [anchor any/c]
-                  [content any/c]
+@defproc[(tooltip [message any/c]
+                  [child any/c]
+                  [#:placement placement (or/c #f symbol?) #f]
+                  [#:title title any/c #f]
+                  [#:footer footer any/c #f]
                   [#:id id (or/c #f string? symbol?) #f]
                   [#:class class any/c #f]
                   [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a tooltip wrapper.
 
 Positional arguments:
-@racket[anchor] is trigger/anchor content and @racket[content] is tooltip content.
+@racket[message] is tooltip text/content and @racket[child] is the trigger/anchor view.
+This constructor also accepts global HTML keyword attributes for its root
+@tt{<div>} element.
 }
 
-@defproc[(popover [anchor any/c]
-                  [content any/c]
+@defproc[(popover [label any/c]
+                  [child any/c] ...
+                  [#:placement placement (or/c #f symbol?) #f]
+                  [#:title title any/c #f]
+                  [#:footer footer any/c #f]
                   [#:id id (or/c #f string? symbol?) #f]
                   [#:class class any/c #f]
                   [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a popover wrapper.
 
 Positional arguments:
-@racket[anchor] is trigger/anchor content and @racket[content] is popover content.
+@racket[label] is trigger label/content and each @racket[child] is popover body content.
+This constructor also accepts global HTML keyword attributes for its root
+@tt{<div>} element.
 }
 
 @section{Reactive and Branching Components}
@@ -2391,7 +2479,7 @@ each @racket[clause] maps match keys to a branch view.
                    [#:id    id    (or/c #f string? symbol?) #f]
                    [#:class class any/c #f]
                    [#:attrs attrs list? null])
-         any/c]{
+         view?]{
 Build a collapsible region.
 
 Positional arguments:
