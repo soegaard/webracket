@@ -120,7 +120,6 @@
        (define collection-main (collection-file-path "main.rkt" "webracket"))
        (define collection-dir (or (path-only collection-main) (current-directory)))
        (define lib-file-name (string-append (symbol->string lib-sym) ".rkt"))
-       (define include-path  (build-path "lib" "libs" lib-file-name))
        (define lib-path (build-path collection-dir "lib" "libs" lib-file-name))
        (unless (file-exists? lib-path)
          (raise-syntax-error
@@ -128,9 +127,11 @@
           (string-append "unknown library `" (symbol->string lib-sym) "`")
           stx
           #'lib-id))
-       (with-syntax ([lib-file (datum->syntax stx (path->string include-path))])
+       ;; Use an absolute `(file ...)` path-spec so inclusion is independent of
+       ;; cwd and source file location.
+       (with-syntax ([lib-file (datum->syntax stx (path->string lib-path))])
          (syntax/loc stx
-           (include/reader lib-file read-syntax/skip-first-line))))]
+           (include/reader (file lib-file) read-syntax/skip-first-line))))]
     [_
      (raise-syntax-error who "expected `(include-lib lib-id)`" stx)]))
 

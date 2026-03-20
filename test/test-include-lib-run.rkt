@@ -11,13 +11,13 @@
 (define (test-include-lib-run)
   (define repo-root (simplify-path (build-path (current-directory) "..")))
   (define webracket-rkt (build-path repo-root "webracket.rkt"))
-  (define (run-r path-string)
+  (define (run-r path-string [cwd repo-root])
     (define stdout (open-output-string))
     (define stderr (open-output-string))
     (define status
       (parameterize ([current-output-port stdout]
                      [current-error-port stderr]
-                     [current-directory repo-root])
+                     [current-directory cwd])
         (system*/exit-code
          (find-executable-path "racket")
          (path->string webracket-rkt)
@@ -74,7 +74,30 @@
                (format "keyword call still misparsed: ~a" kw-output))))
     (lambda ()
       (with-handlers ([exn:fail:filesystem? void])
-        (delete-directory/files tmp-dir)))))
+        (delete-directory/files tmp-dir))))
+
+  ;; Regression: include-lib should resolve library source from the collection,
+  ;; even when compiling a source file outside the repository.
+  (define outside-src (build-path repo-root "test" "test-sxml-lib.rkt"))
+  (define outside-copy (make-temporary-file "webracket-include-lib-outside-~a.rkt"))
+  (dynamic-wind
+    void
+    (lambda ()
+      (copy-file outside-src outside-copy #t)
+      (define outside-cwd (find-system-path 'temp-dir))
+      (define-values (outside-status outside-output)
+        (run-r (path->string outside-copy) outside-cwd))
+      (unless (zero? outside-status)
+        (error 'test-include-lib-run
+               (format "outside include-lib repro failed (~a): ~a"
+                       outside-status outside-output)))
+      (unless (string-contains? outside-output "12345")
+        (error 'test-include-lib-run
+               (format "outside include-lib repro missing sentinel: ~a"
+                       outside-output))))
+    (lambda ()
+      (with-handlers ([exn:fail:filesystem? void])
+        (delete-file outside-copy)))))
 
 (module+ main
   (test-include-lib-run)
