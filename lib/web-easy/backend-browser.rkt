@@ -392,6 +392,34 @@
         (when (and trigger* (not (extern-nullish? trigger*)))
           (js-send trigger* "focus" (vector)))))
 
+    (define boolean-attributes
+      '(hidden
+        inert
+        itemscope
+        async
+        defer
+        nomodule
+        novalidate
+        formnovalidate
+        autofocus
+        disabled
+        readonly
+        required
+        checked
+        multiple
+        selected
+        autoplay
+        controls
+        loop
+        muted
+        playsinline
+        ismap
+        reversed
+        open))
+
+    (define (boolean-attribute? x)
+      (and (memq x boolean-attributes) #t))
+
     ;; apply-attributes! : dom-node-record? list? list? -> void?
     ;;   Apply tracked attributes to native node and handle dialog open/close transitions.
     (define (apply-attributes! n old-attrs attrs)
@@ -428,10 +456,16 @@
                      (js-set! native attr/checked (if value #t #f))]
                     [(on-enter-action)
                      (void)]
-                    [else                                          
-                     (js-set-attribute! native
-                                        (symbol->attr-name name)
-                                        (value->attr-string value))]))
+                    [else
+                     (define attr-name  (symbol->attr-name name))
+                     (define attr-value (value->attr-string value))
+                     (cond
+                       [(boolean-attribute? name)
+                        (if value
+                            (js-set-attribute!    native attr-name attr-value)
+                            (js-remove-attribute! native attr-name))]
+                       [else
+                        (js-set-attribute!    native attr-name attr-value)])]))
                 attrs)
       (when (and (eq? tag 'dialog) (not old-open?) new-open?)
         (handle-dialog-open-transition! native))
