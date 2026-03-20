@@ -6,22 +6,37 @@
 
 (include/reader "../../main-browser.rkt" read-syntax/skip-first-line)
 
+;;;
+;;; Model
+;;;
+
 (define (F->C f) (* (- f 32) 5/9))
 (define (C->F c) (+ (* c 9/5) 32))
-
-(define (~one x) (~r/precision x 1))
 
 (define @tempC      (@ 26))
 (define @tempF      (@tempC . ~> . C->F))
 
+;;;
+;;; Formatters
+;;;
 
 (define (~background color) (or color ""))
 (define (~a x)              (format "~a" x))
+(define (~one x) (~r/precision x 1))
+
+;;;
+;;; View and Control
+;;;
 
 ;; We will never change the field value,
-;; where the user is actively editing.
+;; so we track where the user is actively editing.
 (define @source     (@ "Celsius"))                 ; label for last edited field
 
+;; temp : string obs (number -> number) -> view
+;;   Makes an temperature input component.
+;;   Concretely, it makes an <input> view.
+;;   The model temperature is @temp and convert-to-C
+;;   is used to convert the entered value into Celsius.
 (define (temp label @temp convert-to-C)
   ;; State for the <input> element
   (define @input       (@ (~a (obs-peek @temp))))  ; text in last edited field, initial value from @temp
@@ -46,7 +61,9 @@
           (λ (new-text)
             (:= @input  new-text)
             (:= @source label)
+            (js-log (format "new text: ~a" new-text))
             (define new-temp (string->number new-text))
+            (js-log (format "new temp: ~a" new-temp))
             (cond
               [new-temp (:= @tempC (convert-to-C new-temp))
                         (:= @background #f)]
@@ -54,6 +71,13 @@
                         (:= @background "red")]))
           #:style @input-style)
    (text label)))
+
+;;;
+;;; App
+;;;
+
+;; The app consists of two temperature input fields.
+;; One for Celsius, one for Fahrenheit.
 
 (define 7gui-temperature-converter-app
   (window
