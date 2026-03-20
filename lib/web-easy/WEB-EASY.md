@@ -218,6 +218,48 @@ Near-term directions:
    current check is conservative (direct `window` children only); a future enhancement is a full document-order traversal so `<base>` ordering is validated across the whole rendered view tree.
    TODO: implement full-tree (document-order) validation mode and keep conservative mode as a fast-path fallback.
 
+## Regression Notes
+
+### Include/Reader Error Binding (Resolved)
+
+The include/reader error-binding regression is fixed.
+
+Root cause:
+
+- `collect-assignable-variables` reset the running mutable set to `empty-set`
+  when seeing `#%require` / `#%provide`, so mutable bindings discovered earlier
+  (including `error.59`) were dropped.
+
+Fix:
+
+- Preserve threaded accumulator `xs` in `#%require` and `#%provide` clauses.
+
+Regression guard:
+
+- `lib/web-easy/test/test-error-binding-regression.rkt`
+
+Validation:
+
+- `racket ../../../webracket.rkt -r test-error-binding-regression.rkt` returns `#<void>`.
+
+### Dialog Initial Focus in Browser Backend (Resolved)
+
+Parity dialog pages expecting initial focus inside the dialog now pass.
+
+Fix:
+
+- defer dialog focus-on-open by one timeout tick;
+- clear pending deferred focus timer on close.
+
+### Solar2 List-Group Contract Alignment (Resolved)
+
+Solar2 list-group contract pages now pass with unclipped rows and expected overflow behavior.
+
+Fixes:
+
+- set Solar showcase default theme to `solar2` in `example-browser-solar-showcase.rkt`;
+- ensure list-group overflow is visible in renderer/style path used by Solar2 contract pages.
+
 ## Uppercase With-Children (Decision)
 
 First target elements:
