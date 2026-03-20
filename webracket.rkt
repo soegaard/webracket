@@ -22,6 +22,7 @@
 (define dump-passes-dir (make-parameter #f))
 (define dump-passes-limit (make-parameter #f))
 (define timings?        (make-parameter #f))
+(define pretty-wat?     (make-parameter #f))
 
 (define browser         (make-parameter #f))
 (define nodejs          (make-parameter #t))   ; default
@@ -62,6 +63,10 @@
                             (dump-passes-limit maybe-n)]
    [("--timings") "Print timing breakdown for compilation steps"
                   (timings? #t)]
+   [("--pretty-wat") "Write .wat with pretty formatting"
+                     (pretty-wat? #t)]
+   [("--no-pretty-wat") "Write .wat without pretty formatting (default)"
+                        (pretty-wat? #f)]
    [("--stdlib")             "Include the standard library (default)"
                              (stdlib? #t)]
    [("--no-stdlib")          "Do not include the standard library"
@@ -102,6 +107,7 @@
                      #:dump-passes-dir (dump-passes-dir)
                      #:dump-passes-limit (dump-passes-limit)
                      #:timings?     (timings?)
+                     #:pretty-wat?  (pretty-wat?)
                      #:verbose?      (verbose-mode)
                      #:browser?      (browser)
                      #:node?         (nodejs)
