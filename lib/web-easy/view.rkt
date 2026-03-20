@@ -3918,7 +3918,11 @@
                                             (lambda ()
                                               (invoke-close-callback/internal on-close 'backdrop))))))
            (apply Div
-                  (append children
+                  (append (list (close-button
+                                 (lambda ()
+                                   (invoke-close-callback/internal on-close 'button))
+                                 "Close panel"))
+                          children
                           (list #:attrs (list (cons 'data-we-widget "offcanvas-panel")
                                               (cons 'class @panel-class)
                                               (cons 'tabindex -1))))))))
@@ -5765,16 +5769,6 @@
         (~> @open
             (lambda (open0)
               (if open0 "false" "true"))))
-      (define @bubble-text
-        (obs-combine
-         (lambda (title0 message0 footer0)
-           (string-append
-            (if (eq? title0 #f) "" (string-append (format "~a" title0) " "))
-            (format "~a" message0)
-            (if (eq? footer0 #f) "" (string-append " " (format "~a" footer0)))))
-         @title
-         @message
-         @footer))
       (define (tooltip-change-action key)
         (case (string->symbol key)
           [(mouseenter)
@@ -5784,9 +5778,29 @@
           [else
            (void)]))
       (define bubble-view
-        (html-element
+        (html-element-children
          'span
-         @bubble-text
+         (Span (~> @title
+                   (lambda (title0)
+                     (if (eq? title0 #f) "" (format "~a" title0))))
+               #:data-we-widget "tooltip-header"
+               #:class "we-tooltip-header"
+               #:hidden (~> @title
+                           (lambda (title0)
+                             (if (eq? title0 #f) "hidden" #f))))
+         (Span (~> @message
+                   (lambda (message0)
+                     (format "~a" message0)))
+               #:data-we-widget "tooltip-body"
+               #:class "we-tooltip-body")
+         (Span (~> @footer
+                   (lambda (footer0)
+                     (if (eq? footer0 #f) "" (format "~a" footer0))))
+               #:data-we-widget "tooltip-footer"
+               #:class "we-tooltip-footer"
+               #:hidden (~> @footer
+                           (lambda (footer0)
+                             (if (eq? footer0 #f) "hidden" #f))))
          #:attrs (list (cons 'role 'tooltip)
                        (cons 'id bubble-id)
                        (cons 'data-we-widget "tooltip-bubble")
@@ -5796,14 +5810,16 @@
         (list (cons 'data-we-widget "tooltip")
               (cons 'class @root-class)
               (cons 'on-change-action tooltip-change-action)))
+      (define trigger-child
+        (if (view? child)
+            (apply-extra-attrs/internal child
+                                        (list (cons 'aria-describedby bubble-id)))
+            child))
       (html-element-children
        'div
        (html-element-children
         'div
-        (html-element-children
-         'div
-         child
-         #:attrs (list (cons 'aria-describedby bubble-id)))
+        trigger-child
         #:attrs (list (cons 'data-we-widget "tooltip-trigger")
                       (cons 'class "we-tooltip-trigger")
                       (cons 'on-change-action tooltip-change-action)))

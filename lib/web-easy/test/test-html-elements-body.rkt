@@ -14,14 +14,19 @@
 ;;   With three arguments you can provide an explicit label string.
 
 ;; Helper for compact rejection checks of invalid constructor calls.
-(define-syntax-rule (check-call-rejected expr message)
-  (check-exn (lambda ()
-               expr)
-             message))
+;; The expansion is anchored at the call site so failures report the source location
+;; of the specific rejected call, not this helper definition.
+(define-syntax (check-call-rejected stx)
+  (syntax-case stx ()
+    [(_ expr message)
+     (syntax/loc #'expr
+       (check-exn (lambda ()
+                    expr)
+                  message))]))
 
 ;; Helper for compact positive attribute checks on a rendered node.
 (define (check-node-attrs* node attrs [label #f])
-  (for ([pair attrs])
+  (for ([pair (in-list attrs)])
     (check-equal (node-attr node (car pair))
                  (cadr pair)
                  (if label
@@ -30,13 +35,21 @@
                              (car pair))
                      (format "Expected attribute ~a to have the configured value" (car pair))))))
 
-;; Macro wrapper: unlabeled uses include the node identifier for easier failure localization.
-(define-syntax check-node-attrs
-  (syntax-rules ()
+;; Macro wrapper: unlabeled uses include the node expression for easier failure localization.
+;; Expansion is anchored at the node call-site expression.
+(define-syntax (check-node-attrs stx)
+  (syntax-case stx ()
     [(_ node attrs)
-     (check-node-attrs* node attrs 'node)]
+     (with-syntax ([auto-label
+                    (datum->syntax #'node
+                                   (format "~a" (syntax->datum #'node))
+                                   #'node
+                                   #'node)])
+       (syntax/loc #'node
+         (check-node-attrs* node attrs auto-label)))]
     [(_ node attrs label)
-     (check-node-attrs* node attrs label)]))
+     (syntax/loc #'node
+       (check-node-attrs* node attrs label))]))
 
 ;; -------------------------------------------------------------------
 ;; Core Heading/Text Primitive Coverage
@@ -320,6 +333,7 @@
 (check-call-rejected (H1 "a" "b")
                      "H1 rejects too many positional arguments")
 
+;; define/component supports variadic children with #:rest + #:root-attrs
 ;; -------------------------------------------------------------------
 ;; Primitive Element Batch Coverage (by tag family)
 ;; -------------------------------------------------------------------

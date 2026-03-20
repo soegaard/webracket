@@ -46,19 +46,6 @@
       "target",
       "type"
     ],
-    "applet": [
-      "align",
-      "alt",
-      "archive",
-      "code",
-      "codebase",
-      "height",
-      "hspace",
-      "name",
-      "object",
-      "vspace",
-      "width"
-    ],
     "area": [
       "alt",
       "coords",
@@ -85,11 +72,6 @@
     "base": [
       "href",
       "target"
-    ],
-    "basefont": [
-      "color",
-      "face",
-      "size"
     ],
     "blockquote": [
       "cite"
@@ -153,9 +135,6 @@
     "dialog": [
       "open"
     ],
-    "dir": [
-      "compact"
-    ],
     "div": [
       "align"
     ],
@@ -173,11 +152,6 @@
       "form",
       "name"
     ],
-    "font": [
-      "color",
-      "face",
-      "size"
-    ],
     "form": [
       "accept",
       "accept-charset",
@@ -188,20 +162,6 @@
       "name",
       "novalidate",
       "target"
-    ],
-    "frame": [
-      "frameborder",
-      "longdesc",
-      "marginheight",
-      "marginwidth",
-      "name",
-      "noresize",
-      "scrolling",
-      "src"
-    ],
-    "frameset": [
-      "cols",
-      "rows"
     ],
     "h1": [
       "align"
@@ -313,9 +273,6 @@
       "cite",
       "datetime"
     ],
-    "isindex": [
-      "prompt"
-    ],
     "label": [
       "for",
       "form"
@@ -411,12 +368,6 @@
     ],
     "p": [
       "align"
-    ],
-    "param": [
-      "name",
-      "type",
-      "value",
-      "valuetype"
     ],
     "pre": [
       "width"

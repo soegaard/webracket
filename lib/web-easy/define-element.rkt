@@ -164,6 +164,20 @@
 ;; normalize-element-call : symbol? list? (or/c natural? 'any) (or/c #f list?) list? list? -> values list? any/c
 ;;   Parse constructor call payload into positional args and merged attrs.
 (define (normalize-element-call who all-args expected-positional-count allowed-attrs required-keywords required-any-keywords)
+  (define (dedupe-preserve-order xs)
+    (let loop ([rest xs]
+               [seen '()]
+               [out-rev '()])
+      (cond
+        [(null? rest)
+         (reverse out-rev)]
+        [else
+         (define x (car rest))
+         (if (member x seen)
+             (loop (cdr rest) seen out-rev)
+             (loop (cdr rest)
+                   (cons x seen)
+                   (cons x out-rev)))])))
   (define (keyword-count+ counts kw)
     (cond
       [(null? counts)
@@ -182,7 +196,7 @@
   (define-values (positional-rev attrs extra-attrs-rev)
     (parse-element-call-args who all-args allowed-attrs))
   (define required-target-kws
-    (remove-duplicates (append required-keywords required-any-keywords)))
+    (dedupe-preserve-order (append required-keywords required-any-keywords)))
   (define required-counts
     (let loop ([rest all-args]
                [counts '()])
