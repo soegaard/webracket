@@ -269,8 +269,12 @@ This chapter is the current command-line reference for WebRacket. For
 installation and first-run walkthroughs, see the website
 Quick Start and Installation pages.
 
-The entry point is @tt{webracket.rkt}. It accepts one source file and optional
-flags.
+The entry point is @tt{webracket.rkt}. It accepts either:
+
+@itemlist[
+  @item{One source file plus optional flags (compile mode).}
+  @item{No source file together with @tt{--list-primitives} (listing mode).}
+]
 
 @subsection{Overview}
 
@@ -294,6 +298,12 @@ artifact(s), metadata, and host-side runtime support.
 
 @shellblock{
 racket webracket.rkt [option ...] <filename>
+}
+
+Primitive listing mode:
+
+@shellblock{
+racket webracket.rkt --list-primitives [--ffi <file> ...]
 }
 
 @subsection{Quick Start (CLI)}
@@ -360,10 +370,24 @@ Include one or more @tt{.ffi} files:
 racket webracket.rkt --ffi dom --ffi standard program.rkt
 }
 
+Print all known primitives:
+
+@shellblock{
+racket webracket.rkt --list-primitives
+}
+
+Print primitives including names from selected @tt{.ffi} files:
+
+@shellblock{
+racket webracket.rkt --list-primitives --ffi dom --ffi standard
+}
+
 @subsection{Operational Constraints}
 
 @itemlist[
   @item{@tt{--run} cannot be used together with @tt{--browser}.}
+  @item{Compile mode requires exactly one source filename.}
+  @item{Listing mode (@tt{--list-primitives}) requires no source filename.}
   @item{When using @tt{--run} in Node mode, a working @tt{node} executable is required.}
   @item{A working @tt{wasm-tools} installation is required for WAT-to-WASM assembly.}
   @item{Output paths must be distinct (WAT, WASM, map sidecar, and host output cannot collide).}
@@ -417,6 +441,7 @@ Debug and inspection options:
 
 @itemlist[
   @item{@tt{-v} / @tt{--verbose}: Verbose compiler messages.}
+  @item{@tt{--list-primitives}: Print sorted primitive names and exit.}
   @item{@tt{--label-map-forms}: Include source form payloads in @tt{.wasm.map.sexp} (default).}
   @item{@tt{--no-label-map-forms}: Omit source form payloads in @tt{.wasm.map.sexp}.}
   @item{@tt{--dump-passes <dir>}: Write per-pass dumps to @tt{<dir>}.}
@@ -444,6 +469,8 @@ FFI and linker flags:
 
 @itemlist[
   @item{@shell-code{racket webracket.rkt program.rkt}}
+  @item{@shell-code{racket webracket.rkt --list-primitives}}
+  @item{@shell-code{racket webracket.rkt --list-primitives --ffi dom --ffi standard}}
   @item{@shell-code{racket webracket.rkt --node --run program.rkt}}
   @item{@shell-code{racket webracket.rkt --browser program.rkt}}
   @item{@shell-code{racket webracket.rkt --wat-file out/program.wat --wasm-file out/program.wasm --host-file out/program.js program.rkt}}
