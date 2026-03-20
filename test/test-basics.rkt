@@ -413,9 +413,12 @@
                                (equal? (string->number "-42")    -42)
                                (equal? (string->number "-111" 7) -57)
                                (equal? (string->number "-2.3")   -2.3)
+                               (equal? (string->number ".")      #f)
+                               (equal? (string->number "1.")     1.0)
                                (equal? (string->number "78.")    78.0)
                                (equal? (string->number "79.0")   79.0)
                                (equal? (string->number "80.00")  80.0)
+                               (equal? (string->number "1.10000000000000000000") 1.1)
                                (equal? (string->number "hello") #f)))
                     (list "real?"
                           (and (equal? (real? 1)      #t)
