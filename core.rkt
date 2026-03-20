@@ -67,7 +67,7 @@
      (raise-syntax-error '#%app "bad application form" stx)]))
 
 ;; require-lib : (require-lib lib-id) -> require form
-;;   Require `webracket/libs/<lib-id>` at top level.
+;;   Require `webracket/lib/libs/<lib-id>` at top level.
 (define-syntax (require-lib stx)
   (define who 'require-lib)
   (define context (syntax-local-context))
@@ -84,7 +84,7 @@
        (define collection-main (collection-file-path "main.rkt" "webracket"))
        (define collection-dir (or (path-only collection-main) (current-directory)))
        (define lib-file-name (string-append (symbol->string lib-sym) ".rkt"))
-       (define lib-path (build-path collection-dir "libs" lib-file-name))
+       (define lib-path (build-path collection-dir "lib" "libs" lib-file-name))
        (unless (file-exists? lib-path)
          (raise-syntax-error
           who
@@ -95,7 +95,7 @@
        (define mod-id
          (datum->syntax stx
                         (string->symbol
-                         (string-append "webracket/libs/" (symbol->string lib-sym)))))
+                         (string-append "webracket/lib/libs/" (symbol->string lib-sym)))))
        (with-syntax ([module-id mod-id])
          (syntax/loc stx
            (require module-id))))]
@@ -103,7 +103,7 @@
      (raise-syntax-error who "expected `(require-lib lib-id)`" stx)]))
 
 ;; include-lib : (include-lib lib-id) -> include/reader form
-;;   Include `webracket/libs/<lib-id>.rkt` by source inclusion.
+;;   Include `webracket/lib/libs/<lib-id>.rkt` by source inclusion.
 (define-syntax (include-lib stx)
   (define who 'include-lib)
   (define context (syntax-local-context))
@@ -120,8 +120,8 @@
        (define collection-main (collection-file-path "main.rkt" "webracket"))
        (define collection-dir (or (path-only collection-main) (current-directory)))
        (define lib-file-name (string-append (symbol->string lib-sym) ".rkt"))
-       (define include-path  (build-path "libs" lib-file-name))
-       (define lib-path (build-path collection-dir "libs" lib-file-name))
+       (define include-path  (build-path "lib" "libs" lib-file-name))
+       (define lib-path (build-path collection-dir "lib" "libs" lib-file-name))
        (unless (file-exists? lib-path)
          (raise-syntax-error
           who
