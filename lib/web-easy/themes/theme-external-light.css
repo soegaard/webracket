@@ -201,6 +201,15 @@ html.we-theme-light .we-input {
   color: var(--we-fg);
 }
 
+html.we-theme-light button:disabled,
+html.we-theme-light .we-button:disabled {
+  background: var(--we-bg-disabled);
+  border-color: #c8d0dd;
+  color: #8a94a6;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 html.we-theme-light input::placeholder,
 html.we-theme-light textarea::placeholder {
   color: var(--we-input-placeholder);
@@ -214,6 +223,16 @@ html.we-theme-light .we-input:focus-visible {
   outline: 1px solid var(--we-focus);
   outline-offset: 0;
   border-color: #5c78a6;
+}
+
+html.we-theme-light input:disabled,
+html.we-theme-light textarea:disabled,
+html.we-theme-light .we-input:disabled {
+  background:   var(--we-bg-disabled);
+  color:        var(--we-fg-muted);
+  border-color: var(--we-border-soft);
+  opacity:      0.7;
+  cursor:       not-allowed;
 }
 
 html.we-theme-light button,

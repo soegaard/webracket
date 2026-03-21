@@ -209,6 +209,17 @@ html.we-theme-dark .we-input:focus-visible {
   border-color: #9eb2d5;
 }
 
+html.we-theme-dark input:disabled,
+html.we-theme-dark textarea:disabled,
+html.we-theme-dark .we-input:disabled {
+  background:   var(--we-bg-disabled);
+  color:        var(--we-fg-muted);
+  border-color: var(--we-border-soft);
+  opacity:      0.7;
+  cursor:       not-allowed;
+}
+
+
 html.we-theme-dark button,
 html.we-theme-dark .we-button {
   background: #2a3342;
@@ -238,6 +249,16 @@ html.we-theme-dark .we-button:focus-visible {
   outline: 1px solid var(--we-focus);
   outline-offset: 0;
 }
+
+html.we-theme-dark button:disabled,
+html.we-theme-dark .we-button:disabled {
+  background: var(--we-bg-disabled);
+  border-color: var(--we-border-soft);
+  color: var(--we-fg-muted);
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
 
 /* Button variants used by the public showcase page. */
 html.we-theme-dark .we-button-primary {
