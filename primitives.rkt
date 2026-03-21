@@ -1223,14 +1223,14 @@
   (inclusive-range start end (if step step default-step)))
 
 (define (range-proc start-or-end [end #f] [step #f])
-  (cond [(eq? end #f) (range start-or-end)]
+  (cond [(eq? end  #f) (range start-or-end)]
         [(eq? step #f) (range start-or-end end)]
-        [else (range start-or-end end step)]))
+        [else          (range start-or-end end step)]))
 
 (define (range start-or-end [end #f] [step #f]) 
-  (cond [(eq? end #f) (range start-or-end)]
-        [(eq? step #f) (range start-or-end end)]
-        [else (range start-or-end end step)]))
+  (cond [(eq? end  #f) (range 0 start-or-end 1)]
+        [(eq? step #f) (range start-or-end end 1)]
+        [else          (racket:range start-or-end end step)]))
 
 ;; Checkers
 
