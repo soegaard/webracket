@@ -8,7 +8,7 @@
 
 
 ;; ----------------------------------------
-;; Dates (replacement for gregor)
+;; Dates (replacement for gregor)          
 ;; ----------------------------------------
 
 (struct flight-date (year month day) #:transparent)
@@ -21,23 +21,11 @@
     [(> (flight-date-month a) (flight-date-month b)) #f]
     [else (< (flight-date-day a) (flight-date-day b))]))
 
-;; For this program we only need "today" and "tomorrow" initially.
-#;(define (today/date)
-  (define d (current-date))
-  (flight-date (date-year d) (date-month d) (date-day d)))
-
 (define (today/date)
   (flight-date 2026 3 16))
 
-#;(define (tomorrow/date)
-  ;; Safe enough for initializing the default value.
-  ;; We step via seconds instead of implementing full date arithmetic.
-  (define d (seconds->date (+ (current-seconds) (* 24 60 60))))
-  (flight-date (date-year d) (date-month d) (date-day d)))
-
 (define (tomorrow/date)
   (flight-date 2026 3 17))
-
 
 (define (leap-year? y)
   (or (zero? (remainder y 400))
@@ -108,9 +96,10 @@
   '((one-way "one-way flight")
     (return  "return flight")))
 
-(define @type    (obs 'one-way                'type))
-(define @t1      (obs (~date (today/date))    't1))
-(define @t2      (obs (~date (tomorrow/date)) 't2))
+;                     initial value           name (of the observable)
+(define @type    (obs 'one-way                'type))    ; 
+(define @t1      (obs (~date (today/date))    't1))      ; time 1 (home -> dest)
+(define @t2      (obs (~date (tomorrow/date)) 't2))      ; time 2 (dest -> home)
 (define @booked? (obs #f                      'booked?))
 
 (define @valid?
@@ -133,89 +122,71 @@
         (format "You've booked a return flight on ~a (returning on ~a)." t1 t2)]))
    @type @t1 @t2))
 
+(define @return-disabled
+  ; Use #f not "" to remove the 'disabled attribute.
+  (@type . ~> . (λ (type) (eq? type 'one-way))))
+
+
 ;; ----------------------------------------
 ;; View helpers
 ;; ----------------------------------------
 
+#;(define (input-style valid?)
+  (if valid?
+      "width: 100%; box-sizing: border-box;"
+      "width: 100%; box-sizing: border-box; background-color: #ffdddd;"))
+
 (define (input-style valid?)
   (if valid?
-      "width: 100%;"
-      "width: 100%; background-color: #ffdddd;"))
+      ""
+      "background-color: #ffdddd;")) ; light red
+
 
 (define (book-button)
-  (observable-view
-   @valid?
-   (lambda (valid?)
-     (button "Book"
-             (if valid?
-                 (lambda () (obs-set! @booked? #t))
-                 (lambda () (void)))
-             #:attrs
-             (if valid?
-                 '()
-                 '((disabled . "disabled")))))))
-
-(define (return-date-input)
-  (observable-view
-   @type
-   (lambda (type)
-     (define valid? (not (not (string->date (obs-peek @t2)))))
-     (input @t2
-            (lambda (text) (obs-set! @t2 text))
-            #:input-attrs
-            (append
-             (list (cons 'placeholder "yyyy.MM.dd")
-                   (cons 'style       (input-style valid?)))
-             (if (eq? type 'return)
-                 '()
-                 '((disabled . "disabled"))))))))
-
+  (button "Book"
+          (lambda () (:= @booked? #t))
+          #:disabled (@valid? . ~> . (λ (valid) (not valid)))))
 
 (define 7gui-flight-booker-app
   (window
-   (container
+   (container #:style "max-width: 320px;"
     (h1 "Flight Booker")
     (group "Book Flight"
-           (container
-            (vpanel
-             (choice flight-types
-                     @type
-                     (lambda (new-type) (obs-set! @type new-type)))
-             
-             (observable-view
-              @t1
-              (lambda (t1)
-                (input t1
-                       (lambda (text) (obs-set! @t1 text))
-                       #:input-attrs
-                       (list (cons 'placeholder "yyyy.MM.dd")
-                             (cons 'style       (input-style (string->date t1)))))))
-             
-             (observable-view
-              @type
-              (lambda (type)
-                (define valid? (string->date (obs-peek @t2)))
-                (input @t2
-                       (lambda (text) (obs-set! @t2 text))
-                       #:input-attrs
-                       (append
-                        (list (cons 'placeholder "yyyy.MM.dd")
-                              (cons 'style       (input-style valid?)))
-                        (if (eq? type 'return)
-                            '()
-                            '((disabled . "disabled")))))))
+           (vpanel
+            ; Note: form elments are require to have an #:id or #:name
+            (choice #:id "flight-type-choice"
+                    flight-types
+                    @type
+                    (lambda (new-type) (obs-set! @type new-type)))
 
-             ; (return-date-input)
+            ;; Away
+            (input #:id "away-date-input"
+                   @t1
+                   (lambda (text) (obs-set! @t1 text))
+                   #:input-attrs
+                   (list (cons 'placeholder "yyyy.MM.dd")
+                         (cons 'style       (@t1 . ~> . input-style) ; was(input-style (string->date t1))
+                               )))
+            ;; Return
+            (input #:id "return-date-input"
+                   @t2
+                   (lambda (text) (obs-set! @t2 text))
+                   #:style       (@t2 . ~> . (λ (t) (input-style (string->date t))))
+                   #:disabled    @return-disabled
+                   #:placeholder "yyyy.MM.dd")
 
-             (observable-view
-              @valid?
-              (lambda (valid?)
-                (if valid?
-                    (text "")
-                    (alert "Use yyyy.MM.dd. For return flights, the return date must be later."
-                           'danger))))
+            ; (return-date-input)
+            (observable-view
+             @valid?
+             (lambda (valid?)
+               (if valid?
+                   (text "")
+                   (alert "Use yyyy.MM.dd. For return flights, the return date must be later."
+                          'danger))))
 
-             (book-button))))
+            ; In a <vpanel> the element stretch to the full width.
+            ; We need the natural width of the Book button, so we put it in an <hpanel>.
+            (hpanel (spacer) (book-button) (spacer)))))
     
     (dialog @booked?
             (lambda () (obs-set! @booked? #f))            
@@ -224,7 +195,7 @@
             #:footer
             (hpanel
              (spacer)
-             (button "OK" (lambda () (obs-set! @booked? #f))))))))
+             (button "OK" (lambda () (obs-set! @booked? #f)))))))
 
   
 (define app-renderer
