@@ -392,7 +392,8 @@
    navigation-bar
    menu-bar
    menu
-   menu-item)
+   menu-item
+   rich-list-group)
   (let ()
     (struct view (kind props children) #:transparent)
 
@@ -892,7 +893,7 @@
                [(null? rest) #t]
                [(and (pair? (car rest))
                      (symbol? (caar rest)))
-               (loop (cdr rest))]
+                (loop (cdr rest))]
                [else #f]))))
 
     ;; options-ref/internal : list? symbol? any/c -> any/c
@@ -2003,6 +2004,13 @@
     ;;   Construct a primitive HTML button element with generic keyword attributes.
     (define/element Button html-element 'button)
 
+    ; TODO : Testing whether we can get Button to support child views.
+    ; TODO : Use this in list-view, so a list view can receive views such as
+    ;          (Span #:style italic/muted (text "No matches"))
+    (define/element Button* html-element-children 'button*
+      #:required-keywords ()
+      #:positional-count any)
+
     ;; Div : view? ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML div element with children and generic keyword attrs.
     (define/element Div html-element-children 'div
@@ -2768,10 +2776,10 @@
              (append children
                      (list '#:attrs root-attrs))))
 
-    ;; button : (or/c string? observable?) (-> any/c) [any/c] [any/c] -> view?
+
+    ;; button : any/c (-> any/c) [any/c] [any/c] -> view?
     ;;   Construct a button view with optional leading/trailing icon labels.
-    ;;   Optional parameter leading-icon defaults to #f.
-    ;;   Optional parameter trailing-icon defaults to #f.
+    ;;   Label and icons may be plain text or views.
     (define/component button
       #:root-tag 'button
       #:positional ([label]
@@ -2779,6 +2787,18 @@
                     [leading-icon #f]
                     [trailing-icon #f])
       #:root-attrs attrs/final
+      (define (button-inline-label x data-we-widget class)
+        (if (view? x)
+            (html-element-children
+             'span
+             x
+             #:attrs
+             (list (cons 'data-we-widget data-we-widget)
+                   (cons 'class class)))
+            (Span x
+                  #:data-we-widget data-we-widget
+                  #:class class)))
+
       (define @label
         (observable-or-const label))
       (define @leading-icon
@@ -2787,6 +2807,7 @@
         (observable-or-const trailing-icon))
       (define @state
         (obs-combine list @label @leading-icon @trailing-icon))
+
       (define (make-button-children state)
         (define label0
           (car state))
@@ -2797,26 +2818,85 @@
         (append
          (if (eq? leading-icon0 #f)
              '()
-             (list (Span leading-icon0
-                         #:data-we-widget "button-icon"
-                         #:class "we-button-icon we-button-icon-leading")))
-         (list (Span label0
-                     #:data-we-widget "button-label"
-                     #:class "we-button-label"))
+             (list
+              (button-inline-label
+               leading-icon0
+               "button-icon"
+               "we-button-icon we-button-icon-leading")))
+         (list
+          (button-inline-label
+           label0
+           "button-label"
+           "we-button-label"))
          (if (eq? trailing-icon0 #f)
              '()
-             (list (Span trailing-icon0
-                         #:data-we-widget "button-icon"
-                         #:class "we-button-icon we-button-icon-trailing")))))
+             (list
+              (button-inline-label
+               trailing-icon0
+               "button-icon"
+               "we-button-icon we-button-icon-trailing")))))
+
       (define attrs/final
         (list (cons 'data-we-widget "button")
               (cons 'class "we-button")
               (cons 'on-click-action action)))
+
       (observable-element-children
        'button
        @state
        make-button-children
        #:attrs attrs/final))
+
+
+    ;; ;; button : (or/c string? observable?) (-> any/c) [any/c] [any/c] -> view?
+    ;; ;;   Construct a button view with optional leading/trailing icon labels.
+    ;; ;;   Optional parameter leading-icon defaults to #f.
+    ;; ;;   Optional parameter trailing-icon defaults to #f.
+    ;; (define/component button
+    ;;   #:root-tag 'button
+    ;;   #:positional ([label]
+    ;;                 [action]
+    ;;                 [leading-icon #f]
+    ;;                 [trailing-icon #f])
+    ;;   #:root-attrs attrs/final
+    ;;   (define @label
+    ;;     (observable-or-const label))
+    ;;   (define @leading-icon
+    ;;     (observable-or-const leading-icon))
+    ;;   (define @trailing-icon
+    ;;     (observable-or-const trailing-icon))
+    ;;   (define @state
+    ;;     (obs-combine list @label @leading-icon @trailing-icon))
+    ;;   (define (make-button-children state)
+    ;;     (define label0
+    ;;       (car state))
+    ;;     (define leading-icon0
+    ;;       (cadr state))
+    ;;     (define trailing-icon0
+    ;;       (caddr state))
+    ;;     (append
+    ;;      (if (eq? leading-icon0 #f)
+    ;;          '()
+    ;;          (list (Span leading-icon0
+    ;;                      #:data-we-widget "button-icon"
+    ;;                      #:class "we-button-icon we-button-icon-leading")))
+    ;;      (list (Span label0
+    ;;                  #:data-we-widget "button-label"
+    ;;                  #:class "we-button-label"))
+    ;;      (if (eq? trailing-icon0 #f)
+    ;;          '()
+    ;;          (list (Span trailing-icon0
+    ;;                      #:data-we-widget "button-icon"
+    ;;                      #:class "we-button-icon we-button-icon-trailing")))))
+    ;;   (define attrs/final
+    ;;     (list (cons 'data-we-widget "button")
+    ;;           (cons 'class "we-button")
+    ;;           (cons 'on-click-action action)))
+    ;;   (observable-element-children
+    ;;    'button
+    ;;    @state
+    ;;    make-button-children
+    ;;    #:attrs attrs/final))
 
     ;; link : (or/c string? observable?) (or/c string? observable?) [boolean?] [any/c] -> view?
     ;;   Construct a link view with href and optional download/target attributes.
@@ -3787,76 +3867,76 @@
              (append
               (map
                (lambda (section-entry)
-                  (define section-id (list-ref section-entry 0))
-                  (define section-label (list-ref section-entry 1))
-                  (define section-view (list-ref section-entry 2))
-                  (define panel-id (list-ref section-entry 3))
-                  (define open-state
-                    (if (obs? selected)
-                        (~> selected
-                            (lambda (selected0)
-                              (equal? selected0 section-id)))
-                        (equal? selected section-id)))
-                  (define @expanded
-                    (~> (observable-or-const open-state)
-                        (lambda (open0)
-                          (if open0 "true" "false"))))
-                  (define @trigger-class
-                    (~> (observable-or-const open-state)
-                        (lambda (open0)
-                          (if open0
-                              "we-accordion-trigger is-open"
-                              "we-accordion-trigger"))))
-                  (define @collapse-class
-                    (~> (observable-or-const open-state)
-                        (lambda (open0)
-                          (if open0
-                              "we-collapse is-open we-accordion-content"
-                              "we-collapse we-accordion-content"))))
-                  (define @collapse-hidden
-                    (~> (observable-or-const open-state)
-                        (lambda (open0)
-                          (if open0 "false" "true"))))
-                  (define trigger-attrs
-                    (list (cons 'role 'button)
-                          (cons 'data-we-widget "accordion-trigger")
-                          (cons 'aria-controls panel-id)
-                          (cons 'aria-expanded @expanded)
-                          (cons 'class @trigger-class)))
-                  (define trigger-attrs/final
-                    (if (obs? selected)
-                        (append trigger-attrs
-                                (list (cons 'on-click-action
-                                            (lambda ()
-                                              (toggle-section!/internal section-id)))
-                                      (cons 'on-change-action
-                                            (lambda (key)
-                                              (case (string->symbol key)
-                                                [(ArrowDown)
-                                                 (move-selection!/internal section-id 1)]
-                                                [(ArrowUp)
-                                                 (move-selection!/internal section-id -1)]
-                                                [(Home)
-                                                 (when (pair? section-ids)
-                                                   (select-section!/internal (car section-ids)))]
-                                                [(End)
-                                                 (when (pair? section-ids)
-                                                   (select-section!/internal
-                                                    (list-ref section-ids
-                                                              (- (length section-ids) 1))))]
-                                                [else
-                                                 (void)])))))
-                        trigger-attrs))
-                  (Div
-                   (Button section-label
-                           #:attrs trigger-attrs/final)
-                   (Div section-view
-                        #:attrs (list (cons 'id panel-id)
-                                      (cons 'data-we-widget "collapse")
-                                      (cons 'class @collapse-class)
-                                      (cons 'aria-hidden @collapse-hidden)))
-                   #:attrs (list (cons 'data-we-widget "accordion-section")
-                                 (cons 'class "we-accordion-section"))))
+                 (define section-id (list-ref section-entry 0))
+                 (define section-label (list-ref section-entry 1))
+                 (define section-view (list-ref section-entry 2))
+                 (define panel-id (list-ref section-entry 3))
+                 (define open-state
+                   (if (obs? selected)
+                       (~> selected
+                           (lambda (selected0)
+                             (equal? selected0 section-id)))
+                       (equal? selected section-id)))
+                 (define @expanded
+                   (~> (observable-or-const open-state)
+                       (lambda (open0)
+                         (if open0 "true" "false"))))
+                 (define @trigger-class
+                   (~> (observable-or-const open-state)
+                       (lambda (open0)
+                         (if open0
+                             "we-accordion-trigger is-open"
+                             "we-accordion-trigger"))))
+                 (define @collapse-class
+                   (~> (observable-or-const open-state)
+                       (lambda (open0)
+                         (if open0
+                             "we-collapse is-open we-accordion-content"
+                             "we-collapse we-accordion-content"))))
+                 (define @collapse-hidden
+                   (~> (observable-or-const open-state)
+                       (lambda (open0)
+                         (if open0 "false" "true"))))
+                 (define trigger-attrs
+                   (list (cons 'role 'button)
+                         (cons 'data-we-widget "accordion-trigger")
+                         (cons 'aria-controls panel-id)
+                         (cons 'aria-expanded @expanded)
+                         (cons 'class @trigger-class)))
+                 (define trigger-attrs/final
+                   (if (obs? selected)
+                       (append trigger-attrs
+                               (list (cons 'on-click-action
+                                           (lambda ()
+                                             (toggle-section!/internal section-id)))
+                                     (cons 'on-change-action
+                                           (lambda (key)
+                                             (case (string->symbol key)
+                                               [(ArrowDown)
+                                                (move-selection!/internal section-id 1)]
+                                               [(ArrowUp)
+                                                (move-selection!/internal section-id -1)]
+                                               [(Home)
+                                                (when (pair? section-ids)
+                                                  (select-section!/internal (car section-ids)))]
+                                               [(End)
+                                                (when (pair? section-ids)
+                                                  (select-section!/internal
+                                                   (list-ref section-ids
+                                                             (- (length section-ids) 1))))]
+                                               [else
+                                                (void)])))))
+                       trigger-attrs))
+                 (Div
+                  (Button section-label
+                          #:attrs trigger-attrs/final)
+                  (Div section-view
+                       #:attrs (list (cons 'id panel-id)
+                                     (cons 'data-we-widget "collapse")
+                                     (cons 'class @collapse-class)
+                                     (cons 'aria-hidden @collapse-hidden)))
+                  #:attrs (list (cons 'data-we-widget "accordion-section")
+                                (cons 'class "we-accordion-section"))))
                sections/normalized)
               (list #:attrs attrs/final))))
 
@@ -4041,86 +4121,86 @@
             (invoke-close-callback/internal on-close 'escape))))
       (define make-dialog-children
         (lambda (state)
-        (define title0
-          (list-ref state 1))
-        (define description0
-          (list-ref state 2))
-        (define footer0
-          (list-ref state 3))
-        (define show-close?0
-          (not (eq? (list-ref state 4) #f)))
-        (define close-label0
-          (list-ref state 5))
-        (define tone0
-          (normalize-card-tone/internal (list-ref state 6)))
-        (define tone-style0
-          (normalize-card-tone-style/internal (list-ref state 7)))
-        (define panel-class
-          (string-append
-           "we-dialog-panel we-dialog-size-" (symbol->string final-size)
-           (if tone0
-               (string-append " we-dialog-tone-" (symbol->string tone0))
-               "")
-           (if tone-style0
-               (string-append " we-dialog-tone-" (symbol->string tone-style0))
-               "")))
-        (define dialog-desc-id #f)
-        (define body-content
-          (if (and (eq? description0 #f)
-                   (pair? rest/args)
-                   (text-view?/internal (car rest/args)))
-              (begin
-                (set! dialog-desc-id (next-dialog-body-id/internal))
-                (cons (apply-extra-attrs/internal (car rest/args)
-                                                  (list (cons 'id dialog-desc-id)))
-                      (cdr rest/args)))
-              rest/args))
-        (define body-children
-          (append
-           (if (eq? description0 #f)
-               '()
-               (begin
-                 (set! dialog-desc-id (next-dialog-body-id/internal))
-                 (list (P description0
-                          #:id dialog-desc-id
-                          #:data-we-widget "dialog-description"
-                          #:class "we-dialog-description"))))
-           body-content))
-        (define header-children
-          (append
-           (if (eq? title0 #f)
-               '()
-               (list (H2 title0
-                         #:data-we-widget "dialog-title"
-                         #:class "we-dialog-title")))
-           (if show-close?0
-               (list
-                (Button "×"
-                        #:attrs (list (cons 'role 'button)
-                                      (cons 'data-we-widget "dialog-close")
-                                      (cons 'class "we-close-button we-dialog-close")
-                                      (cons 'aria-label close-label0)
-                                      (cons 'on-click-action
-                                            (lambda ()
-                                              (invoke-close-callback/internal on-close 'button))))))
-               '())))
-        (define footer-children
-          (cond
-            [(eq? footer0 #f)
-             '()]
-            [(view? footer0)
-             (list footer0)]
-            [else
-             (list (Span footer0
-                         #:data-we-widget "dialog-footer-text"
-                         #:class "we-dialog-footer-text"))]))
-        (define panel-attrs
-          (append (list (cons 'class panel-class)
-                        (cons 'data-we-widget "dialog-panel")
-                        (cons 'tabindex -1))
-                  (if dialog-desc-id
-                      (list (cons 'aria-describedby dialog-desc-id))
-                      '())))
+          (define title0
+            (list-ref state 1))
+          (define description0
+            (list-ref state 2))
+          (define footer0
+            (list-ref state 3))
+          (define show-close?0
+            (not (eq? (list-ref state 4) #f)))
+          (define close-label0
+            (list-ref state 5))
+          (define tone0
+            (normalize-card-tone/internal (list-ref state 6)))
+          (define tone-style0
+            (normalize-card-tone-style/internal (list-ref state 7)))
+          (define panel-class
+            (string-append
+             "we-dialog-panel we-dialog-size-" (symbol->string final-size)
+             (if tone0
+                 (string-append " we-dialog-tone-" (symbol->string tone0))
+                 "")
+             (if tone-style0
+                 (string-append " we-dialog-tone-" (symbol->string tone-style0))
+                 "")))
+          (define dialog-desc-id #f)
+          (define body-content
+            (if (and (eq? description0 #f)
+                     (pair? rest/args)
+                     (text-view?/internal (car rest/args)))
+                (begin
+                  (set! dialog-desc-id (next-dialog-body-id/internal))
+                  (cons (apply-extra-attrs/internal (car rest/args)
+                                                    (list (cons 'id dialog-desc-id)))
+                        (cdr rest/args)))
+                rest/args))
+          (define body-children
+            (append
+             (if (eq? description0 #f)
+                 '()
+                 (begin
+                   (set! dialog-desc-id (next-dialog-body-id/internal))
+                   (list (P description0
+                            #:id dialog-desc-id
+                            #:data-we-widget "dialog-description"
+                            #:class "we-dialog-description"))))
+             body-content))
+          (define header-children
+            (append
+             (if (eq? title0 #f)
+                 '()
+                 (list (H2 title0
+                           #:data-we-widget "dialog-title"
+                           #:class "we-dialog-title")))
+             (if show-close?0
+                 (list
+                  (Button "×"
+                          #:attrs (list (cons 'role 'button)
+                                        (cons 'data-we-widget "dialog-close")
+                                        (cons 'class "we-close-button we-dialog-close")
+                                        (cons 'aria-label close-label0)
+                                        (cons 'on-click-action
+                                              (lambda ()
+                                                (invoke-close-callback/internal on-close 'button))))))
+                 '())))
+          (define footer-children
+            (cond
+              [(eq? footer0 #f)
+               '()]
+              [(view? footer0)
+               (list footer0)]
+              [else
+               (list (Span footer0
+                           #:data-we-widget "dialog-footer-text"
+                           #:class "we-dialog-footer-text"))]))
+          (define panel-attrs
+            (append (list (cons 'class panel-class)
+                          (cons 'data-we-widget "dialog-panel")
+                          (cons 'tabindex -1))
+                    (if dialog-desc-id
+                        (list (cons 'aria-describedby dialog-desc-id))
+                        '())))
           (list
            (apply Div
                   (append
@@ -4254,86 +4334,86 @@
             (invoke-close-callback/internal on-close 'escape))))
       (define make-modal-children
         (lambda (state)
-        (define title0
-          (list-ref state 1))
-        (define description0
-          (list-ref state 2))
-        (define footer0
-          (list-ref state 3))
-        (define show-close?0
-          (not (eq? (list-ref state 4) #f)))
-        (define close-label0
-          (list-ref state 5))
-        (define tone0
-          (normalize-card-tone/internal (list-ref state 6)))
-        (define tone-style0
-          (normalize-card-tone-style/internal (list-ref state 7)))
-        (define panel-class
-          (string-append
-           "we-dialog-panel we-dialog-size-" (symbol->string final-size)
-           (if tone0
-               (string-append " we-dialog-tone-" (symbol->string tone0))
-               "")
-           (if tone-style0
-               (string-append " we-dialog-tone-" (symbol->string tone-style0))
-               "")))
-        (define modal-desc-id #f)
-        (define body-content
-          (if (and (eq? description0 #f)
-                   (pair? rest/args)
-                   (text-view?/internal (car rest/args)))
-              (begin
-                (set! modal-desc-id (next-dialog-body-id/internal))
-                (cons (apply-extra-attrs/internal (car rest/args)
-                                                  (list (cons 'id modal-desc-id)))
-                      (cdr rest/args)))
-              rest/args))
-        (define body-children
-          (append
-           (if (eq? description0 #f)
-               '()
-               (begin
-                 (set! modal-desc-id (next-dialog-body-id/internal))
-                 (list (P description0
-                          #:id modal-desc-id
-                          #:data-we-widget "modal-description"
-                          #:class "we-modal-description"))))
-           body-content))
-        (define header-children
-          (append
-           (if (eq? title0 #f)
-               '()
-               (list (H2 title0
-                         #:data-we-widget "modal-title"
-                         #:class "we-modal-title")))
-           (if show-close?0
-               (list
-                (Button "×"
-                        #:attrs (list (cons 'role 'button)
-                                      (cons 'data-we-widget "modal-close")
-                                      (cons 'class "we-close-button we-modal-close")
-                                      (cons 'aria-label close-label0)
-                                      (cons 'on-click-action
-                                            (lambda ()
-                                              (invoke-close-callback/internal on-close 'button))))))
-               '())))
-        (define footer-children
-          (cond
-            [(eq? footer0 #f)
-             '()]
-            [(view? footer0)
-             (list footer0)]
-            [else
-             (list (Span footer0
-                         #:data-we-widget "modal-footer-text"
-                         #:class "we-modal-footer-text"))]))
-        (define panel-attrs
-          (append (list (cons 'class panel-class)
-                        (cons 'data-we-widget "modal-panel")
-                        (cons 'tabindex -1))
-                  (if modal-desc-id
-                      (list (cons 'aria-describedby modal-desc-id))
-                      '())))
+          (define title0
+            (list-ref state 1))
+          (define description0
+            (list-ref state 2))
+          (define footer0
+            (list-ref state 3))
+          (define show-close?0
+            (not (eq? (list-ref state 4) #f)))
+          (define close-label0
+            (list-ref state 5))
+          (define tone0
+            (normalize-card-tone/internal (list-ref state 6)))
+          (define tone-style0
+            (normalize-card-tone-style/internal (list-ref state 7)))
+          (define panel-class
+            (string-append
+             "we-dialog-panel we-dialog-size-" (symbol->string final-size)
+             (if tone0
+                 (string-append " we-dialog-tone-" (symbol->string tone0))
+                 "")
+             (if tone-style0
+                 (string-append " we-dialog-tone-" (symbol->string tone-style0))
+                 "")))
+          (define modal-desc-id #f)
+          (define body-content
+            (if (and (eq? description0 #f)
+                     (pair? rest/args)
+                     (text-view?/internal (car rest/args)))
+                (begin
+                  (set! modal-desc-id (next-dialog-body-id/internal))
+                  (cons (apply-extra-attrs/internal (car rest/args)
+                                                    (list (cons 'id modal-desc-id)))
+                        (cdr rest/args)))
+                rest/args))
+          (define body-children
+            (append
+             (if (eq? description0 #f)
+                 '()
+                 (begin
+                   (set! modal-desc-id (next-dialog-body-id/internal))
+                   (list (P description0
+                            #:id modal-desc-id
+                            #:data-we-widget "modal-description"
+                            #:class "we-modal-description"))))
+             body-content))
+          (define header-children
+            (append
+             (if (eq? title0 #f)
+                 '()
+                 (list (H2 title0
+                           #:data-we-widget "modal-title"
+                           #:class "we-modal-title")))
+             (if show-close?0
+                 (list
+                  (Button "×"
+                          #:attrs (list (cons 'role 'button)
+                                        (cons 'data-we-widget "modal-close")
+                                        (cons 'class "we-close-button we-modal-close")
+                                        (cons 'aria-label close-label0)
+                                        (cons 'on-click-action
+                                              (lambda ()
+                                                (invoke-close-callback/internal on-close 'button))))))
+                 '())))
+          (define footer-children
+            (cond
+              [(eq? footer0 #f)
+               '()]
+              [(view? footer0)
+               (list footer0)]
+              [else
+               (list (Span footer0
+                           #:data-we-widget "modal-footer-text"
+                           #:class "we-modal-footer-text"))]))
+          (define panel-attrs
+            (append (list (cons 'class panel-class)
+                          (cons 'data-we-widget "modal-panel")
+                          (cons 'tabindex -1))
+                    (if modal-desc-id
+                        (list (cons 'aria-describedby modal-desc-id))
+                        '())))
           (list
            (apply Div
                   (append
@@ -5788,8 +5868,8 @@
                #:data-we-widget "tooltip-header"
                #:class "we-tooltip-header"
                #:hidden (~> @title
-                           (lambda (title0)
-                             (if (eq? title0 #f) "hidden" #f))))
+                            (lambda (title0)
+                              (if (eq? title0 #f) "hidden" #f))))
          (Span (~> @message
                    (lambda (message0)
                      (format "~a" message0)))
@@ -5801,8 +5881,8 @@
                #:data-we-widget "tooltip-footer"
                #:class "we-tooltip-footer"
                #:hidden (~> @footer
-                           (lambda (footer0)
-                             (if (eq? footer0 #f) "hidden" #f))))
+                            (lambda (footer0)
+                              (if (eq? footer0 #f) "hidden" #f))))
          #:attrs (list (cons 'role 'tooltip)
                        (cons 'id bubble-id)
                        (cons 'data-we-widget "tooltip-bubble")
@@ -6443,8 +6523,8 @@
                         #:data-we-widget "menu-item-icon"
                         #:class "we-menu-item-icon we-menu-item-icon-leading"
                         #:hidden (~> leading-icon
-                                    (lambda (v)
-                                      (if (eq? v #f) "hidden" #f))))
+                                     (lambda (v)
+                                       (if (eq? v #f) "hidden" #f))))
                   (if (eq? leading-icon #f)
                       #f
                       (Span leading-icon
@@ -6458,8 +6538,8 @@
                         #:data-we-widget "menu-item-icon"
                         #:class "we-menu-item-icon we-menu-item-icon-trailing"
                         #:hidden (~> trailing-icon
-                                    (lambda (v)
-                                      (if (eq? v #f) "hidden" #f))))
+                                     (lambda (v)
+                                       (if (eq? v #f) "hidden" #f))))
                   (if (eq? trailing-icon #f)
                       #f
                       (Span trailing-icon
@@ -6512,6 +6592,61 @@
        #:attrs (list (cons 'data-we-widget "list-view")
                      (cons 'class "we-list-view"))
        #:after-render list-view-after-render))
+
+
+    ;; rich-list-group : list? (or/c any/c observable?) (-> any/c any/c) -> view?
+    ;;   Construct a selectable list-group from entries, current id, and selection action.
+    ;;   Entry labels may be rich views, not just strings.
+    ;;   Accepts global HTML attributes for the root <div> via keyword arguments.
+    ;; TODO : Improve list-group and the remove `rich-list-group`.
+    (define/component rich-list-group
+      #:root-tag 'div
+      #:positional ([entries]
+                    [current]
+                    [action])
+      #:root-attrs attrs/final
+      (define @entries
+        (observable-or-const entries))
+      (define @current
+        (observable-or-const current))
+      (define @state
+        (obs-combine list @entries @current))
+
+      (define (make-list-group-children state)
+        (define entries0
+          (ensure-list/internal (car state) 'rich-list-group "entries"))
+        (define current0
+          (cadr state))
+        (map (lambda (entry)
+               (define item-id
+                 (list-group-id/internal entry))
+               (define item-label
+                 (list-group-label/internal entry))
+               (define current?
+                 (equal? item-id current0))
+               (define attrs0
+                 (list (cons 'role 'listitem)
+                       (cons 'data-we-widget "rich-list-group-item")
+                       (cons 'class (if current?
+                                        "we-list-group-item is-current"
+                                        "we-list-group-item"))
+                       (cons 'aria-current (if current? "true" "false"))))
+               (button item-label
+                       (lambda ()
+                         (action item-id))
+                       #:attrs attrs0))
+             entries0))
+
+      (define attrs/final
+        (list (cons 'role 'list)
+              (cons 'data-we-widget "rich-list-group")
+              (cons 'class "we-list-group")))
+
+      (observable-element-children 'div
+                                   @state
+                                   make-list-group-children
+                                   #:attrs attrs/final))
+
 
     (values view
             view?
@@ -6583,11 +6718,11 @@
             Header
             Footer
             Aside
-   Form
-   Label
-   Ul
-   Menu
-   Ol
+            Form
+            Label
+            Ul
+            Menu
+            Ol
             Li
             Dl
             Dt
@@ -6639,11 +6774,11 @@
             Script
             Link
             Meta
-   Title
-   Base
-   Style
-   Slot
-   h2
+            Title
+            Base
+            Style
+            Slot
+            h2
             h3
             h4
             h5
@@ -6701,4 +6836,5 @@
             navigation-bar
             menu-bar
             menu
-            menu-item)))
+            menu-item
+            rich-list-group)))

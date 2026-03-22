@@ -7,20 +7,20 @@
 ;; Renderer runtime that builds and updates a DOM-like node tree from view values.
 ;;
 ;; Exports:
-;;   renderer?               Predicate for renderer values.
-;;   render                  Render a view into runtime nodes.
-;;   renderer-root           Return renderer root node.
-;;   renderer-destroy        Destroy renderer and run cleanups.
-;;   current-web-easy-warning-handler  Current warning sink procedure.
+;;   renderer?                              Predicate for renderer values.
+;;   render                                 Render a view into runtime nodes.
+;;   renderer-root                          Return renderer root node.
+;;   renderer-destroy                       Destroy renderer and run cleanups.
+;;   current-web-easy-warning-handler       Current warning sink procedure.
 ;;   set-current-web-easy-warning-handler!  Replace warning sink procedure.
-;;   call-with-web-easy-warning-handler  Run thunk with temporary warning sink.
-;;   dom-node-click!         Invoke node click callback when present.
-;;   dom-node-change!        Invoke node change callback when present.
-;;   dom-node-toggle!        Toggle checkbox state and invoke change callback.
-;;   dom-node-select!        Set selected value and invoke change callback.
-;;   dom-node-slide!         Set slider value and invoke change callback.
-;;   dom-node-radio-select!  Set radio selection and invoke change callback.
-;;   dom-node-keydown!       Invoke node keydown callback when present.
+;;   call-with-web-easy-warning-handler     Run thunk with temporary warning sink.
+;;   dom-node-click!                        Invoke node click callback when present.
+;;   dom-node-change!                       Invoke node change callback when present.
+;;   dom-node-toggle!                       Toggle checkbox state and invoke change callback.
+;;   dom-node-select!                       Set selected value and invoke change callback.
+;;   dom-node-slide!                        Set slider value and invoke change callback.
+;;   dom-node-radio-select!                 Set radio selection and invoke change callback.
+;;   dom-node-keydown!                      Invoke node keydown callback when present.
 ;;
 ;; Backend contract used by this renderer:
 ;;   dom-node
@@ -179,7 +179,7 @@
       ":root{--we-focus:#0a66c2;--we-focus-tint:rgba(10,102,194,.20);--we-fg:#111;--we-bg:#fff;--we-bg-subtle:#f3f3f3;--we-bg-selected:#ececec;--we-bg-disabled:#f3f3f3;--we-bg-hover:#e8e8e8;--we-border:#888;--we-border-menu:#aaa;--we-border-muted:#999;--we-border-soft:#bbb;--we-border-hover:#c0c0c0;--we-border-strong:#333;--we-fg-muted:#777;--we-overlay:rgba(0,0,0,0.45);--we-shadow:rgba(0,0,0,.28);--we-progress-success:#3a9147;--we-progress-warning:#b57c1c;--we-progress-danger:#b24545;--we-heading-fg:var(--we-fg,#111);--we-display-heading-fg:var(--we-heading-fg,var(--we-fg,#111));--we-heading-subtitle-fg:var(--we-fg-muted,#777);--we-lead-fg:var(--we-fg-muted,#777);--we-heading-space-compact:0;--we-heading-space-normal:0 0 var(--we-space-xs,2px) 0;--we-heading-space-loose:0 0 var(--we-space-sm,4px) 0;--we-menu-item-hover-bg:var(--we-bg-hover,#e8e8e8);--we-menu-item-hover-fg:var(--we-fg,#111);--we-tab-active-border:var(--we-bg-selected,#ececec);--we-input-placeholder:var(--we-fg-muted,#777);--we-space-xs:2px;--we-space-sm:4px;--we-space-md:8px;--we-space-lg:10px;--we-gap:0.5rem;--we-form-gap:var(--we-gap,0.5rem);--we-gap-tab:0.375rem;}\
        .we-vpanel,.we-group,.we-if-view,.we-cond-view,.we-case-view,.we-observable-view,.we-list-view{display:flex;flex-direction:column;gap:var(--we-gap,0.5rem);}\
        .we-stack{display:flex;flex-direction:column;gap:var(--we-stack-gap,var(--we-gap,0.5rem));}\
-       .we-container{width:min(1200px,calc(100vw - 28px));max-width:1200px;margin:0 auto;}\
+       .we-container{width:min(1200px,calc(100% - 28px));max-width:1200px;margin:0 auto;}\
        .we-grid{display:grid;grid-template-columns:var(--we-grid-columns,repeat(auto-fit,minmax(320px,1fr)));gap:var(--we-grid-gap,12px);align-items:stretch;}\
        .we-inline{display:flex;flex-direction:row;align-items:center;gap:var(--we-gap,0.5rem);flex-wrap:wrap;}\
        .we-spacer{display:block;flex:1 1 auto;min-width:0;min-height:0;}\

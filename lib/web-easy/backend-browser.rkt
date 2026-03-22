@@ -560,7 +560,7 @@
         [(slider)
          (define raw
            (js-value->string
-           (js-ref/extern native "value")))
+            (js-ref/extern native "value")))
          (define parsed (string->number raw))
          (if parsed parsed 0)]
         [(input)
