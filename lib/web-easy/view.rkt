@@ -3214,11 +3214,13 @@
             (lambda (variant0)
               (string-append "we-progress "
                              (progress-level-class/internal variant0)))))
+      (define @max (observable-or-const final-max))
+      (define @min (observable-or-const final-min))      
       (define attrs/final
         (list (cons 'data-we-widget "progress")
               (cons 'class @class)
-              (cons 'min final-min)
-              (cons 'max final-max)
+              (cons 'min @min)
+              (cons 'max @max)
               (cons 'value value)))
       (Progress #:attrs attrs/final))
 
@@ -3391,12 +3393,12 @@
                                         "we-list-group-item"))
                        (cons 'aria-current (if current? "true" "false"))))
                (define attrs/final0
-                 (if current?
-                     attrs0
-                     (append attrs0
-                             (list (cons 'on-click-action
-                                         (lambda ()
-                                           (action item-id)))))))
+                 ; Also enable `on-click-action` on the selected element.
+                 ; This allows users to make selections toggable.
+                 (append attrs0
+                         (list (cons 'on-click-action
+                                     (lambda ()
+                                       (action item-id))))))
                (Button item-label
                        #:attrs attrs/final0))
              entries0))
