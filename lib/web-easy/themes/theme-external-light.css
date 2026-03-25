@@ -19,55 +19,55 @@
 /* If you only change this section, the whole theme updates consistently.      */
 html.we-theme-light {
   /* Focus ring color for keyboard focus (Tab navigation). */
-  --we-focus: #0a66c2;
+  --we-focus:         #0a66c2;
   /* Focus tint fill used inside focused controls. */
-  --we-focus-tint: rgba(10, 102, 194, 0.20);
+  --we-focus-tint:    rgba(10, 102, 194, 0.20);
   /* Main text color. */
-  --we-fg: #1a1f2b;
+  --we-fg:            #1a1f2b;
   /* Main page background. */
-  --we-bg: #ffffff;
+  --we-bg:            #ffffff;
   /* Subtle background blocks (groups/panels). */
-  --we-bg-subtle: #f3f3f3;
+  --we-bg-subtle:     #f3f3f3;
   /* Selected tab/menu states. */
-  --we-bg-selected: #e7f0ff;
+  --we-bg-selected:   #e7f0ff;
   /* Disabled controls. */
-  --we-bg-disabled: #f3f3f3;
+  --we-bg-disabled:   #f3f3f3;
   /* Hover background for interactive controls. */
-  --we-bg-hover: #e8e8e8;
+  --we-bg-hover:      #e8e8e8;
   /* General border color. */
-  --we-border: #888888;
+  --we-border:        #888888;
   /* Menu container border color. */
-  --we-border-menu: #aaaaaa;
+  --we-border-menu:   #aaaaaa;
   /* Less prominent borders. */
-  --we-border-muted: #999999;
+  --we-border-muted:  #999999;
   /* Very soft borders/separators. */
-  --we-border-soft: #bbbbbb;
+  --we-border-soft:   #bbbbbb;
   /* Border when hovering controls. */
-  --we-border-hover: #c0c0c0;
+  --we-border-hover:  #c0c0c0;
   /* Strong/highlighted border. */
   --we-border-strong: #2f4f7f;
   /* Muted/secondary text. */
-  --we-fg-muted: #777777;
+  --we-fg-muted:      #777777;
   /* Backdrop color for overlays/dialogs. */
   --we-overlay: rgba(0, 0, 0, 0.45);
   /* Drop shadow color. */
-  --we-shadow: rgba(0, 0, 0, 0.28);
+  --we-shadow:  rgba(0, 0, 0, 0.28);
   /* Menu item hover colors (separate from general hover for fine tuning). */
   --we-menu-item-hover-bg: #e8e8e8;
   --we-menu-item-hover-fg: #1a1f2b;
   /* Active tab bottom border color. */
-  --we-tab-active-border: #e7f0ff;
+  --we-tab-active-border:  #e7f0ff;
   /* Input/textarea placeholder text color. */
-  --we-input-placeholder: #6f7f99;
+  --we-input-placeholder:  #6f7f99;
   /* Semantic tones used by badges/tables/cards/progress variants. */
-  --we-primary: #2f7ea0;
+  --we-primary:   #2f7ea0;
   --we-secondary: #7a8da6;
-  --we-success: #3d8b5a;
-  --we-info: #2c7dc8;
-  --we-warning: #c1862f;
-  --we-danger: #b65757;
-  --we-light: #f7f9fc;
-  --we-dark: #2a3342;
+  --we-success:   #3d8b5a;
+  --we-info:      #2c7dc8;
+  --we-warning:   #c1862f;
+  --we-danger:    #b65757;
+  --we-light:     #f7f9fc;
+  --we-dark:      #2a3342;
   /* Spacing scale (used by multiple widgets). */
   --we-space-xs: 2px;
   --we-space-sm: 4px;
@@ -107,7 +107,7 @@ html.we-theme-light .we-menu-bar {
   padding: 2px 4px;
   border: 1px solid #aaaaaa;
   border-radius: 4px;
-  background: #f3f3f3;
+  background: var(--we-bg-subtle);
   box-sizing: border-box;
 }
 
@@ -1382,6 +1382,7 @@ html.we-theme-light .we-modal {
   background: var(--we-overlay);
 }
 
+
 html.we-theme-light .we-dialog-panel,
 html.we-theme-light .we-modal-panel {
   border: 1px solid #9aa9c3;
@@ -1559,6 +1560,8 @@ html.we-theme-light .we-modal-close:focus-visible {
   outline-offset: 0;
   opacity: 1;
 }
+}
+
 
 html.we-theme-light .we-offcanvas-panel > .we-close-button {
   align-self: flex-end;
