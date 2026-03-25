@@ -146,14 +146,43 @@
 (check-node-attrs h2-node '((align "left")))
 (check-node-attrs h3-node '((align "center")))
 (check-node-attrs h4-node '((align "right")))
+(define r-hx-children
+  (render
+   (window
+    (vpanel
+     (H1 #:align "center"
+         (Span "Hero")
+         (Em " title"))
+     (H3 #:align "left"
+         (Strong "Section")
+         (Span " title"))))))
+(define hx-children-panel (node-child (renderer-root r-hx-children) 0))
+(define h1-children-node (node-child hx-children-panel 0))
+(define h3-children-node (node-child hx-children-panel 1))
+(check-equal (dom-node-tag h1-children-node) 'h1 "H1 supports child views")
+(check-node-attrs h1-children-node '((align "center")))
+(check-equal (length (dom-node-children h1-children-node)) 2
+             "H1 preserves multiple child views")
+(check-equal (dom-node-tag h3-children-node) 'h3 "H3 supports child views")
+(check-node-attrs h3-children-node '((align "left")))
+(check-equal (length (dom-node-children h3-children-node)) 2
+             "H3 preserves multiple child views")
 
 ;; H1 rejects unknown attributes early
 (check-call-rejected (H1 "Bad attr"
                          #:foo "bar")
                      "H1 rejects unknown keyword attribute")
+(check-call-rejected (H1)
+                     "H1 rejects missing content")
+(check-call-rejected (H1 "Hero" (Span " extra"))
+                     "H1 rejects mixed text and child views")
 (check-call-rejected (H4 "Bad attr"
                          #:foo "bar")
                      "H4 rejects unknown keyword attribute")
+(check-call-rejected (H4)
+                     "H4 rejects missing content")
+(check-call-rejected (H4 "Section" (Span " extra"))
+                     "H4 rejects mixed text and child views")
 
 ;; H1 keeps class merge/dedupe behavior through root decorators
 (define r-h1-class-merge
@@ -360,9 +389,42 @@
 (check-node-attrs span-node
                   '((title "tip")
                     (lang "en")))
+(define r-p-span-children
+  (render
+   (window
+    (vpanel
+     (P #:align "center"
+        (Strong "Paragraph")
+        (Span " body"))
+     (Span #:lang "da"
+           (Em "Inline")
+           (Strong " note"))))))
+(define p-span-children-panel (node-child (renderer-root r-p-span-children) 0))
+(define p-children-node (node-child p-span-children-panel 0))
+(define span-children-node (node-child p-span-children-panel 1))
+(check-equal (dom-node-tag p-children-node) 'p "P supports child views")
+(check-node-attrs p-children-node '((align "center")))
+(check-equal (length (dom-node-children p-children-node)) 2
+             "P preserves multiple child views")
+(check-equal (dom-node-tag (car (dom-node-children p-children-node))) 'strong
+             "P child views keep order")
+(check-equal (dom-node-tag span-children-node) 'span "Span supports child views")
+(check-node-attrs span-children-node '((lang "da")))
+(check-equal (length (dom-node-children span-children-node)) 2
+             "Span preserves multiple child views")
+(check-equal (dom-node-tag (car (dom-node-children span-children-node))) 'em
+             "Span child views keep order")
+(check-call-rejected (P)
+                     "P rejects missing content")
+(check-call-rejected (P "Paragraph" (Span " extra"))
+                     "P rejects mixed text and child views")
 (check-call-rejected (P "Bad P attr"
                         #:foo "x")
                      "P rejects unknown keyword attribute")
+(check-call-rejected (Span)
+                     "Span rejects missing content")
+(check-call-rejected (Span "Inline" (Strong " extra"))
+                     "Span rejects mixed text and child views")
 (check-call-rejected (Span "Bad Span attr"
                            #:foo "x")
                      "Span rejects unknown keyword attribute")
@@ -395,7 +457,55 @@
 (check-equal (dom-node-tag br-node) 'br "Br primitive tag is br")
 (check-equal (dom-node-tag hr-node) 'hr "Hr primitive tag is hr")
 (check-equal (dom-node-text strong-node) "Strong text" "Strong renders text")
+(check-equal (dom-node-text em-node) "Em text" "Em renders text")
+(check-equal (dom-node-text code-node) "x := 1" "Code renders text")
 (check-equal (dom-node-text pre-node) "line 1\nline 2" "Pre preserves text payload")
+(check-equal (dom-node-text small-node) "small print" "Small renders text")
+(define r-inline-children-primitives
+  (render
+   (window
+    (vpanel
+     (Strong #:title "importance"
+             (Span "Very")
+             (Em " important"))
+     (Em #:lang "da"
+         (Span "Quite")
+         (Strong " emphasized"))
+     (Code #:data-testid "code-2"
+           (Span "x")
+           (Strong " := 2"))
+     (Pre #:width 40
+          (Span "line 1")
+          (Span "\nline 2"))
+     (Small #:id "small-2"
+            (Span "tiny")
+            (Em " note"))))))
+(define inline-children-panel (node-child (renderer-root r-inline-children-primitives) 0))
+(define strong-children-node (node-child inline-children-panel 0))
+(define em-children-node (node-child inline-children-panel 1))
+(define code-children-node (node-child inline-children-panel 2))
+(define pre-children-node (node-child inline-children-panel 3))
+(define small-children-node (node-child inline-children-panel 4))
+(check-equal (dom-node-tag strong-children-node) 'strong "Strong supports child views")
+(check-node-attrs strong-children-node '((title "importance")))
+(check-equal (length (dom-node-children strong-children-node)) 2
+             "Strong preserves multiple child views")
+(check-equal (dom-node-tag em-children-node) 'em "Em supports child views")
+(check-node-attrs em-children-node '((lang "da")))
+(check-equal (length (dom-node-children em-children-node)) 2
+             "Em preserves multiple child views")
+(check-equal (dom-node-tag code-children-node) 'code "Code supports child views")
+(check-node-attrs code-children-node '((data-testid "code-2")))
+(check-equal (length (dom-node-children code-children-node)) 2
+             "Code preserves multiple child views")
+(check-equal (dom-node-tag pre-children-node) 'pre "Pre supports child views")
+(check-node-attrs pre-children-node '((width 40)))
+(check-equal (length (dom-node-children pre-children-node)) 2
+             "Pre preserves multiple child views")
+(check-equal (dom-node-tag small-children-node) 'small "Small supports child views")
+(check-node-attrs small-children-node '((id "small-2")))
+(check-equal (length (dom-node-children small-children-node)) 2
+             "Small preserves multiple child views")
 (check-node-attrs pre-node '((width 80)))
 (check-node-attrs br-node '((clear "left")))
 (check-node-attrs hr-node
@@ -403,14 +513,34 @@
                     (size 2)))
 (check-call-rejected (Strong "Bad Strong attr" #:foo "x")
                      "Strong rejects unknown attrs")
+(check-call-rejected (Strong)
+                     "Strong rejects missing content")
+(check-call-rejected (Strong "Strong text" (Span " extra"))
+                     "Strong rejects mixed text and child views")
 (check-call-rejected (Em "Bad Em attr" #:foo "x")
                      "Em rejects unknown attrs")
+(check-call-rejected (Em)
+                     "Em rejects missing content")
+(check-call-rejected (Em "Em text" (Span " extra"))
+                     "Em rejects mixed text and child views")
 (check-call-rejected (Code "Bad Code attr" #:foo "x")
                      "Code rejects unknown attrs")
+(check-call-rejected (Code)
+                     "Code rejects missing content")
+(check-call-rejected (Code "x := 1" (Span " extra"))
+                     "Code rejects mixed text and child views")
 (check-call-rejected (Pre "Bad Pre attr" #:foo "x")
                      "Pre rejects unknown attrs")
+(check-call-rejected (Pre)
+                     "Pre rejects missing content")
+(check-call-rejected (Pre "line 1" (Span " extra"))
+                     "Pre rejects mixed text and child views")
 (check-call-rejected (Small "Bad Small attr" #:foo "x")
                      "Small rejects unknown attrs")
+(check-call-rejected (Small)
+                     "Small rejects missing content")
+(check-call-rejected (Small "small print" (Span " extra"))
+                     "Small rejects mixed text and child views")
 (check-call-rejected (Br "bad")
                      "Br rejects positional content")
 (check-call-rejected (Hr "bad")
@@ -452,11 +582,163 @@
 (check-equal (dom-node-tag kbd-node) 'kbd "Kbd primitive tag is kbd")
 (check-equal (dom-node-tag samp-node) 'samp "Samp primitive tag is samp")
 (check-equal (dom-node-tag var-node) 'var "Var primitive tag is var")
+(define r-bi-u-children
+  (render
+   (window
+    (vpanel
+     (B #:title "b2"
+        (Span "Bold")
+        (Em " tone"))
+     (I #:lang "da"
+        (Span "Italic")
+        (Strong " note"))
+     (U #:data-testid "u-2"
+        (Span "Under")
+        (Code "line"))))))
+(define bi-u-children-panel (node-child (renderer-root r-bi-u-children) 0))
+(define b-children-node (node-child bi-u-children-panel 0))
+(define i-children-node (node-child bi-u-children-panel 1))
+(define u-children-node (node-child bi-u-children-panel 2))
+(check-equal (dom-node-tag b-children-node) 'b "B supports child views")
+(check-node-attrs b-children-node '((title "b2")))
+(check-equal (length (dom-node-children b-children-node)) 2
+             "B preserves multiple child views")
+(check-equal (dom-node-tag i-children-node) 'i "I supports child views")
+(check-node-attrs i-children-node '((lang "da")))
+(check-equal (length (dom-node-children i-children-node)) 2
+             "I preserves multiple child views")
+(check-equal (dom-node-tag u-children-node) 'u "U supports child views")
+(check-node-attrs u-children-node '((data-testid "u-2")))
+(check-equal (length (dom-node-children u-children-node)) 2
+             "U preserves multiple child views")
+(define r-s-mark-children
+  (render
+   (window
+    (vpanel
+     (S #:id "s-2"
+        (Span "Old")
+        (Em " text"))
+     (Mark #:aria-label "mark-2"
+           (Span "High")
+           (Strong " light"))))))
+(define s-mark-children-panel (node-child (renderer-root r-s-mark-children) 0))
+(define s-children-node (node-child s-mark-children-panel 0))
+(define mark-children-node (node-child s-mark-children-panel 1))
+(check-equal (dom-node-tag s-children-node) 's "S supports child views")
+(check-node-attrs s-children-node '((id "s-2")))
+(check-equal (length (dom-node-children s-children-node)) 2
+             "S preserves multiple child views")
+(check-equal (dom-node-tag mark-children-node) 'mark "Mark supports child views")
+(check-node-attrs mark-children-node '((aria-label "mark-2")))
+(check-equal (length (dom-node-children mark-children-node)) 2
+             "Mark preserves multiple child views")
+(define r-subsup-kbd-samp-var-children
+  (render
+   (window
+    (vpanel
+     (Sub #:class "sub2"
+          (Span "x")
+          (Strong "2"))
+     (Sup #:class "sup2"
+          (Span "x")
+          (Strong "3"))
+     (Kbd #:title "kbd2"
+          (Span "Ctrl")
+          (Code "+C"))
+     (Samp #:title "samp2"
+           (Span "std")
+           (Strong "out"))
+     (Var #:title "var2"
+          (Span "n")
+          (Em "0"))))))
+(define subsup-kbd-samp-var-panel
+  (node-child (renderer-root r-subsup-kbd-samp-var-children) 0))
+(define sub-children-node (node-child subsup-kbd-samp-var-panel 0))
+(define sup-children-node (node-child subsup-kbd-samp-var-panel 1))
+(define kbd-children-node (node-child subsup-kbd-samp-var-panel 2))
+(define samp-children-node (node-child subsup-kbd-samp-var-panel 3))
+(define var-children-node (node-child subsup-kbd-samp-var-panel 4))
+(check-equal (dom-node-tag sub-children-node) 'sub "Sub supports child views")
+(check-node-attrs sub-children-node '((class "sub2")))
+(check-equal (length (dom-node-children sub-children-node)) 2
+             "Sub preserves multiple child views")
+(check-equal (dom-node-tag sup-children-node) 'sup "Sup supports child views")
+(check-node-attrs sup-children-node '((class "sup2")))
+(check-equal (length (dom-node-children sup-children-node)) 2
+             "Sup preserves multiple child views")
+(check-equal (dom-node-tag kbd-children-node) 'kbd "Kbd supports child views")
+(check-node-attrs kbd-children-node '((title "kbd2")))
+(check-equal (length (dom-node-children kbd-children-node)) 2
+             "Kbd preserves multiple child views")
+(check-equal (dom-node-tag samp-children-node) 'samp "Samp supports child views")
+(check-node-attrs samp-children-node '((title "samp2")))
+(check-equal (length (dom-node-children samp-children-node)) 2
+             "Samp preserves multiple child views")
+(check-equal (dom-node-tag var-children-node) 'var "Var supports child views")
+(check-node-attrs var-children-node '((title "var2")))
+(check-equal (length (dom-node-children var-children-node)) 2
+             "Var preserves multiple child views")
 (check-node-attrs mark-node '((aria-label "mark")))
 (check-call-rejected (B "Bad B attr" #:foo "x")
                      "B rejects unknown attrs")
+(check-call-rejected (B)
+                     "B rejects missing content")
+(check-call-rejected (B "Bold" (Span " extra"))
+                     "B rejects mixed text and child views")
+(check-call-rejected (I "Bad I attr" #:foo "x")
+                     "I rejects unknown attrs")
+(check-call-rejected (I)
+                     "I rejects missing content")
+(check-call-rejected (I "Italic" (Span " extra"))
+                     "I rejects mixed text and child views")
+(check-call-rejected (U "Bad U attr" #:foo "x")
+                     "U rejects unknown attrs")
+(check-call-rejected (U)
+                     "U rejects missing content")
+(check-call-rejected (U "Underline" (Span " extra"))
+                     "U rejects mixed text and child views")
+(check-call-rejected (S "Bad S attr" #:foo "x")
+                     "S rejects unknown attrs")
+(check-call-rejected (S)
+                     "S rejects missing content")
+(check-call-rejected (S "Strikethrough" (Span " extra"))
+                     "S rejects mixed text and child views")
+(check-call-rejected (Mark "Bad Mark attr" #:foo "x")
+                     "Mark rejects unknown attrs")
+(check-call-rejected (Mark)
+                     "Mark rejects missing content")
+(check-call-rejected (Mark "Highlight" (Span " extra"))
+                     "Mark rejects mixed text and child views")
+(check-call-rejected (Sub "Bad Sub attr" #:foo "x")
+                     "Sub rejects unknown attrs")
+(check-call-rejected (Sub)
+                     "Sub rejects missing content")
+(check-call-rejected (Sub "x2" (Span " extra"))
+                     "Sub rejects mixed text and child views")
+(check-call-rejected (Sup "Bad Sup attr" #:foo "x")
+                     "Sup rejects unknown attrs")
+(check-call-rejected (Sup)
+                     "Sup rejects missing content")
+(check-call-rejected (Sup "x3" (Span " extra"))
+                     "Sup rejects mixed text and child views")
+(check-call-rejected (Kbd "Bad Kbd attr" #:foo "x")
+                     "Kbd rejects unknown attrs")
+(check-call-rejected (Kbd)
+                     "Kbd rejects missing content")
+(check-call-rejected (Kbd "Ctrl+C" (Span " extra"))
+                     "Kbd rejects mixed text and child views")
+(check-call-rejected (Samp "Bad Samp attr" #:foo "x")
+                     "Samp rejects unknown attrs")
+(check-call-rejected (Samp)
+                     "Samp rejects missing content")
+(check-call-rejected (Samp "stdout" (Span " extra"))
+                     "Samp rejects mixed text and child views")
 (check-call-rejected (Var "Bad Var attr" #:foo "x")
                      "Var rejects unknown attrs")
+(check-call-rejected (Var)
+                     "Var rejects missing content")
+(check-call-rejected (Var "n" (Span " extra"))
+                     "Var rejects mixed text and child views")
 
 ;; Additional inline semantic primitives: Q/Cite/Dfn/Abbr/Time/Data
 (define r-inline-semantic-primitives
@@ -483,15 +765,99 @@
 (check-equal (dom-node-tag abbr-node) 'abbr "Abbr primitive tag is abbr")
 (check-equal (dom-node-tag time-node) 'time "Time primitive tag is time")
 (check-equal (dom-node-tag data-node) 'data "Data primitive tag is data")
+(define r-inline-semantic-children
+  (render
+   (window
+    (vpanel
+     (Q #:cite "https://example.test/quote-2"
+        (Span "Quoted")
+        (Em " text"))
+     (Cite #:lang "da"
+           (Span "RFC")
+           (Strong " 3986"))
+     (Dfn #:title "Defined term 2"
+          (Span "Proto")
+          (Em " col"))
+     (Abbr #:title "World Wide Web"
+           (Span "W")
+           (Strong "WW"))
+     (Time #:datetime "11:00"
+           (Span "11")
+           (Code ":00"))
+     (Data #:value "43"
+           (Span "4")
+           (Strong "3"))))))
+(define inline-semantic-children-panel
+  (node-child (renderer-root r-inline-semantic-children) 0))
+(define q-children-node    (node-child inline-semantic-children-panel 0))
+(define cite-children-node (node-child inline-semantic-children-panel 1))
+(define dfn-children-node  (node-child inline-semantic-children-panel 2))
+(define abbr-children-node (node-child inline-semantic-children-panel 3))
+(define time-children-node (node-child inline-semantic-children-panel 4))
+(define data-children-node (node-child inline-semantic-children-panel 5))
+(check-equal (dom-node-tag q-children-node) 'q "Q supports child views")
+(check-node-attrs q-children-node '((cite "https://example.test/quote-2")))
+(check-equal (length (dom-node-children q-children-node)) 2
+             "Q preserves multiple child views")
+(check-equal (dom-node-tag cite-children-node) 'cite "Cite supports child views")
+(check-node-attrs cite-children-node '((lang "da")))
+(check-equal (length (dom-node-children cite-children-node)) 2
+             "Cite preserves multiple child views")
+(check-equal (dom-node-tag dfn-children-node) 'dfn "Dfn supports child views")
+(check-node-attrs dfn-children-node '((title "Defined term 2")))
+(check-equal (length (dom-node-children dfn-children-node)) 2
+             "Dfn preserves multiple child views")
+(check-equal (dom-node-tag abbr-children-node) 'abbr "Abbr supports child views")
+(check-node-attrs abbr-children-node '((title "World Wide Web")))
+(check-equal (length (dom-node-children abbr-children-node)) 2
+             "Abbr preserves multiple child views")
+(check-equal (dom-node-tag time-children-node) 'time "Time supports child views")
+(check-node-attrs time-children-node '((datetime "11:00")))
+(check-equal (length (dom-node-children time-children-node)) 2
+             "Time preserves multiple child views")
+(check-equal (dom-node-tag data-children-node) 'data "Data supports child views")
+(check-node-attrs data-children-node '((value "43")))
+(check-equal (length (dom-node-children data-children-node)) 2
+             "Data preserves multiple child views")
 (check-node-attrs q-node '((cite "https://example.test/quote")))
 (check-node-attrs time-node '((datetime "10:00")))
 (check-node-attrs data-node '((value "42")))
 (check-call-rejected (Q "Bad Q attr" #:foo "x")
                      "Q rejects unknown attrs")
+(check-call-rejected (Q)
+                     "Q rejects missing content")
+(check-call-rejected (Q "Quoted" (Span " extra"))
+                     "Q rejects mixed text and child views")
+(check-call-rejected (Cite "Bad Cite attr" #:foo "x")
+                     "Cite rejects unknown attrs")
+(check-call-rejected (Cite)
+                     "Cite rejects missing content")
+(check-call-rejected (Cite "RFC 3986" (Span " extra"))
+                     "Cite rejects mixed text and child views")
+(check-call-rejected (Dfn "Bad Dfn attr" #:foo "x")
+                     "Dfn rejects unknown attrs")
+(check-call-rejected (Dfn)
+                     "Dfn rejects missing content")
+(check-call-rejected (Dfn "Protocol" (Span " extra"))
+                     "Dfn rejects mixed text and child views")
+(check-call-rejected (Abbr "Bad Abbr attr" #:foo "x")
+                     "Abbr rejects unknown attrs")
+(check-call-rejected (Abbr)
+                     "Abbr rejects missing content")
+(check-call-rejected (Abbr "HTML" (Span " extra"))
+                     "Abbr rejects mixed text and child views")
 (check-call-rejected (Time "Bad Time attr" #:foo "x")
                      "Time rejects unknown attrs")
+(check-call-rejected (Time)
+                     "Time rejects missing content")
+(check-call-rejected (Time "10:00" (Span " extra"))
+                     "Time rejects mixed text and child views")
 (check-call-rejected (Data "Bad Data attr" #:foo "x")
                      "Data rejects unknown attrs")
+(check-call-rejected (Data)
+                     "Data rejects missing content")
+(check-call-rejected (Data "42" (Span " extra"))
+                     "Data rejects mixed text and child views")
 
 ;; Additional edit + break primitives: Del/Ins/Wbr
 (define r-edit-break-primitives
@@ -508,6 +874,31 @@
 (check-equal (dom-node-tag del-node) 'del "Del primitive tag is del")
 (check-equal (dom-node-tag ins-node) 'ins "Ins primitive tag is ins")
 (check-equal (dom-node-tag wbr-node) 'wbr "Wbr primitive tag is wbr")
+(define r-edit-children-primitives
+  (render
+   (window
+    (vpanel
+     (Del #:cite "https://example.test/rev-c" #:datetime "2026-03-21"
+          (Span "old")
+          (Em " text"))
+     (Ins #:cite "https://example.test/rev-d" #:datetime "2026-03-22"
+          (Span "new")
+          (Strong " text"))))))
+(define edit-children-panel (node-child (renderer-root r-edit-children-primitives) 0))
+(define del-children-node (node-child edit-children-panel 0))
+(define ins-children-node (node-child edit-children-panel 1))
+(check-equal (dom-node-tag del-children-node) 'del "Del supports child views")
+(check-node-attrs del-children-node
+                  '((cite "https://example.test/rev-c")
+                    (datetime "2026-03-21")))
+(check-equal (length (dom-node-children del-children-node)) 2
+             "Del preserves multiple child views")
+(check-equal (dom-node-tag ins-children-node) 'ins "Ins supports child views")
+(check-node-attrs ins-children-node
+                  '((cite "https://example.test/rev-d")
+                    (datetime "2026-03-22")))
+(check-equal (length (dom-node-children ins-children-node)) 2
+             "Ins preserves multiple child views")
 (check-node-attrs del-node
                   '((cite "https://example.test/rev-a")
                     (datetime "2026-03-19")))
@@ -516,8 +907,16 @@
                     (datetime "2026-03-20")))
 (check-call-rejected (Del "Bad Del attr" #:foo "x")
                      "Del rejects unknown attrs")
+(check-call-rejected (Del)
+                     "Del rejects missing content")
+(check-call-rejected (Del "old" (Span " extra"))
+                     "Del rejects mixed text and child views")
 (check-call-rejected (Ins "Bad Ins attr" #:foo "x")
                      "Ins rejects unknown attrs")
+(check-call-rejected (Ins)
+                     "Ins rejects missing content")
+(check-call-rejected (Ins "new" (Span " extra"))
+                     "Ins rejects mixed text and child views")
 (check-call-rejected (Wbr #:foo "x")
                      "Wbr rejects unknown attrs")
 (check-call-rejected (Wbr "bad")
@@ -633,6 +1032,28 @@
 (check-node-attrs button-node
                   '((type "button")
                     (disabled #f)))
+(define r-a-children
+  (render
+   (window
+    (A
+     #:href "/docs"
+     (Span "Open")
+     (Strong " docs")))))
+(define a-children-node
+  (node-child (renderer-root r-a-children) 0))
+(check-equal (dom-node-tag a-children-node) 'a "A supports child views")
+(check-node-attrs a-children-node
+                  '((href "/docs")))
+(check-equal (length (dom-node-children a-children-node)) 2
+             "A preserves multiple child views")
+(check-equal (dom-node-tag (car (dom-node-children a-children-node))) 'span
+             "A child views keep order")
+(check-equal (dom-node-tag (cadr (dom-node-children a-children-node))) 'strong
+             "A child views keep all descendants")
+(check-call-rejected (A)
+                     "A rejects missing content")
+(check-call-rejected (A "Open" (Span " docs"))
+                     "A rejects mixed text and child views")
 (check-call-rejected (A "Bad A attr"
                         #:foo "x")
                      "A rejects unknown keyword attribute")
@@ -674,6 +1095,36 @@
 (check-node-attrs button-reactive-node
                   '((disabled #t)
                     (aria-label "Secondary action")))
+
+;; Button preserves text-content compatibility and also supports child views.
+(define @button-text (@ "Start"))
+(define r-button-content-modes
+  (render
+   (window
+    (vpanel
+     (Button @button-text
+             #:type "button")
+     (Button (Strong "Save")
+             (Span " now")
+             #:name "rich-save")))))
+(define button-content-panel (node-child (renderer-root r-button-content-modes) 0))
+(define button-observable-node (node-child button-content-panel 0))
+(define button-children-node   (node-child button-content-panel 1))
+(check-equal (dom-node-tag button-observable-node) 'button "Button observable-content primitive tag is button")
+(check-equal (dom-node-text button-observable-node) "Start" "Button supports observable text content")
+(:= @button-text "Finish")
+(check-equal (dom-node-text button-observable-node) "Finish" "Button observable text content updates")
+(check-equal (dom-node-tag button-children-node) 'button "Button child-view primitive tag is button")
+(check-equal (length (dom-node-children button-children-node)) 2 "Button child-view form keeps both children")
+(check-equal (dom-node-tag (node-child button-children-node 0)) 'strong "Button child-view form keeps nested strong tag")
+(check-equal (dom-node-tag (node-child button-children-node 1)) 'span "Button child-view form keeps nested span tag")
+(check-node-attrs button-children-node
+                  '((name "rich-save")))
+(check-call-rejected (Button)
+                     "Button requires at least one positional content argument")
+(check-call-rejected (Button "Save"
+                             (Span " now"))
+                     "Button rejects mixed text content and child views")
 
 ;; A/Button wildcard boundary checks require proper data-/aria- prefix
 (check-call-rejected (A "Bad A wildcard"
@@ -803,6 +1254,28 @@
 (:= @label-text "Full name")
 (check-node-attrs form-node '((action "/save")))
 (check-equal (dom-node-text form-label-node) "Full name" "Label updates reactive text")
+(define r-label-children
+  (render
+   (window
+    (Label
+     #:for "name-input"
+     (Span "First")
+     (Strong " name")))))
+(define label-children-node
+  (node-child (renderer-root r-label-children) 0))
+(check-equal (dom-node-tag label-children-node) 'label "Label supports child views")
+(check-node-attrs label-children-node
+                  '((for "name-input")))
+(check-equal (length (dom-node-children label-children-node)) 2
+             "Label preserves multiple child views")
+(check-equal (dom-node-tag (car (dom-node-children label-children-node))) 'span
+             "Label child views keep order")
+(check-equal (dom-node-tag (cadr (dom-node-children label-children-node))) 'strong
+             "Label child views keep all descendants")
+(check-call-rejected (Label)
+                     "Label rejects missing content")
+(check-call-rejected (Label "Name" (Span " extra"))
+                     "Label rejects mixed text and child views")
 (check-call-rejected (Form #:foo "x" (P "bad"))
                      "Form rejects unknown attrs")
 (check-call-rejected (Label "x" #:foo "x")
@@ -1101,6 +1574,15 @@
 (check-node-attrs html-option1-node '((value "free")))
 (check-equal (dom-node-tag html-option2-node) 'option "Option second primitive tag is option")
 (check-node-attrs html-option2-node '((selected #t)))
+(define r-option-text
+  (render
+   (window
+    (Option #:value "basic" "Basic"))))
+(define option-text-node
+  (node-child (renderer-root r-option-text) 0))
+(check-equal (dom-node-tag option-text-node) 'option "Option supports direct text content")
+(check-equal (dom-node-text option-text-node) "Basic" "Option direct text content renders")
+(check-node-attrs option-text-node '((value "basic")))
 (check-equal (dom-node-tag html-textarea-node) 'textarea "Textarea primitive tag is textarea")
 (check-equal (dom-node-text html-textarea-node) "Initial notes" "Textarea supports text content")
 (check-node-attrs html-textarea-node
@@ -1112,6 +1594,10 @@
                      "Select rejects unknown attrs")
 (check-call-rejected (Option #:foo "x" (Span "bad"))
                      "Option rejects unknown attrs")
+(check-call-rejected (Option)
+                     "Option rejects missing content")
+(check-call-rejected (Option "Basic" (Span " extra"))
+                     "Option rejects mixed text and child views")
 (check-call-rejected (Textarea "x" #:foo "x")
                      "Textarea rejects unknown attrs")
 (check-call-rejected (Input "bad")
@@ -1350,6 +1836,15 @@
                     (name "account-group")))
 (check-equal (dom-node-tag legend-node) 'legend "Legend primitive tag is legend")
 (check-node-attrs legend-node '((align "left")))
+(define r-legend-text
+  (render
+   (window
+    (Legend #:align "center" "Profile"))))
+(define legend-text-node
+  (node-child (renderer-root r-legend-text) 0))
+(check-equal (dom-node-tag legend-text-node) 'legend "Legend supports direct text content")
+(check-equal (dom-node-text legend-text-node) "Profile" "Legend direct text content renders")
+(check-node-attrs legend-text-node '((align "center")))
 (check-equal (dom-node-tag datalist-node) 'datalist "Datalist primitive tag is datalist")
 (check-node-attrs datalist-node '((id "user-suggestions")))
 (check-equal (dom-node-tag optgroup-node) 'optgroup "Optgroup primitive tag is optgroup")
@@ -1360,6 +1855,10 @@
                      "Fieldset rejects unknown attrs")
 (check-call-rejected (Legend #:foo "x" (Span "bad"))
                      "Legend rejects unknown attrs")
+(check-call-rejected (Legend)
+                     "Legend rejects missing content")
+(check-call-rejected (Legend "Account" (Span " extra"))
+                     "Legend rejects mixed text and child views")
 (check-call-rejected (Datalist #:foo "x" (Option #:value "x" (Span "bad")))
                      "Datalist rejects unknown attrs")
 (check-call-rejected (Optgroup #:foo "x" (Option #:value "x" (Span "bad")))

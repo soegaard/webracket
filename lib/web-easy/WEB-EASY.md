@@ -2,8 +2,21 @@
 
 This document captures internal design decisions for `lib/web-easy/`.
 
+## API Layers
+
+The intended core-vs-library split is described in [API-LAYERS.md](API-LAYERS.md).
+
 ## Recent Changes
 
+- Began making the core-vs-library split explicit:
+  - uppercase HTML-like constructors are the primitive/core layer,
+  - lowercase convenience constructors are the higher-level component layer.
+- Extended the main text-bearing primitive family in place so they preserve historical text content while also accepting child views:
+  - `Button`, `A`, `Label`, `H1` .. `H6`
+  - `P`, `Span`, `Strong`, `Em`, `Code`, `Pre`, `Small`
+  - `B`, `I`, `U`, `S`, `Mark`, `Sub`, `Sup`, `Kbd`, `Samp`, `Var`
+  - `Q`, `Cite`, `Dfn`, `Abbr`, `Time`, `Data`, `Del`, `Ins`
+- Extended primitive `Option` and `Legend` so they accept either a single text-like value or child views.
 - Added internal `define/element` support for broad primitive HTML constructor generation.
 - Expanded uppercase primitive element coverage (leaf + with-children families) with validated keyword attrs.
 - Added `Base` constraints:

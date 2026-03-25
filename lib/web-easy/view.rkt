@@ -74,7 +74,7 @@
 ;;   Hr             Build a primitive HTML hr element view with generic keyword attrs.
 ;;   Img            Build a primitive HTML img element view with required #:src and generic keyword attrs.
 ;;   A              Build a primitive HTML a element view with generic keyword attrs.
-;;   Button         Build a primitive HTML button element view with generic keyword attrs.
+;;   Button         Build a primitive HTML button element view with generic keyword attrs and child content.
 ;;   Div            Build a primitive HTML div element view with children and generic keyword attrs.
 ;;   Section        Build a primitive HTML section element view with children and generic keyword attrs.
 ;;   Article        Build a primitive HTML article element view with children and generic keyword attrs.
@@ -1848,129 +1848,222 @@
              (append (list 1 content)
                      forwarded-args)))
 
-    ;; H1 : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; H1 : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML level-1 heading element with generic keyword attributes.
-    (define/element H1 html-element 'h1)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element H1 html-element 'h1
+      #:content-mode text-or-children)
 
-    ;; H2 : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; H2 : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML level-2 heading element with generic keyword attributes.
-    (define/element H2 html-element 'h2)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element H2 html-element 'h2
+      #:content-mode text-or-children)
 
-    ;; H3 : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; H3 : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML level-3 heading element with generic keyword attributes.
-    (define/element H3 html-element 'h3)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element H3 html-element 'h3
+      #:content-mode text-or-children)
 
-    ;; H4 : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; H4 : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML level-4 heading element with generic keyword attributes.
-    (define/element H4 html-element 'h4)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element H4 html-element 'h4
+      #:content-mode text-or-children)
 
-    ;; H5 : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; H5 : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML level-5 heading element with generic keyword attributes.
-    (define/element H5 html-element 'h5)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element H5 html-element 'h5
+      #:content-mode text-or-children)
 
-    ;; H6 : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; H6 : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML level-6 heading element with generic keyword attributes.
-    (define/element H6 html-element 'h6)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element H6 html-element 'h6
+      #:content-mode text-or-children)
 
-    ;; P : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; P : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML paragraph element with generic keyword attributes.
-    (define/element P html-element 'p)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element P html-element 'p
+      #:content-mode text-or-children)
 
-    ;; Span : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; Span : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML span element with generic keyword attributes.
-    (define/element Span html-element 'span)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Span html-element 'span
+      #:content-mode text-or-children)
 
-    ;; Strong : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; Strong : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML strong element with generic keyword attributes.
-    (define/element Strong html-element 'strong)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Strong html-element 'strong
+      #:content-mode text-or-children)
 
-    ;; Em : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; Em : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML em element with generic keyword attributes.
-    (define/element Em html-element 'em)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Em html-element 'em
+      #:content-mode text-or-children)
 
-    ;; Code : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; Code : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML code element with generic keyword attributes.
-    (define/element Code html-element 'code)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Code html-element 'code
+      #:content-mode text-or-children)
 
-    ;; Pre : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; Pre : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML pre element with generic keyword attributes.
-    (define/element Pre html-element 'pre)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Pre html-element 'pre
+      #:content-mode text-or-children)
 
-    ;; Small : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; Small : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML small element with generic keyword attributes.
-    (define/element Small html-element 'small)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Small html-element 'small
+      #:content-mode text-or-children)
 
-    ;; B : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; B : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML b element with generic keyword attributes.
-    (define/element B html-element 'b)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element B html-element 'b
+      #:content-mode text-or-children)
 
-    ;; I : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; I : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML i element with generic keyword attributes.
-    (define/element I html-element 'i)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element I html-element 'i
+      #:content-mode text-or-children)
 
-    ;; U : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; U : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML u element with generic keyword attributes.
-    (define/element U html-element 'u)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element U html-element 'u
+      #:content-mode text-or-children)
 
-    ;; S : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; S : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML s element with generic keyword attributes.
-    (define/element S html-element 's)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element S html-element 's
+      #:content-mode text-or-children)
 
-    ;; Mark : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; Mark : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML mark element with generic keyword attributes.
-    (define/element Mark html-element 'mark)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Mark html-element 'mark
+      #:content-mode text-or-children)
 
-    ;; Sub : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; Sub : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML sub element with generic keyword attributes.
-    (define/element Sub html-element 'sub)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Sub html-element 'sub
+      #:content-mode text-or-children)
 
-    ;; Sup : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; Sup : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML sup element with generic keyword attributes.
-    (define/element Sup html-element 'sup)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Sup html-element 'sup
+      #:content-mode text-or-children)
 
-    ;; Kbd : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; Kbd : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML kbd element with generic keyword attributes.
-    (define/element Kbd html-element 'kbd)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Kbd html-element 'kbd
+      #:content-mode text-or-children)
 
-    ;; Samp : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; Samp : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML samp element with generic keyword attributes.
-    (define/element Samp html-element 'samp)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Samp html-element 'samp
+      #:content-mode text-or-children)
 
-    ;; Var : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; Var : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML var element with generic keyword attributes.
-    (define/element Var html-element 'var)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Var html-element 'var
+      #:content-mode text-or-children)
 
-    ;; Q : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; Q : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML q element with generic keyword attributes.
-    (define/element Q html-element 'q)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Q html-element 'q
+      #:content-mode text-or-children)
 
-    ;; Cite : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; Cite : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML cite element with generic keyword attributes.
-    (define/element Cite html-element 'cite)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Cite html-element 'cite
+      #:content-mode text-or-children)
 
-    ;; Dfn : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; Dfn : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML dfn element with generic keyword attributes.
-    (define/element Dfn html-element 'dfn)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Dfn html-element 'dfn
+      #:content-mode text-or-children)
 
-    ;; Abbr : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; Abbr : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML abbr element with generic keyword attributes.
-    (define/element Abbr html-element 'abbr)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Abbr html-element 'abbr
+      #:content-mode text-or-children)
 
-    ;; Time : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; Time : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML time element with generic keyword attributes.
-    (define/element Time html-element 'time)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Time html-element 'time
+      #:content-mode text-or-children)
 
-    ;; Data : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; Data : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML data element with generic keyword attributes.
-    (define/element Data html-element 'data)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Data html-element 'data
+      #:content-mode text-or-children)
 
-    ;; Del : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; Del : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML del element with generic keyword attributes.
-    (define/element Del html-element 'del)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Del html-element 'del
+      #:content-mode text-or-children)
 
-    ;; Ins : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; Ins : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML ins element with generic keyword attributes.
-    (define/element Ins html-element 'ins)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Ins html-element 'ins
+      #:content-mode text-or-children)
 
     ;; Br : [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML br element with generic keyword attributes.
@@ -1996,20 +2089,19 @@
       #:required-keywords (#:src)
       #:positional-count 0)
 
-    ;; A : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; A : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML anchor element with generic keyword attributes.
-    (define/element A html-element 'a)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element A html-element 'a
+      #:content-mode text-or-children)
 
-    ;; Button : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; Button : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML button element with generic keyword attributes.
-    (define/element Button html-element 'button)
-
-    ; TODO : Testing whether we can get Button to support child views.
-    ; TODO : Use this in list-view, so a list view can receive views such as
-    ;          (Span #:style italic/muted (text "No matches"))
-    (define/element Button* html-element-children 'button*
-      #:required-keywords ()
-      #:positional-count any)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Button html-element 'button
+      #:content-mode text-or-children)
 
     ;; Div : view? ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML div element with children and generic keyword attrs.
@@ -2065,9 +2157,12 @@
       #:required-keywords ()
       #:positional-count any)
 
-    ;; Label : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
+    ;; Label : any/c ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML label element with generic keyword attrs.
-    (define/element Label html-element 'label)
+    ;;   A single text-like positional value preserves the historical text-bearing form.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Label html-element 'label
+      #:content-mode text-or-children)
 
     ;; Ul : view? ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML ul element with children and generic keyword attrs.
@@ -2219,11 +2314,12 @@
       #:required-keywords ()
       #:positional-count any)
 
-    ;; Option : view? ... [#:attrs any/c] [#:* any/c] -> view?
-    ;;   Construct a primitive HTML option element with children and generic keyword attrs.
-    (define/element Option html-element-children 'option
-      #:required-keywords ()
-      #:positional-count any)
+    ;; Option : any/c ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML option element with generic keyword attrs.
+    ;;   A single text-like positional value is accepted directly.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Option html-element 'option
+      #:content-mode text-or-children)
 
     ;; Textarea : (or/c string? observable?) [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML textarea element with generic keyword attrs.
@@ -2331,11 +2427,12 @@
       #:required-keywords ()
       #:positional-count any)
 
-    ;; Legend : view? ... [#:attrs any/c] [#:* any/c] -> view?
-    ;;   Construct a primitive HTML legend element with children and generic keyword attrs.
-    (define/element Legend html-element-children 'legend
-      #:required-keywords ()
-      #:positional-count any)
+    ;; Legend : any/c ... [#:attrs any/c] [#:* any/c] -> view?
+    ;;   Construct a primitive HTML legend element with generic keyword attrs.
+    ;;   A single text-like positional value is accepted directly.
+    ;;   One or more view positional values are rendered as primitive child content.
+    (define/element Legend html-element 'legend
+      #:content-mode text-or-children)
 
     ;; Datalist : view? ... [#:attrs any/c] [#:* any/c] -> view?
     ;;   Construct a primitive HTML datalist element with children and generic keyword attrs.
@@ -2779,7 +2876,9 @@
 
     ;; button : any/c (-> any/c) [any/c] [any/c] -> view?
     ;;   Construct a button view with optional leading/trailing icon labels.
-    ;;   Label and icons may be plain text or views.
+    ;;   Label and icons may be plain text or child views.
+    ;;   The rendered root is a primitive HTML <button>.
+    ;;   For static slot content this composes the primitive Button directly.
     (define/component button
       #:root-tag 'button
       #:positional ([label]
@@ -2798,6 +2897,27 @@
             (Span x
                   #:data-we-widget data-we-widget
                   #:class class)))
+      (define (button-children/static label0 leading-icon0 trailing-icon0)
+        (append
+         (if (eq? leading-icon0 #f)
+             '()
+             (list
+              (button-inline-label
+               leading-icon0
+               "button-icon"
+               "we-button-icon we-button-icon-leading")))
+         (list
+          (button-inline-label
+           label0
+           "button-label"
+           "we-button-label"))
+         (if (eq? trailing-icon0 #f)
+             '()
+             (list
+              (button-inline-label
+               trailing-icon0
+               "button-icon"
+               "we-button-icon we-button-icon-trailing")))))
 
       (define @label
         (observable-or-const label))
@@ -2841,11 +2961,17 @@
               (cons 'class "we-button")
               (cons 'on-click-action action)))
 
-      (observable-element-children
-       'button
-       @state
-       make-button-children
-       #:attrs attrs/final))
+      (if (and (not (obs? label))
+               (not (obs? leading-icon))
+               (not (obs? trailing-icon)))
+          (apply Button
+                 (append (button-children/static label leading-icon trailing-icon)
+                         (list #:attrs attrs/final)))
+          (observable-element-children
+           'button
+           @state
+           make-button-children
+           #:attrs attrs/final)))
 
 
     ;; ;; button : (or/c string? observable?) (-> any/c) [any/c] [any/c] -> view?
