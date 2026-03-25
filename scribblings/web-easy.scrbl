@@ -295,6 +295,38 @@ Most concrete component constructors support:
 Composition forms such as @racket[window], @racket[vpanel], and
 @racket[hpanel] keep positional-only contracts.
 
+@defthing[html-attr-entry/c
+          (or/c (cons/c symbol? any/c)
+                (list/c symbol? any/c))]{
+Contract alias for one attribute entry used in @racket[#:attrs].
+
+An entry is either:
+
+@itemlist[
+  @item{a pair such as @racket[(cons 'id "hero")]}
+  @item{a 2-element list such as @racket['(id "hero")]}
+]
+}
+
+@defthing[html-attrs/c
+          (or/c #f
+                (listof html-attr-entry/c))]{
+Contract alias for attribute lists accepted by @racket[#:attrs].
+}
+
+@defthing[content/c
+          (or/c string?
+                view?
+                observable?)]{
+Public-facing contract alias for primitive element content that may be:
+
+@itemlist[
+  @item{a string}
+  @item{a child view}
+  @item{an observable whose current value is a string or a view}
+]
+}
+
 @defthing[text-content/c any/c]{
 Predicate for values accepted by text-bearing constructors:
 strings, symbols, numbers, booleans, characters, or observables whose
@@ -314,21 +346,21 @@ Most users should prefer the uppercase primitive constructors
 (@racket[H1], @racket[P], @racket[Span], @racket[Div], and so on).
 
 @defproc[(html-element [tag (or/c symbol? observable?)]
-                       [content any/c]
+                       [content text-content/c]
                        [#:id id (or/c #f string? symbol?) #f]
                        [#:class class any/c #f]
-                       [#:attrs attrs list? null])
+                       [#:attrs attrs html-attrs/c null])
          view?]{
 Build a low-level primitive HTML leaf element from a tag and content.
 
 Positional arguments:
 @racket[tag] is the element tag (for example @racket['h1], @racket['p], @racket['span]),
-and @racket[content] is text/content.
+and @racket[content] is text-like content.
 }
 
 @defproc[(html-element-children [tag (or/c symbol? observable?)]
-                                [#:attrs attrs list? null]
-                                [child any/c] ...)
+                                [#:attrs attrs html-attrs/c null]
+                                [child view?] ...)
          view?]{
 Build a low-level primitive HTML container element from a tag and child views.
 
@@ -377,17 +409,12 @@ They accept:
 
 @itemlist[
   @item{@racket[content] as text/observable content}
-  @item{@racket[#:attrs] as an optional attribute list (@racket[list?] or @racket[#f])}
+  @item{@racket[#:attrs] as an optional attribute list matching @racket[html-attrs/c]}
   @item{keyword attributes corresponding to HTML attributes for the specific element
         (plus global attributes and @tt{data-*}/@tt{aria-*})}
 ]
 
-Attribute-list entries in @racket[#:attrs] must be either:
-
-@itemlist[
-  @item{a pair: @racket['(attr-key . value)] or @racket[(cons 'attr-key value)]}
-  @item{a 2-element list: @racket['(attr-key value)]}
-]
+Attribute-list entries in @racket[#:attrs] must match @racket[html-attr-entry/c].
 
 Example:
 
@@ -436,36 +463,36 @@ and produces a single HTML node (as opposed to container-style constructors
 that are built from child view arguments).
 
 @defproc*[
-([(H1 [content any/c] ...
+([(H1 [content content/c] ...
       [#:align align any/c #f]
-      [#:attrs attrs (or/c #f list?) null])
+      [#:attrs attrs html-attrs/c null])
   view?]
- [(H2 [content any/c] ...
+ [(H2 [content content/c] ...
       [#:align align any/c #f]
-      [#:attrs attrs (or/c #f list?) null])
+      [#:attrs attrs html-attrs/c null])
   view?]
- [(H3 [content any/c] ...
+ [(H3 [content content/c] ...
       [#:align align any/c #f]
-      [#:attrs attrs (or/c #f list?) null])
+      [#:attrs attrs html-attrs/c null])
   view?]
- [(H4 [content any/c] ...
+ [(H4 [content content/c] ...
       [#:align align any/c #f]
-      [#:attrs attrs (or/c #f list?) null])
+      [#:attrs attrs html-attrs/c null])
   view?]
- [(H5 [content any/c] ...
+ [(H5 [content content/c] ...
       [#:align align any/c #f]
-      [#:attrs attrs (or/c #f list?) null])
+      [#:attrs attrs html-attrs/c null])
   view?]
- [(H6 [content any/c] ...
+ [(H6 [content content/c] ...
       [#:align align any/c #f]
-      [#:attrs attrs (or/c #f list?) null])
+      [#:attrs attrs html-attrs/c null])
   view?])]{Build primitive @tt{<h1>} ... @tt{<h6>} elements.
 
 These elements represent headings of different levels.
 @racket[H1] is the most important heading level, and @racket[H6] is the least important.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 For @racket[H1] through @racket[H6], @racket[#:align] maps to the HTML
 @tt{align} attribute. Typical values are @racket["left"], @racket["center"],
@@ -476,34 +503,34 @@ without validating it.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("h1" "h2" "h3" "h4" "h5" "h6")))}.
 }
 
-@defproc[(P [content any/c] ...
-            [#:attrs attrs (or/c #f list?) null])
+@defproc[(P [content content/c] ...
+            [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<p>} element.
 
 This is a paragraph element, typically used for ordinary text content.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("p")))}.
 }
 
-@defproc[(A [content any/c] ...
-            [#:attrs attrs (or/c #f list?) null])
+@defproc[(A [content content/c] ...
+            [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<a>} element.
 
 This is an anchor/link element, typically used for navigation.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("a")))}.
 }
 
 @defproc[(Img [#:src src any/c]
-              [#:attrs attrs (or/c #f list?) null])
+              [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<img>} element.
 
@@ -513,353 +540,350 @@ Use this for images and decorative/illustrative media.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("img")))}.
 }
 
-@defproc[(Button [content any/c] ...
-                 [#:attrs attrs (or/c #f list?) null])
+@defproc[(Button [child content/c] ...
+                 [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<button>} element.
 
 This is a native button element for actions and form submission.
-It accepts either:
 
-@itemlist[
-  @item{a single text-like content value, including an observable}
-  @item{one or more child views, for richer button content}
-]
+A single content item preserves the historical text-bearing form.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("button")))}.
 }
 
-@defproc[(Span [content any/c] ...
-               [#:attrs attrs (or/c #f list?) null])
+@defproc[(Span [content content/c] ...
+               [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<span>} element.
 
 This is an inline text container, typically used to style or annotate part of a line.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Strong [content any/c] ...
-                 [#:attrs attrs (or/c #f list?) null])
+@defproc[(Strong [content content/c] ...
+                 [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<strong>} element.
 
 This marks content with strong importance (typically bold emphasis).
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Em [content any/c] ...
-             [#:attrs attrs (or/c #f list?) null])
+@defproc[(Em [content content/c] ...
+             [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<em>} element.
 
 This marks emphasized content (typically stress emphasis).
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Code [content any/c] ...
-               [#:attrs attrs (or/c #f list?) null])
+@defproc[(Code [content content/c] ...
+               [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<code>} element.
 
 This marks inline code or code-like text.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Pre [content any/c] ...
-              [#:attrs attrs (or/c #f list?) null])
+@defproc[(Pre [content content/c] ...
+              [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<pre>} element.
 
 This preserves whitespace and line breaks for preformatted text.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("pre")))}.
 }
 
-@defproc[(Small [content any/c] ...
-                [#:attrs attrs (or/c #f list?) null])
+@defproc[(Small [content content/c] ...
+                [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<small>} element.
 
 This marks side comments or fine-print style text.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(B [content any/c] ...
-            [#:attrs attrs (or/c #f list?) null])
+@defproc[(B [content content/c] ...
+            [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<b>} element.
 
 This offsets text stylistically without implying extra semantic importance.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(I [content any/c] ...
-            [#:attrs attrs (or/c #f list?) null])
+@defproc[(I [content content/c] ...
+            [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<i>} element.
 
 This offsets text in an alternate voice or mood (often rendered in italics).
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(U [content any/c] ...
-            [#:attrs attrs (or/c #f list?) null])
+@defproc[(U [content content/c] ...
+            [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<u>} element.
 
 This marks non-textual annotation text (often rendered underlined).
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(S [content any/c] ...
-            [#:attrs attrs (or/c #f list?) null])
+@defproc[(S [content content/c] ...
+            [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<s>} element.
 
 This marks text that is no longer accurate or relevant.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Mark [content any/c] ...
-               [#:attrs attrs (or/c #f list?) null])
+@defproc[(Mark [content content/c] ...
+               [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<mark>} element.
 
 This marks text that should be highlighted for reference.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Sub [content any/c] ...
-              [#:attrs attrs (or/c #f list?) null])
+@defproc[(Sub [content content/c] ...
+              [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<sub>} element.
 
 This marks subscript text.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Sup [content any/c] ...
-              [#:attrs attrs (or/c #f list?) null])
+@defproc[(Sup [content content/c] ...
+              [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<sup>} element.
 
 This marks superscript text.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Kbd [content any/c] ...
-              [#:attrs attrs (or/c #f list?) null])
+@defproc[(Kbd [content content/c] ...
+              [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<kbd>} element.
 
 This marks user input text, such as keyboard shortcuts.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Samp [content any/c] ...
-               [#:attrs attrs (or/c #f list?) null])
+@defproc[(Samp [content content/c] ...
+               [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<samp>} element.
 
 This marks sample output text from a program or system.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Var [content any/c] ...
-              [#:attrs attrs (or/c #f list?) null])
+@defproc[(Var [content content/c] ...
+              [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<var>} element.
 
 This marks a variable name or placeholder.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Q [content any/c] ...
-            [#:attrs attrs (or/c #f list?) null])
+@defproc[(Q [content content/c] ...
+            [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<q>} element.
 
 This marks an inline quotation.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("q")))}.
 }
 
-@defproc[(Cite [content any/c] ...
-               [#:attrs attrs (or/c #f list?) null])
+@defproc[(Cite [content content/c] ...
+               [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<cite>} element.
 
 This marks the title of a cited creative work.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Dfn [content any/c] ...
-              [#:attrs attrs (or/c #f list?) null])
+@defproc[(Dfn [content content/c] ...
+              [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<dfn>} element.
 
 This marks a term being defined.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Abbr [content any/c] ...
-               [#:attrs attrs (or/c #f list?) null])
+@defproc[(Abbr [content content/c] ...
+               [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<abbr>} element.
 
 This marks an abbreviation or acronym.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Time [content any/c] ...
-               [#:attrs attrs (or/c #f list?) null])
+@defproc[(Time [content content/c] ...
+               [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<time>} element.
 
 This marks a date/time value in text.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("time")))}.
 }
 
-@defproc[(Data [content any/c] ...
-               [#:attrs attrs (or/c #f list?) null])
+@defproc[(Data [content content/c] ...
+               [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<data>} element.
 
 This associates human-readable text with a machine-readable value.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("data")))}.
 }
 
-@defproc[(Del [content any/c] ...
-              [#:attrs attrs (or/c #f list?) null])
+@defproc[(Del [content content/c] ...
+              [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<del>} element.
 
 This marks content that has been removed.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("del")))}.
 }
 
-@defproc[(Ins [content any/c] ...
-              [#:attrs attrs (or/c #f list?) null])
+@defproc[(Ins [content content/c] ...
+              [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<ins>} element.
 
 This marks content that has been inserted.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("ins")))}.
 }
 
-@defproc[(Br [#:attrs attrs (or/c #f list?) null])
+@defproc[(Br [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<br>} element.
 
@@ -868,7 +892,7 @@ This inserts a line break. It is a leaf/void element and takes no content argume
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("br")))}.
 }
 
-@defproc[(Wbr [#:attrs attrs (or/c #f list?) null])
+@defproc[(Wbr [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<wbr>} element.
 
@@ -878,7 +902,7 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Hr [#:attrs attrs (or/c #f list?) null])
+@defproc[(Hr [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<hr>} element.
 
@@ -887,8 +911,8 @@ This inserts a thematic break (horizontal rule). It is a leaf/void element and t
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("hr")))}.
 }
 
-@defproc[(Div [#:attrs attrs (or/c #f list?) null]
-              [child any/c] ...)
+@defproc[(Div [#:attrs attrs html-attrs/c null]
+              [child view?] ...)
          view?]{
 Build a primitive @tt{<div>} element with children.
 
@@ -897,8 +921,8 @@ This is a generic block-level container element.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("div")))}.
 }
 
-@defproc[(Section [#:attrs attrs (or/c #f list?) null]
-                  [child any/c] ...)
+@defproc[(Section [#:attrs attrs html-attrs/c null]
+                  [child view?] ...)
          view?]{
 Build a primitive @tt{<section>} element with children.
 
@@ -908,8 +932,8 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Article [#:attrs attrs (or/c #f list?) null]
-                  [child any/c] ...)
+@defproc[(Article [#:attrs attrs html-attrs/c null]
+                  [child view?] ...)
          view?]{
 Build a primitive @tt{<article>} element with children.
 
@@ -919,8 +943,8 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Nav [#:attrs attrs (or/c #f list?) null]
-              [child any/c] ...)
+@defproc[(Nav [#:attrs attrs html-attrs/c null]
+              [child view?] ...)
          view?]{
 Build a primitive @tt{<nav>} element with children.
 
@@ -930,8 +954,8 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Main [#:attrs attrs (or/c #f list?) null]
-               [child any/c] ...)
+@defproc[(Main [#:attrs attrs html-attrs/c null]
+               [child view?] ...)
          view?]{
 Build a primitive @tt{<main>} element with children.
 
@@ -941,8 +965,8 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Header [#:attrs attrs (or/c #f list?) null]
-                 [child any/c] ...)
+@defproc[(Header [#:attrs attrs html-attrs/c null]
+                 [child view?] ...)
          view?]{
 Build a primitive @tt{<header>} element with children.
 
@@ -952,8 +976,8 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Footer [#:attrs attrs (or/c #f list?) null]
-                 [child any/c] ...)
+@defproc[(Footer [#:attrs attrs html-attrs/c null]
+                 [child view?] ...)
          view?]{
 Build a primitive @tt{<footer>} element with children.
 
@@ -963,8 +987,8 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Aside [#:attrs attrs (or/c #f list?) null]
-                [child any/c] ...)
+@defproc[(Aside [#:attrs attrs html-attrs/c null]
+                [child view?] ...)
          view?]{
 Build a primitive @tt{<aside>} element with children.
 
@@ -974,8 +998,8 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Form [#:attrs attrs (or/c #f list?) null]
-               [child any/c] ...)
+@defproc[(Form [#:attrs attrs html-attrs/c null]
+               [child view?] ...)
          view?]{
 Build a primitive @tt{<form>} element with children.
 
@@ -984,15 +1008,15 @@ This is a native form container for controls and submission behavior.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("form")))}.
 }
 
-@defproc[(Label [content any/c] ...
-                [#:attrs attrs (or/c #f list?) null])
+@defproc[(Label [content content/c] ...
+                [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<label>} element.
 
 This is a native label element for naming form controls.
 
 A single text-like positional value preserves the historical text-bearing form.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("label")))}.
 }
@@ -1008,8 +1032,8 @@ Example:
  (Button "Save" #:type "submit"))
 ]
 
-@defproc[(Ul [#:attrs attrs (or/c #f list?) null]
-             [child any/c] ...)
+@defproc[(Ul [#:attrs attrs html-attrs/c null]
+             [child view?] ...)
          view?]{
 Build a primitive @tt{<ul>} element with children.
 
@@ -1018,8 +1042,8 @@ This is an unordered list container element.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("ul")))}.
 }
 
-@defproc[(Menu [#:attrs attrs (or/c #f list?) null]
-               [child any/c] ...)
+@defproc[(Menu [#:attrs attrs html-attrs/c null]
+               [child view?] ...)
          view?]{
 Build a primitive @tt{<menu>} element with children.
 
@@ -1028,8 +1052,8 @@ This is a menu/list container element.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("menu")))}.
 }
 
-@defproc[(Ol [#:attrs attrs (or/c #f list?) null]
-             [child any/c] ...)
+@defproc[(Ol [#:attrs attrs html-attrs/c null]
+             [child view?] ...)
          view?]{
 Build a primitive @tt{<ol>} element with children.
 
@@ -1038,8 +1062,8 @@ This is an ordered list container element.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("ol")))}.
 }
 
-@defproc[(Li [#:attrs attrs (or/c #f list?) null]
-             [child any/c] ...)
+@defproc[(Li [#:attrs attrs html-attrs/c null]
+             [child view?] ...)
          view?]{
 Build a primitive @tt{<li>} element with children.
 
@@ -1053,8 +1077,8 @@ Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags
 
 
 
-@defproc[(Dl [#:attrs attrs (or/c #f list?) null]
-             [child any/c] ...)
+@defproc[(Dl [#:attrs attrs html-attrs/c null]
+             [child view?] ...)
          view?]{
 Build a primitive @tt{<dl>} element with children.
 
@@ -1063,8 +1087,8 @@ This is a description list container for term/description pairs.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("dl")))}.
 }
 
-@defproc[(Dt [#:attrs attrs (or/c #f list?) null]
-             [child any/c] ...)
+@defproc[(Dt [#:attrs attrs html-attrs/c null]
+             [child view?] ...)
          view?]{
 Build a primitive @tt{<dt>} element with children.
 
@@ -1074,8 +1098,8 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Dd [#:attrs attrs (or/c #f list?) null]
-             [child any/c] ...)
+@defproc[(Dd [#:attrs attrs html-attrs/c null]
+             [child view?] ...)
          view?]{
 Build a primitive @tt{<dd>} element with children.
 
@@ -1085,8 +1109,8 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Table [#:attrs attrs (or/c #f list?) null]
-                [child any/c] ...)
+@defproc[(Table [#:attrs attrs html-attrs/c null]
+                [child view?] ...)
          view?]{
 Build a primitive @tt{<table>} element with children.
 
@@ -1095,8 +1119,8 @@ This is a table container element for tabular data.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("table")))}.
 }
 
-@defproc[(Caption [#:attrs attrs (or/c #f list?) null]
-                  [child any/c] ...)
+@defproc[(Caption [#:attrs attrs html-attrs/c null]
+                  [child view?] ...)
          view?]{
 Build a primitive @tt{<caption>} element with children.
 
@@ -1105,8 +1129,8 @@ This is a caption/title element for a @tt{<table>}.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("caption")))}.
 }
 
-@defproc[(Thead [#:attrs attrs (or/c #f list?) null]
-                [child any/c] ...)
+@defproc[(Thead [#:attrs attrs html-attrs/c null]
+                [child view?] ...)
          view?]{
 Build a primitive @tt{<thead>} element with children.
 
@@ -1115,8 +1139,8 @@ This groups header rows in a @tt{<table>}.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("thead")))}.
 }
 
-@defproc[(Tbody [#:attrs attrs (or/c #f list?) null]
-                [child any/c] ...)
+@defproc[(Tbody [#:attrs attrs html-attrs/c null]
+                [child view?] ...)
          view?]{
 Build a primitive @tt{<tbody>} element with children.
 
@@ -1125,8 +1149,8 @@ This groups body rows in a @tt{<table>}.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("tbody")))}.
 }
 
-@defproc[(Tfoot [#:attrs attrs (or/c #f list?) null]
-                [child any/c] ...)
+@defproc[(Tfoot [#:attrs attrs html-attrs/c null]
+                [child view?] ...)
          view?]{
 Build a primitive @tt{<tfoot>} element with children.
 
@@ -1135,8 +1159,8 @@ This groups footer rows in a @tt{<table>}.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("tfoot")))}.
 }
 
-@defproc[(Tr [#:attrs attrs (or/c #f list?) null]
-             [child any/c] ...)
+@defproc[(Tr [#:attrs attrs html-attrs/c null]
+             [child view?] ...)
          view?]{
 Build a primitive @tt{<tr>} element with children.
 
@@ -1145,8 +1169,8 @@ This is a row element used inside table section containers.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("tr")))}.
 }
 
-@defproc[(Th [#:attrs attrs (or/c #f list?) null]
-             [child any/c] ...)
+@defproc[(Th [#:attrs attrs html-attrs/c null]
+             [child view?] ...)
          view?]{
 Build a primitive @tt{<th>} element with children.
 
@@ -1155,8 +1179,8 @@ This is a header cell element in a table row.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("th")))}.
 }
 
-@defproc[(Td [#:attrs attrs (or/c #f list?) null]
-             [child any/c] ...)
+@defproc[(Td [#:attrs attrs html-attrs/c null]
+             [child view?] ...)
          view?]{
 Build a primitive @tt{<td>} element with children.
 
@@ -1165,8 +1189,8 @@ This is a data cell element in a table row.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("td")))}.
 }
 
-@defproc[(Audio [#:attrs attrs (or/c #f list?) null]
-                [child any/c] ...)
+@defproc[(Audio [#:attrs attrs html-attrs/c null]
+                [child view?] ...)
          view?]{
 Build a primitive @tt{<audio>} element with children.
 
@@ -1175,8 +1199,8 @@ This embeds sound content and can include nested @tt{<source>} and @tt{<track>} 
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("audio")))}.
 }
 
-@defproc[(Video [#:attrs attrs (or/c #f list?) null]
-                [child any/c] ...)
+@defproc[(Video [#:attrs attrs html-attrs/c null]
+                [child view?] ...)
          view?]{
 Build a primitive @tt{<video>} element with children.
 
@@ -1185,7 +1209,7 @@ This embeds video content and can include nested @tt{<source>} and @tt{<track>} 
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("video")))}.
 }
 
-@defproc[(Source [#:attrs attrs (or/c #f list?) null])
+@defproc[(Source [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<source>} element.
 
@@ -1194,7 +1218,7 @@ This is a leaf/void media source element used inside media containers.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("source")))}.
 }
 
-@defproc[(Track [#:attrs attrs (or/c #f list?) null])
+@defproc[(Track [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<track>} element.
 
@@ -1203,8 +1227,8 @@ This is a leaf/void timed-text track element used for captions/subtitles.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("track")))}.
 }
 
-@defproc[(Canvas [#:attrs attrs (or/c #f list?) null]
-                 [child any/c] ...)
+@defproc[(Canvas [#:attrs attrs html-attrs/c null]
+                 [child view?] ...)
          view?]{
 Build a primitive @tt{<canvas>} element with children.
 
@@ -1213,8 +1237,8 @@ This embeds script-driven drawing content and may include fallback child content
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("canvas")))}.
 }
 
-@defproc[(Iframe [#:attrs attrs (or/c #f list?) null]
-                 [child any/c] ...)
+@defproc[(Iframe [#:attrs attrs html-attrs/c null]
+                 [child view?] ...)
          view?]{
 Build a primitive @tt{<iframe>} element with children.
 
@@ -1223,7 +1247,7 @@ This embeds another page/document and may include fallback child content.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("iframe")))}.
 }
 
-@defproc[(Embed [#:attrs attrs (or/c #f list?) null])
+@defproc[(Embed [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<embed>} element.
 
@@ -1232,8 +1256,8 @@ This is a leaf/void embedded-content element for external resources.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("embed")))}.
 }
 
-@defproc[(Object [#:attrs attrs (or/c #f list?) null]
-                 [child any/c] ...)
+@defproc[(Object [#:attrs attrs html-attrs/c null]
+                 [child view?] ...)
          view?]{
 Build a primitive @tt{<object>} element with children.
 
@@ -1242,7 +1266,7 @@ This embeds external resources and may include fallback child content.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("object")))}.
 }
 
-@defproc[(Input [#:attrs attrs (or/c #f list?) null])
+@defproc[(Input [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<input>} element.
 
@@ -1251,8 +1275,8 @@ This is a leaf/void form input element.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("input")))}.
 }
 
-@defproc[(Select [#:attrs attrs (or/c #f list?) null]
-                 [child any/c] ...)
+@defproc[(Select [#:attrs attrs html-attrs/c null]
+                 [child view?] ...)
          view?]{
 Build a primitive @tt{<select>} element with children.
 
@@ -1261,21 +1285,21 @@ This is a form selection control, typically containing @tt{<option>} children.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("select")))}.
 }
 
-@defproc[(Option [content any/c] ...
-                 [#:attrs attrs (or/c #f list?) null])
+@defproc[(Option [content content/c] ...
+                 [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<option>} element.
 
 This is an option item used inside @tt{<select>}.
 
 A single text-like positional value is accepted directly.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("option")))}.
 }
 
 @defproc[(Textarea [content text-content/c]
-                   [#:attrs attrs (or/c #f list?) null])
+                   [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<textarea>} element.
 
@@ -1287,8 +1311,8 @@ Use observables for its text/value content and keyword attributes instead of nes
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("textarea")))}.
 }
 
-@defproc[(Details [#:attrs attrs (or/c #f list?) null]
-                  [child any/c] ...)
+@defproc[(Details [#:attrs attrs html-attrs/c null]
+                  [child view?] ...)
          view?]{
 Build a primitive @tt{<details>} element with children.
 
@@ -1297,8 +1321,8 @@ This is a disclosure container that can be toggled open/closed.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("details")))}.
 }
 
-@defproc[(Dialog [#:attrs attrs (or/c #f list?) null]
-                 [child any/c] ...)
+@defproc[(Dialog [#:attrs attrs html-attrs/c null]
+                 [child view?] ...)
          view?]{
 Build a primitive @tt{<dialog>} element with children.
 
@@ -1307,8 +1331,8 @@ This is a dialog/modal container element.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("dialog")))}.
 }
 
-@defproc[(Summary [#:attrs attrs (or/c #f list?) null]
-                  [child any/c] ...)
+@defproc[(Summary [#:attrs attrs html-attrs/c null]
+                  [child view?] ...)
          view?]{
 Build a primitive @tt{<summary>} element with children.
 
@@ -1318,8 +1342,8 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Figure [#:attrs attrs (or/c #f list?) null]
-                 [child any/c] ...)
+@defproc[(Figure [#:attrs attrs html-attrs/c null]
+                 [child view?] ...)
          view?]{
 Build a primitive @tt{<figure>} element with children.
 
@@ -1329,8 +1353,8 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Figcaption [#:attrs attrs (or/c #f list?) null]
-                     [child any/c] ...)
+@defproc[(Figcaption [#:attrs attrs html-attrs/c null]
+                     [child view?] ...)
          view?]{
 Build a primitive @tt{<figcaption>} element with children.
 
@@ -1340,8 +1364,8 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Hgroup [#:attrs attrs (or/c #f list?) null]
-                 [child any/c] ...)
+@defproc[(Hgroup [#:attrs attrs html-attrs/c null]
+                 [child view?] ...)
          view?]{
 Build a primitive @tt{<hgroup>} element with children.
 
@@ -1351,8 +1375,8 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Address [#:attrs attrs (or/c #f list?) null]
-                  [child any/c] ...)
+@defproc[(Address [#:attrs attrs html-attrs/c null]
+                  [child view?] ...)
          view?]{
 Build a primitive @tt{<address>} element with children.
 
@@ -1362,8 +1386,8 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Blockquote [#:attrs attrs (or/c #f list?) null]
-                     [child any/c] ...)
+@defproc[(Blockquote [#:attrs attrs html-attrs/c null]
+                     [child view?] ...)
          view?]{
 Build a primitive @tt{<blockquote>} element with children.
 
@@ -1372,8 +1396,8 @@ This is the primitive block quotation container element.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("blockquote")))}.
 }
 
-@defproc[(Ruby [#:attrs attrs (or/c #f list?) null]
-               [child any/c] ...)
+@defproc[(Ruby [#:attrs attrs html-attrs/c null]
+               [child view?] ...)
          view?]{
 Build a primitive @tt{<ruby>} element with children.
 
@@ -1383,8 +1407,8 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Rt [#:attrs attrs (or/c #f list?) null]
-             [child any/c] ...)
+@defproc[(Rt [#:attrs attrs html-attrs/c null]
+             [child view?] ...)
          view?]{
 Build a primitive @tt{<rt>} element with children.
 
@@ -1394,8 +1418,8 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Rp [#:attrs attrs (or/c #f list?) null]
-             [child any/c] ...)
+@defproc[(Rp [#:attrs attrs html-attrs/c null]
+             [child view?] ...)
          view?]{
 Build a primitive @tt{<rp>} element with children.
 
@@ -1405,8 +1429,8 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Bdi [#:attrs attrs (or/c #f list?) null]
-              [child any/c] ...)
+@defproc[(Bdi [#:attrs attrs html-attrs/c null]
+              [child view?] ...)
          view?]{
 Build a primitive @tt{<bdi>} element with children.
 
@@ -1416,8 +1440,8 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Bdo [#:attrs attrs (or/c #f list?) null]
-              [child any/c] ...)
+@defproc[(Bdo [#:attrs attrs html-attrs/c null]
+              [child view?] ...)
          view?]{
 Build a primitive @tt{<bdo>} element with children.
 
@@ -1427,8 +1451,8 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Progress [#:attrs attrs (or/c #f list?) null]
-                   [child any/c] ...)
+@defproc[(Progress [#:attrs attrs html-attrs/c null]
+                   [child view?] ...)
          view?]{
 Build a primitive @tt{<progress>} element with children.
 
@@ -1437,8 +1461,8 @@ This represents task completion progress.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("progress")))}.
 }
 
-@defproc[(Meter [#:attrs attrs (or/c #f list?) null]
-                [child any/c] ...)
+@defproc[(Meter [#:attrs attrs html-attrs/c null]
+                [child view?] ...)
          view?]{
 Build a primitive @tt{<meter>} element with children.
 
@@ -1447,8 +1471,8 @@ This represents a scalar measurement within a known range.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("meter")))}.
 }
 
-@defproc[(Output [#:attrs attrs (or/c #f list?) null]
-                 [child any/c] ...)
+@defproc[(Output [#:attrs attrs html-attrs/c null]
+                 [child view?] ...)
          view?]{
 Build a primitive @tt{<output>} element with children.
 
@@ -1457,8 +1481,8 @@ This represents the result of a calculation or user action.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("output")))}.
 }
 
-@defproc[(Fieldset [#:attrs attrs (or/c #f list?) null]
-                   [child any/c] ...)
+@defproc[(Fieldset [#:attrs attrs html-attrs/c null]
+                   [child view?] ...)
          view?]{
 Build a primitive @tt{<fieldset>} element with children.
 
@@ -1467,21 +1491,21 @@ This groups related form controls and labels.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("fieldset")))}.
 }
 
-@defproc[(Legend [content any/c] ...
-                 [#:attrs attrs (or/c #f list?) null])
+@defproc[(Legend [content content/c] ...
+                 [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<legend>} element.
 
 This is a caption/title for a @tt{<fieldset>}.
 
 A single text-like positional value is accepted directly.
-One or more child views are rendered as primitive child content.
+One or more content items are rendered in order; text-like items become raw text children and views remain child views.
 
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("legend")))}.
 }
 
-@defproc[(Datalist [#:attrs attrs (or/c #f list?) null]
-                   [child any/c] ...)
+@defproc[(Datalist [#:attrs attrs html-attrs/c null]
+                   [child view?] ...)
          view?]{
 Build a primitive @tt{<datalist>} element with children.
 
@@ -1491,8 +1515,8 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Optgroup [#:attrs attrs (or/c #f list?) null]
-                   [child any/c] ...)
+@defproc[(Optgroup [#:attrs attrs html-attrs/c null]
+                   [child view?] ...)
          view?]{
 Build a primitive @tt{<optgroup>} element with children.
 
@@ -1501,8 +1525,8 @@ This groups related @tt{<option>} elements inside @tt{<select>}.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("optgroup")))}.
 }
 
-@defproc[(Colgroup [#:attrs attrs (or/c #f list?) null]
-                   [child any/c] ...)
+@defproc[(Colgroup [#:attrs attrs html-attrs/c null]
+                   [child view?] ...)
          view?]{
 Build a primitive @tt{<colgroup>} element with children.
 
@@ -1511,7 +1535,7 @@ This groups @tt{<col>} elements for shared table column formatting.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("colgroup")))}.
 }
 
-@defproc[(Col [#:attrs attrs (or/c #f list?) null])
+@defproc[(Col [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<col>} element.
 
@@ -1520,8 +1544,8 @@ This is a leaf/void table column formatting element.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("col")))}.
 }
 
-@defproc[(Map [#:attrs attrs (or/c #f list?) null]
-              [child any/c] ...)
+@defproc[(Map [#:attrs attrs html-attrs/c null]
+              [child view?] ...)
          view?]{
 Build a primitive @tt{<map>} element with children.
 
@@ -1530,7 +1554,7 @@ This defines an image map container for clickable regions.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("map")))}.
 }
 
-@defproc[(Area [#:attrs attrs (or/c #f list?) null])
+@defproc[(Area [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<area>} element.
 
@@ -1539,7 +1563,7 @@ This is a leaf/void clickable region element used inside @tt{<map>}.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("area")))}.
 }
 
-@defproc[(Script [#:attrs attrs (or/c #f list?) null])
+@defproc[(Script [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<script>} element.
 
@@ -1548,7 +1572,7 @@ This is a leaf/void script resource element.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("script")))}.
 }
 
-@defproc[(Link [#:attrs attrs (or/c #f list?) null])
+@defproc[(Link [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<link>} element.
 
@@ -1557,7 +1581,7 @@ This is a leaf/void external resource link element.
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("link")))}.
 }
 
-@defproc[(Meta [#:attrs attrs (or/c #f list?) null])
+@defproc[(Meta [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<meta>} element.
 
@@ -1567,7 +1591,7 @@ Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags
 }
 
 @defproc[(Title [content text-content/c]
-                [#:attrs attrs (or/c #f list?) null])
+                [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<title>} element.
 
@@ -1581,7 +1605,7 @@ Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
 
-@defproc[(Base [#:attrs attrs (or/c #f list?) null])
+@defproc[(Base [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<base>} element.
 
@@ -1594,7 +1618,7 @@ Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags
 }
 
 @defproc[(Style [content text-content/c]
-                [#:attrs attrs (or/c #f list?) null])
+                [#:attrs attrs html-attrs/c null])
          view?]{
 Build a primitive @tt{<style>} element.
 
@@ -1607,8 +1631,8 @@ If an observable update becomes a non-string and non-@racket[#f] value, the upda
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("style")))}.
 }
 
-@defproc[(Slot [#:attrs attrs (or/c #f list?) null]
-               [child any/c] ...)
+@defproc[(Slot [#:attrs attrs html-attrs/c null]
+               [child view?] ...)
          view?]{
 Build a primitive @tt{<slot>} element with children.
 
@@ -1625,18 +1649,18 @@ calling forms.
 
 @subsection{Layout Components}
 
-@defproc[(window [child any/c] ...) any/c]{
+@defproc[(window [child view?] ...) any/c]{
 Build a root window view.
                                            
 Positional arguments: each @racket[child] is a view shown in the window.
 }
 
-@defproc[(vpanel [child any/c] ...) any/c]{
+@defproc[(vpanel [child view?] ...) any/c]{
 Build a vertical container.
 Positional arguments: each @racket[child] is stacked top-to-bottom.
 }
 
-@defproc[(hpanel [child any/c] ...) any/c]{
+@defproc[(hpanel [child view?] ...) any/c]{
 Build a horizontal container.
 
 Positional arguments: each @racket[child] is laid out left-to-right.
@@ -1645,7 +1669,7 @@ Positional arguments: each @racket[child] is laid out left-to-right.
 @defproc[(container [#:id    id    (or/c #f string? symbol?) #f]
                     [#:class class any/c                     #f]
                     [#:attrs attrs list?                     null]
-                    [child any/c] ...)
+                    [child view?] ...)
          view?]{
 Build a centered container with width constraints.
 
@@ -1656,7 +1680,7 @@ Positional arguments: each @racket[child] is content inside the container.
                [#:id    id    (or/c #f string? symbol?) #f]
                [#:class class any/c                     #f]
                [#:attrs attrs list?                     null]
-               [child any/c] ...)
+               [child view?] ...)
          view?]{
 Build a grid container. The first child may be a gap value (number or CSS length string).
 
@@ -1666,7 +1690,7 @@ Positional arguments: @racket[columns] sets the column template/count; @racket[c
 @defproc[(stack [#:id    id    (or/c #f string? symbol?) #f]
                 [#:class class any/c                     #f]
                 [#:attrs attrs list?                     null]
-                [child any/c] ...)
+                [child view?] ...)
          view?]{
 Build a vertical stack container.
 
@@ -1676,14 +1700,14 @@ Positional arguments: each @racket[child] is a stacked item.
 @defproc[(inline [#:id    id    (or/c #f string? symbol?) #f]
                  [#:class class any/c                     #f]
                  [#:attrs attrs list?                     null]
-                 [child any/c] ...)
+                 [child view?] ...)
          view?]{
 Build a horizontal inline container.
 
 Positional arguments: each @racket[child] is an inline item.
 }
 
-@defproc[(Fragment [child any/c] ...)
+@defproc[(Fragment [child view?] ...)
          view?]{
 Build a zero-wrapper composition view.
 
@@ -1715,7 +1739,7 @@ Positional arguments: @racket[orientation] is @racket['horizontal] or @racket['v
                 [#:id    id    (or/c #f string? symbol?) #f]
                 [#:class class any/c                     #f]
                 [#:attrs attrs list?                     null]
-                [child any/c] ...)
+                [child view?] ...)
          view?]{
 Build a labeled container (fieldset-like grouping).
 
@@ -2013,7 +2037,7 @@ This constructor also accepts global HTML keyword attributes for its root
 @tt{<button>} element.
 }
 
-@defproc[(button-group [child any/c] ...
+@defproc[(button-group [child view?] ...
                        [#:id id (or/c #f string? symbol?) #f]
                        [#:class class any/c #f]
                        [#:attrs attrs list? null])
@@ -2057,7 +2081,7 @@ This constructor also accepts global HTML keyword attributes for its root
 @tt{<div>} element.
 }
 
-@defproc[(toolbar [child any/c] ...
+@defproc[(toolbar [child view?] ...
                   [#:id id (or/c #f string? symbol?) #f]
                   [#:class class any/c #f]
                   [#:attrs attrs list? null])
@@ -2070,7 +2094,7 @@ This constructor also accepts global HTML keyword attributes for its root
 @tt{<div>} element.
 }
 
-@defproc[(toolbar-group [child any/c] ...
+@defproc[(toolbar-group [child view?] ...
                         [#:id id (or/c #f string? symbol?) #f]
                         [#:class class any/c #f]
                         [#:attrs attrs list? null])
@@ -2425,7 +2449,7 @@ Positional arguments:
 @racket[key-of] extracts stable item keys.
 }
 
-@defproc[(card [child any/c] ...
+@defproc[(card [child view?] ...
                [#:id id (or/c #f string? symbol?) #f]
                [#:class class any/c #f]
                [#:attrs attrs list? null])
@@ -2492,7 +2516,7 @@ Positional arguments:
                  [#:close-label close-label any/c "Close dialog"]
                  [#:tone tone any/c #f]
                  [#:tone-style tone-style any/c #f]
-                 [child any/c] ...
+                 [child view?] ...
                  [#:id id (or/c #f string? symbol?) #f]
                  [#:class class any/c #f]
                  [#:attrs attrs list? null])
@@ -2517,7 +2541,7 @@ This constructor also accepts global HTML keyword attributes for its root
                 [#:close-label close-label any/c "Close modal"]
                 [#:tone tone any/c #f]
                 [#:tone-style tone-style any/c #f]
-                [child any/c] ...
+                [child view?] ...
                 [#:id id (or/c #f string? symbol?) #f]
                 [#:class class any/c #f]
                 [#:attrs attrs list? null])
@@ -2535,7 +2559,7 @@ This constructor also accepts global HTML keyword attributes for its root
 @defproc[(offcanvas [open any/c]
                     [on-close procedure?]
                     [#:side side (or/c #f symbol?) #f]
-                    [child any/c] ...
+                    [child view?] ...
                     [#:id id (or/c #f string? symbol?) #f]
                     [#:class class any/c #f]
                     [#:attrs attrs list? null])
@@ -2568,7 +2592,7 @@ This constructor also accepts global HTML keyword attributes for its root
 }
 
 @defproc[(popover [label any/c]
-                  [child any/c] ...
+                  [child view?] ...
                   [#:placement placement (or/c #f symbol?) #f]
                   [#:title title any/c #f]
                   [#:footer footer any/c #f]

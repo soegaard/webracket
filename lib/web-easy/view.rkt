@@ -412,6 +412,7 @@
     (define kind/vpanel    'vpanel)    ; Vertical container view.
     (define kind/hpanel    'hpanel)    ; Horizontal container view.
     (define kind/fragment  'fragment)  ; Zero-wrapper composition view.
+    (define kind/raw-text  'raw-text)  ; Internal raw text child view for primitive mixed content.
     (define kind/html-element 'html-element) ; Primitive HTML element leaf view.
     (define kind/html-element-children 'html-element-children) ; Primitive HTML element container view.
     (define kind/observable-element-children 'observable-element-children) ; Dynamic multi-child primitive element view.
@@ -1727,6 +1728,25 @@
        #f
        attrs
        'html-element-children))
+
+    ;; raw-text-view/internal : text-content/c -> view?
+    ;;   Construct an internal raw text child view for primitive mixed content.
+    (define (raw-text-view/internal value)
+      (view kind/raw-text
+            (list (cons 'value value))
+            '()))
+
+    ;; content-item->child-view/internal : symbol? any/c -> view?
+    ;;   Normalize primitive mixed content item as child view, preserving raw text.
+    (define (content-item->child-view/internal who item)
+      (cond
+        [(view? item) item]
+        [(text-content/c item)
+         (raw-text-view/internal item)]
+        [else
+         (error who
+                "expected text-like content or child view, got ~e"
+                item)]))
 
     ;; normalize-heading-level/internal : any/c -> number?
     ;;   Normalize heading level to integer in the closed interval 1..6.

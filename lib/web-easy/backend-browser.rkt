@@ -1163,7 +1163,12 @@
     ;; dom-node : symbol? list? list? any/c any/c any/c -> dom-node?
     ;;   Construct a browser-backed node and install event bridges.
     (define (dom-node tag attrs children text on-click on-change)
-      (define native (js-create-element (tag->element-name tag)))
+      (define native
+        (if (eq? tag 'text)
+            (js-create-text-node (if text
+                                     (value->attr-string text)
+                                     ""))
+            (js-create-element (tag->element-name tag))))
       (define n      (dom-node-record tag attrs children text on-click on-change native))
       ;; invoke-click-callback! : any/c -> void?
       ;;   Invoke callback when present.
@@ -1176,34 +1181,35 @@
         (when callback
           (callback payload)))
       
-      (install-default-node-shape! n)
-      (apply-attributes! n '() attrs)
-      (when text
-        (apply-text! native text))
-      (js-add-event-listener!
+      (unless (eq? tag 'text)
+        (install-default-node-shape! n)
+        (apply-attributes! n '() attrs)
+        (when text
+          (apply-text! native text))
+        (js-add-event-listener!
        native
        "click"
        (procedure->external
         (lambda (_evt)
           (define callback (dom-node-record-on-click n))
           (invoke-click-callback! callback))))
-      (js-add-event-listener!
+        (js-add-event-listener!
        native
        "change"
        (procedure->external
         (lambda (_evt)
           (define callback (dom-node-record-on-change n))
           (invoke-change-callback! callback (node-change-value n)))))
-      (when (or (eq? tag 'input)
-                (eq? tag 'textarea))
-        (js-add-event-listener!
+        (when (or (eq? tag 'input)
+                  (eq? tag 'textarea))
+          (js-add-event-listener!
          native
          "input"
          (procedure->external
           (lambda (_evt)
             (define callback (dom-node-record-on-change n))
             (invoke-change-callback! callback (node-change-value n))))))
-      (js-add-event-listener!
+        (js-add-event-listener!
        native
        "keydown"
        (procedure->external
@@ -1320,7 +1326,7 @@
               (focus-cycled-dialog-target! native shift?)))
           (when (and callback (role-dialog-node? n))
             (invoke-change-callback! callback key)))))
-      (js-add-event-listener!
+        (js-add-event-listener!
        native
        "mouseenter"
        (procedure->external
@@ -1332,7 +1338,7 @@
             (define callback (dom-node-record-on-change n))
             (when (and callback (hover-change-node? n))
               (invoke-change-callback! callback "mouseenter"))))))
-      (js-add-event-listener!
+        (js-add-event-listener!
        native
        "mouseleave"
        (procedure->external
@@ -1344,7 +1350,7 @@
             (define callback (dom-node-record-on-change n))
             (when (and callback (hover-change-node? n))
               (invoke-change-callback! callback "mouseleave"))))))
-      (js-add-event-listener!
+        (js-add-event-listener!
        native
        "focusout"
        (procedure->external
@@ -1465,7 +1471,18 @@
     ;;   Update tracked text and sync native DOM text child.
     (define (set-dom-node-text! n text)
       (set-dom-node-record-text! n text)
-      (apply-text! (dom-node-record-native n) text)
+      (if (eq? (dom-node-record-tag n) 'text)
+          (let ()
+            (define old-native (dom-node-record-native n))
+            (define replacement
+              (js-create-text-node (if text
+                                       (value->attr-string text)
+                                       "")))
+            (define old-parent (js-ref/extern old-native "parentNode"))
+            (when (and old-parent (not (extern-nullish? old-parent)))
+              (js-send old-parent "replaceChild" (vector replacement old-native)))
+            (set-dom-node-record-native! n replacement))
+          (apply-text! (dom-node-record-native n) text))
       (void))
 
     ;; set-dom-node-on-click! : dom-node? any/c -> void?

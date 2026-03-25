@@ -1472,7 +1472,205 @@
     (remove-duplicates (append globals
                                specific
                                '(data-* aria-*))))
+  ;; `#:content-mode text-or-children` is for primitive HTML elements such as
+  ;; `Button` that preserve the old single text-like content form while also
+  ;; accepting ordered mixed content sequences like a real container element.
   (syntax-case stx ()
+    [(_ name base fixed ...
+        #:required-keywords (required-kw ...)
+        #:required-any-keywords (required-any-kw ...)
+        #:content-mode content-mode)
+     (identifier? #'name)
+     (let* ([base-sym (syntax-e #'base)]
+            [fixed-list (syntax->list #'(fixed ...))]
+            [content-mode-datum (syntax-e #'content-mode)]
+            [required-kws (syntax->datum #'(required-kw ...))]
+            [required-any-kws (syntax->datum #'(required-any-kw ...))]
+            [_ (unless (eq? content-mode-datum 'text-or-children)
+                 (raise-syntax-error who
+                                     "expected `text-or-children` for #:content-mode"
+                                     stx
+                                     #'content-mode))]
+            [allowed-attrs
+             (if (or (eq? base-sym 'html-element)
+                     (eq? base-sym 'html-element-children))
+                 (let ()
+                   (unless (and fixed-list (= (length fixed-list) 1))
+                     (raise-syntax-error who
+                                         "html-element wrappers must provide exactly one fixed tag literal"
+                                         stx
+                                         #'(fixed ...)))
+                   (define fixed0 (car fixed-list))
+                   (syntax-case fixed0 (quote)
+                     [(quote tag-sym)
+                      (if (symbol? (syntax-e #'tag-sym))
+                          (allowed-attrs-for-html-tag stx (syntax-e #'tag-sym))
+                          (raise-syntax-error who
+                                              "expected quoted symbol tag in html-element wrapper"
+                                              stx
+                                              fixed0))]
+                     [_
+                      (raise-syntax-error who
+                                          "expected quoted symbol tag in html-element wrapper"
+                                          stx
+                                          fixed0)]))
+                 #f)])
+       (with-syntax ([name/sym (datum->syntax #'name (syntax-e #'name) #'name #'name)]
+                     [html-element-id (datum->syntax #'base 'html-element #'base #'base)]
+                     [html-element-children-id (datum->syntax #'base 'html-element-children #'base #'base)]
+                     [content-item->child-view-id (datum->syntax #'base 'content-item->child-view/internal #'base #'base)]
+                     [allowed-attrs-stx (datum->syntax stx (list 'quote allowed-attrs) stx stx)]
+                     [required-kws-stx (datum->syntax stx (list 'quote required-kws) stx stx)]
+                     [required-any-kws-stx (datum->syntax stx (list 'quote required-any-kws) stx stx)])
+         #'(define (name . all-args)
+             (define-values (positional attrs)
+               (normalize-element-call 'name/sym
+                                       all-args
+                                       'any
+                                       allowed-attrs-stx
+                                       required-kws-stx
+                                       required-any-kws-stx))
+             (when (null? positional)
+               (error 'name/sym
+                      "wrong number of positional arguments (expected at least 1, got 0)"))
+             (if (and (= (length positional) 1)
+                      (not (view? (car positional))))
+                 (html-element-id fixed ...
+                                  (car positional)
+                                  #:attrs attrs)
+                 (apply html-element-children-id
+                        (append (list fixed ...)
+                                (map (lambda (item)
+                                       (content-item->child-view-id 'name/sym item))
+                                     positional)
+                                (list #:attrs attrs)))))))]
+    [(_ name base fixed ...
+        #:required-keywords (required-kw ...)
+        #:content-mode content-mode)
+     (identifier? #'name)
+     (let* ([base-sym (syntax-e #'base)]
+            [fixed-list (syntax->list #'(fixed ...))]
+            [content-mode-datum (syntax-e #'content-mode)]
+            [required-kws (syntax->datum #'(required-kw ...))]
+            [_ (unless (eq? content-mode-datum 'text-or-children)
+                 (raise-syntax-error who
+                                     "expected `text-or-children` for #:content-mode"
+                                     stx
+                                     #'content-mode))]
+            [allowed-attrs
+             (if (or (eq? base-sym 'html-element)
+                     (eq? base-sym 'html-element-children))
+                 (let ()
+                   (unless (and fixed-list (= (length fixed-list) 1))
+                     (raise-syntax-error who
+                                         "html-element wrappers must provide exactly one fixed tag literal"
+                                         stx
+                                         #'(fixed ...)))
+                   (define fixed0 (car fixed-list))
+                   (syntax-case fixed0 (quote)
+                     [(quote tag-sym)
+                      (if (symbol? (syntax-e #'tag-sym))
+                          (allowed-attrs-for-html-tag stx (syntax-e #'tag-sym))
+                          (raise-syntax-error who
+                                              "expected quoted symbol tag in html-element wrapper"
+                                              stx
+                                              fixed0))]
+                     [_
+                      (raise-syntax-error who
+                                          "expected quoted symbol tag in html-element wrapper"
+                                          stx
+                                          fixed0)]))
+                 #f)])
+       (with-syntax ([name/sym (datum->syntax #'name (syntax-e #'name) #'name #'name)]
+                     [html-element-id (datum->syntax #'base 'html-element #'base #'base)]
+                     [html-element-children-id (datum->syntax #'base 'html-element-children #'base #'base)]
+                     [content-item->child-view-id (datum->syntax #'base 'content-item->child-view/internal #'base #'base)]
+                     [allowed-attrs-stx (datum->syntax stx (list 'quote allowed-attrs) stx stx)]
+                     [required-kws-stx (datum->syntax stx (list 'quote required-kws) stx stx)])
+         #'(define (name . all-args)
+             (define-values (positional attrs)
+               (normalize-element-call 'name/sym
+                                       all-args
+                                       'any
+                                       allowed-attrs-stx
+                                       required-kws-stx
+                                       '()))
+             (when (null? positional)
+               (error 'name/sym
+                      "wrong number of positional arguments (expected at least 1, got 0)"))
+             (if (and (= (length positional) 1)
+                      (not (view? (car positional))))
+                 (html-element-id fixed ...
+                                  (car positional)
+                                  #:attrs attrs)
+                 (apply html-element-children-id
+                        (append (list fixed ...)
+                                (map (lambda (item)
+                                       (content-item->child-view-id 'name/sym item))
+                                     positional)
+                                (list #:attrs attrs)))))))]
+    [(_ name base fixed ...
+        #:content-mode content-mode)
+     (identifier? #'name)
+     (let* ([base-sym (syntax-e #'base)]
+            [fixed-list (syntax->list #'(fixed ...))]
+            [content-mode-datum (syntax-e #'content-mode)]
+            [_ (unless (eq? content-mode-datum 'text-or-children)
+                 (raise-syntax-error who
+                                     "expected `text-or-children` for #:content-mode"
+                                     stx
+                                     #'content-mode))]
+            [allowed-attrs
+             (if (or (eq? base-sym 'html-element)
+                     (eq? base-sym 'html-element-children))
+                 (let ()
+                   (unless (and fixed-list (= (length fixed-list) 1))
+                     (raise-syntax-error who
+                                         "html-element wrappers must provide exactly one fixed tag literal"
+                                         stx
+                                         #'(fixed ...)))
+                   (define fixed0 (car fixed-list))
+                   (syntax-case fixed0 (quote)
+                     [(quote tag-sym)
+                      (if (symbol? (syntax-e #'tag-sym))
+                          (allowed-attrs-for-html-tag stx (syntax-e #'tag-sym))
+                          (raise-syntax-error who
+                                              "expected quoted symbol tag in html-element wrapper"
+                                              stx
+                                              fixed0))]
+                     [_
+                      (raise-syntax-error who
+                                          "expected quoted symbol tag in html-element wrapper"
+                                          stx
+                                          fixed0)]))
+                 #f)])
+       (with-syntax ([name/sym (datum->syntax #'name (syntax-e #'name) #'name #'name)]
+                     [html-element-id (datum->syntax #'base 'html-element #'base #'base)]
+                     [html-element-children-id (datum->syntax #'base 'html-element-children #'base #'base)]
+                     [content-item->child-view-id (datum->syntax #'base 'content-item->child-view/internal #'base #'base)]
+                     [allowed-attrs-stx (datum->syntax stx (list 'quote allowed-attrs) stx stx)])
+         #'(define (name . all-args)
+             (define-values (positional attrs)
+               (normalize-element-call 'name/sym
+                                       all-args
+                                       'any
+                                       allowed-attrs-stx
+                                       '()
+                                       '()))
+             (when (null? positional)
+               (error 'name/sym
+                      "wrong number of positional arguments (expected at least 1, got 0)"))
+             (if (and (= (length positional) 1)
+                      (not (view? (car positional))))
+                 (html-element-id fixed ...
+                                  (car positional)
+                                  #:attrs attrs)
+                 (apply html-element-children-id
+                        (append (list fixed ...)
+                                (map (lambda (item)
+                                       (content-item->child-view-id 'name/sym item))
+                                     positional)
+                                (list #:attrs attrs)))))))]
     [(_ name base fixed ...
         #:required-keywords (required-kw ...)
         #:required-any-keywords (required-any-kw ...)

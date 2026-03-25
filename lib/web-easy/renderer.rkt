@@ -1115,6 +1115,22 @@
            node]
           [(fragment)
            (error 'Fragment "cannot be rendered directly; use as child content")]
+          [(raw-text)
+           (define raw-value (alist-ref (view-props v) 'value 'render))
+           (define node (dom-node 'text '() '() "" #f #f))
+           (define (set-text! value0)
+             (set-dom-node-text! node (value->text value0)))
+           (cond
+             [(obs? raw-value)
+              (set-text! (obs-peek raw-value))
+              (define (value-listener updated-value)
+                (set-text! updated-value))
+              (obs-observe! raw-value value-listener)
+              (register-cleanup! (lambda ()
+                                   (obs-unobserve! raw-value value-listener)))]
+             [else
+              (set-text! raw-value)])
+           node]
           [(html-element)
            (define raw-tag   (alist-ref (view-props v) 'tag   'render))
            (define raw-value (alist-ref (view-props v) 'value 'render))

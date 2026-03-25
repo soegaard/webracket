@@ -51,6 +51,51 @@
      (syntax/loc #'node
        (check-node-attrs* node attrs label))]))
 
+;; Render one primitive node under the standard window/vpanel harness.
+(define (render-primitive-node v)
+  (node-child (node-child (renderer-root (render (window (vpanel v)))) 0) 0))
+
+;; Check the standard mixed-content shape produced by text-or-children primitives.
+(define (check-mixed-content-node* node expected-tag [label #f])
+  (define prefix (if label
+                     (format "~a: " label)
+                     ""))
+  (define children (dom-node-children node))
+  (check-equal (dom-node-tag node)
+               expected-tag
+               (string-append prefix "root tag matches"))
+  (check-equal (length children)
+               3
+               (string-append prefix "mixed content keeps three ordered children"))
+  (check-equal (dom-node-tag (list-ref children 0))
+               'text
+               (string-append prefix "leading text becomes raw text child"))
+  (check-equal (dom-node-text (list-ref children 0))
+               "Lead "
+               (string-append prefix "leading text preserved"))
+  (check-equal (dom-node-tag (list-ref children 1))
+               'span
+               (string-append prefix "middle child view preserved"))
+  (check-equal (dom-node-text (list-ref children 1))
+               "mid"
+               (string-append prefix "middle child view text preserved"))
+  (check-equal (dom-node-tag (list-ref children 2))
+               'text
+               (string-append prefix "trailing text becomes raw text child"))
+  (check-equal (dom-node-text (list-ref children 2))
+               " tail"
+               (string-append prefix "trailing text preserved")))
+
+;; Macro wrapper for concise mixed-content acceptance checks.
+(define-syntax (check-mixed-content-accepted stx)
+  (syntax-case stx ()
+    [(_ expr expected-tag)
+     (syntax/loc #'expr
+       (check-mixed-content-node* (render-primitive-node expr) expected-tag))]
+    [(_ expr expected-tag label)
+     (syntax/loc #'expr
+       (check-mixed-content-node* (render-primitive-node expr) expected-tag label))]))
+
 ;; -------------------------------------------------------------------
 ;; Core Heading/Text Primitive Coverage
 ;; -------------------------------------------------------------------
@@ -174,15 +219,17 @@
                      "H1 rejects unknown keyword attribute")
 (check-call-rejected (H1)
                      "H1 rejects missing content")
-(check-call-rejected (H1 "Hero" (Span " extra"))
-                     "H1 rejects mixed text and child views")
+(check-mixed-content-accepted (H1 "Lead " (Span "mid") " tail")
+                              'h1
+                              "H1 mixed content")
 (check-call-rejected (H4 "Bad attr"
                          #:foo "bar")
                      "H4 rejects unknown keyword attribute")
 (check-call-rejected (H4)
                      "H4 rejects missing content")
-(check-call-rejected (H4 "Section" (Span " extra"))
-                     "H4 rejects mixed text and child views")
+(check-mixed-content-accepted (H4 "Lead " (Span "mid") " tail")
+                              'h4
+                              "H4 mixed content")
 
 ;; H1 keeps class merge/dedupe behavior through root decorators
 (define r-h1-class-merge
@@ -359,8 +406,9 @@
 
 (check-call-rejected (H1)
                      "H1 rejects missing required positional content")
-(check-call-rejected (H1 "a" "b")
-                     "H1 rejects too many positional arguments")
+(check-mixed-content-accepted (H1 "Lead " (Span "mid") " tail")
+                              'h1
+                              "H1 positional mixed content")
 
 ;; define/component supports variadic children with #:rest + #:root-attrs
 ;; -------------------------------------------------------------------
@@ -416,15 +464,17 @@
              "Span child views keep order")
 (check-call-rejected (P)
                      "P rejects missing content")
-(check-call-rejected (P "Paragraph" (Span " extra"))
-                     "P rejects mixed text and child views")
+(check-mixed-content-accepted (P "Lead " (Span "mid") " tail")
+                              'p
+                              "P mixed content")
 (check-call-rejected (P "Bad P attr"
                         #:foo "x")
                      "P rejects unknown keyword attribute")
 (check-call-rejected (Span)
                      "Span rejects missing content")
-(check-call-rejected (Span "Inline" (Strong " extra"))
-                     "Span rejects mixed text and child views")
+(check-mixed-content-accepted (Span "Lead " (Span "mid") " tail")
+                              'span
+                              "Span mixed content")
 (check-call-rejected (Span "Bad Span attr"
                            #:foo "x")
                      "Span rejects unknown keyword attribute")
@@ -515,32 +565,37 @@
                      "Strong rejects unknown attrs")
 (check-call-rejected (Strong)
                      "Strong rejects missing content")
-(check-call-rejected (Strong "Strong text" (Span " extra"))
-                     "Strong rejects mixed text and child views")
+(check-mixed-content-accepted (Strong "Lead " (Span "mid") " tail")
+                              'strong
+                              "Strong mixed content")
 (check-call-rejected (Em "Bad Em attr" #:foo "x")
                      "Em rejects unknown attrs")
 (check-call-rejected (Em)
                      "Em rejects missing content")
-(check-call-rejected (Em "Em text" (Span " extra"))
-                     "Em rejects mixed text and child views")
+(check-mixed-content-accepted (Em "Lead " (Span "mid") " tail")
+                              'em
+                              "Em mixed content")
 (check-call-rejected (Code "Bad Code attr" #:foo "x")
                      "Code rejects unknown attrs")
 (check-call-rejected (Code)
                      "Code rejects missing content")
-(check-call-rejected (Code "x := 1" (Span " extra"))
-                     "Code rejects mixed text and child views")
+(check-mixed-content-accepted (Code "Lead " (Span "mid") " tail")
+                              'code
+                              "Code mixed content")
 (check-call-rejected (Pre "Bad Pre attr" #:foo "x")
                      "Pre rejects unknown attrs")
 (check-call-rejected (Pre)
                      "Pre rejects missing content")
-(check-call-rejected (Pre "line 1" (Span " extra"))
-                     "Pre rejects mixed text and child views")
+(check-mixed-content-accepted (Pre "Lead " (Span "mid") " tail")
+                              'pre
+                              "Pre mixed content")
 (check-call-rejected (Small "Bad Small attr" #:foo "x")
                      "Small rejects unknown attrs")
 (check-call-rejected (Small)
                      "Small rejects missing content")
-(check-call-rejected (Small "small print" (Span " extra"))
-                     "Small rejects mixed text and child views")
+(check-mixed-content-accepted (Small "Lead " (Span "mid") " tail")
+                              'small
+                              "Small mixed content")
 (check-call-rejected (Br "bad")
                      "Br rejects positional content")
 (check-call-rejected (Hr "bad")
@@ -683,62 +738,52 @@
                      "B rejects unknown attrs")
 (check-call-rejected (B)
                      "B rejects missing content")
-(check-call-rejected (B "Bold" (Span " extra"))
-                     "B rejects mixed text and child views")
+(check-mixed-content-accepted (B "Lead " (Span "mid") " tail") 'b "B mixed content")
 (check-call-rejected (I "Bad I attr" #:foo "x")
                      "I rejects unknown attrs")
 (check-call-rejected (I)
                      "I rejects missing content")
-(check-call-rejected (I "Italic" (Span " extra"))
-                     "I rejects mixed text and child views")
+(check-mixed-content-accepted (I "Lead " (Span "mid") " tail") 'i "I mixed content")
 (check-call-rejected (U "Bad U attr" #:foo "x")
                      "U rejects unknown attrs")
 (check-call-rejected (U)
                      "U rejects missing content")
-(check-call-rejected (U "Underline" (Span " extra"))
-                     "U rejects mixed text and child views")
+(check-mixed-content-accepted (U "Lead " (Span "mid") " tail") 'u "U mixed content")
 (check-call-rejected (S "Bad S attr" #:foo "x")
                      "S rejects unknown attrs")
 (check-call-rejected (S)
                      "S rejects missing content")
-(check-call-rejected (S "Strikethrough" (Span " extra"))
-                     "S rejects mixed text and child views")
+(check-mixed-content-accepted (S "Lead " (Span "mid") " tail") 's "S mixed content")
 (check-call-rejected (Mark "Bad Mark attr" #:foo "x")
                      "Mark rejects unknown attrs")
 (check-call-rejected (Mark)
                      "Mark rejects missing content")
-(check-call-rejected (Mark "Highlight" (Span " extra"))
-                     "Mark rejects mixed text and child views")
+(check-mixed-content-accepted (Mark "Lead " (Span "mid") " tail") 'mark "Mark mixed content")
 (check-call-rejected (Sub "Bad Sub attr" #:foo "x")
                      "Sub rejects unknown attrs")
 (check-call-rejected (Sub)
                      "Sub rejects missing content")
-(check-call-rejected (Sub "x2" (Span " extra"))
-                     "Sub rejects mixed text and child views")
+(check-mixed-content-accepted (Sub "Lead " (Span "mid") " tail") 'sub "Sub mixed content")
 (check-call-rejected (Sup "Bad Sup attr" #:foo "x")
                      "Sup rejects unknown attrs")
 (check-call-rejected (Sup)
                      "Sup rejects missing content")
-(check-call-rejected (Sup "x3" (Span " extra"))
-                     "Sup rejects mixed text and child views")
+(check-mixed-content-accepted (Sup "Lead " (Span "mid") " tail") 'sup "Sup mixed content")
 (check-call-rejected (Kbd "Bad Kbd attr" #:foo "x")
                      "Kbd rejects unknown attrs")
 (check-call-rejected (Kbd)
                      "Kbd rejects missing content")
-(check-call-rejected (Kbd "Ctrl+C" (Span " extra"))
-                     "Kbd rejects mixed text and child views")
+(check-mixed-content-accepted (Kbd "Lead " (Span "mid") " tail") 'kbd "Kbd mixed content")
 (check-call-rejected (Samp "Bad Samp attr" #:foo "x")
                      "Samp rejects unknown attrs")
 (check-call-rejected (Samp)
                      "Samp rejects missing content")
-(check-call-rejected (Samp "stdout" (Span " extra"))
-                     "Samp rejects mixed text and child views")
+(check-mixed-content-accepted (Samp "Lead " (Span "mid") " tail") 'samp "Samp mixed content")
 (check-call-rejected (Var "Bad Var attr" #:foo "x")
                      "Var rejects unknown attrs")
 (check-call-rejected (Var)
                      "Var rejects missing content")
-(check-call-rejected (Var "n" (Span " extra"))
-                     "Var rejects mixed text and child views")
+(check-mixed-content-accepted (Var "Lead " (Span "mid") " tail") 'var "Var mixed content")
 
 ;; Additional inline semantic primitives: Q/Cite/Dfn/Abbr/Time/Data
 (define r-inline-semantic-primitives
@@ -826,38 +871,32 @@
                      "Q rejects unknown attrs")
 (check-call-rejected (Q)
                      "Q rejects missing content")
-(check-call-rejected (Q "Quoted" (Span " extra"))
-                     "Q rejects mixed text and child views")
+(check-mixed-content-accepted (Q "Lead " (Span "mid") " tail") 'q "Q mixed content")
 (check-call-rejected (Cite "Bad Cite attr" #:foo "x")
                      "Cite rejects unknown attrs")
 (check-call-rejected (Cite)
                      "Cite rejects missing content")
-(check-call-rejected (Cite "RFC 3986" (Span " extra"))
-                     "Cite rejects mixed text and child views")
+(check-mixed-content-accepted (Cite "Lead " (Span "mid") " tail") 'cite "Cite mixed content")
 (check-call-rejected (Dfn "Bad Dfn attr" #:foo "x")
                      "Dfn rejects unknown attrs")
 (check-call-rejected (Dfn)
                      "Dfn rejects missing content")
-(check-call-rejected (Dfn "Protocol" (Span " extra"))
-                     "Dfn rejects mixed text and child views")
+(check-mixed-content-accepted (Dfn "Lead " (Span "mid") " tail") 'dfn "Dfn mixed content")
 (check-call-rejected (Abbr "Bad Abbr attr" #:foo "x")
                      "Abbr rejects unknown attrs")
 (check-call-rejected (Abbr)
                      "Abbr rejects missing content")
-(check-call-rejected (Abbr "HTML" (Span " extra"))
-                     "Abbr rejects mixed text and child views")
+(check-mixed-content-accepted (Abbr "Lead " (Span "mid") " tail") 'abbr "Abbr mixed content")
 (check-call-rejected (Time "Bad Time attr" #:foo "x")
                      "Time rejects unknown attrs")
 (check-call-rejected (Time)
                      "Time rejects missing content")
-(check-call-rejected (Time "10:00" (Span " extra"))
-                     "Time rejects mixed text and child views")
+(check-mixed-content-accepted (Time "Lead " (Span "mid") " tail") 'time "Time mixed content")
 (check-call-rejected (Data "Bad Data attr" #:foo "x")
                      "Data rejects unknown attrs")
 (check-call-rejected (Data)
                      "Data rejects missing content")
-(check-call-rejected (Data "42" (Span " extra"))
-                     "Data rejects mixed text and child views")
+(check-mixed-content-accepted (Data "Lead " (Span "mid") " tail") 'data "Data mixed content")
 
 ;; Additional edit + break primitives: Del/Ins/Wbr
 (define r-edit-break-primitives
@@ -909,14 +948,12 @@
                      "Del rejects unknown attrs")
 (check-call-rejected (Del)
                      "Del rejects missing content")
-(check-call-rejected (Del "old" (Span " extra"))
-                     "Del rejects mixed text and child views")
+(check-mixed-content-accepted (Del "Lead " (Span "mid") " tail") 'del "Del mixed content")
 (check-call-rejected (Ins "Bad Ins attr" #:foo "x")
                      "Ins rejects unknown attrs")
 (check-call-rejected (Ins)
                      "Ins rejects missing content")
-(check-call-rejected (Ins "new" (Span " extra"))
-                     "Ins rejects mixed text and child views")
+(check-mixed-content-accepted (Ins "Lead " (Span "mid") " tail") 'ins "Ins mixed content")
 (check-call-rejected (Wbr #:foo "x")
                      "Wbr rejects unknown attrs")
 (check-call-rejected (Wbr "bad")
@@ -1052,8 +1089,9 @@
              "A child views keep all descendants")
 (check-call-rejected (A)
                      "A rejects missing content")
-(check-call-rejected (A "Open" (Span " docs"))
-                     "A rejects mixed text and child views")
+(check-mixed-content-accepted (A "Lead " (Span "mid") " tail")
+                              'a
+                              "A mixed content")
 (check-call-rejected (A "Bad A attr"
                         #:foo "x")
                      "A rejects unknown keyword attribute")
@@ -1120,11 +1158,28 @@
 (check-equal (dom-node-tag (node-child button-children-node 1)) 'span "Button child-view form keeps nested span tag")
 (check-node-attrs button-children-node
                   '((name "rich-save")))
+(define @button-mixed-prefix (@ "Lead "))
+(define r-button-mixed-reactive
+  (render
+   (window
+    (Button @button-mixed-prefix
+            (Span "mid")
+            " tail"
+            #:name "mixed-save"))))
+(define button-mixed-reactive-node
+  (node-child (renderer-root r-button-mixed-reactive) 0))
+(check-node-attrs button-mixed-reactive-node
+                  '((name "mixed-save")))
+(check-mixed-content-node* button-mixed-reactive-node 'button "Button reactive mixed content")
+(:= @button-mixed-prefix "Start ")
+(check-equal (dom-node-text (node-child button-mixed-reactive-node 0))
+             "Start "
+             "Button reactive mixed content updates raw text child")
 (check-call-rejected (Button)
                      "Button requires at least one positional content argument")
-(check-call-rejected (Button "Save"
-                             (Span " now"))
-                     "Button rejects mixed text content and child views")
+(check-mixed-content-accepted (Button "Lead " (Span "mid") " tail")
+                              'button
+                              "Button mixed content")
 
 ;; A/Button wildcard boundary checks require proper data-/aria- prefix
 (check-call-rejected (A "Bad A wildcard"
@@ -1274,8 +1329,9 @@
              "Label child views keep all descendants")
 (check-call-rejected (Label)
                      "Label rejects missing content")
-(check-call-rejected (Label "Name" (Span " extra"))
-                     "Label rejects mixed text and child views")
+(check-mixed-content-accepted (Label "Lead " (Span "mid") " tail")
+                              'label
+                              "Label mixed content")
 (check-call-rejected (Form #:foo "x" (P "bad"))
                      "Form rejects unknown attrs")
 (check-call-rejected (Label "x" #:foo "x")
@@ -1596,8 +1652,9 @@
                      "Option rejects unknown attrs")
 (check-call-rejected (Option)
                      "Option rejects missing content")
-(check-call-rejected (Option "Basic" (Span " extra"))
-                     "Option rejects mixed text and child views")
+(check-mixed-content-accepted (Option "Lead " (Span "mid") " tail")
+                              'option
+                              "Option mixed content")
 (check-call-rejected (Textarea "x" #:foo "x")
                      "Textarea rejects unknown attrs")
 (check-call-rejected (Input "bad")
@@ -1857,8 +1914,9 @@
                      "Legend rejects unknown attrs")
 (check-call-rejected (Legend)
                      "Legend rejects missing content")
-(check-call-rejected (Legend "Account" (Span " extra"))
-                     "Legend rejects mixed text and child views")
+(check-mixed-content-accepted (Legend "Lead " (Span "mid") " tail")
+                              'legend
+                              "Legend mixed content")
 (check-call-rejected (Datalist #:foo "x" (Option #:value "x" (Span "bad")))
                      "Datalist rejects unknown attrs")
 (check-call-rejected (Optgroup #:foo "x" (Option #:value "x" (Span "bad")))
