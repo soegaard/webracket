@@ -1951,19 +1951,19 @@ Build lead paragraph text.
 Positional arguments: @racket[content] is lead text/content.
 }
 
-@defproc[(blockquote [content any/c]
-                     [attribution any/c #f]
+@defproc[(blockquote [content text-content/c]
+                     [attribution (or/c #f text-content/c) #f]
                      [#:align align symbol? 'left]
                      [#:id id (or/c #f string? symbol?) #f]
                      [#:class class any/c #f]
-                     [#:attrs attrs list? null])
+                     [#:attrs attrs html-attrs/c null])
          view?]{
 Build a blockquote with optional attribution and alignment.
 
 Positional arguments:
 @racket[content] is quote text/content;
 @racket[attribution] is optional attribution text;
-@racket[align] is quote alignment.
+@racket[#:align] is quote alignment.
 This constructor also accepts global HTML keyword attributes for its root
 @tt{<figure>} element.
 }
@@ -2004,17 +2004,20 @@ This constructor also accepts global HTML keyword attributes for its root
 
 @subsection{Action and Input Components}
 
-@defproc[(button [label any/c]
+@defproc[(button [label content/c]
                  [action procedure?]
+                 [leading-icon (or/c #f content/c) #f]
+                 [trailing-icon (or/c #f content/c) #f]
                  [#:id id (or/c #f string? symbol?) #f]
                  [#:class class any/c #f]
-                 [#:attrs attrs list? null])
+                 [#:attrs attrs html-attrs/c null])
          view?]{
 Build a clickable button.
 
 Positional arguments:
 @racket[label] is the button caption and
-@racket[action] is called on click.
+@racket[action] is called on click;
+@racket[leading-icon] and @racket[trailing-icon] are optional icon/content slots.
 The label and optional icon arguments may be plain text or child views,
 so this component can nest richer content inside the rendered @tt{<button>}.
 It is a higher-level convenience wrapper over the primitive @racket[Button].
@@ -2023,10 +2026,10 @@ This constructor also accepts global HTML keyword attributes for its root
 }
 
 @defproc[(close-button [action procedure?]
-                       [aria-label any/c "Close"]
+                       [aria-label text-content/c "Close"]
                        [#:id id (or/c #f string? symbol?) #f]
                        [#:class class any/c #f]
-                       [#:attrs attrs list? null])
+                       [#:attrs attrs html-attrs/c null])
          view?]{
 Build a standardized close button.
 
@@ -2040,7 +2043,7 @@ This constructor also accepts global HTML keyword attributes for its root
 @defproc[(button-group [child view?] ...
                        [#:id id (or/c #f string? symbol?) #f]
                        [#:class class any/c #f]
-                       [#:attrs attrs list? null])
+                       [#:attrs attrs html-attrs/c null])
          view?]{
 Build a grouped button container.
 
@@ -2068,10 +2071,10 @@ This constructor also accepts global HTML keyword attributes for its root
 @tt{<div>} element.
 }
 
-@defproc[(button-toolbar [group any/c] ...
+@defproc[(button-toolbar [group view?] ...
                          [#:id id (or/c #f string? symbol?) #f]
                          [#:class class any/c #f]
-                         [#:attrs attrs list? null])
+                         [#:attrs attrs html-attrs/c null])
          view?]{
 Build a toolbar composed of button groups.
 
@@ -2084,7 +2087,7 @@ This constructor also accepts global HTML keyword attributes for its root
 @defproc[(toolbar [child view?] ...
                   [#:id id (or/c #f string? symbol?) #f]
                   [#:class class any/c #f]
-                  [#:attrs attrs list? null])
+                  [#:attrs attrs html-attrs/c null])
          view?]{
 Build a generic horizontal toolbar.
 
@@ -2097,7 +2100,7 @@ This constructor also accepts global HTML keyword attributes for its root
 @defproc[(toolbar-group [child view?] ...
                         [#:id id (or/c #f string? symbol?) #f]
                         [#:class class any/c #f]
-                        [#:attrs attrs list? null])
+                        [#:attrs attrs html-attrs/c null])
          view?]{
 Build a grouped toolbar section.
 
@@ -2379,7 +2382,7 @@ This constructor also accepts global HTML keyword attributes for its root
 @tt{<div>} element.
 }
 
-@defproc[(menu-bar [menu any/c] ...) view?]{
+@defproc[(menu-bar [menu view?] ...) view?]{
 Build a horizontal menu bar.
 
 Positional arguments: each @racket[menu] is a @racket[menu] view.
@@ -2387,7 +2390,7 @@ This constructor also accepts global HTML keyword attributes for its root
 @tt{<menu-bar>} element.
 }
 
-@defproc[(menu [label any/c] [item any/c] ...) view?]{
+@defproc[(menu [label text-content/c] [item view?] ...) view?]{
 Build a menu in a menu bar.
 
 Positional arguments:
@@ -2396,28 +2399,35 @@ This constructor also accepts global HTML keyword attributes for its root
 @tt{<menu>} element.
 }
 
-@defproc[(menu-item [label any/c] [action procedure?]) view?]{
+@defproc[(menu-item [label text-content/c]
+                    [action procedure?]
+                    [leading-icon (or/c #f content/c) #f]
+                    [trailing-icon (or/c #f content/c) #f])
+         view?]{
 Build a menu item.
 
-Positional arguments: @racket[label] is item text and @racket[action] is called on activation.
+Positional arguments:
+@racket[label] is item text;
+@racket[action] is called on activation;
+@racket[leading-icon] and @racket[trailing-icon] are optional icon/content slots.
 This constructor also accepts global HTML keyword attributes for its root
 @tt{<menu-item>} element.
 }
 
-@defproc[(navigation-bar [item any/c] ...
+@defproc[(navigation-bar [item view?] ...
                          [#:id id (or/c #f string? symbol?) #f]
                          [#:class class any/c #f]
-                         [#:attrs attrs list? null])
+                         [#:attrs attrs html-attrs/c null])
          view?]{
 Build a navigation bar.
 
 Positional arguments: each @racket[item] is navbar content (brand, links, controls, menus, etc.).
 }
 
-@defproc[(top-bar [item any/c] ...
+@defproc[(top-bar [item view?] ...
                   [#:id id (or/c #f string? symbol?) #f]
                   [#:class class any/c #f]
-                  [#:attrs attrs list? null])
+                  [#:attrs attrs html-attrs/c null])
          view?]{
 Build a top bar container.
 
@@ -2430,17 +2440,17 @@ Positional arguments: each @racket[item] is top-bar content.
                 [rows list?]
                 [#:id id (or/c #f string? symbol?) #f]
                 [#:class class any/c #f]
-                [#:attrs attrs list? null])
+                [#:attrs attrs html-attrs/c null])
          view?]{
 Build a table view.
 
 Positional arguments: @racket[columns] defines table columns and @racket[rows] is row data.
 }
 
-@defproc[(list-view [items any/c]
+@defproc[(list-view [items (or/c list? observable?)]
                     [render-item procedure?]
                     [key-of procedure?])
-         any/c]{
+         view?]{
 Build a keyed dynamic list view.
 
 Positional arguments:
@@ -2452,7 +2462,7 @@ Positional arguments:
 @defproc[(card [child view?] ...
                [#:id id (or/c #f string? symbol?) #f]
                [#:class class any/c #f]
-               [#:attrs attrs list? null])
+               [#:attrs attrs html-attrs/c null])
          view?]{
 Build a card container.
 
@@ -2464,7 +2474,7 @@ Positional arguments: each @racket[child] is card content.
                     [on-select procedure?]
                     [#:id id (or/c #f string? symbol?) #f]
                     [#:class class any/c #f]
-                    [#:attrs attrs list? null])
+                    [#:attrs attrs html-attrs/c null])
          view?]{
 Build an accordion with one open section.
 
@@ -2479,7 +2489,7 @@ Positional arguments:
                    [on-select procedure?]
                    [#:id id (or/c #f string? symbol?) #f]
                    [#:class class any/c #f]
-                   [#:attrs attrs list? null])
+                   [#:attrs attrs html-attrs/c null])
          view?]{
 Build a carousel.
 
@@ -2494,7 +2504,7 @@ Positional arguments:
                     [on-select procedure?]
                     [#:id id (or/c #f string? symbol?) #f]
                     [#:class class any/c #f]
-                    [#:attrs attrs list? null])
+                    [#:attrs attrs html-attrs/c null])
          view?]{
 Build a scrollspy navigation component.
 
@@ -2506,20 +2516,20 @@ Positional arguments:
 
 @subsection{Overlays}
 
-@defproc[(dialog [open any/c]
+@defproc[(dialog [open (or/c boolean? observable?)]
                  [on-close procedure?]
                  [#:size size (or/c #f symbol?) #f]
-                 [#:title title any/c #f]
-                 [#:description description any/c #f]
-                 [#:footer footer any/c #f]
+                 [#:title title text-content/c #f]
+                 [#:description description text-content/c #f]
+                 [#:footer footer (or/c #f content/c) #f]
                  [#:show-close? show-close? any/c #f]
-                 [#:close-label close-label any/c "Close dialog"]
+                 [#:close-label close-label text-content/c "Close dialog"]
                  [#:tone tone any/c #f]
                  [#:tone-style tone-style any/c #f]
                  [child view?] ...
                  [#:id id (or/c #f string? symbol?) #f]
                  [#:class class any/c #f]
-                 [#:attrs attrs list? null])
+                 [#:attrs attrs html-attrs/c null])
          view?]{
 Build a dialog.
 
@@ -2531,20 +2541,20 @@ This constructor also accepts global HTML keyword attributes for its root
 @tt{<dialog>} element.
 }
 
-@defproc[(modal [open any/c]
+@defproc[(modal [open (or/c boolean? observable?)]
                 [on-close procedure?]
                 [#:size size (or/c #f symbol?) #f]
-                [#:title title any/c #f]
-                [#:description description any/c #f]
-                [#:footer footer any/c #f]
+                [#:title title text-content/c #f]
+                [#:description description text-content/c #f]
+                [#:footer footer (or/c #f content/c) #f]
                 [#:show-close? show-close? any/c #f]
-                [#:close-label close-label any/c "Close modal"]
+                [#:close-label close-label text-content/c "Close modal"]
                 [#:tone tone any/c #f]
                 [#:tone-style tone-style any/c #f]
                 [child view?] ...
                 [#:id id (or/c #f string? symbol?) #f]
                 [#:class class any/c #f]
-                [#:attrs attrs list? null])
+                [#:attrs attrs html-attrs/c null])
          view?]{
 Build a modal overlay.
 
@@ -2556,13 +2566,13 @@ This constructor also accepts global HTML keyword attributes for its root
 @tt{<dialog>} element.
 }
 
-@defproc[(offcanvas [open any/c]
+@defproc[(offcanvas [open (or/c boolean? observable?)]
                     [on-close procedure?]
                     [#:side side (or/c #f symbol?) #f]
                     [child view?] ...
                     [#:id id (or/c #f string? symbol?) #f]
                     [#:class class any/c #f]
-                    [#:attrs attrs list? null])
+                    [#:attrs attrs html-attrs/c null])
          view?]{
 Build an offcanvas panel.
 
@@ -2574,14 +2584,14 @@ This constructor also accepts global HTML keyword attributes for its root
 @tt{<div>} element.
 }
 
-@defproc[(tooltip [message any/c]
-                  [child any/c]
+@defproc[(tooltip [message text-content/c]
+                  [child view?]
                   [#:placement placement (or/c #f symbol?) #f]
-                  [#:title title any/c #f]
-                  [#:footer footer any/c #f]
+                  [#:title title (or/c #f text-content/c) #f]
+                  [#:footer footer (or/c #f text-content/c) #f]
                   [#:id id (or/c #f string? symbol?) #f]
                   [#:class class any/c #f]
-                  [#:attrs attrs list? null])
+                  [#:attrs attrs html-attrs/c null])
          view?]{
 Build a tooltip wrapper.
 
@@ -2591,14 +2601,14 @@ This constructor also accepts global HTML keyword attributes for its root
 @tt{<div>} element.
 }
 
-@defproc[(popover [label any/c]
+@defproc[(popover [label text-content/c]
                   [child view?] ...
                   [#:placement placement (or/c #f symbol?) #f]
-                  [#:title title any/c #f]
-                  [#:footer footer any/c #f]
+                  [#:title title (or/c #f text-content/c) #f]
+                  [#:footer footer (or/c #f text-content/c) #f]
                   [#:id id (or/c #f string? symbol?) #f]
                   [#:class class any/c #f]
-                  [#:attrs attrs list? null])
+                  [#:attrs attrs html-attrs/c null])
          view?]{
 Build a popover wrapper.
 
@@ -2610,14 +2620,14 @@ This constructor also accepts global HTML keyword attributes for its root
 
 @subsection{Reactive and Branching Components}
 
-@defproc[(observable-view [obs any/c] [render procedure?]) any/c]{
+@defproc[(observable-view [obs any/c] [render procedure?]) view?]{
 Build a dynamic view from an observable value.
 
 Positional arguments:
 @racket[obs] is the observable source and @racket[render] maps each observed value to a view.
 }
 
-@defproc[(if-view [test any/c] [then-view any/c] [else-view any/c]) any/c]{
+@defproc[(if-view [test any/c] [then-view view?] [else-view view?]) view?]{
 Build a two-way conditional view.
 
 Positional arguments: @racket[test] is condition value/observable;
@@ -2625,13 +2635,13 @@ Positional arguments: @racket[test] is condition value/observable;
 @racket[else-view] is false branch.
 }
 
-@defproc[(cond-view [clause pair?] ...) any/c]{
+@defproc[(cond-view [clause pair?] ...) view?]{
 Build a multi-branch conditional view.
 
 Positional arguments: each @racket[clause] is a condition/view branch pair.
 }
 
-@defproc[(case-view [target any/c] [clause pair?] ...) any/c]{
+@defproc[(case-view [target any/c] [clause pair?] ...) view?]{
 Build an equality-based branch view.
 
 Positional arguments:
@@ -2639,11 +2649,11 @@ Positional arguments:
 each @racket[clause] maps match keys to a branch view.
 }
 
-@defproc[(collapse [open any/c]
-                   [child any/c]
+@defproc[(collapse [open (or/c boolean? observable?)]
+                   [child view?]
                    [#:id    id    (or/c #f string? symbol?) #f]
                    [#:class class any/c #f]
-                   [#:attrs attrs list? null])
+                   [#:attrs attrs html-attrs/c null])
          view?]{
 Build a collapsible region.
 
