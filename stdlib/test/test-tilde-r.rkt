@@ -40,5 +40,11 @@
   (equal? (~r/precision 50.0 6) "50")
 
   ;; Precision 1
-  (equal? (~r/precision 78.80000000000001 1) "78.8")                        
+  (equal? (~r/precision 78.80000000000001 1) "78.8")
+  (equal? (~r/precision 1.100000000  1)
+          (~r/precision 1.1000000000 1))
+  (equal? (~r/precision 1.1000000000  1)  ; more of a reader test ;-)
+          (~r/precision 1.10000000000 1))
+
+  
   )
