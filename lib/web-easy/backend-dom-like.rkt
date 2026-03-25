@@ -7,30 +7,30 @@
 ;; Backend representation and primitive operations for the in-memory DOM-like node model.
 ;;
 ;; Exports:
-;;   dom-node                DOM-like node constructor.
-;;   dom-node?               Predicate for DOM-like nodes.
-;;   dom-node-tag            Access node tag symbol.
-;;   dom-node-attrs          Access node attributes alist.
-;;   dom-node-children       Access child node list.
-;;   dom-node-text           Access node text content.
-;;   dom-node-on-click       Access node click callback.
-;;   dom-node-on-change      Access node change callback.
-;;   set-dom-node-tag!       Mutate node tag.
-;;   set-dom-node-attrs!     Mutate node attributes.
-;;   set-dom-node-children!  Mutate node children.
-;;   set-dom-node-text!      Mutate node text content.
-;;   set-dom-node-on-click!  Mutate node click callback.
-;;   set-dom-node-on-change! Mutate node change callback.
-;;   dom-node-native         Return host-native node handle (#f in DOM-like backend).
-;;   backend-append-child!   Append child to parent node.
-;;   backend-set-single-child!  Replace node children with a single child.
-;;   backend-replace-children! Replace node children with a child list.
-;;   backend-mount-root!     Mount a root node into a host container (no-op here).
-;;   backend-scrollspy-observe-scroll!  Register scroll observer callback (no-op here).
+;;   dom-node                            DOM-like node constructor.
+;;   dom-node?                           Predicate for DOM-like nodes.
+;;   dom-node-tag                        Access node tag symbol.
+;;   dom-node-attrs                      Access node attributes alist.
+;;   dom-node-children                   Access child node list.
+;;   dom-node-text                       Access node text content.
+;;   dom-node-on-click                   Access node click callback.
+;;   dom-node-on-change                  Access node change callback.
+;;   set-dom-node-tag!                   Mutate node tag.
+;;   set-dom-node-attrs!                 Mutate node attributes.
+;;   set-dom-node-children!              Mutate node children.
+;;   set-dom-node-text!                  Mutate node text content.
+;;   set-dom-node-on-click!              Mutate node click callback.
+;;   set-dom-node-on-change!             Mutate node change callback.
+;;   dom-node-native                     Return host-native node handle (#f in DOM-like backend).
+;;   backend-append-child!               Append child to parent node.
+;;   backend-set-single-child!           Replace node children with a single child.
+;;   backend-replace-children!           Replace node children with a child list.
+;;   backend-mount-root!                 Mount a root node into a host container (no-op here).
+;;   backend-scrollspy-observe-scroll!   Register scroll observer callback (no-op here).
 ;;   backend-scrollspy-scroll-into-view! Scroll section node into view (no-op here).
-;;   backend-scrollspy-active-id  Compute active scrollspy id from section bindings.
-;;   backend-set-timeout!    Register a timeout callback (no-op here).
-;;   backend-clear-timeout!  Clear timeout callback handle (no-op here).
+;;   backend-scrollspy-active-id         Compute active scrollspy id from section bindings.
+;;   backend-set-timeout!                Register a timeout callback (no-op here).
+;;   backend-clear-timeout!              Clear timeout callback handle (no-op here).
 
 (define-values
   (dom-node
