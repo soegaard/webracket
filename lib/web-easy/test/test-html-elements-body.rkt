@@ -2002,6 +2002,41 @@
 (check-node-attrs style-node
                   '((type "text/css")
                     (media "screen")))
+(define @title-text (@ "Demo Page 2"))
+(define @style-text (@ "body { color: blue; }"))
+(define title-style-warning-messages '())
+(call-with-web-easy-warning-handler
+ (lambda (msg)
+   (set! title-style-warning-messages
+         (cons msg title-style-warning-messages)))
+ (lambda ()
+   (define r-head-reactive
+     (render
+      (window
+       (vpanel
+        (Title @title-text)
+        (Style @style-text #:type "text/css")))))
+   (define head-reactive-panel (node-child (renderer-root r-head-reactive) 0))
+   (define title-reactive-node (node-child head-reactive-panel 0))
+   (define style-reactive-node (node-child head-reactive-panel 1))
+   (check-equal (dom-node-text title-reactive-node) "Demo Page 2"
+                "Title supports observable string content")
+   (check-equal (dom-node-text style-reactive-node) "body { color: blue; }"
+                "Style supports observable string content")
+   (:= @title-text #f)
+   (:= @style-text #f)
+   (check-equal (dom-node-text title-reactive-node) ""
+                "Title maps observable #f to empty text")
+   (check-equal (dom-node-text style-reactive-node) ""
+                "Style maps observable #f to empty text")
+   (:= @title-text 42)
+   (:= @style-text '(bad))
+   (check-equal (dom-node-text title-reactive-node) ""
+                "Title ignores invalid observable text updates")
+   (check-equal (dom-node-text style-reactive-node) ""
+                "Style ignores invalid observable text updates")))
+(check-equal (length title-style-warning-messages) 2
+             "Title/Style invalid observable updates emit warnings")
 (check-call-rejected (Title "x" #:foo "x")
                      "Title rejects unknown attrs")
 (check-call-rejected (Base #:foo "x")

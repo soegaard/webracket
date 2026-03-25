@@ -111,6 +111,20 @@ Primitive `html-element` supports observable attrs.
 - `style` updates reactively,
 - tag can be observable (used by semantic `heading` delegation).
 
+### Special text-only primitives
+
+Some primitives intentionally remain text-only even after the broader primitive widening pass:
+
+- `Title`
+- `Style`
+- `Textarea`
+
+Current direction:
+
+- `Title` and `Style` stay text-only and should accept plain strings or observables.
+- If an observable update for `Title` or `Style` becomes a non-string and non-`#f` value, the update should be ignored and a console error should be logged.
+- `Textarea` stays a value/text primitive rather than accepting child views.
+
 ### Procedure-valued attrs
 
 Policy:

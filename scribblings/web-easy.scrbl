@@ -1281,6 +1281,9 @@ Build a primitive @tt{<textarea>} element.
 
 This is a multi-line text form control.
 
+This primitive remains text/value-oriented and does not accept child views.
+Use observables for its text/value content and keyword attributes instead of nested child elements.
+
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("textarea")))}.
 }
 
@@ -1570,6 +1573,10 @@ Build a primitive @tt{<title>} element.
 
 This sets the document title text.
 
+This primitive remains text-only and does not accept child views.
+It accepts plain strings and observables.
+If an observable update becomes a non-string and non-@racket[#f] value, the update is ignored.
+
 Element-specific keyword attributes: none beyond global attributes
 (plus @tt{data-*}/@tt{aria-*}).
 }
@@ -1592,6 +1599,10 @@ Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags
 Build a primitive @tt{<style>} element.
 
 This defines inline style-sheet text.
+
+This primitive remains text-only and does not accept child views.
+It accepts plain strings and observables.
+If an observable update becomes a non-string and non-@racket[#f] value, the update is ignored.
 
 Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags '("style")))}.
 }

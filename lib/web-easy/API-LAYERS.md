@@ -151,6 +151,12 @@ Still worth evaluating separately:
 
 These remaining cases need a more deliberate decision because their HTML content model is not just ordinary phrasing content.
 
+Current policy direction:
+
+- `Title` and `Style` should remain text-only primitives.
+- They should accept plain strings and observables, but observable updates that become non-string and non-`#f` should be ignored and logged as console errors.
+- `Textarea` should remain a value/text primitive rather than a child-view container.
+
 ## Library API
 
 These exports can build on the core primitives and provide the higher-level ergonomic layer.

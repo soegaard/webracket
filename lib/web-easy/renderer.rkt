@@ -615,6 +615,17 @@
         [(symbol? v) (symbol->string v)]
         [else        text/fallback]))
 
+    ;; html-string-only-text-tag? : any/c -> boolean?
+    ;;   Check whether tag is a primitive HTML element that keeps string-only text semantics.
+    (define (html-string-only-text-tag? tag)
+      (or (eq? tag 'title)
+          (eq? tag 'style)))
+
+    ;; html-string-only-text-value->string : any/c -> string?
+    ;;   Convert allowed string-only element text values to DOM text.
+    (define (html-string-only-text-value->string value)
+      (if (string? value) value ""))
+
     ;; attr-remove-key : list? symbol? -> list?
     ;;   Return attrs without entries for key.
     (define (attr-remove-key attrs key)
@@ -1105,7 +1116,7 @@
           [(fragment)
            (error 'Fragment "cannot be rendered directly; use as child content")]
           [(html-element)
-           (define raw-tag   (alist-ref (view-props v) 'tag 'render))
+           (define raw-tag   (alist-ref (view-props v) 'tag   'render))
            (define raw-value (alist-ref (view-props v) 'value 'render))
            (define initial-tag
              (let ([v0 (maybe-observable-value raw-tag)])
@@ -1129,27 +1140,51 @@
                  #t))
            (define (refresh-root-attrs!)
              (set-dom-node-attrs! node (attr-remove-key (dom-node-attrs node) 'class)))
-           (define (set-tag! tag-value)
+          (define (set-tag! tag-value)
              (set-dom-node-tag! node
                                 (if (symbol? tag-value)
                                     tag-value
                                     'div)))
-           (define (set-text! value0)
+          (define (set-text! value0)
              (set-dom-node-text! node (value->text value0)))
-           (cond
-             [(obs? raw-tag)
-              (set-tag! (obs-peek raw-tag))
-              (define (tag-listener updated-tag)
-                (set-tag! updated-tag))
+          (define (set-string-only-text! value0)
+            (set-dom-node-text! node
+                                (html-string-only-text-value->string value0)))
+          (define (emit-string-only-text-update-ignored! tag value0)
+            (define msg
+              (string-append "web-easy: ignored non-string observable text update for "
+                             (symbol->string tag)))
+            (emit-web-easy-warning! msg)
+            (js-log msg))
+          (define (current-text-tag)
+            (dom-node-tag node))
+          (cond
+            [(obs? raw-tag)
+             (set-tag! (obs-peek raw-tag))
+             (define (tag-listener updated-tag)
+               (set-tag! updated-tag))
               (obs-observe! raw-tag tag-listener)
               (register-cleanup! (lambda () (obs-unobserve! raw-tag tag-listener)))]
              [else
-              (set-tag! raw-tag)])
-           (cond
-             [(obs? raw-value)
-              (set-text! (obs-peek raw-value))
-              (define (listener updated)
-                (set-text! updated))
+             (set-tag! raw-tag)])
+          (cond
+            [(obs? raw-value)
+             (define initial-text-tag (current-text-tag))
+             (if (html-string-only-text-tag? initial-text-tag)
+                 (let ([initial-value (obs-peek raw-value)])
+                   (if (or (string? initial-value)
+                           (eq? initial-value #f))
+                       (set-string-only-text! initial-value)
+                       (emit-string-only-text-update-ignored! initial-text-tag initial-value)))
+                 (set-text! (obs-peek raw-value)))
+             (define (listener updated)
+               (define text-tag (current-text-tag))
+               (if (html-string-only-text-tag? text-tag)
+                   (if (or (string? updated)
+                           (eq? updated #f))
+                       (set-string-only-text! updated)
+                       (emit-string-only-text-update-ignored! text-tag updated))
+                   (set-text! updated)))
               (obs-observe! raw-value listener)
               (register-cleanup! (lambda () (obs-unobserve! raw-value listener)))]
              [else
