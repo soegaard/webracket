@@ -1574,7 +1574,7 @@
        #:after-render toast-after-render
        #:attrs attrs/final))
 
-    ;; close-button : (-> any/c) [(or/c string? observable?)] -> view?
+    ;; close-button : (-> any/c) [text-content/c] -> view?
     ;;   Construct a standardized close button with action, optional aria-label, and root decorators.
     ;;   Optional parameter aria-label defaults to "Close".
     (define/component close-button
@@ -2832,7 +2832,7 @@
       (P content
          #:attrs attrs/final))
 
-    ;; blockquote : (or/c string? observable?) [(or/c string? observable? false/c)] -> view?
+    ;; blockquote : text-content/c [(or/c #f text-content/c)] -> view?
     ;;   Construct a semantic blockquote with optional attribution footer and alignment.
     ;;   Optional parameter attribution defaults to #f.
     ;;   Accepts global HTML attributes for the root <figure> via keyword arguments.
@@ -2894,7 +2894,7 @@
                      (list '#:attrs root-attrs))))
 
 
-    ;; button : any/c (-> any/c) [any/c] [any/c] -> view?
+    ;; button : content/c (-> any/c) [(or/c #f content/c)] [(or/c #f content/c)] -> view?
     ;;   Construct a button view with optional leading/trailing icon labels.
     ;;   Label and icons may be plain text or child views.
     ;;   The rendered root is a primitive HTML <button>.
@@ -4086,9 +4086,8 @@
                sections/normalized)
               (list #:attrs attrs/final))))
 
-    ;; offcanvas : (or/c boolean? observable?) (-> any/c) [(or/c symbol? observable?)] view? ... -> view?
-    ;;   Construct an offcanvas side panel with open flag, close action, and optional side.
-    ;;   Optional parameter side defaults to 'end.
+    ;; offcanvas : (or/c boolean? observable?) (-> any/c) [view?] ... -> view?
+    ;;   Construct an offcanvas side panel with open flag, close action, optional #:side, and body children.
     (define/component offcanvas
       #:root-tag 'div
       #:component-keywords ([#:side side-kw #f])
@@ -4169,17 +4168,11 @@
        make-offcanvas-children
        #:attrs attrs/final))
 
-    ;; dialog : (or/c boolean? observable?) (-> any/c) [symbol?] [list?] view? ... -> view?
+    ;; dialog : (or/c boolean? observable?) (-> any/c) [view?] ... -> view?
     ;;   Construct a modal dialog that is visible when open is true and closes via on-close.
-    ;;   Optional parameter size defaults to 'md.
-    ;;   Optional parameter options defaults to '() and accepts:
-    ;;     title       -> string/observable title text.
-    ;;     description -> string/observable description text.
-    ;;     footer      -> string/observable or view content.
-    ;;     show-close? -> boolean toggle for top-right close button (default #f).
-    ;;     close-label -> string/observable aria-label for close button.
-    ;;     tone        -> symbol tone: primary/secondary/success/danger/warning/info/light/dark.
-    ;;     tone-style  -> symbol tone style: fill/outline.
+    ;;   Optional keyword #:size defaults to 'md.
+    ;;   Optional keywords #:title, #:description, #:footer, #:show-close?, #:close-label, #:tone,
+    ;;   and #:tone-style configure dialog chrome.
     (define/component dialog
       #:root-tag 'dialog
       #:component-keywords ([#:size size-kw #f]
@@ -4382,17 +4375,11 @@
        make-dialog-children
        #:attrs attrs/final))
 
-    ;; modal : (or/c boolean? observable?) (-> any/c) [symbol?] [list?] view? ... -> view?
+    ;; modal : (or/c boolean? observable?) (-> any/c) [view?] ... -> view?
     ;;   Construct a modal container that mirrors dialog behavior.
-    ;;   Optional parameter size defaults to 'md.
-    ;;   Optional parameter options defaults to '() and accepts:
-    ;;     title       -> string/observable title text.
-    ;;     description -> string/observable description text.
-    ;;     footer      -> string/observable or view content.
-    ;;     show-close? -> boolean toggle for top-right close button (default #f).
-    ;;     close-label -> string/observable aria-label for close button.
-    ;;     tone        -> symbol tone: primary/secondary/success/danger/warning/info/light/dark.
-    ;;     tone-style  -> symbol tone style: fill/outline.
+    ;;   Optional keyword #:size defaults to 'md.
+    ;;   Optional keywords #:title, #:description, #:footer, #:show-close?, #:close-label, #:tone,
+    ;;   and #:tone-style configure modal chrome.
     (define/component modal
       #:root-tag 'dialog
       #:component-keywords ([#:size size-kw #f]
@@ -5928,12 +5915,9 @@
                      (cons 'data-we-widget "scrollspy")
                      (cons 'class "we-scrollspy"))))
 
-    ;; tooltip : (or/c string? observable?) view? [symbol?] [list?] -> view?
-    ;;   Construct a tooltip container with message, trigger child view, optional placement, and optional options.
-    ;;   Optional parameter placement defaults to 'top.
-    ;;   Optional parameter options defaults to '() and accepts:
-    ;;     title  -> string/observable heading shown above message.
-    ;;     footer -> string/observable text shown below message.
+    ;; tooltip : text-content/c view? -> view?
+    ;;   Construct a tooltip container with message, trigger child view, optional #:placement,
+    ;;   and optional #:title/#:footer text.
     (define/component tooltip
       #:root-tag 'div
       #:component-keywords ([#:placement placement-kw #f]
@@ -6054,12 +6038,9 @@
        bubble-view
        #:attrs attrs/final))
 
-    ;; popover : (or/c string? observable?) [symbol?] [list?] view? ... -> view?
-    ;;   Construct a click-toggle popover with trigger label, optional placement, optional options, and body children.
-    ;;   Optional parameter placement defaults to 'bottom.
-    ;;   Optional parameter options defaults to '() and accepts:
-    ;;     title  -> string/observable heading shown above body.
-    ;;     footer -> string/observable text shown below body.
+    ;; popover : text-content/c [view?] ... -> view?
+    ;;   Construct a click-toggle popover with trigger label, optional #:placement,
+    ;;   optional #:title/#:footer text, and body children.
     (define/component popover
       #:root-tag 'div
       #:component-keywords ([#:placement placement-kw #f]
@@ -6437,11 +6418,8 @@
              (append children
                      (list #:attrs attrs/final))))
 
-    ;; navigation-bar : [(or/c symbol? observable?)] [(or/c boolean? observable?)] [symbol?] view? ... -> view?
-    ;;   Construct a navigation bar with optional orientation/collapsed/expand props and children.
-    ;;   Optional parameter orientation defaults to 'horizontal.
-    ;;   Optional parameter collapsed? defaults to #f.
-    ;;   Optional parameter expand defaults to 'never.
+    ;; navigation-bar : view? ... -> view?
+    ;;   Construct a navigation bar with optional #:orientation, #:collapsed?, and #:expand keywords plus children.
     (define/component navigation-bar
       #:root-tag 'nav
       #:component-keywords ([#:orientation orientation-kw #f]
@@ -6539,7 +6517,7 @@
                      children
                      (list #:attrs attrs/final))))
 
-    ;; menu : (or/c string? observable?) view? ... -> view?
+    ;; menu : text-content/c view? ... -> view?
     ;;   Construct a labeled menu containing menu-item children.
     ;;   Accepts global HTML attributes for the root <menu> via keyword arguments.
     (define/component menu
@@ -6619,7 +6597,7 @@
                                           (cons 'class @popup-class)))))
        #:attrs attrs/final))
 
-    ;; menu-item : (or/c string? observable?) (-> any/c) [any/c] [any/c] -> view?
+    ;; menu-item : text-content/c (-> any/c) [(or/c #f content/c)] [(or/c #f content/c)] -> view?
     ;;   Construct a menu item with optional leading/trailing icon labels.
     ;;   Optional parameter leading-icon defaults to #f.
     ;;   Optional parameter trailing-icon defaults to #f.
