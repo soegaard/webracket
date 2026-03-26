@@ -1906,6 +1906,18 @@ var imports = {
         'stop-propagation'() { throw new Error('DOM not available in this environment'); },
         'stop-immediate-propagation'() { throw new Error('DOM not available in this environment'); }
     },
+    // DOMRect
+    'dom-rect': hasDOM ? {
+        'left':   (rect => rect.left),
+        'top':    (rect => rect.top),
+        'width':  (rect => rect.width),
+        'height': (rect => rect.height)
+    } : {
+        'left'()   { throw new Error('DOM not available in this environment'); },
+        'top'()    { throw new Error('DOM not available in this environment'); },
+        'width'()  { throw new Error('DOM not available in this environment'); },
+        'height'() { throw new Error('DOM not available in this environment'); }
+    },
     // EventTarget
     'event-target': hasDOM ? {
         'add-event-listener!': ((target, type, listener) => target.addEventListener(from_fasl(type), listener))
