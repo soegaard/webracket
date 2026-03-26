@@ -133,9 +133,13 @@ These exports should behave like the core HTML building blocks that other compon
 - Expose generic primitive DOM event keywords directly on primitive elements.
 - Avoid library policy, styling conventions, and widget behavior.
 
-Current Phase 1 primitive DOM event support covers bubbling mouse and pointer
-events such as `#:on-click`, `#:on-mousedown`, `#:on-mouseup`,
-`#:on-pointerdown`, `#:on-pointermove`, and `#:on-pointerup`.
+Current primitive DOM event support covers bubbling mouse, pointer, keyboard,
+focus, form/input, wheel/scroll, drag/drop, and touch events such as
+`#:on-click`, `#:on-contextmenu`, `#:on-keydown`, `#:on-focus`,
+`#:on-input`, `#:on-submit`, `#:on-wheel`, `#:on-dragover`,
+`#:on-touchstart`, `#:on-load`, `#:on-animationstart`,
+`#:on-transitionend`, `#:on-pointerdown`, `#:on-pointermove`, and
+`#:on-pointerup`.
 Callbacks receive the raw browser event object.
 
 ## Widening Audit

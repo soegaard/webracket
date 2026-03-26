@@ -749,6 +749,39 @@
     (define primitive-dom-event-attr-keys
       '(on-click
         on-doubleclick
+        on-contextmenu
+        on-keydown
+        on-keyup
+        on-focus
+        on-blur
+        on-focusin
+        on-focusout
+        on-input
+        on-change
+        on-beforeinput
+        on-submit
+        on-reset
+        on-invalid
+        on-wheel
+        on-scroll
+        on-drag
+        on-dragstart
+        on-dragend
+        on-dragenter
+        on-dragleave
+        on-dragover
+        on-drop
+        on-touchstart
+        on-touchmove
+        on-touchend
+        on-touchcancel
+        on-load
+        on-error
+        on-abort
+        on-animationstart
+        on-animationend
+        on-animationiteration
+        on-transitionend
         on-mousedown
         on-mousemove
         on-mouseup

@@ -22,6 +22,13 @@ The intended core-vs-library split is described in [API-LAYERS.md](API-LAYERS.md
 - Added generic primitive DOM event keywords for bubbling mouse and pointer events
   (for example `#:on-mouseup`, `#:on-pointerdown`, `#:on-click`), with raw browser
   event payloads passed to callbacks.
+- Expanded primitive DOM event keywords with keyboard, focus, and form/input
+  families such as `#:on-keydown`, `#:on-focus`, `#:on-input`, and `#:on-submit`.
+- Expanded primitive DOM event keywords further with wheel/scroll, drag/drop,
+  and touch families such as `#:on-wheel`, `#:on-dragover`, and `#:on-touchstart`.
+- Expanded primitive DOM event keywords again with media/load/error and
+  animation/transition families such as `#:on-load`, `#:on-error`,
+  `#:on-animationstart`, and `#:on-transitionend`.
 - Added `Base` constraints:
   - constructor requires at least one of `#:href` or `#:target`,
   - conservative runtime ordering check for direct `window` children.
@@ -121,10 +128,22 @@ event keywords:
 
 - mouse: `#:on-click`, `#:on-doubleclick`, `#:on-mousedown`, `#:on-mousemove`,
   `#:on-mouseup`, `#:on-mouseenter`, `#:on-mouseleave`, `#:on-mouseover`,
-  `#:on-mouseout`
+  `#:on-mouseout`, `#:on-contextmenu`
 - pointer: `#:on-pointerdown`, `#:on-pointermove`, `#:on-pointerup`,
   `#:on-pointerenter`, `#:on-pointerleave`, `#:on-pointerover`,
   `#:on-pointerout`, `#:on-pointercancel`
+- keyboard: `#:on-keydown`, `#:on-keyup`
+- focus: `#:on-focus`, `#:on-blur`, `#:on-focusin`, `#:on-focusout`
+- form/input: `#:on-input`, `#:on-change`, `#:on-beforeinput`,
+  `#:on-submit`, `#:on-reset`, `#:on-invalid`
+- wheel/scroll: `#:on-wheel`, `#:on-scroll`
+- drag/drop: `#:on-drag`, `#:on-dragstart`, `#:on-dragend`,
+  `#:on-dragenter`, `#:on-dragleave`, `#:on-dragover`, `#:on-drop`
+- touch: `#:on-touchstart`, `#:on-touchmove`, `#:on-touchend`,
+  `#:on-touchcancel`
+- media/load/error: `#:on-load`, `#:on-error`, `#:on-abort`
+- animation/transition: `#:on-animationstart`, `#:on-animationend`,
+  `#:on-animationiteration`, `#:on-transitionend`
 
 These keywords are part of the primitive/core layer, not the higher-level
 component layer.

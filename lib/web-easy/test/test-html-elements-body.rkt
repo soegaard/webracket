@@ -1074,6 +1074,17 @@
 (check-node-attrs button-node
                   '((type "button")
                     (disabled #f)))
+(define recorded-button-focus #f)
+(define focus-button-node
+  (render-primitive-node
+   (Button "Focusable"
+           #:on-focus (lambda (evt)
+                        (set! recorded-button-focus evt)))))
+(check-equal (procedure? (node-event-handler focus-button-node "focus")) #t
+             "Button stores generic focus callback")
+((node-event-handler focus-button-node "focus") 'focus-token)
+(check-equal recorded-button-focus 'focus-token
+             "Button focus callback receives raw event payload")
 (define r-a-children
   (render
    (window
@@ -1305,6 +1316,17 @@
 (check-node-attrs form-node
                   '((action "/submit")
                     (method "post")))
+(define recorded-form-submit #f)
+(define submit-form-node
+  (render-primitive-node
+   (Form #:on-submit (lambda (evt)
+                       (set! recorded-form-submit evt))
+         (P "Body"))))
+(check-equal (procedure? (node-event-handler submit-form-node "submit")) #t
+             "Form stores generic submit callback")
+((node-event-handler submit-form-node "submit") 'submit-token)
+(check-equal recorded-form-submit 'submit-token
+             "Form submit callback receives raw event payload")
 (check-equal (dom-node-tag form-label-node) 'label "Label primitive tag is label")
 (check-equal (dom-node-text form-label-node) "Name" "Label content supports observables")
 (check-node-attrs form-label-node
@@ -1549,6 +1571,7 @@
 (define recorded-canvas-mouseup #f)
 (define recorded-canvas-pointerdown #f)
 (define recorded-anchor-click #f)
+(define recorded-anchor-contextmenu #f)
 (define recorded-legacy-click #f)
 (define r-canvas-iframe-embed
   (render
@@ -1568,6 +1591,9 @@
         #:on-click
         (lambda (evt)
           (set! recorded-anchor-click evt))
+        #:on-contextmenu
+        (lambda (evt)
+          (set! recorded-anchor-contextmenu evt))
         "Event anchor")
      (Iframe
       #:src "/frame.html"
@@ -1611,15 +1637,20 @@
              "Canvas stores generic pointerdown callback")
 (check-equal (procedure? (node-event-handler anchor-node "click")) #t
              "A stores generic click callback")
+(check-equal (procedure? (node-event-handler anchor-node "contextmenu")) #t
+             "A stores generic contextmenu callback")
 ((node-event-handler canvas-node "mouseup") 'mouseup-token)
 ((node-event-handler canvas-node "pointerdown") 'pointerdown-token)
 ((node-event-handler anchor-node "click") 'click-token)
+((node-event-handler anchor-node "contextmenu") 'contextmenu-token)
 (check-equal recorded-canvas-mouseup 'mouseup-token
              "Canvas mouseup callback receives raw event payload")
 (check-equal recorded-canvas-pointerdown 'pointerdown-token
              "Canvas pointerdown callback receives raw event payload")
 (check-equal recorded-anchor-click 'click-token
              "A click callback receives raw event payload")
+(check-equal recorded-anchor-contextmenu 'contextmenu-token
+             "A contextmenu callback receives raw event payload")
 (define legacy-click-node
   (render-primitive-node
    (Button "Legacy + generic"
@@ -1646,6 +1677,111 @@
                      "Embed rejects unknown attrs")
 (check-call-rejected (Embed "bad")
                      "Embed rejects positional content")
+
+;; Wheel/Scroll/Drag/Touch primitive events
+(define recorded-wheel #f)
+(define recorded-scroll #f)
+(define recorded-dragover #f)
+(define recorded-drop #f)
+(define recorded-touchstart #f)
+(define recorded-touchend #f)
+(define interaction-node
+  (render-primitive-node
+   (Div #:on-wheel (lambda (evt)
+                     (set! recorded-wheel evt))
+        #:on-scroll (lambda (evt)
+                      (set! recorded-scroll evt))
+        #:on-dragover (lambda (evt)
+                        (set! recorded-dragover evt))
+        #:on-drop (lambda (evt)
+                    (set! recorded-drop evt))
+        #:on-touchstart (lambda (evt)
+                          (set! recorded-touchstart evt))
+        #:on-touchend (lambda (evt)
+                        (set! recorded-touchend evt))
+        (Span "Interactive"))))
+(check-equal (procedure? (node-event-handler interaction-node "wheel")) #t
+             "Div stores generic wheel callback")
+(check-equal (procedure? (node-event-handler interaction-node "scroll")) #t
+             "Div stores generic scroll callback")
+(check-equal (procedure? (node-event-handler interaction-node "dragover")) #t
+             "Div stores generic dragover callback")
+(check-equal (procedure? (node-event-handler interaction-node "drop")) #t
+             "Div stores generic drop callback")
+(check-equal (procedure? (node-event-handler interaction-node "touchstart")) #t
+             "Div stores generic touchstart callback")
+(check-equal (procedure? (node-event-handler interaction-node "touchend")) #t
+             "Div stores generic touchend callback")
+((node-event-handler interaction-node "wheel") 'wheel-token)
+((node-event-handler interaction-node "scroll") 'scroll-token)
+((node-event-handler interaction-node "dragover") 'dragover-token)
+((node-event-handler interaction-node "drop") 'drop-token)
+((node-event-handler interaction-node "touchstart") 'touchstart-token)
+((node-event-handler interaction-node "touchend") 'touchend-token)
+(check-equal recorded-wheel 'wheel-token
+             "Div wheel callback receives raw event payload")
+(check-equal recorded-scroll 'scroll-token
+             "Div scroll callback receives raw event payload")
+(check-equal recorded-dragover 'dragover-token
+             "Div dragover callback receives raw event payload")
+(check-equal recorded-drop 'drop-token
+             "Div drop callback receives raw event payload")
+(check-equal recorded-touchstart 'touchstart-token
+             "Div touchstart callback receives raw event payload")
+(check-equal recorded-touchend 'touchend-token
+             "Div touchend callback receives raw event payload")
+(check-call-rejected (Div #:on-wheel "bad" (Span "bad"))
+                     "Div rejects non-procedure wheel handler")
+
+;; Media/Load/Error and Animation/Transition primitive events
+(define recorded-img-load #f)
+(define recorded-img-error #f)
+(define recorded-img-abort #f)
+(define recorded-animationstart #f)
+(define recorded-transitionend #f)
+(define img-event-node
+  (render-primitive-node
+   (Img #:src "/asset.png"
+        #:on-load (lambda (evt)
+                    (set! recorded-img-load evt))
+        #:on-error (lambda (evt)
+                     (set! recorded-img-error evt))
+        #:on-abort (lambda (evt)
+                     (set! recorded-img-abort evt)))))
+(define animated-div-node
+  (render-primitive-node
+   (Div #:on-animationstart (lambda (evt)
+                              (set! recorded-animationstart evt))
+        #:on-transitionend (lambda (evt)
+                             (set! recorded-transitionend evt))
+        (Span "Animated"))))
+(check-equal (procedure? (node-event-handler img-event-node "load")) #t
+             "Img stores generic load callback")
+(check-equal (procedure? (node-event-handler img-event-node "error")) #t
+             "Img stores generic error callback")
+(check-equal (procedure? (node-event-handler img-event-node "abort")) #t
+             "Img stores generic abort callback")
+(check-equal (procedure? (node-event-handler animated-div-node "animationstart")) #t
+             "Div stores generic animationstart callback")
+(check-equal (procedure? (node-event-handler animated-div-node "transitionend")) #t
+             "Div stores generic transitionend callback")
+((node-event-handler img-event-node "load") 'load-token)
+((node-event-handler img-event-node "error") 'error-token)
+((node-event-handler img-event-node "abort") 'abort-token)
+((node-event-handler animated-div-node "animationstart") 'animationstart-token)
+((node-event-handler animated-div-node "transitionend") 'transitionend-token)
+(check-equal recorded-img-load 'load-token
+             "Img load callback receives raw event payload")
+(check-equal recorded-img-error 'error-token
+             "Img error callback receives raw event payload")
+(check-equal recorded-img-abort 'abort-token
+             "Img abort callback receives raw event payload")
+(check-equal recorded-animationstart 'animationstart-token
+             "Div animationstart callback receives raw event payload")
+(check-equal recorded-transitionend 'transitionend-token
+             "Div transitionend callback receives raw event payload")
+(check-call-rejected (Img #:src "/asset.png" #:on-load "bad")
+                     "Img rejects non-procedure load handler")
 
 ;; -------------------------------------------------------------------
 ;; Resource/Head Primitive Coverage
@@ -1680,6 +1816,36 @@
 (check-node-attrs html-input-node
                   '((type "text")
                     (placeholder "Your name")))
+(define recorded-input-keydown #f)
+(define recorded-input-input #f)
+(define input-event-node
+  (render-primitive-node
+   (Input #:type "text"
+          #:on-keydown (lambda (evt)
+                         (set! recorded-input-keydown evt))
+          #:on-input (lambda (evt)
+                       (set! recorded-input-input evt)))))
+(check-equal (procedure? (node-event-handler input-event-node "keydown")) #t
+             "Input stores generic keydown callback")
+(check-equal (procedure? (node-event-handler input-event-node "input")) #t
+             "Input stores generic input callback")
+((node-event-handler input-event-node "keydown") 'keydown-token)
+((node-event-handler input-event-node "input") 'input-token)
+(check-equal recorded-input-keydown 'keydown-token
+             "Input keydown callback receives raw event payload")
+(check-equal recorded-input-input 'input-token
+             "Input input callback receives raw event payload")
+(define legacy-change-node
+  (render-primitive-node
+   (Input #:type "text"
+          #:on-change (lambda (_evt) (void))
+          #:attrs (list (cons 'on-change-action
+                              (lambda ()
+                                (void)))))))
+(check-equal (procedure? (dom-node-on-change legacy-change-node)) #t
+             "Legacy on-change-action remains wired on primitive change channel")
+(check-equal (procedure? (node-event-handler legacy-change-node "change")) #t
+             "Generic primitive on-change coexists with legacy change action")
 (check-equal (dom-node-tag html-select-node) 'select "Select primitive tag is select")
 (check-node-attrs html-select-node
                   '((multiple #t)
@@ -1715,6 +1881,8 @@
                               "Option mixed content")
 (check-call-rejected (Textarea "x" #:foo "x")
                      "Textarea rejects unknown attrs")
+(check-call-rejected (Input #:on-keydown "bad")
+                     "Input rejects non-procedure keydown handler")
 (check-call-rejected (Input "bad")
                      "Input rejects positional content")
 

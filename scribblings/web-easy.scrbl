@@ -299,7 +299,15 @@ Primitive HTML element constructors also support a Phase 1 set of
 generic bubbling DOM event keywords:
 
 @itemlist[
-  @item{@racket[#:on-click], @racket[#:on-doubleclick]}
+  @item{@racket[#:on-click], @racket[#:on-doubleclick], @racket[#:on-contextmenu]}
+  @item{@racket[#:on-keydown], @racket[#:on-keyup]}
+  @item{@racket[#:on-focus], @racket[#:on-blur], @racket[#:on-focusin], @racket[#:on-focusout]}
+  @item{@racket[#:on-input], @racket[#:on-change], @racket[#:on-beforeinput], @racket[#:on-submit], @racket[#:on-reset], @racket[#:on-invalid]}
+  @item{@racket[#:on-wheel], @racket[#:on-scroll]}
+  @item{@racket[#:on-drag], @racket[#:on-dragstart], @racket[#:on-dragend], @racket[#:on-dragenter], @racket[#:on-dragleave], @racket[#:on-dragover], @racket[#:on-drop]}
+  @item{@racket[#:on-touchstart], @racket[#:on-touchmove], @racket[#:on-touchend], @racket[#:on-touchcancel]}
+  @item{@racket[#:on-load], @racket[#:on-error], @racket[#:on-abort]}
+  @item{@racket[#:on-animationstart], @racket[#:on-animationend], @racket[#:on-animationiteration], @racket[#:on-transitionend]}
   @item{@racket[#:on-mousedown], @racket[#:on-mousemove], @racket[#:on-mouseup]}
   @item{@racket[#:on-mouseenter], @racket[#:on-mouseleave], @racket[#:on-mouseover], @racket[#:on-mouseout]}
   @item{@racket[#:on-pointerdown], @racket[#:on-pointermove], @racket[#:on-pointerup]}
@@ -309,6 +317,15 @@ generic bubbling DOM event keywords:
 These keywords are part of the core primitive surface.
 Each callback receives the raw browser event object, so handlers can read
 fields such as @tt{offsetX}, @tt{offsetY}, @tt{clientX}, and @tt{clientY}.
+
+Example:
+
+@racketblock[
+(Input #:on-keydown
+        (lambda (evt)
+          (define key (js-ref evt "key"))
+          (js-log key)))
+]
 
 @defthing[html-attr-entry/c
           (or/c (cons/c symbol? any/c)
