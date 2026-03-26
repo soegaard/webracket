@@ -27,6 +27,40 @@
 (define (keyword->attr-key kw)
   (string->symbol (keyword->string kw)))
 
+;; primitive-event-attr-keys : list?
+;;   Supported generic primitive DOM event keys accepted as #:on-* keywords.
+(define primitive-event-attr-keys
+  '(on-click
+    on-doubleclick
+    on-mousedown
+    on-mousemove
+    on-mouseup
+    on-mouseenter
+    on-mouseleave
+    on-mouseover
+    on-mouseout
+    on-pointerdown
+    on-pointermove
+    on-pointerup
+    on-pointerenter
+    on-pointerleave
+    on-pointerover
+    on-pointerout
+    on-pointercancel))
+
+;; primitive-event-attr-key? : symbol? -> boolean?
+;;   Check whether attr-key is a supported generic primitive DOM event key.
+(define (primitive-event-attr-key? attr-key)
+  (and (symbol? attr-key)
+       (memq attr-key primitive-event-attr-keys)))
+
+;; event-handler-value-accepted? : any/c -> boolean?
+;;   Check whether v can be used as a primitive event handler value.
+(define (event-handler-value-accepted? v)
+  (or (procedure? v)
+      (obs? v)
+      (eq? v #f)))
+
 ;; string-prefix?/internal : string? string? -> boolean?
 ;;   Return #t when s starts with prefix.
 (define (string-prefix?/internal s prefix)
@@ -85,7 +119,8 @@
 (define (internal-action-attr-symbol? attr-key)
   (or (eq? attr-key 'on-click-action)
       (eq? attr-key 'on-change-action)
-      (eq? attr-key 'on-enter-action)))
+      (eq? attr-key 'on-enter-action)
+      (primitive-event-attr-key? attr-key)))
 
 (define (reject-procedure-attrs! who attrs)
   (when (list? attrs)
@@ -128,6 +163,11 @@
           (define attr-key (keyword->attr-key kw))
           (when (not (attr-key-allowed? attr-key allowed-attrs))
             (error who "unknown keyword argument: ~a" kw))
+          (when (and (primitive-event-attr-key? attr-key)
+                     (not (event-handler-value-accepted? v)))
+            (error who
+                   "expected event handler as procedure?, observable?, or #f: ~a"
+                   kw))
           (set! extra-attrs-rev
                 (cons (cons attr-key v)
                       extra-attrs-rev))])
@@ -1471,7 +1511,24 @@
     (define specific (hash-ref table (symbol->string tag-sym) '()))
     (remove-duplicates (append globals
                                specific
-                               '(data-* aria-*))))
+                               '(data-* aria-*)
+                               '(on-click
+                                 on-doubleclick
+                                 on-mousedown
+                                 on-mousemove
+                                 on-mouseup
+                                 on-mouseenter
+                                 on-mouseleave
+                                 on-mouseover
+                                 on-mouseout
+                                 on-pointerdown
+                                 on-pointermove
+                                 on-pointerup
+                                 on-pointerenter
+                                 on-pointerleave
+                                 on-pointerover
+                                 on-pointerout
+                                 on-pointercancel))))
   ;; `#:content-mode text-or-children` is for primitive HTML elements such as
   ;; `Button` that preserve the old single text-like content form while also
   ;; accepting ordered mixed content sequences like a real container element.

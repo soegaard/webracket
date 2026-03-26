@@ -746,13 +746,77 @@
 
     ;; merge-root-extra-attrs : view? list? -> list?
     ;;   Merge with-attrs/with-class props into base root attrs.
+    (define primitive-dom-event-attr-keys
+      '(on-click
+        on-doubleclick
+        on-mousedown
+        on-mousemove
+        on-mouseup
+        on-mouseenter
+        on-mouseleave
+        on-mouseover
+        on-mouseout
+        on-pointerdown
+        on-pointermove
+        on-pointerup
+        on-pointerenter
+        on-pointerleave
+        on-pointerover
+        on-pointerout
+        on-pointercancel))
+
+    (define (primitive-dom-event-attr-key? attr-key)
+      (and (symbol? attr-key)
+           (memq attr-key primitive-dom-event-attr-keys)))
+
     (define (internal-action-attr-key? attr-key)
       (or (eq? attr-key 'on-click-action)
           (eq? attr-key 'on-change-action)))
 
     (define (procedure-allowed-attr-key? attr-key)
       (or (internal-action-attr-key? attr-key)
-          (eq? attr-key 'on-enter-action)))
+          (eq? attr-key 'on-enter-action)
+          (primitive-dom-event-attr-key? attr-key)))
+
+    ;; primitive-event-attr-key->dom-event-name : symbol? -> string?
+    ;;   Convert primitive event attr key like 'on-mouseup to DOM event name "mouseup".
+    (define (primitive-event-attr-key->dom-event-name attr-key)
+      (define s (symbol->string attr-key))
+      (substring s 3))
+
+    ;; event-handler-value->callback : symbol? any/c -> any/c
+    ;;   Normalize primitive event attr value to a callback procedure or #f.
+    (define (event-handler-value->callback attr-key value)
+      (cond
+        [(or (eq? value #f)
+             (procedure? value))
+         value]
+        [else
+         (emit-web-easy-warning!
+          (string-append "web-easy: ignored non-procedure event handler "
+                         (symbol->string attr-key)))
+         #f]))
+
+    ;; event-handlers-from-extra-attrs : list? -> list?
+    ;;   Extract generic primitive DOM event callbacks from raw extra attrs.
+    (define (event-handlers-from-extra-attrs extra-attrs/raw)
+      (let loop ([remaining extra-attrs/raw]
+                 [acc '()])
+        (cond
+          [(null? remaining)
+           (reverse acc)]
+          [(primitive-dom-event-attr-key? (caar remaining))
+           (define callback
+             (event-handler-value->callback (caar remaining)
+                                            (maybe-observable-value (cdar remaining))))
+           (loop (cdr remaining)
+                 (if callback
+                     (cons (cons (primitive-event-attr-key->dom-event-name (caar remaining))
+                                 callback)
+                           acc)
+                     acc))]
+          [else
+           (loop (cdr remaining) acc)])))
 
     (define (merge-root-extra-attrs v attrs)
       (define props (view-props v))
@@ -812,6 +876,8 @@
                                        widget-value)
                              acc))))]
             [(internal-action-attr-key? (caar remaining))
+             (loop (cdr remaining) acc)]
+            [(primitive-dom-event-attr-key? (caar remaining))
              (loop (cdr remaining) acc)]
             [else
              (define attr-value (maybe-observable-value (cdar remaining)))
@@ -1207,10 +1273,14 @@
               (set-text! raw-value)])
            (define on-click-callback (callback-from-action-attr 'on-click-action))
            (define on-change-callback (callback-from-action-attr 'on-change-action))
+           (define (refresh-root-event-handlers!)
+             (set-dom-node-event-handlers! node
+                                           (event-handlers-from-extra-attrs extra-attrs/raw)))
            (when on-click-callback
              (set-dom-node-on-click! node on-click-callback))
            (when on-change-callback
              (set-dom-node-on-change! node on-change-callback))
+           (refresh-root-event-handlers!)
            (for-each
             (lambda (entry)
               (when (and (pair? entry)
@@ -1219,7 +1289,9 @@
                 (define attr-obs (cdr entry))
                 (define (attr-listener _updated)
                   (if (valid-observable-attr-update? (car entry) _updated)
-                      (refresh-root-attrs!)
+                      (let ()
+                        (refresh-root-attrs!)
+                        (refresh-root-event-handlers!))
                       (void)))
                 (obs-observe! attr-obs attr-listener)
                 (register-cleanup! (lambda () (obs-unobserve! attr-obs attr-listener)))))
@@ -1268,10 +1340,14 @@
                      (view-children v))
            (define on-click-callback (callback-from-action-attr 'on-click-action))
            (define on-change-callback (callback-from-action-attr 'on-change-action))
+           (define (refresh-root-event-handlers!)
+             (set-dom-node-event-handlers! node
+                                           (event-handlers-from-extra-attrs extra-attrs/raw)))
            (when on-click-callback
              (set-dom-node-on-click! node on-click-callback))
            (when on-change-callback
              (set-dom-node-on-change! node on-change-callback))
+           (refresh-root-event-handlers!)
            (for-each
             (lambda (entry)
               (when (and (pair? entry)
@@ -1280,7 +1356,9 @@
                 (define attr-obs (cdr entry))
                 (define (attr-listener updated)
                   (if (valid-observable-attr-update? (car entry) updated)
-                      (refresh-root-attrs!)
+                      (let ()
+                        (refresh-root-attrs!)
+                        (refresh-root-event-handlers!))
                       (void)))
                 (obs-observe! attr-obs attr-listener)
                 (register-cleanup! (lambda () (obs-unobserve! attr-obs attr-listener)))))
@@ -1358,10 +1436,14 @@
                                     'div)))
            (define on-click-callback (callback-from-action-attr 'on-click-action))
            (define on-change-callback (callback-from-action-attr 'on-change-action))
+           (define (refresh-root-event-handlers!)
+             (set-dom-node-event-handlers! node
+                                           (event-handlers-from-extra-attrs extra-attrs/raw)))
            (when on-click-callback
              (set-dom-node-on-click! node on-click-callback))
            (when on-change-callback
              (set-dom-node-on-change! node on-change-callback))
+           (refresh-root-event-handlers!)
            (define last-value #f)
            (define have-last? #f)
            (define (render-from-value! value)
@@ -1403,7 +1485,9 @@
                 (define attr-obs (cdr entry))
                 (define (attr-listener updated)
                   (if (valid-observable-attr-update? (car entry) updated)
-                      (refresh-root-attrs!)
+                      (let ()
+                        (refresh-root-attrs!)
+                        (refresh-root-event-handlers!))
                       (void)))
                 (obs-observe! attr-obs attr-listener)
                 (register-cleanup! (lambda () (obs-unobserve! attr-obs attr-listener)))))

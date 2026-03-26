@@ -130,7 +130,13 @@ These exports should behave like the core HTML building blocks that other compon
 - Accept observables wherever the HTML value can change.
 - Accept child views whenever the HTML element can contain children.
 - Expose global attributes and element-specific attributes directly.
+- Expose generic primitive DOM event keywords directly on primitive elements.
 - Avoid library policy, styling conventions, and widget behavior.
+
+Current Phase 1 primitive DOM event support covers bubbling mouse and pointer
+events such as `#:on-click`, `#:on-mousedown`, `#:on-mouseup`,
+`#:on-pointerdown`, `#:on-pointermove`, and `#:on-pointerup`.
+Callbacks receive the raw browser event object.
 
 ## Widening Audit
 

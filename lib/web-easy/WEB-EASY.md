@@ -19,6 +19,9 @@ The intended core-vs-library split is described in [API-LAYERS.md](API-LAYERS.md
 - Extended primitive `Option` and `Legend` so they accept either a single text-like value or child views.
 - Added internal `define/element` support for broad primitive HTML constructor generation.
 - Expanded uppercase primitive element coverage (leaf + with-children families) with validated keyword attrs.
+- Added generic primitive DOM event keywords for bubbling mouse and pointer events
+  (for example `#:on-mouseup`, `#:on-pointerdown`, `#:on-click`), with raw browser
+  event payloads passed to callbacks.
 - Added `Base` constraints:
   - constructor requires at least one of `#:href` or `#:target`,
   - conservative runtime ordering check for direct `window` children.
@@ -110,6 +113,22 @@ Primitive `html-element` supports observable attrs.
 - `class` merge updates reactively,
 - `style` updates reactively,
 - tag can be observable (used by semantic `heading` delegation).
+
+### Primitive DOM event keywords
+
+Primitive HTML constructors now accept a Phase 1 set of generic bubbling DOM
+event keywords:
+
+- mouse: `#:on-click`, `#:on-doubleclick`, `#:on-mousedown`, `#:on-mousemove`,
+  `#:on-mouseup`, `#:on-mouseenter`, `#:on-mouseleave`, `#:on-mouseover`,
+  `#:on-mouseout`
+- pointer: `#:on-pointerdown`, `#:on-pointermove`, `#:on-pointerup`,
+  `#:on-pointerenter`, `#:on-pointerleave`, `#:on-pointerover`,
+  `#:on-pointerout`, `#:on-pointercancel`
+
+These keywords are part of the primitive/core layer, not the higher-level
+component layer.
+Callbacks receive the raw browser event object.
 
 ### Special text-only primitives
 

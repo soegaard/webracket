@@ -55,6 +55,11 @@
 (define (render-primitive-node v)
   (node-child (node-child (renderer-root (render (window (vpanel v)))) 0) 0))
 
+;; Lookup generic primitive DOM event callback by event name string.
+(define (node-event-handler node event-name)
+  (define p (assoc event-name (dom-node-event-handlers node)))
+  (and p (cdr p)))
+
 ;; Check the standard mixed-content shape produced by text-or-children primitives.
 (define (check-mixed-content-node* node expected-tag [label #f])
   (define prefix (if label
@@ -1541,14 +1546,29 @@
                      "Track rejects positional content")
 
 ;; Canvas/Iframe/Embed primitives
+(define recorded-canvas-mouseup #f)
+(define recorded-canvas-pointerdown #f)
+(define recorded-anchor-click #f)
+(define recorded-legacy-click #f)
 (define r-canvas-iframe-embed
   (render
    (window
     (vpanel
      (Canvas
+      #:on-mouseup
+      (lambda (evt)
+        (set! recorded-canvas-mouseup evt))
+      #:on-pointerdown
+      (lambda (evt)
+        (set! recorded-canvas-pointerdown evt))
       #:width 320
       #:height 200
       (Span "Canvas fallback"))
+     (A #:href "/evented"
+        #:on-click
+        (lambda (evt)
+          (set! recorded-anchor-click evt))
+        "Event anchor")
      (Iframe
       #:src "/frame.html"
       #:loading "lazy"
@@ -1562,13 +1582,18 @@
       #:height 400)))))
 (define frame-panel (node-child (renderer-root r-canvas-iframe-embed) 0))
 (define canvas-node (node-child frame-panel 0))
-(define iframe-node (node-child frame-panel 1))
-(define embed-node  (node-child frame-panel 2))
+(define anchor-node (node-child frame-panel 1))
+(define iframe-node (node-child frame-panel 2))
+(define embed-node  (node-child frame-panel 3))
 (check-equal (dom-node-tag canvas-node) 'canvas "Canvas primitive tag is canvas")
 (check-node-attrs canvas-node
                   '((width 320)
                     (height 200)))
+(check-equal (node-attr canvas-node 'on-mouseup) #f "Canvas generic event keywords do not become DOM attrs")
+(check-equal (node-attr canvas-node 'on-pointerdown) #f "Canvas pointer event keyword stays off DOM attrs")
 (check-equal (dom-node-text (node-child canvas-node 0)) "Canvas fallback" "Canvas child fallback text renders")
+(check-equal (dom-node-tag anchor-node) 'a "A primitive tag remains a with generic click event")
+(check-node-attrs anchor-node '((href "/evented")))
 (check-equal (dom-node-tag iframe-node) 'iframe "Iframe primitive tag is iframe")
 (check-node-attrs iframe-node
                   '((src "/frame.html")
@@ -1580,8 +1605,41 @@
                   '((src "/doc.pdf")
                     (type "application/pdf")
                     (height 400)))
+(check-equal (procedure? (node-event-handler canvas-node "mouseup")) #t
+             "Canvas stores generic mouseup callback")
+(check-equal (procedure? (node-event-handler canvas-node "pointerdown")) #t
+             "Canvas stores generic pointerdown callback")
+(check-equal (procedure? (node-event-handler anchor-node "click")) #t
+             "A stores generic click callback")
+((node-event-handler canvas-node "mouseup") 'mouseup-token)
+((node-event-handler canvas-node "pointerdown") 'pointerdown-token)
+((node-event-handler anchor-node "click") 'click-token)
+(check-equal recorded-canvas-mouseup 'mouseup-token
+             "Canvas mouseup callback receives raw event payload")
+(check-equal recorded-canvas-pointerdown 'pointerdown-token
+             "Canvas pointerdown callback receives raw event payload")
+(check-equal recorded-anchor-click 'click-token
+             "A click callback receives raw event payload")
+(define legacy-click-node
+  (render-primitive-node
+   (Button "Legacy + generic"
+           #:on-click (lambda (evt)
+                        (set! recorded-anchor-click evt))
+           #:attrs (list (cons 'on-click-action
+                               (lambda ()
+                                 (set! recorded-legacy-click #t)))))))
+(check-equal (procedure? (dom-node-on-click legacy-click-node)) #t
+             "Legacy on-click-action remains wired on primitive click channel")
+(check-equal (procedure? (node-event-handler legacy-click-node "click")) #t
+             "Generic primitive on-click coexists with legacy click action")
 (check-call-rejected (Canvas #:foo "x" (Span "bad"))
                      "Canvas rejects unknown attrs")
+(check-call-rejected (Canvas #:on-foo (lambda (_evt) (void))
+                             (Span "bad"))
+                     "Canvas rejects unsupported generic event keyword")
+(check-call-rejected (Canvas #:on-mouseup "bad"
+                             (Span "bad"))
+                     "Canvas rejects non-procedure event handler")
 (check-call-rejected (Iframe #:foo "x" (Span "bad"))
                      "Iframe rejects unknown attrs")
 (check-call-rejected (Embed #:foo "x")

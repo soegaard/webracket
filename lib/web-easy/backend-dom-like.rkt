@@ -15,12 +15,14 @@
 ;;   dom-node-text                       Access node text content.
 ;;   dom-node-on-click                   Access node click callback.
 ;;   dom-node-on-change                  Access node change callback.
+;;   dom-node-event-handlers             Access generic event callback alist.
 ;;   set-dom-node-tag!                   Mutate node tag.
 ;;   set-dom-node-attrs!                 Mutate node attributes.
 ;;   set-dom-node-children!              Mutate node children.
 ;;   set-dom-node-text!                  Mutate node text content.
 ;;   set-dom-node-on-click!              Mutate node click callback.
 ;;   set-dom-node-on-change!             Mutate node change callback.
+;;   set-dom-node-event-handlers!        Mutate generic event callback alist.
 ;;   dom-node-native                     Return host-native node handle (#f in DOM-like backend).
 ;;   backend-append-child!               Append child to parent node.
 ;;   backend-set-single-child!           Replace node children with a single child.
@@ -41,12 +43,14 @@
    dom-node-text
    dom-node-on-click
    dom-node-on-change
+   dom-node-event-handlers
    set-dom-node-tag!
    set-dom-node-attrs!
    set-dom-node-children!
    set-dom-node-text!
    set-dom-node-on-click!
    set-dom-node-on-change!
+   set-dom-node-event-handlers!
    dom-node-native
    backend-append-child!
    backend-set-single-child!
@@ -58,7 +62,89 @@
    backend-set-timeout!
    backend-clear-timeout!)
   (let ()
-    (struct dom-node (tag attrs children text on-click on-change) #:mutable #:transparent)
+    (struct dom-node-record (tag attrs children text on-click on-change event-handlers)
+      #:mutable
+      #:transparent)
+
+    ;; dom-node : symbol? list? list? any/c any/c any/c [list?] -> dom-node?
+    ;;   Construct a DOM-like node with optional generic event callback alist.
+    (define (dom-node tag attrs children text on-click on-change [event-handlers '()])
+      (dom-node-record tag attrs children text on-click on-change event-handlers))
+
+    ;; dom-node? : any/c -> boolean?
+    ;;   Check whether v is a DOM-like node.
+    (define (dom-node? v)
+      (dom-node-record? v))
+
+    ;; dom-node-tag : dom-node? -> any/c
+    ;;   Access node tag.
+    (define (dom-node-tag n)
+      (dom-node-record-tag n))
+
+    ;; dom-node-attrs : dom-node? -> list?
+    ;;   Access node attrs.
+    (define (dom-node-attrs n)
+      (dom-node-record-attrs n))
+
+    ;; dom-node-children : dom-node? -> list?
+    ;;   Access node children.
+    (define (dom-node-children n)
+      (dom-node-record-children n))
+
+    ;; dom-node-text : dom-node? -> any/c
+    ;;   Access node text content.
+    (define (dom-node-text n)
+      (dom-node-record-text n))
+
+    ;; dom-node-on-click : dom-node? -> any/c
+    ;;   Access node click callback.
+    (define (dom-node-on-click n)
+      (dom-node-record-on-click n))
+
+    ;; dom-node-on-change : dom-node? -> any/c
+    ;;   Access node change callback.
+    (define (dom-node-on-change n)
+      (dom-node-record-on-change n))
+
+    ;; dom-node-event-handlers : dom-node? -> list?
+    ;;   Access generic event callback alist.
+    (define (dom-node-event-handlers n)
+      (dom-node-record-event-handlers n))
+
+    ;; set-dom-node-tag! : dom-node? any/c -> void?
+    ;;   Mutate node tag.
+    (define (set-dom-node-tag! n tag)
+      (set-dom-node-record-tag! n tag))
+
+    ;; set-dom-node-attrs! : dom-node? list? -> void?
+    ;;   Mutate node attrs.
+    (define (set-dom-node-attrs! n attrs)
+      (set-dom-node-record-attrs! n attrs))
+
+    ;; set-dom-node-children! : dom-node? list? -> void?
+    ;;   Mutate node children.
+    (define (set-dom-node-children! n children)
+      (set-dom-node-record-children! n children))
+
+    ;; set-dom-node-text! : dom-node? any/c -> void?
+    ;;   Mutate node text content.
+    (define (set-dom-node-text! n text)
+      (set-dom-node-record-text! n text))
+
+    ;; set-dom-node-on-click! : dom-node? any/c -> void?
+    ;;   Mutate node click callback.
+    (define (set-dom-node-on-click! n on-click)
+      (set-dom-node-record-on-click! n on-click))
+
+    ;; set-dom-node-on-change! : dom-node? any/c -> void?
+    ;;   Mutate node change callback.
+    (define (set-dom-node-on-change! n on-change)
+      (set-dom-node-record-on-change! n on-change))
+
+    ;; set-dom-node-event-handlers! : dom-node? list? -> void?
+    ;;   Mutate generic event callback alist.
+    (define (set-dom-node-event-handlers! n event-handlers)
+      (set-dom-node-record-event-handlers! n event-handlers))
 
     ;; dom-node-native : dom-node? -> any/c
     ;;   Return #f because this backend has no browser-native node.
@@ -123,12 +209,14 @@
             dom-node-text
             dom-node-on-click
             dom-node-on-change
+            dom-node-event-handlers
             set-dom-node-tag!
             set-dom-node-attrs!
             set-dom-node-children!
             set-dom-node-text!
             set-dom-node-on-click!
             set-dom-node-on-change!
+            set-dom-node-event-handlers!
             dom-node-native
             backend-append-child!
             backend-set-single-child!

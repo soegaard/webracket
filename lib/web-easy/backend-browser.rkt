@@ -15,12 +15,14 @@
 ;;   dom-node-text            Access node text content.
 ;;   dom-node-on-click        Access node click callback.
 ;;   dom-node-on-change       Access node change callback.
+;;   dom-node-event-handlers  Access generic event callback alist.
 ;;   set-dom-node-tag!        Mutate node tag.
 ;;   set-dom-node-attrs!      Mutate node attributes and sync browser node attributes.
 ;;   set-dom-node-children!   Mutate node children list.
 ;;   set-dom-node-text!       Mutate node text and sync browser node text.
 ;;   set-dom-node-on-click!   Mutate node click callback.
 ;;   set-dom-node-on-change!  Mutate node change callback.
+;;   set-dom-node-event-handlers!  Mutate generic event callback alist.
 ;;   dom-node-native          Return host-native DOM node handle.
 ;;   backend-append-child!    Append child to parent node in model and browser DOM.
 ;;   backend-set-single-child! Replace node children with a single child in model and browser DOM.
@@ -41,12 +43,14 @@
    dom-node-text
    dom-node-on-click
    dom-node-on-change
+   dom-node-event-handlers
    set-dom-node-tag!
    set-dom-node-attrs!
    set-dom-node-children!
    set-dom-node-text!
    set-dom-node-on-click!
    set-dom-node-on-change!
+   set-dom-node-event-handlers!
    dom-node-native
    backend-append-child!
    backend-set-single-child!
@@ -58,9 +62,30 @@
    backend-set-timeout!
    backend-clear-timeout!)
   (let ()
-    (struct dom-node-record (tag attrs children text on-click on-change native)
+    (struct dom-node-record (tag attrs children text on-click on-change event-handlers native)
       #:mutable
       #:transparent)
+
+    ;; primitive-dom-event-names : list?
+    ;;   Supported generic primitive DOM event names bridged directly in the browser backend.
+    (define primitive-dom-event-names
+      '("click"
+        "doubleclick"
+        "mousedown"
+        "mousemove"
+        "mouseup"
+        "mouseenter"
+        "mouseleave"
+        "mouseover"
+        "mouseout"
+        "pointerdown"
+        "pointermove"
+        "pointerup"
+        "pointerenter"
+        "pointerleave"
+        "pointerover"
+        "pointerout"
+        "pointercancel"))
 
     ;; Constants used by browser backend DOM translation.
     (define attr/type    "type")    ; Attribute name for input element type.
@@ -1160,16 +1185,25 @@
             (define next-idx (modulo (+ start step len) len))
             (focus-scrollspy-item! native next-idx)))))
 
-    ;; dom-node : symbol? list? list? any/c any/c any/c -> dom-node?
+    ;; event-handler-ref : list? string? -> any/c
+    ;;   Return generic event callback for event-name, or #f when absent.
+    (define (event-handler-ref handlers event-name)
+      (define p (assoc event-name handlers))
+      (if p
+          (cdr p)
+          #f))
+
+    ;; dom-node : symbol? list? list? any/c any/c any/c list? -> dom-node?
     ;;   Construct a browser-backed node and install event bridges.
-    (define (dom-node tag attrs children text on-click on-change)
+    (define (dom-node tag attrs children text on-click on-change [event-handlers '()])
       (define native
         (if (eq? tag 'text)
             (js-create-text-node (if text
                                      (value->attr-string text)
                                      ""))
             (js-create-element (tag->element-name tag))))
-      (define n      (dom-node-record tag attrs children text on-click on-change native))
+      (define n
+        (dom-node-record tag attrs children text on-click on-change event-handlers native))
       ;; invoke-click-callback! : any/c -> void?
       ;;   Invoke callback when present.
       (define (invoke-click-callback! callback)
@@ -1180,23 +1214,40 @@
       (define (invoke-change-callback! callback payload)
         (when callback
           (callback payload)))
+      ;; invoke-generic-event-callback! : string? any/c -> void?
+      ;;   Invoke supported generic primitive event callback with raw event payload.
+      (define (invoke-generic-event-callback! event-name evt)
+        (define callback
+          (event-handler-ref (dom-node-record-event-handlers n) event-name))
+        (when callback
+          (callback evt)))
       
       (unless (eq? tag 'text)
         (install-default-node-shape! n)
         (apply-attributes! n '() attrs)
         (when text
           (apply-text! native text))
+        (for-each
+         (lambda (event-name)
+           (js-add-event-listener!
+            native
+            event-name
+            (procedure->external
+             (lambda (evt)
+               (invoke-generic-event-callback! event-name evt)))))
+         primitive-dom-event-names)
         (js-add-event-listener!
        native
        "click"
        (procedure->external
-        (lambda (_evt)
+        (lambda (evt)
           (define callback (dom-node-record-on-click n))
-          (invoke-click-callback! callback))))
+          (invoke-click-callback! callback)
+          (void evt))))
         (js-add-event-listener!
        native
        "change"
-       (procedure->external
+        (procedure->external
         (lambda (_evt)
           (define callback (dom-node-record-on-change n))
           (invoke-change-callback! callback (node-change-value n)))))
@@ -1330,26 +1381,28 @@
        native
        "mouseenter"
        (procedure->external
-        (lambda (_evt)
+        (lambda (evt)
           (with-handlers ([(lambda (_e) #t)
                            (lambda (_e)
                              ;; Ignore teardown-time mouseenter bridge exceptions.
                              (void))])
             (define callback (dom-node-record-on-change n))
             (when (and callback (hover-change-node? n))
-              (invoke-change-callback! callback "mouseenter"))))))
+              (invoke-change-callback! callback "mouseenter"))
+            (void evt)))))
         (js-add-event-listener!
        native
        "mouseleave"
        (procedure->external
-        (lambda (_evt)
+        (lambda (evt)
           (with-handlers ([(lambda (_e) #t)
                            (lambda (_e)
                              ;; Ignore teardown-time mouseleave bridge exceptions.
                              (void))])
             (define callback (dom-node-record-on-change n))
             (when (and callback (hover-change-node? n))
-              (invoke-change-callback! callback "mouseleave"))))))
+              (invoke-change-callback! callback "mouseleave"))
+            (void evt)))))
         (js-add-event-listener!
        native
        "focusout"
@@ -1383,7 +1436,7 @@
               (unless (or still-inside?
                           related-menu-control?)
                 (invoke-change-callback! callback "focusout")))))))
-      n)
+      n))
 
     ;; dom-node? : any/c -> boolean?
     ;;   Check whether v is a browser-backed node.
@@ -1420,6 +1473,11 @@
     (define (dom-node-on-change n)
       (dom-node-record-on-change n))
 
+    ;; dom-node-event-handlers : dom-node? -> list?
+    ;;   Return generic event callback alist.
+    (define (dom-node-event-handlers n)
+      (dom-node-record-event-handlers n))
+
     ;; set-dom-node-tag! : dom-node? symbol? -> void?
     ;;   Remount node with a new native element when tag changes.
     (define (set-dom-node-tag! n tag)
@@ -1433,7 +1491,8 @@
                     (dom-node-record-children n)
                     (dom-node-record-text n)
                     (dom-node-record-on-click n)
-                    (dom-node-record-on-change n)))
+                    (dom-node-record-on-change n)
+                    (dom-node-record-event-handlers n)))
         (define new-native (dom-node-record-native replacement))
         (define children (dom-node-record-children n))
         (when (pair? children)
@@ -1450,6 +1509,8 @@
         (set-dom-node-record-text! n (dom-node-record-text replacement))
         (set-dom-node-record-on-click! n (dom-node-record-on-click replacement))
         (set-dom-node-record-on-change! n (dom-node-record-on-change replacement))
+        (set-dom-node-record-event-handlers! n
+                                             (dom-node-record-event-handlers replacement))
         (set-dom-node-record-native! n new-native)))
 
     ;; set-dom-node-attrs! : dom-node? list? -> void?
@@ -1494,6 +1555,11 @@
     ;;   Update change callback.
     (define (set-dom-node-on-change! n on-change)
       (set-dom-node-record-on-change! n on-change))
+
+    ;; set-dom-node-event-handlers! : dom-node? list? -> void?
+    ;;   Update generic event callback alist.
+    (define (set-dom-node-event-handlers! n event-handlers)
+      (set-dom-node-record-event-handlers! n event-handlers))
 
     ;; dom-node-native : dom-node? -> any/c
     ;;   Return wrapped browser DOM node handle.
@@ -1699,12 +1765,14 @@
             dom-node-text
             dom-node-on-click
             dom-node-on-change
+            dom-node-event-handlers
             set-dom-node-tag!
             set-dom-node-attrs!
             set-dom-node-children!
             set-dom-node-text!
             set-dom-node-on-click!
             set-dom-node-on-change!
+            set-dom-node-event-handlers!
             dom-node-native
             backend-append-child!
             backend-set-single-child!
