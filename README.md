@@ -202,7 +202,20 @@ Here is what I see, when Node is started:
 
 The compiler needs Racket 9 or newer.
 
-## raco-static-web
+### nanopass
+Install nanopass using `raco`.
+
+       raco pkg install nanopass
+
+### webracket
+Get a clone and install webracket. (If the cloned directory is in racket's collection paths the last step can be skipped)
+
+       git clone https://github.com/soegaard/webracket.git
+       cd webracket
+       raco pkg install --link
+      
+
+## raco-static-web (optional)
 
 1. Install the web-server using `raco`.
 
