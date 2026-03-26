@@ -382,6 +382,122 @@ event object passed to primitive @racket[#:on-*] callbacks:
         @racket[keyboard-event-repeat]}
 ]
 
+@defproc*[
+([(event-type [evt external])
+  string?]
+ [(event-target [evt external])
+  (or/c #f external)]
+ [(event-current-target [evt external])
+  (or/c #f external)])]{
+Read common properties from a raw browser event object.
+
+The argument @racket[evt] is an @racket[external] value expected to
+contain a JavaScript @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/Event"]{Event}
+object.
+
+@racket[event-type] returns the DOM event type, such as @racket["click"]
+or @racket["contextmenu"].
+
+@racket[event-target] returns the event target object, if any.
+
+@racket[event-current-target] returns the object whose listener is
+currently running, if any.
+}
+
+@defproc*[
+([(prevent-default! [evt external])
+  void?]
+ [(stop-propagation! [evt external])
+  void?]
+ [(stop-immediate-propagation! [evt external])
+  void?])]{
+Control propagation and default browser behavior for a raw browser event object.
+
+The argument @racket[evt] is an @racket[external] value expected to
+contain a JavaScript @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/Event"]{Event}
+object.
+
+@racket[prevent-default!] requests that the browser skip the event's
+default action.
+
+@racket[stop-propagation!] stops the event from propagating further.
+
+@racket[stop-immediate-propagation!] stops immediate propagation, so
+later listeners for the same event are not run.
+}
+
+@defproc*[
+([(mouse-event-offset-x [evt external])
+  number?]
+ [(mouse-event-offset-y [evt external])
+  number?])]{
+Read mouse coordinates relative to the event target.
+
+The argument @racket[evt] is an @racket[external] value expected to
+contain a JavaScript @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent"]{MouseEvent}
+object.
+
+@racket[mouse-event-offset-x] returns the horizontal offset from the
+left edge of the target.
+
+@racket[mouse-event-offset-y] returns the vertical offset from the top
+edge of the target.
+}
+
+@defproc*[
+([(mouse-event-client-x [evt external])
+  number?]
+ [(mouse-event-client-y [evt external])
+  number?])]{
+Read mouse coordinates in viewport pixels.
+
+The argument @racket[evt] is an @racket[external] value expected to
+contain a JavaScript @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent"]{MouseEvent}
+object.
+
+@racket[mouse-event-client-x] returns the horizontal client coordinate.
+
+@racket[mouse-event-client-y] returns the vertical client coordinate.
+}
+
+@defproc*[
+([(keyboard-event-key [evt external])
+  string?]
+ [(keyboard-event-code [evt external])
+  string?])]{
+Read the key identity from a keyboard event.
+
+The argument @racket[evt] is an @racket[external] value expected to
+contain a JavaScript @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent"]{KeyboardEvent}
+object.
+
+@racket[keyboard-event-key] returns the key value reported by the browser.
+
+@racket[keyboard-event-code] returns the physical key code.
+}
+
+@defproc*[
+([(keyboard-event-alt-key [evt external])
+  boolean?]
+ [(keyboard-event-ctrl-key [evt external])
+  boolean?]
+ [(keyboard-event-meta-key [evt external])
+  boolean?]
+ [(keyboard-event-shift-key [evt external])
+  boolean?]
+ [(keyboard-event-repeat [evt external])
+  boolean?])]{
+Read modifier-key and repeat status from a keyboard event.
+
+The argument @racket[evt] is an @racket[external] value expected to
+contain a JavaScript @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent"]{KeyboardEvent}
+object.
+
+Each modifier helper reports whether the corresponding modifier key was active.
+
+@racket[keyboard-event-repeat] reports whether the event is auto-repeating.
+}
+
 Example:
 
 @racketblock[
