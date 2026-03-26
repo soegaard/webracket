@@ -29,6 +29,9 @@ The intended core-vs-library split is described in [API-LAYERS.md](API-LAYERS.md
 - Expanded primitive DOM event keywords again with media/load/error and
   animation/transition families such as `#:on-load`, `#:on-error`,
   `#:on-animationstart`, and `#:on-transitionend`.
+- Added browser-only event helper wrappers on top of the raw DOM event FFI,
+  for example `prevent-default!`, `mouse-event-offset-x`, and
+  `keyboard-event-key`.
 - Added `Base` constraints:
   - constructor requires at least one of `#:href` or `#:target`,
   - conservative runtime ordering check for direct `window` children.

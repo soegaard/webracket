@@ -141,6 +141,9 @@ focus, form/input, wheel/scroll, drag/drop, and touch events such as
 `#:on-transitionend`, `#:on-pointerdown`, `#:on-pointermove`, and
 `#:on-pointerup`.
 Callbacks receive the raw browser event object.
+Browser builds also provide thin `web-easy` helper wrappers such as
+`prevent-default!`, `mouse-event-offset-x`, and `keyboard-event-key`
+on top of the raw DOM FFI.
 
 ## Widening Audit
 

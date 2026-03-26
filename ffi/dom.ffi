@@ -1158,6 +1158,103 @@
 
 
 ;;;
+;;; MouseEvent
+;;;
+
+;; The various functions in this section are documented here:
+;;
+;;     https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent
+
+;; Properties
+(define-foreign js-mouse-event-offset-x
+  #:module "mouse-event"
+  #:name   "offset-x"
+  #:doc    "Returns the mouse offset X coordinate relative to the event target."
+  #:mdn    "MouseEvent/offsetX"
+  (-> (extern) (f64)))
+
+(define-foreign js-mouse-event-offset-y
+  #:module "mouse-event"
+  #:name   "offset-y"
+  #:doc    "Returns the mouse offset Y coordinate relative to the event target."
+  #:mdn    "MouseEvent/offsetY"
+  (-> (extern) (f64)))
+
+(define-foreign js-mouse-event-client-x
+  #:module "mouse-event"
+  #:name   "client-x"
+  #:doc    "Returns the mouse client X coordinate in viewport pixels."
+  #:mdn    "MouseEvent/clientX"
+  (-> (extern) (f64)))
+
+(define-foreign js-mouse-event-client-y
+  #:module "mouse-event"
+  #:name   "client-y"
+  #:doc    "Returns the mouse client Y coordinate in viewport pixels."
+  #:mdn    "MouseEvent/clientY"
+  (-> (extern) (f64)))
+
+
+;;;
+;;; KeyboardEvent
+;;;
+
+;; The various functions in this section are documented here:
+;;
+;;     https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent
+
+;; Properties
+(define-foreign js-keyboard-event-key
+  #:module "keyboard-event"
+  #:name   "key"
+  #:doc    "Returns the key value for the keyboard event."
+  #:mdn    "KeyboardEvent/key"
+  (-> (extern) (string)))
+
+(define-foreign js-keyboard-event-code
+  #:module "keyboard-event"
+  #:name   "code"
+  #:doc    "Returns the physical key code for the keyboard event."
+  #:mdn    "KeyboardEvent/code"
+  (-> (extern) (string)))
+
+(define-foreign js-keyboard-event-alt-key
+  #:module "keyboard-event"
+  #:name   "alt-key"
+  #:doc    "Reports whether the Alt modifier was active."
+  #:mdn    "KeyboardEvent/altKey"
+  (-> (extern) (i32)))
+
+(define-foreign js-keyboard-event-ctrl-key
+  #:module "keyboard-event"
+  #:name   "ctrl-key"
+  #:doc    "Reports whether the Control modifier was active."
+  #:mdn    "KeyboardEvent/ctrlKey"
+  (-> (extern) (i32)))
+
+(define-foreign js-keyboard-event-meta-key
+  #:module "keyboard-event"
+  #:name   "meta-key"
+  #:doc    "Reports whether the Meta modifier was active."
+  #:mdn    "KeyboardEvent/metaKey"
+  (-> (extern) (i32)))
+
+(define-foreign js-keyboard-event-shift-key
+  #:module "keyboard-event"
+  #:name   "shift-key"
+  #:doc    "Reports whether the Shift modifier was active."
+  #:mdn    "KeyboardEvent/shiftKey"
+  (-> (extern) (i32)))
+
+(define-foreign js-keyboard-event-repeat
+  #:module "keyboard-event"
+  #:name   "repeat"
+  #:doc    "Reports whether the keyboard event is auto-repeating."
+  #:mdn    "KeyboardEvent/repeat"
+  (-> (extern) (i32)))
+
+
+;;;
 ;;; Element
 ;;;
 

@@ -365,6 +365,34 @@ strings, symbols, numbers, booleans, characters, or observables whose
 current value is one of those.
 }
 
+@subsection{Event Helpers}
+
+In browser builds that include @filepath{lib/web-easy/main-browser.rkt},
+the following thin convenience wrappers are available on top of the raw
+event object passed to primitive @racket[#:on-*] callbacks:
+
+@itemlist[
+  @item{@racket[event-type], @racket[event-target], @racket[event-current-target]}
+  @item{@racket[prevent-default!], @racket[stop-propagation!], @racket[stop-immediate-propagation!]}
+  @item{@racket[mouse-event-offset-x], @racket[mouse-event-offset-y]}
+  @item{@racket[mouse-event-client-x], @racket[mouse-event-client-y]}
+  @item{@racket[keyboard-event-key], @racket[keyboard-event-code]}
+  @item{@racket[keyboard-event-alt-key], @racket[keyboard-event-ctrl-key],
+        @racket[keyboard-event-meta-key], @racket[keyboard-event-shift-key],
+        @racket[keyboard-event-repeat]}
+]
+
+Example:
+
+@racketblock[
+(Canvas #:on-contextmenu
+        (lambda (evt)
+          (prevent-default! evt)
+          (define x (mouse-event-offset-x evt))
+          (define y (mouse-event-offset-y evt))
+          (js-log (format "menu at (~a, ~a)" x y))))
+]
+
 @section{Core Primitives}
 
 The uppercase HTML-like constructors and low-level HTML helpers form the core primitive API.

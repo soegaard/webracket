@@ -15,3 +15,4 @@
 (include/reader "theme-token-browser.rkt" read-syntax/skip-first-line)
 (include/reader "renderer.rkt"            read-syntax/skip-first-line)
 (include/reader "browser-host.rkt"        read-syntax/skip-first-line)
+(include/reader "event-browser.rkt"       read-syntax/skip-first-line)
