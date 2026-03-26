@@ -372,6 +372,9 @@ the following thin convenience wrappers are available on top of the raw
 event object passed to primitive @racket[#:on-*] callbacks:
 
 @itemlist[
+  @item{@racket[event?], @racket[mouse-event?], @racket[keyboard-event?]}
+  @item{@racket[pointer-event?], @racket[focus-event?], @racket[input-event?],
+        @racket[submit-event?], @racket[wheel-event?]}
   @item{@racket[event-type], @racket[event-target], @racket[event-current-target]}
   @item{@racket[prevent-default!], @racket[stop-propagation!], @racket[stop-immediate-propagation!]}
   @item{@racket[mouse-event-offset-x], @racket[mouse-event-offset-y]}
@@ -381,6 +384,46 @@ event object passed to primitive @racket[#:on-*] callbacks:
         @racket[keyboard-event-meta-key], @racket[keyboard-event-shift-key],
         @racket[keyboard-event-repeat]}
 ]
+
+@defproc*[
+([(event? [evt external])
+  boolean?]
+ [(mouse-event? [evt external])
+  boolean?]
+ [(keyboard-event? [evt external])
+  boolean?])]{
+Check whether an @racket[external] value contains a common DOM event object.
+
+The argument @racket[evt] is an @racket[external] value. These predicates
+check whether it contains a JavaScript
+@hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/Event"]{Event},
+@hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent"]{MouseEvent},
+or @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent"]{KeyboardEvent}
+object, respectively.
+}
+
+@defproc*[
+([(pointer-event? [evt external])
+  boolean?]
+ [(focus-event? [evt external])
+  boolean?]
+ [(input-event? [evt external])
+  boolean?]
+ [(submit-event? [evt external])
+  boolean?]
+ [(wheel-event? [evt external])
+  boolean?])]{
+Check whether an @racket[external] value contains a more specialized DOM event object.
+
+The argument @racket[evt] is an @racket[external] value. These predicates
+check for JavaScript
+@hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/PointerEvent"]{PointerEvent},
+@hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/FocusEvent"]{FocusEvent},
+@hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/InputEvent"]{InputEvent},
+@hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/SubmitEvent"]{SubmitEvent},
+and @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/WheelEvent"]{WheelEvent}
+objects, respectively.
+}
 
 @defproc*[
 ([(event-type [evt external])

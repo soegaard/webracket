@@ -1056,6 +1056,14 @@
   ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
   (-> (string value) (extern/raw)))
 
+;; Predicates
+(define-foreign js-event?
+  #:module "event"
+  #:name   "event?"
+  #:doc    "Reports whether the external value is a JavaScript Event object."
+  #:mdn    "Event"
+  (-> (extern) (boolean)))
+
 ;; Properties
 (define-foreign js-event-type
   #:module "event"
@@ -1165,6 +1173,14 @@
 ;;
 ;;     https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent
 
+;; Predicates
+(define-foreign js-mouse-event?
+  #:module "event"
+  #:name   "mouse-event?"
+  #:doc    "Reports whether the external value is a JavaScript MouseEvent object."
+  #:mdn    "MouseEvent"
+  (-> (extern) (boolean)))
+
 ;; Properties
 (define-foreign js-mouse-event-offset-x
   #:module "event"
@@ -1202,6 +1218,14 @@
 ;; The various functions in this section are documented here:
 ;;
 ;;     https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent
+
+;; Predicates
+(define-foreign js-keyboard-event?
+  #:module "event"
+  #:name   "keyboard-event?"
+  #:doc    "Reports whether the external value is a JavaScript KeyboardEvent object."
+  #:mdn    "KeyboardEvent"
+  (-> (extern) (boolean)))
 
 ;; Properties
 (define-foreign js-keyboard-event-key
@@ -1252,6 +1276,91 @@
   #:doc    "Reports whether the keyboard event is auto-repeating."
   #:mdn    "KeyboardEvent/repeat"
   (-> (extern) (i32)))
+
+
+;;;
+;;; PointerEvent
+;;;
+
+;; The various functions in this section are documented here:
+;;
+;;     https://developer.mozilla.org/en-US/docs/Web/API/PointerEvent
+
+;; Predicates
+(define-foreign js-pointer-event?
+  #:module "event"
+  #:name   "pointer-event?"
+  #:doc    "Reports whether the external value is a JavaScript PointerEvent object."
+  #:mdn    "PointerEvent"
+  (-> (extern) (boolean)))
+
+
+;;;
+;;; FocusEvent
+;;;
+
+;; The various functions in this section are documented here:
+;;
+;;     https://developer.mozilla.org/en-US/docs/Web/API/FocusEvent
+
+;; Predicates
+(define-foreign js-focus-event?
+  #:module "event"
+  #:name   "focus-event?"
+  #:doc    "Reports whether the external value is a JavaScript FocusEvent object."
+  #:mdn    "FocusEvent"
+  (-> (extern) (boolean)))
+
+
+;;;
+;;; InputEvent
+;;;
+
+;; The various functions in this section are documented here:
+;;
+;;     https://developer.mozilla.org/en-US/docs/Web/API/InputEvent
+
+;; Predicates
+(define-foreign js-input-event?
+  #:module "event"
+  #:name   "input-event?"
+  #:doc    "Reports whether the external value is a JavaScript InputEvent object."
+  #:mdn    "InputEvent"
+  (-> (extern) (boolean)))
+
+
+;;;
+;;; SubmitEvent
+;;;
+
+;; The various functions in this section are documented here:
+;;
+;;     https://developer.mozilla.org/en-US/docs/Web/API/SubmitEvent
+
+;; Predicates
+(define-foreign js-submit-event?
+  #:module "event"
+  #:name   "submit-event?"
+  #:doc    "Reports whether the external value is a JavaScript SubmitEvent object."
+  #:mdn    "SubmitEvent"
+  (-> (extern) (boolean)))
+
+
+;;;
+;;; WheelEvent
+;;;
+
+;; The various functions in this section are documented here:
+;;
+;;     https://developer.mozilla.org/en-US/docs/Web/API/WheelEvent
+
+;; Predicates
+(define-foreign js-wheel-event?
+  #:module "event"
+  #:name   "wheel-event?"
+  #:doc    "Reports whether the external value is a JavaScript WheelEvent object."
+  #:mdn    "WheelEvent"
+  (-> (extern) (boolean)))
 
 
 ;;;

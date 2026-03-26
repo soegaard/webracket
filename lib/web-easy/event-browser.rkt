@@ -7,6 +7,14 @@
 ;; Thin convenience wrappers around raw DOM event FFI bindings.
 ;;
 ;; Exports:
+;;   event?                          Check whether value is a DOM Event.
+;;   mouse-event?                    Check whether value is a DOM MouseEvent.
+;;   keyboard-event?                 Check whether value is a DOM KeyboardEvent.
+;;   pointer-event?                  Check whether value is a DOM PointerEvent.
+;;   focus-event?                    Check whether value is a DOM FocusEvent.
+;;   input-event?                    Check whether value is a DOM InputEvent.
+;;   submit-event?                   Check whether value is a DOM SubmitEvent.
+;;   wheel-event?                    Check whether value is a DOM WheelEvent.
 ;;   event-type                       Read event type string.
 ;;   event-target                     Read original dispatch target.
 ;;   event-current-target             Read current listener target.
@@ -26,7 +34,15 @@
 ;;   keyboard-event-repeat            Read repeat state as boolean.
 
 (define-values
-  (event-type
+  (event?
+   mouse-event?
+   keyboard-event?
+   pointer-event?
+   focus-event?
+   input-event?
+   submit-event?
+   wheel-event?
+   event-type
    event-target
    event-current-target
    prevent-default!
@@ -48,6 +64,46 @@
     ;;   Convert FFI i32 flag results to boolean.
     (define (js-flag->boolean/internal v)
       (not (zero? v)))
+
+    ;; event? : any/c -> boolean?
+    ;;   Report whether evt is a DOM Event object.
+    (define (event? evt)
+      (js-event? evt))
+
+    ;; mouse-event? : any/c -> boolean?
+    ;;   Report whether evt is a DOM MouseEvent object.
+    (define (mouse-event? evt)
+      (js-mouse-event? evt))
+
+    ;; keyboard-event? : any/c -> boolean?
+    ;;   Report whether evt is a DOM KeyboardEvent object.
+    (define (keyboard-event? evt)
+      (js-keyboard-event? evt))
+
+    ;; pointer-event? : any/c -> boolean?
+    ;;   Report whether evt is a DOM PointerEvent object.
+    (define (pointer-event? evt)
+      (js-pointer-event? evt))
+
+    ;; focus-event? : any/c -> boolean?
+    ;;   Report whether evt is a DOM FocusEvent object.
+    (define (focus-event? evt)
+      (js-focus-event? evt))
+
+    ;; input-event? : any/c -> boolean?
+    ;;   Report whether evt is a DOM InputEvent object.
+    (define (input-event? evt)
+      (js-input-event? evt))
+
+    ;; submit-event? : any/c -> boolean?
+    ;;   Report whether evt is a DOM SubmitEvent object.
+    (define (submit-event? evt)
+      (js-submit-event? evt))
+
+    ;; wheel-event? : any/c -> boolean?
+    ;;   Report whether evt is a DOM WheelEvent object.
+    (define (wheel-event? evt)
+      (js-wheel-event? evt))
 
     ;; event-type : any/c -> string?
     ;;   Return the browser event type string.
@@ -134,7 +190,15 @@
     (define (keyboard-event-repeat evt)
       (js-flag->boolean/internal (js-keyboard-event-repeat evt)))
 
-    (values event-type
+    (values event?
+            mouse-event?
+            keyboard-event?
+            pointer-event?
+            focus-event?
+            input-event?
+            submit-event?
+            wheel-event?
+            event-type
             event-target
             event-current-target
             prevent-default!
