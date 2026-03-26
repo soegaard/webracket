@@ -1364,6 +1364,145 @@
 
 
 ;;;
+;;; TouchEvent
+;;;
+
+;; The various functions in this section are documented here:
+;;
+;;     https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent
+
+;; Predicates
+(define-foreign js-touch-event?
+  #:module "event"
+  #:name   "touch-event?"
+  #:doc    "Reports whether the external value is a JavaScript TouchEvent object."
+  #:mdn    "TouchEvent"
+  (-> (extern) (boolean)))
+
+;; Properties
+(define-foreign js-touch-event-touches
+  #:module "event"
+  #:name   "touches"
+  #:doc    "Returns the active touches for a TouchEvent."
+  #:mdn    "TouchEvent/touches"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-touch-event-target-touches
+  #:module "event"
+  #:name   "target-touches"
+  #:doc    "Returns the active touches that started on the same target."
+  #:mdn    "TouchEvent/targetTouches"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-touch-event-changed-touches
+  #:module "event"
+  #:name   "changed-touches"
+  #:doc    "Returns the touches involved in the current change."
+  #:mdn    "TouchEvent/changedTouches"
+  (-> (extern) (extern/raw)))
+
+
+;;;
+;;; TouchList
+;;;
+
+;; The various functions in this section are documented here:
+;;
+;;     https://developer.mozilla.org/en-US/docs/Web/API/TouchList
+
+;; Predicates
+(define-foreign js-touch-list?
+  #:module "touch-list"
+  #:name   "touch-list?"
+  #:doc    "Reports whether the external value is a JavaScript TouchList object."
+  #:mdn    "TouchList"
+  (-> (extern) (boolean)))
+
+;; Properties
+(define-foreign js-touch-list-length
+  #:module "touch-list"
+  #:name   "length"
+  #:doc    "Returns the number of touches in a TouchList."
+  #:mdn    "TouchList/length"
+  (-> (extern) (u32)))
+
+;; Methods
+(define-foreign js-touch-list-ref
+  #:module "touch-list"
+  #:name   "ref"
+  #:doc    "Returns the touch at index i, or #f when out of range."
+  #:mdn    "TouchList/item"
+  (-> (extern u32) (extern)))
+
+
+;;;
+;;; Touch
+;;;
+
+;; The various functions in this section are documented here:
+;;
+;;     https://developer.mozilla.org/en-US/docs/Web/API/Touch
+
+;; Predicates
+(define-foreign js-touch?
+  #:module "touch"
+  #:name   "touch?"
+  #:doc    "Reports whether the external value is a JavaScript Touch object."
+  #:mdn    "Touch"
+  (-> (extern) (boolean)))
+
+;; Properties
+(define-foreign js-touch-identifier
+  #:module "touch"
+  #:name   "identifier"
+  #:doc    "Returns the touch identifier."
+  #:mdn    "Touch/identifier"
+  (-> (extern) (i32)))
+
+(define-foreign js-touch-client-x
+  #:module "touch"
+  #:name   "client-x"
+  #:doc    "Returns the horizontal client coordinate of a touch."
+  #:mdn    "Touch/clientX"
+  (-> (extern) (f64)))
+
+(define-foreign js-touch-client-y
+  #:module "touch"
+  #:name   "client-y"
+  #:doc    "Returns the vertical client coordinate of a touch."
+  #:mdn    "Touch/clientY"
+  (-> (extern) (f64)))
+
+(define-foreign js-touch-page-x
+  #:module "touch"
+  #:name   "page-x"
+  #:doc    "Returns the horizontal page coordinate of a touch."
+  #:mdn    "Touch/pageX"
+  (-> (extern) (f64)))
+
+(define-foreign js-touch-page-y
+  #:module "touch"
+  #:name   "page-y"
+  #:doc    "Returns the vertical page coordinate of a touch."
+  #:mdn    "Touch/pageY"
+  (-> (extern) (f64)))
+
+(define-foreign js-touch-screen-x
+  #:module "touch"
+  #:name   "screen-x"
+  #:doc    "Returns the horizontal screen coordinate of a touch."
+  #:mdn    "Touch/screenX"
+  (-> (extern) (f64)))
+
+(define-foreign js-touch-screen-y
+  #:module "touch"
+  #:name   "screen-y"
+  #:doc    "Returns the vertical screen coordinate of a touch."
+  #:mdn    "Touch/screenY"
+  (-> (extern) (f64)))
+
+
+;;;
 ;;; DOMRect
 ;;;
 

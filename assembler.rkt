@@ -1867,6 +1867,10 @@ var imports = {
         'focus-event?': (evt => (typeof FocusEvent !== 'undefined') && (evt instanceof FocusEvent)),
         'input-event?': (evt => (typeof InputEvent !== 'undefined') && (evt instanceof InputEvent)),
         'submit-event?': (evt => (typeof SubmitEvent !== 'undefined') && (evt instanceof SubmitEvent)),
+        'touch-event?': (evt => (typeof TouchEvent !== 'undefined') && (evt instanceof TouchEvent)),
+        'touches': (evt => evt.touches),
+        'target-touches': (evt => evt.targetTouches),
+        'changed-touches': (evt => evt.changedTouches),
         'wheel-event?': (evt => (typeof WheelEvent !== 'undefined') && (evt instanceof WheelEvent)),
         'stop-propagation': (evt => evt.stopPropagation()),
         'stop-immediate-propagation': (evt => evt.stopImmediatePropagation())
@@ -1902,9 +1906,43 @@ var imports = {
         'focus-event?'() { throw new Error('DOM not available in this environment'); },
         'input-event?'() { throw new Error('DOM not available in this environment'); },
         'submit-event?'() { throw new Error('DOM not available in this environment'); },
+        'touch-event?'() { throw new Error('DOM not available in this environment'); },
+        'touches'() { throw new Error('DOM not available in this environment'); },
+        'target-touches'() { throw new Error('DOM not available in this environment'); },
+        'changed-touches'() { throw new Error('DOM not available in this environment'); },
         'wheel-event?'() { throw new Error('DOM not available in this environment'); },
         'stop-propagation'() { throw new Error('DOM not available in this environment'); },
         'stop-immediate-propagation'() { throw new Error('DOM not available in this environment'); }
+    },
+    // TouchList
+    'touch-list': hasDOM ? {
+        'touch-list?': (xs => (typeof TouchList !== 'undefined') && (xs instanceof TouchList)),
+        'length': (xs => xs.length),
+        'ref': ((xs, i) => xs.item(i))
+    } : {
+        'touch-list?'() { throw new Error('DOM not available in this environment'); },
+        'length'() { throw new Error('DOM not available in this environment'); },
+        'ref'() { throw new Error('DOM not available in this environment'); }
+    },
+    // Touch
+    'touch': hasDOM ? {
+        'touch?': (t => (typeof Touch !== 'undefined') && (t instanceof Touch)),
+        'identifier': (t => t.identifier),
+        'client-x': (t => t.clientX),
+        'client-y': (t => t.clientY),
+        'page-x': (t => t.pageX),
+        'page-y': (t => t.pageY),
+        'screen-x': (t => t.screenX),
+        'screen-y': (t => t.screenY)
+    } : {
+        'touch?'() { throw new Error('DOM not available in this environment'); },
+        'identifier'() { throw new Error('DOM not available in this environment'); },
+        'client-x'() { throw new Error('DOM not available in this environment'); },
+        'client-y'() { throw new Error('DOM not available in this environment'); },
+        'page-x'() { throw new Error('DOM not available in this environment'); },
+        'page-y'() { throw new Error('DOM not available in this environment'); },
+        'screen-x'() { throw new Error('DOM not available in this environment'); },
+        'screen-y'() { throw new Error('DOM not available in this environment'); }
     },
     // DOMRect
     'dom-rect': hasDOM ? {

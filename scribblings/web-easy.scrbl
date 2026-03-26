@@ -385,7 +385,8 @@ Example:
 @itemlist[
   @item{@racket[event?], @racket[mouse-event?], @racket[keyboard-event?]}
   @item{@racket[pointer-event?], @racket[focus-event?], @racket[input-event?],
-        @racket[submit-event?], @racket[wheel-event?]}
+        @racket[submit-event?], @racket[touch-event?], @racket[wheel-event?]}
+  @item{@racket[touch-list?], @racket[touch?]}
   @item{@racket[event-type], @racket[event-target], @racket[event-current-target]}
   @item{@racket[prevent-default!], @racket[stop-propagation!], @racket[stop-immediate-propagation!]}
   @item{@racket[mouse-event-offset-x], @racket[mouse-event-offset-y]}
@@ -394,6 +395,12 @@ Example:
   @item{@racket[keyboard-event-alt-key?], @racket[keyboard-event-ctrl-key?],
         @racket[keyboard-event-meta-key?], @racket[keyboard-event-shift-key?],
         @racket[keyboard-event-repeat?]}
+  @item{@racket[touch-event-touches], @racket[touch-event-target-touches],
+        @racket[touch-event-changed-touches]}
+  @item{@racket[touch-list-length], @racket[touch-list-ref]}
+  @item{@racket[touch-identifier], @racket[touch-client-x], @racket[touch-client-y]}
+  @item{@racket[touch-page-x], @racket[touch-page-y],
+        @racket[touch-screen-x], @racket[touch-screen-y]}
 ]
 
 @defproc*[
@@ -411,6 +418,8 @@ Example:
   boolean?]
  [(submit-event? [evt external])
   boolean?]
+ [(touch-event? [evt external])
+  boolean?]
  [(wheel-event? [evt external])
   boolean?])]{
 Check whether an @racket[external] value contains a DOM event object of a particular kind.
@@ -424,8 +433,27 @@ check whether it contains a JavaScript
 @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/FocusEvent"]{FocusEvent},
 @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/InputEvent"]{InputEvent},
 @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/SubmitEvent"]{SubmitEvent},
+@hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent"]{TouchEvent},
 or @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/WheelEvent"]{WheelEvent}
 object, respectively.
+}
+
+@defproc*[
+([(touch-list? [v any/c])
+  boolean?]
+ [(touch? [v any/c])
+  boolean?])]{
+Check whether a value is a browser touch collection or touch object.
+
+@racket[touch-list?] reports whether @racket[v] is an @racket[external]
+containing a JavaScript
+@hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/TouchList"]{TouchList}
+object.
+
+@racket[touch?] reports whether @racket[v] is an @racket[external]
+containing a JavaScript
+@hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/Touch"]{Touch}
+object.
 }
 
 @defproc*[
@@ -542,6 +570,61 @@ object.
 Each modifier helper reports whether the corresponding modifier key was active.
 
 @racket[keyboard-event-repeat?] reports whether the event is auto-repeating.
+}
+
+@defproc*[
+([(touch-event-touches [evt external])
+  external]
+ [(touch-event-target-touches [evt external])
+  external]
+ [(touch-event-changed-touches [evt external])
+  external])]{
+Read touch collections from a touch event.
+
+The argument @racket[evt] is an @racket[external] value expected to
+contain a JavaScript @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent"]{TouchEvent}
+object.
+
+Each function returns an @racket[external] containing a JavaScript
+@hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/TouchList"]{TouchList}
+object.
+}
+
+@defproc*[
+([(touch-list-length [xs external])
+  exact-nonnegative-integer?]
+ [(touch-list-ref [xs external]
+                  [i exact-nonnegative-integer?])
+  (or/c #f external)])]{
+Inspect a touch list.
+
+The argument @racket[xs] is an @racket[external] value expected to
+contain a JavaScript @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/TouchList"]{TouchList}
+object.
+
+@racket[touch-list-ref] returns @racket[#f] when @racket[i] is out of range.
+}
+
+@defproc*[
+([(touch-identifier [t external])
+  exact-integer?]
+ [(touch-client-x [t external])
+  number?]
+ [(touch-client-y [t external])
+  number?]
+ [(touch-page-x [t external])
+  number?]
+ [(touch-page-y [t external])
+  number?]
+ [(touch-screen-x [t external])
+  number?]
+ [(touch-screen-y [t external])
+  number?])]{
+Read properties from a touch object.
+
+The argument @racket[t] is an @racket[external] value expected to
+contain a JavaScript @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/Touch"]{Touch}
+object.
 }
 
 @section{Core Primitives}
