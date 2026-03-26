@@ -72,6 +72,12 @@
       '("click"
         "doubleclick"
         "contextmenu"
+        "copy"
+        "cut"
+        "paste"
+        "compositionstart"
+        "compositionupdate"
+        "compositionend"
         "keydown"
         "keyup"
         "focus"
@@ -118,7 +124,19 @@
         "pointerleave"
         "pointerover"
         "pointerout"
-        "pointercancel"))
+        "pointercancel"
+        "gotpointercapture"
+        "lostpointercapture"
+        "loadeddata"
+        "loadedmetadata"
+        "canplay"
+        "canplaythrough"
+        "play"
+        "playing"
+        "pause"
+        "ended"
+        "timeupdate"
+        "volumechange"))
 
     ;; Constants used by browser backend DOM translation.
     (define attr/type    "type")    ; Attribute name for input element type.

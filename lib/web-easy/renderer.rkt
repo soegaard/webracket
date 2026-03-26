@@ -750,6 +750,12 @@
       '(on-click
         on-doubleclick
         on-contextmenu
+        on-copy
+        on-cut
+        on-paste
+        on-compositionstart
+        on-compositionupdate
+        on-compositionend
         on-keydown
         on-keyup
         on-focus
@@ -796,7 +802,19 @@
         on-pointerleave
         on-pointerover
         on-pointerout
-        on-pointercancel))
+        on-pointercancel
+        on-gotpointercapture
+        on-lostpointercapture
+        on-loadeddata
+        on-loadedmetadata
+        on-canplay
+        on-canplaythrough
+        on-play
+        on-playing
+        on-pause
+        on-ended
+        on-timeupdate
+        on-volumechange))
 
     (define (primitive-dom-event-attr-key? attr-key)
       (and (symbol? attr-key)

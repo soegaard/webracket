@@ -33,6 +33,12 @@
   '(on-click
     on-doubleclick
     on-contextmenu
+    on-copy
+    on-cut
+    on-paste
+    on-compositionstart
+    on-compositionupdate
+    on-compositionend
     on-keydown
     on-keyup
     on-focus
@@ -79,7 +85,19 @@
     on-pointerleave
     on-pointerover
     on-pointerout
-    on-pointercancel))
+    on-pointercancel
+    on-gotpointercapture
+    on-lostpointercapture
+    on-loadeddata
+    on-loadedmetadata
+    on-canplay
+    on-canplaythrough
+    on-play
+    on-playing
+    on-pause
+    on-ended
+    on-timeupdate
+    on-volumechange))
 
 ;; primitive-event-attr-key? : symbol? -> boolean?
 ;;   Check whether attr-key is a supported generic primitive DOM event key.
@@ -1548,6 +1566,12 @@
                                '(on-click
                                  on-doubleclick
                                  on-contextmenu
+                                 on-copy
+                                 on-cut
+                                 on-paste
+                                 on-compositionstart
+                                 on-compositionupdate
+                                 on-compositionend
                                  on-keydown
                                  on-keyup
                                  on-focus
@@ -1594,7 +1618,19 @@
                                  on-pointerleave
                                  on-pointerover
                                  on-pointerout
-                                 on-pointercancel))))
+                                 on-pointercancel
+                                 on-gotpointercapture
+                                 on-lostpointercapture
+                                 on-loadeddata
+                                 on-loadedmetadata
+                                 on-canplay
+                                 on-canplaythrough
+                                 on-play
+                                 on-playing
+                                 on-pause
+                                 on-ended
+                                 on-timeupdate
+                                 on-volumechange))))
   ;; `#:content-mode text-or-children` is for primitive HTML elements such as
   ;; `Button` that preserve the old single text-like content form while also
   ;; accepting ordered mixed content sequences like a real container element.

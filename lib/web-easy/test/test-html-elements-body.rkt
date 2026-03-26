@@ -1733,10 +1733,43 @@
 (check-call-rejected (Div #:on-wheel "bad" (Span "bad"))
                      "Div rejects non-procedure wheel handler")
 
+;; Clipboard/Composition/Pointer-Capture primitive events
+(define recorded-copy #f)
+(define recorded-compositionupdate #f)
+(define recorded-gotpointercapture #f)
+(define extended-interaction-node
+  (render-primitive-node
+   (Input #:on-copy (lambda (evt)
+                      (set! recorded-copy evt))
+          #:on-compositionupdate (lambda (evt)
+                                   (set! recorded-compositionupdate evt))
+          #:on-gotpointercapture (lambda (evt)
+                                   (set! recorded-gotpointercapture evt))
+          #:value "edit me")))
+(check-equal (procedure? (node-event-handler extended-interaction-node "copy")) #t
+             "Input stores generic copy callback")
+(check-equal (procedure? (node-event-handler extended-interaction-node "compositionupdate")) #t
+             "Input stores generic compositionupdate callback")
+(check-equal (procedure? (node-event-handler extended-interaction-node "gotpointercapture")) #t
+             "Input stores generic gotpointercapture callback")
+((node-event-handler extended-interaction-node "copy") 'copy-token)
+((node-event-handler extended-interaction-node "compositionupdate") 'compositionupdate-token)
+((node-event-handler extended-interaction-node "gotpointercapture") 'gotpointercapture-token)
+(check-equal recorded-copy 'copy-token
+             "Input copy callback receives raw event payload")
+(check-equal recorded-compositionupdate 'compositionupdate-token
+             "Input compositionupdate callback receives raw event payload")
+(check-equal recorded-gotpointercapture 'gotpointercapture-token
+             "Input gotpointercapture callback receives raw event payload")
+(check-call-rejected (Input #:on-copy "bad")
+                     "Input rejects non-procedure copy handler")
+
 ;; Media/Load/Error and Animation/Transition primitive events
 (define recorded-img-load #f)
 (define recorded-img-error #f)
 (define recorded-img-abort #f)
+(define recorded-media-loadedmetadata #f)
+(define recorded-media-timeupdate #f)
 (define recorded-animationstart #f)
 (define recorded-transitionend #f)
 (define img-event-node
@@ -1748,6 +1781,13 @@
                      (set! recorded-img-error evt))
         #:on-abort (lambda (evt)
                      (set! recorded-img-abort evt)))))
+(define media-event-node
+  (render-primitive-node
+   (Audio #:src "/clip.mp3"
+          #:on-loadedmetadata (lambda (evt)
+                                (set! recorded-media-loadedmetadata evt))
+          #:on-timeupdate (lambda (evt)
+                            (set! recorded-media-timeupdate evt)))))
 (define animated-div-node
   (render-primitive-node
    (Div #:on-animationstart (lambda (evt)
@@ -1761,6 +1801,10 @@
              "Img stores generic error callback")
 (check-equal (procedure? (node-event-handler img-event-node "abort")) #t
              "Img stores generic abort callback")
+(check-equal (procedure? (node-event-handler media-event-node "loadedmetadata")) #t
+             "Audio stores generic loadedmetadata callback")
+(check-equal (procedure? (node-event-handler media-event-node "timeupdate")) #t
+             "Audio stores generic timeupdate callback")
 (check-equal (procedure? (node-event-handler animated-div-node "animationstart")) #t
              "Div stores generic animationstart callback")
 (check-equal (procedure? (node-event-handler animated-div-node "transitionend")) #t
@@ -1768,6 +1812,8 @@
 ((node-event-handler img-event-node "load") 'load-token)
 ((node-event-handler img-event-node "error") 'error-token)
 ((node-event-handler img-event-node "abort") 'abort-token)
+((node-event-handler media-event-node "loadedmetadata") 'loadedmetadata-token)
+((node-event-handler media-event-node "timeupdate") 'timeupdate-token)
 ((node-event-handler animated-div-node "animationstart") 'animationstart-token)
 ((node-event-handler animated-div-node "transitionend") 'transitionend-token)
 (check-equal recorded-img-load 'load-token
@@ -1776,6 +1822,10 @@
              "Img error callback receives raw event payload")
 (check-equal recorded-img-abort 'abort-token
              "Img abort callback receives raw event payload")
+(check-equal recorded-media-loadedmetadata 'loadedmetadata-token
+             "Audio loadedmetadata callback receives raw event payload")
+(check-equal recorded-media-timeupdate 'timeupdate-token
+             "Audio timeupdate callback receives raw event payload")
 (check-equal recorded-animationstart 'animationstart-token
              "Div animationstart callback receives raw event payload")
 (check-equal recorded-transitionend 'transitionend-token

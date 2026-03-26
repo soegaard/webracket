@@ -300,18 +300,22 @@ generic bubbling DOM event keywords:
 
 @itemlist[
   @item{@racket[#:on-click], @racket[#:on-doubleclick], @racket[#:on-contextmenu]}
+  @item{@racket[#:on-copy], @racket[#:on-cut], @racket[#:on-paste]}
+  @item{@racket[#:on-compositionstart], @racket[#:on-compositionupdate], @racket[#:on-compositionend]}
   @item{@racket[#:on-keydown], @racket[#:on-keyup]}
   @item{@racket[#:on-focus], @racket[#:on-blur], @racket[#:on-focusin], @racket[#:on-focusout]}
   @item{@racket[#:on-input], @racket[#:on-change], @racket[#:on-beforeinput], @racket[#:on-submit], @racket[#:on-reset], @racket[#:on-invalid]}
   @item{@racket[#:on-wheel], @racket[#:on-scroll]}
   @item{@racket[#:on-drag], @racket[#:on-dragstart], @racket[#:on-dragend], @racket[#:on-dragenter], @racket[#:on-dragleave], @racket[#:on-dragover], @racket[#:on-drop]}
   @item{@racket[#:on-touchstart], @racket[#:on-touchmove], @racket[#:on-touchend], @racket[#:on-touchcancel]}
-  @item{@racket[#:on-load], @racket[#:on-error], @racket[#:on-abort]}
+  @item{@racket[#:on-load], @racket[#:on-error], @racket[#:on-abort], @racket[#:on-loadeddata], @racket[#:on-loadedmetadata]}
+  @item{@racket[#:on-canplay], @racket[#:on-canplaythrough], @racket[#:on-play], @racket[#:on-playing], @racket[#:on-pause], @racket[#:on-ended], @racket[#:on-timeupdate], @racket[#:on-volumechange]}
   @item{@racket[#:on-animationstart], @racket[#:on-animationend], @racket[#:on-animationiteration], @racket[#:on-transitionend]}
   @item{@racket[#:on-mousedown], @racket[#:on-mousemove], @racket[#:on-mouseup]}
   @item{@racket[#:on-mouseenter], @racket[#:on-mouseleave], @racket[#:on-mouseover], @racket[#:on-mouseout]}
   @item{@racket[#:on-pointerdown], @racket[#:on-pointermove], @racket[#:on-pointerup]}
   @item{@racket[#:on-pointerenter], @racket[#:on-pointerleave], @racket[#:on-pointerover], @racket[#:on-pointerout], @racket[#:on-pointercancel]}
+  @item{@racket[#:on-gotpointercapture], @racket[#:on-lostpointercapture]}
 ]
 
 These keywords are part of the core primitive surface.
