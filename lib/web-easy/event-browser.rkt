@@ -27,11 +27,11 @@
 ;;   mouse-event-client-y             Read viewport-relative mouse y coordinate.
 ;;   keyboard-event-key               Read logical key string.
 ;;   keyboard-event-code              Read physical key code string.
-;;   keyboard-event-alt-key           Read Alt modifier state as boolean.
-;;   keyboard-event-ctrl-key          Read Control modifier state as boolean.
-;;   keyboard-event-meta-key          Read Meta modifier state as boolean.
-;;   keyboard-event-shift-key         Read Shift modifier state as boolean.
-;;   keyboard-event-repeat            Read repeat state as boolean.
+;;   keyboard-event-alt-key?          Read Alt modifier state as boolean.
+;;   keyboard-event-ctrl-key?         Read Control modifier state as boolean.
+;;   keyboard-event-meta-key?         Read Meta modifier state as boolean.
+;;   keyboard-event-shift-key?        Read Shift modifier state as boolean.
+;;   keyboard-event-repeat?           Read repeat state as boolean.
 
 (define-values
   (event?
@@ -54,11 +54,11 @@
    mouse-event-client-y
    keyboard-event-key
    keyboard-event-code
-   keyboard-event-alt-key
-   keyboard-event-ctrl-key
-   keyboard-event-meta-key
-   keyboard-event-shift-key
-   keyboard-event-repeat)
+   keyboard-event-alt-key?
+   keyboard-event-ctrl-key?
+   keyboard-event-meta-key?
+   keyboard-event-shift-key?
+   keyboard-event-repeat?)
   (let ()
     ;; js-flag->boolean/internal : integer? -> boolean?
     ;;   Convert FFI i32 flag results to boolean.
@@ -165,29 +165,29 @@
     (define (keyboard-event-code evt)
       (js-keyboard-event-code evt))
 
-    ;; keyboard-event-alt-key : any/c -> boolean?
+    ;; keyboard-event-alt-key? : any/c -> boolean?
     ;;   Report whether Alt was active for keyboard evt.
-    (define (keyboard-event-alt-key evt)
+    (define (keyboard-event-alt-key? evt)
       (js-flag->boolean/internal (js-keyboard-event-alt-key evt)))
 
-    ;; keyboard-event-ctrl-key : any/c -> boolean?
+    ;; keyboard-event-ctrl-key? : any/c -> boolean?
     ;;   Report whether Control was active for keyboard evt.
-    (define (keyboard-event-ctrl-key evt)
+    (define (keyboard-event-ctrl-key? evt)
       (js-flag->boolean/internal (js-keyboard-event-ctrl-key evt)))
 
-    ;; keyboard-event-meta-key : any/c -> boolean?
+    ;; keyboard-event-meta-key? : any/c -> boolean?
     ;;   Report whether Meta was active for keyboard evt.
-    (define (keyboard-event-meta-key evt)
+    (define (keyboard-event-meta-key? evt)
       (js-flag->boolean/internal (js-keyboard-event-meta-key evt)))
 
-    ;; keyboard-event-shift-key : any/c -> boolean?
+    ;; keyboard-event-shift-key? : any/c -> boolean?
     ;;   Report whether Shift was active for keyboard evt.
-    (define (keyboard-event-shift-key evt)
+    (define (keyboard-event-shift-key? evt)
       (js-flag->boolean/internal (js-keyboard-event-shift-key evt)))
 
-    ;; keyboard-event-repeat : any/c -> boolean?
+    ;; keyboard-event-repeat? : any/c -> boolean?
     ;;   Report whether keyboard evt is auto-repeating.
-    (define (keyboard-event-repeat evt)
+    (define (keyboard-event-repeat? evt)
       (js-flag->boolean/internal (js-keyboard-event-repeat evt)))
 
     (values event?
@@ -210,8 +210,8 @@
             mouse-event-client-y
             keyboard-event-key
             keyboard-event-code
-            keyboard-event-alt-key
-            keyboard-event-ctrl-key
-            keyboard-event-meta-key
-            keyboard-event-shift-key
-            keyboard-event-repeat)))
+            keyboard-event-alt-key?
+            keyboard-event-ctrl-key?
+            keyboard-event-meta-key?
+            keyboard-event-shift-key?
+            keyboard-event-repeat?)))

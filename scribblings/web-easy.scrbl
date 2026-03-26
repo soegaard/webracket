@@ -365,11 +365,22 @@ strings, symbols, numbers, booleans, characters, or observables whose
 current value is one of those.
 }
 
-@subsection{Event Helpers}
+@section{Event}
 
 In browser builds that include @filepath{lib/web-easy/main-browser.rkt},
 the following thin convenience wrappers are available on top of the raw
 event object passed to primitive @racket[#:on-*] callbacks:
+
+Example:
+
+@racketblock[
+(Canvas #:on-contextmenu
+        (lambda (evt)
+          (prevent-default! evt)
+          (define x (mouse-event-offset-x evt))
+          (define y (mouse-event-offset-y evt))
+          (js-log (format "menu at (~a, ~a)" x y))))
+]
 
 @itemlist[
   @item{@racket[event?], @racket[mouse-event?], @racket[keyboard-event?]}
@@ -380,9 +391,9 @@ event object passed to primitive @racket[#:on-*] callbacks:
   @item{@racket[mouse-event-offset-x], @racket[mouse-event-offset-y]}
   @item{@racket[mouse-event-client-x], @racket[mouse-event-client-y]}
   @item{@racket[keyboard-event-key], @racket[keyboard-event-code]}
-  @item{@racket[keyboard-event-alt-key], @racket[keyboard-event-ctrl-key],
-        @racket[keyboard-event-meta-key], @racket[keyboard-event-shift-key],
-        @racket[keyboard-event-repeat]}
+  @item{@racket[keyboard-event-alt-key?], @racket[keyboard-event-ctrl-key?],
+        @racket[keyboard-event-meta-key?], @racket[keyboard-event-shift-key?],
+        @racket[keyboard-event-repeat?]}
 ]
 
 @defproc*[
@@ -512,15 +523,15 @@ object.
 }
 
 @defproc*[
-([(keyboard-event-alt-key [evt external])
+([(keyboard-event-alt-key? [evt external])
   boolean?]
- [(keyboard-event-ctrl-key [evt external])
+ [(keyboard-event-ctrl-key? [evt external])
   boolean?]
- [(keyboard-event-meta-key [evt external])
+ [(keyboard-event-meta-key? [evt external])
   boolean?]
- [(keyboard-event-shift-key [evt external])
+ [(keyboard-event-shift-key? [evt external])
   boolean?]
- [(keyboard-event-repeat [evt external])
+ [(keyboard-event-repeat? [evt external])
   boolean?])]{
 Read modifier-key and repeat status from a keyboard event.
 
@@ -530,19 +541,8 @@ object.
 
 Each modifier helper reports whether the corresponding modifier key was active.
 
-@racket[keyboard-event-repeat] reports whether the event is auto-repeating.
+@racket[keyboard-event-repeat?] reports whether the event is auto-repeating.
 }
-
-Example:
-
-@racketblock[
-(Canvas #:on-contextmenu
-        (lambda (evt)
-          (prevent-default! evt)
-          (define x (mouse-event-offset-x evt))
-          (define y (mouse-event-offset-y evt))
-          (js-log (format "menu at (~a, ~a)" x y))))
-]
 
 @section{Core Primitives}
 
