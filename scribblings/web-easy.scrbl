@@ -391,19 +391,8 @@ event object passed to primitive @racket[#:on-*] callbacks:
  [(mouse-event? [evt external])
   boolean?]
  [(keyboard-event? [evt external])
-  boolean?])]{
-Check whether an @racket[external] value contains a common DOM event object.
-
-The argument @racket[evt] is an @racket[external] value. These predicates
-check whether it contains a JavaScript
-@hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/Event"]{Event},
-@hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent"]{MouseEvent},
-or @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent"]{KeyboardEvent}
-object, respectively.
-}
-
-@defproc*[
-([(pointer-event? [evt external])
+  boolean?]
+ [(pointer-event? [evt external])
   boolean?]
  [(focus-event? [evt external])
   boolean?]
@@ -413,16 +402,19 @@ object, respectively.
   boolean?]
  [(wheel-event? [evt external])
   boolean?])]{
-Check whether an @racket[external] value contains a more specialized DOM event object.
+Check whether an @racket[external] value contains a DOM event object of a particular kind.
 
 The argument @racket[evt] is an @racket[external] value. These predicates
-check for JavaScript
+check whether it contains a JavaScript
+@hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/Event"]{Event},
+@hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent"]{MouseEvent},
+@hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent"]{KeyboardEvent},
 @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/PointerEvent"]{PointerEvent},
 @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/FocusEvent"]{FocusEvent},
 @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/InputEvent"]{InputEvent},
 @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/SubmitEvent"]{SubmitEvent},
-and @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/WheelEvent"]{WheelEvent}
-objects, respectively.
+or @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/WheelEvent"]{WheelEvent}
+object, respectively.
 }
 
 @defproc*[
