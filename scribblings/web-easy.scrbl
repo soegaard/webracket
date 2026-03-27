@@ -651,6 +651,19 @@ The stylesheet load order is:
   @item{optional extra/page CSS}
 ]
 
+The starter theme stylesheets use a small set of token tiers:
+
+@itemlist[
+  @item{neutral/page tokens such as background, foreground, subtle surfaces, and separators}
+  @item{control and popup tokens for shared widget chrome}
+  @item{semantic base tones such as @tt{--we-primary} and @tt{--we-success}}
+  @item{semantic companion tokens for soft surfaces and readable accents:
+        @tt{--we-*-subtle}, @tt{--we-*-border}, @tt{--we-*-emphasis}, and @tt{--we-*-on}}
+]
+
+This keeps the starter themes approachable: most customization can happen by
+editing token values before changing component-specific selectors.
+
 @defproc[(theme [id any/c]
                  [class-name string?]
                  [core-css string?]

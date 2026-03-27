@@ -15,6 +15,7 @@
 /* 1) Design Tokens (CSS variables)                                            */
 /* -------------------------------------------------------------------------- */
 html.we-theme-dark {
+  /* Core neutrals: page text/background and shared chrome. */
   /* Focus ring color for keyboard focus (Tab navigation). */
   --we-focus: #7db7ff;
   /* Focus tint fill used inside focused controls. */
@@ -65,11 +66,19 @@ html.we-theme-dark {
   --we-danger: #cc7e7e;
   --we-light: #d9e2f3;
   --we-dark: #121722;
-  /* Shared control/popup surface tokens. */
+  /* Neutral surface layer: base, raised, subtle, and separators. */
   --we-surface:                 #1a2230;
   --we-surface-raised:          #2a3342;
+  --we-surface-subtle:          #1a1f29;
+  --we-surface-muted:           #1f2a38;
   --we-surface-hover:           #37445a;
   --we-surface-active:          #1f2938;
+  --we-separator:               #475670;
+  --we-separator-strong:        #4e5e79;
+  --we-table-header-bg:         #1f2a38;
+  --we-table-header-fg:         #d9e2f3;
+  --we-table-cell-border:       #46556e;
+  /* Shared control/popup surface tokens. */
   --we-control-border:          #7383a1;
   --we-control-border-hover:    #a3b5d5;
   --we-control-border-focus:    #9eb2d5;
@@ -77,7 +86,13 @@ html.we-theme-dark {
   --we-popup-bg:                #161d28;
   --we-popup-border:            #5e6a84;
   --we-popup-shadow:            rgba(0, 0, 0, 0.45);
-  /* Emphasis and subtle semantic tones. */
+  /* Semantic family tokens: base, on-color, emphasis, subtle, border. */
+  --we-primary-on:              #edf7ff;
+  --we-secondary-on:            #e6eefc;
+  --we-success-on:              #ebfff3;
+  --we-info-on:                 #ecf6ff;
+  --we-warning-on:              #fff8ed;
+  --we-danger-on:               #fff2f2;
   --we-primary-emphasis:        #8fc0eb;
   --we-secondary-emphasis:      #b7c7e0;
   --we-success-emphasis:        #8ccaa1;
@@ -148,7 +163,7 @@ html.we-theme-dark .we-menu-popup {
 html.we-theme-dark .we-menu-popup .we-divider,
 html.we-theme-dark .we-menu-popup .we-divider-horizontal {
   margin: 3px 2px;
-  border-top-color: #4c5a73;
+  border-top-color: var(--we-separator);
 }
 
 html.we-theme-dark .we-menu-label {
@@ -293,14 +308,14 @@ html.we-theme-dark .we-button:disabled {
 
 /* Button variants used by the public showcase page. */
 html.we-theme-dark .we-button-primary {
-  background: #2f7ea0;
-  border-color: #4f9fc1;
-  color: #eef7ff;
+  background: var(--we-primary);
+  border-color: var(--we-primary);
+  color: var(--we-primary-on);
 }
 
 html.we-theme-dark .we-button-primary:hover {
-  background: #3d8fb1;
-  border-color: #67afd0;
+  background: var(--we-primary-emphasis);
+  border-color: var(--we-primary-emphasis);
 }
 
 html.we-theme-dark .we-button-secondary {
@@ -328,27 +343,27 @@ html.we-theme-dark .we-button-ghost:hover {
 
 /* Extended semantic button variants used by demos/tests. */
 html.we-theme-dark .we-button-success {
-  background: #2f7850;
-  border-color: #5ca877;
-  color: #eaf8ef;
+  background: var(--we-success);
+  border-color: var(--we-success);
+  color: var(--we-success-on);
 }
 
 html.we-theme-dark .we-button-info {
-  background: #2a5f97;
-  border-color: #5f9cd8;
-  color: #edf5ff;
+  background: var(--we-info);
+  border-color: var(--we-info);
+  color: var(--we-info-on);
 }
 
 html.we-theme-dark .we-button-warning {
-  background: #8b6b36;
-  border-color: #c5a770;
-  color: #fff5e3;
+  background: var(--we-warning);
+  border-color: var(--we-warning);
+  color: var(--we-warning-on);
 }
 
 html.we-theme-dark .we-button-danger {
-  background: #8a4b4b;
-  border-color: #cc7e7e;
-  color: #ffecec;
+  background: var(--we-danger);
+  border-color: var(--we-danger);
+  color: var(--we-danger-on);
 }
 
 html.we-theme-dark .we-button-light {
@@ -427,7 +442,7 @@ html.we-theme-dark select option {
 html.we-theme-dark .we-alert {
   border: 1px solid #7383a1;
   border-radius: 4px;
-  background: #1a1f29;
+  background: var(--we-surface-subtle);
   color: var(--we-fg);
   padding: 0.75rem 1rem;
 }
@@ -495,7 +510,7 @@ html.we-theme-dark .we-toast {
   align-items: start;
   border: 1px solid #7383a1;
   border-radius: 6px;
-  background: #13161c;
+  background: var(--we-bg);
   color: var(--we-fg);
   padding: 0.75rem 0.875rem;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
@@ -879,12 +894,12 @@ html.we-theme-dark .we-card .we-heading {
   color: inherit;
 }
 
-html.we-theme-dark .we-card-tone-primary   { --we-card-tone-bg: color-mix(in srgb, var(--we-primary) 55%, var(--we-bg) 45%);   --we-card-tone-border: var(--we-primary);   --we-card-tone-fg: #edf7ff; }
-html.we-theme-dark .we-card-tone-secondary { --we-card-tone-bg: color-mix(in srgb, var(--we-secondary) 35%, var(--we-bg) 65%); --we-card-tone-border: var(--we-secondary); --we-card-tone-fg: #e6eefc; }
-html.we-theme-dark .we-card-tone-success   { --we-card-tone-bg: color-mix(in srgb, var(--we-success) 40%, var(--we-bg) 60%);   --we-card-tone-border: var(--we-success);   --we-card-tone-fg: #ebfff3; }
-html.we-theme-dark .we-card-tone-info      { --we-card-tone-bg: color-mix(in srgb, var(--we-info) 42%, var(--we-bg) 58%);      --we-card-tone-border: var(--we-info);      --we-card-tone-fg: #ecf6ff; }
-html.we-theme-dark .we-card-tone-warning   { --we-card-tone-bg: color-mix(in srgb, var(--we-warning) 38%, var(--we-bg) 62%);   --we-card-tone-border: var(--we-warning);   --we-card-tone-fg: #fff8ed; }
-html.we-theme-dark .we-card-tone-danger    { --we-card-tone-bg: color-mix(in srgb, var(--we-danger) 40%, var(--we-bg) 60%);    --we-card-tone-border: var(--we-danger);    --we-card-tone-fg: #fff2f2; }
+html.we-theme-dark .we-card-tone-primary   { --we-card-tone-bg: color-mix(in srgb, var(--we-primary) 55%, var(--we-bg) 45%);   --we-card-tone-border: var(--we-primary);   --we-card-tone-fg: var(--we-primary-on); }
+html.we-theme-dark .we-card-tone-secondary { --we-card-tone-bg: color-mix(in srgb, var(--we-secondary) 35%, var(--we-bg) 65%); --we-card-tone-border: var(--we-secondary); --we-card-tone-fg: var(--we-secondary-on); }
+html.we-theme-dark .we-card-tone-success   { --we-card-tone-bg: color-mix(in srgb, var(--we-success) 40%, var(--we-bg) 60%);   --we-card-tone-border: var(--we-success);   --we-card-tone-fg: var(--we-success-on); }
+html.we-theme-dark .we-card-tone-info      { --we-card-tone-bg: color-mix(in srgb, var(--we-info) 42%, var(--we-bg) 58%);      --we-card-tone-border: var(--we-info);      --we-card-tone-fg: var(--we-info-on); }
+html.we-theme-dark .we-card-tone-warning   { --we-card-tone-bg: color-mix(in srgb, var(--we-warning) 38%, var(--we-bg) 62%);   --we-card-tone-border: var(--we-warning);   --we-card-tone-fg: var(--we-warning-on); }
+html.we-theme-dark .we-card-tone-danger    { --we-card-tone-bg: color-mix(in srgb, var(--we-danger) 40%, var(--we-bg) 60%);    --we-card-tone-border: var(--we-danger);    --we-card-tone-fg: var(--we-danger-on); }
 html.we-theme-dark .we-card-tone-light     { --we-card-tone-bg: #cfd9eb; --we-card-tone-border: #cfd9eb; --we-card-tone-fg: #1a2230; }
 html.we-theme-dark .we-card-tone-dark      { --we-card-tone-bg: #0f141f; --we-card-tone-border: #0f141f; --we-card-tone-fg: #d9e2f3; }
 
@@ -970,12 +985,12 @@ html.we-theme-dark .we-table {
 
 html.we-theme-dark .we-table th,
 html.we-theme-dark .we-table td {
-  border: 1px solid #46556e;
+  border: 1px solid var(--we-table-cell-border);
 }
 
 html.we-theme-dark .we-table th {
-  background: #1f2a38;
-  color: #d9e2f3;
+  background: var(--we-table-header-bg);
+  color: var(--we-table-header-fg);
 }
 
 html.we-theme-dark .we-table.we-table-striped > tr:nth-of-type(even) {
@@ -1002,7 +1017,7 @@ html.we-theme-dark .we-table > tr.we-table-row-dark { background: #121722; }
 /* Badges: tone classes should be visually distinct in examples and apps. */
 html.we-theme-dark .we-badge {
   border: 1px solid #6e7f9b;
-  background: #1f2a38;
+  background: var(--we-surface-muted);
   color: #d9e2f3;
 }
 
@@ -1424,12 +1439,12 @@ html.we-theme-dark .we-offcanvas-backdrop {
 /* Misc separators and helper widgets. */
 html.we-theme-dark .we-divider,
 html.we-theme-dark .we-divider-vertical {
-  border-color: #475670;
+  border-color: var(--we-separator);
 }
 
 html.we-theme-dark .we-placeholder {
   border-color: #52617c;
-  background: #1f2a38;
+  background: var(--we-surface-muted);
 }
 
 /* -------------------------------------------------------------------------- */

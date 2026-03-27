@@ -13,15 +13,32 @@
   --we-bg-selected: #ececec;
   --we-bg-disabled: #f3f3f3;
   --we-bg-hover: #e8e8e8;
+  --we-surface: #ffffff;
+  --we-surface-subtle: #f3f6fb;
+  --we-surface-muted: #eef3fb;
   --we-border: #888888;
   --we-border-menu: #aaaaaa;
   --we-border-muted: #999999;
   --we-border-soft: #bbbbbb;
   --we-border-hover: #c0c0c0;
   --we-border-strong: #333333;
+  --we-separator: #d0d9e8;
+  --we-table-header-bg: #eef3fb;
+  --we-table-header-fg: #2b3f5f;
+  --we-table-cell-border: #d4deed;
   --we-fg-muted: #777777;
   --we-overlay: rgba(0, 0, 0, 0.45);
   --we-shadow: rgba(0, 0, 0, 0.28);
+  --we-primary: #2f7ea0;
+  --we-primary-on: #f7fcff;
+  --we-primary-emphasis: #266985;
+  --we-primary-subtle: #d8e8f2;
+  --we-primary-border: #85a8bf;
+  --we-success: #3d8b5a;
+  --we-success-on: #f5fff9;
+  --we-success-emphasis: #2f6c46;
+  --we-success-subtle: #e4f2e7;
+  --we-success-border: #6a9b73;
   --we-progress-success: #3a9147;
   --we-progress-warning: #b57c1c;
   --we-progress-danger: #b24545;
@@ -55,6 +72,26 @@
 
 .we-card-header {
   background: var(--we-bg-subtle, #f3f3f3);
+}
+
+.we-alert-primary {
+  background: var(--we-primary-subtle, #d8e8f2);
+  border-color: var(--we-primary-border, #85a8bf);
+  color: var(--we-primary-emphasis, #266985);
+}
+
+.we-alert-success {
+  background: var(--we-success-subtle, #e4f2e7);
+  border-color: var(--we-success-border, #6a9b73);
+  color: var(--we-success-emphasis, #2f6c46);
+}
+
+.we-button-primary,
+.we-button-primary.we-button,
+.we-button-primary .we-button {
+  background: var(--we-primary, #2f7ea0) !important;
+  border-color: var(--we-primary, #2f7ea0) !important;
+  color: var(--we-primary-on, #f7fcff) !important;
 }
 
 .we-page-btn.is-current {

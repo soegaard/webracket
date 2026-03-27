@@ -399,7 +399,7 @@
                        (text "web-easy is a web-rendered gui-easy style toolkit for WebRacket."))
                  (list 'themes
                        "How do themes work?"
-                       (text "Theme files override CSS tokens and widget classes only."))))
+                       (text "Theme files mostly customize token tiers (neutral surfaces, semantic tones, borders, emphasis, and on-colors) plus widget classes."))))
                (offcanvas
                  @off-open?
                  (lambda () (:= @off-open? #f))

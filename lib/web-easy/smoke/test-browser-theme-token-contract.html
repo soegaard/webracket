@@ -146,6 +146,48 @@
       themeHelper.assertTrue(after !== before, "breadcrumb separator color changed after token override");
     }
 
+    async function checkSemanticAlertTokens(frame, timeoutMs) {
+      const doc = await loadCase(
+        frame,
+        "./generated/example-browser-smoke-all.html?test=alert",
+        (d) => d.querySelector(".we-alert-success"),
+        timeoutMs
+      );
+      const alert = doc.querySelector(".we-alert-success");
+      const beforeBg = themeHelper.normalizedCssColor(getComputedStyle(alert).backgroundColor);
+      const beforeBorder = themeHelper.normalizedCssColor(getComputedStyle(alert).borderTopColor);
+      const beforeFg = themeHelper.normalizedCssColor(getComputedStyle(alert).color);
+      doc.documentElement.style.setProperty("--we-success-subtle", "rgb(220, 242, 230)");
+      doc.documentElement.style.setProperty("--we-success-border", "rgb(20, 140, 95)");
+      doc.documentElement.style.setProperty("--we-success-emphasis", "rgb(15, 90, 60)");
+      await themeHelper.sleep(80);
+      const afterBg = themeHelper.normalizedCssColor(getComputedStyle(alert).backgroundColor);
+      const afterBorder = themeHelper.normalizedCssColor(getComputedStyle(alert).borderTopColor);
+      const afterFg = themeHelper.normalizedCssColor(getComputedStyle(alert).color);
+      themeHelper.assertTrue(afterBg === "rgb(220,242,230)", "alert success background updates from --we-success-subtle");
+      themeHelper.assertTrue(afterBorder === "rgb(20,140,95)", "alert success border updates from --we-success-border");
+      themeHelper.assertTrue(afterFg === "rgb(15,90,60)", "alert success text updates from --we-success-emphasis");
+      themeHelper.assertTrue(afterBg !== beforeBg, "alert success background changed after token override");
+      themeHelper.assertTrue(afterBorder !== beforeBorder, "alert success border changed after token override");
+      themeHelper.assertTrue(afterFg !== beforeFg, "alert success text changed after token override");
+    }
+
+    async function checkSemanticOnToken(frame, timeoutMs) {
+      const doc = await loadCase(
+        frame,
+        "./demo-theme-showcase.html",
+        (d) => d.querySelector(".we-button-primary"),
+        timeoutMs
+      );
+      const btn = doc.querySelector(".we-button-primary");
+      const before = themeHelper.normalizedCssColor(getComputedStyle(btn).color);
+      doc.documentElement.style.setProperty("--we-primary-on", "rgb(12, 34, 56)");
+      await themeHelper.sleep(80);
+      const after = themeHelper.normalizedCssColor(getComputedStyle(btn).color);
+      themeHelper.assertTrue(after === "rgb(12,34,56)", "primary button text updates from --we-primary-on");
+      themeHelper.assertTrue(after !== before, "primary button text changed after token override");
+    }
+
     async function checkOffcanvasBgToken(frame, timeoutMs) {
       const doc = await loadCase(
         frame,
@@ -280,9 +322,24 @@
           "--we-bg",
           "--we-bg-subtle",
           "--we-bg-selected",
+          "--we-surface",
+          "--we-surface-subtle",
+          "--we-surface-muted",
           "--we-border",
           "--we-border-menu",
           "--we-border-strong",
+          "--we-separator",
+          "--we-table-header-bg",
+          "--we-table-header-fg",
+          "--we-table-cell-border",
+          "--we-primary-subtle",
+          "--we-primary-border",
+          "--we-primary-emphasis",
+          "--we-primary-on",
+          "--we-success-subtle",
+          "--we-success-border",
+          "--we-success-emphasis",
+          "--we-success-on",
           "--we-overlay",
           "--we-progress-success",
           "--we-progress-warning",
@@ -303,6 +360,8 @@
         await checkCardBgToken(frame, timeoutMs);
         await checkSelectedBgToken(frame, timeoutMs);
         await checkMutedFgToken(frame, timeoutMs);
+        await checkSemanticAlertTokens(frame, timeoutMs);
+        await checkSemanticOnToken(frame, timeoutMs);
         await checkOffcanvasBgToken(frame, timeoutMs);
         await checkScrollspySelectedToken(frame, timeoutMs);
         await checkScrollspyThemeHooks(frame, timeoutMs);
@@ -310,7 +369,7 @@
         await checkHeadingTokens(frame, timeoutMs);
 
         setStatus(
-          "PASS\nrequired --we-* tokens are defined; overrides affect menu/card/pagination/breadcrumb/offcanvas/scrollspy/close-icon/headings/heading-spacing",
+          "PASS\nrequired --we-* tokens are defined; overrides affect menu/card/pagination/breadcrumb/semantic alert/button/offcanvas/scrollspy/close-icon/headings/heading-spacing",
           "pass"
         );
       } catch (err) {

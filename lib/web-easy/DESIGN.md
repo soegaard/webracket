@@ -1127,7 +1127,7 @@ Migration note:
 
 Core vs Theme rule (strict):
 - Core layer (`themes/web-easy-core.css`): structure/behavior only (`display`, layout direction, open/close mechanics, positioning anchors).
-- Theme layer (`themes/theme-external-*.css`, `themes/theme-solar-2.css`): visuals only (colors, borders, typography, shadows, spacing polish).
+- Theme layer (`themes/theme-light.css`, `themes/theme-dark.css`, `themes/theme-external-solar.css`, `themes/theme-solar-2.css`): visuals only (colors, borders, typography, shadows, spacing polish).
 - Showcase layer (`theme-showcase-*.css`): page-specific layout/polish only.
 - Load order must be: core -> theme -> showcase (if present).
 
@@ -1138,6 +1138,7 @@ Light/Dark style intent:
 - Density policy: comfortable defaults (not compact-first), consistent vertical rhythm, and predictable control sizing.
 - Component coverage goal: both themes should style the same widget surface area as Solar2 (including newer components), so users can switch themes without unstyled fallbacks.
 - Customization goal: these files should remain approachable as starter themes users can copy and modify without depending on showcase selectors.
+- Token tiers: starter themes are organized around neutral surfaces, shared control/popup chrome, semantic base tones, semantic soft-surface/border/emphasis/on-color companions, and spacing/layout tokens.
 
 Core utility note:
 - `we-flow` is now part of the structural core layer (`.we-flow > * + *`) for uniform sibling spacing.

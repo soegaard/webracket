@@ -18,6 +18,7 @@
 /* These variables are shared by many widgets.                                 */
 /* If you only change this section, the whole theme updates consistently.      */
 html.we-theme-light {
+  /* Core neutrals: page text/background and shared chrome. */
   /* Focus ring color for keyboard focus (Tab navigation). */
   --we-focus:         #0a66c2;
   /* Focus tint fill used inside focused controls. */
@@ -68,11 +69,19 @@ html.we-theme-light {
   --we-danger:    #b65757;
   --we-light:     #f7f9fc;
   --we-dark:      #2a3342;
-  /* Shared control/popup surface tokens. */
+  /* Neutral surface layer: base, raised, subtle, and separators. */
   --we-surface:                 #ffffff;
   --we-surface-raised:          #f7f9fd;
+  --we-surface-subtle:          #f3f6fb;
+  --we-surface-muted:           #eef3fb;
   --we-surface-hover:           #e9f0fb;
   --we-surface-active:          #dce7f7;
+  --we-separator:               #d0d9e8;
+  --we-separator-strong:        #c6d3e8;
+  --we-table-header-bg:         #eef3fb;
+  --we-table-header-fg:         #2b3f5f;
+  --we-table-cell-border:       #d4deed;
+  /* Shared control/popup surface tokens. */
   --we-control-border:          #9aa9c3;
   --we-control-border-hover:    #6f86aa;
   --we-control-border-focus:    #5c78a6;
@@ -80,7 +89,13 @@ html.we-theme-light {
   --we-popup-bg:                #ffffff;
   --we-popup-border:            #888888;
   --we-popup-shadow:            rgba(0, 0, 0, 0.2);
-  /* Emphasis and subtle semantic tones. */
+  /* Semantic family tokens: base, on-color, emphasis, subtle, border. */
+  --we-primary-on:              #f7fcff;
+  --we-secondary-on:            #f8fbff;
+  --we-success-on:              #f5fff9;
+  --we-info-on:                 #f6fbff;
+  --we-warning-on:              #fffaf1;
+  --we-danger-on:               #fff7f7;
   --we-primary-emphasis:        #266985;
   --we-secondary-emphasis:      #5b749d;
   --we-success-emphasis:        #2f6c46;
@@ -177,7 +192,7 @@ html.we-theme-light .we-menu-popup {
 html.we-theme-light .we-menu-popup .we-divider,
 html.we-theme-light .we-menu-popup .we-divider-horizontal {
   margin: 3px 2px;
-  border-top-color: #cfd8e6;
+  border-top-color: var(--we-separator);
 }
 
 html.we-theme-light .we-menu-item {
@@ -303,14 +318,14 @@ html.we-theme-light .we-button:focus-visible {
 
 /* Button variants used by the public showcase page. */
 html.we-theme-light .we-button-primary {
-  background: #2f7ea0;
-  border-color: #2f7ea0;
-  color: #ffffff;
+  background: var(--we-primary);
+  border-color: var(--we-primary);
+  color: var(--we-primary-on);
 }
 
 html.we-theme-light .we-button-primary:hover {
-  background: #266985;
-  border-color: #266985;
+  background: var(--we-primary-emphasis);
+  border-color: var(--we-primary-emphasis);
 }
 
 html.we-theme-light .we-button-secondary {
@@ -337,27 +352,27 @@ html.we-theme-light .we-button-ghost:hover {
 
 /* Extended semantic button variants used by demos/tests. */
 html.we-theme-light .we-button-success {
-  background: #3d8b5a;
-  border-color: #3d8b5a;
-  color: #ffffff;
+  background: var(--we-success);
+  border-color: var(--we-success);
+  color: var(--we-success-on);
 }
 
 html.we-theme-light .we-button-info {
-  background: #2c7dc8;
-  border-color: #2c7dc8;
-  color: #ffffff;
+  background: var(--we-info);
+  border-color: var(--we-info);
+  color: var(--we-info-on);
 }
 
 html.we-theme-light .we-button-warning {
-  background: #c1862f;
-  border-color: #c1862f;
-  color: #ffffff;
+  background: var(--we-warning);
+  border-color: var(--we-warning);
+  color: var(--we-warning-on);
 }
 
 html.we-theme-light .we-button-danger {
-  background: #b65757;
-  border-color: #b65757;
-  color: #ffffff;
+  background: var(--we-danger);
+  border-color: var(--we-danger);
+  color: var(--we-danger-on);
 }
 
 html.we-theme-light .we-button-light {
@@ -431,7 +446,7 @@ html.we-theme-light select option {
 html.we-theme-light .we-alert {
   border: 1px solid #9aa9c3;
   border-radius: 4px;
-  background: #f3f6fb;
+  background: var(--we-surface-subtle);
   color: var(--we-fg);
   padding: 0.75rem 1rem;
 }
@@ -499,7 +514,7 @@ html.we-theme-light .we-toast {
   align-items: start;
   border: 1px solid #9aa9c3;
   border-radius: 6px;
-  background: #ffffff;
+  background: var(--we-surface);
   color: var(--we-fg);
   padding: 0.75rem 0.875rem;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
@@ -717,17 +732,17 @@ html.we-theme-light .we-accordion-trigger.is-open::after {
 html.we-theme-light .we-navigation-bar {
   border: 1px solid #9aa9c3;
   border-radius: 6px;
-  background: #f3f6fb;
+  background: var(--we-surface-subtle);
   padding: 6px 10px;
 }
 
 html.we-theme-light .we-navigation-bar .we-divider,
 html.we-theme-light .we-navigation-bar .we-divider-horizontal {
-  border-top-color: #c6d3e8;
+  border-top-color: var(--we-separator-strong);
 }
 
 html.we-theme-light .we-navigation-bar .we-divider-vertical {
-  border-left-color: #c6d3e8;
+  border-left-color: var(--we-separator-strong);
 }
 
 html.we-theme-light .we-navigation-bar .we-navigation-bar-items > .we-button,
@@ -892,12 +907,12 @@ html.we-theme-light .we-card .we-heading {
   color: inherit;
 }
 
-html.we-theme-light .we-card-tone-primary   { --we-card-tone-bg: var(--we-primary);   --we-card-tone-border: var(--we-primary);   --we-card-tone-fg: #f7fcff; }
-html.we-theme-light .we-card-tone-secondary { --we-card-tone-bg: var(--we-secondary); --we-card-tone-border: var(--we-secondary); --we-card-tone-fg: #f8fbff; }
-html.we-theme-light .we-card-tone-success   { --we-card-tone-bg: var(--we-success);   --we-card-tone-border: var(--we-success);   --we-card-tone-fg: #f5fff9; }
-html.we-theme-light .we-card-tone-info      { --we-card-tone-bg: var(--we-info);      --we-card-tone-border: var(--we-info);      --we-card-tone-fg: #f6fbff; }
-html.we-theme-light .we-card-tone-warning   { --we-card-tone-bg: var(--we-warning);   --we-card-tone-border: var(--we-warning);   --we-card-tone-fg: #fffaf1; }
-html.we-theme-light .we-card-tone-danger    { --we-card-tone-bg: var(--we-danger);    --we-card-tone-border: var(--we-danger);    --we-card-tone-fg: #fff7f7; }
+html.we-theme-light .we-card-tone-primary   { --we-card-tone-bg: var(--we-primary);   --we-card-tone-border: var(--we-primary);   --we-card-tone-fg: var(--we-primary-on); }
+html.we-theme-light .we-card-tone-secondary { --we-card-tone-bg: var(--we-secondary); --we-card-tone-border: var(--we-secondary); --we-card-tone-fg: var(--we-secondary-on); }
+html.we-theme-light .we-card-tone-success   { --we-card-tone-bg: var(--we-success);   --we-card-tone-border: var(--we-success);   --we-card-tone-fg: var(--we-success-on); }
+html.we-theme-light .we-card-tone-info      { --we-card-tone-bg: var(--we-info);      --we-card-tone-border: var(--we-info);      --we-card-tone-fg: var(--we-info-on); }
+html.we-theme-light .we-card-tone-warning   { --we-card-tone-bg: var(--we-warning);   --we-card-tone-border: var(--we-warning);   --we-card-tone-fg: var(--we-warning-on); }
+html.we-theme-light .we-card-tone-danger    { --we-card-tone-bg: var(--we-danger);    --we-card-tone-border: var(--we-danger);    --we-card-tone-fg: var(--we-danger-on); }
 html.we-theme-light .we-card-tone-light     { --we-card-tone-bg: #f7f9fc; --we-card-tone-border: #c0cee2; --we-card-tone-fg: #1f3452; }
 html.we-theme-light .we-card-tone-dark      { --we-card-tone-bg: #2a3342; --we-card-tone-border: #2a3342; --we-card-tone-fg: #f2f6ff; }
 
@@ -983,12 +998,12 @@ html.we-theme-light .we-table {
 
 html.we-theme-light .we-table th,
 html.we-theme-light .we-table td {
-  border: 1px solid #d4deed;
+  border: 1px solid var(--we-table-cell-border);
 }
 
 html.we-theme-light .we-table th {
-  background: #eef3fb;
-  color: #2b3f5f;
+  background: var(--we-table-header-bg);
+  color: var(--we-table-header-fg);
 }
 
 html.we-theme-light .we-table.we-table-striped > tr:nth-of-type(even) {
@@ -1015,8 +1030,8 @@ html.we-theme-light .we-table > tr.we-table-row-dark { background: #dce2ec; }
 /* Badges: tone classes should be visually distinct in examples and apps. */
 html.we-theme-light .we-badge {
   border: 1px solid #b4c3da;
-  background: #eef3fb;
-  color: #2b3f5f;
+  background: var(--we-surface-muted);
+  color: var(--we-table-header-fg);
 }
 
 html.we-theme-light .we-badge.we-badge-primary { background: var(--we-primary-subtle); border-color: var(--we-primary-border); }
@@ -1438,12 +1453,12 @@ html.we-theme-light .we-offcanvas-backdrop {
 /* Misc separators and helper widgets. */
 html.we-theme-light .we-divider,
 html.we-theme-light .we-divider-vertical {
-  border-color: #d0d9e8;
+  border-color: var(--we-separator);
 }
 
 html.we-theme-light .we-placeholder {
   border-color: #ccd7e8;
-  background: #eef3fb;
+  background: var(--we-surface-muted);
 }
 
 /* -------------------------------------------------------------------------- */
