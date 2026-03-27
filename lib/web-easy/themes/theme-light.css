@@ -93,6 +93,12 @@ html.we-theme-light {
   --we-info-subtle:             #e4eefb;
   --we-warning-subtle:          #fdf1de;
   --we-danger-subtle:           #f9e5e5;
+  --we-primary-border:          #85a8bf;
+  --we-secondary-border:        #b2bfd3;
+  --we-success-border:          #6a9b73;
+  --we-info-border:             #6e9fd1;
+  --we-warning-border:          #b79256;
+  --we-danger-border:           #b25a5a;
   /* Spacing scale (used by multiple widgets). */
   --we-space-xs: 2px;
   --we-space-sm: 4px;
@@ -431,37 +437,37 @@ html.we-theme-light .we-alert {
 }
 
 html.we-theme-light .we-alert-primary {
-  border-color: #85a8bf;
+  border-color: var(--we-primary-border);
   background: var(--we-primary-subtle);
   color: var(--we-primary-emphasis);
 }
 
 html.we-theme-light .we-alert-secondary {
-  border-color: #b2bfd3;
+  border-color: var(--we-secondary-border);
   background: var(--we-secondary-subtle);
   color: var(--we-secondary-emphasis);
 }
 
 html.we-theme-light .we-alert-success {
-  border-color: #6a9b73;
+  border-color: var(--we-success-border);
   background: var(--we-success-subtle);
   color: var(--we-success-emphasis);
 }
 
 html.we-theme-light .we-alert-info {
-  border-color: #6e9fd1;
+  border-color: var(--we-info-border);
   background: var(--we-info-subtle);
   color: var(--we-info-emphasis);
 }
 
 html.we-theme-light .we-alert-warning {
-  border-color: #b79256;
+  border-color: var(--we-warning-border);
   background: var(--we-warning-subtle);
   color: var(--we-warning-emphasis);
 }
 
 html.we-theme-light .we-alert-danger {
-  border-color: #b25a5a;
+  border-color: var(--we-danger-border);
   background: var(--we-danger-subtle);
   color: var(--we-danger-emphasis);
 }
@@ -515,25 +521,25 @@ html.we-theme-light .we-toast-message {
 }
 
 html.we-theme-light .we-toast-success {
-  border-color: #6a9b73;
+  border-color: var(--we-success-border);
   background: var(--we-success-subtle);
   color: var(--we-success-emphasis);
 }
 
 html.we-theme-light .we-toast-info {
-  border-color: #6e9fd1;
+  border-color: var(--we-info-border);
   background: var(--we-info-subtle);
   color: var(--we-info-emphasis);
 }
 
 html.we-theme-light .we-toast-warning {
-  border-color: #b79256;
+  border-color: var(--we-warning-border);
   background: var(--we-warning-subtle);
   color: var(--we-warning-emphasis);
 }
 
 html.we-theme-light .we-toast-danger {
-  border-color: #b25a5a;
+  border-color: var(--we-danger-border);
   background: var(--we-danger-subtle);
   color: var(--we-danger-emphasis);
 }
@@ -1013,12 +1019,12 @@ html.we-theme-light .we-badge {
   color: #2b3f5f;
 }
 
-html.we-theme-light .we-badge.we-badge-primary { background: var(--we-primary-subtle); border-color: #9fbdd0; }
-html.we-theme-light .we-badge.we-badge-secondary { background: var(--we-secondary-subtle); border-color: #c0cad8; }
-html.we-theme-light .we-badge.we-badge-success { background: var(--we-success-subtle); border-color: #abd1b6; }
-html.we-theme-light .we-badge.we-badge-info { background: var(--we-info-subtle); border-color: #aac3e7; }
-html.we-theme-light .we-badge.we-badge-warning { background: var(--we-warning-subtle); border-color: #e0bf8d; }
-html.we-theme-light .we-badge.we-badge-danger { background: var(--we-danger-subtle); border-color: #d8aeae; }
+html.we-theme-light .we-badge.we-badge-primary { background: var(--we-primary-subtle); border-color: var(--we-primary-border); }
+html.we-theme-light .we-badge.we-badge-secondary { background: var(--we-secondary-subtle); border-color: var(--we-secondary-border); }
+html.we-theme-light .we-badge.we-badge-success { background: var(--we-success-subtle); border-color: var(--we-success-border); }
+html.we-theme-light .we-badge.we-badge-info { background: var(--we-info-subtle); border-color: var(--we-info-border); }
+html.we-theme-light .we-badge.we-badge-warning { background: var(--we-warning-subtle); border-color: var(--we-warning-border); }
+html.we-theme-light .we-badge.we-badge-danger { background: var(--we-danger-subtle); border-color: var(--we-danger-border); }
 html.we-theme-light .we-badge.we-badge-light { background: #ffffff; border-color: #c0cee2; }
 html.we-theme-light .we-badge.we-badge-dark { background: #2a3342; border-color: #2a3342; color: #ffffff; }
 
