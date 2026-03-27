@@ -371,8 +371,7 @@ current value is one of those.
 
 @section{Event}
 
-In browser builds that include @filepath{lib/web-easy/main-browser.rkt},
-the following thin convenience wrappers are available on top of the raw
+The following thin convenience wrappers are available on top of the raw
 event object passed to primitive @racket[#:on-*] callbacks:
 
 Example:
@@ -630,6 +629,137 @@ The argument @racket[t] is an @racket[external] value expected to
 contain a JavaScript @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/Touch"]{Touch}
 object.
 }
+
+@section{Theme}
+
+@tt{web-easy} also provides a small stylesheet-based theme API.
+
+This API is intentionally concrete:
+
+@itemlist[
+  @item{a @racket[theme] value describes the root html class and CSS files to use}
+  @item{@racket[install-theme-manager!] installs the stylesheet link nodes}
+  @item{@racket[set-theme!] switches the active theme}
+  @item{@racket[observe-theme!] keeps a theme manager in sync with an observable}
+]
+
+The stylesheet load order is:
+
+@itemlist[
+  @item{core CSS}
+  @item{theme CSS}
+  @item{optional extra/page CSS}
+]
+
+@defproc[(theme [id any/c]
+                 [class-name string?]
+                 [core-css string?]
+                 [theme-css string?]
+                 [extra-css (or/c #f string?)])
+         theme?]{
+Create a browser theme descriptor.
+
+The resulting value records:
+
+@itemlist[
+  @item{@racket[id], an application-chosen theme identifier}
+  @item{@racket[class-name], the class applied to the root @tt{<html>} element}
+  @item{@racket[core-css], the shared core stylesheet path}
+  @item{@racket[theme-css], the main theme stylesheet path}
+  @item{@racket[extra-css], an optional extra/page stylesheet path}
+]
+}
+
+@defproc[(theme? [v any/c])
+         boolean?]{
+Report whether @racket[v] is a theme descriptor.
+}
+
+@defproc[(theme-manager? [v any/c])
+         boolean?]{
+Report whether @racket[v] is a browser theme manager created by
+@racket[install-theme-manager!].
+}
+
+@defproc[(install-theme-manager! [initial-theme theme?])
+         theme-manager?]{
+Install or reuse the managed stylesheet links in @tt{<head>} and apply
+@racket[initial-theme] immediately.
+
+The managed link ids are:
+
+@itemlist[
+  @item{@tt{we-theme-core-css}}
+  @item{@tt{we-theme-css}}
+  @item{@tt{we-theme-extra-css}}
+]
+}
+
+@defproc[(set-theme! [manager theme-manager?]
+                     [next-theme theme?])
+         void?]{
+Switch @racket[manager] to @racket[next-theme].
+
+This updates the root html theme class and the managed stylesheet @tt{href}
+attributes.
+}
+
+@defproc[(observe-theme! [manager theme-manager?]
+                         [@theme obs?]
+                         [theme->descriptor procedure?])
+         void?]{
+Synchronize @racket[manager] with the observable @racket[@theme].
+
+The procedure @racket[theme->descriptor] is called on the current observable
+value and on each later update. It must return a @racket[theme] value.
+}
+
+A common pattern is:
+
+@itemlist[
+  @item{define one or more @racket[theme] values}
+  @item{install a theme manager with the initial theme}
+  @item{optionally switch themes directly with @racket[set-theme!]}
+  @item{or keep the manager in sync with an observable using @racket[observe-theme!]}
+]
+
+@subsection{Theme Example}
+
+@racketblock[
+(code:comment "Define two named themes that share the same core CSS.")
+(define light-theme
+  (theme 'light
+         "we-theme-light"
+         "web-easy-core.css"
+         "theme-light.css"
+         #f))
+
+(define dark-theme
+  (theme 'dark
+         "we-theme-dark"
+         "web-easy-core.css"
+         "theme-dark.css"
+         #f))
+
+(code:comment "Install the stylesheet links and apply the initial theme.")
+(define tm
+  (install-theme-manager! light-theme))
+
+(code:comment "set-theme! uses the existing manager to switch to another theme.")
+(set-theme! tm dark-theme)
+
+(code:comment "Or controlled reactively from an observable.")
+(define |@theme|
+  (obs 'light))
+
+(observe-theme! tm
+                |@theme|
+                (lambda (id)
+                  (case id
+                    [(light) light-theme]
+                    [(dark)  dark-theme]
+                    [else    light-theme])))
+]
 
 @section{Core Primitives}
 

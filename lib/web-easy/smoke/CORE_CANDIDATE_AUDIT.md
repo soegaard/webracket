@@ -2,8 +2,8 @@
 
 Date: 2026-03-11  
 Scope: remaining duplicated selectors across:
-- `theme-external-light.css`
-- `theme-external-dark.css`
+- `theme-light.css`
+- `theme-dark.css`
 - `theme-external-solar.css`
 
 ## Classification Rules

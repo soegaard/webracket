@@ -20,6 +20,6 @@ done
 
 # Keep required theme CSS next to generated HTML for simple static serving.
 cp -f "$ROOT_DIR/lib/web-easy/themes/web-easy-core.css"            "generated/web-easy-core.css"
-cp -f "$ROOT_DIR/lib/web-easy/themes/theme-external-light.css"     "generated/theme-external-light.css"
+cp -f "$ROOT_DIR/lib/web-easy/themes/theme-light.css"     "generated/theme-light.css"
 
 echo "compiled: generated/$BASENAME.html"

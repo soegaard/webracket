@@ -81,11 +81,11 @@
 ;;   Map theme id to general stylesheet path.
 (define (theme-css-path/general theme)
   (case theme
-    [(light)  "../themes/theme-external-light.css"]
-    [(dark)   "../themes/theme-external-dark.css"]
+    [(light)  "../themes/theme-light.css"]
+    [(dark)   "../themes/theme-dark.css"]
     [(solar)  "../themes/theme-external-solar.css"]
     [(solar2) "../themes/theme-solar-2.css"]
-    [else     "../themes/theme-external-light.css"]))
+    [else     "../themes/theme-light.css"]))
 
 ;; theme-css-path/showcase : any/c -> string?
 ;;   Map theme id to page-specific stylesheet path.

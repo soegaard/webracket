@@ -82,8 +82,8 @@
   (define normalized-theme (normalize-theme-id theme))
   (define path
     (case normalized-theme
-      [(light) "../themes/theme-external-light.css"]
-      [(dark)  "../themes/theme-external-dark.css"]
+      [(light) "../themes/theme-light.css"]
+      [(dark)  "../themes/theme-dark.css"]
       [else    "../themes/theme-external-solar.css"]))
   path)
 
@@ -250,8 +250,8 @@
                    (toolbar
                       (toolbar-group
                        (link "Download Solar CSS" "../themes/theme-external-solar.css" #t #:class "showcase-link-button")
-                       (link "Download Light CSS" "../themes/theme-external-light.css" #t #:class "showcase-link-button")
-                       (link "Download Dark CSS" "../themes/theme-external-dark.css" #t #:class "showcase-link-button"))
+                       (link "Download Light CSS" "../themes/theme-light.css" #t #:class "showcase-link-button")
+                       (link "Download Dark CSS" "../themes/theme-dark.css" #t #:class "showcase-link-button"))
                       #:class "showcase-controls-download-row")
                    #:class "showcase-topbar-controls")
                 #:class "showcase-topbar-inner")

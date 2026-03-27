@@ -1132,7 +1132,7 @@ Core vs Theme rule (strict):
 - Load order must be: core -> theme -> showcase (if present).
 
 Light/Dark style intent:
-- `themes/theme-external-light.css` and `themes/theme-external-dark.css` are the default general-purpose themes for applications, not showcase-specific skins.
+- `themes/theme-light.css` and `themes/theme-dark.css` are the default general-purpose themes for applications, not showcase-specific skins.
 - Visual language: neutral system-style controls, moderate corner radius, clear borders, and conservative elevation.
 - Contrast policy: keep text/background contrast strong and state colors readable (hover/active/focus/disabled) across all supported widgets.
 - Density policy: comfortable defaults (not compact-first), consistent vertical rhythm, and predictable control sizing.

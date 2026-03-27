@@ -16,3 +16,4 @@
 (include/reader "renderer.rkt"            read-syntax/skip-first-line)
 (include/reader "browser-host.rkt"        read-syntax/skip-first-line)
 (include/reader "event-browser.rkt"       read-syntax/skip-first-line)
+(include/reader "theme-browser.rkt"       read-syntax/skip-first-line)

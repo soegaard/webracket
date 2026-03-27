@@ -307,32 +307,21 @@
 ;;; Themes
 ;;;
 
-;; Note: The paths to the theme css files assume the
-;;       web-server was started in lib/web-easy/
+;; Note: compile.sh copies the required theme CSS files next to the
+;;       generated HTML, so these stylesheet paths are relative to
+;;       the generated/ output directory.
 
-;; install-theme-link! : string? -> any/c
-;;   Create and attach a stylesheet link element in <head>.
-(define (install-theme-link! link-id)
-  (define doc  (js-var "document"))
-  (define head (js-ref/extern doc "head"))
-  (define link (js-create-element "link"))
-  (js-set-attribute! link "id"  link-id)
-  (js-set-attribute! link "rel" "stylesheet")
-  (js-append-child! head link)
-  link)
+;; light-theme : theme?
+;;   Shared light theme used by this example.
+(define light-theme
+  (theme 'light
+         "we-theme-light"
+         "web-easy-core.css"
+         "theme-light.css"
+         #f))
 
-;; apply-light-theme! : any/c any/c -> void?
-;;   Set root class and stylesheet hrefs for Light theme.
-(define (apply-light-theme! core-link light-link)
-  (define html-node (js-ref/extern (js-document-body) "parentElement"))
-  (js-set-attribute! html-node  "class" "we-theme-light")
-  (js-set-attribute! core-link  "href"  "web-easy-core.css")
-  (js-set-attribute! light-link "href"  "theme-external-light.css")
-  (void))
-
-(define theme-core-link-node  (install-theme-link! "we-theme-core-css"))
-(define theme-light-link-node (install-theme-link! "we-theme-external-css"))
-(apply-light-theme! theme-core-link-node theme-light-link-node)
+(define theme-manager
+  (install-theme-manager! light-theme))
 
 ;;;
 ;;; Mount the renderer

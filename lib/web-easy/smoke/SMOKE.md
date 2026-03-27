@@ -460,7 +460,7 @@ Selected before/after computed metrics:
 - Manual external CSS theming example:
 - `test-browser-theme-external-css.html`
   - `test-browser-listgroup-clipping-debug.html` (manual clipping debugger with zoom control)
-  - editable stylesheets: `../themes/theme-external-light.css`, `../themes/theme-external-dark.css`, `../themes/theme-external-solar.css`
+  - editable stylesheets: `../themes/theme-light.css`, `../themes/theme-dark.css`, `../themes/theme-external-solar.css`
   - gallery covers workspace/menu/tabs/dialog/controls/width/profile/list pages
 
 Close-button icon theming:

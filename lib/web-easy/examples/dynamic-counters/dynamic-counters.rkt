@@ -77,7 +77,7 @@
   (define html-node (js-ref/extern (js-document-body) "parentElement"))
   (js-set-attribute! html-node  "class" "we-theme-light")
   (js-set-attribute! core-link  "href"  "web-easy-core.css")
-  (js-set-attribute! light-link "href"  "theme-external-light.css")
+  (js-set-attribute! light-link "href"  "theme-light.css")
   (void))
 
 (define theme-core-link-node  (install-theme-link! "we-theme-core-css"))

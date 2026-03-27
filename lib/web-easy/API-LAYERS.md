@@ -124,6 +124,15 @@ These exports should behave like the core HTML building blocks that other compon
 - `text-content/c`
 - attribute and normalization helpers
 
+### Browser-only helpers
+
+- event helpers from `event-browser.rkt`
+- stylesheet-based theme support from `theme-browser.rkt`
+  - `theme`
+  - `install-theme-manager!`
+  - `set-theme!`
+  - `observe-theme!`
+
 ## Core rules
 
 - Mirror HTML semantics closely.
@@ -132,6 +141,8 @@ These exports should behave like the core HTML building blocks that other compon
 - Expose global attributes and element-specific attributes directly.
 - Expose generic primitive DOM event keywords directly on primitive elements.
 - Avoid library policy, styling conventions, and widget behavior.
+- Keep browser-specific convenience layers such as event helpers and theme
+  managers outside the renderer core.
 
 Current primitive DOM event support covers bubbling mouse, pointer, keyboard,
 focus, form/input, wheel/scroll, drag/drop, and touch events such as
