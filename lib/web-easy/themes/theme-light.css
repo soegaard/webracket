@@ -68,6 +68,31 @@ html.we-theme-light {
   --we-danger:    #b65757;
   --we-light:     #f7f9fc;
   --we-dark:      #2a3342;
+  /* Shared control/popup surface tokens. */
+  --we-surface:                 #ffffff;
+  --we-surface-raised:          #f7f9fd;
+  --we-surface-hover:           #e9f0fb;
+  --we-surface-active:          #dce7f7;
+  --we-control-border:          #9aa9c3;
+  --we-control-border-hover:    #6f86aa;
+  --we-control-border-focus:    #5c78a6;
+  --we-control-border-disabled: #c8d0dd;
+  --we-popup-bg:                #ffffff;
+  --we-popup-border:            #888888;
+  --we-popup-shadow:            rgba(0, 0, 0, 0.2);
+  /* Emphasis and subtle semantic tones. */
+  --we-primary-emphasis:        #266985;
+  --we-secondary-emphasis:      #5b749d;
+  --we-success-emphasis:        #2f6c46;
+  --we-info-emphasis:           #245f9a;
+  --we-warning-emphasis:        #9b6822;
+  --we-danger-emphasis:         #944444;
+  --we-primary-subtle:          #d8e8f2;
+  --we-secondary-subtle:        #e5eaf2;
+  --we-success-subtle:          #e4f2e7;
+  --we-info-subtle:             #e4eefb;
+  --we-warning-subtle:          #fdf1de;
+  --we-danger-subtle:           #f9e5e5;
   /* Spacing scale (used by multiple widgets). */
   --we-space-xs: 2px;
   --we-space-sm: 4px;
@@ -136,10 +161,10 @@ html.we-theme-light .we-menu-label[aria-expanded='true'] {
 
 html.we-theme-light .we-menu-popup {
   padding: 2px;
-  border: 1px solid #888888;
+  border: 1px solid var(--we-popup-border);
   border-radius: 4px;
-  background: #ffffff;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  background: var(--we-popup-bg);
+  box-shadow: 0 4px 10px var(--we-popup-shadow);
 }
 
 /* Popup separators should read as subtle menu section breaks. */
@@ -196,15 +221,15 @@ html.we-theme-light textarea {
 html.we-theme-light input,
 html.we-theme-light textarea,
 html.we-theme-light .we-input {
-  background: #ffffff;
-  border: 1px solid #9aa9c3;
+  background: var(--we-surface);
+  border: 1px solid var(--we-control-border);
   color: var(--we-fg);
 }
 
 html.we-theme-light button:disabled,
 html.we-theme-light .we-button:disabled {
   background: var(--we-bg-disabled);
-  border-color: #c8d0dd;
+  border-color: var(--we-control-border-disabled);
   color: #8a94a6;
   opacity: 0.7;
   cursor: not-allowed;
@@ -222,7 +247,7 @@ html.we-theme-light .we-input:focus-visible {
   background-image: linear-gradient(var(--we-focus-tint), var(--we-focus-tint));
   outline: 1px solid var(--we-focus);
   outline-offset: 0;
-  border-color: #5c78a6;
+  border-color: var(--we-control-border-focus);
 }
 
 html.we-theme-light input:disabled,
@@ -237,8 +262,8 @@ html.we-theme-light .we-input:disabled {
 
 html.we-theme-light button,
 html.we-theme-light .we-button {
-  background: #f7f9fd;
-  border: 1px solid #9aa9c3;
+  background: var(--we-surface-raised);
+  border: 1px solid var(--we-control-border);
   color: var(--we-fg);
   border-radius: 3px;
   padding: 5px 11px;
@@ -253,14 +278,14 @@ html.we-theme-light .we-close-button-icon::before {
 
 html.we-theme-light button:hover,
 html.we-theme-light .we-button:hover {
-  background: #e9f0fb;
-  border-color: #6f86aa;
+  background: var(--we-surface-hover);
+  border-color: var(--we-control-border-hover);
 }
 
 html.we-theme-light button:active,
 html.we-theme-light .we-button:active {
-  background: #dce7f7;
-  border-color: #5b749d;
+  background: var(--we-surface-active);
+  border-color: var(--we-control-border-focus);
 }
 
 html.we-theme-light button:focus-visible,
@@ -407,34 +432,38 @@ html.we-theme-light .we-alert {
 
 html.we-theme-light .we-alert-primary {
   border-color: #85a8bf;
-  background: #d8e8f2;
-  color: #1f3a4d;
+  background: var(--we-primary-subtle);
+  color: var(--we-primary-emphasis);
 }
 
 html.we-theme-light .we-alert-secondary {
   border-color: #b2bfd3;
-  background: #e5eaf2;
-  color: #33465f;
+  background: var(--we-secondary-subtle);
+  color: var(--we-secondary-emphasis);
 }
 
 html.we-theme-light .we-alert-success {
   border-color: #6a9b73;
-  background: #e8f4e8;
+  background: var(--we-success-subtle);
+  color: var(--we-success-emphasis);
 }
 
 html.we-theme-light .we-alert-info {
   border-color: #6e9fd1;
-  background: #e7f1fc;
+  background: var(--we-info-subtle);
+  color: var(--we-info-emphasis);
 }
 
 html.we-theme-light .we-alert-warning {
   border-color: #b79256;
-  background: #fff4df;
+  background: var(--we-warning-subtle);
+  color: var(--we-warning-emphasis);
 }
 
 html.we-theme-light .we-alert-danger {
   border-color: #b25a5a;
-  background: #fdeaea;
+  background: var(--we-danger-subtle);
+  color: var(--we-danger-emphasis);
 }
 
 html.we-theme-light .we-alert-light {
@@ -487,22 +516,26 @@ html.we-theme-light .we-toast-message {
 
 html.we-theme-light .we-toast-success {
   border-color: #6a9b73;
-  background: #e8f4e8;
+  background: var(--we-success-subtle);
+  color: var(--we-success-emphasis);
 }
 
 html.we-theme-light .we-toast-info {
   border-color: #6e9fd1;
-  background: #e7f1fc;
+  background: var(--we-info-subtle);
+  color: var(--we-info-emphasis);
 }
 
 html.we-theme-light .we-toast-warning {
   border-color: #b79256;
-  background: #fff4df;
+  background: var(--we-warning-subtle);
+  color: var(--we-warning-emphasis);
 }
 
 html.we-theme-light .we-toast-danger {
   border-color: #b25a5a;
-  background: #fdeaea;
+  background: var(--we-danger-subtle);
+  color: var(--we-danger-emphasis);
 }
 
 html.we-theme-light .we-toast-close {
@@ -853,12 +886,12 @@ html.we-theme-light .we-card .we-heading {
   color: inherit;
 }
 
-html.we-theme-light .we-card-tone-primary   { --we-card-tone-bg: #2f7ea0; --we-card-tone-border: #2f7ea0; --we-card-tone-fg: #f7fcff; }
-html.we-theme-light .we-card-tone-secondary { --we-card-tone-bg: #70829a; --we-card-tone-border: #70829a; --we-card-tone-fg: #f8fbff; }
-html.we-theme-light .we-card-tone-success   { --we-card-tone-bg: #3d8b5a; --we-card-tone-border: #3d8b5a; --we-card-tone-fg: #f5fff9; }
-html.we-theme-light .we-card-tone-info      { --we-card-tone-bg: #2c7dc8; --we-card-tone-border: #2c7dc8; --we-card-tone-fg: #f6fbff; }
-html.we-theme-light .we-card-tone-warning   { --we-card-tone-bg: #c1862f; --we-card-tone-border: #c1862f; --we-card-tone-fg: #fffaf1; }
-html.we-theme-light .we-card-tone-danger    { --we-card-tone-bg: #b65757; --we-card-tone-border: #b65757; --we-card-tone-fg: #fff7f7; }
+html.we-theme-light .we-card-tone-primary   { --we-card-tone-bg: var(--we-primary);   --we-card-tone-border: var(--we-primary);   --we-card-tone-fg: #f7fcff; }
+html.we-theme-light .we-card-tone-secondary { --we-card-tone-bg: var(--we-secondary); --we-card-tone-border: var(--we-secondary); --we-card-tone-fg: #f8fbff; }
+html.we-theme-light .we-card-tone-success   { --we-card-tone-bg: var(--we-success);   --we-card-tone-border: var(--we-success);   --we-card-tone-fg: #f5fff9; }
+html.we-theme-light .we-card-tone-info      { --we-card-tone-bg: var(--we-info);      --we-card-tone-border: var(--we-info);      --we-card-tone-fg: #f6fbff; }
+html.we-theme-light .we-card-tone-warning   { --we-card-tone-bg: var(--we-warning);   --we-card-tone-border: var(--we-warning);   --we-card-tone-fg: #fffaf1; }
+html.we-theme-light .we-card-tone-danger    { --we-card-tone-bg: var(--we-danger);    --we-card-tone-border: var(--we-danger);    --we-card-tone-fg: #fff7f7; }
 html.we-theme-light .we-card-tone-light     { --we-card-tone-bg: #f7f9fc; --we-card-tone-border: #c0cee2; --we-card-tone-fg: #1f3452; }
 html.we-theme-light .we-card-tone-dark      { --we-card-tone-bg: #2a3342; --we-card-tone-border: #2a3342; --we-card-tone-fg: #f2f6ff; }
 
@@ -964,12 +997,12 @@ html.we-theme-light .we-table > tr.we-table-row-active {
   background: #dfe8f6;
 }
 
-html.we-theme-light .we-table > tr.we-table-row-primary { background: #d8e8f2; }
-html.we-theme-light .we-table > tr.we-table-row-secondary { background: #e5eaf2; }
-html.we-theme-light .we-table > tr.we-table-row-success { background: #e4f2e7; }
-html.we-theme-light .we-table > tr.we-table-row-info { background: #e4eefb; }
-html.we-theme-light .we-table > tr.we-table-row-warning { background: #fdf1de; }
-html.we-theme-light .we-table > tr.we-table-row-danger { background: #f9e5e5; }
+html.we-theme-light .we-table > tr.we-table-row-primary { background: var(--we-primary-subtle); }
+html.we-theme-light .we-table > tr.we-table-row-secondary { background: var(--we-secondary-subtle); }
+html.we-theme-light .we-table > tr.we-table-row-success { background: var(--we-success-subtle); }
+html.we-theme-light .we-table > tr.we-table-row-info { background: var(--we-info-subtle); }
+html.we-theme-light .we-table > tr.we-table-row-warning { background: var(--we-warning-subtle); }
+html.we-theme-light .we-table > tr.we-table-row-danger { background: var(--we-danger-subtle); }
 html.we-theme-light .we-table > tr.we-table-row-light { background: #f9fbff; }
 html.we-theme-light .we-table > tr.we-table-row-dark { background: #dce2ec; }
 
@@ -980,12 +1013,12 @@ html.we-theme-light .we-badge {
   color: #2b3f5f;
 }
 
-html.we-theme-light .we-badge.we-badge-primary { background: #d8e8f2; border-color: #9fbdd0; }
-html.we-theme-light .we-badge.we-badge-secondary { background: #e5eaf2; border-color: #c0cad8; }
-html.we-theme-light .we-badge.we-badge-success { background: #e4f2e7; border-color: #abd1b6; }
-html.we-theme-light .we-badge.we-badge-info { background: #e4eefb; border-color: #aac3e7; }
-html.we-theme-light .we-badge.we-badge-warning { background: #fdf1de; border-color: #e0bf8d; }
-html.we-theme-light .we-badge.we-badge-danger { background: #f9e5e5; border-color: #d8aeae; }
+html.we-theme-light .we-badge.we-badge-primary { background: var(--we-primary-subtle); border-color: #9fbdd0; }
+html.we-theme-light .we-badge.we-badge-secondary { background: var(--we-secondary-subtle); border-color: #c0cad8; }
+html.we-theme-light .we-badge.we-badge-success { background: var(--we-success-subtle); border-color: #abd1b6; }
+html.we-theme-light .we-badge.we-badge-info { background: var(--we-info-subtle); border-color: #aac3e7; }
+html.we-theme-light .we-badge.we-badge-warning { background: var(--we-warning-subtle); border-color: #e0bf8d; }
+html.we-theme-light .we-badge.we-badge-danger { background: var(--we-danger-subtle); border-color: #d8aeae; }
 html.we-theme-light .we-badge.we-badge-light { background: #ffffff; border-color: #c0cee2; }
 html.we-theme-light .we-badge.we-badge-dark { background: #2a3342; border-color: #2a3342; color: #ffffff; }
 
