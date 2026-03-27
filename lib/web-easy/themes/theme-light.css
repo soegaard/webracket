@@ -51,8 +51,12 @@ html.we-theme-light {
   --we-fg-muted:      #777777;
   /* Backdrop color for overlays/dialogs. */
   --we-overlay: rgba(0, 0, 0, 0.45);
-  /* Drop shadow color. */
-  --we-shadow:  rgba(0, 0, 0, 0.28);
+  /* Shadow scale: small cards, popups, and larger overlays. */
+  --we-shadow-sm: 0 1px 2px rgba(30, 52, 82, 0.08);
+  --we-shadow-md: 0 4px 10px rgba(0, 0, 0, 0.20);
+  --we-shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.28);
+  /* Legacy/general overlay alias. */
+  --we-shadow: var(--we-shadow-lg);
   /* Menu item hover colors (separate from general hover for fine tuning). */
   --we-menu-item-hover-bg: #e8e8e8;
   --we-menu-item-hover-fg: #1a1f2b;
@@ -88,7 +92,7 @@ html.we-theme-light {
   --we-control-border-disabled: #c8d0dd;
   --we-popup-bg:                #ffffff;
   --we-popup-border:            #888888;
-  --we-popup-shadow:            rgba(0, 0, 0, 0.2);
+  --we-popup-shadow:            var(--we-shadow-md);
   /* Semantic family tokens: base, on-color, emphasis, subtle, border. */
   --we-primary-on:              #f7fcff;
   --we-secondary-on:            #f8fbff;
@@ -119,6 +123,19 @@ html.we-theme-light {
   --we-space-sm: 4px;
   --we-space-md: 8px;
   --we-space-lg: 10px;
+  --we-radius-sm: 3px;
+  --we-radius-md: 4px;
+  --we-radius-lg: 8px;
+  --we-radius-pill: 999px;
+  --we-font-family-base: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --we-font-family-heading: var(--we-font-family-base);
+  --we-font-size-sm: 0.875rem;
+  --we-font-size-md: 1rem;
+  --we-font-size-lg: 1.15rem;
+  --we-line-height-base: 1.5;
+  --we-font-weight-normal: 400;
+  --we-font-weight-semibold: 600;
+  --we-font-weight-bold: 700;
   --we-menu-popup-offset: 2px;
   --we-menu-popup-min-width: 150px;
   --we-menu-popup-gap: 0px;
@@ -138,8 +155,9 @@ html.we-theme-light body {
   background: var(--we-bg);
   color: var(--we-fg);
   /* Match demo-theme-showcase typography. */
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  line-height: 1.5;
+  font-family: var(--we-font-family-base);
+  font-size: var(--we-font-size-md);
+  line-height: var(--we-line-height-base);
   margin: 0;
   padding: 0;
 }
@@ -152,7 +170,7 @@ html.we-theme-light .we-menu-bar {
   gap: 2px;
   padding: 2px 4px;
   border: 1px solid #aaaaaa;
-  border-radius: 4px;
+  border-radius: var(--we-radius-md);
   background: var(--we-bg-subtle);
   box-sizing: border-box;
 }
@@ -163,7 +181,7 @@ html.we-theme-light .we-menu-label {
   padding: 2px 8px;
   /* Transparent border reserves space so state changes do not shift layout. */
   border: 1px solid transparent;
-  border-radius: 3px;
+  border-radius: var(--we-radius-sm);
   background: transparent;
   color: var(--we-fg);
 }
@@ -183,9 +201,9 @@ html.we-theme-light .we-menu-label[aria-expanded='true'] {
 html.we-theme-light .we-menu-popup {
   padding: 2px;
   border: 1px solid var(--we-popup-border);
-  border-radius: 4px;
+  border-radius: var(--we-radius-md);
   background: var(--we-popup-bg);
-  box-shadow: 0 4px 10px var(--we-popup-shadow);
+  box-shadow: var(--we-popup-shadow);
 }
 
 /* Popup separators should read as subtle menu section breaks. */
@@ -200,7 +218,7 @@ html.we-theme-light .we-menu-item {
   background: var(--we-bg);
   color: var(--we-fg);
   border: none;
-  border-radius: 3px;
+  border-radius: var(--we-radius-sm);
 }
 
 html.we-theme-light .we-menu-item:hover {
@@ -244,6 +262,7 @@ html.we-theme-light textarea,
 html.we-theme-light .we-input {
   background: var(--we-surface);
   border: 1px solid var(--we-control-border);
+  border-radius: var(--we-radius-md);
   color: var(--we-fg);
 }
 
@@ -286,9 +305,10 @@ html.we-theme-light .we-button {
   background: var(--we-surface-raised);
   border: 1px solid var(--we-control-border);
   color: var(--we-fg);
-  border-radius: 3px;
+  border-radius: var(--we-radius-sm);
   padding: 5px 11px;
-  font-size: 1rem;
+  font-size: var(--we-font-size-md);
+  font-weight: var(--we-font-weight-normal);
   line-height: 1.25;
 }
 
@@ -405,12 +425,12 @@ html.we-theme-light .we-button-outline-dark { background: transparent; border-co
 
 html.we-theme-light .we-button-lg {
   padding: 8px 14px;
-  font-size: 1.15rem;
+  font-size: var(--we-font-size-lg);
 }
 
 html.we-theme-light .we-button-sm {
   padding: 3px 9px;
-  font-size: 0.85rem;
+  font-size: var(--we-font-size-sm);
 }
 
 /* Pagination links should look like buttons, not underlined text links. */
@@ -424,6 +444,7 @@ html.we-theme-light select,
 html.we-theme-light .we-choice {
   background: #ffffff;
   border: 1px solid #9aa9c3;
+  border-radius: var(--we-radius-md);
   color: var(--we-fg);
 }
 
@@ -445,7 +466,7 @@ html.we-theme-light select option {
 /* Alert classes are severity-specific and easy to retheme independently. */
 html.we-theme-light .we-alert {
   border: 1px solid #9aa9c3;
-  border-radius: 4px;
+  border-radius: var(--we-radius-md);
   background: var(--we-surface-subtle);
   color: var(--we-fg);
   padding: 0.75rem 1rem;
@@ -517,14 +538,15 @@ html.we-theme-light .we-toast {
   background: var(--we-surface);
   color: var(--we-fg);
   padding: 0.75rem 0.875rem;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--we-shadow-md);
 }
 
 html.we-theme-light .we-toast-title {
   grid-area: title;
   display: block;
   margin: 0;
-  font-weight: 700;
+  font-family: var(--we-font-family-heading);
+  font-weight: var(--we-font-weight-bold);
   line-height: 1.25;
 }
 
@@ -567,7 +589,7 @@ html.we-theme-light .we-toast-close {
   height: 1.5rem;
   padding: 0;
   border: 0;
-  border-radius: 4px;
+  border-radius: var(--we-radius-md);
   background: transparent;
   color: inherit;
   font-size: 0;
@@ -610,7 +632,7 @@ html.we-theme-light .we-tab-btn {
   min-width: 88px;
   padding: 5px 11px;
   border: 1px solid #9aa9c3;
-  border-radius: 8px 8px 0 0;
+  border-radius: var(--we-radius-lg) var(--we-radius-lg) 0 0;
   border-bottom: none;
   background: #eef3fb;
   color: var(--we-fg);
@@ -627,7 +649,7 @@ html.we-theme-light .we-tab-btn.is-selected {
   /* Active tab sits in front and merges into the content panel. */
   border-bottom: 1px solid #ffffff;
   background: #ffffff;
-  font-weight: bold;
+  font-weight: var(--we-font-weight-bold);
   z-index: 1;
 }
 
@@ -640,7 +662,7 @@ html.we-theme-light .we-tab-btn.is-disabled {
 html.we-theme-light .we-tab-content {
   border: 1px solid #9aa9c3;
   border-top: none;
-  border-radius: 0 0 8px 8px;
+  border-radius: 0 0 var(--we-radius-lg) var(--we-radius-lg);
   background: #ffffff;
   padding: 10px;
 }
@@ -655,7 +677,7 @@ html.we-theme-light .we-dialog-panel {
   border-color: #9aa9c3;
   background: #ffffff;
   color: var(--we-fg);
-  box-shadow: 0 10px 24px var(--we-shadow);
+  box-shadow: var(--we-shadow-lg);
 }
 
 html.we-theme-light .we-tab-btn:focus-visible {
@@ -691,7 +713,8 @@ html.we-theme-light .we-accordion-trigger {
   border-radius: 6px;
   background: #f3f6fb;
   color: var(--we-fg);
-  font-weight: 600;
+  font-family: var(--we-font-family-heading);
+  font-weight: var(--we-font-weight-semibold);
 }
 
 /* Right-side indicator (Bootstrap-like) points to collapsed content. */
@@ -878,10 +901,10 @@ html.we-theme-light .we-variant-subtle .we-navigation-bar .we-menu-popup {
 /* Cards/lists/tables share one subtle container system in this theme. */
 html.we-theme-light .we-card {
   border: 1px solid #c0cee2;
-  border-radius: 8px;
+  border-radius: var(--we-radius-lg);
   background: #ffffff;
   overflow: hidden;
-  box-shadow: 0 1px 2px rgba(30, 52, 82, 0.08);
+  box-shadow: var(--we-shadow-sm);
 }
 
 html.we-theme-light .we-card-header,
@@ -945,7 +968,7 @@ html.we-theme-light .we-card.we-card-tone-outline .we-card-footer {
 
 html.we-theme-light .we-list-group {
   border: 1px solid #c0cee2;
-  border-radius: 8px;
+  border-radius: var(--we-radius-lg);
   background: #ffffff;
   overflow: hidden;
 }
@@ -986,7 +1009,7 @@ html.we-theme-light .we-list-group-item .we-badge {
   justify-content: center;
   min-width: 2rem;
   padding: 0.2rem 0.5rem;
-  border-radius: 999px;
+  border-radius: var(--we-radius-pill);
   text-align: center;
 }
 
@@ -1051,7 +1074,7 @@ html.we-theme-light .we-badge-shape-square .we-badge {
 }
 
 html.we-theme-light .we-badge-shape-pill .we-badge {
-  border-radius: 999px;
+  border-radius: var(--we-radius-pill);
   padding-left: 0.62rem;
   padding-right: 0.62rem;
 }
@@ -1182,7 +1205,7 @@ html.we-theme-light .we-popover-panel {
   border-color: #9aa9c3;
   background: #ffffff;
   color: var(--we-fg);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--we-shadow-md);
 }
 
 html.we-theme-light .we-offcanvas-panel {
@@ -1212,7 +1235,7 @@ html.we-theme-light .we-progress {
   height: 1rem;
   min-height: 1rem;
   border: 1px solid #b9c8de;
-  border-radius: 999px;
+  border-radius: var(--we-radius-pill);
   overflow: hidden;
   background: #e9eef6;
 }
@@ -1369,7 +1392,7 @@ html.we-theme-light .we-text-body-tertiary { color: var(--we-body-tertiary, var(
 /* Group + form semantics should be visible without showcase-specific CSS. */
 html.we-theme-light .we-group {
   border: 1px solid #c0cee2;
-  border-radius: 8px;
+  border-radius: var(--we-radius-lg);
   background: #ffffff;
 }
 
@@ -1407,7 +1430,7 @@ html.we-theme-light .we-checkbox.we-switch-control {
   width: 2.25rem;
   height: 1.25rem;
   border: 1px solid #9aa9c3;
-  border-radius: 999px;
+  border-radius: var(--we-radius-pill);
   background-color: #c9d4e6;
   background-image: radial-gradient(circle, #ffffff 0 48%, transparent 49%);
   background-size: 1rem 1rem;
@@ -1440,7 +1463,7 @@ html.we-theme-light .we-modal {
 html.we-theme-light .we-dialog-panel,
 html.we-theme-light .we-modal-panel {
   border: 1px solid #9aa9c3;
-  border-radius: 8px;
+  border-radius: var(--we-radius-lg);
   border-color: #9aa9c3;
   background: #ffffff;
   color: var(--we-fg);
@@ -1491,7 +1514,7 @@ html.we-theme-light .we-alert-dismiss {
   min-height: 1.5rem;
   padding: 0;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--we-radius-pill);
   background: transparent;
   color: #476489;
   opacity: 0.75;
@@ -1591,7 +1614,7 @@ html.we-theme-light .we-modal-close {
   min-height: 1.5rem;
   padding: 0;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--we-radius-pill);
   background: transparent;
   color: #476489;
   opacity: 0.75;
@@ -1626,7 +1649,7 @@ html.we-theme-light .we-offcanvas-panel > .we-close-button {
   min-height: 1.5rem;
   padding: 0;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--we-radius-pill);
   background: transparent;
   color: #476489;
   opacity: 0.75;
@@ -1653,7 +1676,7 @@ html.we-theme-light .we-carousel-nav,
 html.we-theme-light .we-carousel-prev,
 html.we-theme-light .we-carousel-next {
   border: 1px solid #9fb4d6;
-  border-radius: 4px;
+  border-radius: var(--we-radius-md);
   background: #f7fbff;
   color: #2f4f7f;
 }
@@ -1691,7 +1714,7 @@ html.we-theme-light .we-scrollspy-section {
 
 html.we-theme-light .we-scrollspy-item {
   border: 1px solid transparent;
-  border-radius: 4px;
+  border-radius: var(--we-radius-md);
   color: #35567d;
 }
 
@@ -1746,7 +1769,7 @@ html.we-theme-light .we-link:hover {
 
 html.we-theme-light .we-close-button {
   border: 1px solid #b7c7df;
-  border-radius: 4px;
+  border-radius: var(--we-radius-md);
   background: #f7fbff;
   color: #3a587a;
 }
