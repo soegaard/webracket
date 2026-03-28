@@ -153,6 +153,7 @@
     (define scrollspy-observers          '()) ; Association list mapping scrollspy container native nodes to observer handles.
     (define scrollspy-listeners          '()) ; Association list mapping scrollspy container native nodes to listener handles.
     (define scrollspy-cleanup-registered '()) ; Native nodes with registered scrollspy cleanup callbacks.
+    (define dom-node-listeners           '()) ; Association list mapping native DOM nodes to installed event-listener pairs.
     (define menu-typeahead-timeout-ms    700) ; Milliseconds before menu typeahead prefix resets.
     (define menu-typeahead-state         '()) ; Association list mapping popup native nodes to (cons timestamp-ms prefix).
 
@@ -190,6 +191,58 @@
     (define (alist-ref/default attrs key default)
       (define p (assq key attrs))
       (if p (cdr p) default))
+
+    ;; tag->display-name : symbol? -> string?
+    ;;   Convert a primitive tag into a readable callback-name prefix.
+    (define (tag->display-name tag)
+      (define raw (symbol->string tag))
+      (cond
+        [(string=? raw "") "Node"]
+        [else
+         (string-append (string-upcase (substring raw 0 1))
+                        (substring raw 1))]))
+
+    ;; name-part->string : any/c -> (or/c string? #f)
+    ;;   Convert name-like value to string, or #f when it has no useful string form.
+    (define (name-part->string v)
+      (cond
+        [(string? v) v]
+        [(symbol? v) (symbol->string v)]
+        [else #f]))
+
+    ;; callback-context-name : (or/c symbol? #f) list? string? -> symbol?
+    ;;   Derive a contextual callback name from tag/attrs and backend role.
+    (define (callback-context-name tag attrs role)
+      (define id-text
+        (name-part->string (alist-ref/default attrs 'id #f)))
+      (define widget-text
+        (name-part->string (alist-ref/default attrs 'data-we-widget #f)))
+      (define base-name
+        (if tag
+            (let ([tag-name (tag->display-name tag)])
+              (cond
+                [id-text     (string-append tag-name ":" id-text ":" role)]
+                [widget-text (string-append tag-name ":" widget-text ":" role)]
+                [else        (string-append tag-name ":" role)]))
+            role))
+      (string->symbol base-name))
+
+    ;; callback-display-name : (or/c symbol? #f) list? string? any/c -> symbol?
+    ;;   Preserve explicit callback names and derive contextual names for anonymous callbacks.
+    (define (callback-display-name tag attrs role callback)
+      (define explicit-name
+        (and callback
+             (name-part->string (object-name callback))))
+      (if explicit-name
+          (string->symbol explicit-name)
+          (callback-context-name tag attrs role)))
+
+    ;; contextual-procedure->external : (or/c symbol? #f) list? string? any/c procedure? -> any/c
+    ;;   Rename wrapper for JS-side diagnostics before converting it to an external callback.
+    (define (contextual-procedure->external tag attrs role callback wrapper)
+      (procedure->external
+       (procedure-rename wrapper
+                         (callback-display-name tag attrs role callback))))
 
     ;; sync-select-options! : any/c list? list? -> void?
     ;;   Replace select children with option nodes for choices/option-pairs.
@@ -238,8 +291,9 @@
     (define (backend-set-timeout! duration-ms callback)
       (js-send (js-window-window)
                "setTimeout"
-               (vector (procedure->external
-                        (lambda () (callback)))
+               (vector (contextual-procedure->external
+                        #f '() "timeout-callback" callback
+                        callback)
                        duration-ms)))
 
     ;; backend-clear-timeout! : any/c -> void?
@@ -1244,6 +1298,284 @@
           (cdr p)
           #f))
 
+    ;; invoke-click-callback! : any/c -> void?
+    ;;   Invoke callback when present.
+    (define (invoke-click-callback! callback)
+      (when callback
+        (callback)))
+
+    ;; invoke-change-callback! : any/c any/c -> void?
+    ;;   Invoke callback with payload when present.
+    (define (invoke-change-callback! callback payload)
+      (when callback
+        (callback payload)))
+
+    ;; invoke-generic-event-callback! : dom-node? string? any/c -> void?
+    ;;   Invoke supported generic primitive event callback with raw event payload.
+    (define (invoke-generic-event-callback! n event-name evt)
+      (define callback
+        (event-handler-ref (dom-node-record-event-handlers n) event-name))
+      (when callback
+        (callback evt)))
+
+    ;; keydown-callback-source : dom-node? -> any/c
+    ;;   Return the current callback whose explicit name should drive keydown bridge naming.
+    (define (keydown-callback-source n)
+      (or (alist-ref/default (dom-node-record-attrs n) 'on-enter-action #f)
+          (dom-node-record-on-click n)
+          (dom-node-record-on-change n)))
+
+    ;; refresh-dom-node-listeners! : dom-node? -> void?
+    ;;   Reinstall native browser listeners so callback names track current node callbacks.
+    (define (refresh-dom-node-listeners! n)
+      (define native* (dom-node-record-native n))
+      (when (and native* (not (extern-nullish? native*)))
+        (define old-listeners (native-mapping-ref dom-node-listeners native*))
+        (when old-listeners
+          (for-each (lambda (entry)
+                      (js-send native* "removeEventListener" (vector (car entry) (cdr entry))))
+                    old-listeners))
+        (define listeners '())
+        (define (register-listener! event-name listener)
+          (js-add-event-listener! native* event-name listener)
+          (set! listeners (cons (cons event-name listener) listeners)))
+        (for-each
+         (lambda (event-name)
+           (define callback
+             (event-handler-ref (dom-node-record-event-handlers n) event-name))
+           (define listener
+             (contextual-procedure->external
+              (dom-node-record-tag n)
+              (dom-node-record-attrs n)
+              (string-append "on-" event-name)
+              callback
+              (lambda (evt)
+                (invoke-generic-event-callback! n event-name evt))))
+           (register-listener! event-name listener))
+         primitive-dom-event-names)
+        (register-listener!
+         "click"
+         (contextual-procedure->external
+          (dom-node-record-tag n)
+          (dom-node-record-attrs n)
+          "on-click"
+          (dom-node-record-on-click n)
+          (lambda (evt)
+            (define callback (dom-node-record-on-click n))
+            (invoke-click-callback! callback)
+            (void evt))))
+        (register-listener!
+         "change"
+         (contextual-procedure->external
+          (dom-node-record-tag n)
+          (dom-node-record-attrs n)
+          "on-change"
+          (dom-node-record-on-change n)
+          (lambda (_evt)
+            (define callback (dom-node-record-on-change n))
+            (invoke-change-callback! callback (node-change-value n)))))
+        (register-listener!
+         "keydown"
+         (contextual-procedure->external
+          (dom-node-record-tag n)
+          (dom-node-record-attrs n)
+          "on-keydown"
+          (keydown-callback-source n)
+          (lambda (evt)
+            (define key (event-key-value evt))
+            (define on-enter (input-enter-action n))
+            (when (and on-enter (string=? key "Enter"))
+              (js-send evt "preventDefault" (vector))
+              (on-enter))
+            (define on-click (dom-node-record-on-click n))
+            (define role-pair (assq 'role (dom-node-record-attrs n)))
+            (when (and on-click
+                       (or (eq? (dom-node-record-tag n) 'button)
+                           (and role-pair
+                                (or (eq? (cdr role-pair) 'button)
+                                    (eq? (cdr role-pair) 'menuitem))))
+                       (activation-key? key))
+              (js-send evt "preventDefault" (vector))
+              (on-click))
+            (define callback (dom-node-record-on-change n))
+            (when (and callback (tab-key-node? n))
+              (when (nav-key? key)
+                (js-send evt "preventDefault" (vector)))
+              (invoke-change-callback! callback key)
+              (when (nav-key? key)
+                (focus-selected-sibling-tab! native*)))
+            (when (menu-label-node? n)
+              (case (string->symbol key)
+                [(ArrowDown)
+                 (invoke-change-callback! callback "ArrowDown")
+                 (js-send evt "preventDefault" (vector))
+                 (focus-first-menu-item! native*)]
+                [(ArrowUp)
+                 (invoke-change-callback! callback "ArrowUp")
+                 (js-send evt "preventDefault" (vector))
+                 (focus-last-menu-item! native*)]
+                [(ArrowRight)
+                 (js-send evt "preventDefault" (vector))
+                 (switch-menu-from-label! native* 'next)]
+                [(ArrowLeft)
+                 (js-send evt "preventDefault" (vector))
+                 (switch-menu-from-label! native* 'prev)]
+                [(Home)
+                 (js-send evt "preventDefault" (vector))
+                 (focus-edge-menu-label! native* 'first)]
+                [(End)
+                 (js-send evt "preventDefault" (vector))
+                 (focus-edge-menu-label! native* 'last)]
+                [(Tab)
+                 (invoke-change-callback! callback "focusout")]
+                [else
+                 (when (menu-typeahead-key? key)
+                   (when (focus-matching-menu-item-from-label! native* key evt)
+                     (js-send evt "preventDefault" (vector))))]))
+            (when (menu-item-node? n)
+              (case (string->symbol key)
+                [(ArrowDown)
+                 (js-send evt "preventDefault" (vector))
+                 (focus-next-menu-item! native*)]
+                [(ArrowUp)
+                 (js-send evt "preventDefault" (vector))
+                 (focus-prev-menu-item! native*)]
+                [(ArrowRight)
+                 (js-send evt "preventDefault" (vector))
+                 (switch-menu-from-item! native* 'next)]
+                [(ArrowLeft)
+                 (js-send evt "preventDefault" (vector))
+                 (switch-menu-from-item! native* 'prev)]
+                [(Tab)
+                 (invoke-change-callback! callback "focusout")]
+                [(Escape)
+                 (invoke-change-callback! callback "Escape")
+                 (focus-own-menu-label! native*)]
+                [else
+                 (when (menu-typeahead-key? key)
+                   (when (focus-matching-menu-item-from-item! native* key evt)
+                     (js-send evt "preventDefault" (vector))))]))
+            (when (scrollspy-item-node? n)
+              (case (string->symbol key)
+                [(ArrowRight ArrowDown)
+                 (js-send evt "preventDefault" (vector))
+                 (focus-scrollspy-step! native* 1)]
+                [(ArrowLeft ArrowUp)
+                 (js-send evt "preventDefault" (vector))
+                 (focus-scrollspy-step! native* -1)]
+                [(Home)
+                 (js-send evt "preventDefault" (vector))
+                 (focus-scrollspy-item! native* 0)]
+                [(End)
+                 (js-send evt "preventDefault" (vector))
+                 (define parent* (js-ref/extern native* "parentElement"))
+                 (when (and parent* (not (extern-nullish? parent*)))
+                   (define items
+                     (js-send/extern/nullish parent* "querySelectorAll" (vector scrollspy-item-selector)))
+                   (when (and items (not (extern-nullish? items)))
+                     (define len (nodelist-length items))
+                     (when (> len 0)
+                       (focus-scrollspy-item! native* (- len 1)))))]
+                [else
+                 (void)]))
+            (when (carousel-node? n)
+              (case (string->symbol key)
+                [(ArrowLeft ArrowRight Home End)
+                 (js-send evt "preventDefault" (vector))
+                 (invoke-change-callback! callback key)]
+                [else
+                 (void)]))
+            (when (and callback (role-button-node? n))
+              (invoke-change-callback! callback key))
+            (when (and (role-dialog-node? n) (string=? key "Tab"))
+              (js-send evt "preventDefault" (vector))
+              (define shift? (extern-bool-true? (js-ref/extern evt "shiftKey")))
+              (when (dialog-open-attr? (dom-node-record-attrs n))
+                (focus-cycled-dialog-target! native* shift?)))
+            (when (and callback (role-dialog-node? n))
+              (invoke-change-callback! callback key)))))
+        (register-listener!
+         "mouseenter"
+         (contextual-procedure->external
+          (dom-node-record-tag n)
+          (dom-node-record-attrs n)
+          "on-mouseenter"
+          (dom-node-record-on-change n)
+          (lambda (evt)
+            (with-handlers ([(lambda (_e) #t)
+                             (lambda (_e)
+                               (void))])
+              (define callback (dom-node-record-on-change n))
+              (when (and callback (hover-change-node? n))
+                (invoke-change-callback! callback "mouseenter"))
+              (void evt)))))
+        (register-listener!
+         "mouseleave"
+         (contextual-procedure->external
+          (dom-node-record-tag n)
+          (dom-node-record-attrs n)
+          "on-mouseleave"
+          (dom-node-record-on-change n)
+          (lambda (evt)
+            (with-handlers ([(lambda (_e) #t)
+                             (lambda (_e)
+                               (void))])
+              (define callback (dom-node-record-on-change n))
+              (when (and callback (hover-change-node? n))
+                (invoke-change-callback! callback "mouseleave"))
+              (void evt)))))
+        (register-listener!
+         "focusout"
+         (contextual-procedure->external
+          (dom-node-record-tag n)
+          (dom-node-record-attrs n)
+          "on-focusout"
+          (dom-node-record-on-change n)
+          (lambda (evt)
+            (with-handlers ([(lambda (_e) #t)
+                             (lambda (_e)
+                               (void))])
+              (define callback (dom-node-record-on-change n))
+              (define menu-container (focusout-menu-container n native*))
+              (when (and callback menu-container)
+                (define related* (js-ref/extern evt "relatedTarget"))
+                (define related
+                  (if (or (not related*)
+                          (extern-nullish? related*))
+                      #f
+                      related*))
+                (define still-inside?
+                  (and related
+                       (extern-bool-true?
+                        (js-send/extern/nullish
+                         menu-container
+                         "contains"
+                         (vector related)))))
+                (define related-menu-control?
+                  (and related
+                       (or (extern-node-matches-selector? related ".we-menu-label[role='button']")
+                           (extern-node-matches-selector? related ".we-menu-item[role='menuitem']"))))
+                (unless (or still-inside?
+                            related-menu-control?)
+                  (invoke-change-callback! callback "focusout")))))))
+        (when (or (eq? (dom-node-record-tag n) 'input)
+                  (eq? (dom-node-record-tag n) 'textarea))
+          (register-listener!
+           "input"
+           (contextual-procedure->external
+            (dom-node-record-tag n)
+            (dom-node-record-attrs n)
+            "on-input"
+            (dom-node-record-on-change n)
+            (lambda (_evt)
+              (define callback (dom-node-record-on-change n))
+              (invoke-change-callback! callback (node-change-value n))))))
+        (set! dom-node-listeners
+              (native-mapping-set dom-node-listeners
+                                  native*
+                                  (reverse listeners))))
+      (void))
+
     ;; dom-node : symbol? list? list? any/c any/c any/c list? -> dom-node?
     ;;   Construct a browser-backed node and install event bridges.
     (define (dom-node tag attrs children text on-click on-change [event-handlers '()])
@@ -1255,239 +1587,13 @@
             (js-create-element (tag->element-name tag))))
       (define n
         (dom-node-record tag attrs children text on-click on-change event-handlers native))
-      ;; invoke-click-callback! : any/c -> void?
-      ;;   Invoke callback when present.
-      (define (invoke-click-callback! callback)
-        (when callback
-          (callback)))
-      ;; invoke-change-callback! : any/c any/c -> void?
-      ;;   Invoke callback with payload when present.
-      (define (invoke-change-callback! callback payload)
-        (when callback
-          (callback payload)))
-      ;; invoke-generic-event-callback! : string? any/c -> void?
-      ;;   Invoke supported generic primitive event callback with raw event payload.
-      (define (invoke-generic-event-callback! event-name evt)
-        (define callback
-          (event-handler-ref (dom-node-record-event-handlers n) event-name))
-        (when callback
-          (callback evt)))
-      
       (unless (eq? tag 'text)
         (install-default-node-shape! n)
         (apply-attributes! n '() attrs)
         (when text
           (apply-text! native text))
-        (for-each
-         (lambda (event-name)
-           (js-add-event-listener!
-            native
-            event-name
-            (procedure->external
-             (lambda (evt)
-               (invoke-generic-event-callback! event-name evt)))))
-         primitive-dom-event-names)
-        (js-add-event-listener!
-       native
-       "click"
-       (procedure->external
-        (lambda (evt)
-          (define callback (dom-node-record-on-click n))
-          (invoke-click-callback! callback)
-          (void evt))))
-        (js-add-event-listener!
-       native
-       "change"
-        (procedure->external
-        (lambda (_evt)
-          (define callback (dom-node-record-on-change n))
-          (invoke-change-callback! callback (node-change-value n)))))
-        (when (or (eq? tag 'input)
-                  (eq? tag 'textarea))
-          (js-add-event-listener!
-         native
-         "input"
-         (procedure->external
-          (lambda (_evt)
-            (define callback (dom-node-record-on-change n))
-            (invoke-change-callback! callback (node-change-value n))))))
-        (js-add-event-listener!
-       native
-       "keydown"
-       (procedure->external
-        (lambda (evt)
-          (define key (event-key-value evt))
-          (define on-enter (input-enter-action n))
-          (when (and on-enter (string=? key "Enter"))
-            (js-send evt "preventDefault" (vector))
-            (on-enter))
-          (define on-click (dom-node-record-on-click n))
-          (define role-pair (assq 'role (dom-node-record-attrs n)))
-          (when (and on-click
-                     (or (eq? tag 'button)
-                         (and role-pair
-                              (or (eq? (cdr role-pair) 'button)
-                                  (eq? (cdr role-pair) 'menuitem))))
-                     (activation-key? key))
-            (js-send evt "preventDefault" (vector))
-            (on-click))
-          (define callback (dom-node-record-on-change n))
-          (when (and callback (tab-key-node? n))
-            (when (nav-key? key)
-              (js-send evt "preventDefault" (vector)))
-            (invoke-change-callback! callback key)
-            (when (nav-key? key)
-              (focus-selected-sibling-tab! native)))
-          (when (menu-label-node? n)
-            (case (string->symbol key)
-                [(ArrowDown)
-                 (invoke-change-callback! callback "ArrowDown")
-                 (js-send evt "preventDefault" (vector))
-                 (focus-first-menu-item! native)]
-                [(ArrowUp)
-                 (invoke-change-callback! callback "ArrowUp")
-                 (js-send evt "preventDefault" (vector))
-                 (focus-last-menu-item! native)]
-                [(ArrowRight)
-                 (js-send evt "preventDefault" (vector))
-                 (switch-menu-from-label! native 'next)]
-                [(ArrowLeft)
-                 (js-send evt "preventDefault" (vector))
-                 (switch-menu-from-label! native 'prev)]
-                [(Home)
-                 (js-send evt "preventDefault" (vector))
-                 (focus-edge-menu-label! native 'first)]
-                [(End)
-                 (js-send evt "preventDefault" (vector))
-                 (focus-edge-menu-label! native 'last)]
-                [(Tab)
-                 (invoke-change-callback! callback "focusout")]
-                [else
-                 (when (menu-typeahead-key? key)
-                   (when (focus-matching-menu-item-from-label! native key evt)
-                     (js-send evt "preventDefault" (vector))))]))
-          (when (menu-item-node? n)
-            (case (string->symbol key)
-                [(ArrowDown)
-                 (js-send evt "preventDefault" (vector))
-                 (focus-next-menu-item! native)]
-                [(ArrowUp)
-                 (js-send evt "preventDefault" (vector))
-                 (focus-prev-menu-item! native)]
-                [(ArrowRight)
-                 (js-send evt "preventDefault" (vector))
-                 (switch-menu-from-item! native 'next)]
-                [(ArrowLeft)
-                 (js-send evt "preventDefault" (vector))
-                 (switch-menu-from-item! native 'prev)]
-                [(Tab)
-                 (invoke-change-callback! callback "focusout")]
-                [(Escape)
-                 (invoke-change-callback! callback "Escape")
-                 (focus-own-menu-label! native)]
-                [else
-                 (when (menu-typeahead-key? key)
-                   (when (focus-matching-menu-item-from-item! native key evt)
-                     (js-send evt "preventDefault" (vector))))]))
-          (when (scrollspy-item-node? n)
-            (case (string->symbol key)
-                [(ArrowRight ArrowDown)
-                 (js-send evt "preventDefault" (vector))
-                 (focus-scrollspy-step! native 1)]
-                [(ArrowLeft ArrowUp)
-                 (js-send evt "preventDefault" (vector))
-                 (focus-scrollspy-step! native -1)]
-                [(Home)
-                 (js-send evt "preventDefault" (vector))
-                 (focus-scrollspy-item! native 0)]
-                [(End)
-                 (js-send evt "preventDefault" (vector))
-                 (define parent* (js-ref/extern native "parentElement"))
-                 (when (and parent* (not (extern-nullish? parent*)))
-                   (define items
-                     (js-send/extern/nullish parent* "querySelectorAll" (vector scrollspy-item-selector)))
-                   (when (and items (not (extern-nullish? items)))
-                     (define len (nodelist-length items))
-                     (when (> len 0)
-                       (focus-scrollspy-item! native (- len 1)))))]
-                [else
-                 (void)]))
-          (when (carousel-node? n)
-            (case (string->symbol key)
-                [(ArrowLeft ArrowRight Home End)
-                 (js-send evt "preventDefault" (vector))
-                 (invoke-change-callback! callback key)]
-                [else
-                 (void)]))
-          (when (and callback (role-button-node? n))
-            (invoke-change-callback! callback key))
-          (when (and (role-dialog-node? n) (string=? key "Tab"))
-            (js-send evt "preventDefault" (vector))
-            (define shift? (extern-bool-true? (js-ref/extern evt "shiftKey")))
-            (when (dialog-open-attr? (dom-node-record-attrs n))
-              (focus-cycled-dialog-target! native shift?)))
-          (when (and callback (role-dialog-node? n))
-            (invoke-change-callback! callback key)))))
-        (js-add-event-listener!
-       native
-       "mouseenter"
-       (procedure->external
-        (lambda (evt)
-          (with-handlers ([(lambda (_e) #t)
-                           (lambda (_e)
-                             ;; Ignore teardown-time mouseenter bridge exceptions.
-                             (void))])
-            (define callback (dom-node-record-on-change n))
-            (when (and callback (hover-change-node? n))
-              (invoke-change-callback! callback "mouseenter"))
-            (void evt)))))
-        (js-add-event-listener!
-       native
-       "mouseleave"
-       (procedure->external
-        (lambda (evt)
-          (with-handlers ([(lambda (_e) #t)
-                           (lambda (_e)
-                             ;; Ignore teardown-time mouseleave bridge exceptions.
-                             (void))])
-            (define callback (dom-node-record-on-change n))
-            (when (and callback (hover-change-node? n))
-              (invoke-change-callback! callback "mouseleave"))
-            (void evt)))))
-        (js-add-event-listener!
-       native
-       "focusout"
-       (procedure->external
-        (lambda (evt)
-          (with-handlers ([(lambda (_e) #t)
-                           (lambda (_e)
-                             ;; During iframe unload, relatedTarget/contains may become invalid.
-                             ;; Ignore teardown-time focusout bridge exceptions.
-                             (void))])
-            (define callback (dom-node-record-on-change n))
-            (define menu-container (focusout-menu-container n native))
-            (when (and callback menu-container)
-              (define related* (js-ref/extern evt "relatedTarget"))
-              (define related
-                (if (or (not related*)
-                        (extern-nullish? related*))
-                    #f
-                    related*))
-              (define still-inside?
-                (and related
-                     (extern-bool-true?
-                      (js-send/extern/nullish
-                       menu-container
-                       "contains"
-                       (vector related)))))
-              (define related-menu-control?
-                (and related
-                     (or (extern-node-matches-selector? related ".we-menu-label[role='button']")
-                         (extern-node-matches-selector? related ".we-menu-item[role='menuitem']"))))
-              (unless (or still-inside?
-                          related-menu-control?)
-                (invoke-change-callback! callback "focusout")))))))
-      n))
+        (refresh-dom-node-listeners! n))
+      n)
 
     ;; dom-node? : any/c -> boolean?
     ;;   Check whether v is a browser-backed node.
@@ -1562,7 +1668,8 @@
         (set-dom-node-record-on-change! n (dom-node-record-on-change replacement))
         (set-dom-node-record-event-handlers! n
                                              (dom-node-record-event-handlers replacement))
-        (set-dom-node-record-native! n new-native)))
+        (set-dom-node-record-native! n new-native)
+        (refresh-dom-node-listeners! n)))
 
     ;; set-dom-node-attrs! : dom-node? list? -> void?
     ;;   Replace tracked attributes and sync native DOM attributes.
@@ -1572,6 +1679,7 @@
       (clear-attributes! native old-attrs)
       (set-dom-node-record-attrs! n attrs)
       (apply-attributes! n old-attrs attrs)
+      (refresh-dom-node-listeners! n)
       (void))
 
     ;; set-dom-node-children! : dom-node? list? -> void?
@@ -1600,17 +1708,20 @@
     ;; set-dom-node-on-click! : dom-node? any/c -> void?
     ;;   Update click callback.
     (define (set-dom-node-on-click! n on-click)
-      (set-dom-node-record-on-click! n on-click))
+      (set-dom-node-record-on-click! n on-click)
+      (refresh-dom-node-listeners! n))
 
     ;; set-dom-node-on-change! : dom-node? any/c -> void?
     ;;   Update change callback.
     (define (set-dom-node-on-change! n on-change)
-      (set-dom-node-record-on-change! n on-change))
+      (set-dom-node-record-on-change! n on-change)
+      (refresh-dom-node-listeners! n))
 
     ;; set-dom-node-event-handlers! : dom-node? list? -> void?
     ;;   Update generic event callback alist.
     (define (set-dom-node-event-handlers! n event-handlers)
-      (set-dom-node-record-event-handlers! n event-handlers))
+      (set-dom-node-record-event-handlers! n event-handlers)
+      (refresh-dom-node-listeners! n))
 
     ;; dom-node-native : dom-node? -> any/c
     ;;   Return wrapped browser DOM node handle.
@@ -1682,7 +1793,8 @@
                (not (extern-nullish? reflect*))))
         (if io-supported?
                 (let* ([io-callback
-                        (procedure->external
+                        (contextual-procedure->external
+                     #f '() "Scrollspy:observer" #f
                      (lambda (_entries _observer)
                        (void)))]
                    [observer
@@ -1698,7 +1810,8 @@
                      (vector scrollspy-section-selector))])
               (if (or (not observer) (extern-nullish? observer))
                   (let ([listener
-                         (procedure->external
+                         (contextual-procedure->external
+                          #f '() "Scrollspy:scroll-fallback" #f
                           (lambda (_evt)
                             (invoke-scrollspy-callback! "scroll-fallback/no-observer")))])
                     (set! scrollspy-listeners
@@ -1708,7 +1821,8 @@
                     (set! scrollspy-observers
                           (native-mapping-set scrollspy-observers native observer))
                     (let ([listener
-                           (procedure->external
+                           (contextual-procedure->external
+                            #f '() "Scrollspy:scroll-observer" #f
                             (lambda (_evt)
                               (invoke-scrollspy-callback! "scroll-with-observer")))])
                       (set! scrollspy-listeners
@@ -1724,7 +1838,8 @@
                           (loop (add1 i)))))
                     (void))))
             (let ([listener
-                   (procedure->external
+                   (contextual-procedure->external
+                    #f '() "Scrollspy:scroll-fallback" #f
                     (lambda (_evt)
                       (invoke-scrollspy-callback! "scroll-fallback/no-io")))])
               (set! scrollspy-listeners
