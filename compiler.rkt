@@ -2778,8 +2778,11 @@
                                                          'α-rename "compiler.rkt: unbound variable"
                                                          (variable-id x))]
                                                        [else
+                                                        ; In full Racket variable references outside modules
+                                                        ; go through a current namespace - think #%top .
+                                                        
                                                         ; signal unbound variable at runtime
-                                                        (displayln (list 'WARNING "unbound?" x))
+                                                        (displayln (list 'WARNING "unbound?" x) (current-error-port))
                                                         (values `(app ,#'here
                                                                       ,(variable #'raise-unbound-variable-reference)
                                                                       ,`(quote ,(variable-id x)
@@ -4316,6 +4319,14 @@
          ;; (displayln (list 'top (map unparse-variable (id-set->list top-vars))))
          ;; (displayln (list 'mod (map unparse-variable module-vars)))
          ;; (displayln (list 'loc (map unparse-variable local-vars)))
+
+         ;; Note: In full Racket a reference to an unbound variable at the top-level
+         ;;       will go through the current namespace.
+         (when (variable? v)
+           (define id (variable-id v))
+           (raise-syntax-error (syntax-e id)
+                               "unbound identifier"
+                               id))
          (error 'classify "got: ~a" v)]))
     ;; 2. References to variable according to their type
     (define (Reference v)
