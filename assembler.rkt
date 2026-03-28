@@ -88,6 +88,7 @@ var externals = [];
 var callback_export;
 var callback_accepts_argc_export;
 var callback_expected_arity_export;
+var callback_name_export;
 
 function read_u32(arr, i) {
   return ((arr[i] << 24) | (arr[i + 1] << 16) |
@@ -518,6 +519,26 @@ function callback_expected_arity_text(id) {
     return fasl_to_js_value(new Uint8Array(memory.buffer, 0, len))[0];
 }
 
+function callback_name_text(id) {
+    if (!callback_name_export) {
+        return null;
+    }
+    const len = callback_name_export(id);
+    const value = fasl_to_js_value(new Uint8Array(memory.buffer, 0, len))[0];
+    if (typeof value === 'symbol') {
+        return Symbol.keyFor(value) ?? value.description ?? String(value);
+    }
+    if (typeof value === 'string' && value.length > 0) {
+        return value;
+    }
+    return null;
+}
+
+function callback_label_text(id) {
+    const name = callback_name_text(id);
+    return name ? `${name} (callback id ${id})` : `callback id ${id}`;
+}
+
 export function make_callback(id) {
     return (...args) => {
         const argc = args.length;
@@ -525,14 +546,25 @@ export function make_callback(id) {
             callback_accepts_argc_export(id, argc) === 0) {
             const expected = callback_expected_arity_text(id);
             throw new TypeError(
-                `WebRacket callback arity mismatch (callback id ${id}): expected ${expected}, given ${argc}.`
+                `WebRacket callback arity mismatch (${callback_label_text(id)}): expected ${expected}, given ${argc}.`
             );
         }
         try {
             const fasl = js_value_to_fasl(Array.from(args));
             new Uint8Array(memory.buffer).set(fasl, 0);
             const len = callback_export(id, 0);
-            return fasl_to_js_value(new Uint8Array(memory.buffer, 0, len))[0];
+            const [ok, payload] =
+                fasl_to_js_value(new Uint8Array(memory.buffer, 0, len))[0];
+            if (ok) {
+                return payload;
+            }
+            const message =
+                (typeof payload === 'string' && payload.length > 0)
+                ? payload
+                : 'The callback raised a WebRacket exception.';
+            throw new Error(
+                `WebRacket callback failed (${callback_label_text(id)}, argc ${argc}):\n${message}`
+            );
         } catch (err) {
             const isWasmException = (typeof WebAssembly.Exception !== 'undefined') &&
                                     (err instanceof WebAssembly.Exception);
@@ -543,11 +575,12 @@ export function make_callback(id) {
                 if (isArityMismatch) {
                     const expected = callback_expected_arity_text(id);
                     throw new TypeError(
-                        `WebRacket callback arity mismatch (callback id ${id}): expected ${expected}, given ${argc}.`
+                        `WebRacket callback arity mismatch (${callback_label_text(id)}): expected ${expected}, given ${argc}.`
                     );
                 }
+                const label = callback_label_text(id);
                 const wrapped = new Error(
-                    `WebRacket callback failed (callback id ${id}, argc ${argc}). The callback raised a WebRacket exception.`
+                    `WebRacket callback failed (${label}, argc ${argc}). The callback raised a WebRacket exception.`
                 );
                 wrapped.cause = err;
                 throw wrapped;
@@ -2333,10 +2366,12 @@ const wasmModule
       .instantiate(wasmBuffer, imports)
       .then(results  => { const { entry, get_bytes, copy_bytes_to_memory, callback,
                                   ['callback-accepts-argc']: callback_accepts_argc,
-                                  ['callback-expected-arity']: callback_expected_arity } = results.instance.exports;
+                                  ['callback-expected-arity']: callback_expected_arity,
+                                  ['callback-name']: callback_name } = results.instance.exports;
                           callback_export = callback;
                           callback_accepts_argc_export = callback_accepts_argc;
                           callback_expected_arity_export = callback_expected_arity;
+                          callback_name_export = callback_name;
                           var result;
                           try {
                             result = entry();

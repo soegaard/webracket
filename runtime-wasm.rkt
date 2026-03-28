@@ -32590,6 +32590,22 @@
          ;;; CALLBACKS (Calling webracket from js)
          ;;;
 
+         ;; callback-result->bridge-payload : any/c boolean? -> any/c
+         ;;   Convert a callback result into a host-serializable bridge payload.
+         (func $callback-result->bridge-payload
+               (param $v        (ref eq))
+               (param $success? i32)
+               (result          (ref eq))
+
+               (if (result (ref eq))
+                   (local.get $success?)
+                   (then (local.get $v))
+                   (else
+                    (if (result (ref eq))
+                        (ref.eq (call $exn? (local.get $v)) (global.get $false))
+                        (then (call $format/display (local.get $v)))
+                        (else (call $exn-message (local.get $v)))))))
+
          (func $callback-register (export "callback-register")
                (param $p (ref $Procedure))
                (result   i32)
@@ -32611,6 +32627,9 @@
                (local $vec   (ref $Vector))
                (local $args  (ref $Args))
                (local $res   (ref eq))
+               (local $payload (ref eq))
+               (local $bridge  (ref $Vector))
+               (local $success? i32)
                (local $len   i32)
 
                ;; Look up procedure by id
@@ -32627,15 +32646,40 @@
                (local.set $args
                           (ref.cast (ref $Args)
                                     (struct.get $Vector $arr (local.get $vec))))
-               ;; Invoke procedure with arguments
+               ;; Invoke procedure and tag the callback outcome before
+               ;; serializing anything across the Wasm<->JS callback bridge.
+               (local.set $success? (i32.const 0))
                (local.set $res
-                          (call_ref $ProcedureInvoker
-                                    (local.get $proc)
-                                    (local.get $args)
-                                    (struct.get $Procedure $invoke (local.get $proc))))
-               ;; Encode result and copy to memory for host
+                          (block $callback-raised (result (ref eq))
+                                 (try_table (result (ref eq))
+                                            (catch $exn $callback-raised)
+                                            (local.set $res
+                                                       (call_ref $ProcedureInvoker
+                                                                 (local.get $proc)
+                                                                 (local.get $args)
+                                                                 (struct.get $Procedure $invoke
+                                                                             (local.get $proc))))
+                                            (local.set $success? (i32.const 1))
+                                            (local.get $res))))
+               (local.set $payload
+                          (call $callback-result->bridge-payload
+                                (local.get $res)
+                                (local.get $success?)))
+               (local.set $bridge
+                          (struct.new $Vector
+                                      (i32.const 0)
+                                      (i32.const 1)
+                                      (array.new_fixed $Array 2
+                                                       (if (result (ref eq))
+                                                           (local.get $success?)
+                                                           (then (global.get $true))
+                                                           (else (global.get $false)))
+                                                       (local.get $payload))))
+               ;; Encode tagged result and copy to memory for host
                (global.set $result-bytes
-                           (call $s-exp->fasl (local.get $res) (global.get $false)))
+                           (call $s-exp->fasl
+                                 (local.get $bridge)
+                                 (global.get $false)))
                (local.set $len
                           (call $copy-bytes-to-memory
                                 (ref.cast (ref $Bytes) (global.get $result-bytes))
@@ -32677,6 +32721,30 @@
                (global.set $result-bytes
                            (call $s-exp->fasl
                                  (call $procedure-arity->expected-string (local.get $proc))
+                                 (global.get $false)))
+               (local.set $len
+                          (call $copy-bytes-to-memory
+                                (ref.cast (ref $Bytes) (global.get $result-bytes))
+                                (i32.const 0)))
+               (local.get $len))
+
+         ;; callback-name : callback-id -> fasl-name-byte-length
+         ;; Encodes the callback's object-name result in linear memory at 0.
+         (func $callback-name (export "callback-name")
+               (param $id i32)
+               (result i32)
+
+               (local $proc (ref $Procedure))
+               (local $len  i32)
+
+               (local.set $proc
+                          (ref.cast (ref $Procedure)
+                                    (call $growable-array-ref
+                                          (global.get $callback-registry)
+                                          (local.get $id))))
+               (global.set $result-bytes
+                           (call $s-exp->fasl
+                                 (call $object-name (local.get $proc))
                                  (global.get $false)))
                (local.set $len
                           (call $copy-bytes-to-memory
