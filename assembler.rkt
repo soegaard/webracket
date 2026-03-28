@@ -563,7 +563,7 @@ export function make_callback(id) {
                 ? payload
                 : 'The callback raised a WebRacket exception.';
             throw new Error(
-                `WebRacket callback failed (${callback_label_text(id)}, argc ${argc}):\n${message}`
+                `WebRacket callback failed\n(${callback_label_text(id)}, argc ${argc}):\n\n${message}`
             );
         } catch (err) {
             const isWasmException = (typeof WebAssembly.Exception !== 'undefined') &&
@@ -580,7 +580,7 @@ export function make_callback(id) {
                 }
                 const label = callback_label_text(id);
                 const wrapped = new Error(
-                    `WebRacket callback failed (${label}, argc ${argc}). The callback raised a WebRacket exception.`
+                    `WebRacket callback failed\n(${label}, argc ${argc}):\n\nThe callback raised a WebRacket exception.`
                 );
                 wrapped.cause = err;
                 throw wrapped;

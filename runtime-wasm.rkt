@@ -1237,6 +1237,8 @@
     (add-runtime-string-constant 'real?                      "real?")
     (add-runtime-string-constant 'exact-nonnegative-integer? "exact-nonnegative-integer?")
     (add-runtime-string-constant 'uncaught-exception         "uncaught exception: ")
+    (add-runtime-string-constant 'callback:no-js-equivalent
+                                 "The callback attempted to return a WebRacket value with no JavaScript equivalent (i.e. without a FASL encoding): ")
     (add-runtime-string-constant 'arity-at-least?            "arity-at-least?")
     
     (add-runtime-string-constant 'srcloc?                    "srcloc?")
@@ -32606,6 +32608,42 @@
                         (then (call $format/display (local.get $v)))
                         (else (call $exn-message (local.get $v)))))))
 
+         ;; callback-result->bridge-vector : boolean? any/c -> vector?
+         ;;   Build the tagged callback bridge result returned to JS.
+         (func $callback-result->bridge-vector
+               (param $success? i32)
+               (param $payload  (ref eq))
+               (result          (ref $Vector))
+
+               (struct.new $Vector
+                           (i32.const 0)
+                           (i32.const 1)
+                           (array.new_fixed $Array 2
+                                            (if (result (ref eq))
+                                                (local.get $success?)
+                                                (then (global.get $true))
+                                                (else (global.get $false)))
+                                            (local.get $payload))))
+
+         ;; callback-non-fasl-return-message : any/c -> string?
+         ;;   Explain that a callback returned a value with no JS/FASL encoding.
+         (func $callback-non-fasl-return-message
+               (param $v (ref eq))
+               (result   (ref $String))
+
+               (local $out (ref $GrowableArray))
+
+               (local.set $out
+                          (call $make-growable-array (i32.const 2)))
+               (call $growable-array-add!
+                     (local.get $out)
+                     (global.get $string:callback:no-js-equivalent))
+               (call $growable-array-add!
+                     (local.get $out)
+                     (call $format/display (local.get $v)))
+               (call $array-of-strings->string
+                     (call $growable-array->array (local.get $out))))
+
          (func $callback-register (export "callback-register")
                (param $p (ref $Procedure))
                (result   i32)
@@ -32629,6 +32667,8 @@
                (local $res   (ref eq))
                (local $payload (ref eq))
                (local $bridge  (ref $Vector))
+               (local $bridge-exn (ref eq))
+               (local $bridge-sentinel (ref eq))
                (local $success? i32)
                (local $len   i32)
 
@@ -32666,20 +32706,36 @@
                                 (local.get $res)
                                 (local.get $success?)))
                (local.set $bridge
-                          (struct.new $Vector
-                                      (i32.const 0)
-                                      (i32.const 1)
-                                      (array.new_fixed $Array 2
-                                                       (if (result (ref eq))
-                                                           (local.get $success?)
-                                                           (then (global.get $true))
-                                                           (else (global.get $false)))
-                                                       (local.get $payload))))
-               ;; Encode tagged result and copy to memory for host
-               (global.set $result-bytes
-                           (call $s-exp->fasl
-                                 (local.get $bridge)
-                                 (global.get $false)))
+                          (call $callback-result->bridge-vector
+                                (local.get $success?)
+                                (local.get $payload)))
+               ;; Encode tagged result and copy to memory for host. If a
+               ;; successful callback returned a non-FASL value, convert that
+               ;; serialization failure into an ordinary callback failure.
+               (local.set $bridge-sentinel
+                          (call $cons (global.get $false) (global.get $false)))
+               (local.set $bridge-exn
+                          (block $callback-encode-failed (result (ref eq))
+                                 (try_table (result (ref eq))
+                                            (catch $exn $callback-encode-failed)
+                                            (global.set $result-bytes
+                                                        (call $s-exp->fasl
+                                                              (local.get $bridge)
+                                                              (global.get $false)))
+                                            (local.get $bridge-sentinel))))
+               (if (i32.eqz (ref.eq (local.get $bridge-exn) (local.get $bridge-sentinel)))
+                   (then
+                    (local.set $payload
+                               (call $callback-non-fasl-return-message
+                                     (local.get $res)))
+                    (local.set $bridge
+                               (call $callback-result->bridge-vector
+                                     (i32.const 0)
+                                     (local.get $payload)))
+                    (global.set $result-bytes
+                                (call $s-exp->fasl
+                                      (local.get $bridge)
+                                      (global.get $false)))))
                (local.set $len
                           (call $copy-bytes-to-memory
                                 (ref.cast (ref $Bytes) (global.get $result-bytes))
@@ -36329,7 +36385,20 @@
                          (call $fasl:s-exp->fasl (local.get $v) (local.get $out))
                          (global.get $void))
                         (else (call $raise-check-port-or-false (local.get $out))
-                              (unreachable))))))
+	                              (unreachable))))))
+
+         ;; raise-s-exp->fasl:unsupported-value : any/c -> none
+         ;;   Raise a regular exception for values that cannot be FASL encoded.
+         (func $raise-s-exp->fasl:unsupported-value
+               (param $v (ref eq))
+
+               (drop (call $raise
+                           (call $make-exn:fail
+                                 (call $format/display (local.get $v))
+                                 (call $current-continuation-marks
+                                       (global.get $missing)))
+                           (global.get $true)))
+               (unreachable))
                               
          (func $fasl:s-exp->fasl
                (param $v   (ref eq))
@@ -36407,13 +36476,15 @@
                                                                       (if (ref.test (ref $External) (local.get $v))
                                                                           (then
                                                                            (drop (call $write-byte (global.get $fasl-external) (local.get $out)))
-                                                                           (call $fasl:write-u32
-                                                                                 (call $js-register-external
-                                                                                       (ref.as_non_null
-                                                                                         (struct.get $External $v
-                                     (ref.cast (ref $External) (local.get $v)))))
-                                                                                 (local.get $out)))
-                                                                          (else (unreachable)))))))))))))))))) ;; unsupported type
+                                                                          (call $fasl:write-u32
+                                                                                (call $js-register-external
+                                                                                      (ref.as_non_null
+                                                                                        (struct.get $External $v
+                                                                                                    (ref.cast (ref $External) (local.get $v)))))
+                                                                                (local.get $out)))
+                                                                          (else (call $raise-s-exp->fasl:unsupported-value
+                                                                                      (local.get $v))
+                                                                                (unreachable)))))))))))))))))) ;; unsupported type
          
          (func $s-exp->fasl/immediate
                (param $i   i32)

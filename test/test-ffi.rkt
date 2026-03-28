@@ -199,7 +199,23 @@
                              (define v (js-send stream "next" (vector)))
                              (void? v)))]
                      [res (js-send f "call" (vector (js-global-this) obj (js-undefined)))])
-                (equal? res #t)))))
+                (equal? res #t)))
+        (list "procedure->external/raised exception stays a callback failure"
+              (with-handlers ([exn? (λ (_) #t)])
+                (define f
+                  (procedure->external
+                   (λ ()
+                     (error 'callback "boom"))))
+                (js-send f "call" (vector (js-global-this)))
+                #f))
+        (list "procedure->external/non-fasl result stays a callback failure"
+              (with-handlers ([exn? (λ (_) #t)])
+                (define f
+                  (procedure->external
+                   (λ ()
+                     (λ () 1))))
+                (js-send f "call" (vector (js-global-this)))
+                #f))))
 
  (list "Fundamental objects"
        (list
