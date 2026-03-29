@@ -259,8 +259,6 @@
 (define @selected-circle-id (@ #f))
 (define @menu               (@ #f))
 (define @editor-mode        (@ #f)) ; #f, 'diameter, or 'color
-(define @editor-ref         (@ #f))
-
 (define @diam-preview  (@ 40))
 (define @red-preview   (@ default-circle-red))
 (define @green-preview (@ default-circle-green))
@@ -268,16 +266,6 @@
 
 (define (editor-active?)
   (obs-peek @editor-mode))
-
-(obs-observe! @editor-ref
-  (lambda (node)
-    (when node
-      ;; Focus after mount so Escape works immediately when the editor opens.
-      (js-window-set-timeout/delay
-       (procedure->external
-        (lambda ()
-          (js-send node "focus" (vector))))
-       0.0))))
 
 (define (selected-circle)
   (find-circle-by-id (obs-peek @circles)
@@ -407,7 +395,7 @@
 
 (define (editor-shell title save-action body)
   (Div #:style "border: 1px solid #999; background: white; padding: 12px; border-radius: 6px;"
-       #:ref   @editor-ref
+       #:autofocus #t
        #:attrs '((tabindex "0"))
        #:on-keydown editor-handle-key!
        (apply vpanel
