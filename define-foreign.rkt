@@ -311,24 +311,26 @@
 (define (result-types->wasm-import-results result-types)
   (map result-type->wasm-import-result result-types))
 
+(define (result-type->wasm-import-value-type type)
+  (case type
+    [(boolean) 'i32]
+    [(string)  'externref]   ; raw JS string, converted in the wrapper
+    [(value)   'i32]         ; index into linear memory
+    [(extern)  'externref]
+    [(extern/raw) 'externref]
+    [(extern/null) 'externref]
+    [(extern/undefined) 'externref]
+    [(extern/nullish) 'externref]
+    [(i32)     'i32]
+    [(u32)     'i32]
+    [(f64)     'f64]
+    [else
+     (error 'result-type->wasm-import-value-type
+            "expected type, got: ~a"
+            type)]))
+
 (define (result-type->wasm-import-result type)
-  (define t (case type
-              [(boolean) 'i32]
-              [(string)  'i32]         ; index into linear memory
-              [(value)   'i32]         ; index into linear memory
-              [(extern)  'externref]
-              [(extern/raw) 'externref]
-              [(extern/null) 'externref]
-              [(extern/undefined) 'externref]
-              [(extern/nullish) 'externref]
-              [(i32)     'i32]
-              [(u32)     'i32]
-              [(f64)     'f64]
-              [else
-               (error 'result-type->wasm-import-result
-                      "expected type, got: ~a"
-                      type)]))
-  `(result ,t))
+  `(result ,(result-type->wasm-import-value-type type)))
 
 
 ;; Primitive wrapper for the imported function
@@ -398,7 +400,7 @@
             ;; - a local to hold the results (only if one is expected)
             ,@(match result-types
                 [(list t)
-                 `((local $results ,(argument-type->wasm-import-parameter t)))]
+                 `((local $results ,(result-type->wasm-import-value-type t)))]
                 [_ '()])
             ;; - a local to hold host exceptions caught from foreign imports
             (local $ffi-host externref)
@@ -564,7 +566,9 @@
                       (else (global.get $false))))]                  
                [(list 'string) ; a string is returned as an index into linear memory
                 `(return
-                  (call $linear-memory->string (local.get $results)))]
+                  (call $linear-memory->string
+                        (call $js-external-string->string
+                              (ref.as_non_null (local.get $results)))))]
                [(list 'value) ; a value is returned as an index into linear memory
                 `(return
                   (call $linear-memory->value (local.get $results)))]

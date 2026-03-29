@@ -811,10 +811,10 @@ var imports = {
       'nan?':                      ((x) => isNaN(x) ? 1 : 0),
       'parse-float':               ((s) => parseFloat(from_fasl(s))),
       'parse-int':                 ((s) => parseInt(from_fasl(s))),
-      'decode-uri':                ((s) => to_string( decodeURI(from_fasl(s)))),
-      'decode-uri-component':      ((s) => to_string( decodeURIComponent(from_fasl(s)))),
-      'encode-uri':                ((s) => to_string( encodeURI(from_fasl(s)))),
-      'encode-uri-component':      ((s) => to_string( encodeURIComponent(from_fasl(s)))),
+      'decode-uri':                ((s) => decodeURI(from_fasl(s))),
+      'decode-uri-component':      ((s) => decodeURIComponent(from_fasl(s))),
+      'encode-uri':                ((s) => encodeURI(from_fasl(s))),
+      'encode-uri-component':      ((s) => encodeURIComponent(from_fasl(s))),
       'var':                       ((name) => globalThis[from_fasl(name)]),
       'ref/value':                 ((obj, key) => to_fasl(obj[from_fasl(key)])),
       'ref/extern':                ((obj, key) => obj[from_fasl(key)]),
@@ -875,8 +875,8 @@ var imports = {
       'array/extern':               (args => { const as = from_fasl(args);
                                               return [...( as ? as : [])]
                                     }),
-      'typeof':                    ((obj) => to_string(typeof obj)),
-      'value->string':             ((obj) => to_string(String(obj))),
+      'typeof':                    ((obj) => typeof obj),
+      'value->string':             ((obj) => String(obj)),
       'instanceof':                ((obj, type) => (obj instanceof type) ? 1 : 0),
       'operator':                  ((op, operands) => {
                                      const o = from_fasl(op);
@@ -1030,25 +1030,24 @@ var imports = {
         // Convert number to exponential notation.
         'to-exponential':    ((x, fd) => {
                                  const d = from_fasl(fd);
-                                 const r = d === undefined ? x.toExponential() : x.toExponential(d);
-                                 return to_fasl(r); 
+                                 return d === undefined ? x.toExponential() : x.toExponential(d);
                                }),
         // Format number with fixed-point notation.
         'to-fixed':          ((x, digits) => {
                                  const d = from_fasl(digits);
-                                 return to_fasl( d === undefined ? x.toFixed() : x.toFixed(d) );
+                                 return d === undefined ? x.toFixed() : x.toFixed(d);
                                }),
         // Format number using locale-specific rules.
-        'to-locale-string':  ((x, locales, options) => to_fasl( x.toLocaleString(from_fasl(locales), from_fasl(options))) ),
+        'to-locale-string':  ((x, locales, options) => x.toLocaleString(from_fasl(locales), from_fasl(options))),
         // Format number with specified precision.
         'to-precision':      ((x, precision) => {
                                  const p = from_fasl(precision);
-                                 return to_fasl( p === undefined ? x.toPrecision() : x.toPrecision(p) );
+                                 return p === undefined ? x.toPrecision() : x.toPrecision(p);
                                }),
         // Convert number to string with optional radix.
         'to-string':         ((x, radix) => {
                                  const r = from_fasl(radix);
-                                 return to_fasl( r === undefined ? x.toString() : x.toString(r) );
+                                 return r === undefined ? x.toString() : x.toString(r);
                                }),
         // Extract primitive numeric value.
         'value-of':          (x => x.valueOf())

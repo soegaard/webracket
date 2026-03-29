@@ -74,6 +74,9 @@
         (list "js-decode-uri-component/encode-uri-component"
               (let ([s "a b+c"])
                 (equal? (js-decode-uri-component (js-encode-uri-component s)) s)))        
+        (list "string result marshalling"
+              (and (equal? (js-encode-uri-component "Escape key?") "Escape%20key%3F")
+                   (equal? (js-typeof (js-global-this)) "object")))
         (list "js-ref/js-set!/js-assign"
               (let ([obj (js-object (list))])
                 (js-set! obj "a" 1)
@@ -164,7 +167,7 @@
               (equal? (external-number->flonum
                        (js-operator "+" (vector 1 2)))   3.))
         (list "js-typeof"
-              (list (js-typeof (js-array/extern (vector 1 2 3))) "object"))
+              (equal? (js-typeof (js-array/extern (vector 1 2 3))) "object"))
         (list "js-instanceof"
               (let ([arr (js-array/extern #())])
                 (equal? (js-instanceof arr (js-ref (js-global-this) "Array")) #t)))
@@ -249,7 +252,8 @@
         (list "js-URIError"
               (equal? (js-typeof (js-URIError)) "function"))
         (list "js-InternalError"
-              (equal? (js-typeof (js-InternalError)) "function")))) ; todo
+              (member (js-typeof (js-InternalError))
+                      '("undefined" "function"))))) ; non-standard global
 
  (list "Numbers and dates"
        (list
@@ -262,7 +266,8 @@
         (list "js-Date"
               (equal? (js-typeof (js-Date)) "function"))
         (list "js-Temporal"
-              (equal? (js-typeof (js-Temporal)) "object")))) ; todo
+              (member (js-typeof (js-Temporal))
+                      '("undefined" "object"))))) ; not available everywhere
 
  (list "Text processing"
        (list
@@ -336,7 +341,8 @@
         (list "js-Iterator"
               (equal? (js-typeof (js-Iterator)) "function"))
         (list "js-AsyncIterator"  
-              (list (js-typeof (js-AsyncIterator)) "function"))  ; undefined ?
+              (member (js-typeof (js-AsyncIterator))
+                      '("undefined" "function")))  ; not available everywhere
         (list "js-Promise"
               (equal? (js-typeof (js-Promise)) "function"))
         (list "js-GeneratorFunction"
