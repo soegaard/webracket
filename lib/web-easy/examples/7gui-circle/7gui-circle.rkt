@@ -549,40 +549,38 @@
                  (define green (and (circle? c) (circle-green c)))
                  (define blue  (and (circle? c) (circle-blue c)))
                  (Div #:style
-                      (format (string-append "position:    absolute;"
-                                             "left:        ~apx;"
-                                             "top:         ~apx;"
-                                             "white-space: nowrap;"
-                                             "background:  white;"
-                                             "border:      1px solid #999;"
-                                             "padding:     6px;"
-                                             "z-index:     1000;")
+                      (format (string-append "position: absolute;"
+                                             "left: ~apx;"
+                                             "top: ~apx;"
+                                             "z-index: 1000;")
                               (menu-state-offset-x m)
-                              (menu-state-offset-y m))           
-                      (Button "Adjust diameter"
-                              #:on-click
-                              (lambda (_evt)
-                                (when c
-                                  (:= @adjusting-diameter
-                                      (adjust-diameter-state d))
-                                  (:= @diam d)
-                                  (:= @menu #f))))
-                      (Button "Adjust color"
-                              #:on-click
-                              (lambda (_evt)
-                                (when c
-                                  (:= @adjusting-color
-                                      (adjust-color-state red green blue))
-                                  (:= @red   red)
-                                  (:= @green green)
-                                  (:= @blue  blue)
-                                  (:= @menu  #f))))
-                      (Button "Delete"
-                              #:on-click
-                              (lambda (_evt)
-                                (delete-circle! c)
-                                (:= @menu            #f)                                
-                                (:= @selected-circle #f))))]
+                              (menu-state-offset-y m))
+                      #:attrs '((role "menu")
+                                (data-we-widget "menu-popup")
+                                (class "we-menu-popup is-open"))
+                      (menu-item "Adjust diameter"
+                                 (lambda ()
+                                   (when c
+                                     (:= @adjusting-diameter
+                                         (adjust-diameter-state d))
+                                     (:= @diam d)
+                                     (:= @menu #f))))
+                      (menu-item "Adjust color"
+                                 (lambda ()
+                                   (when c
+                                     (:= @adjusting-color
+                                         (adjust-color-state red green blue))
+                                     (:= @red   red)
+                                     (:= @green green)
+                                     (:= @blue  blue)
+                                     (:= @menu  #f))))
+                      (divider)
+                      (menu-item "Delete"
+                                 (lambda ()
+                                   (delete-circle! c)
+                                   (:= @menu            #f)
+                                   (:= @selected-circle #f))
+                                 #:style "color: #a12626; font-weight: 600;"))]
                 [else
                  (Span "")]))))
       
