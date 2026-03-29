@@ -52,6 +52,7 @@
         H.assertTrue(!!openButton, "open-popup button present");
         H.assertTrue(H.bodyText(doc).includes("status:idle"), "status idle before open");
 
+        openButton.focus();
         openButton.click();
 
         await H.waitForCondition("menu-popup mount", 20000, function () {
@@ -106,6 +107,10 @@
         });
 
         H.assertTrue(!doc.getElementById("popup-menu"), "popup closes on Escape");
+        await H.waitForCondition("menu-popup focus return", 20000, function () {
+          return doc.activeElement === openButton;
+        });
+        H.assertEqual(doc.activeElement, openButton, "popup returns focus to opener on close");
         H.setStatus("PASS\nmenu-popup enters roving focus with ArrowDown", "pass");
       } catch (err) {
         console.error(err);

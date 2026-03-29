@@ -150,6 +150,7 @@
       ".we-scrollspy-item") ; Selector used for scrollspy keyboard roving.
     (define dialog-focus-returns         '()) ; Association list mapping dialog native nodes to return-focus targets.
     (define dialog-focus-timeouts        '()) ; Association list mapping dialog native nodes to pending focus timeout handles.
+    (define menu-popup-focus-returns     '()) ; Association list mapping popup native nodes to return-focus targets.
     (define scrollspy-observers          '()) ; Association list mapping scrollspy container native nodes to observer handles.
     (define scrollspy-listeners          '()) ; Association list mapping scrollspy container native nodes to listener handles.
     (define scrollspy-cleanup-registered '()) ; Native nodes with registered scrollspy cleanup callbacks.
@@ -371,6 +372,33 @@
                 [(eq? (caar pairs) dialog-native) (cdr pairs)]
                 [else (cons (car pairs) (loop (cdr pairs)))]))))
 
+    ;; menu-popup-focus-return-set! : any/c any/c -> void?
+    ;;   Track focus return target for popup-native.
+    (define (menu-popup-focus-return-set! popup-native target)
+      (set! menu-popup-focus-returns
+            (cons (cons popup-native target)
+                  (let loop ([pairs menu-popup-focus-returns])
+                    (cond
+                      [(null? pairs) '()]
+                      [(eq? (caar pairs) popup-native) (cdr pairs)]
+                      [else (cons (car pairs) (loop (cdr pairs)))])))))
+
+    ;; menu-popup-focus-return-ref : any/c -> any/c
+    ;;   Return focus return target for popup-native or #f.
+    (define (menu-popup-focus-return-ref popup-native)
+      (define p (assq popup-native menu-popup-focus-returns))
+      (if p (cdr p) #f))
+
+    ;; menu-popup-focus-return-remove! : any/c -> void?
+    ;;   Remove focus return target mapping for popup-native.
+    (define (menu-popup-focus-return-remove! popup-native)
+      (set! menu-popup-focus-returns
+            (let loop ([pairs menu-popup-focus-returns])
+              (cond
+                [(null? pairs) '()]
+                [(eq? (caar pairs) popup-native) (cdr pairs)]
+                [else (cons (car pairs) (loop (cdr pairs)))]))))
+
     ;; clear-pending-dialog-focus-timeout! : any/c -> void?
     ;;   Clear and forget pending deferred focus timer for dialog-native.
     (define (clear-pending-dialog-focus-timeout! dialog-native)
@@ -537,6 +565,29 @@
         (when (and trigger* (not (extern-nullish? trigger*)))
           (js-send trigger* "focus" (vector)))))
 
+    ;; handle-menu-popup-open-transition! : any/c -> void?
+    ;;   Capture return focus target and move focus into popup.
+    (define (handle-menu-popup-open-transition! popup-native)
+      (define doc (js-document))
+      (define active* (js-ref/extern doc "activeElement"))
+      (define active
+        (if (or (not active*) (extern-nullish? active*))
+            #f
+            active*))
+      (menu-popup-focus-return-set! popup-native active)
+      (focus-native-later! popup-native))
+
+    ;; handle-menu-popup-close-transition! : any/c -> void?
+    ;;   Restore focus to tracked return target when available.
+    (define (handle-menu-popup-close-transition! popup-native)
+      (define target (menu-popup-focus-return-ref popup-native))
+      (when (and target (not (extern-nullish? target)))
+        (backend-set-timeout!
+         10
+         (lambda ()
+           (js-send target "focus" (vector)))))
+      (menu-popup-focus-return-remove! popup-native))
+
     (define boolean-attributes
       '(hidden
         inert
@@ -565,6 +616,13 @@
     (define (boolean-attribute? x)
       (and (memq x boolean-attributes) #t))
 
+    ;; menu-popup-attr? : list? -> boolean?
+    ;;   Report whether attrs mark a standalone menu popup container.
+    (define (menu-popup-attr? attrs)
+      (define p (assq 'data-we-widget attrs))
+      (and p
+           (string=? (value->attr-string (cdr p)) "menu-popup")))
+
     ;; apply-attributes! : dom-node-record? list? list? -> void?
     ;;   Apply tracked attributes to native node and handle dialog open/close transitions.
     (define (apply-attributes! n old-attrs attrs)
@@ -574,6 +632,7 @@
       (define new-open?           (dialog-open-attr? attrs))
       (define old-autofocus?      (autofocus-attr? old-attrs))
       (define new-autofocus?      (autofocus-attr? attrs))
+      (define menu-popup?         (menu-popup-attr? attrs))
       (define popover-panel?      (popover-panel-attr? attrs))
       (define old-popover-hidden? (popover-hidden-attr? old-attrs))
       (define new-popover-hidden? (popover-hidden-attr? attrs))
@@ -623,7 +682,25 @@
       (when (and popover-panel? (not old-popover-hidden?) new-popover-hidden?)
         (handle-popover-close-transition! native))
       (when (and (not old-autofocus?) new-autofocus?)
-        (focus-native-later! native)))
+        (if menu-popup?
+            (handle-menu-popup-open-transition! native)
+            (focus-native-later! native))))
+
+    ;; handle-node-removal! : dom-node? -> void?
+    ;;   Run close-transition cleanup for nodes that are about to leave the DOM.
+    (define (handle-node-removal! n)
+      (for-each handle-node-removal! (dom-node-record-children n))
+      (define native (dom-node-record-native n))
+      (define attrs  (dom-node-record-attrs n))
+      (when (menu-popup-attr? attrs)
+        (handle-menu-popup-close-transition! native))
+      (when (and (eq? (dom-node-record-tag n) 'dialog)
+                 (dialog-open-attr? attrs))
+        (handle-dialog-close-transition! native))
+      (when (and (popover-panel-attr? attrs)
+                 (not (popover-hidden-attr? attrs)))
+        (handle-popover-close-transition! native))
+      (void))
 
     ;; apply-text! : any/c any/c -> void?
     ;;   Replace native node children with a single text child.
@@ -1832,6 +1909,7 @@
     ;; backend-set-single-child! : dom-node? dom-node? -> void?
     ;;   Replace children with one node in model and browser DOM.
     (define (backend-set-single-child! parent child)
+      (for-each handle-node-removal! (dom-node-record-children parent))
       (set-dom-node-record-children! parent (list child))
       (js-replace-children! (dom-node-record-native parent)
                                       (dom-node-record-native child))
@@ -1840,6 +1918,7 @@
     ;; backend-replace-children! : dom-node? list? -> void?
     ;;   Replace children list in model and browser DOM.
     (define (backend-replace-children! parent children)
+      (for-each handle-node-removal! (dom-node-record-children parent))
       (set-dom-node-record-children! parent children)
       (define fragment (js-create-document-fragment))
       (for-each (lambda (child)
