@@ -259,7 +259,7 @@
 (define @selected-circle-id (@ #f))
 (define @menu               (@ #f))
 (define @editor-mode        (@ #f)) ; #f, 'diameter, or 'color
- (define @editor-ref        (@ #f))
+(define @editor-ref         (@ #f))
 
 (define @diam-preview  (@ 40))
 (define @red-preview   (@ default-circle-red))
@@ -272,6 +272,7 @@
 (obs-observe! @editor-ref
   (lambda (node)
     (when node
+      ;; Focus after mount so Escape works immediately when the editor opens.
       (js-window-set-timeout/delay
        (procedure->external
         (lambda ()
@@ -341,11 +342,8 @@
   (clear-menu!)
   (void))
 
-(define (safe-event-key evt)
-  (keyboard-event-key evt))
-
 (define (editor-handle-key! evt)
-  (define key (safe-event-key evt))
+  (define key (keyboard-event-key evt))
   (case (string->symbol key)
     [(Escape)
      (prevent-default! evt)
@@ -383,8 +381,8 @@
 
 (obs-watch! @circles @selected-circle-id @editor-mode
             @diam-preview @red-preview @green-preview @blue-preview
-  (lambda (circles selected-circle-id editor-mode
-                    diam-preview red-preview green-preview blue-preview)
+  (lambda (circles _selected-circle-id _editor-mode
+                    _diam-preview _red-preview _green-preview _blue-preview)
     (redraw-canvas! circles)))
 
 ;; ----------------------------------------
