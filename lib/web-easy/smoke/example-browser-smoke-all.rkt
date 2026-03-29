@@ -50,6 +50,7 @@
 (include/reader "smoke-capsule-popover.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-dialog.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-autofocus.rkt" read-syntax/skip-first-line)
+(include/reader "smoke-capsule-autofocus-component.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-modal.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-dialog-no-desc.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-table-align.rkt" read-syntax/skip-first-line)
@@ -144,6 +145,10 @@
         (cons 'popover  (list popover-make-page popover-run-test popover-cleanup))
         (cons 'dialog   (list dialog-make-page dialog-run-test dialog-cleanup))
         (cons 'autofocus (list autofocus-make-page autofocus-run-test autofocus-cleanup))
+        (cons 'autofocus-component
+              (list autofocus-component-make-page
+                    autofocus-component-run-test
+                    autofocus-component-cleanup))
         (cons 'modal   (list modal-make-page modal-run-test modal-cleanup))
         (cons 'dialog-no-desc
               (list dialog-no-desc-make-page dialog-no-desc-run-test dialog-no-desc-cleanup))

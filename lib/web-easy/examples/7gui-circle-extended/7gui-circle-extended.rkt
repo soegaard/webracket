@@ -527,6 +527,8 @@
       (observable-view
        @editor-mode
        (lambda (mode)
+         ;; TODO: The editor focus order should include the sliders themselves,
+         ;; not only the editor shell and action buttons.
          (case mode
            [(diameter)
             (editor-shell
