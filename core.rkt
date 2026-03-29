@@ -25,6 +25,8 @@
                      [lambda lambda] ; [#%plain-lambda       lambda]
                      [#%plain-lambda       λ]))
 
+(provide _)
+
 
 (require (for-syntax racket/base
                      racket/path
