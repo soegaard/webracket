@@ -395,8 +395,6 @@
 
 (define (editor-shell title save-action body)
   (Div #:style "border: 1px solid #999; background: white; padding: 12px; border-radius: 6px;"
-       #:autofocus #t
-       #:attrs '((tabindex "0"))
        #:on-keydown editor-handle-key!
        (apply vpanel
               (append
@@ -527,8 +525,6 @@
       (observable-view
        @editor-mode
        (lambda (mode)
-         ;; TODO: The editor focus order should include the sliders themselves,
-         ;; not only the editor shell and action buttons.
          (case mode
            [(diameter)
             (editor-shell
@@ -541,7 +537,8 @@
               (slider @diam-preview
                       (lambda (diam)
                         (:= @diam-preview diam))
-                      0 100)))]
+                      0 100
+                      #:autofocus #t)))]
            [(color)
             (editor-shell
              "Adjust Color"
@@ -564,7 +561,8 @@
               (slider @red-preview
                       (lambda (red)
                         (:= @red-preview red))
-                      0 255)
+                      0 255
+                      #:autofocus #t)
               (text (@green-preview . ~> .
                                     (lambda (green)
                                       (format "Green: ~a" green))))
