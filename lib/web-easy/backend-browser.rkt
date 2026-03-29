@@ -286,6 +286,21 @@
           (string=? (value->attr-string (cdr p)) "true")
           #t))
 
+    ;; autofocus-attr? : list? -> boolean?
+    ;;   Read mount-time autofocus intent from attrs.
+    (define (autofocus-attr? attrs)
+      (define p (assq 'autofocus attrs))
+      (and p (cdr p) #t))
+
+    ;; focus-native-later! : any/c -> void?
+    ;;   Schedule focus on native node after the current mount/update turn.
+    (define (focus-native-later! native)
+      (when (and native (not (extern-nullish? native)))
+        (backend-set-timeout!
+         0.0
+         (lambda ()
+           (js-send native "focus" (vector))))))
+
     ;; backend-set-timeout! : number? (-> void?) -> any/c
     ;;   Register callback to run after duration-ms; returns timeout handle.
     (define (backend-set-timeout! duration-ms callback)
@@ -557,6 +572,8 @@
       (define tag                 (dom-node-record-tag n))
       (define old-open?           (dialog-open-attr? old-attrs))
       (define new-open?           (dialog-open-attr? attrs))
+      (define old-autofocus?      (autofocus-attr? old-attrs))
+      (define new-autofocus?      (autofocus-attr? attrs))
       (define popover-panel?      (popover-panel-attr? attrs))
       (define old-popover-hidden? (popover-hidden-attr? old-attrs))
       (define new-popover-hidden? (popover-hidden-attr? attrs))
@@ -604,7 +621,9 @@
       (when (and popover-panel? old-popover-hidden? (not new-popover-hidden?))
         (handle-popover-open-transition! native))
       (when (and popover-panel? (not old-popover-hidden?) new-popover-hidden?)
-        (handle-popover-close-transition! native)))
+        (handle-popover-close-transition! native))
+      (when (and (not old-autofocus?) new-autofocus?)
+        (focus-native-later! native)))
 
     ;; apply-text! : any/c any/c -> void?
     ;;   Replace native node children with a single text child.

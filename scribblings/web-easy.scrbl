@@ -576,6 +576,29 @@ already be expressed declaratively.
              (js-send node "focus" (vector))))))
 ]
 
+@subsection{Autofocus}
+
+Primitive elements accept a @racket[#:autofocus] keyword argument.
+Components can also use @racket[#:autofocus] when they forward root
+attributes to a primitive root element.
+
+When @racket[#:autofocus] is true, @tt{web-easy} will focus the mounted
+root DOM node after it appears in the browser. This makes
+@racket[#:autofocus] useful not only for initial page load, but also for
+dynamically mounted UI such as editors, dialogs, and popovers.
+
+Use @racket[#:autofocus] for the common declarative case where a newly
+mounted element should receive focus automatically. Use @racket[#:ref]
+when you need lower-level control over exactly when or how focus is moved.
+
+@racketblock[
+(Input #:autofocus #t)
+
+(Div #:tabindex 0
+     #:autofocus #t
+     "Keyboard focus starts here")
+]
+
 @defproc*[
 ([(event? [evt external])
   boolean?]

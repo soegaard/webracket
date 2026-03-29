@@ -2712,6 +2712,16 @@
 (check-equal (node-attr button-group-attrs-node2 'class) "we-button-group outer-group" "button-group merges base and forwarded class")
 (check-equal (node-attr button-group-attrs-node2 'role) 'group "button-group preserves role")
 
+;; define/component root attrs also forward #:autofocus to the root node.
+(define r24d-autofocus-root-attrs
+  (render
+   (window
+    (vpanel
+     (top-bar #:id "tb-auto" #:autofocus #t (text "Brand"))))))
+(define top-bar-autofocus-node (node-child (node-child (renderer-root r24d-autofocus-root-attrs) 0) 0))
+(check-equal (node-attr top-bar-autofocus-node 'id) "tb-auto" "top-bar forwards id with autofocus")
+(check-equal (node-attr top-bar-autofocus-node 'autofocus) #t "top-bar forwards autofocus to root")
+
 ;; input supports direct attrs list on constructor
 (define r25-input
   (render

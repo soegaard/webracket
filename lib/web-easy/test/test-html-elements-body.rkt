@@ -409,6 +409,53 @@
                   '((title "from-attrs")
                     (lang "da")))
 
+;; Primitive #:ref stores the mounted node handle in the supplied observable
+;; and clears it again when the renderer is destroyed.
+(define @h1-ref (@ #f))
+(define r-h1-ref
+  (render
+   (window
+    (vpanel
+     (H1 "Ref heading"
+         #:id "h1-ref"
+         #:ref @h1-ref)))))
+(define h1-ref-panel (node-child (renderer-root r-h1-ref) 0))
+(define h1-ref-node  (node-child h1-ref-panel 0))
+(check-equal (obs-peek @h1-ref)
+             h1-ref-node
+             "primitive #:ref stores mounted node handle")
+(check-node-attrs h1-ref-node '((id "h1-ref")) "H1 ref node attrs preserved")
+(check-equal (if (assq 'ref (dom-node-attrs h1-ref-node)) #t #f)
+             #f
+             "primitive #:ref is not emitted as DOM attribute")
+(renderer-destroy r-h1-ref)
+(check-equal (obs-peek @h1-ref)
+             #f
+             "primitive #:ref clears observable on destroy")
+
+(check-call-rejected
+ (H1 "Bad ref" #:ref #f)
+ "expected #:ref as observable?: #:ref")
+
+(check-call-rejected
+ (H1 "Bad ref attrs" #:attrs '((ref 42)))
+ "ref attribute value must be observable?: ref")
+
+;; Primitive #:autofocus is accepted as a regular root attribute.
+(define r-h1-autofocus
+  (render
+   (window
+    (vpanel
+     (H1 "Autofocus heading"
+         #:id "h1-autofocus"
+         #:autofocus #t)))))
+(define h1-autofocus-panel (node-child (renderer-root r-h1-autofocus) 0))
+(define h1-autofocus-node  (node-child h1-autofocus-panel 0))
+(check-node-attrs h1-autofocus-node
+                  '((id "h1-autofocus")
+                    (autofocus #t))
+                  "primitive #:autofocus preserved as root attr")
+
 (check-call-rejected (H1)
                      "H1 rejects missing required positional content")
 (check-mixed-content-accepted (H1 "Lead " (Span "mid") " tail")
