@@ -793,6 +793,23 @@ Examples:
 - `Escape` closes the popup and returns focus to the owning label.
 - Leaving menu focus (focus moves outside menu container) closes the open popup.
 
+### Standalone Popup Menus
+
+Standalone popups that use `data-we-widget="menu-popup"` and contain `menu-item` children now share the same roving-focus entry behavior as dropdown/menu popups.
+
+- When the popup itself has focus:
+  - `ArrowDown` or `Home` moves focus to the first item.
+  - `ArrowUp` or `End` moves focus to the last item.
+  - Typing a letter moves focus to the first matching item.
+- When a popup menu item has focus:
+  - `ArrowUp` / `ArrowDown` moves to the previous/next item.
+  - `Home` / `End` moves to the first/last item.
+- Closing a standalone popup returns focus to the element that was focused before the popup opened.
+
+Current smoke coverage:
+
+- `test-browser-menu-popup.html` checks popup keyboard entry plus focus return.
+
 ## Width Policy (Current Defaults)
 
 Current width defaults are intentionally split between layout containers and leaf controls.

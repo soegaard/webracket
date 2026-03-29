@@ -175,6 +175,7 @@ When screenshot/computed output does not match what you see manually:
 | Dialog no-desc contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-dialog-no-desc-contract.html` |
 | Menu typeahead-timeout contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-menu-typeahead-timeout-contract.html` |
 | Menu typeahead-timeout contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-menu-typeahead-timeout-contract.html` |
+| Standalone popup-menu keyboard contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-menu-popup.html` |
 | Dropdown focus-return contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-dropdown-focus-return-contract.html` |
 | Dropdown focus-return contract (parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-dropdown-focus-return-contract.html` |
 | Choice decode contract (core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-choice-decode-contract.html` |
@@ -307,6 +308,7 @@ For lean CI parity with local behavior:
    - `test-browser-tooltip-contract.html`
    - `test-browser-toast-behavior-contract.html`
    - `test-browser-menu-typeahead-contract.html`
+   - `test-browser-menu-popup.html`
    - `test-browser-parity-menu-core-structure-contract.html`
 
 Full no-compile baseline (local):
