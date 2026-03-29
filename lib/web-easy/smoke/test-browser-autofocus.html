@@ -68,8 +68,7 @@
 
         H.assertEqual(doc.activeElement, editor, "autofocus moves focus to mounted editor");
 
-        const FrameKeyboardEvent = doc.defaultView.KeyboardEvent;
-        editor.dispatchEvent(new FrameKeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+        H.dispatchKey(editor, "Escape");
 
         await H.waitForCondition("autofocus escape close", 20000, function () {
           return H.bodyText(doc).includes("status:escape");
