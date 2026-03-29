@@ -15,6 +15,15 @@ Unless noted, behavior is intended to match the corresponding Racket form.
 @(define scribble-ns (variable-reference->namespace (#%variable-reference)))
 @(define webracket-specific
    '(require-lib include-lib #%app #%module-begin))
+@(define (symbol<? a b)
+   (string<? (symbol->string a) (symbol->string b)))
+@(define core-forms
+   (sort (filter (lambda (name) (not (memq name webracket-specific)))
+                 documented-special-forms)
+         symbol<?))
+@(define webracket-forms
+   (filter (lambda (name) (memq name webracket-specific))
+           documented-special-forms))
 @(define (racket-doc-url name)
    (string-append "https://docs.racket-lang.org/search/index.html?q="
                   (uri-encode (symbol->string name))))
@@ -94,13 +103,11 @@ Unless noted, behavior is intended to match the corresponding Racket form.
 @section{Core Forms}
 
 @(append*
-  (for/list ([name (in-list documented-special-forms)]
-             #:unless (memq name webracket-specific))
+  (for/list ([name (in-list core-forms)])
     (list (render-form-entry name))))
 
 @section{WebRacket-specific Forms}
 
 @(append*
-  (for/list ([name (in-list documented-special-forms)]
-             #:when (memq name webracket-specific))
+  (for/list ([name (in-list webracket-forms)])
     (list (render-form-entry name))))

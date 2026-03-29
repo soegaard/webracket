@@ -281,6 +281,128 @@ is straight forward.
 ]
 
 
+@section{Observables}
+
+Observables are the state layer in @racketid[web-easy].
+An observable holds a current value, can be updated, and can notify
+dependent views or callbacks when the value changes.
+
+The Quickstart examples use the short operator forms:
+
+@itemlist[
+ @item{@racket[(|@| v)] creates an observable}
+ @item{@racket[(o . ~> . f)] reads/maps the current value through @racket[f]}
+ @item{@racket[(o . <~ . f)] updates the current value with @racket[f]}
+ @item{@racket[(:= o v)] replaces the current value with @racket[v]}
+]
+
+The corresponding procedure forms are documented below.
+
+@defproc[(obs? [v any/c]) boolean?]{
+Check whether @racket[v] is an observable.
+}
+
+@defproc[(obs [v any/c]
+               [name symbol? 'anon]
+               [derived? boolean? #f])
+         observable?]{
+Create an observable holding @racket[v].
+
+The optional @racket[name] is used for debugging and error reporting.
+If @racket[derived?] is true, the observable is derived/read-only and cannot be
+updated with @racket[obs-update!] or @racket[obs-set!].
+}
+
+@defproc[(obs-name [o observable?]) symbol?]{
+Return the name attached to @racket[o].
+}
+
+@defproc[(obs-peek [o observable?]) any/c]{
+Return the current value of @racket[o].
+}
+
+@defproc[(obs-observe! [o observable?]
+                       [f procedure?])
+         void?]{
+Register @racket[f] to be called whenever @racket[o] changes.
+
+The callback receives the new value of @racket[o].
+}
+
+@defproc[(obs-unobserve! [o observable?]
+                         [f procedure?])
+         void?]{
+Remove the observer @racket[f] from @racket[o].
+}
+
+@defproc[(obs-update! [o observable?]
+                      [f procedure?])
+         any/c]{
+Update @racket[o] by applying @racket[f] to its current value.
+The result becomes the new current value and is returned.
+}
+
+@defproc[(obs-set! [o observable?]
+                   [v any/c])
+         void?]{
+Replace the current value of @racket[o] with @racket[v].
+}
+
+@defproc[(obs-map [o observable?]
+                  [f procedure?])
+         observable?]{
+Create a derived observable whose value is @racket[(f (obs-peek o))].
+}
+
+@defproc[(obs-combine [f procedure?]
+                      [o observable?] ...)
+         observable?]{
+Create a derived observable by applying @racket[f] to the current values
+of one or more observables.
+
+For example, this produces an observable whose value is always a list of
+the current values of three source observables:
+
+@racketblock[
+(obs-combine list |@circles| |@selected-circle| |@diam|)]
+}
+
+@defproc[(obs-filter [o observable?]
+                     [pred procedure?]
+                     [default any/c #f])
+         observable?]{
+Create a derived observable that only updates when @racket[pred] accepts
+the new value.
+
+If the initial value does not satisfy @racket[pred], the derived observable
+starts with @racket[default].
+}
+
+@defform[(obs-watch! o ... f)]{
+Observe several observables at once and call @racket[f] with their current values.
+
+@racket[obs-watch!] is shorthand for combining the source observables with
+@racket[list] and then observing the combined result. The callback @racket[f]
+is called with one argument per observable, in the same order as the
+observable arguments.
+
+Example:
+
+@racketblock[
+(obs-watch! |@circles| |@selected-circle| |@diam|
+  (λ (circles selected-circle diam)
+    (redraw-canvas! circles)))]
+
+This is equivalent to:
+
+@racketblock[
+(obs-observe! (obs-combine list |@circles| |@selected-circle| |@diam|)
+  (λ (state)
+    (match state
+      [(list circles selected-circle diam)
+       (redraw-canvas! circles)])))]
+}
+
 
 @section{Common Keywords and Contracts}
 
@@ -386,6 +508,7 @@ Example:
 ]
 
 @itemlist[
+  @item{@racket[#:ref] on primitive elements}
   @item{@racket[event?], @racket[mouse-event?], @racket[keyboard-event?]}
   @item{@racket[pointer-event?], @racket[focus-event?], @racket[input-event?],
         @racket[submit-event?], @racket[touch-event?], @racket[wheel-event?]}
@@ -394,6 +517,11 @@ Example:
   @item{@racket[prevent-default!], @racket[stop-propagation!], @racket[stop-immediate-propagation!]}
   @item{@racket[mouse-event-offset-x], @racket[mouse-event-offset-y]}
   @item{@racket[mouse-event-client-x], @racket[mouse-event-client-y]}
+  @item{@racket[mouse-event-page-x], @racket[mouse-event-page-y]}
+  @item{@racket[mouse-event-screen-x], @racket[mouse-event-screen-y]}
+  @item{@racket[mouse-event-button], @racket[mouse-event-buttons]}
+  @item{@racket[mouse-event-alt-key?], @racket[mouse-event-ctrl-key?],
+        @racket[mouse-event-meta-key?], @racket[mouse-event-shift-key?]}
   @item{@racket[keyboard-event-key], @racket[keyboard-event-code]}
   @item{@racket[keyboard-event-alt-key?], @racket[keyboard-event-ctrl-key?],
         @racket[keyboard-event-meta-key?], @racket[keyboard-event-shift-key?],
@@ -404,6 +532,48 @@ Example:
   @item{@racket[touch-identifier], @racket[touch-client-x], @racket[touch-client-y]}
   @item{@racket[touch-page-x], @racket[touch-page-y],
         @racket[touch-screen-x], @racket[touch-screen-y]}
+]
+
+@subsection{Ref}
+
+Primitive elements also accept a @racket[#:ref] keyword argument.
+The value of @racket[#:ref] must be an observable.
+
+A ref observable holds:
+
+@itemlist[
+  @item{@racket[#f] before the element is mounted}
+  @item{the current DOM node while the element is mounted}
+  @item{@racket[#f] again after the renderer is destroyed}
+]
+
+This gives @tt{web-easy} an imperative escape hatch without introducing a
+separate ref type. A ref is simply an observable used to track the
+current node.
+
+Refs are most useful when you need to reach out from the declarative
+view layer and perform a small imperative DOM action. Typical cases
+include:
+
+@itemlist[
+  @item{moving focus to a particular element}
+  @item{reading or adjusting browser-managed selection or playback state}
+  @item{calling DOM or library APIs that operate on a concrete node}
+]
+
+Prefer ordinary views, callbacks, and observables when the behavior can
+already be expressed declaratively.
+
+@racketblock[
+(define |@input| (|@| #f))
+
+(vpanel
+ (Input #:ref |@input|)
+ (Button "Focus input"
+         (lambda ()
+           (define node (obs-peek |@input|))
+           (when node
+             (js-send node "focus" (vector))))))
 ]
 
 @defproc*[
@@ -535,6 +705,72 @@ object.
 @racket[mouse-event-client-x] returns the horizontal client coordinate.
 
 @racket[mouse-event-client-y] returns the vertical client coordinate.
+}
+
+@defproc*[
+([(mouse-event-page-x [evt external])
+  number?]
+ [(mouse-event-page-y [evt external])
+  number?])]{
+Read mouse coordinates in document pixels.
+
+The argument @racket[evt] is an @racket[external] value expected to
+contain a JavaScript @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent"]{MouseEvent}
+object.
+
+@racket[mouse-event-page-x] returns the horizontal page coordinate.
+
+@racket[mouse-event-page-y] returns the vertical page coordinate.
+}
+
+@defproc*[
+([(mouse-event-screen-x [evt external])
+  number?]
+ [(mouse-event-screen-y [evt external])
+  number?])]{
+Read mouse coordinates in screen pixels.
+
+The argument @racket[evt] is an @racket[external] value expected to
+contain a JavaScript @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent"]{MouseEvent}
+object.
+
+@racket[mouse-event-screen-x] returns the horizontal screen coordinate.
+
+@racket[mouse-event-screen-y] returns the vertical screen coordinate.
+}
+
+@defproc*[
+([(mouse-event-button [evt external])
+  exact-integer?]
+ [(mouse-event-buttons [evt external])
+  exact-integer?])]{
+Read mouse button state from a mouse event.
+
+The argument @racket[evt] is an @racket[external] value expected to
+contain a JavaScript @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent"]{MouseEvent}
+object.
+
+@racket[mouse-event-button] returns the button code for the event.
+
+@racket[mouse-event-buttons] returns the current pressed-buttons bitmask.
+}
+
+@defproc*[
+([(mouse-event-alt-key? [evt external])
+  boolean?]
+ [(mouse-event-ctrl-key? [evt external])
+  boolean?]
+ [(mouse-event-meta-key? [evt external])
+  boolean?]
+ [(mouse-event-shift-key? [evt external])
+  boolean?])]{
+Read modifier-key state from a mouse event.
+
+The argument @racket[evt] is an @racket[external] value expected to
+contain a JavaScript @hyperlink["https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent"]{MouseEvent}
+object.
+
+Each helper reports whether the corresponding modifier key was active.
 }
 
 @defproc*[

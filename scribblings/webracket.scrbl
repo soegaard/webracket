@@ -528,7 +528,17 @@ Currently available libraries include:
 @itemlist[
   @item{@racket[(require-lib define)] to make @racket[define/key] and
         @racket[call/key] available.}
+  @item{@racket[(require-lib threading)] to make @racket[~~>],
+        @racket[~>>], @racket[and~>], and @racket[and~>>] available.}
 ]
+
+A port of Alexis King's @tt{threading} library is included in WebRacket.
+The @tt{threading} library has an ISC License.
+
+To avoid a name clash, @racket[~>] is renamed to @racket[~~>] in WebRacket.
+
+See also:
+@url{https://docs.racket-lang.org/threading/index.html}
 }
 
 @;-------------------------------------------------------------------
