@@ -433,3 +433,16 @@ add-ons from Racket code.
        alt="xtermjs example"
        width="50%">
 </p>
+
+
+# Dependencies
+
+## Threading
+
+A port of `threading` Alexis King <lexi.lambda@gmail.com> is included.
+The `threading` library has an ISC License.
+
+To avoid a nameclash, ~> is renamed ~~> in WebRacket.
+
+https://docs.racket-lang.org/threading/index.html
+
