@@ -805,6 +805,11 @@
     (define (menu-item-node? n)
       (string=? (widget-value n) "menu-item"))
 
+    ;; menu-popup-node? : dom-node-record? -> boolean?
+    ;;   Check whether n is a standalone menu popup container.
+    (define (menu-popup-node? n)
+      (string=? (widget-value n) "menu-popup"))
+
     ;; scrollspy-item-node? : dom-node-record? -> boolean?
     ;;   Check whether n is a scrollspy navigation item button.
     (define (scrollspy-item-node? n)
@@ -923,6 +928,34 @@
     ;;   Focus last menu item in popup for label-native.
     (define (focus-last-menu-item! label-native)
       (define popup-native (js-ref/extern label-native "nextElementSibling"))
+      (when (extern-present? popup-native)
+        (define item-list
+          (js-send/extern/nullish
+           popup-native
+           "querySelectorAll"
+           (vector ".we-menu-item[role='menuitem']")))
+        (when (extern-present? item-list)
+          (define len (nodelist-length item-list))
+          (when (> len 0)
+            (define last-item (nodelist-item item-list (- len 1)))
+            (when (extern-present? last-item)
+              (js-send last-item "focus" (vector)))))))
+
+    ;; focus-first-menu-item-in-popup! : any/c -> void?
+    ;;   Focus first menu item inside popup-native.
+    (define (focus-first-menu-item-in-popup! popup-native)
+      (when (extern-present? popup-native)
+        (define first-item
+          (js-send/extern/nullish
+           popup-native
+           "querySelector"
+           (vector ".we-menu-item[role='menuitem']")))
+        (when (extern-present? first-item)
+          (js-send first-item "focus" (vector)))))
+
+    ;; focus-last-menu-item-in-popup! : any/c -> void?
+    ;;   Focus last menu item inside popup-native.
+    (define (focus-last-menu-item-in-popup! popup-native)
       (when (extern-present? popup-native)
         (define item-list
           (js-send/extern/nullish
@@ -1266,6 +1299,23 @@
                 #f))
           #f))
 
+    ;; focus-matching-menu-item-from-popup! : any/c string? any/c -> boolean?
+    ;;   Focus first matching item in popup-native for key/query.
+    (define (focus-matching-menu-item-from-popup! popup-native key evt)
+      (if (extern-present? popup-native)
+          (let ([item-list
+                 (js-send/extern/nullish
+                  popup-native
+                  "querySelectorAll"
+                  (vector ".we-menu-item[role='menuitem']"))])
+            (if (extern-present? item-list)
+                (focus-matching-menu-item-from-list!
+                 item-list
+                 0
+                 (popup-typeahead-query! popup-native key evt))
+                #f))
+          #f))
+
     ;; focus-selected-sibling-tab! : any/c -> void?
     ;;   Focus selected tab button in the same tablist as native.
     (define (focus-selected-sibling-tab! native)
@@ -1474,6 +1524,20 @@
                  (when (menu-typeahead-key? key)
                    (when (focus-matching-menu-item-from-item! native* key evt)
                      (js-send evt "preventDefault" (vector))))]))
+            (when (menu-popup-node? n)
+              (define target* (js-ref/extern evt "target"))
+              (when (extern-node-same? target* native*)
+                (case (string->symbol key)
+                  [(ArrowDown Home)
+                   (js-send evt "preventDefault" (vector))
+                   (focus-first-menu-item-in-popup! native*)]
+                  [(ArrowUp End)
+                   (js-send evt "preventDefault" (vector))
+                   (focus-last-menu-item-in-popup! native*)]
+                  [else
+                   (when (menu-typeahead-key? key)
+                     (when (focus-matching-menu-item-from-popup! native* key evt)
+                       (js-send evt "preventDefault" (vector))))])))
             (when (scrollspy-item-node? n)
               (case (string->symbol key)
                 [(ArrowRight ArrowDown)
