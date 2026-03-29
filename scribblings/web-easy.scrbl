@@ -3147,6 +3147,16 @@ Positional arguments:
 @racket[leading-icon] and @racket[trailing-icon] are optional icon/content slots.
 This constructor also accepts global HTML keyword attributes for its root
 @tt{<menu-item>} element.
+
+When @racket[menu-item] values are used inside a standalone popup that uses the
+standard @tt{menu-popup} widget hooks, the browser backend provides menu-style
+keyboard behavior:
+
+@itemlist[
+ @item{@tt{ArrowDown} and @tt{Home} enter the popup at the first item.}
+ @item{@tt{ArrowUp} and @tt{End} enter the popup at the last item.}
+ @item{Typing a letter performs type-ahead focus.}
+ @item{Closing the popup returns focus to the element that was focused before the popup opened.}]
 }
 
 @defproc[(navigation-bar [item view?] ...
