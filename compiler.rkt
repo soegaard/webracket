@@ -3440,16 +3440,16 @@
                                                       (k `(variable-reference ,s (non-top ,s0 ,x))))]
         [(variable-reference ,s (top ,s0 ,x))      (with-output-language (LANF AExpr) 
                                                      (k `(variable-reference ,s (top ,s0 ,x))))]
-        [(begin ,s ,e0 ,e1 ...)
-         (define (Expr/id e) (Expr e identity))
-         (let ([e0 (Expr/id e0)] [e1 (map Expr/id e1)])
-           (k (with-output-language (LANF Expr)
-                `(begin ,s ,e0 ,e1 ...))))]
-        [(begin0 ,s ,e0 ,e1 ...)
-         (define (Expr/id e) (Expr e identity))
-         (let ([e0 (Expr/id e0)] [e1 (map Expr/id e1)])
-           (k (with-output-language (LANF Expr)
-                `(begin0 ,s ,e0 ,e1 ...))))]
+        [(begin ,s ,e0)          (Expr e0 k)]
+        [(begin ,s ,e0 ,e1 ...)  (define (Expr/id e) (Expr e identity))
+                                 (let ([e0 (Expr/id e0)] [e1 (map Expr/id e1)])                                  
+                                  (k (with-output-language (LANF Expr)
+                                       `(begin ,s ,e0 ,e1 ...))))]        
+        [(begin0 ,s ,e0)         (Expr e0 k)]
+        [(begin0 ,s ,e0 ,e1 ...) (define (Expr/id e) (Expr e identity))
+                                 (let ([e0 (Expr/id e0)] [e1 (map Expr/id e1)])
+                                   (k (with-output-language (LANF Expr)
+                                        `(begin0 ,s ,e0 ,e1 ...))))]
         [(wcm ,s ,e0 ,e1 ,e2)
          (Expr/name s e0
            (λ (ae0) (Expr/name s e1
