@@ -88,6 +88,18 @@
         });
         H.assertEqual(doc.activeElement, items()[0], "ArrowUp from second item focuses first item");
 
+        H.dispatchKey(items()[0], "End");
+        await H.waitForCondition("menu-item End last", 20000, function () {
+          return doc.activeElement === items()[1];
+        });
+        H.assertEqual(doc.activeElement, items()[1], "End from first item focuses last item");
+
+        H.dispatchKey(items()[1], "Home");
+        await H.waitForCondition("menu-item Home first", 20000, function () {
+          return doc.activeElement === items()[0];
+        });
+        H.assertEqual(doc.activeElement, items()[0], "Home from last item focuses first item");
+
         H.dispatchKey(popup, "Escape");
         await H.waitForCondition("menu-popup escape close", 20000, function () {
           return H.bodyText(doc).includes("status:escape");

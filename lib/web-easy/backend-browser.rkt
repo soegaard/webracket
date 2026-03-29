@@ -1509,6 +1509,14 @@
                 [(ArrowUp)
                  (js-send evt "preventDefault" (vector))
                  (focus-prev-menu-item! native*)]
+                [(Home)
+                 (js-send evt "preventDefault" (vector))
+                 (define popup-native (js-ref/extern native* "parentElement"))
+                 (focus-first-menu-item-in-popup! popup-native)]
+                [(End)
+                 (js-send evt "preventDefault" (vector))
+                 (define popup-native (js-ref/extern native* "parentElement"))
+                 (focus-last-menu-item-in-popup! popup-native)]
                 [(ArrowRight)
                  (js-send evt "preventDefault" (vector))
                  (switch-menu-from-item! native* 'next)]
