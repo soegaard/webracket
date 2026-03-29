@@ -272,7 +272,11 @@
 (obs-observe! @editor-ref
   (lambda (node)
     (when node
-      (js-send node "focus" (vector)))))
+      (js-window-set-timeout/delay
+       (procedure->external
+        (lambda ()
+          (js-send node "focus" (vector))))
+       0.0))))
 
 (define (selected-circle)
   (find-circle-by-id (obs-peek @circles)
