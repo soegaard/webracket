@@ -350,9 +350,9 @@
         (list "js-AsyncGeneratorFunction"
               (equal? (js-typeof (js-AsyncGeneratorFunction)) "function"))
         (list "js-Generator"
-              (equal? (js-typeof (js-Generator)) "function"))
+              (equal? (js-typeof (js-Generator)) "object"))
         (list "js-AsyncGenerator"
-              (equal? (js-typeof (js-AsyncGenerator)) "function"))
+              (equal? (js-typeof (js-AsyncGenerator)) "object"))
         (list "js-AsyncFunction"
               (equal? (js-typeof (js-AsyncFunction)) "function"))
         (list "js-DisposableStack"
