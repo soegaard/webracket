@@ -32,6 +32,7 @@ All function names are linked to MDN pages for the corresponding Web API interfa
 - [Chapter 4 — DOM Tree and Selectors](#chapter-4--dom-tree-and-selectors)
 - [4.1 Document Module](#41-document-module)
 - [4.2 Element Module](#42-element-module)
+- [4.3 DOMRect Module](#43-domrect-module)
 - [Chapter 5 — Events](#chapter-5--events)
 - [5.1 EventTarget Module](#51-eventtarget-module)
 - [5.2 Event Module](#52-event-module)
@@ -363,6 +364,20 @@ MDN root: [Element](https://developer.mozilla.org/en-US/docs/Web/API/Element)
 
 Note: Promise-like externals in this table: [`js-request-fullscreen`](https://developer.mozilla.org/en-US/docs/Web/API/Element/requestFullscreen).
 
+### 4.3 DOMRect Module
+
+Module source in `ffi/dom.ffi`: `#:module "dom-rect"`  
+MDN root: [DOMRect](https://developer.mozilla.org/en-US/docs/Web/API/DOMRect)
+
+| Function | Input types | Output type | Side effects? | Callback? | Nullable return? | Example | Use when |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| [`js-dom-rect-left`](https://developer.mozilla.org/en-US/docs/Web/API/DOMRect/left) | `(extern)` | `(f64)` | no | no | no | `(js-dom-rect-left rect)` | read `left` as `f64`. |
+| [`js-dom-rect-top`](https://developer.mozilla.org/en-US/docs/Web/API/DOMRect/top) | `(extern)` | `(f64)` | no | no | no | `(js-dom-rect-top rect)` | read `top` as `f64`. |
+| [`js-dom-rect-width`](https://developer.mozilla.org/en-US/docs/Web/API/DOMRect/width) | `(extern)` | `(f64)` | no | no | no | `(js-dom-rect-width rect)` | read `width` as `f64`. |
+| [`js-dom-rect-height`](https://developer.mozilla.org/en-US/docs/Web/API/DOMRect/height) | `(extern)` | `(f64)` | no | no | no | `(js-dom-rect-height rect)` | read `height` as `f64`. |
+
+Note: Promise-like externals in this table: none.
+
 ## Chapter 5 — Events
 
 ### 5.1 EventTarget Module
@@ -398,6 +413,50 @@ MDN root: [Event](https://developer.mozilla.org/en-US/docs/Web/API/Event)
 | [`js-event-prevent-default`](https://developer.mozilla.org/en-US/docs/Web/API/Event/preventDefault) | `(extern)` | `()` | yes | no | no | `(js-event-prevent-default evt)` | call `prevent-default` for side effects. |
 | [`js-event-stop-propagation`](https://developer.mozilla.org/en-US/docs/Web/API/Event/stopPropagation) | `(extern)` | `()` | yes | no | no | `(js-event-stop-propagation evt)` | call `stop-propagation` for side effects. |
 | [`js-event-stop-immediate-propagation`](https://developer.mozilla.org/en-US/docs/Web/API/Event/stopImmediatePropagation) | `(extern)` | `()` | yes | no | no | `(js-event-stop-immediate-propagation evt)` | call `stop-immediate-propagation` for side effects. |
+| [`js-event?`](https://developer.mozilla.org/en-US/docs/Web/API/Event) | `(extern)` | `(boolean)` | no | no | no | `(js-event? evt)` | test whether a value is an Event. |
+| [`js-mouse-event?`](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent) | `(extern)` | `(boolean)` | no | no | no | `(js-mouse-event? evt)` | test whether a value is a MouseEvent. |
+| [`js-mouse-event-offset-x`](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/offsetX) | `(extern)` | `(f64)` | no | no | no | `(js-mouse-event-offset-x evt)` | read `offset-x` as `f64`. |
+| [`js-mouse-event-offset-y`](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/offsetY) | `(extern)` | `(f64)` | no | no | no | `(js-mouse-event-offset-y evt)` | read `offset-y` as `f64`. |
+| [`js-mouse-event-client-x`](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/clientX) | `(extern)` | `(f64)` | no | no | no | `(js-mouse-event-client-x evt)` | read `client-x` as `f64`. |
+| [`js-mouse-event-client-y`](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/clientY) | `(extern)` | `(f64)` | no | no | no | `(js-mouse-event-client-y evt)` | read `client-y` as `f64`. |
+| [`js-mouse-event-page-x`](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/pageX) | `(extern)` | `(f64)` | no | no | no | `(js-mouse-event-page-x evt)` | read `page-x` as `f64`. |
+| [`js-mouse-event-page-y`](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/pageY) | `(extern)` | `(f64)` | no | no | no | `(js-mouse-event-page-y evt)` | read `page-y` as `f64`. |
+| [`js-mouse-event-screen-x`](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/screenX) | `(extern)` | `(f64)` | no | no | no | `(js-mouse-event-screen-x evt)` | read `screen-x` as `f64`. |
+| [`js-mouse-event-screen-y`](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/screenY) | `(extern)` | `(f64)` | no | no | no | `(js-mouse-event-screen-y evt)` | read `screen-y` as `f64`. |
+| [`js-mouse-event-button`](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/button) | `(extern)` | `(i32)` | no | no | no | `(js-mouse-event-button evt)` | read `button` as `i32`. |
+| [`js-mouse-event-buttons`](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/buttons) | `(extern)` | `(i32)` | no | no | no | `(js-mouse-event-buttons evt)` | read `buttons` as `i32`. |
+| [`js-mouse-event-alt-key`](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/altKey) | `(extern)` | `(i32)` | no | no | no | `(js-mouse-event-alt-key evt)` | read `alt-key` as `i32`. |
+| [`js-mouse-event-ctrl-key`](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/ctrlKey) | `(extern)` | `(i32)` | no | no | no | `(js-mouse-event-ctrl-key evt)` | read `ctrl-key` as `i32`. |
+| [`js-mouse-event-meta-key`](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/metaKey) | `(extern)` | `(i32)` | no | no | no | `(js-mouse-event-meta-key evt)` | read `meta-key` as `i32`. |
+| [`js-mouse-event-shift-key`](https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent/shiftKey) | `(extern)` | `(i32)` | no | no | no | `(js-mouse-event-shift-key evt)` | read `shift-key` as `i32`. |
+| [`js-keyboard-event?`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent) | `(extern)` | `(boolean)` | no | no | no | `(js-keyboard-event? evt)` | test whether a value is a KeyboardEvent. |
+| [`js-keyboard-event-key`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/key) | `(extern)` | `(string)` | no | no | no | `(js-keyboard-event-key evt)` | read `key` as `string`. |
+| [`js-keyboard-event-code`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/code) | `(extern)` | `(string)` | no | no | no | `(js-keyboard-event-code evt)` | read `code` as `string`. |
+| [`js-keyboard-event-alt-key`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/altKey) | `(extern)` | `(i32)` | no | no | no | `(js-keyboard-event-alt-key evt)` | read `alt-key` as `i32`. |
+| [`js-keyboard-event-ctrl-key`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/ctrlKey) | `(extern)` | `(i32)` | no | no | no | `(js-keyboard-event-ctrl-key evt)` | read `ctrl-key` as `i32`. |
+| [`js-keyboard-event-meta-key`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/metaKey) | `(extern)` | `(i32)` | no | no | no | `(js-keyboard-event-meta-key evt)` | read `meta-key` as `i32`. |
+| [`js-keyboard-event-shift-key`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/shiftKey) | `(extern)` | `(i32)` | no | no | no | `(js-keyboard-event-shift-key evt)` | read `shift-key` as `i32`. |
+| [`js-keyboard-event-repeat`](https://developer.mozilla.org/en-US/docs/Web/API/KeyboardEvent/repeat) | `(extern)` | `(i32)` | no | no | no | `(js-keyboard-event-repeat evt)` | read `repeat` as `i32`. |
+| [`js-pointer-event?`](https://developer.mozilla.org/en-US/docs/Web/API/PointerEvent) | `(extern)` | `(boolean)` | no | no | no | `(js-pointer-event? evt)` | test whether a value is a PointerEvent. |
+| [`js-focus-event?`](https://developer.mozilla.org/en-US/docs/Web/API/FocusEvent) | `(extern)` | `(boolean)` | no | no | no | `(js-focus-event? evt)` | test whether a value is a FocusEvent. |
+| [`js-input-event?`](https://developer.mozilla.org/en-US/docs/Web/API/InputEvent) | `(extern)` | `(boolean)` | no | no | no | `(js-input-event? evt)` | test whether a value is an InputEvent. |
+| [`js-submit-event?`](https://developer.mozilla.org/en-US/docs/Web/API/SubmitEvent) | `(extern)` | `(boolean)` | no | no | no | `(js-submit-event? evt)` | test whether a value is a SubmitEvent. |
+| [`js-wheel-event?`](https://developer.mozilla.org/en-US/docs/Web/API/WheelEvent) | `(extern)` | `(boolean)` | no | no | no | `(js-wheel-event? evt)` | test whether a value is a WheelEvent. |
+| [`js-touch-event?`](https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent) | `(extern)` | `(boolean)` | no | no | no | `(js-touch-event? evt)` | test whether a value is a TouchEvent. |
+| [`js-touch-event-touches`](https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent/touches) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-touch-event-touches evt)` | read `touches` as `extern`. |
+| [`js-touch-event-target-touches`](https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent/targetTouches) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-touch-event-target-touches evt)` | read `target-touches` as `extern`. |
+| [`js-touch-event-changed-touches`](https://developer.mozilla.org/en-US/docs/Web/API/TouchEvent/changedTouches) | `(extern)` | `(extern/raw)` | no | no | yes | `(js-touch-event-changed-touches evt)` | read `changed-touches` as `extern`. |
+| [`js-touch-list?`](https://developer.mozilla.org/en-US/docs/Web/API/TouchList) | `(extern)` | `(boolean)` | no | no | no | `(js-touch-list? evt)` | test whether a value is a TouchList. |
+| [`js-touch-list-length`](https://developer.mozilla.org/en-US/docs/Web/API/TouchList/length) | `(extern)` | `(u32)` | no | no | no | `(js-touch-list-length tl)` | read `length` as `u32`. |
+| [`js-touch-list-ref`](https://developer.mozilla.org/en-US/docs/Web/API/TouchList/item) | `(extern u32)` | `(extern)` | no | no | yes | `(js-touch-list-ref tl 0)` | read a touch by index and keep the raw JS result. |
+| [`js-touch?`](https://developer.mozilla.org/en-US/docs/Web/API/Touch) | `(extern)` | `(boolean)` | no | no | no | `(js-touch? evt)` | test whether a value is a Touch. |
+| [`js-touch-identifier`](https://developer.mozilla.org/en-US/docs/Web/API/Touch/identifier) | `(extern)` | `(i32)` | no | no | no | `(js-touch-identifier touch)` | read `identifier` as `i32`. |
+| [`js-touch-client-x`](https://developer.mozilla.org/en-US/docs/Web/API/Touch/clientX) | `(extern)` | `(f64)` | no | no | no | `(js-touch-client-x touch)` | read `client-x` as `f64`. |
+| [`js-touch-client-y`](https://developer.mozilla.org/en-US/docs/Web/API/Touch/clientY) | `(extern)` | `(f64)` | no | no | no | `(js-touch-client-y touch)` | read `client-y` as `f64`. |
+| [`js-touch-page-x`](https://developer.mozilla.org/en-US/docs/Web/API/Touch/pageX) | `(extern)` | `(f64)` | no | no | no | `(js-touch-page-x touch)` | read `page-x` as `f64`. |
+| [`js-touch-page-y`](https://developer.mozilla.org/en-US/docs/Web/API/Touch/pageY) | `(extern)` | `(f64)` | no | no | no | `(js-touch-page-y touch)` | read `page-y` as `f64`. |
+| [`js-touch-screen-x`](https://developer.mozilla.org/en-US/docs/Web/API/Touch/screenX) | `(extern)` | `(f64)` | no | no | no | `(js-touch-screen-x touch)` | read `screen-x` as `f64`. |
+| [`js-touch-screen-y`](https://developer.mozilla.org/en-US/docs/Web/API/Touch/screenY) | `(extern)` | `(f64)` | no | no | no | `(js-touch-screen-y touch)` | read `screen-y` as `f64`. |
 
 Note: Promise-like externals in this table: none.
 
@@ -713,13 +772,14 @@ old-role
 
 ## Chapter 9 — Coverage Checklist
 
-- Total documented functions: **402**
+- Total documented functions: **450**
 - `window`: 89 functions
 - `performance`: 1 function
 - `document`: 39 functions
 - `event-target`: 1 function
-- `event`: 15 functions
+- `event`: 59 functions
 - `element`: 49 functions
+- `dom-rect`: 4 functions
 - `canvas`: 9 functions
 - `canvas-rendering-context-2d`: 105 functions
 - `media`: 58 functions
