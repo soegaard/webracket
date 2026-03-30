@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy thematic boost compare</title>
+  <style>
+    :root {
+      --page-bg: #f6f7f8;
+      --page-fg: #1c232a;
+      --panel-bg: #ffffff;
+      --panel-border: #c8d0d7;
+      --accent: #2f7ea0;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--page-fg);
+      background: var(--page-bg);
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #ffffff;
+      border-bottom: 1px solid #d7dee4;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .topbar-inner {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .brand h1,
+    .brand p {
+      margin: 0;
+    }
+
+    .brand h1 {
+      font-size: 16px;
+      letter-spacing: 0.02em;
+    }
+
+    .brand p {
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .controls strong {
+      font-size: 13px;
+    }
+
+    .controls select,
+    .controls a {
+      font: inherit;
+      font-size: 13px;
+      border-radius: 6px;
+      border: 1px solid #aab8c5;
+      background: #ffffff;
+      color: #20303b;
+      text-decoration: none;
+      padding: 5px 10px;
+    }
+
+    .controls a {
+      display: inline-block;
+    }
+
+    .controls select:hover,
+    .controls a:hover {
+      border-color: #6c8ea5;
+    }
+
+    .page {
+      max-width: 1600px;
+      margin: 0 auto;
+      padding: 14px;
+    }
+
+    .lead {
+      margin: 0 0 12px 0;
+      padding: 10px 12px;
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      background: var(--panel-bg);
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
+    .compare-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .panel {
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      background: var(--panel-bg);
+      overflow: clip;
+    }
+
+    .panel h2 {
+      margin: 0;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--panel-border);
+      font-size: 13px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: #f9fbfc;
+    }
+
+    iframe {
+      width: 100%;
+      height: calc(100vh - 170px);
+      min-height: 720px;
+      border: 0;
+      background: #fff;
+    }
+
+    @media (max-width: 1100px) {
+      .compare-grid {
+        grid-template-columns: 1fr;
+      }
+
+      iframe {
+        height: 960px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <h1>web-easy Thematic Boost Compare</h1>
+        <p>Compare strict and boosted generated themes side by side.</p>
+      </div>
+      <div class="controls">
+        <strong>Theme Pair</strong>
+        <select id="pair-select" aria-label="Choose theme pair">
+          <option value="lux">Lux / Lux Boost</option>
+          <option value="sandstone">Sandstone / Sandstone Boost</option>
+        </select>
+        <a href="./test-browser-theme-thematic.html">Open Single Preview</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+    <p class="lead">
+      The left preview keeps the strict Bootstrap-faithful output. The right preview uses
+      <code>--accent-boost</code> so you can judge whether the extra personality is worth it.
+    </p>
+
+    <div class="compare-grid">
+      <section class="panel">
+        <h2 id="strict-title">Lux</h2>
+        <iframe id="strict-frame" title="strict thematic preview"></iframe>
+      </section>
+      <section class="panel">
+        <h2 id="boost-title">Lux Boost</h2>
+        <iframe id="boost-frame" title="boosted thematic preview"></iframe>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const PAIRS = {
+      lux: { strict: "lux", boost: "lux-boost", strictLabel: "Lux", boostLabel: "Lux Boost" },
+      sandstone: { strict: "sandstone", boost: "sandstone-boost", strictLabel: "Sandstone", boostLabel: "Sandstone Boost" }
+    };
+
+    function applyPair(name) {
+      const pair = PAIRS[name] || PAIRS.lux;
+      document.getElementById("pair-select").value = name;
+      document.getElementById("strict-title").textContent = pair.strictLabel;
+      document.getElementById("boost-title").textContent = pair.boostLabel;
+      document.getElementById("strict-frame").src = "./test-browser-theme-thematic.html?theme=" + encodeURIComponent(pair.strict);
+      document.getElementById("boost-frame").src = "./test-browser-theme-thematic.html?theme=" + encodeURIComponent(pair.boost);
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const initialPair = Object.prototype.hasOwnProperty.call(PAIRS, params.get("pair")) ? params.get("pair") : "lux";
+    document.getElementById("pair-select").addEventListener("change", (e) => applyPair(e.target.value));
+    applyPair(initialPair);
+  </script>
+</body>
+</html>

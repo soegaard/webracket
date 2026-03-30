@@ -1,0 +1,12 @@
+#lang racket/base
+
+;;;
+;;; thematic
+;;;
+
+(require racket/runtime-path)
+
+(define-runtime-path tool-path "../thematic/main.rkt")
+
+(parameterize ([current-command-line-arguments (current-command-line-arguments)])
+  ((dynamic-require tool-path 'main)))

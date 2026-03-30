@@ -59,6 +59,9 @@ It fetches the `html-element-attributes` package source and writes:
 - `lib/web-easy/generated/html-element-attributes.json`
 - `lib/web-easy/spec/html-element-attributes.sexp`
 
+Deprecated/obsolete tags are filtered out of the committed snapshot:
+`applet`, `basefont`, `dir`, `font`, `frame`, `frameset`, `isindex`, `param`.
+
 Inputs:
 - package version (`--version`, default `3.1.0`)
 - source URL (optional override via `--source-url`)
@@ -80,4 +83,30 @@ node tools/fetch-html-element-attributes.mjs \
   --version 3.1.0 \
   --out-json lib/web-easy/generated/html-element-attributes.json \
   --out-sexp lib/web-easy/spec/html-element-attributes.sexp
+```
+
+thematic
+--------
+Launcher for Thematic 2000. It runs the implementation in
+`thematic/main.rkt`.
+
+Thematic generates a starter `web-easy` external theme from Bootstrap custom
+properties. It reads one selector from a Bootstrap stylesheet, maps `--bs-*`
+tokens into a small theme model, derives companion `--we-*` tokens, and emits
+a complete starter stylesheet using the existing light theme structure.
+
+Inputs:
+- Bootstrap CSS file (`--input`)
+- output stylesheet path (`--output`)
+- optional theme class (`--theme-class`, default `we-theme-bootstrap`)
+- optional selector (`--selector`, default `:root`)
+
+Example:
+
+```sh
+racket tools/thematic \
+  --input /path/to/bootstrap.css \
+  --output /tmp/theme-bootstrap.css \
+  --theme-class we-theme-bootstrap \
+  --selector ':root'
 ```

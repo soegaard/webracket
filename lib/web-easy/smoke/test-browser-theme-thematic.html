@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy thematic preview</title>
+  <style>
+    :root {
+      --page-bg: #f6f7f8;
+      --page-fg: #1c232a;
+      --panel-bg: #ffffff;
+      --panel-border: #c8d0d7;
+      --accent: #2f7ea0;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      color: var(--page-fg);
+      background: var(--page-bg);
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: #ffffff;
+      border-bottom: 1px solid #d7dee4;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .topbar-inner {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 16px;
+      letter-spacing: 0.02em;
+    }
+
+    .brand p {
+      margin: 0;
+      font-size: 12px;
+      opacity: 0.8;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .controls strong {
+      font-size: 13px;
+    }
+
+    .controls button,
+    .controls select,
+    .controls a {
+      font: inherit;
+      font-size: 13px;
+      border-radius: 6px;
+      border: 1px solid #aab8c5;
+      background: #ffffff;
+      color: #20303b;
+      text-decoration: none;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+
+    .controls a {
+      display: inline-block;
+    }
+
+    .controls button:hover,
+    .controls select:hover,
+    .controls a:hover {
+      border-color: #6c8ea5;
+    }
+
+    #current {
+      font-size: 12px;
+      font-weight: 700;
+      color: #2a5c76;
+    }
+
+    .page {
+      max-width: 1320px;
+      margin: 0 auto;
+      padding: 14px;
+    }
+
+    .lead {
+      margin: 0 0 12px 0;
+      padding: 10px 12px;
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      background: var(--panel-bg);
+      line-height: 1.45;
+      font-size: 14px;
+    }
+
+    #gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 12px;
+    }
+
+    .panel {
+      border: 1px solid var(--panel-border);
+      border-radius: 8px;
+      background: var(--panel-bg);
+      overflow: clip;
+      min-height: 340px;
+    }
+
+    .panel h2 {
+      margin: 0;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--panel-border);
+      font-size: 13px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--accent);
+      background: #f9fbfc;
+    }
+
+    iframe {
+      width: 100%;
+      height: 320px;
+      border: 0;
+      background: #fff;
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <h1>web-easy Thematic Preview</h1>
+        <p>Preview generated Bootswatch-derived themes across real widgets.</p>
+      </div>
+      <div class="controls">
+        <strong>Theme</strong>
+        <select id="theme-select" aria-label="Choose generated theme">
+          <option value="superhero">Superhero</option>
+          <option value="sketchy">Sketchy</option>
+          <option value="lux">Lux</option>
+          <option value="lux-boost">Lux Boost</option>
+          <option value="sandstone">Sandstone</option>
+          <option value="sandstone-boost">Sandstone Boost</option>
+        </select>
+        <button id="btn-superhero" type="button">Superhero</button>
+        <button id="btn-sketchy" type="button">Sketchy</button>
+        <button id="btn-lux" type="button">Lux</button>
+        <button id="btn-lux-boost" type="button">Lux Boost</button>
+        <button id="btn-sandstone" type="button">Sandstone</button>
+        <button id="btn-sandstone-boost" type="button">Sandstone Boost</button>
+        <span id="current">(loading)</span>
+        <a href="./generated/thematic-superhero.css" download>Download Superhero CSS</a>
+        <a href="./generated/thematic-sketchy.css" download>Download Sketchy CSS</a>
+        <a href="./generated/thematic-lux.css" download>Download Lux CSS</a>
+        <a href="./generated/thematic-lux-boost.css" download>Download Lux Boost CSS</a>
+        <a href="./generated/thematic-sandstone.css" download>Download Sandstone CSS</a>
+        <a href="./generated/thematic-sandstone-boost.css" download>Download Sandstone Boost CSS</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+    <p class="lead">
+      This page applies the generated `thematic` stylesheets to the existing widget gallery.
+      Use it to compare cards, tabs, dialogs, controls, lists, and tables across the generated
+      Superhero, Sketchy, Lux, Lux Boost, Sandstone, and Sandstone Boost themes.
+    </p>
+
+    <div id="gallery">
+      <section class="panel">
+        <h2>Workspace (profile/settings/table/list)</h2>
+        <iframe id="frame-workspace" src="./generated/example-browser-parity-all.html?test=parity-workspace" title="workspace"></iframe>
+      </section>
+      <section class="panel">
+        <h2>Profile (radios + image)</h2>
+        <iframe id="frame-profile" src="./generated/example-browser-parity-all.html?test=parity-profile" title="profile"></iframe>
+      </section>
+      <section class="panel">
+        <h2>Menu Full</h2>
+        <iframe id="frame-menu" src="./generated/example-browser-parity-all.html?test=parity-menu-full" title="menu full"></iframe>
+      </section>
+      <section class="panel">
+        <h2>Tabs</h2>
+        <iframe id="frame-tabs" src="./generated/example-browser-parity-all.html?test=parity-tabs" title="tabs"></iframe>
+      </section>
+      <section class="panel">
+        <h2>Tabs Disabled</h2>
+        <iframe id="frame-tabs-disabled" src="./generated/example-browser-smoke-all.html?test=tab-panel-disabled" title="tabs disabled"></iframe>
+      </section>
+      <section class="panel">
+        <h2>Dialog</h2>
+        <iframe id="frame-dialog" src="./generated/example-browser-smoke-all.html?test=dialog" title="dialog"></iframe>
+      </section>
+      <section class="panel">
+        <h2>Controls</h2>
+        <iframe id="frame-controls" src="./generated/example-browser-smoke-all.html?test=controls" title="controls"></iframe>
+      </section>
+      <section class="panel">
+        <h2>Width Policy (group + form/table)</h2>
+        <iframe id="frame-width" src="./generated/example-browser-smoke-all.html?test=width" title="width policy"></iframe>
+      </section>
+      <section class="panel">
+        <h2>List View</h2>
+        <iframe id="frame-list" src="./generated/example-browser-parity-all.html?test=parity-list" title="list view"></iframe>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const CORE_CSS = "../themes/web-easy-core.css";
+
+    const THEMES = {
+      superhero: "./thematic-superhero.css",
+      sketchy: "./thematic-sketchy.css",
+      lux: "./thematic-lux.css",
+      "lux-boost": "./thematic-lux-boost.css",
+      sandstone: "./thematic-sandstone.css",
+      "sandstone-boost": "./thematic-sandstone-boost.css"
+    };
+
+    const FRAME_IDS = [
+      "frame-workspace",
+      "frame-profile",
+      "frame-menu",
+      "frame-tabs",
+      "frame-tabs-disabled",
+      "frame-dialog",
+      "frame-controls",
+      "frame-width",
+      "frame-list"
+    ];
+
+    function initialThemeFromQuery() {
+      const params = new URLSearchParams(window.location.search);
+      const requested = params.get("theme");
+      return Object.prototype.hasOwnProperty.call(THEMES, requested) ? requested : "superhero";
+    }
+
+    let currentTheme = initialThemeFromQuery();
+
+    function frameDocFrom(frame) {
+      return frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+    }
+
+    function ensureThemeLink(frameDoc) {
+      let link = frameDoc.getElementById("external-theme-css");
+      if (!link) {
+        link = frameDoc.createElement("link");
+        link.id = "external-theme-css";
+        link.rel = "stylesheet";
+        frameDoc.head.appendChild(link);
+      }
+      return link;
+    }
+
+    function ensureCoreLink(frameDoc) {
+      let link = frameDoc.getElementById("we-theme-core-css");
+      if (!link) {
+        link = frameDoc.createElement("link");
+        link.id = "we-theme-core-css";
+        link.rel = "stylesheet";
+        frameDoc.head.appendChild(link);
+      }
+      return link;
+    }
+
+    function applyThemeToFrame(frame, name) {
+      const frameDoc = frameDocFrom(frame);
+      if (!frameDoc) return;
+      frameDoc.documentElement.classList.remove(
+        "we-theme-superhero",
+        "we-theme-sketchy",
+        "we-theme-lux",
+        "we-theme-lux-boost",
+        "we-theme-sandstone",
+        "we-theme-sandstone-boost"
+      );
+      frameDoc.documentElement.classList.add("we-theme-" + name);
+      const coreLink = ensureCoreLink(frameDoc);
+      coreLink.href = CORE_CSS;
+      const link = ensureThemeLink(frameDoc);
+      link.href = THEMES[name];
+    }
+
+    function applyTheme(name) {
+      currentTheme = name;
+      for (const id of FRAME_IDS) {
+        const frame = document.getElementById(id);
+        if (frame) applyThemeToFrame(frame, name);
+      }
+      document.getElementById("theme-select").value = name;
+      document.getElementById("current").textContent = "current=" + name;
+    }
+
+    for (const id of FRAME_IDS) {
+      const frame = document.getElementById(id);
+      frame.addEventListener("load", () => applyThemeToFrame(frame, currentTheme));
+    }
+
+    document.getElementById("btn-superhero").addEventListener("click", () => applyTheme("superhero"));
+    document.getElementById("btn-sketchy").addEventListener("click", () => applyTheme("sketchy"));
+    document.getElementById("btn-lux").addEventListener("click", () => applyTheme("lux"));
+    document.getElementById("btn-lux-boost").addEventListener("click", () => applyTheme("lux-boost"));
+    document.getElementById("btn-sandstone").addEventListener("click", () => applyTheme("sandstone"));
+    document.getElementById("btn-sandstone-boost").addEventListener("click", () => applyTheme("sandstone-boost"));
+    document.getElementById("theme-select").addEventListener("change", (e) => applyTheme(e.target.value));
+
+    window.addEventListener("load", () => applyTheme(currentTheme));
+  </script>
+</body>
+</html>
