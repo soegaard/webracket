@@ -1,9 +1,10 @@
-#lang racket
+#lang at-exp racket
 (require scribble/manual)
 
 (provide wiki
           margin-wiki
-          em)
+          em
+          how-to-require)
 
 (define (wiki title page)
    (hyperlink
@@ -17,3 +18,11 @@
      (list "Ⓦ " title))))
 
 (define (em . xs) (apply italic xs))
+
+(define-syntax-rule (how-to-require req-form name mod-path)
+  @defmodule[#:require-form (lambda (modname)
+                               (list (racket (req-form name))))
+             mod-path
+             #:link-target? #f
+             #:packages ()
+             #:no-declare])

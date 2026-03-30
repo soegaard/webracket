@@ -65,7 +65,9 @@
 @title{Library: @racketid[web-easy]}
 @declare-exporting[(lib "scribblings/web-easy-labels.rkt" "webracket")]
 
-@section{Introduction}
+@(how-to-require include-lib web-easy (lib "core.rkt" "webracket"))
+
+@section{About web-easy}
 
 The @tt{web-easy} library is a declarative UI library for WebRacket.
 
@@ -89,7 +91,7 @@ turned into a runnable program, look at the @tt{examples/}
 subfolder of the @racketid[web-easy] library. Each program in
 this Quickstart has its own folder. 
 
-TODO:insert-link-to-examples-at-github.
+@url{https://github.com/soegaard/webracket/tree/main/lib/web-easy/examples}
 
 The examples are heavily inspired by the @racket[gui-easy] Quickstart.
 
