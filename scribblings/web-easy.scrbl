@@ -3162,6 +3162,26 @@ numeric values are rendered in pixels.
 @racket['absolute] when any explicit positioning keyword is used.
 @racket[#:z-index] sets popup stacking order.
 
+When @racket[#:position] is @racket['absolute] (the default for explicitly
+positioned popups), @racket[#:left] and @racket[#:top] are interpreted in the
+same way as CSS absolute positioning: they are relative to the popup's
+containing block, which is usually the nearest positioned ancestor. In
+practice, this means standalone context menus are often rendered inside a
+wrapper with @tt{position: relative}, and the popup offsets are measured from
+that wrapper's top-left corner.
+
+Example:
+
+@racketblock[
+(Div #:style "position: relative;"
+     (Canvas #:id "circle-canvas")
+     (menu-popup
+      #:left 120
+      #:top 80
+      #:z-index 1000
+      (menu-item "Delete" (lambda () (void)))))
+]
+
 The browser backend gives standalone popup menus menu-style keyboard behavior:
 
 @tt{ArrowDown} and @tt{Home} enter the popup at the first item.
