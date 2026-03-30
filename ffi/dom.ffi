@@ -1210,6 +1210,76 @@
   #:mdn    "MouseEvent/clientY"
   (-> (extern) (f64)))
 
+(define-foreign js-mouse-event-page-x
+  #:module "event"
+  #:name   "mouse-page-x"
+  #:doc    "Returns the mouse page X coordinate in document pixels."
+  #:mdn    "MouseEvent/pageX"
+  (-> (extern) (f64)))
+
+(define-foreign js-mouse-event-page-y
+  #:module "event"
+  #:name   "mouse-page-y"
+  #:doc    "Returns the mouse page Y coordinate in document pixels."
+  #:mdn    "MouseEvent/pageY"
+  (-> (extern) (f64)))
+
+(define-foreign js-mouse-event-screen-x
+  #:module "event"
+  #:name   "mouse-screen-x"
+  #:doc    "Returns the mouse screen X coordinate in screen pixels."
+  #:mdn    "MouseEvent/screenX"
+  (-> (extern) (f64)))
+
+(define-foreign js-mouse-event-screen-y
+  #:module "event"
+  #:name   "mouse-screen-y"
+  #:doc    "Returns the mouse screen Y coordinate in screen pixels."
+  #:mdn    "MouseEvent/screenY"
+  (-> (extern) (f64)))
+
+(define-foreign js-mouse-event-button
+  #:module "event"
+  #:name   "mouse-button"
+  #:doc    "Returns the button code for the mouse event."
+  #:mdn    "MouseEvent/button"
+  (-> (extern) (i32)))
+
+(define-foreign js-mouse-event-buttons
+  #:module "event"
+  #:name   "mouse-buttons"
+  #:doc    "Returns the buttons bitmask for the mouse event."
+  #:mdn    "MouseEvent/buttons"
+  (-> (extern) (i32)))
+
+(define-foreign js-mouse-event-alt-key
+  #:module "event"
+  #:name   "mouse-alt-key"
+  #:doc    "Reports whether the Alt modifier was active for the mouse event."
+  #:mdn    "MouseEvent/altKey"
+  (-> (extern) (i32)))
+
+(define-foreign js-mouse-event-ctrl-key
+  #:module "event"
+  #:name   "mouse-ctrl-key"
+  #:doc    "Reports whether the Control modifier was active for the mouse event."
+  #:mdn    "MouseEvent/ctrlKey"
+  (-> (extern) (i32)))
+
+(define-foreign js-mouse-event-meta-key
+  #:module "event"
+  #:name   "mouse-meta-key"
+  #:doc    "Reports whether the Meta modifier was active for the mouse event."
+  #:mdn    "MouseEvent/metaKey"
+  (-> (extern) (i32)))
+
+(define-foreign js-mouse-event-shift-key
+  #:module "event"
+  #:name   "mouse-shift-key"
+  #:doc    "Reports whether the Shift modifier was active for the mouse event."
+  #:mdn    "MouseEvent/shiftKey"
+  (-> (extern) (i32)))
+
 
 ;;;
 ;;; KeyboardEvent
