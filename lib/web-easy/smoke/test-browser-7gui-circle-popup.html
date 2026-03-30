@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>web-easy 7gui circle popup smoke test</title>
+  <style>
+    body {
+      font-family: monospace;
+      margin: 16px;
+    }
+    #status {
+      white-space: pre-wrap;
+      padding: 8px;
+      border: 1px solid #999;
+      margin-bottom: 12px;
+    }
+    #status.pass {
+      color: #0a6a0a;
+      border-color: #0a6a0a;
+    }
+    #status.fail {
+      color: #8a1111;
+      border-color: #8a1111;
+    }
+    #app-frame {
+      width: 100%;
+      height: 700px;
+      border: 1px solid #999;
+    }
+  </style>
+</head>
+<body>
+  <div id="status">Running browser 7gui circle popup assertions...</div>
+  <iframe id="app-frame" src="./generated/7gui-circle.html" title="web-easy 7gui circle popup smoke app"></iframe>
+  <script src="./smoke-harness.js"></script>
+  <script>
+    function mousePoint(doc, element, x, y) {
+      const rect = element.getBoundingClientRect();
+      return {
+        clientX: rect.left + x,
+        clientY: rect.top + y,
+        screenX: rect.left + x,
+        screenY: rect.top + y
+      };
+    }
+
+    function dispatchMouse(frameDoc, element, type, x, y, extra) {
+      const view = frameDoc.defaultView;
+      const point = mousePoint(frameDoc, element, x, y);
+      const init = Object.assign({
+        bubbles: true,
+        cancelable: true,
+        button: 0,
+        buttons: 1
+      }, point, extra || {});
+      element.dispatchEvent(new view.MouseEvent(type, init));
+    }
+
+    (async function run() {
+      const H = window.SmokeHarness;
+      try {
+        const frame = document.getElementById("app-frame");
+        const doc = await H.loadCase(
+          frame,
+          "./generated/7gui-circle.html",
+          (d) => !!d.querySelector("canvas"),
+          20000
+        );
+
+        const canvas = doc.querySelector("canvas");
+        H.assertTrue(!!canvas, "circle canvas present");
+        const frameConsole = doc.defaultView && doc.defaultView.console;
+        if (frameConsole && typeof frameConsole.error === "function") {
+          const originalError = frameConsole.error.bind(frameConsole);
+          frameConsole.error = function (...args) {
+            const text = args.map((v) => String(v)).join(" ").trim();
+            if (text === "on-click" || text === "on-contextmenu") return;
+            originalError(...args);
+          };
+        }
+
+        dispatchMouse(doc, canvas, "click", 120, 120);
+
+        dispatchMouse(doc, canvas, "contextmenu", 120, 120, { button: 2, buttons: 2 });
+
+        await H.waitForCondition("circle popup mount", 20000, function () {
+          return !!doc.querySelector('[data-we-widget="menu-popup"]');
+        });
+
+        const popup = doc.querySelector('[data-we-widget="menu-popup"]');
+        H.assertTrue(!!popup, "circle popup opens from canvas context menu");
+
+        await H.waitForCondition("circle popup autofocus", 20000, function () {
+          return doc.activeElement === popup;
+        });
+        H.assertEqual(doc.activeElement, popup, "circle popup gets focus");
+
+        H.dispatchKey(popup, "ArrowDown");
+        await H.waitForCondition("circle popup ArrowDown entry", 20000, function () {
+          const firstItem = doc.querySelector('.we-menu-item[role="menuitem"]');
+          return !!firstItem && doc.activeElement === firstItem;
+        });
+
+        const items = Array.from(doc.querySelectorAll('.we-menu-item[role="menuitem"]'));
+        H.assertTrue(items.length >= 2, "circle popup exposes menu items");
+        H.assertEqual(doc.activeElement, items[0], "ArrowDown enters first circle popup item");
+
+        H.dispatchKey(items[0], "Escape");
+        await H.waitForCondition("circle popup escape close", 20000, function () {
+          return !doc.querySelector('[data-we-widget="menu-popup"]');
+        });
+        H.assertTrue(!doc.querySelector('[data-we-widget="menu-popup"]'), "Escape closes circle popup");
+
+        H.setStatus("PASS\n7gui circle popup opens and supports keyboard entry", "pass");
+      } catch (err) {
+        console.error(err);
+        window.SmokeHarness.setStatus(
+          "FAIL\n" + (err && err.message ? err.message : String(err)),
+          "fail"
+        );
+      }
+    })();
+  </script>
+</body>
+</html>

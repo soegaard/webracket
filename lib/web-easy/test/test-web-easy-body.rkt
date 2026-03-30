@@ -2742,6 +2742,18 @@
 (check-equal (node-attr top-bar-autofocus-node 'id) "tb-auto" "top-bar forwards id with autofocus")
 (check-equal (node-attr top-bar-autofocus-node 'autofocus) #t "top-bar forwards autofocus to root")
 
+;; define/component root attrs also forward primitive event keywords to the root node.
+(define @top-bar-keydown-count (@ 0))
+(define r24e-event-root-attrs
+  (render
+   (window
+    (vpanel
+     (top-bar #:id "tb-key"
+              #:on-keydown (lambda (_evt) (<~ @top-bar-keydown-count add1))
+              (text "Keys"))))))
+(define top-bar-keydown-node (node-child (node-child (renderer-root r24e-event-root-attrs) 0) 0))
+(check-equal (node-attr top-bar-keydown-node 'id) "tb-key" "top-bar forwards id with event attr")
+
 ;; input supports direct attrs list on constructor
 (define r25-input
   (render

@@ -192,6 +192,23 @@
                   attr-key))))
      attrs)))
 
+;; reject-invalid-ref-attrs! : symbol? any/c -> void?
+;;   Reject ref attribute values unless they are observables.
+(define (reject-invalid-ref-attrs! who attrs)
+  (when (list? attrs)
+    (for-each
+     (lambda (entry)
+       (define normalized (attrs-entry->pair entry))
+       (when normalized
+         (define attr-key (car normalized))
+         (define value (cdr normalized))
+         (when (and (eq? attr-key 'ref)
+                    (not (obs? value)))
+           (error who
+                  "ref attribute value must be observable?: ~a"
+                  attr-key))))
+     attrs)))
+
 ;; parse-element-call-args : symbol? list? (or/c #f list?) -> values list? any/c any/c
 ;;   Parse raw args into positional-rev, raw-#:attrs value, and extra attrs (reversed).
 (define (parse-element-call-args who all-args allowed-attrs)
@@ -214,6 +231,9 @@
           (define attr-key (keyword->attr-key kw))
           (when (not (attr-key-allowed? attr-key allowed-attrs))
             (error who "unknown keyword argument: ~a" kw))
+          (when (and (eq? attr-key 'ref)
+                     (not (obs? v)))
+            (error who "expected #:ref as observable?: ~a" kw))
           (when (and (primitive-event-attr-key? attr-key)
                      (not (event-handler-value-accepted? v)))
             (error who
@@ -324,6 +344,7 @@
   (define extra-attrs (reverse extra-attrs-rev))
   (define merged-attrs (merge-element-attrs who attrs extra-attrs))
   (reject-procedure-attrs! who merged-attrs)
+  (reject-invalid-ref-attrs! who merged-attrs)
   (values positional merged-attrs))
 
 ;; alist-set : list? any/c any/c -> list?
@@ -505,8 +526,17 @@
        (when (null? (cdr rest))
          (error who "missing value after keyword argument: ~a" (car rest)))
        (define attr-key (keyword->attr-key (car rest)))
-       (when (not (attr-key-allowed? attr-key allowed-attrs))
+       (when (not (or (attr-key-allowed? attr-key allowed-attrs)
+                      (primitive-event-attr-key? attr-key)))
          (error who "unknown keyword argument: ~a" (car rest)))
+       (when (and (eq? attr-key 'ref)
+                  (not (obs? (cadr rest))))
+         (error who "expected #:ref as observable?: ~a" (car rest)))
+       (when (and (primitive-event-attr-key? attr-key)
+                  (not (event-handler-value-accepted? (cadr rest))))
+         (error who
+                "expected event handler as procedure?, observable?, or #f: ~a"
+                (car rest)))
        (set! attrs-rev
              (cons (cons attr-key
                          (cadr rest))
@@ -1564,6 +1594,7 @@
                                specific
                                '(data-* aria-*)
                                '(on-click
+                                 ref
                                  on-doubleclick
                                  on-contextmenu
                                  on-copy
