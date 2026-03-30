@@ -41,6 +41,9 @@ jobs:
       - name: Install Scribble tools
         run: raco pkg install --auto --skip-installed --no-docs scribble-tools
 
+      - name: Install nanopass
+        run: raco pkg install --auto --skip-installed --no-docs nanopass
+
       - name: Link local webracket collection
         run: raco link "$GITHUB_WORKSPACE"
 
