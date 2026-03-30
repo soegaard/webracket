@@ -27,6 +27,8 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      WASM_TOOLS_VERSION: "1.225.0"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -43,6 +45,27 @@ jobs:
 
       - name: Install nanopass
         run: raco pkg install --auto --skip-installed --no-docs nanopass
+
+      - name: Cache wasm-tools binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.local/bin/wasm-tools
+          key: ${{ runner.os }}-wasm-tools-${{ env.WASM_TOOLS_VERSION }}
+
+      - name: Add local bin to PATH
+        run: echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Install wasm-tools (prebuilt)
+        run: |
+          if [ ! -x "$HOME/.local/bin/wasm-tools" ]; then
+            mkdir -p "$HOME/.local/bin"
+            curl -L -o /tmp/wasm-tools.tar.gz \
+              "https://github.com/bytecodealliance/wasm-tools/releases/download/v${WASM_TOOLS_VERSION}/wasm-tools-${WASM_TOOLS_VERSION}-x86_64-linux.tar.gz"
+            tar -xzf /tmp/wasm-tools.tar.gz -C /tmp
+            cp "/tmp/wasm-tools-${WASM_TOOLS_VERSION}-x86_64-linux/wasm-tools" "$HOME/.local/bin/wasm-tools"
+            chmod +x "$HOME/.local/bin/wasm-tools"
+          fi
+          wasm-tools --version
 
       - name: Link local webracket collection
         run: raco link "$GITHUB_WORKSPACE"
