@@ -377,7 +377,8 @@
 
 ; Update selected circle, unless a task is active.
 (define (update-selected-circle-from-point! x y)
-  (unless (obs-peek @task-active?)
+  (unless (or (obs-peek @task-active?)
+              (obs-peek @menu))
     (define circles (obs-peek @circles))
     (define closest (find-closest-circle circles x y))
     (:= @selected-circle closest))
@@ -452,6 +453,13 @@
   (λ (circles selected-circle diam red green blue)
     (redraw-canvas! circles)))
 
+(define (menu-handle-key! evt)
+  (define key (keyboard-event-key evt))
+  (when (string=? key "Escape")
+    (prevent-default! evt)
+    (:= @menu #f))
+  (void))
+
 
 
 
@@ -463,18 +471,20 @@
 
 (define (on-click/tap x y)
   (when (not (obs-peek @task-active?))
-    ; close any open menus on click/tap
-    (:= @menu #f)
-    ; find out if the click/tap was inside or outside a circle
-    (when (and (number? x) (number? y))
-      (define circles (obs-peek @circles))
-      (define closest (find-closest-circle circles x y))
-      (cond
-        [closest ; click is inside an existing circle
-         (:= @selected-circle closest)]
-        [else    ; click is outside all existing circles
-         (add-circle! (make-circle x y))]))
-    (update-selected-circle-from-point! x y))
+    (cond
+      [(obs-peek @menu)
+       (:= @menu #f)]
+      [else
+       ; find out if the click/tap was inside or outside a circle
+       (when (and (number? x) (number? y))
+         (define circles (obs-peek @circles))
+         (define closest (find-closest-circle circles x y))
+         (cond
+           [closest ; click is inside an existing circle
+            (:= @selected-circle closest)]
+           [else    ; click is outside all existing circles
+            (add-circle! (make-circle x y))]))
+       (update-selected-circle-from-point! x y)]))
   (void))
 
 (define 7gui-circle-drawer-app
@@ -548,39 +558,39 @@
                  (define red   (and (circle? c) (circle-red c)))
                  (define green (and (circle? c) (circle-green c)))
                  (define blue  (and (circle? c) (circle-blue c)))
-                 (Div #:style
-                      (format (string-append "position: absolute;"
-                                             "left: ~apx;"
-                                             "top: ~apx;"
-                                             "z-index: 1000;")
-                              (menu-state-offset-x m)
-                              (menu-state-offset-y m))
-                      #:attrs '((role "menu")
-                                (data-we-widget "menu-popup")
-                                (class "we-menu-popup is-open"))
-                      (menu-item "Adjust diameter"
-                                 (lambda ()
-                                   (when c
-                                     (:= @adjusting-diameter
-                                         (adjust-diameter-state d))
-                                     (:= @diam d)
-                                     (:= @menu #f))))
-                      (menu-item "Adjust color"
-                                 (lambda ()
-                                   (when c
-                                     (:= @adjusting-color
-                                         (adjust-color-state red green blue))
-                                     (:= @red   red)
-                                     (:= @green green)
-                                     (:= @blue  blue)
-                                     (:= @menu  #f))))
-                      (divider)
-                      (menu-item "Delete"
-                                 (lambda ()
-                                   (delete-circle! c)
-                                   (:= @menu            #f)
-                                   (:= @selected-circle #f))
-                                 #:style "color: #a12626; font-weight: 600;"))]
+                 (menu-popup
+                  #:style
+                  (format (string-append "position: absolute;"
+                                         "left: ~apx;"
+                                         "top: ~apx;"
+                                         "z-index: 1000;")
+                          (menu-state-offset-x m)
+                          (menu-state-offset-y m))
+                  #:autofocus #t
+                  #:on-keydown menu-handle-key!
+                  (menu-item "Adjust diameter"
+                             (lambda ()
+                               (when c
+                                 (:= @adjusting-diameter
+                                     (adjust-diameter-state d))
+                                 (:= @diam d)
+                                 (:= @menu #f))))
+                  (menu-item "Adjust color"
+                             (lambda ()
+                               (when c
+                                 (:= @adjusting-color
+                                     (adjust-color-state red green blue))
+                                 (:= @red   red)
+                                 (:= @green green)
+                                 (:= @blue  blue)
+                                 (:= @menu  #f))))
+                  (divider)
+                  (menu-item "Delete"
+                             (lambda ()
+                               (delete-circle! c)
+                               (:= @menu            #f)
+                               (:= @selected-circle #f))
+                             #:style "color: #a12626; font-weight: 600;"))]
                 [else
                  (Span "")]))))
       

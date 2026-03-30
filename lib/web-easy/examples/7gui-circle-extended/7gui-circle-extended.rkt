@@ -330,6 +330,13 @@
   (clear-menu!)
   (void))
 
+(define (menu-handle-key! evt)
+  (define key (keyboard-event-key evt))
+  (when (string=? key "Escape")
+    (prevent-default! evt)
+    (clear-menu!))
+  (void))
+
 (define (editor-handle-key! evt)
   (define key (keyboard-event-key evt))
   (case (string->symbol key)
@@ -378,23 +385,27 @@
 ;; ----------------------------------------
 
 (define (on-click/tap x y)
-  (unless (or (editor-active?)
-              (obs-peek @menu))
-    (clear-menu!)
-    (when (and (number? x) (number? y))
-      (define circles (obs-peek @circles))
-      (define closest (find-closest-circle circles x y))
-      (cond
-        [closest
-         (:= @selected-circle-id (circle-id closest))]
-        [else
-         (define c (make-circle x y))
-         (add-circle! c)
-         (:= @selected-circle-id (circle-id c))])))
+  (unless (editor-active?)
+    (cond
+      [(obs-peek @menu)
+       (clear-menu!)]
+      [else
+       (clear-menu!)
+       (when (and (number? x) (number? y))
+         (define circles (obs-peek @circles))
+         (define closest (find-closest-circle circles x y))
+         (cond
+           [closest
+            (:= @selected-circle-id (circle-id closest))]
+           [else
+            (define c (make-circle x y))
+            (add-circle! c)
+            (:= @selected-circle-id (circle-id c))]))]))
   (void))
 
 (define (editor-shell title save-action body)
   (Div #:style "border: 1px solid #999; background: white; padding: 12px; border-radius: 6px;"
+       #:attrs '((tabindex "-1"))
        #:on-keydown editor-handle-key!
        (apply vpanel
               (append
@@ -492,28 +503,29 @@
             (lambda (m)
               (cond
                 [m
-                 (Div #:style
-                      (format (string-append "position: absolute; left: ~apx; top: ~apx; "
-                                             "white-space: nowrap; background: white; "
-                                             "border: 1px solid #999; padding: 6px; z-index: 1000;")
-                              (menu-state-offset-x m)
-                              (menu-state-offset-y m))
-                      (Button "Adjust diameter"
-                              #:on-click
-                              (lambda (_evt)
-                                (start-diameter-editor!)))
-                      (Button "Adjust color"
-                              #:on-click
-                              (lambda (_evt)
-                                (start-color-editor!)))
-                      (Button "Delete"
-                              #:on-click
-                              (lambda (_evt)
-                                (define c-id (selected-circle-id))
-                                (when c-id
-                                  (delete-circle/id! c-id)
-                                  (:= @selected-circle-id #f)
-                                  (clear-menu!)))))]
+                 (menu-popup
+                  #:style
+                  (format (string-append "position: absolute; left: ~apx; top: ~apx; "
+                                         "z-index: 1000;")
+                          (menu-state-offset-x m)
+                          (menu-state-offset-y m))
+                  #:autofocus #t
+                  #:on-keydown menu-handle-key!
+                  (menu-item "Adjust diameter"
+                             (lambda ()
+                               (start-diameter-editor!)))
+                  (menu-item "Adjust color"
+                             (lambda ()
+                               (start-color-editor!)))
+                  (divider)
+                  (menu-item "Delete"
+                             (lambda ()
+                               (define c-id (selected-circle-id))
+                               (when c-id
+                                 (delete-circle/id! c-id)
+                                 (:= @selected-circle-id #f)
+                                 (clear-menu!)))
+                             #:style "color: #a12626; font-weight: 600;"))]
                 [else
                  (Span "")]))))
 
