@@ -167,3 +167,9 @@
             obs-map
             obs-combine
             obs-filter)))
+
+(define-syntax (obs-watch! stx)
+  (syntax-case stx ()
+    [(_ o ... f)
+     #'(obs-observe! (obs-combine list o ...)
+         (λ (as) (apply f as)))]))

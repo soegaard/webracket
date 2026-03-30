@@ -28,6 +28,16 @@
 ;;   mouse-event-offset-y             Read target-relative mouse y coordinate.
 ;;   mouse-event-client-x             Read viewport-relative mouse x coordinate.
 ;;   mouse-event-client-y             Read viewport-relative mouse y coordinate.
+;;   mouse-event-page-x               Read document-relative mouse x coordinate.
+;;   mouse-event-page-y               Read document-relative mouse y coordinate.
+;;   mouse-event-screen-x             Read screen-relative mouse x coordinate.
+;;   mouse-event-screen-y             Read screen-relative mouse y coordinate.
+;;   mouse-event-button               Read button code for mouse event.
+;;   mouse-event-buttons              Read pressed-buttons bitmask for mouse event.
+;;   mouse-event-alt-key?             Read Alt modifier state as boolean.
+;;   mouse-event-ctrl-key?            Read Control modifier state as boolean.
+;;   mouse-event-meta-key?            Read Meta modifier state as boolean.
+;;   mouse-event-shift-key?           Read Shift modifier state as boolean.
 ;;   keyboard-event-key               Read logical key string.
 ;;   keyboard-event-code              Read physical key code string.
 ;;   keyboard-event-alt-key?          Read Alt modifier state as boolean.
@@ -70,6 +80,16 @@
    mouse-event-offset-y
    mouse-event-client-x
    mouse-event-client-y
+   mouse-event-page-x
+   mouse-event-page-y
+   mouse-event-screen-x
+   mouse-event-screen-y
+   mouse-event-button
+   mouse-event-buttons
+   mouse-event-alt-key?
+   mouse-event-ctrl-key?
+   mouse-event-meta-key?
+   mouse-event-shift-key?
    keyboard-event-key
    keyboard-event-code
    keyboard-event-alt-key?
@@ -94,6 +114,31 @@
     ;;   Convert FFI i32 flag results to boolean.
     (define (js-flag->boolean/internal v)
       (not (zero? v)))
+
+    (define-syntax-rule (define-mouse-event-number-accessor name js-name doc)
+      (begin
+        ;; name : any/c -> number?
+        ;;   doc
+        (define (name evt)
+          (check-mouse-event 'name evt)
+          (js-name evt))))
+
+    (define-syntax-rule (define-mouse-event-integer-accessor name js-name doc)
+      (begin
+        ;; name : any/c -> exact-integer?
+        ;;   doc
+        (define (name evt)
+          (check-mouse-event 'name evt)
+          (js-name evt))))
+
+    (define-syntax-rule (define-mouse-event-boolean-accessor name js-name doc)
+      (begin
+        ;; name : any/c -> boolean?
+        ;;   doc
+        (define (name evt)
+          (check-mouse-event 'name evt)
+          (js-flag->boolean/internal
+           (js-name evt)))))
 
     ;; check-event : symbol? any/c -> void?
     ;;   Ensure evt is a DOM Event object.
@@ -233,29 +278,75 @@
       (check-event 'stop-immediate-propagation! evt)
       (js-event-stop-immediate-propagation evt))
 
-    ;; mouse-event-offset-x : any/c -> number?
-    ;;   Return target-relative mouse x coordinate.
-    (define (mouse-event-offset-x evt)
-      (check-mouse-event 'mouse-event-offset-x evt)
-      (js-mouse-event-offset-x evt))
+    (define-mouse-event-number-accessor
+      mouse-event-offset-x
+      js-mouse-event-offset-x
+      "Return target-relative mouse x coordinate.")
 
-    ;; mouse-event-offset-y : any/c -> number?
-    ;;   Return target-relative mouse y coordinate.
-    (define (mouse-event-offset-y evt)
-      (check-mouse-event 'mouse-event-offset-y evt)
-      (js-mouse-event-offset-y evt))
+    (define-mouse-event-number-accessor
+      mouse-event-offset-y
+      js-mouse-event-offset-y
+      "Return target-relative mouse y coordinate.")
 
-    ;; mouse-event-client-x : any/c -> number?
-    ;;   Return viewport-relative mouse x coordinate.
-    (define (mouse-event-client-x evt)
-      (check-mouse-event 'mouse-event-client-x evt)
-      (js-mouse-event-client-x evt))
+    (define-mouse-event-number-accessor
+      mouse-event-client-x
+      js-mouse-event-client-x
+      "Return viewport-relative mouse x coordinate.")
 
-    ;; mouse-event-client-y : any/c -> number?
-    ;;   Return viewport-relative mouse y coordinate.
-    (define (mouse-event-client-y evt)
-      (check-mouse-event 'mouse-event-client-y evt)
-      (js-mouse-event-client-y evt))
+    (define-mouse-event-number-accessor
+      mouse-event-client-y
+      js-mouse-event-client-y
+      "Return viewport-relative mouse y coordinate.")
+
+    (define-mouse-event-number-accessor
+      mouse-event-page-x
+      js-mouse-event-page-x
+      "Return document-relative mouse x coordinate.")
+
+    (define-mouse-event-number-accessor
+      mouse-event-page-y
+      js-mouse-event-page-y
+      "Return document-relative mouse y coordinate.")
+
+    (define-mouse-event-number-accessor
+      mouse-event-screen-x
+      js-mouse-event-screen-x
+      "Return screen-relative mouse x coordinate.")
+
+    (define-mouse-event-number-accessor
+      mouse-event-screen-y
+      js-mouse-event-screen-y
+      "Return screen-relative mouse y coordinate.")
+
+    (define-mouse-event-integer-accessor
+      mouse-event-button
+      js-mouse-event-button
+      "Return the mouse button code.")
+
+    (define-mouse-event-integer-accessor
+      mouse-event-buttons
+      js-mouse-event-buttons
+      "Return the pressed-buttons bitmask.")
+
+    (define-mouse-event-boolean-accessor
+      mouse-event-alt-key?
+      js-mouse-event-alt-key
+      "Report whether Alt was active for mouse evt.")
+
+    (define-mouse-event-boolean-accessor
+      mouse-event-ctrl-key?
+      js-mouse-event-ctrl-key
+      "Report whether Control was active for mouse evt.")
+
+    (define-mouse-event-boolean-accessor
+      mouse-event-meta-key?
+      js-mouse-event-meta-key
+      "Report whether Meta was active for mouse evt.")
+
+    (define-mouse-event-boolean-accessor
+      mouse-event-shift-key?
+      js-mouse-event-shift-key
+      "Report whether Shift was active for mouse evt.")
 
     ;; keyboard-event-key : any/c -> string?
     ;;   Return logical key string for keyboard evt.
@@ -397,6 +488,16 @@
             mouse-event-offset-y
             mouse-event-client-x
             mouse-event-client-y
+            mouse-event-page-x
+            mouse-event-page-y
+            mouse-event-screen-x
+            mouse-event-screen-y
+            mouse-event-button
+            mouse-event-buttons
+            mouse-event-alt-key?
+            mouse-event-ctrl-key?
+            mouse-event-meta-key?
+            mouse-event-shift-key?
             keyboard-event-key
             keyboard-event-code
             keyboard-event-alt-key?
