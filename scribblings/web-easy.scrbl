@@ -3134,6 +3134,22 @@ This constructor also accepts global HTML keyword attributes for its root
 @tt{<menu>} element.
 }
 
+@defproc[(menu-popup [item view?] ...) view?]{
+Build a standalone popup menu container.
+
+Positional arguments:
+each @racket[item] is usually a @racket[menu-item] or divider.
+This constructor also accepts global HTML keyword attributes for its root
+@tt{<vpanel>} element.
+
+The browser backend gives standalone popup menus menu-style keyboard behavior:
+
+@tt{ArrowDown} and @tt{Home} enter the popup at the first item.
+@tt{ArrowUp} and @tt{End} enter the popup at the last item.
+Typing a letter performs type-ahead focus.
+Closing the popup returns focus to the element that was focused before the popup opened.
+}
+
 @defproc[(menu-item [label text-content/c]
                     [action procedure?]
                     [leading-icon (or/c #f content/c) #f]
@@ -3147,16 +3163,6 @@ Positional arguments:
 @racket[leading-icon] and @racket[trailing-icon] are optional icon/content slots.
 This constructor also accepts global HTML keyword attributes for its root
 @tt{<menu-item>} element.
-
-When @racket[menu-item] values are used inside a standalone popup that uses the
-standard @tt{menu-popup} widget hooks, the browser backend provides menu-style
-keyboard behavior:
-
-@itemlist[
- @item{@tt{ArrowDown} and @tt{Home} enter the popup at the first item.}
- @item{@tt{ArrowUp} and @tt{End} enter the popup at the last item.}
- @item{Typing a letter performs type-ahead focus.}
- @item{Closing the popup returns focus to the element that was focused before the popup opened.}]
 }
 
 @defproc[(navigation-bar [item view?] ...

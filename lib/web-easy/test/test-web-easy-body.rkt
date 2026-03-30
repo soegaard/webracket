@@ -2399,6 +2399,26 @@
 (check-equal (node-attr menu-label-node 'aria-expanded) "false" "menu-item Escape closes popup")
 (check-equal (node-attr menu-popup-node 'class) "we-menu-popup" "menu popup class after menu-item Escape")
 
+;; standalone menu-popup provides menu container defaults
+(define @standalone-popup-clicks (obs 0))
+(define r20-popup
+  (render
+   (window
+    (vpanel
+     (menu-popup
+      (menu-item "Rename"
+                 (lambda () (<~ @standalone-popup-clicks add1))))))))
+(define standalone-popup-node (node-child (node-child (renderer-root r20-popup) 0) 0))
+(define standalone-popup-item-node (node-child standalone-popup-node 0))
+(check-equal (dom-node-tag standalone-popup-node) 'vpanel "standalone menu-popup node tag")
+(check-equal (node-attr standalone-popup-node 'role) 'menu "standalone menu-popup role attr")
+(check-equal (node-attr standalone-popup-node 'data-we-widget) "menu-popup" "standalone menu-popup data-we-widget attr")
+(check-equal (node-attr standalone-popup-node 'class) "we-menu-popup is-open" "standalone menu-popup open class")
+(check-equal (node-attr standalone-popup-node 'tabindex) 0 "standalone menu-popup tabindex attr")
+(check-equal (dom-node-tag standalone-popup-item-node) 'menu-item "standalone menu-popup item tag")
+(dom-node-click! standalone-popup-item-node)
+(check-equal (obs-peek @standalone-popup-clicks) 1 "standalone menu-popup item action invoked")
+
 ;; menu-bar supports root decorators/global attrs and rejects unknown attrs
 (define r20-decorated
   (render
@@ -2789,6 +2809,27 @@
 (check-equal (length (dom-node-children icon-button-node)) 3 "button icon slots add leading + label + trailing nodes")
 (check-equal (node-attr (node-child icon-button-node 0) 'data-we-widget) "button-icon" "button leading icon widget")
 (check-equal (length (dom-node-children icon-menu-item-child)) 3 "menu-item icon slots add leading + label + trailing nodes")
+
+;; button accepts child-view labels and icon views while preserving root semantics.
+(define @button-view-clicks (@ 0))
+(define r27b-button-view-label
+  (render
+   (window
+    (vpanel
+     (button (Span "Save" #:class "label-rich")
+             (lambda ()
+               (:= @button-view-clicks (+ (obs-peek @button-view-clicks) 1)))
+             (Span "L" #:class "icon-left")
+             (Span "R" #:class "icon-right"))))))
+(define button-view-label-node (node-child (node-child (renderer-root r27b-button-view-label) 0) 0))
+(check-equal (node-attr button-view-label-node 'data-we-widget) "button" "button with view label keeps widget attr")
+(check-equal (node-attr button-view-label-node 'class) "we-button" "button with view label keeps base class")
+(check-equal (length (dom-node-children button-view-label-node)) 3 "button with view label keeps icon + label + icon structure")
+(check-equal (dom-node-tag (node-child button-view-label-node 0)) 'span "button leading icon view is wrapped in span")
+(check-equal (dom-node-tag (node-child button-view-label-node 1)) 'span "button label view is wrapped in span")
+(check-equal (dom-node-tag (node-child button-view-label-node 2)) 'span "button trailing icon view is wrapped in span")
+(dom-node-click! button-view-label-node)
+(check-equal (obs-peek @button-view-clicks) 1 "button with view label preserves click action")
 
 ;; card variants attach variant classes and headerless suppresses header node.
 (define r28-card

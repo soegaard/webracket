@@ -201,6 +201,7 @@
 ;;   navigation-bar Build a navigation bar container view.
 ;;   menu-bar       Build a menu-bar container view.
 ;;   menu           Build a menu container view.
+;;   menu-popup     Build a standalone popup menu view.
 ;;   menu-item      Build a clickable menu-item view.
 
 (define-values
@@ -392,6 +393,7 @@
    navigation-bar
    menu-bar
    menu
+   menu-popup
    menu-item
    rich-list-group)
   (let ()
@@ -6597,6 +6599,23 @@
                                           (cons 'class @popup-class)))))
        #:attrs attrs/final))
 
+    ;; menu-popup : view? ... -> view?
+    ;;   Construct a standalone popup menu container for menu-item children.
+    ;;   Accepts global HTML attributes for the root <vpanel> via keyword arguments.
+    (define/component menu-popup
+      #:root-tag 'vpanel
+      #:rest children
+      #:root-attrs attrs/final
+      (define attrs/final
+        (list (cons 'role 'menu)
+              (cons 'data-we-widget "menu-popup")
+              (cons 'class "we-menu-popup is-open")
+              (cons 'tabindex 0)))
+      (apply html-element-children
+             (append (list 'vpanel)
+                     children
+                     (list #:attrs attrs/final))))
+
     ;; menu-item : text-content/c (-> any/c) [(or/c #f content/c)] [(or/c #f content/c)] -> view?
     ;;   Construct a menu item with optional leading/trailing icon labels.
     ;;   Optional parameter leading-icon defaults to #f.
@@ -6960,5 +6979,6 @@
             navigation-bar
             menu-bar
             menu
+            menu-popup
             menu-item
             rich-list-group)))
