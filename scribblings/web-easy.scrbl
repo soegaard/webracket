@@ -591,6 +591,9 @@ Use @racket[#:autofocus] for the common declarative case where a newly
 mounted element should receive focus automatically. Use @racket[#:ref]
 when you need lower-level control over exactly when or how focus is moved.
 
+Components that forward root attributes can also forward @racket[#:ref]
+and generic bubbling DOM event keywords such as @racket[#:on-keydown].
+
 @racketblock[
 (Input #:autofocus #t)
 
@@ -1083,6 +1086,11 @@ This means DOM identity can change across tag updates.
 For internal component authoring in @tt{web-easy}, @racket[define/component]
 supports variadic children with @racket[#:rest], including together with
 @racket[#:root-attrs].
+
+When a component uses @racket[#:root-attrs], the forwarded root keyword
+surface can include ordinary root attributes, @racket[#:ref],
+@racket[#:autofocus], and generic bubbling DOM event keywords named
+@racket[#:on-<dom-event-name>].
 
 Internal status note:
 built-in semantic/compound constructors are implemented with

@@ -527,6 +527,7 @@
          (error who "missing value after keyword argument: ~a" (car rest)))
        (define attr-key (keyword->attr-key (car rest)))
        (when (not (or (attr-key-allowed? attr-key allowed-attrs)
+                      (eq? attr-key 'ref)
                       (primitive-event-attr-key? attr-key)))
          (error who "unknown keyword argument: ~a" (car rest)))
        (when (and (eq? attr-key 'ref)
