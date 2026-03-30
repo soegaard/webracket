@@ -559,13 +559,9 @@
                  (define green (and (circle? c) (circle-green c)))
                  (define blue  (and (circle? c) (circle-blue c)))
                  (menu-popup
-                  #:style
-                  (format (string-append "position: absolute;"
-                                         "left: ~apx;"
-                                         "top: ~apx;"
-                                         "z-index: 1000;")
-                          (menu-state-offset-x m)
-                          (menu-state-offset-y m))
+                  #:left (menu-state-offset-x m)
+                  #:top (menu-state-offset-y m)
+                  #:z-index 1000
                   #:autofocus #t
                   #:on-keydown menu-handle-key!
                   (menu-item "Adjust diameter"

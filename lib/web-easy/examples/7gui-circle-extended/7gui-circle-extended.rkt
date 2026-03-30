@@ -504,11 +504,9 @@
               (cond
                 [m
                  (menu-popup
-                  #:style
-                  (format (string-append "position: absolute; left: ~apx; top: ~apx; "
-                                         "z-index: 1000;")
-                          (menu-state-offset-x m)
-                          (menu-state-offset-y m))
+                  #:left (menu-state-offset-x m)
+                  #:top (menu-state-offset-y m)
+                  #:z-index 1000
                   #:autofocus #t
                   #:on-keydown menu-handle-key!
                   (menu-item "Adjust diameter"

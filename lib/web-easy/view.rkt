@@ -4708,6 +4708,43 @@
           placement0
           default-placement))
 
+    ;; menu-popup-css-value/internal : any/c -> (or/c #f string?)
+    ;;   Convert popup positioning value to CSS text, adding px for numbers.
+    (define (menu-popup-css-value/internal v)
+      (cond
+        [(eq? v #f) #f]
+        [(number? v) (format "~apx" v)]
+        [else (format "~a" v)]))
+
+    ;; menu-popup-z-index-css-value/internal : any/c -> (or/c #f string?)
+    ;;   Convert popup z-index value to CSS text without adding length units.
+    (define (menu-popup-z-index-css-value/internal v)
+      (cond
+        [(eq? v #f) #f]
+        [else (format "~a" v)]))
+
+    ;; menu-popup-style/internal : any/c any/c any/c any/c -> (or/c #f string?)
+    ;;   Build inline positioning style for a standalone menu popup.
+    (define (menu-popup-style/internal left top position z-index)
+      (define left-css     (menu-popup-css-value/internal left))
+      (define top-css      (menu-popup-css-value/internal top))
+      (define z-index-css  (menu-popup-z-index-css-value/internal z-index))
+      (define position-css
+        (cond
+          [(eq? position #f)
+           (and (or left-css top-css z-index-css) "absolute")]
+          [else
+           (menu-popup-css-value/internal position)]))
+      (define parts
+        (filter (lambda (s) s)
+                (list (and position-css (format "position: ~a;" position-css))
+                      (and left-css     (format "left: ~a;" left-css))
+                      (and top-css      (format "top: ~a;" top-css))
+                      (and z-index-css  (format "z-index: ~a;" z-index-css)))))
+      (if (null? parts)
+          #f
+          (apply string-append parts)))
+
     ;; normalized-option-pairs/internal : list? -> list?
     ;;   Normalize option rows to (cons id label) pairs.
     (define (normalized-option-pairs/internal rows)
@@ -6604,13 +6641,21 @@
     ;;   Accepts global HTML attributes for the root <vpanel> via keyword arguments.
     (define/component menu-popup
       #:root-tag 'vpanel
+      #:component-keywords ([#:left left-kw #f]
+                            [#:top top-kw #f]
+                            [#:position position-kw #f]
+                            [#:z-index z-index-kw #f])
       #:rest children
       #:root-attrs attrs/final
+      (define popup-style
+        (menu-popup-style/internal left-kw top-kw position-kw z-index-kw))
       (define attrs/final
-        (list (cons 'role 'menu)
+        (filter (lambda (entry) (not (eq? (cdr entry) #f)))
+                (list (cons 'role 'menu)
               (cons 'data-we-widget "menu-popup")
               (cons 'class "we-menu-popup is-open")
-              (cons 'tabindex 0)))
+              (cons 'tabindex 0)
+              (cons 'style popup-style))))
       (apply html-element-children
              (append (list 'vpanel)
                      children

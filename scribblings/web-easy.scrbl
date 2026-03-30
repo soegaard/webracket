@@ -3142,13 +3142,25 @@ This constructor also accepts global HTML keyword attributes for its root
 @tt{<menu>} element.
 }
 
-@defproc[(menu-popup [item view?] ...) view?]{
+@defproc[(menu-popup [item view?] ...
+                     [#:left left (or/c #f real? string?) #f]
+                     [#:top top (or/c #f real? string?) #f]
+                     [#:position position (or/c #f symbol? string?) #f]
+                     [#:z-index z-index (or/c #f real? string?) #f])
+         view?]{
 Build a standalone popup menu container.
 
 Positional arguments:
 each @racket[item] is usually a @racket[menu-item] or divider.
 This constructor also accepts global HTML keyword attributes for its root
 @tt{<vpanel>} element.
+
+Optional positioning keywords:
+@racket[#:left] and @racket[#:top] place the popup explicitly;
+numeric values are rendered in pixels.
+@racket[#:position] overrides the CSS positioning mode and defaults to
+@racket['absolute] when any explicit positioning keyword is used.
+@racket[#:z-index] sets popup stacking order.
 
 The browser backend gives standalone popup menus menu-style keyboard behavior:
 

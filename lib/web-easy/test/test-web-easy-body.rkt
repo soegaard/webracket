@@ -2419,6 +2419,21 @@
 (dom-node-click! standalone-popup-item-node)
 (check-equal (obs-peek @standalone-popup-clicks) 1 "standalone menu-popup item action invoked")
 
+(define r20-popup-positioned
+  (render
+   (window
+    (vpanel
+     (menu-popup
+      #:left 12
+      #:top 34
+      #:z-index 1000
+      (menu-item "Rename" (lambda () (void))))))))
+(define standalone-popup-positioned-node
+  (node-child (node-child (renderer-root r20-popup-positioned) 0) 0))
+(check-equal (node-attr standalone-popup-positioned-node 'style)
+             "position: absolute;left: 12px;top: 34px;z-index: 1000;"
+             "standalone menu-popup builds positioning style from keywords")
+
 ;; menu-bar supports root decorators/global attrs and rejects unknown attrs
 (define r20-decorated
   (render
