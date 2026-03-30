@@ -882,6 +882,18 @@
     (define (menu-item-node? n)
       (string=? (widget-value n) "menu-item"))
 
+    ;; dom-node-disabled? : dom-node-record? -> boolean?
+    ;;   Check whether n should ignore activation because it is disabled.
+    (define (dom-node-disabled? n)
+      (define attrs (dom-node-record-attrs n))
+      (define disabled-pair (assq 'disabled attrs))
+      (define aria-pair     (assq 'aria-disabled attrs))
+      (or (and disabled-pair
+               (not (or (eq? (cdr disabled-pair) #f)
+                        (equal? (cdr disabled-pair) "false"))))
+          (and aria-pair
+               (equal? (cdr aria-pair) "true"))))
+
     ;; menu-popup-node? : dom-node-record? -> boolean?
     ;;   Check whether n is a standalone menu popup container.
     (define (menu-popup-node? n)
@@ -990,6 +1002,18 @@
 
     ;; focus-first-menu-item! : any/c -> void?
     ;;   Focus first menu item in popup for label-native.
+    (define menu-item-enabled-selector
+      ".we-menu-item[role='menuitem']:not([aria-disabled='true']):not([disabled])")
+
+    ;; menu-item-list-in-popup : any/c -> any/c
+    ;;   Return enabled menu items in popup-native, or #f when unavailable.
+    (define (menu-item-list-in-popup popup-native)
+      (and (extern-present? popup-native)
+           (js-send/extern/nullish
+            popup-native
+            "querySelectorAll"
+            (vector menu-item-enabled-selector))))
+
     (define (focus-first-menu-item! label-native)
       (define popup-native (js-ref/extern label-native "nextElementSibling"))
       (when (extern-present? popup-native)
@@ -997,7 +1021,7 @@
           (js-send/extern/nullish
            popup-native
            "querySelector"
-           (vector ".we-menu-item[role='menuitem']")))
+           (vector menu-item-enabled-selector)))
         (when (extern-present? first-item)
           (js-send first-item "focus" (vector)))))
 
@@ -1007,10 +1031,7 @@
       (define popup-native (js-ref/extern label-native "nextElementSibling"))
       (when (extern-present? popup-native)
         (define item-list
-          (js-send/extern/nullish
-           popup-native
-           "querySelectorAll"
-           (vector ".we-menu-item[role='menuitem']")))
+          (menu-item-list-in-popup popup-native))
         (when (extern-present? item-list)
           (define len (nodelist-length item-list))
           (when (> len 0)
@@ -1026,7 +1047,7 @@
           (js-send/extern/nullish
            popup-native
            "querySelector"
-           (vector ".we-menu-item[role='menuitem']")))
+           (vector menu-item-enabled-selector)))
         (when (extern-present? first-item)
           (js-send first-item "focus" (vector)))))
 
@@ -1035,10 +1056,7 @@
     (define (focus-last-menu-item-in-popup! popup-native)
       (when (extern-present? popup-native)
         (define item-list
-          (js-send/extern/nullish
-           popup-native
-           "querySelectorAll"
-           (vector ".we-menu-item[role='menuitem']")))
+          (menu-item-list-in-popup popup-native))
         (when (extern-present? item-list)
           (define len (nodelist-length item-list))
           (when (> len 0)
@@ -1161,10 +1179,7 @@
       (define popup-native (js-ref/extern item-native "parentElement"))
       (if (extern-present? popup-native)
           (let ([item-list
-                 (js-send/extern/nullish
-                  popup-native
-                  "querySelectorAll"
-                  (vector ".we-menu-item[role='menuitem']"))])
+                 (menu-item-list-in-popup popup-native)])
             (if (extern-present? item-list)
                 (let* ([idx (nodelist-index-of-node item-list item-native)]
                        [len (nodelist-length item-list)]
@@ -1186,10 +1201,7 @@
       (define popup-native (js-ref/extern item-native "parentElement"))
       (if (extern-present? popup-native)
           (let ([item-list
-                 (js-send/extern/nullish
-                  popup-native
-                  "querySelectorAll"
-                  (vector ".we-menu-item[role='menuitem']"))])
+                 (menu-item-list-in-popup popup-native)])
             (if (extern-present? item-list)
                 (let* ([idx (nodelist-index-of-node item-list item-native)]
                        [len (nodelist-length item-list)]
@@ -1341,10 +1353,7 @@
       (define popup-native (js-ref/extern label-native "nextElementSibling"))
       (if (extern-present? popup-native)
           (let ([item-list
-                 (js-send/extern/nullish
-                  popup-native
-                  "querySelectorAll"
-                  (vector ".we-menu-item[role='menuitem']"))])
+                 (menu-item-list-in-popup popup-native)])
             (if (extern-present? item-list)
                 (focus-matching-menu-item-from-list!
                  item-list
@@ -1359,10 +1368,7 @@
       (define popup-native (js-ref/extern item-native "parentElement"))
       (if (extern-present? popup-native)
           (let ([item-list
-                 (js-send/extern/nullish
-                  popup-native
-                  "querySelectorAll"
-                  (vector ".we-menu-item[role='menuitem']"))])
+                 (menu-item-list-in-popup popup-native)])
             (if (extern-present? item-list)
                 (let* ([idx (nodelist-index-of-node item-list item-native)]
                        [len (nodelist-length item-list)]
@@ -1381,10 +1387,7 @@
     (define (focus-matching-menu-item-from-popup! popup-native key evt)
       (if (extern-present? popup-native)
           (let ([item-list
-                 (js-send/extern/nullish
-                  popup-native
-                  "querySelectorAll"
-                  (vector ".we-menu-item[role='menuitem']"))])
+                 (menu-item-list-in-popup popup-native)])
             (if (extern-present? item-list)
                 (focus-matching-menu-item-from-list!
                  item-list
@@ -1446,8 +1449,9 @@
 
     ;; invoke-click-callback! : any/c -> void?
     ;;   Invoke callback when present.
-    (define (invoke-click-callback! callback)
-      (when callback
+    (define (invoke-click-callback! n callback)
+      (when (and callback
+                 (not (dom-node-disabled? n)))
         (callback)))
 
     ;; invoke-change-callback! : any/c any/c -> void?
@@ -1508,7 +1512,7 @@
           (dom-node-record-on-click n)
           (lambda (evt)
             (define callback (dom-node-record-on-click n))
-            (invoke-click-callback! callback)
+            (invoke-click-callback! n callback)
             (void evt))))
         (register-listener!
          "change"
@@ -1536,6 +1540,7 @@
             (define on-click (dom-node-record-on-click n))
             (define role-pair (assq 'role (dom-node-record-attrs n)))
             (when (and on-click
+                       (not (dom-node-disabled? n))
                        (or (eq? (dom-node-record-tag n) 'button)
                            (and role-pair
                                 (or (eq? (cdr role-pair) 'button)

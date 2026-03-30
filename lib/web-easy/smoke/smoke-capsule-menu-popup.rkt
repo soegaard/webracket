@@ -66,8 +66,11 @@
                                      (data-we-widget "menu-popup")
                                      (class "we-menu-popup is-open"))
                            #:on-keydown popup-key!
-                           (menu-item "Alpha" (lambda () (mark! "alpha")))
-                           (menu-item "Beta"  (lambda () (mark! "beta"))))
+                           (menu-item "Alpha"  (lambda () (mark! "alpha")))
+                           (menu-item "Bravo"
+                                      (lambda () (mark! "bravo"))
+                                      #:disabled #t)
+                           (menu-item "Delete" (lambda () (mark! "delete"))))
                       (text "popup-hidden"))))
                (text (~> @status
                          (lambda (status)

@@ -2434,6 +2434,67 @@
              "position: absolute;left: 12px;top: 34px;z-index: 1000;"
              "standalone menu-popup builds positioning style from keywords")
 
+;; menu-item supports disabled state and ignores activation
+(define @disabled-menu-clicks (obs 0))
+(define r20-popup-disabled
+  (render
+   (window
+    (vpanel
+     (menu-popup
+      (menu-item "Rename"
+                 (lambda () (<~ @disabled-menu-clicks add1))
+                 #:disabled #t)
+      (menu-item "Delete"
+                 (lambda () (<~ @disabled-menu-clicks add1))))))))
+(define standalone-disabled-popup-node
+  (node-child (node-child (renderer-root r20-popup-disabled) 0) 0))
+(define standalone-disabled-item-node
+  (node-child standalone-disabled-popup-node 0))
+(define standalone-enabled-item-node
+  (node-child standalone-disabled-popup-node 1))
+(check-equal (node-attr standalone-disabled-item-node 'aria-disabled) "true" "menu-item disabled aria state")
+(check-equal (node-attr standalone-disabled-item-node 'tabindex) -1 "menu-item disabled tabindex")
+(check-equal (node-class-contains? standalone-disabled-item-node "is-disabled") #t "menu-item disabled class")
+(dom-node-click! standalone-disabled-item-node)
+(check-equal (obs-peek @disabled-menu-clicks) 0 "menu-item disabled click ignored")
+(dom-node-click! standalone-enabled-item-node)
+(check-equal (obs-peek @disabled-menu-clicks) 1 "menu-item enabled click still works")
+
+;; menu-item supports observable disabled state updates
+(define @disabled-menu-clicks/obs (obs 0))
+(define @menu-item-disabled?      (obs #t))
+(define r20-popup-disabled/obs
+  (render
+   (window
+    (vpanel
+     (menu-popup
+      (menu-item "Rename"
+                 (lambda () (<~ @disabled-menu-clicks/obs add1))
+                 #:disabled @menu-item-disabled?)
+      (menu-item "Delete"
+                 (lambda () (<~ @disabled-menu-clicks/obs add1))))))))
+(define standalone-disabled/obs-popup-node
+  (node-child (node-child (renderer-root r20-popup-disabled/obs) 0) 0))
+(define standalone-disabled/obs-item-node
+  (node-child standalone-disabled/obs-popup-node 0))
+(check-equal (node-attr standalone-disabled/obs-item-node 'aria-disabled) "true" "menu-item observable disabled initial aria state")
+(check-equal (node-attr standalone-disabled/obs-item-node 'tabindex) -1 "menu-item observable disabled initial tabindex")
+(check-equal (node-class-contains? standalone-disabled/obs-item-node "is-disabled") #t "menu-item observable disabled initial class")
+(dom-node-click! standalone-disabled/obs-item-node)
+(check-equal (obs-peek @disabled-menu-clicks/obs) 0 "menu-item observable disabled initial click ignored")
+(:= @menu-item-disabled? #f)
+(check-equal (node-attr standalone-disabled/obs-item-node 'aria-disabled) "false" "menu-item observable disabled clears aria state")
+(check-equal (node-attr standalone-disabled/obs-item-node 'tabindex) 0 "menu-item observable disabled clears tabindex")
+(check-equal (node-class-contains? standalone-disabled/obs-item-node "is-disabled") #f "menu-item observable disabled clears class")
+(dom-node-click! standalone-disabled/obs-item-node)
+(check-equal (obs-peek @disabled-menu-clicks/obs) 1 "menu-item observable disabled click works after enable")
+(:= @menu-item-disabled? #t)
+(check-equal (node-attr standalone-disabled/obs-item-node 'aria-disabled) "true" "menu-item observable disabled restores aria state")
+(check-equal (node-attr standalone-disabled/obs-item-node 'tabindex) -1 "menu-item observable disabled restores tabindex")
+(check-equal (node-class-contains? standalone-disabled/obs-item-node "is-disabled") #t "menu-item observable disabled restores class")
+(dom-node-click! standalone-disabled/obs-item-node)
+(check-equal (obs-peek @disabled-menu-clicks/obs) 1 "menu-item observable disabled click ignored after re-disable")
+
 ;; menu-bar supports root decorators/global attrs and rejects unknown attrs
 (define r20-decorated
   (render

@@ -793,8 +793,13 @@
     (define table (load-html-attr-table/component use-stx))
     (define globals (hash-ref table "*" '()))
     (define specific (hash-ref table (symbol->string tag-sym) '()))
+    (define extra
+      (case tag-sym
+        [(menu-item) '(disabled)]
+        [else '()]))
     (remove-duplicates (append globals
                                specific
+                               extra
                                '(data-* aria-*))))
   (syntax-case stx (quote)
     [(_ name

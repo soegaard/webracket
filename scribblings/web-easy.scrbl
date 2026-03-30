@@ -3193,7 +3193,8 @@ Closing the popup returns focus to the element that was focused before the popup
 @defproc[(menu-item [label text-content/c]
                     [action procedure?]
                     [leading-icon (or/c #f content/c) #f]
-                    [trailing-icon (or/c #f content/c) #f])
+                    [trailing-icon (or/c #f content/c) #f]
+                    [#:disabled disabled boolean? #f])
          view?]{
 Build a menu item.
 
@@ -3201,6 +3202,8 @@ Positional arguments:
 @racket[label] is item text;
 @racket[action] is called on activation;
 @racket[leading-icon] and @racket[trailing-icon] are optional icon/content slots.
+When @racket[#:disabled] is true, the item is rendered with disabled styling,
+is skipped by popup keyboard navigation and type-ahead, and ignores activation.
 This constructor also accepts global HTML keyword attributes for its root
 @tt{<menu-item>} element.
 }

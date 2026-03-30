@@ -69,37 +69,46 @@
         H.assertEqual(doc.activeElement, popup, "popup gets autofocus when opened");
 
         const items = () => Array.from(doc.querySelectorAll('.we-menu-item[role="menuitem"]'));
-        H.assertEqual(items().length, 2, "popup exposes two menu items");
+        const enabledItems = () => items().filter((item) => item.getAttribute("aria-disabled") !== "true");
+        H.assertEqual(items().length, 3, "popup exposes three menu items");
+        H.assertEqual(enabledItems().length, 2, "popup exposes two enabled menu items");
+        H.assertEqual(items()[1].getAttribute("aria-disabled"), "true", "middle item is disabled");
 
         H.dispatchKey(popup, "ArrowDown");
         await H.waitForCondition("menu-popup ArrowDown entry", 20000, function () {
-          return doc.activeElement === items()[0];
+          return doc.activeElement === enabledItems()[0];
         });
-        H.assertEqual(doc.activeElement, items()[0], "ArrowDown from popup focuses first item");
+        H.assertEqual(doc.activeElement, enabledItems()[0], "ArrowDown from popup focuses first enabled item");
 
-        H.dispatchKey(items()[0], "ArrowDown");
+        H.dispatchKey(enabledItems()[0], "ArrowDown");
         await H.waitForCondition("menu-item ArrowDown next", 20000, function () {
-          return doc.activeElement === items()[1];
+          return doc.activeElement === enabledItems()[1];
         });
-        H.assertEqual(doc.activeElement, items()[1], "ArrowDown from first item focuses second item");
+        H.assertEqual(doc.activeElement, enabledItems()[1], "ArrowDown skips disabled item");
 
-        H.dispatchKey(items()[1], "ArrowUp");
+        H.dispatchKey(enabledItems()[1], "ArrowUp");
         await H.waitForCondition("menu-item ArrowUp prev", 20000, function () {
-          return doc.activeElement === items()[0];
+          return doc.activeElement === enabledItems()[0];
         });
-        H.assertEqual(doc.activeElement, items()[0], "ArrowUp from second item focuses first item");
+        H.assertEqual(doc.activeElement, enabledItems()[0], "ArrowUp skips disabled item");
 
-        H.dispatchKey(items()[0], "End");
+        H.dispatchKey(enabledItems()[0], "End");
         await H.waitForCondition("menu-item End last", 20000, function () {
-          return doc.activeElement === items()[1];
+          return doc.activeElement === enabledItems()[1];
         });
-        H.assertEqual(doc.activeElement, items()[1], "End from first item focuses last item");
+        H.assertEqual(doc.activeElement, enabledItems()[1], "End from first item focuses last enabled item");
 
-        H.dispatchKey(items()[1], "Home");
+        H.dispatchKey(enabledItems()[1], "Home");
         await H.waitForCondition("menu-item Home first", 20000, function () {
-          return doc.activeElement === items()[0];
+          return doc.activeElement === enabledItems()[0];
         });
-        H.assertEqual(doc.activeElement, items()[0], "Home from last item focuses first item");
+        H.assertEqual(doc.activeElement, enabledItems()[0], "Home from last item focuses first enabled item");
+
+        H.dispatchKey(popup, "d");
+        await H.waitForCondition("menu-popup typeahead skips disabled", 20000, function () {
+          return doc.activeElement === enabledItems()[1];
+        });
+        H.assertEqual(doc.activeElement, enabledItems()[1], "typeahead skips disabled item and reaches Delete");
 
         H.dispatchKey(popup, "Escape");
         await H.waitForCondition("menu-popup escape close", 20000, function () {
@@ -111,7 +120,7 @@
           return doc.activeElement === openButton;
         });
         H.assertEqual(doc.activeElement, openButton, "popup returns focus to opener on close");
-        H.setStatus("PASS\nmenu-popup enters roving focus with ArrowDown", "pass");
+        H.setStatus("PASS\nmenu-popup skips disabled items during keyboard navigation", "pass");
       } catch (err) {
         console.error(err);
         window.SmokeHarness.setStatus(

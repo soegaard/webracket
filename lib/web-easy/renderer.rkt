@@ -474,9 +474,55 @@
 
     ;; dom-node-click! : dom-node? -> void?
     ;;   Invoke the node click callback when present.
+    (define (attr-bool-true?/internal attrs key)
+      (define p (assq key attrs))
+      (and p
+           (let ([v (cdr p)])
+             (not (or (eq? v #f)
+                      (equal? v "false"))))))
+
+    ;; class-append-token/internal : any/c string? -> string?
+    ;;   Append token to class string unless already present.
+    (define (attr-ref/default/internal attrs key default)
+      (define p (assq key attrs))
+      (if p (cdr p) default))
+
+    (define (class-append-token/internal current token)
+      (define tokens
+        (filter (lambda (s) (not (string=? s "")))
+                (string-split (if (string? current) current "") " ")))
+      (if (member token tokens)
+          (string-join tokens " ")
+          (string-join (append tokens (list token)) " ")))
+
+    ;; attr-set/internal : list? symbol? any/c -> list?
+    ;;   Return attrs with key set to value, replacing any earlier occurrence.
+    (define (attr-set/internal attrs key value)
+      (append (filter (lambda (entry) (not (eq? (car entry) key))) attrs)
+              (list (cons key value))))
+
+    ;; normalize-menu-item-attrs/internal : list? -> list?
+    ;;   Ensure disabled menu items expose consistent class, aria, and tabindex attrs.
+    (define (normalize-menu-item-attrs/internal attrs)
+      (if (and (attr-bool-true?/internal attrs 'disabled)
+               (equal? (attr-ref/default/internal attrs 'data-we-widget #f) "menu-item"))
+          (let* ([class0 (attr-ref/default/internal attrs 'class "")]
+                 [attrs1 (attr-set/internal attrs 'class (class-append-token/internal class0 "is-disabled"))]
+                 [attrs2 (attr-set/internal attrs1 'aria-disabled "true")])
+            (attr-set/internal attrs2 'tabindex -1))
+          attrs))
+
+    ;; dom-node-disabled? : dom-node? -> boolean?
+    ;;   Check whether node should ignore activation because it is disabled.
+    (define (dom-node-disabled? n)
+      (define attrs (dom-node-attrs n))
+      (or (attr-bool-true?/internal attrs 'disabled)
+          (equal? (attr-ref/default/internal attrs 'aria-disabled #f) "true")))
+
     (define (dom-node-click! n)
       (define on-click (dom-node-on-click n))
-      (when on-click
+      (when (and on-click
+                 (not (dom-node-disabled? n)))
         (on-click)))
 
     ;; dom-node-change! : dom-node? any/c -> void?
@@ -562,6 +608,7 @@
                  (string=? key "Enter"))
         ((cdr on-enter-pair)))
       (when (and on-click
+                 (not (dom-node-disabled? n))
                  (or (eq? tag 'button)
                      (and role-pair
                           (or (eq? (cdr role-pair) 'button)
@@ -829,6 +876,11 @@
           (eq? attr-key 'on-enter-action)
           (primitive-dom-event-attr-key? attr-key)))
 
+    ;; ref-attr-key? : any/c -> boolean?
+    ;;   Check whether attr-key is the special primitive ref attribute.
+    (define (ref-attr-key? attr-key)
+      (eq? attr-key 'ref))
+
     ;; primitive-event-attr-key->dom-event-name : symbol? -> string?
     ;;   Convert primitive event attr key like 'on-mouseup to DOM event name "mouseup".
     (define (primitive-event-attr-key->dom-event-name attr-key)
@@ -868,6 +920,19 @@
                      acc))]
           [else
            (loop (cdr remaining) acc)])))
+
+    ;; ref-observable-from-extra-attrs : list? -> (or/c observable? #f)
+    ;;   Return the last ref observable from raw extra attrs, or #f when absent.
+    (define (ref-observable-from-extra-attrs extra-attrs/raw)
+      (let loop ([remaining extra-attrs/raw]
+                 [found #f])
+        (cond
+          [(null? remaining)
+           found]
+          [(ref-attr-key? (caar remaining))
+           (loop (cdr remaining) (cdar remaining))]
+          [else
+           (loop (cdr remaining) found)])))
 
     (define (merge-root-extra-attrs v attrs)
       (define props (view-props v))
@@ -928,6 +993,8 @@
                              acc))))]
             [(internal-action-attr-key? (caar remaining))
              (loop (cdr remaining) acc)]
+            [(ref-attr-key? (caar remaining))
+             (loop (cdr remaining) acc)]
             [(primitive-dom-event-attr-key? (caar remaining))
              (loop (cdr remaining) acc)]
             [else
@@ -947,6 +1014,14 @@
     ;;   Read observable content when v is observable, otherwise return v.
     (define (maybe-observable-value v)
       (if (obs? v) (obs-peek v) v))
+
+    ;; node-ref-mounted-value : dom-node? -> any/c
+    ;;   Return browser-native node when available, otherwise the backend node itself.
+    (define (node-ref-mounted-value n)
+      (define native (dom-node-native n))
+      (if native
+          native
+          n))
 
     ;; base-order/url-attr-keys : list?
     ;;   Attribute keys treated as URL-bearing for conservative Base ordering checks.
@@ -1201,9 +1276,10 @@
       ;;   Set attrs, applying view-level style hooks only on this view's root node.
       (define (set-dom-node-attrs! n attrs)
         (backend-set-dom-node-attrs!
-         n (if (and root-node (eq? n root-node))
-               (merge-root-extra-attrs v attrs)
-               attrs)))
+         n (normalize-menu-item-attrs/internal
+            (if (and root-node (eq? n root-node))
+                (merge-root-extra-attrs v attrs)
+                attrs))))
       (define node
         (case kind
           [(window)
@@ -1256,6 +1332,10 @@
                (if (symbol? v0) v0 'div)))
            (define node (dom-node initial-tag '() '() "" #f #f))
            (define extra-attrs/raw (props-extra-attrs (view-props v)))
+           (define ref-obs (ref-observable-from-extra-attrs extra-attrs/raw))
+           (define (refresh-ref!)
+             (when ref-obs
+               (obs-set! ref-obs (node-ref-mounted-value node))))
           (define (callback-from-action-attr attr-key)
             (define p (assq attr-key extra-attrs/raw))
             (if p
@@ -1277,12 +1357,15 @@
              (set-dom-node-tag! node
                                 (if (symbol? tag-value)
                                     tag-value
-                                    'div)))
+                                    'div))
+             (refresh-ref!))
           (define (set-text! value0)
-             (set-dom-node-text! node (value->text value0)))
+             (set-dom-node-text! node (value->text value0))
+             (refresh-ref!))
           (define (set-string-only-text! value0)
             (set-dom-node-text! node
-                                (html-string-only-text-value->string value0)))
+                                (html-string-only-text-value->string value0))
+            (refresh-ref!))
           (define (emit-string-only-text-update-ignored! tag value0)
             (define msg
               (string-append "web-easy: ignored non-string observable text update for "
@@ -1322,27 +1405,30 @@
               (register-cleanup! (lambda () (obs-unobserve! raw-value listener)))]
              [else
               (set-text! raw-value)])
-           (define on-click-callback (callback-from-action-attr 'on-click-action))
-           (define on-change-callback (callback-from-action-attr 'on-change-action))
            (define (refresh-root-event-handlers!)
              (set-dom-node-event-handlers! node
                                            (event-handlers-from-extra-attrs extra-attrs/raw)))
-           (when on-click-callback
-             (set-dom-node-on-click! node on-click-callback))
-           (when on-change-callback
-             (set-dom-node-on-change! node on-change-callback))
-           (refresh-root-event-handlers!)
+           (define (refresh-root-callbacks!)
+             (set-dom-node-on-click! node (callback-from-action-attr 'on-click-action))
+             (set-dom-node-on-change! node (callback-from-action-attr 'on-change-action))
+             (refresh-root-event-handlers!))
+           (refresh-root-callbacks!)
+           (refresh-ref!)
+           (when ref-obs
+             (register-cleanup! (lambda ()
+                                  (obs-set! ref-obs #f))))
            (for-each
             (lambda (entry)
               (when (and (pair? entry)
                          (symbol? (car entry))
-                         (obs? (cdr entry)))
+                         (obs? (cdr entry))
+                         (not (ref-attr-key? (car entry))))
                 (define attr-obs (cdr entry))
                 (define (attr-listener _updated)
                   (if (valid-observable-attr-update? (car entry) _updated)
                       (let ()
                         (refresh-root-attrs!)
-                        (refresh-root-event-handlers!))
+                        (refresh-root-callbacks!))
                       (void)))
                 (obs-observe! attr-obs attr-listener)
                 (register-cleanup! (lambda () (obs-unobserve! attr-obs attr-listener)))))
@@ -1355,12 +1441,20 @@
                (if (symbol? v0) v0 'div)))
            (define node (dom-node initial-tag '() '() #f #f #f))
            (define extra-attrs/raw (props-extra-attrs (view-props v)))
+           (define ref-obs (ref-observable-from-extra-attrs extra-attrs/raw))
+           (define (refresh-ref!)
+             (when ref-obs
+               (obs-set! ref-obs (node-ref-mounted-value node))))
            (define (callback-from-action-attr attr-key)
              (define p (assq attr-key extra-attrs/raw))
              (if p
                  (let ([v0 (maybe-observable-value (cdr p))])
                    (if (procedure? v0) v0 #f))
                  #f))
+           (define (refresh-root-callbacks!)
+             (set-dom-node-on-click! node (callback-from-action-attr 'on-click-action))
+             (set-dom-node-on-change! node (callback-from-action-attr 'on-change-action))
+             (refresh-root-event-handlers!))
            (define (valid-observable-attr-update? attr-key updated-value)
              (if (and (procedure? updated-value)
                       (not (procedure-allowed-attr-key? attr-key)))
@@ -1372,11 +1466,12 @@
                  #t))
            (define (refresh-root-attrs!)
              (set-dom-node-attrs! node (attr-remove-key (dom-node-attrs node) 'class)))
-           (define (set-tag! tag-value)
+          (define (set-tag! tag-value)
              (set-dom-node-tag! node
                                 (if (symbol? tag-value)
                                     tag-value
-                                    'div)))
+                                    'div))
+             (refresh-ref!))
            (cond
              [(obs? raw-tag)
               (set-tag! (obs-peek raw-tag))
@@ -1389,27 +1484,26 @@
            (for-each (lambda (child)
                        (append-view-child! node child))
                      (view-children v))
-           (define on-click-callback (callback-from-action-attr 'on-click-action))
-           (define on-change-callback (callback-from-action-attr 'on-change-action))
            (define (refresh-root-event-handlers!)
              (set-dom-node-event-handlers! node
                                            (event-handlers-from-extra-attrs extra-attrs/raw)))
-           (when on-click-callback
-             (set-dom-node-on-click! node on-click-callback))
-           (when on-change-callback
-             (set-dom-node-on-change! node on-change-callback))
-           (refresh-root-event-handlers!)
+           (refresh-root-callbacks!)
+           (refresh-ref!)
+           (when ref-obs
+             (register-cleanup! (lambda ()
+                                  (obs-set! ref-obs #f))))
            (for-each
             (lambda (entry)
               (when (and (pair? entry)
                          (symbol? (car entry))
-                         (obs? (cdr entry)))
+                         (obs? (cdr entry))
+                         (not (ref-attr-key? (car entry))))
                 (define attr-obs (cdr entry))
                 (define (attr-listener updated)
                   (if (valid-observable-attr-update? (car entry) updated)
                       (let ()
                         (refresh-root-attrs!)
-                        (refresh-root-event-handlers!))
+                        (refresh-root-callbacks!))
                       (void)))
                 (obs-observe! attr-obs attr-listener)
                 (register-cleanup! (lambda () (obs-unobserve! attr-obs attr-listener)))))
@@ -1426,6 +1520,10 @@
                (if (symbol? v0) v0 'div)))
            (define node (dom-node initial-tag '() '() #f #f #f))
            (define extra-attrs/raw (props-extra-attrs (view-props v)))
+           (define ref-obs (ref-observable-from-extra-attrs extra-attrs/raw))
+           (define (refresh-ref!)
+             (when ref-obs
+               (obs-set! ref-obs (node-ref-mounted-value node))))
            (define (callback-from-action-attr attr-key)
              (define p (assq attr-key extra-attrs/raw))
              (if p
@@ -1484,17 +1582,20 @@
              (set-dom-node-tag! node
                                 (if (symbol? tag-value)
                                     tag-value
-                                    'div)))
-           (define on-click-callback (callback-from-action-attr 'on-click-action))
-           (define on-change-callback (callback-from-action-attr 'on-change-action))
+                                    'div))
+             (refresh-ref!))
            (define (refresh-root-event-handlers!)
              (set-dom-node-event-handlers! node
                                            (event-handlers-from-extra-attrs extra-attrs/raw)))
-           (when on-click-callback
-             (set-dom-node-on-click! node on-click-callback))
-           (when on-change-callback
-             (set-dom-node-on-change! node on-change-callback))
-           (refresh-root-event-handlers!)
+           (define (refresh-root-callbacks!)
+             (set-dom-node-on-click! node (callback-from-action-attr 'on-click-action))
+             (set-dom-node-on-change! node (callback-from-action-attr 'on-change-action))
+             (refresh-root-event-handlers!))
+           (refresh-root-callbacks!)
+           (refresh-ref!)
+           (when ref-obs
+             (register-cleanup! (lambda ()
+                                  (obs-set! ref-obs #f))))
            (define last-value #f)
            (define have-last? #f)
            (define (render-from-value! value)
@@ -1532,13 +1633,14 @@
             (lambda (entry)
               (when (and (pair? entry)
                          (symbol? (car entry))
-                         (obs? (cdr entry)))
+                         (obs? (cdr entry))
+                         (not (ref-attr-key? (car entry))))
                 (define attr-obs (cdr entry))
                 (define (attr-listener updated)
                   (if (valid-observable-attr-update? (car entry) updated)
                       (let ()
                         (refresh-root-attrs!)
-                        (refresh-root-event-handlers!))
+                        (refresh-root-callbacks!))
                       (void)))
                 (obs-observe! attr-obs attr-listener)
                 (register-cleanup! (lambda () (obs-unobserve! attr-obs attr-listener)))))

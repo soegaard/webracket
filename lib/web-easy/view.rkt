@@ -6683,6 +6683,7 @@
         (list (cons 'role 'menuitem)
               (cons 'class "we-menu-item")
               (cons 'data-we-widget "menu-item")
+              (cons 'aria-disabled "false")
               (cons 'tabindex 0)
               (cons 'on-click-action
                     (lambda ()
