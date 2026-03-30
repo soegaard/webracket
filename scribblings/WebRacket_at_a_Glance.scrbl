@@ -2,13 +2,12 @@
 
 @title{WebRacket at a Glance}
 
-A high-level overview of what WebRacket is, what it targets, and how the main
-pieces fit together.
+This is a high-level overview of WebRacket.
 
-@section{What WebRacket Is}
+@section{What is WebRacket?}
 
 WebRacket is a @bold{Racket-to-WebAssembly compiler} designed to run practical
-Racket programs directly in modern web browsers.
+Racket programs directly in the browser.
 
 It compiles a substantial subset of Racket to
 @hyperlink["https://webassembly.org/"]{WebAssembly}, which you can think of as
@@ -27,11 +26,11 @@ In practice, WebRacket:
   @item{Keeps the boundary to JavaScript explicit via the FFI.}
 ]
 
-@section{What WebRacket Is Not}
+@section{What WebRacket is not}
 
 WebRacket is not a drop-in replacement for Racket on the Racket VM.
-Some features are missing or differ because of browser and WebAssembly
-constraints.
+Some features are missing or behave differently because of browser
+and WebAssembly constraints.
 
 WebRacket aims for a useful and predictable subset, with differences reduced
 over time.
@@ -43,18 +42,15 @@ a browser environment. This model drives how computation, memory management,
 and host interaction are structured.
 
 @itemlist[
-  @item{@bold{Single-threaded execution}: no parallel threads or shared-memory
-        concurrency.}
-  @item{@bold{Custom runtime}: implements core Racket value representations and
-        primitive operations.}
-  @item{@bold{WebAssembly GC types}: uses Wasm GC for heap-allocated values
-        where available.}
+  @item{@bold{Single-threaded execution}: no parallel threads or shared-memory concurrency.}
+  @item{@bold{Custom runtime}: implements core Racket value representations and primitive operations.}
+  @item{@bold{WebAssembly GC types}: uses Wasm GC for heap-allocated values.}
 ]
 
 @section{Language Coverage}
 
 WebRacket focuses on practical web programs. It supports many core forms and
-data structures, while some areas are still in progress.
+data structures. Some areas are still a work in progress.
 
 Supported areas include:
 
@@ -76,20 +72,29 @@ Current limitations include:
   @item{Module support is still in progress.}
   @item{No support for continuations and continuation marks.}
   @item{Some numeric and control features are not yet implemented.}
-  @item{Keyword-argument behavior is evolving; see the Libraries chapter for
-        current @racket[define/key] and @racket[call/key] support.}
+  @item{Keyword-argument behavior is evolving;
+        see the Libraries chapter for @racket[define/key].}
 ]
 
 @section{JavaScript FFI}
 
-WebRacket integrates with the browser through an explicit JavaScript FFI.
-This is how programs use the DOM, Canvas, and libraries such as MathJax,
+WebAssembly programs can't directly call JavaScript functions.
+A foreign-function interface (FFI) is needed as a bridge between the two languages.
+
+Only very simple values, such as integers and floating-point numbers, can be
+passed directly when a JavaScript function is called from WebAssembly.
+To pass other values, WebAssembly needs to encode the values as bytes
+and store them in a shared byte array. On the JavaScript side, the bytes
+are decoded before the function is invoked. This process is called FASL
+encoding and decoding.
+
+The process is similar when JavaScript calls a WebAssembly function.
+
+WebRacket attempts to automate this process as much as possible,
+but you still need to be aware that not all values can cross the bridge.
+
+For common browser APIs, WebRacket has efficient static bindings.
+This covers the DOM, Canvas, and libraries such as MathJax,
 Xterm.js, and JSXGraph.
 
-The FFI keeps conversions and effects explicit so boundary behavior stays
-predictable and debuggable.
-
-@section{Very Brief Compiler Overview}
-
-WebRacket uses a direct-style compiler that translates expanded Racket programs
-to WebAssembly through a sequence of code transformations. This structure
+If you need other browser APIs, there is a dynamic FFI available.
