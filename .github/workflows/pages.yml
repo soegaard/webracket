@@ -33,6 +33,9 @@ jobs:
           distribution: full
           version: stable
 
+      - name: Install Scribble tools
+        run: raco pkg install --auto --skip-installed --no-docs scribble-tools
+
       - name: Render WebRacket manual
         run: raco scribble --htmls --dest html scribblings/webracket.scrbl
 
