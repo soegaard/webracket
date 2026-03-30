@@ -6,7 +6,6 @@ on:
       - main
     paths:
       - "scribblings/**"
-      - "lib/web-easy/**"
       - "compiler.rkt"
       - "primitives.rkt"
       - "runtime-wasm.rkt"
@@ -69,24 +68,6 @@ jobs:
 
       - name: Link local webracket collection
         run: raco link "$GITHUB_WORKSPACE"
-
-      - name: Compile web-easy examples
-        run: |
-          set -euo pipefail
-          publish_root="web-site/public/web-easy-examples"
-          rm -rf "$publish_root"
-          mkdir -p "$publish_root"
-          while IFS= read -r compile_sh; do
-            example_dir="$(dirname "$compile_sh")"
-            example_name="$(basename "$example_dir")"
-            echo "Compiling $example_name"
-            (cd "$example_dir" && bash ./compile.sh)
-            mkdir -p "$publish_root/$example_name"
-            cp -R "$example_dir/generated/." "$publish_root/$example_name/"
-          done < <(find lib/web-easy/examples -mindepth 2 -maxdepth 2 -name compile.sh | sort)
-
-      - name: Generate web-easy examples page
-        run: bash web-site/src/generate-web-easy-examples-page.sh
 
       - name: Render WebRacket manual
         run: raco scribble --htmls --dest html scribblings/webracket.scrbl

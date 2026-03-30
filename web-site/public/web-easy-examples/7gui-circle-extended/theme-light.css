@@ -1,0 +1,1788 @@
+/*
+ * Web Easy external light theme example.
+ *
+ * This file is intended as a "starter template" for users writing their own
+ * stylesheet. The page enables this theme by adding the class
+ *   we-theme-light
+ * on the <html> element.
+ *
+ * Quick start:
+ * 1) Change colors in the Design Tokens section.
+ * 2) Keep the selectors the same at first.
+ * 3) Refresh the page and iterate.
+ */
+
+/* -------------------------------------------------------------------------- */
+/* 1) Design Tokens (CSS variables)                                            */
+/* -------------------------------------------------------------------------- */
+/* These variables are shared by many widgets.                                 */
+/* If you only change this section, the whole theme updates consistently.      */
+html.we-theme-light {
+  /* Core neutrals: page text/background and shared chrome. */
+  /* Focus ring color for keyboard focus (Tab navigation). */
+  --we-focus:         #0a66c2;
+  /* Focus tint fill used inside focused controls. */
+  --we-focus-tint:    rgba(10, 102, 194, 0.20);
+  /* Main text color. */
+  --we-fg:            #1a1f2b;
+  /* Main page background. */
+  --we-bg:            #ffffff;
+  /* Subtle background blocks (groups/panels). */
+  --we-bg-subtle:     #f3f3f3;
+  /* Selected tab/menu states. */
+  --we-bg-selected:   #e7f0ff;
+  /* Disabled controls. */
+  --we-bg-disabled:   #f3f3f3;
+  /* Hover background for interactive controls. */
+  --we-bg-hover:      #e8e8e8;
+  /* General border color. */
+  --we-border:        #888888;
+  /* Menu container border color. */
+  --we-border-menu:   #aaaaaa;
+  /* Less prominent borders. */
+  --we-border-muted:  #999999;
+  /* Very soft borders/separators. */
+  --we-border-soft:   #bbbbbb;
+  /* Border when hovering controls. */
+  --we-border-hover:  #c0c0c0;
+  /* Strong/highlighted border. */
+  --we-border-strong: #2f4f7f;
+  /* Muted/secondary text. */
+  --we-fg-muted:      #777777;
+  /* Backdrop color for overlays/dialogs. */
+  --we-overlay: rgba(0, 0, 0, 0.45);
+  /* Shadow scale: small cards, popups, and larger overlays. */
+  --we-shadow-sm: 0 1px 2px rgba(30, 52, 82, 0.08);
+  --we-shadow-md: 0 4px 10px rgba(0, 0, 0, 0.20);
+  --we-shadow-lg: 0 10px 24px rgba(0, 0, 0, 0.28);
+  /* Legacy/general overlay alias. */
+  --we-shadow: var(--we-shadow-lg);
+  /* Menu item hover colors (separate from general hover for fine tuning). */
+  --we-menu-item-hover-bg: #e8e8e8;
+  --we-menu-item-hover-fg: #1a1f2b;
+  /* Active tab bottom border color. */
+  --we-tab-active-border:  #e7f0ff;
+  /* Input/textarea placeholder text color. */
+  --we-input-placeholder:  #6f7f99;
+  /* Semantic tones used by badges/tables/cards/progress variants. */
+  --we-primary:   #2f7ea0;
+  --we-secondary: #7a8da6;
+  --we-success:   #3d8b5a;
+  --we-info:      #2c7dc8;
+  --we-warning:   #c1862f;
+  --we-danger:    #b65757;
+  --we-light:     #f7f9fc;
+  --we-dark:      #2a3342;
+  /* Neutral surface layer: base, raised, subtle, and separators. */
+  --we-surface:                 #ffffff;
+  --we-surface-raised:          #f7f9fd;
+  --we-surface-subtle:          #f3f6fb;
+  --we-surface-muted:           #eef3fb;
+  --we-surface-hover:           #e9f0fb;
+  --we-surface-active:          #dce7f7;
+  --we-separator:               #d0d9e8;
+  --we-separator-strong:        #c6d3e8;
+  --we-table-header-bg:         #eef3fb;
+  --we-table-header-fg:         #2b3f5f;
+  --we-table-cell-border:       #d4deed;
+  /* Shared control/popup surface tokens. */
+  --we-control-border:          #9aa9c3;
+  --we-control-border-hover:    #6f86aa;
+  --we-control-border-focus:    #5c78a6;
+  --we-control-border-disabled: #c8d0dd;
+  --we-popup-bg:                #ffffff;
+  --we-popup-border:            #888888;
+  --we-popup-shadow:            var(--we-shadow-md);
+  /* Semantic family tokens: base, on-color, emphasis, subtle, border. */
+  --we-primary-on:              #f7fcff;
+  --we-secondary-on:            #f8fbff;
+  --we-success-on:              #f5fff9;
+  --we-info-on:                 #f6fbff;
+  --we-warning-on:              #fffaf1;
+  --we-danger-on:               #fff7f7;
+  --we-primary-emphasis:        #266985;
+  --we-secondary-emphasis:      #5b749d;
+  --we-success-emphasis:        #2f6c46;
+  --we-info-emphasis:           #245f9a;
+  --we-warning-emphasis:        #9b6822;
+  --we-danger-emphasis:         #944444;
+  --we-primary-subtle:          #d8e8f2;
+  --we-secondary-subtle:        #e5eaf2;
+  --we-success-subtle:          #e4f2e7;
+  --we-info-subtle:             #e4eefb;
+  --we-warning-subtle:          #fdf1de;
+  --we-danger-subtle:           #f9e5e5;
+  --we-primary-border:          #85a8bf;
+  --we-secondary-border:        #b2bfd3;
+  --we-success-border:          #6a9b73;
+  --we-info-border:             #6e9fd1;
+  --we-warning-border:          #b79256;
+  --we-danger-border:           #b25a5a;
+  /* Spacing scale (used by multiple widgets). */
+  --we-space-xs: 2px;
+  --we-space-sm: 4px;
+  --we-space-md: 8px;
+  --we-space-lg: 10px;
+  --we-radius-sm: 3px;
+  --we-radius-md: 4px;
+  --we-radius-lg: 8px;
+  --we-radius-pill: 999px;
+  --we-font-family-base: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --we-font-family-heading: var(--we-font-family-base);
+  --we-font-size-sm: 0.875rem;
+  --we-font-size-md: 1rem;
+  --we-font-size-lg: 1.15rem;
+  --we-line-height-base: 1.5;
+  --we-font-weight-normal: 400;
+  --we-font-weight-semibold: 600;
+  --we-font-weight-bold: 700;
+  --we-menu-popup-offset: 2px;
+  --we-menu-popup-min-width: 150px;
+  --we-menu-popup-gap: 0px;
+
+  /* Fallback text color on the <html> element itself. */
+  color: var(--we-fg);
+}
+
+/* Page background and default text. */
+html.we-theme-light {
+  background: var(--we-bg);
+  margin: 0;
+  padding: 0;
+}
+
+html.we-theme-light body {
+  background: var(--we-bg);
+  color: var(--we-fg);
+  /* Match demo-theme-showcase typography. */
+  font-family: var(--we-font-family-base);
+  font-size: var(--we-font-size-md);
+  line-height: var(--we-line-height-base);
+  margin: 0;
+  padding: 0;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 2) Menu-specific tuning                                                      */
+/* -------------------------------------------------------------------------- */
+/* Menus are a bar of labels with popup lists, not a row of chip buttons. */
+html.we-theme-light .we-menu-bar {
+  gap: 2px;
+  padding: 2px 4px;
+  border: 1px solid #aaaaaa;
+  border-radius: var(--we-radius-md);
+  background: var(--we-bg-subtle);
+  box-sizing: border-box;
+}
+
+html.we-theme-light .we-menu-label {
+  -webkit-appearance: none;
+  appearance: none;
+  padding: 2px 8px;
+  /* Transparent border reserves space so state changes do not shift layout. */
+  border: 1px solid transparent;
+  border-radius: var(--we-radius-sm);
+  background: transparent;
+  color: var(--we-fg);
+  font-family: var(--we-font-family-heading);
+}
+
+html.we-theme-light .we-menu-label:hover {
+  background: var(--we-bg-hover);
+  color: var(--we-fg);
+  border-color: var(--we-border-soft);
+}
+
+html.we-theme-light .we-menu-label[aria-expanded='true'] {
+  background: var(--we-bg-selected);
+  color: var(--we-fg);
+  border-color: var(--we-border-soft);
+}
+
+html.we-theme-light .we-menu-popup {
+  padding: 2px;
+  border: 1px solid var(--we-popup-border);
+  border-radius: var(--we-radius-md);
+  background: var(--we-popup-bg);
+  box-shadow: var(--we-popup-shadow);
+}
+
+/* Popup separators should read as subtle menu section breaks. */
+html.we-theme-light .we-menu-popup .we-divider,
+html.we-theme-light .we-menu-popup .we-divider-horizontal {
+  margin: 3px 2px;
+  border-top-color: var(--we-separator);
+}
+
+html.we-theme-light .we-menu-item {
+  padding: 2px 8px;
+  background: var(--we-bg);
+  color: var(--we-fg);
+  border: none;
+  border-radius: var(--we-radius-sm);
+  font-family: var(--we-font-family-base);
+}
+
+html.we-theme-light .we-menu-item:hover {
+  background: var(--we-menu-item-hover-bg);
+  color: var(--we-menu-item-hover-fg);
+}
+
+html.we-theme-light .we-menu-label:focus-visible,
+html.we-theme-light .we-menu-item:focus-visible {
+  /* Keep ring tight to widget edges so menu geometry stays stable. */
+}
+
+html.we-theme-light .we-menu-label:focus-visible {
+  background-color: var(--we-focus-tint);
+  outline: 1px solid var(--we-focus);
+  color: var(--we-fg);
+  border-color: var(--we-border-soft);
+}
+
+html.we-theme-light .we-menu-item:focus-visible {
+  background-color: var(--we-focus-tint);
+  outline: 1px solid var(--we-focus);
+  /* Keep the focus outline above neighboring items (avoids bottom-edge clipping). */
+  position: relative;
+  z-index: 1;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 3) Control Basics (buttons, inputs, select, textarea)                       */
+/* -------------------------------------------------------------------------- */
+/* Keep contrast high for readability.                                         */
+html.we-theme-light button,
+html.we-theme-light input,
+html.we-theme-light select,
+html.we-theme-light textarea {
+  color: var(--we-fg);
+}
+
+html.we-theme-light input,
+html.we-theme-light textarea,
+html.we-theme-light .we-input {
+  background: var(--we-surface);
+  border: 1px solid var(--we-control-border);
+  border-radius: var(--we-radius-md);
+  color: var(--we-fg);
+}
+
+html.we-theme-light button:disabled,
+html.we-theme-light .we-button:disabled {
+  background: var(--we-bg-disabled);
+  border-color: var(--we-control-border-disabled);
+  color: #8a94a6;
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+html.we-theme-light input::placeholder,
+html.we-theme-light textarea::placeholder {
+  color: var(--we-input-placeholder);
+}
+
+html.we-theme-light input:focus-visible,
+html.we-theme-light textarea:focus-visible,
+html.we-theme-light .we-input:focus-visible {
+  /* Gradient tint gives keyboard focus fill without replacing base colors entirely. */
+  background-image: linear-gradient(var(--we-focus-tint), var(--we-focus-tint));
+  outline: 1px solid var(--we-focus);
+  outline-offset: 0;
+  border-color: var(--we-control-border-focus);
+}
+
+html.we-theme-light input:disabled,
+html.we-theme-light textarea:disabled,
+html.we-theme-light .we-input:disabled {
+  background:   var(--we-bg-disabled);
+  color:        var(--we-fg-muted);
+  border-color: var(--we-border-soft);
+  opacity:      0.7;
+  cursor:       not-allowed;
+}
+
+html.we-theme-light button,
+html.we-theme-light .we-button {
+  background: var(--we-surface-raised);
+  border: 1px solid var(--we-control-border);
+  color: var(--we-fg);
+  border-radius: var(--we-radius-sm);
+  padding: 5px 11px;
+  font-family: var(--we-font-family-base);
+  font-size: var(--we-font-size-md);
+  font-weight: var(--we-font-weight-normal);
+  line-height: 1.25;
+}
+
+/* The close icon is CSS-driven; override this selector to use another glyph. */
+html.we-theme-light .we-close-button-icon::before {
+  content: "✕";
+}
+
+html.we-theme-light button:hover,
+html.we-theme-light .we-button:hover {
+  background: var(--we-surface-hover);
+  border-color: var(--we-control-border-hover);
+}
+
+html.we-theme-light button:active,
+html.we-theme-light .we-button:active {
+  background: var(--we-surface-active);
+  border-color: var(--we-control-border-focus);
+}
+
+html.we-theme-light button:focus-visible,
+html.we-theme-light .we-button:focus-visible {
+  background-image: linear-gradient(var(--we-focus-tint), var(--we-focus-tint));
+  outline: 1px solid var(--we-focus);
+  outline-offset: 0;
+}
+
+/* Button variants used by the public showcase page. */
+html.we-theme-light .we-button-primary {
+  background: var(--we-primary);
+  border-color: var(--we-primary);
+  color: var(--we-primary-on);
+}
+
+html.we-theme-light .we-button-primary:hover {
+  background: var(--we-primary-emphasis);
+  border-color: var(--we-primary-emphasis);
+}
+
+html.we-theme-light .we-button-secondary {
+  background: #e9eef6;
+  border-color: #91a6c4;
+  color: #2f4563;
+}
+
+html.we-theme-light .we-button-secondary:hover {
+  background: #dce6f3;
+  border-color: #7e98bd;
+}
+
+html.we-theme-light .we-button-ghost {
+  background: transparent;
+  border-color: var(--we-control-border);
+  color: var(--we-primary-emphasis);
+}
+
+html.we-theme-light .we-button-ghost:hover {
+  background: color-mix(in srgb, var(--we-primary) 10%, transparent);
+  border-color: var(--we-control-border-hover);
+}
+
+/* Extended semantic button variants used by demos/tests. */
+html.we-theme-light .we-button-success {
+  background: var(--we-success);
+  border-color: var(--we-success);
+  color: var(--we-success-on);
+}
+
+html.we-theme-light .we-button-info {
+  background: var(--we-info);
+  border-color: var(--we-info);
+  color: var(--we-info-on);
+}
+
+html.we-theme-light .we-button-warning {
+  background: var(--we-warning);
+  border-color: var(--we-warning);
+  color: var(--we-warning-on);
+}
+
+html.we-theme-light .we-button-danger {
+  background: var(--we-danger);
+  border-color: var(--we-danger);
+  color: var(--we-danger-on);
+}
+
+html.we-theme-light .we-button-light {
+  background: var(--we-light);
+  border-color: var(--we-light-border);
+  color: var(--we-light-emphasis);
+}
+
+html.we-theme-light .we-button-dark {
+  background: var(--we-dark);
+  border-color: var(--we-dark);
+  color: var(--we-dark-on);
+}
+
+html.we-theme-light .we-button-link {
+  background: transparent;
+  border-color: transparent;
+  color: var(--we-primary);
+  text-decoration: underline;
+}
+
+html.we-theme-light .we-button-outline-primary { background: transparent; border-color: var(--we-primary); color: var(--we-primary); }
+html.we-theme-light .we-button-outline-secondary { background: transparent; border-color: var(--we-secondary-border); color: var(--we-secondary-emphasis); }
+html.we-theme-light .we-button-outline-success { background: transparent; border-color: var(--we-success); color: var(--we-success-emphasis); }
+html.we-theme-light .we-button-outline-info { background: transparent; border-color: var(--we-info); color: var(--we-info); }
+html.we-theme-light .we-button-outline-warning { background: transparent; border-color: var(--we-warning); color: var(--we-warning-emphasis); }
+html.we-theme-light .we-button-outline-danger { background: transparent; border-color: var(--we-danger); color: var(--we-danger-emphasis); }
+html.we-theme-light .we-button-outline-light { background: var(--we-surface); border-color: var(--we-light-border); color: var(--we-light-emphasis); }
+html.we-theme-light .we-button-outline-dark { background: transparent; border-color: var(--we-dark); color: var(--we-dark); }
+
+html.we-theme-light .we-button-lg {
+  padding: 8px 14px;
+  font-size: var(--we-font-size-lg);
+}
+
+html.we-theme-light .we-button-sm {
+  padding: 3px 9px;
+  font-size: var(--we-font-size-sm);
+}
+
+/* Pagination links should look like buttons, not underlined text links. */
+html.we-theme-light .we-page-btn,
+html.we-theme-light .we-page-btn:hover,
+html.we-theme-light .we-page-btn:focus-visible {
+  text-decoration: none;
+}
+
+html.we-theme-light select,
+html.we-theme-light .we-choice {
+  background: var(--we-surface);
+  border: 1px solid var(--we-control-border);
+  border-radius: var(--we-radius-md);
+  color: var(--we-fg);
+}
+
+html.we-theme-light select:focus-visible,
+html.we-theme-light .we-choice:focus-visible {
+  background-image: linear-gradient(var(--we-focus-tint), var(--we-focus-tint));
+  outline: 1px solid var(--we-focus);
+  outline-offset: 0;
+}
+
+html.we-theme-light select option {
+  background: var(--we-surface);
+  color: var(--we-fg);
+}
+
+/* -------------------------------------------------------------------------- */
+/* 4) Alerts (inline status banners)                                            */
+/* -------------------------------------------------------------------------- */
+/* Alert classes are severity-specific and easy to retheme independently. */
+html.we-theme-light .we-alert {
+  border: 1px solid var(--we-control-border);
+  border-radius: var(--we-radius-md);
+  background: var(--we-surface-subtle);
+  color: var(--we-fg);
+  padding: 0.75rem 1rem;
+}
+
+html.we-theme-light .we-alert-primary {
+  border-color: var(--we-primary-border);
+  background: var(--we-primary-subtle);
+  color: var(--we-primary-emphasis);
+}
+
+html.we-theme-light .we-alert-secondary {
+  border-color: var(--we-secondary-border);
+  background: var(--we-secondary-subtle);
+  color: var(--we-secondary-emphasis);
+}
+
+html.we-theme-light .we-alert-success {
+  border-color: var(--we-success-border);
+  background: var(--we-success-subtle);
+  color: var(--we-success-emphasis);
+}
+
+html.we-theme-light .we-alert-info {
+  border-color: var(--we-info-border);
+  background: var(--we-info-subtle);
+  color: var(--we-info-emphasis);
+}
+
+html.we-theme-light .we-alert-warning {
+  border-color: var(--we-warning-border);
+  background: var(--we-warning-subtle);
+  color: var(--we-warning-emphasis);
+}
+
+html.we-theme-light .we-alert-danger {
+  border-color: var(--we-danger-border);
+  background: var(--we-danger-subtle);
+  color: var(--we-danger-emphasis);
+}
+
+html.we-theme-light .we-alert-light {
+  border-color: var(--we-light-border);
+  background: var(--we-light);
+  color: var(--we-light-emphasis);
+}
+
+html.we-theme-light .we-alert-dark {
+  border-color: var(--we-dark);
+  background: var(--we-dark);
+  color: var(--we-dark-on);
+}
+
+/* -------------------------------------------------------------------------- */
+/* 5) Toasts (floating non-modal notifications)                                 */
+/* -------------------------------------------------------------------------- */
+/* Toasts share alert severity colors, but are positioned as floating overlays. */
+html.we-theme-light .we-toast {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "title close"
+    "message close";
+  column-gap: 0.625rem;
+  row-gap: 0.25rem;
+  align-items: start;
+  border: 1px solid var(--we-control-border);
+  border-radius: 6px;
+  background: var(--we-surface);
+  color: var(--we-fg);
+  padding: 0.75rem 0.875rem;
+  box-shadow: var(--we-shadow-md);
+}
+
+html.we-theme-light .we-toast-title {
+  grid-area: title;
+  display: block;
+  margin: 0;
+  font-family: var(--we-font-family-heading);
+  font-weight: var(--we-font-weight-bold);
+  line-height: 1.25;
+}
+
+html.we-theme-light .we-toast-message {
+  grid-area: message;
+  display: block;
+  margin: 0;
+  line-height: 1.45;
+}
+
+html.we-theme-light .we-toast-success {
+  border-color: var(--we-success-border);
+  background: var(--we-success-subtle);
+  color: var(--we-success-emphasis);
+}
+
+html.we-theme-light .we-toast-info {
+  border-color: var(--we-info-border);
+  background: var(--we-info-subtle);
+  color: var(--we-info-emphasis);
+}
+
+html.we-theme-light .we-toast-warning {
+  border-color: var(--we-warning-border);
+  background: var(--we-warning-subtle);
+  color: var(--we-warning-emphasis);
+}
+
+html.we-theme-light .we-toast-danger {
+  border-color: var(--we-danger-border);
+  background: var(--we-danger-subtle);
+  color: var(--we-danger-emphasis);
+}
+
+html.we-theme-light .we-toast-close {
+  grid-area: close;
+  align-self: start;
+  justify-self: end;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--we-radius-md);
+  background: transparent;
+  color: inherit;
+  font-size: 0;
+  line-height: 0;
+  opacity: 0.75;
+}
+
+html.we-theme-light .we-toast-close::before {
+  content: "\00d7";
+  display: block;
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+html.we-theme-light .we-toast-close:hover {
+  opacity: 1;
+  background: color-mix(in srgb, var(--we-fg) 6%, transparent);
+}
+
+html.we-theme-light .we-toast-close:focus-visible {
+  opacity: 1;
+  outline: 1px solid var(--we-focus);
+  outline-offset: 1px;
+  background: color-mix(in srgb, var(--we-fg) 8%, transparent);
+}
+
+/* -------------------------------------------------------------------------- */
+/* 6) Tabs (tab-strip look, not button-row look)                               */
+/* -------------------------------------------------------------------------- */
+/* These rules make tabs look connected to the content panel. */
+html.we-theme-light .we-tab-list {
+  gap: 0;
+  border-bottom: 1px solid var(--we-control-border);
+  padding: 0 8px;
+  margin: 0;
+}
+
+html.we-theme-light .we-tab-btn {
+  min-width: 88px;
+  padding: 5px 11px;
+  border: 1px solid var(--we-control-border);
+  border-radius: var(--we-radius-lg) var(--we-radius-lg) 0 0;
+  border-bottom: none;
+  background: var(--we-surface-muted);
+  color: var(--we-fg-muted);
+  font-family: var(--we-font-family-heading);
+  margin: 0 0 -1px 0;
+  position: relative;
+}
+
+html.we-theme-light .we-tab-btn + .we-tab-btn {
+  margin-left: -1px;
+}
+
+html.we-theme-light .we-tab-btn.is-selected {
+  border-color: var(--we-primary-border);
+  /* Active tab sits in front and merges into the content panel. */
+  border-bottom: 1px solid color-mix(in srgb, var(--we-primary-subtle) 78%, var(--we-surface) 22%);
+  background: color-mix(in srgb, var(--we-primary-subtle) 78%, var(--we-surface) 22%);
+  color: var(--we-primary-emphasis);
+  font-weight: var(--we-font-weight-bold);
+  z-index: 1;
+}
+
+html.we-theme-light .we-tab-btn.is-disabled {
+  border-color: var(--we-control-border-disabled);
+  background: var(--we-bg-disabled);
+  color: var(--we-fg-muted);
+}
+
+html.we-theme-light .we-tab-content {
+  border: 1px solid var(--we-control-border);
+  border-top: none;
+  border-radius: 0 0 var(--we-radius-lg) var(--we-radius-lg);
+  background: var(--we-surface);
+  padding: 10px;
+}
+
+html.we-theme-light .we-tab-panel > .we-tab-list + .we-tab-content {
+  border-top-left-radius: 0;
+  border-top-right-radius: 0;
+}
+
+/* Dialog surface colors are theme-owned, so theme switching updates overlays. */
+html.we-theme-light .we-dialog-panel {
+  border-color: var(--we-control-border);
+  background: var(--we-popup-bg);
+  color: var(--we-fg);
+  box-shadow: var(--we-shadow-lg);
+}
+
+html.we-theme-light .we-tab-btn:focus-visible {
+  /* Focus tint overlays the tab while keeping tab shape and border cues visible. */
+  background-image: linear-gradient(var(--we-focus-tint), var(--we-focus-tint));
+  outline: 1px solid var(--we-focus);
+  outline-offset: 0;
+}
+
+html.we-theme-light .we-dialog-panel:focus-visible {
+  background-image: linear-gradient(var(--we-focus-tint), var(--we-focus-tint));
+  outline: 1px solid var(--we-focus);
+  outline-offset: 2px;
+}
+
+/* -------------------------------------------------------------------------- */
+/* 7) Accordion (section headers + right-side indicator)                       */
+/* -------------------------------------------------------------------------- */
+/* Accordion headers should read as section titles, not generic action buttons. */
+html.we-theme-light .we-accordion {
+  gap: 2px;
+}
+
+html.we-theme-light .we-accordion-section {
+  border: 1px solid var(--we-control-border);
+  border-radius: 6px;
+  background: var(--we-surface);
+}
+
+html.we-theme-light .we-accordion-trigger {
+  padding: 4px 8px;
+  border: none;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--we-primary-subtle) 18%, var(--we-surface-subtle) 82%);
+  color: var(--we-fg);
+  font-family: var(--we-font-family-heading);
+  font-weight: var(--we-font-weight-semibold);
+}
+
+/* Right-side indicator (Bootstrap-like) points to collapsed content. */
+html.we-theme-light .we-accordion-trigger::after {
+  content: "▸";
+  color: var(--we-fg-muted);
+  transform: rotate(0deg);
+  transition-duration: 0.18s;
+}
+
+html.we-theme-light .we-accordion-trigger:hover {
+  background: color-mix(in srgb, var(--we-primary-subtle) 34%, var(--we-surface-hover) 66%);
+}
+
+/* Open state rotates indicator downward and visually connects to the panel. */
+html.we-theme-light .we-accordion-trigger.is-open {
+  background: color-mix(in srgb, var(--we-primary-subtle) 82%, var(--we-surface) 18%);
+  border-bottom: 1px solid var(--we-primary-border);
+  border-radius: 6px 6px 0 0;
+  color: var(--we-primary-emphasis);
+}
+
+html.we-theme-light .we-accordion-trigger.is-open::after {
+  transform: rotate(90deg);
+  color: var(--we-primary-emphasis);
+}
+
+/*
+ * Customization tip:
+ * When creating your own theme, prefer changing variables first. If you later
+ * need component-specific styling, add new blocks below this line.
+ */
+/* Showcase page shell/topbar/hero styles live in theme-showcase-light.css. */
+
+/* -------------------------------------------------------------------------- */
+/* 8) Extended Component Coverage (non-showcase widgets)                       */
+/* -------------------------------------------------------------------------- */
+/* Navigation bar: links should look like nav links, not raised buttons. */
+html.we-theme-light .we-navigation-bar {
+  border: 1px solid var(--we-control-border);
+  border-radius: 6px;
+  background: var(--we-surface-raised);
+  padding: 6px 10px;
+}
+
+html.we-theme-light .we-navigation-bar .we-divider,
+html.we-theme-light .we-navigation-bar .we-divider-horizontal {
+  border-top-color: var(--we-separator-strong);
+}
+
+html.we-theme-light .we-navigation-bar .we-divider-vertical {
+  border-left-color: var(--we-separator-strong);
+}
+
+html.we-theme-light .we-navigation-bar .we-navigation-bar-items > .we-button,
+html.we-theme-light .we-navigation-bar .we-menu-label {
+  -webkit-appearance: none;
+  appearance: none;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--we-primary-emphasis);
+}
+
+html.we-theme-light .we-navigation-bar .we-navigation-bar-items > .we-button:hover,
+html.we-theme-light .we-navigation-bar .we-menu-label:hover {
+  background: color-mix(in srgb, var(--we-primary-subtle) 45%, var(--we-surface-hover) 55%);
+  border-color: var(--we-primary-border);
+  color: var(--we-primary-emphasis);
+}
+
+html.we-theme-light .we-navigation-bar .we-navigation-bar-items > .we-button[aria-current='page'],
+html.we-theme-light .we-navigation-bar .we-menu-label[aria-expanded='true'] {
+  background: color-mix(in srgb, var(--we-primary-subtle) 80%, var(--we-surface-raised) 20%);
+  border-color: var(--we-primary-border);
+  color: var(--we-primary-emphasis);
+}
+
+html.we-theme-light .we-navigation-bar .we-menu-popup {
+  border-color: var(--we-popup-border);
+  background: var(--we-popup-bg);
+}
+
+/* Navbar dropdowns are rendered as menu-bars; remove standalone menu-bar chrome. */
+html.we-theme-light .we-navigation-bar .we-menu-bar {
+  gap: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+/* Navbar variants used by the four-row showcase sample. */
+html.we-theme-light .we-navigation-bar.we-variant-primary,
+html.we-theme-light .we-variant-primary .we-navigation-bar {
+  border-color: var(--we-primary);
+  background: var(--we-primary);
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-dark,
+html.we-theme-light .we-variant-dark .we-navigation-bar {
+  border-color: var(--we-dark);
+  background: var(--we-dark);
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-light,
+html.we-theme-light .we-variant-light .we-navigation-bar {
+  border-color: var(--we-light-border);
+  background: var(--we-light);
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-subtle,
+html.we-theme-light .we-variant-subtle .we-navigation-bar {
+  border-color: var(--we-separator);
+  background: var(--we-surface-subtle);
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-primary :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label),
+html.we-theme-light .we-variant-primary .we-navigation-bar :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label),
+html.we-theme-light .we-navigation-bar.we-variant-dark :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label),
+html.we-theme-light .we-variant-dark .we-navigation-bar :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label) {
+  color: var(--we-primary-on);
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-light :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label),
+html.we-theme-light .we-variant-light .we-navigation-bar :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label) {
+  color: var(--we-light-emphasis);
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-subtle :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label),
+html.we-theme-light .we-variant-subtle .we-navigation-bar :is(.we-navbar-brand, .we-navigation-bar-items > .we-button, .we-menu-label) {
+  color: var(--we-fg);
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-primary .we-navigation-bar-items > .we-button:hover,
+html.we-theme-light .we-navigation-bar.we-variant-primary .we-menu-label:hover,
+html.we-theme-light .we-variant-primary .we-navigation-bar .we-navigation-bar-items > .we-button:hover,
+html.we-theme-light .we-variant-primary .we-navigation-bar .we-menu-label:hover {
+  background: var(--we-primary-emphasis);
+  border-color: var(--we-primary-emphasis);
+  color: var(--we-primary-on);
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-dark .we-navigation-bar-items > .we-button:hover,
+html.we-theme-light .we-navigation-bar.we-variant-dark .we-menu-label:hover,
+html.we-theme-light .we-variant-dark .we-navigation-bar .we-navigation-bar-items > .we-button:hover,
+html.we-theme-light .we-variant-dark .we-navigation-bar .we-menu-label:hover {
+  background: color-mix(in srgb, var(--we-dark) 82%, var(--we-surface) 18%);
+  border-color: var(--we-dark-border);
+  color: var(--we-dark-on);
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-subtle .we-navigation-bar-items > .we-button:hover,
+html.we-theme-light .we-navigation-bar.we-variant-subtle .we-menu-label:hover,
+html.we-theme-light .we-variant-subtle .we-navigation-bar .we-navigation-bar-items > .we-button:hover,
+html.we-theme-light .we-variant-subtle .we-navigation-bar .we-menu-label:hover {
+  background: var(--we-surface-hover);
+  border-color: var(--we-light-border);
+  color: var(--we-fg);
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-primary .we-menu-popup,
+html.we-theme-light .we-variant-primary .we-navigation-bar .we-menu-popup {
+  border-color: var(--we-primary-border);
+  background: var(--we-popup-bg);
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-dark .we-menu-popup,
+html.we-theme-light .we-variant-dark .we-navigation-bar .we-menu-popup {
+  border-color: var(--we-dark-border);
+  background: var(--we-popup-bg);
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-light .we-menu-popup,
+html.we-theme-light .we-variant-light .we-navigation-bar .we-menu-popup {
+  border-color: var(--we-light-border);
+  background: var(--we-popup-bg);
+}
+
+html.we-theme-light .we-navigation-bar.we-variant-subtle .we-menu-popup,
+html.we-theme-light .we-variant-subtle .we-navigation-bar .we-menu-popup {
+  border-color: var(--we-separator);
+  background: var(--we-popup-bg);
+}
+
+/* Cards/lists/tables share one subtle container system in this theme. */
+html.we-theme-light .we-card {
+  border: 1px solid var(--we-light-border);
+  border-radius: var(--we-radius-lg);
+  background: var(--we-surface);
+  overflow: hidden;
+  box-shadow: var(--we-shadow-sm);
+}
+
+html.we-theme-light .we-card-header,
+html.we-theme-light .we-card-footer {
+  border-color: color-mix(in srgb, var(--we-primary-border) 35%, var(--we-light-border) 65%);
+  background: color-mix(in srgb, var(--we-primary-subtle) 28%, var(--we-surface-subtle) 72%);
+  background-clip: padding-box;
+  color: var(--we-primary-emphasis);
+  font-family: var(--we-font-family-heading);
+  padding: 0.6rem 0.85rem;
+}
+
+html.we-theme-light .we-card-subtitle {
+  color: var(--we-fg-muted);
+}
+
+html.we-theme-light .we-card-body {
+  padding: 0.85rem;
+  gap: 0.6rem;
+}
+
+html.we-theme-light .we-card .we-heading {
+  margin: 0 0 0.2rem 0;
+  color: inherit;
+}
+
+html.we-theme-light .we-card-tone-primary   { --we-card-tone-bg: var(--we-primary);   --we-card-tone-border: var(--we-primary);   --we-card-tone-fg: var(--we-primary-on); }
+html.we-theme-light .we-card-tone-secondary { --we-card-tone-bg: var(--we-secondary); --we-card-tone-border: var(--we-secondary); --we-card-tone-fg: var(--we-secondary-on); }
+html.we-theme-light .we-card-tone-success   { --we-card-tone-bg: var(--we-success);   --we-card-tone-border: var(--we-success);   --we-card-tone-fg: var(--we-success-on); }
+html.we-theme-light .we-card-tone-info      { --we-card-tone-bg: var(--we-info);      --we-card-tone-border: var(--we-info);      --we-card-tone-fg: var(--we-info-on); }
+html.we-theme-light .we-card-tone-warning   { --we-card-tone-bg: var(--we-warning);   --we-card-tone-border: var(--we-warning);   --we-card-tone-fg: var(--we-warning-on); }
+html.we-theme-light .we-card-tone-danger    { --we-card-tone-bg: var(--we-danger);    --we-card-tone-border: var(--we-danger);    --we-card-tone-fg: var(--we-danger-on); }
+html.we-theme-light .we-card-tone-light     { --we-card-tone-bg: var(--we-light); --we-card-tone-border: var(--we-light-border); --we-card-tone-fg: var(--we-light-emphasis); }
+html.we-theme-light .we-card-tone-dark      { --we-card-tone-bg: var(--we-dark); --we-card-tone-border: var(--we-dark); --we-card-tone-fg: var(--we-dark-on); }
+
+html.we-theme-light .we-card.we-card-tone-fill {
+  background: var(--we-card-tone-bg, var(--we-surface));
+  border-color: var(--we-card-tone-border, var(--we-light-border));
+  color: var(--we-card-tone-fg, var(--we-fg));
+}
+
+html.we-theme-light .we-card.we-card-tone-fill :is(.we-card-header, .we-card-body, .we-card-footer, .we-card-subtitle, .we-card-media-text, .we-card-action-text) {
+  color: var(--we-card-tone-fg, var(--we-fg));
+}
+
+html.we-theme-light .we-card.we-card-tone-fill .we-card-header,
+html.we-theme-light .we-card.we-card-tone-fill .we-card-footer {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+html.we-theme-light .we-card.we-card-tone-outline {
+  border-color: var(--we-card-tone-border, var(--we-light-border));
+  color: var(--we-card-tone-border, var(--we-fg));
+}
+
+html.we-theme-light .we-card.we-card-tone-outline .we-card-header,
+html.we-theme-light .we-card.we-card-tone-outline .we-card-footer {
+  background: color-mix(in srgb, var(--we-card-tone-bg, var(--we-surface)) 10%, var(--we-surface));
+  border-color: color-mix(in srgb, var(--we-card-tone-border, var(--we-light-border)) 55%, var(--we-surface));
+}
+
+html.we-theme-light .we-list-group {
+  border: 1px solid var(--we-light-border);
+  border-radius: var(--we-radius-lg);
+  background: var(--we-surface);
+  overflow: hidden;
+}
+
+html.we-theme-light .we-list-group-item {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  border-bottom: 1px solid var(--we-table-cell-border);
+  background: transparent;
+  text-align: left;
+  font-family: var(--we-font-family-base);
+  line-height: 1.4;
+  padding: 0.65rem 1rem;
+}
+
+html.we-theme-light button.we-list-group-item,
+html.we-theme-light .we-list-group-item[data-we-widget="list-group-item"] {
+  appearance: none;
+  cursor: pointer;
+}
+
+html.we-theme-light .we-list-group-item:last-child {
+  border-bottom: none;
+}
+
+html.we-theme-light .we-list-group-item.is-current,
+html.we-theme-light .we-list-group-item.is-active {
+  background: color-mix(in srgb, var(--we-primary-subtle) 86%, var(--we-surface) 14%);
+  border-color: var(--we-primary-border);
+  color: var(--we-primary-emphasis);
+}
+
+html.we-theme-light .we-list-group-item .we-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--we-radius-pill);
+  text-align: center;
+}
+
+html.we-theme-light .we-table {
+  border: 1px solid var(--we-light-border);
+  border-collapse: collapse;
+  background: var(--we-surface);
+}
+
+html.we-theme-light .we-table th,
+html.we-theme-light .we-table td {
+  border: 1px solid var(--we-table-cell-border);
+}
+
+html.we-theme-light .we-table th {
+  background: color-mix(in srgb, var(--we-primary-subtle) 32%, var(--we-table-header-bg) 68%);
+  color: var(--we-primary-emphasis);
+  font-family: var(--we-font-family-heading);
+}
+
+html.we-theme-light .we-table.we-table-striped > tr:nth-of-type(even) {
+  background: color-mix(in srgb, var(--we-surface-muted) 65%, var(--we-surface));
+}
+
+html.we-theme-light .we-table.we-table-hover > tr:not(:first-of-type):hover {
+  background: var(--we-surface-hover);
+}
+
+html.we-theme-light .we-table > tr.we-table-row-active {
+  background: var(--we-surface-active);
+}
+
+html.we-theme-light .we-table > tr.we-table-row-primary { background: var(--we-primary-subtle); }
+html.we-theme-light .we-table > tr.we-table-row-secondary { background: var(--we-secondary-subtle); }
+html.we-theme-light .we-table > tr.we-table-row-success { background: var(--we-success-subtle); }
+html.we-theme-light .we-table > tr.we-table-row-info { background: var(--we-info-subtle); }
+html.we-theme-light .we-table > tr.we-table-row-warning { background: var(--we-warning-subtle); }
+html.we-theme-light .we-table > tr.we-table-row-danger { background: var(--we-danger-subtle); }
+html.we-theme-light .we-table > tr.we-table-row-light { background: var(--we-light-subtle); }
+html.we-theme-light .we-table > tr.we-table-row-dark { background: var(--we-dark-subtle); }
+
+/* Badges: tone classes should be visually distinct in examples and apps. */
+html.we-theme-light .we-badge {
+  border: 1px solid var(--we-separator-strong);
+  background: var(--we-surface-muted);
+  color: var(--we-table-header-fg);
+  font-family: var(--we-font-family-heading);
+}
+
+html.we-theme-light .we-badge.we-badge-primary { background: var(--we-primary-subtle); border-color: var(--we-primary-border); }
+html.we-theme-light .we-badge.we-badge-secondary { background: var(--we-secondary-subtle); border-color: var(--we-secondary-border); }
+html.we-theme-light .we-badge.we-badge-success { background: var(--we-success-subtle); border-color: var(--we-success-border); }
+html.we-theme-light .we-badge.we-badge-info { background: var(--we-info-subtle); border-color: var(--we-info-border); }
+html.we-theme-light .we-badge.we-badge-warning { background: var(--we-warning-subtle); border-color: var(--we-warning-border); }
+html.we-theme-light .we-badge.we-badge-danger { background: var(--we-danger-subtle); border-color: var(--we-danger-border); }
+html.we-theme-light .we-badge.we-badge-light { background: var(--we-light); border-color: var(--we-light-border); color: var(--we-light-emphasis); }
+html.we-theme-light .we-badge.we-badge-dark { background: var(--we-dark); border-color: var(--we-dark); color: var(--we-dark-on); }
+
+/* Badge shape utilities used by showcase rows (square vs pill). */
+html.we-theme-light .we-badge-shape-square .we-badge {
+  border-radius: 0.22rem;
+  padding-left: 0.42rem;
+  padding-right: 0.42rem;
+}
+
+html.we-theme-light .we-badge-shape-pill .we-badge {
+  border-radius: var(--we-radius-pill);
+  padding-left: 0.62rem;
+  padding-right: 0.62rem;
+}
+
+/* Navigation helpers for breadcrumb/pagination. */
+html.we-theme-light .we-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+html.we-theme-light .we-breadcrumb .we-breadcrumb-item {
+  appearance: none;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  color: #355277;
+  font-family: var(--we-font-family-base);
+  font-weight: 400;
+  line-height: 1.35;
+  padding: 0;
+  margin: 0;
+  min-height: 0;
+  text-align: left;
+  text-decoration: none;
+}
+
+html.we-theme-light .we-breadcrumb .we-breadcrumb-item:hover {
+  background: transparent;
+  color: #203a5b;
+  text-decoration: underline;
+}
+
+html.we-theme-light .we-breadcrumb .we-breadcrumb-sep {
+  color: #7d91af;
+  opacity: 1;
+  padding: 0;
+}
+
+html.we-theme-light .we-breadcrumb-item.is-current,
+html.we-theme-light .we-page-btn.is-current {
+  background: transparent;
+  border: 0;
+  color: #6f8099;
+  font-weight: 400;
+  text-decoration: none;
+}
+
+html.we-theme-light .we-page-btn.is-disabled {
+  background: var(--we-bg-disabled);
+  border-color: var(--we-control-border-disabled);
+  color: var(--we-fg-muted);
+}
+
+/* Grouped buttons should read as one control, without visual gaps. */
+html.we-theme-light .we-button-group,
+html.we-theme-light .we-toolbar-group,
+html.we-theme-light .we-toggle-button-group {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--we-control-border);
+  border-radius: 6px;
+  border-color: var(--we-control-border);
+  background: var(--we-surface);
+}
+
+html.we-theme-light .we-toggle-button-group {
+  display: inline-flex;
+  width: auto;
+  align-self: flex-start;
+}
+
+html.we-theme-light .we-button-group > .we-button,
+html.we-theme-light .we-toolbar-group > .we-button,
+html.we-theme-light .we-toggle-button-group > .we-button {
+  border: 0;
+  border-radius: 0;
+  margin: 0;
+}
+
+html.we-theme-light .we-button-group > .we-button + .we-button,
+html.we-theme-light .we-toolbar-group > .we-button + .we-button,
+html.we-theme-light .we-toggle-button-group > .we-button + .we-button {
+  border-left-color: var(--we-separator-strong);
+  border-left-style: solid;
+  border-left-width: 1px;
+}
+
+/* Toggle button groups (checkbox/radio style) need a clear selected state. */
+html.we-theme-light .we-toggle-button-group > .we-button.is-active {
+  background: color-mix(in srgb, var(--we-primary-subtle) 82%, var(--we-surface) 18%);
+  color: var(--we-primary-emphasis);
+}
+
+/* Vertical grouped buttons should size to content and stay connected. */
+html.we-theme-light .we-button-group-vertical,
+html.we-theme-light .we-button-group-vertical.we-stack {
+  display: inline-flex;
+  flex-direction: column;
+  align-self: flex-start;
+  gap: 0;
+  overflow: hidden;
+  border: 1px solid var(--we-control-border);
+  border-radius: 6px;
+  background: var(--we-surface);
+}
+
+html.we-theme-light .we-button-group-vertical > .we-button {
+  width: auto;
+  border: 0;
+  border-radius: 0;
+  margin: 0;
+}
+
+html.we-theme-light .we-button-group-vertical > .we-button + .we-button {
+  border-top: 1px solid var(--we-separator-strong);
+}
+
+/* Tooltip/popover/offcanvas/carousel/scrollspy surfaces. */
+html.we-theme-light .we-tooltip-bubble,
+html.we-theme-light .we-popover-panel {
+  border-color: var(--we-popup-border);
+  background: var(--we-popup-bg);
+  color: var(--we-fg);
+  box-shadow: var(--we-shadow-md);
+}
+
+html.we-theme-light .we-offcanvas-panel {
+  border-color: var(--we-popup-border);
+  background: var(--we-popup-bg);
+  color: var(--we-fg);
+}
+
+html.we-theme-light .we-carousel,
+html.we-theme-light .we-scrollspy {
+  border-color: var(--we-light-border);
+  background: var(--we-surface);
+}
+
+html.we-theme-light .we-carousel-indicator.is-current,
+html.we-theme-light .we-scrollspy-item.is-current {
+  background: var(--we-bg-selected);
+  border-color: var(--we-control-border-focus);
+}
+
+/* Progress: include striped and animated variants for contracts/examples. */
+html.we-theme-light .we-progress {
+  display: block;
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  height: 1rem;
+  min-height: 1rem;
+  border: 1px solid var(--we-separator-strong);
+  border-radius: var(--we-radius-pill);
+  overflow: hidden;
+  background: var(--we-surface-muted);
+}
+
+html.we-theme-light .we-progress::-webkit-progress-bar {
+  background: var(--we-surface-muted);
+}
+
+html.we-theme-light .we-progress::-webkit-progress-inner-element {
+  display: block;
+  height: 100%;
+}
+
+html.we-theme-light .we-progress::-webkit-progress-value {
+  background: var(--we-progress-fill, var(--we-info));
+}
+
+html.we-theme-light .we-progress::-moz-progress-bar {
+  background: var(--we-progress-fill, var(--we-info));
+}
+
+html.we-theme-light .we-progress.we-progress-info {
+  --we-progress-fill: var(--we-info);
+}
+
+html.we-theme-light .we-progress.we-progress-success {
+  --we-progress-fill: var(--we-success);
+}
+
+html.we-theme-light .we-progress.we-progress-warning {
+  --we-progress-fill: var(--we-warning);
+}
+
+html.we-theme-light .we-progress.we-progress-danger {
+  --we-progress-fill: var(--we-danger);
+}
+
+html.we-theme-light .we-progress-fill-default { background: var(--we-info); }
+html.we-theme-light .we-progress-fill-success { background: var(--we-success); }
+html.we-theme-light .we-progress-fill-info { background: var(--we-info); }
+html.we-theme-light .we-progress-fill-warning { background: var(--we-warning); }
+html.we-theme-light .we-progress-fill-danger { background: var(--we-danger); }
+
+html.we-theme-light .we-progress-fill-striped {
+  background-image:
+    linear-gradient(
+      -45deg,
+      rgba(255, 255, 255, 0.35) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgba(255, 255, 255, 0.35) 50%,
+      rgba(255, 255, 255, 0.35) 75%,
+      transparent 75%,
+      transparent
+    );
+  background-size: 1rem 1rem;
+}
+
+html.we-theme-light .we-progress-fill-animated {
+  animation: we-light-progress-stripes 1s linear infinite;
+}
+
+html.we-theme-light .we-progress.we-progress-striped::-webkit-progress-value,
+html.we-theme-light .we-progress.we-progress-striped::-moz-progress-bar {
+  background-image:
+    linear-gradient(
+      -45deg,
+      rgba(255, 255, 255, 0.35) 25%,
+      transparent 25%,
+      transparent 50%,
+      rgba(255, 255, 255, 0.35) 50%,
+      rgba(255, 255, 255, 0.35) 75%,
+      transparent 75%,
+      transparent
+    );
+  background-size: 1rem 1rem;
+}
+
+html.we-theme-light .we-progress.we-progress-animated::-webkit-progress-value,
+html.we-theme-light .we-progress.we-progress-animated::-moz-progress-bar {
+  animation: we-light-progress-stripes 1s linear infinite;
+}
+
+@keyframes we-light-progress-stripes {
+  from { background-position-x: 1rem; }
+  to { background-position-x: 0; }
+}
+
+/* Typography and readable long-form content blocks. */
+html.we-theme-light .we-heading,
+html.we-theme-light .we-display-heading {
+  color: var(--we-table-header-fg);
+}
+
+html.we-theme-light .we-lead {
+  color: var(--we-secondary-emphasis);
+}
+
+html.we-theme-light .we-blockquote-quote {
+  color: var(--we-primary-emphasis);
+}
+
+html.we-theme-light .we-blockquote-attrib {
+  color: var(--we-secondary-emphasis);
+}
+
+html.we-theme-light .we-heading-subtitle {
+  margin-left: 0.35rem;
+  color: var(--we-fg-muted);
+  font-size: 0.7em;
+  font-weight: 400;
+}
+
+html.we-theme-light .we-text-fine-print {
+  font-size: 0.875rem;
+  color: var(--we-fg-muted);
+}
+
+html.we-theme-light .we-text-strong {
+  font-weight: 700;
+}
+
+html.we-theme-light .we-text-emphasis {
+  font-style: italic;
+}
+
+html.we-theme-light .we-text-abbr {
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+
+/* General text tone utilities (used by showcase and user apps). */
+html.we-theme-light .we-text-primary { color: var(--we-primary); }
+html.we-theme-light .we-text-primary-emphasis { color: var(--we-primary-emphasis, var(--we-primary)); }
+html.we-theme-light .we-text-secondary { color: var(--we-secondary); }
+html.we-theme-light .we-text-secondary-emphasis { color: var(--we-secondary-emphasis, var(--we-secondary)); }
+html.we-theme-light .we-text-success { color: var(--we-success); }
+html.we-theme-light .we-text-success-emphasis { color: var(--we-success-emphasis, var(--we-success)); }
+html.we-theme-light .we-text-info { color: var(--we-info); }
+html.we-theme-light .we-text-info-emphasis { color: var(--we-info-emphasis, var(--we-info)); }
+html.we-theme-light .we-text-warning { color: var(--we-warning); }
+html.we-theme-light .we-text-warning-emphasis { color: var(--we-warning-emphasis, var(--we-warning)); }
+html.we-theme-light .we-text-danger { color: var(--we-danger); }
+html.we-theme-light .we-text-danger-emphasis { color: var(--we-danger-emphasis, var(--we-danger)); }
+html.we-theme-light .we-text-light { color: var(--we-light); }
+html.we-theme-light .we-text-light-emphasis { color: var(--we-light-emphasis, var(--we-light)); }
+html.we-theme-light .we-text-dark { color: var(--we-dark); }
+html.we-theme-light .we-text-dark-emphasis { color: var(--we-dark-emphasis, var(--we-dark)); }
+html.we-theme-light .we-text-body { color: var(--we-fg); }
+html.we-theme-light .we-text-body-emphasis { color: var(--we-fg); }
+html.we-theme-light .we-text-body-secondary { color: var(--we-body-secondary, var(--we-fg-muted)); }
+html.we-theme-light .we-text-body-tertiary { color: var(--we-body-tertiary, var(--we-fg-muted)); }
+
+/* Group + form semantics should be visible without showcase-specific CSS. */
+html.we-theme-light .we-group {
+  border: 1px solid var(--we-light-border);
+  border-radius: var(--we-radius-lg);
+  background: var(--we-surface);
+}
+
+html.we-theme-light .we-group-legend {
+  color: var(--we-primary-emphasis);
+  font-weight: 600;
+}
+
+html.we-theme-light .we-form-help {
+  color: #6f809a;
+  font-size: 0.9rem;
+  line-height: 1.4;
+}
+
+html.we-theme-light .we-checkbox,
+html.we-theme-light .we-radio-input,
+html.we-theme-light .we-slider {
+  accent-color: var(--we-primary);
+}
+
+/* Switches: pill track + sliding knob (separate from plain checkboxes). */
+html.we-theme-light .we-switch-row.we-form-check {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding-left: 0;
+}
+
+html.we-theme-light .we-checkbox.we-switch-control {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  float: none;
+  margin: 0;
+  width: 2.25rem;
+  height: 1.25rem;
+  border: 1px solid var(--we-control-border);
+  border-radius: var(--we-radius-pill);
+  background-color: var(--we-control-border-disabled);
+  background-image: radial-gradient(circle, var(--we-surface) 0 48%, transparent 49%);
+  background-size: 1rem 1rem;
+  background-repeat: no-repeat;
+  background-position: left 0.12rem center;
+  transition: background-position 0.18s ease-in-out,
+              background-color 0.18s ease-in-out,
+              border-color 0.18s ease-in-out;
+}
+
+html.we-theme-light .we-checkbox.we-switch-control:checked {
+  background-color: var(--we-primary);
+  border-color: var(--we-primary);
+  background-image: radial-gradient(circle, var(--we-primary-on) 0 48%, transparent 49%);
+  background-position: right 0.12rem center;
+}
+
+html.we-theme-light .we-checkbox.we-switch-control:focus-visible {
+  outline: 1px solid var(--we-focus);
+  outline-offset: 0;
+}
+
+/* Dialog/modal/offcanvas overlays should track light theme tokens. */
+html.we-theme-light .we-dialog,
+html.we-theme-light .we-modal {
+  background: var(--we-overlay);
+}
+
+
+html.we-theme-light .we-dialog-panel,
+html.we-theme-light .we-modal-panel {
+  border: 1px solid var(--we-control-border);
+  border-radius: var(--we-radius-lg);
+  border-color: var(--we-control-border);
+  background: var(--we-popup-bg);
+  color: var(--we-fg);
+}
+
+html.we-theme-light .we-offcanvas-backdrop {
+  background: rgba(0, 0, 0, 0.38);
+}
+
+/* Misc separators and helper widgets. */
+html.we-theme-light .we-divider,
+html.we-theme-light .we-divider-vertical {
+  border-color: var(--we-separator);
+}
+
+html.we-theme-light .we-placeholder {
+  border-color: #ccd7e8;
+  background: var(--we-surface-muted);
+}
+
+/* -------------------------------------------------------------------------- */
+/* 9) Rich Component Internals (alert/dialog/popover/carousel/scrollspy)       */
+/* -------------------------------------------------------------------------- */
+html.we-theme-light .we-alert-title {
+  font-weight: 700;
+  color: #294a6e;
+}
+
+html.we-theme-light .we-alert-body {
+  color: var(--we-fg);
+}
+
+html.we-theme-light .we-alert-link {
+  color: #2f7ea0;
+  text-underline-offset: 2px;
+}
+
+html.we-theme-light .we-alert-dismiss {
+  position: absolute;
+  top: 0.6rem;
+  right: 0.65rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--we-radius-pill);
+  background: transparent;
+  color: #476489;
+  opacity: 0.75;
+  font-size: 1.4rem;
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+}
+
+html.we-theme-light .we-alert-dismiss:hover {
+  background: rgba(41, 74, 110, 0.12);
+  color: #2c4f76;
+  opacity: 1;
+}
+
+html.we-theme-light .we-alert-dismiss:focus-visible {
+  outline: 1px solid var(--we-focus);
+  outline-offset: 0;
+  opacity: 1;
+}
+
+html.we-theme-light .we-alert {
+  position: relative;
+}
+
+html.we-theme-light .we-alert:has(.we-alert-dismiss) {
+  padding-right: calc(2rem + 1rem + 0.75rem);
+}
+
+html.we-theme-light .we-alert-layout-inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 2px;
+}
+
+html.we-theme-light .we-alert-layout-inline .we-alert-title {
+  flex-basis: 100%;
+  margin: 0 0 2px 0;
+}
+
+html.we-theme-light .we-alert-layout-inline .we-alert-body,
+html.we-theme-light .we-alert-layout-inline .we-alert-link {
+  display: inline;
+  margin: 0;
+}
+
+html.we-theme-light .we-alert-scale-major {
+  padding: 8px 12px;
+}
+
+html.we-theme-light .we-dialog-header,
+html.we-theme-light .we-modal-header,
+html.we-theme-light .we-popover-header,
+html.we-theme-light .we-tooltip-header {
+  border-bottom: 1px solid #d6e0ef;
+  padding: 0.7rem 0.9rem;
+  margin: 0;
+}
+
+html.we-theme-light .we-dialog-footer,
+html.we-theme-light .we-modal-footer,
+html.we-theme-light .we-popover-footer,
+html.we-theme-light .we-tooltip-footer {
+  border-top: 1px solid #d6e0ef;
+  padding: 0.65rem 0.9rem;
+  margin: 0;
+}
+
+html.we-theme-light .we-dialog-body,
+html.we-theme-light .we-modal-body {
+  padding: 0.85rem 0.9rem;
+}
+
+html.we-theme-light .we-dialog-title,
+html.we-theme-light .we-modal-title,
+html.we-theme-light .we-popover-title,
+html.we-theme-light .we-tooltip-title {
+  font-family: var(--we-font-family-heading);
+  font-weight: 700;
+  color: #294a6e;
+}
+
+html.we-theme-light .we-dialog-description,
+html.we-theme-light .we-modal-description,
+html.we-theme-light .we-popover-body,
+html.we-theme-light .we-tooltip-body {
+  color: #3b5274;
+}
+
+html.we-theme-light .we-dialog-close,
+html.we-theme-light .we-modal-close {
+  margin-left: auto;
+  width: 1.5rem;
+  height: 1.5rem;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--we-radius-pill);
+  background: transparent;
+  color: #476489;
+  opacity: 0.75;
+  font-size: 1.4rem;
+  font-weight: 400;
+  line-height: 1;
+  cursor: pointer;
+}
+
+html.we-theme-light .we-dialog-close:hover,
+html.we-theme-light .we-modal-close:hover {
+  background: rgba(41, 74, 110, 0.12);
+  color: #2c4f76;
+  opacity: 1;
+}
+
+html.we-theme-light .we-dialog-close:focus-visible,
+html.we-theme-light .we-modal-close:focus-visible {
+  outline: 1px solid var(--we-focus);
+  outline-offset: 0;
+  opacity: 1;
+}
+}
+
+
+html.we-theme-light .we-offcanvas-panel > .we-close-button {
+  align-self: flex-end;
+  margin: 0 0 0.25rem 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  min-width: 1.5rem;
+  min-height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--we-radius-pill);
+  background: transparent;
+  color: #476489;
+  opacity: 0.75;
+}
+
+html.we-theme-light .we-offcanvas-panel > .we-close-button:hover {
+  background: rgba(41, 74, 110, 0.12);
+  color: #2c4f76;
+  opacity: 1;
+}
+
+html.we-theme-light .we-offcanvas-panel > .we-close-button:focus-visible {
+  outline: 1px solid var(--we-focus);
+  outline-offset: 0;
+  opacity: 1;
+}
+
+html.we-theme-light .we-carousel-controls {
+  border-top: 1px solid #d6e0ef;
+  padding-top: 6px;
+}
+
+html.we-theme-light .we-carousel-nav,
+html.we-theme-light .we-carousel-prev,
+html.we-theme-light .we-carousel-next {
+  border: 1px solid #9fb4d6;
+  border-radius: var(--we-radius-md);
+  background: #f7fbff;
+  color: #2f4f7f;
+}
+
+html.we-theme-light .we-carousel-nav:hover,
+html.we-theme-light .we-carousel-prev:hover,
+html.we-theme-light .we-carousel-next:hover {
+  background: #e9f0fb;
+}
+
+html.we-theme-light .we-carousel-indicator {
+  border: 1px solid #9fb4d6;
+  background: #ffffff;
+}
+
+html.we-theme-light .we-carousel-indicator.is-current {
+  background: #e7f0ff;
+}
+
+html.we-theme-light .we-scrollspy-nav {
+  border-bottom: 1px solid #d6e0ef;
+  padding-bottom: 4px;
+}
+
+html.we-theme-light .we-scrollspy-sections {
+  border-top: 1px solid #d6e0ef;
+  background: #fcfdff;
+}
+
+html.we-theme-light .we-scrollspy-section {
+  border: 1px solid #d6e0ef;
+  border-radius: 6px;
+  background: #ffffff;
+}
+
+html.we-theme-light .we-scrollspy-item {
+  border: 1px solid transparent;
+  border-radius: var(--we-radius-md);
+  color: #35567d;
+}
+
+html.we-theme-light .we-scrollspy-item:hover {
+  background: #edf3fc;
+  border-color: #c6d6ec;
+}
+
+html.we-theme-light .we-card-media {
+  border-top: 1px solid #d6e0ef;
+  border-bottom: 1px solid #d6e0ef;
+  background: #f7faff;
+}
+
+html.we-theme-light .we-card-media-text,
+html.we-theme-light .we-card-action-text {
+  color: #3b5274;
+}
+
+html.we-theme-light .we-card-actions {
+  border-top: 1px solid #d6e0ef;
+  padding: 0.6rem 0.85rem;
+}
+
+html.we-theme-light .we-button-toolbar {
+  gap: 8px;
+}
+
+html.we-theme-light .we-table-caption {
+  color: #607795;
+  margin-bottom: 4px;
+}
+
+html.we-theme-light .we-table.we-table-borderless th,
+html.we-theme-light .we-table.we-table-borderless td {
+  border-color: transparent;
+}
+
+html.we-theme-light .we-table.we-table-sm th,
+html.we-theme-light .we-table.we-table-sm td {
+  padding: 2px 6px;
+}
+
+html.we-theme-light .we-link {
+  color: #2f7ea0;
+}
+
+html.we-theme-light .we-link:hover {
+  color: #266985;
+  background: transparent;
+}
+
+html.we-theme-light .we-close-button {
+  border: 1px solid #b7c7df;
+  border-radius: var(--we-radius-md);
+  background: #f7fbff;
+  color: #3a587a;
+}

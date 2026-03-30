@@ -37,8 +37,9 @@ EOF
   while IFS= read -r compile_sh; do
     example_dir="$(dirname "$compile_sh")"
     example_name="$(basename "$example_dir")"
+    example_html="${example_name}.html"
     label="$(printf '%s' "$example_name" | perl -pe 's/-/ /g; s/(^| )([a-z])/$1\U$2/g')"
-    printf '        <li><a href="web-easy-examples/%s/">%s</a></li>\n' "$example_name" "$label"
+    printf '        <li><a href="web-easy-examples/%s/%s">%s</a></li>\n' "$example_name" "$example_html" "$label"
   done < <(find "$ROOT_DIR/lib/web-easy/examples" -mindepth 2 -maxdepth 2 -name compile.sh | sort)
   cat <<'EOF'
       </ul>
