@@ -16,21 +16,18 @@
         (cons k (proc (cdr entry)))
         entry)))
  
-(define (counter @count action)
+(define (counter count action)
   (hpanel
    ; #:stretch '(#t #f)
    (button "-" (λ () (action sub1)))
-   (text (@count . ~> . number->string))
+   (text (number->string count))
    (button "+" (λ () (action add1)))))
 
-
-;; TODO: This example uses the new version of `render-list-items`
-;;       in renderer.rkt - but the switch hasn't been made yet.
 
 (define dynamic-counters-app
   (window ; #:size '(#f 200)
    (container
-    (h1 " Counters")
+    (h1 "Dynamic Counters")
 
     (vpanel
      (hpanel
@@ -39,8 +36,8 @@
       (button "Add counter" (λ () (@counters . <~ . append-counter))))
      
      (list-view @counters
-                (λ (k @entry)
-                  (counter (@entry . ~> . cdr)
+                (λ (k entry)
+                  (counter (cdr entry)
                            (λ (proc)
                              (@counters . <~ .
                                         (λ (counts)
