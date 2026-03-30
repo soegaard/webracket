@@ -5,6 +5,7 @@ on:
     branches:
       - main
     paths:
+      - "scribblings/**"
       - "web-site/public/**"
       - ".github/workflows/pages.yml"
   workflow_dispatch:
@@ -24,6 +25,22 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Setup Racket
+        uses: Bogdanp/setup-racket@v1.11
+        with:
+          architecture: x64
+          distribution: full
+          version: stable
+
+      - name: Render WebRacket manual
+        run: raco scribble --htmls --dest html scribblings/webracket.scrbl
+
+      - name: Publish manual under /webracket/
+        run: |
+          rm -rf web-site/public/webracket
+          mkdir -p web-site/public/webracket
+          cp -R html/webracket/. web-site/public/webracket/
 
       - name: Configure Pages
         uses: actions/configure-pages@v5
