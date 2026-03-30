@@ -20,11 +20,12 @@ PAGE="$ROOT_DIR/web-site/public/web-easy-examples.html"
     .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; padding: 2rem; box-shadow: 0 30px 80px rgba(0,0,0,0.35); }
     h1 { margin: 0 0 0.5rem; font-size: clamp(2.5rem, 5vw, 4rem); line-height: 1.05; }
     p { margin: 0 0 1rem; color: var(--muted); }
-    ul { margin: 1.5rem 0 0; padding-left: 1.2rem; columns: 2; column-gap: 2rem; }
+    .example-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; margin-top: 1.5rem; }
+    ul { margin: 0; padding-left: 1.2rem; }
     li { margin: 0 0 0.55rem; break-inside: avoid; }
     a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
-    @media (max-width: 700px) { ul { columns: 1; } main { padding-inline: 1rem; } .panel { padding: 1.25rem; } }
+    @media (max-width: 700px) { .example-columns { grid-template-columns: 1fr; } main { padding-inline: 1rem; } .panel { padding: 1.25rem; } }
   </style>
 </head>
 <body>
@@ -32,17 +33,44 @@ PAGE="$ROOT_DIR/web-site/public/web-easy-examples.html"
     <section class="panel">
       <h1>Web-Easy Examples</h1>
       <p>Compiled example pages from <code>lib/web-easy/examples/</code>.</p>
-      <ul>
+      <div class="example-columns">
+        <ul>
 EOF
-  while IFS= read -r compile_sh; do
-    example_dir="$(dirname "$compile_sh")"
-    example_name="$(basename "$example_dir")"
-    example_html="${example_name}.html"
-    label="$(printf '%s' "$example_name" | perl -pe 's/-/ /g; s/(^| )([a-z])/$1\U$2/g')"
-    printf '        <li><a href="web-easy-examples/%s/%s">%s</a></li>\n' "$example_name" "$example_html" "$label"
-  done < <(find "$ROOT_DIR/lib/web-easy/examples" -mindepth 2 -maxdepth 2 -name compile.sh | sort)
+  left_examples=(
+    hello-world
+    a-single-counter
+    multiple-counters
+    dynamic-counters
+    add-two-numbers
+    todo-lists
+  )
+  right_examples=(
+    7gui-counter
+    7gui-temperature-converter
+    7gui-flight-booker
+    7gui-timer
+    7gui-crud
+    7gui-circle
+    7gui-circle-extended
+  )
+
+  emit_example_items() {
+    local example_name label
+    for example_name in "$@"; do
+      label="$(printf '%s' "$example_name" | perl -pe 's/-/ /g; s/(^| )([a-z])/$1\U$2/g')"
+      printf '          <li><a href="web-easy-examples/%s/%s.html">%s</a></li>\n' "$example_name" "$example_name" "$label"
+    done
+  }
+
+  emit_example_items "${left_examples[@]}"
   cat <<'EOF'
-      </ul>
+        </ul>
+        <ul>
+EOF
+  emit_example_items "${right_examples[@]}"
+  cat <<'EOF'
+        </ul>
+      </div>
     </section>
   </main>
 </body>

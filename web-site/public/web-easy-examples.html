@@ -12,11 +12,12 @@
     .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; padding: 2rem; box-shadow: 0 30px 80px rgba(0,0,0,0.35); }
     h1 { margin: 0 0 0.5rem; font-size: clamp(2.5rem, 5vw, 4rem); line-height: 1.05; }
     p { margin: 0 0 1rem; color: var(--muted); }
-    ul { margin: 1.5rem 0 0; padding-left: 1.2rem; columns: 2; column-gap: 2rem; }
+    .example-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; margin-top: 1.5rem; }
+    ul { margin: 0; padding-left: 1.2rem; }
     li { margin: 0 0 0.55rem; break-inside: avoid; }
     a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
-    @media (max-width: 700px) { ul { columns: 1; } main { padding-inline: 1rem; } .panel { padding: 1.25rem; } }
+    @media (max-width: 700px) { .example-columns { grid-template-columns: 1fr; } main { padding-inline: 1rem; } .panel { padding: 1.25rem; } }
   </style>
 </head>
 <body>
@@ -24,21 +25,25 @@
     <section class="panel">
       <h1>Web-Easy Examples</h1>
       <p>Compiled example pages from <code>lib/web-easy/examples/</code>.</p>
-      <ul>
-        <li><a href="web-easy-examples/7gui-circle-extended/7gui-circle-extended.html">7gui Circle Extended</a></li>
-        <li><a href="web-easy-examples/7gui-circle/7gui-circle.html">7gui Circle</a></li>
-        <li><a href="web-easy-examples/7gui-counter/7gui-counter.html">7gui Counter</a></li>
-        <li><a href="web-easy-examples/7gui-crud/7gui-crud.html">7gui Crud</a></li>
-        <li><a href="web-easy-examples/7gui-flight-booker/7gui-flight-booker.html">7gui Flight Booker</a></li>
-        <li><a href="web-easy-examples/7gui-temperature-converter/7gui-temperature-converter.html">7gui Temperature Converter</a></li>
-        <li><a href="web-easy-examples/7gui-timer/7gui-timer.html">7gui Timer</a></li>
-        <li><a href="web-easy-examples/a-single-counter/a-single-counter.html">A Single Counter</a></li>
-        <li><a href="web-easy-examples/add-two-numbers/add-two-numbers.html">Add Two Numbers</a></li>
-        <li><a href="web-easy-examples/dynamic-counters/dynamic-counters.html">Dynamic Counters</a></li>
-        <li><a href="web-easy-examples/hello-world/hello-world.html">Hello World</a></li>
-        <li><a href="web-easy-examples/multiple-counters/multiple-counters.html">Multiple Counters</a></li>
-        <li><a href="web-easy-examples/todo-lists/todo-lists.html">Todo Lists</a></li>
-      </ul>
+      <div class="example-columns">
+        <ul>
+          <li><a href="web-easy-examples/hello-world/hello-world.html">Hello World</a></li>
+          <li><a href="web-easy-examples/a-single-counter/a-single-counter.html">A Single Counter</a></li>
+          <li><a href="web-easy-examples/multiple-counters/multiple-counters.html">Multiple Counters</a></li>
+          <li><a href="web-easy-examples/dynamic-counters/dynamic-counters.html">Dynamic Counters</a></li>
+          <li><a href="web-easy-examples/add-two-numbers/add-two-numbers.html">Add Two Numbers</a></li>
+          <li><a href="web-easy-examples/todo-lists/todo-lists.html">Todo Lists</a></li>
+        </ul>
+        <ul>
+          <li><a href="web-easy-examples/7gui-counter/7gui-counter.html">7gui Counter</a></li>
+          <li><a href="web-easy-examples/7gui-temperature-converter/7gui-temperature-converter.html">7gui Temperature Converter</a></li>
+          <li><a href="web-easy-examples/7gui-flight-booker/7gui-flight-booker.html">7gui Flight Booker</a></li>
+          <li><a href="web-easy-examples/7gui-timer/7gui-timer.html">7gui Timer</a></li>
+          <li><a href="web-easy-examples/7gui-crud/7gui-crud.html">7gui Crud</a></li>
+          <li><a href="web-easy-examples/7gui-circle/7gui-circle.html">7gui Circle</a></li>
+          <li><a href="web-easy-examples/7gui-circle-extended/7gui-circle-extended.html">7gui Circle Extended</a></li>
+        </ul>
+      </div>
     </section>
   </main>
 </body>
