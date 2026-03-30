@@ -22,7 +22,8 @@
    (list "ffi-js" "DOCS-js.md" "documentation-ffi-js.html")
    (list "ffi-math" "DOCS-math.md" "documentation-ffi-math.html")
    (list "ffi-jsxgraph" "DOCS-jsxgraph.md" "documentation-ffi-jsxgraph.html")
-   (list "ffi-xtermjs" "DOCS-xtermjs.md" "documentation-ffi-xtermjs.html")))
+   (list "ffi-xtermjs" "DOCS-xtermjs.md" "documentation-ffi-xtermjs.html")
+   (list "ffi-websocket" "DOCS-websocket.md" "documentation-ffi-websocket.html")))
 
 (define warnings '())
 (define (warn who msg)

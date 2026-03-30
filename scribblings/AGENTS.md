@@ -20,7 +20,7 @@ This file defines documentation-writing rules for files under `scribblings/`.
 - Grammar/spell check command:
   - `aspell --lang=en_US --mode=tex list < scribblings/webracket.scrbl`
 - Render command:
-  - `raco scribble --htmls --dest /tmp/webracket-doc-test scribblings/webracket.scrbl`
+  - `raco scribble --htmls --dest html/ scribblings/webracket.scrbl`
 
 ## Bindings Documentation Rules **[Bindings chapter only]**
 

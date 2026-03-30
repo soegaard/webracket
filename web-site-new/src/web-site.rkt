@@ -606,6 +606,7 @@
     [(string-suffix? path "documentation-ffi-math.html")          'doc-ffi-math]
     [(string-suffix? path "documentation-ffi-jsxgraph.html")      'doc-ffi-jsxgraph]
     [(string-suffix? path "documentation-ffi-xtermjs.html")       'doc-ffi-xtermjs]
+    [(string-suffix? path "documentation-ffi-websocket.html")     'doc-ffi-websocket]
     [(string-suffix? path "documentation-extended-example-jsxgraph-board-points.html")
                                                               'doc-extended-example-jsxgraph-board-points]
     [(string-suffix? path "documentation-extended-example-jsxgraph-geometry-constructors.html")
@@ -641,6 +642,7 @@
                    doc-ffi-math
                    doc-ffi-jsxgraph
                    doc-ffi-xtermjs
+                   doc-ffi-websocket
                    doc-extended-example-jsxgraph-board-points
                    doc-extended-example-jsxgraph-geometry-constructors))
       'documentation
@@ -1164,7 +1166,7 @@ a.code-pill:focus-visible {
   outline-offset: 3px;
 }
 .page {
-  width: min(1200px, 92vw);
+  width: min(1320px, 94vw);
   margin: 0 auto;
   padding: 32px 0 80px;
   display: flex;
@@ -1172,7 +1174,7 @@ a.code-pill:focus-visible {
   gap: 0;
 }
 .page--ffi-reference {
-  width: min(1560px, 98vw);
+  width: min(1720px, 99vw);
 }
 .page--minischeme {
   width: min(1500px, 96vw);
@@ -1975,6 +1977,14 @@ pre {
 .ffi-type-table td.ffi-function-col,
 .ffi-type-table td.ffi-function-col a,
 .ffi-type-table td.ffi-function-col code {
+  white-space: nowrap;
+  word-break: normal;
+  overflow-wrap: normal;
+}
+.ffi-type-table th.ffi-binding-col,
+.ffi-type-table td.ffi-binding-col,
+.ffi-type-table td.ffi-binding-col a,
+.ffi-type-table td.ffi-binding-col code {
   white-space: nowrap;
   word-break: normal;
   overflow-wrap: normal;
@@ -4806,7 +4816,7 @@ body {
   color: var(--ink) !important;
 }
 .page {
-  width: min(980px, calc(100vw - 36px)) !important;
+  width: min(1180px, calc(100vw - 36px)) !important;
   margin: 0 auto !important;
   padding: 0 0 44px !important;
 }

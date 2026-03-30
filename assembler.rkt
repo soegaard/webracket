@@ -344,6 +344,33 @@ function js_value_to_fasl(v) {
   return Uint8Array.from(out);
 }
 
+const websocket_impl = {
+  'new': ((url, protocols) => {
+    const u = from_fasl(url);
+    const p = from_fasl(protocols);
+    return p === undefined ? new WebSocket(u) : new WebSocket(u, p);
+  }),
+  'send': ((ws, data) => ws.send(from_fasl(data))),
+  'close': ((ws, code, reason) => {
+    const c = from_fasl(code);
+    const r = from_fasl(reason);
+    if (c === undefined && r === undefined) {
+      ws.close();
+    } else if (r === undefined) {
+      ws.close(c);
+    } else if (c === undefined) {
+      ws.close(1000, r);
+    } else {
+      ws.close(c, r);
+    }
+  }),
+  'url': (ws => ws.url),
+  'ready-state': (ws => ws.readyState),
+  'buffered-amount': (ws => ws.bufferedAmount),
+  'protocol': (ws => ws.protocol),
+  'extensions': (ws => ws.extensions)
+};
+
 function is_pair(v) {
     return v && typeof v === 'object' && v.tag === 'pair'
 }
@@ -487,6 +514,15 @@ const hasDOM = typeof document !== 'undefined' && typeof document.createTextNode
 // hasXterm indicates whether XTermJS is available
 // const hasXterm = typeof Terminal !== 'undefined';
 const hasXterm = true;
+
+const websocket = new Proxy({}, {
+  get(_target, prop) {
+    if (typeof globalThis.WebSocket === 'undefined') {
+      return () => { throw new Error(`WebSocket not available in this environment: ${String(prop)}`); };
+    }
+    return websocket_impl[prop];
+  }
+});
 
 function from_fasl(index) {
     return fasl_to_js_value(new Uint8Array(memory.buffer), index)[0]
@@ -1526,6 +1562,7 @@ var imports = {
     'performance': hasDOM ? {
         'now':                 (() => performance.now())
     } : new Proxy({}, { get() { throw new Error('DOM not available in this environment'); } }),
+    'websocket': websocket,
     // Document
     'document': hasDOM ? {
         'document':                 (()                               => document),

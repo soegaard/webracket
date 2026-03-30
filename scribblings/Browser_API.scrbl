@@ -24,3 +24,4 @@ In this manual, entries present those tags with user-facing wording:
 ]
 
 @include-section["DOM.scrbl"]
+@include-section["WebSocket.scrbl"]

@@ -20,6 +20,7 @@ Checks consistency for:
 - `DOCS-math.md` against `ffi/math.ffi`
 - `DOCS-jsxgraph.md` against `ffi/jsxgraph.ffi`
 - `DOCS-xtermjs.md` against `ffi/xtermjs.ffi`
+- `DOCS-websocket.md` against `ffi/websocket.ffi`
 
 Per document, it validates that:
 - documented table functions exist in the corresponding `.ffi`

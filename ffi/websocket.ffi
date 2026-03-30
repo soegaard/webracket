@@ -1,0 +1,74 @@
+;;;
+;;; WebSocket
+;;;
+
+;; This file declares bindings for the JavaScript WebSocket API.
+;; The core surface intentionally stays small: construction, send/close,
+;; and a few read-only state accessors.
+
+;;; Construction
+
+;; Create a new WebSocket.
+;; `protocols` is optional; pass `(void)` for the default of no subprotocols.
+;; url : string
+;; protocols : value
+(define-foreign websocket-new
+  #:module "websocket"
+  #:name   "new"
+  (-> (string value) (extern/raw)))
+
+;;; Methods
+
+;; Send data through the socket.
+;; data : value
+(define-foreign websocket-send
+  #:module "websocket"
+  #:name   "send"
+  (-> (extern value) ()))
+
+;; Close the socket.
+;; `code` and `reason` are optional; pass `(void)` to use the default values.
+;; If `code` is omitted, WebSocket defaults to `1000`.
+;; code : value
+;; reason : value
+(define-foreign websocket-close
+  #:module "websocket"
+  #:name   "close"
+  (-> (extern value value) ()))
+
+;;; Properties
+
+;; WebSocket URL.
+;; ws : extern
+(define-foreign websocket-url
+  #:module "websocket"
+  #:name   "url"
+  (-> (extern) (string)))
+
+;; WebSocket readyState.
+;; ws : extern
+(define-foreign websocket-ready-state
+  #:module "websocket"
+  #:name   "ready-state"
+  (-> (extern) (u32)))
+
+;; WebSocket bufferedAmount.
+;; ws : extern
+(define-foreign websocket-buffered-amount
+  #:module "websocket"
+  #:name   "buffered-amount"
+  (-> (extern) (u32)))
+
+;; WebSocket protocol.
+;; ws : extern
+(define-foreign websocket-protocol
+  #:module "websocket"
+  #:name   "protocol"
+  (-> (extern) (string)))
+
+;; WebSocket extensions.
+;; ws : extern
+(define-foreign websocket-extensions
+  #:module "websocket"
+  #:name   "extensions"
+  (-> (extern) (string)))

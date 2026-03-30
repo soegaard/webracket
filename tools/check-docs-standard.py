@@ -9,6 +9,7 @@ Currently checked pairs:
 - DOCS-math.md vs ffi/math.ffi
 - DOCS-jsxgraph.md vs ffi/jsxgraph.ffi
 - DOCS-xtermjs.md vs ffi/xtermjs.ffi
+- DOCS-websocket.md vs ffi/websocket.ffi
 
 Checks per document:
 - every documented table function exists in the target .ffi
@@ -30,7 +31,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-FN_PATTERN = r"(?:js|jsx|xterm)-[^`)\s]+"
+FN_PATTERN = r"(?:js|jsx|xterm|websocket)-[^`)\s]+"
 
 
 @dataclass(frozen=True)
@@ -122,6 +123,19 @@ CONFIGS: tuple[DocCheckConfig, ...] = (
         require_table_example_use_when=True,
         require_index_coverage=False,
         allowed_url_prefixes=("https://xtermjs.org/docs/",),
+    ),
+    DocCheckConfig(
+        label="websocket",
+        doc_path=ROOT / "DOCS-websocket.md",
+        ffi_path=ROOT / "ffi" / "websocket.ffi",
+        coverage_patterns=(
+            r"- Total documented functions: \*\*(\d+)\*\*",
+            r"This document covers \*\*(\d+)\*\* functions from `ffi/websocket\.ffi`\.",
+        ),
+        legacy_section_heading_pattern=None,
+        require_table_example_use_when=True,
+        require_index_coverage=False,
+        allowed_url_prefixes=("https://developer.mozilla.org/",),
     ),
 )
 

@@ -27,6 +27,7 @@ cp website-docs-only.html ../public/documentation-ffi-js.html
 cp website-docs-only.html ../public/documentation-ffi-math.html
 cp website-docs-only.html ../public/documentation-ffi-jsxgraph.html
 cp website-docs-only.html ../public/documentation-ffi-xtermjs.html
+cp website-docs-only.html ../public/documentation-ffi-websocket.html
 cp website-docs-only.html ../public/documentation-extended-example-jsxgraph-board-points.html
 cp website-docs-only.html ../public/documentation-extended-example-jsxgraph-geometry-constructors.html
 cp ../../extras/jsxgraph/docs/static/jsxgraphcore.js ../public/assets/vendor/jsxgraph/jsxgraphcore.js
