@@ -50,7 +50,9 @@ and host interaction are structured.
 @section{Language Coverage}
 
 WebRacket focuses on practical web programs. It supports many core forms and
-data structures. Some areas are still a work in progress.
+data structures. Some areas are still a work in progress; see
+@hyperlink["Implemented_Primitives.html"]{Implemented Primitives} for the
+current primitive list.
 
 Supported areas include:
 
