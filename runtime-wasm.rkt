@@ -986,6 +986,7 @@
           LVT
 
           in-list
+          in-vector
           in-mlist
           in-range
           in-naturals
@@ -1232,6 +1233,7 @@
     (add-runtime-string-constant 'symbol?                    "symbol?")
     (add-runtime-string-constant 'keyword?                   "keyword?")
     (add-runtime-string-constant 'list?                      "list?")
+    (add-runtime-string-constant 'vector?                    "vector?")
     (add-runtime-string-constant 'mpair-or-null              "(or/c mpair? null?)")
     (add-runtime-string-constant 'catch*-matching-lengths    "same number of handlers as predicates")
     (add-runtime-string-constant 'real?                      "real?")
@@ -6526,6 +6528,19 @@
                                (global.get $string:list?)
                                (local.get $l))
                          (unreachable))))
+
+         (func $check-vector (type $Prim1)
+               (param $v (ref eq)) ;; vector
+               (result   (ref eq))
+               (if (result (ref eq))
+                   (ref.eq (call $vector? (local.get $v)) (global.get $true))
+                   (then (global.get $void))
+                   (else (call $raise-argument-error1
+                               (global.get $symbol:in-vector)
+                               (global.get $string:vector?)
+                               (local.get $v))
+                         (unreachable))))
+
 
          (func $check-string (type $Prim1)
                (param $s (ref eq)) ;; string

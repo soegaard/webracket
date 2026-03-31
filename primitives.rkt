@@ -278,6 +278,7 @@
  check-range-generic
  check-naturals
  check-string
+ check-vector
 
  ;; structure type properties
  ;; (these are used in kw.rkt)
@@ -1239,6 +1240,10 @@
 (define (check-list l)
   (unless (list? l)
     (raise-argument-error 'in-list "list?" l)))
+
+(define (check-vector v)
+  (unless (vector? v)
+    (raise-argument-error 'in-vector "vector?" v)))
 
 (define (check-string l)
   (unless (string? l)
