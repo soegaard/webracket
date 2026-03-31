@@ -60,46 +60,75 @@
       (symbol->string event-name)
       event-name))
 
-;; check-websocket-protocols : symbol? any/c -> void?
-;;   Ensure protocols is omitted, a string, or a string sequence.
-(define (check-websocket-protocols who protocols)
-  (define (string-sequence? xs)
-    (cond
-      [(null? xs) #t]
-      [(pair? xs)
-       (and (string? (car xs))
-            (string-sequence? (cdr xs)))]
-      [else #f]))
-  (define (vector-of-strings? v)
-    (let loop ([i 0])
-      (cond
-        [(= i (vector-length v)) #t]
-        [(string? (vector-ref v i)) (loop (add1 i))]
-        [else #f])))
-  (unless (or (void? protocols)
-              (string? protocols)
-              (and (list? protocols)
-                   (string-sequence? protocols))
-              (and (vector? protocols)
-                   (vector-of-strings? protocols)))
-    (raise-argument-error
-     who
-     "(or/c void? string? (listof string?) (vectorof string?))"
-     protocols)))
+;; check-websocket-protocol : symbol? any/c -> void?
+;;   Ensure a subprotocol name is a string or symbol.
+(define (check-websocket-protocol who protocol)
+  (unless (or (string? protocol)
+              (symbol? protocol))
+    (raise-argument-error who "(or/c string? symbol?)" protocol)))
+
+;; normalize-websocket-protocol : symbol? any/c -> string?
+;;   Convert a subprotocol name to a string.
+(define (normalize-websocket-protocol who protocol)
+  (check-websocket-protocol who protocol)
+  (if (symbol? protocol)
+      (symbol->string protocol)
+      protocol))
+
+;; normalize-websocket-protocols : symbol? (listof (or/c string? symbol?)) -> (or/c void? string? (vectorof string?))
+;;   Convert variadic subprotocol arguments to a low-level WebSocket argument.
+(define (normalize-websocket-protocols who protocols)
+  (cond
+    [(null? protocols)
+     (void)]
+    [(null? (cdr protocols))
+     (normalize-websocket-protocol who (car protocols))]
+    [else
+     (list->vector
+      (map (lambda (protocol)
+             (normalize-websocket-protocol who protocol))
+           protocols))]))
+
+;; ready-state-number->symbol : exact-integer? -> symbol?
+;;   Convert a browser readyState number to a symbolic label.
+(define (ready-state-number->symbol state)
+  (case state
+    [(0) 'connecting]
+    [(1) 'open]
+    [(2) 'closing]
+    [(3) 'closed]
+    [else
+     (error 'websocket-ready-state-number
+            "unexpected readyState value: ~a"
+            state)]))
 
 ;; check-websocket-close-code : symbol? any/c -> void?
-;;   Ensure code is omitted or an exact integer.
+;;   Ensure code is an exact integer.
 (define (check-websocket-close-code who code)
-  (unless (or (void? code)
-              (exact-integer? code))
-    (raise-argument-error who "(or/c void? exact-integer?)" code)))
+  (unless (exact-integer? code)
+    (raise-argument-error who "exact-integer?" code)))
 
 ;; check-websocket-close-reason : symbol? any/c -> void?
-;;   Ensure reason is omitted or a string.
+;;   Ensure reason is absent or a string.
 (define (check-websocket-close-reason who reason)
-  (unless (or (void? reason)
+  (unless (or (eq? reason #f)
               (string? reason))
-    (raise-argument-error who "(or/c void? string?)" reason)))
+    (raise-argument-error who "(or/c #f string?)" reason)))
+
+;; check-websocket-send-data : symbol? (or/c string? bytes? external?) -> void?
+;;   Ensure data is a browser-acceptable WebSocket message body.
+(define (check-websocket-send-data who data)
+  (unless (or (string? data)
+              (bytes? data)
+              (external? data))
+    (raise-argument-error who "(or/c string? bytes? external?)" data)))
+
+;; check-websocket-listener-option : symbol? (or/c boolean? external?) -> void?
+;;   Ensure an add/removeEventListener option is a boolean or JS object.
+(define (check-websocket-listener-option who option)
+  (unless (or (boolean? option)
+              (external? option))
+    (raise-argument-error who "(or/c boolean? external?)" option)))
 
 ;; websocket-handler->external : symbol? any/c -> any/c
 ;;   Convert a handler to an external callback or JS null.
@@ -137,27 +166,29 @@
   (js-set! ws prop (websocket-handler->external who handler))
   (void))
 
-;; websocket-new : string? [protocols (or/c void? string? (listof string?) (vectorof string?))] -> extern/raw
-;;   Create a new WebSocket connection.
-(define (websocket-new url [protocols (void)])
+;; websocket-new : string? (or/c string? symbol?) ... -> extern/raw
+;;   Create a new WebSocket connection from a URL and optional subprotocol names.
+(define (websocket-new url . protocols)
   (unless (string? url)
     (raise-argument-error 'websocket-new "string?" url))
-  (check-websocket-protocols 'websocket-new protocols)
-  (js-websocket-new url protocols))
+  (define low-level-protocols
+    (normalize-websocket-protocols 'websocket-new protocols))
+  (js-websocket-new url low-level-protocols))
 
-;; websocket-send : websocket? any/c -> void?
+;; websocket-send : websocket? (or/c string? bytes? external?) -> void?
 ;;   Send data through a WebSocket connection.
 (define (websocket-send ws data)
   (check-websocket 'websocket-send ws)
+  (check-websocket-send-data 'websocket-send data)
   (js-websocket-send ws data))
 
-;; websocket-close : websocket? [code (or/c void? exact-integer?)] [reason (or/c void? string?)] -> void?
+;; websocket-close : websocket? [code exact-integer? 1000] [reason (or/c #f string?) #f] -> void?
 ;;   Close a WebSocket connection.
-(define (websocket-close ws [code (void)] [reason (void)])
+(define (websocket-close ws [code 1000] [reason #f])
   (check-websocket 'websocket-close ws)
   (check-websocket-close-code 'websocket-close code)
   (check-websocket-close-reason 'websocket-close reason)
-  (js-websocket-close ws code reason))
+  (js-websocket-close ws code (if reason reason (void))))
 
 ;; websocket-url : websocket? -> string?
 ;;   Read the WebSocket URL.
@@ -165,11 +196,16 @@
   (check-websocket 'websocket-url ws)
   (js-websocket-url ws))
 
-;; websocket-ready-state : websocket? -> u32?
-;;   Read the readyState value.
-(define (websocket-ready-state ws)
-  (check-websocket 'websocket-ready-state ws)
+;; websocket-ready-state-number : websocket? -> u32?
+;;   Read the raw readyState number.
+(define (websocket-ready-state-number ws)
+  (check-websocket 'websocket-ready-state-number ws)
   (js-websocket-ready-state ws))
+
+;; websocket-ready-state : websocket? -> symbol?
+;;   Read the readyState value as a symbolic label.
+(define (websocket-ready-state ws)
+  (ready-state-number->symbol (websocket-ready-state-number ws)))
 
 ;; websocket-buffered-amount : websocket? -> u32?
 ;;   Read the bufferedAmount value.
@@ -209,20 +245,34 @@
 (define (websocket-onerror! ws handler)
   (websocket-set-handler! 'websocket-onerror! ws "onerror" handler))
 
-;; websocket-add-event-listener! : websocket? (or/c string? symbol?) (or/c procedure? external?) [any/c] -> external?
+;; websocket-add-event-listener! : websocket? (or/c string? symbol?) (or/c procedure? external?) (or/c boolean? external?) ... -> external?
 ;;   Add a WebSocket event listener and return the installed listener.
-(define (websocket-add-event-listener! ws event-name listener [options (void)])
+(define (websocket-add-event-listener! ws event-name listener . options)
   (check-websocket 'websocket-add-event-listener! ws)
   (define event-name* (normalize-websocket-event-name 'websocket-add-event-listener! event-name))
   (define listener* (websocket-listener->external 'websocket-add-event-listener! listener))
-  (js-send/extern/nullish ws "addEventListener" (vector event-name* listener* options))
+  (for-each (lambda (option)
+              (check-websocket-listener-option 'websocket-add-event-listener! option))
+            options)
+  (define args
+    (if (null? options)
+        (vector event-name* listener*)
+        (list->vector (list* event-name* listener* options))))
+  (js-send/extern/nullish ws "addEventListener" args)
   listener*)
 
-;; websocket-remove-event-listener! : websocket? (or/c string? symbol?) (or/c procedure? external?) [any/c] -> void?
+;; websocket-remove-event-listener! : websocket? (or/c string? symbol?) (or/c procedure? external?) (or/c boolean? external?) ... -> void?
 ;;   Remove a previously installed WebSocket event listener.
-(define (websocket-remove-event-listener! ws event-name listener [options (void)])
+(define (websocket-remove-event-listener! ws event-name listener . options)
   (check-websocket 'websocket-remove-event-listener! ws)
   (define event-name* (normalize-websocket-event-name 'websocket-remove-event-listener! event-name))
   (define listener* (websocket-listener->external 'websocket-remove-event-listener! listener))
-  (js-send/extern/nullish ws "removeEventListener" (vector event-name* listener* options))
+  (for-each (lambda (option)
+              (check-websocket-listener-option 'websocket-remove-event-listener! option))
+            options)
+  (define args
+    (if (null? options)
+        (vector event-name* listener*)
+        (list->vector (list* event-name* listener* options))))
+  (js-send/extern/nullish ws "removeEventListener" args)
   (void))

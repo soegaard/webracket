@@ -102,12 +102,14 @@
                         this.sent.push(data);
                       }
                       close(code, reason) {
-                        this.closed.push([code, reason]);
+                        this.closed.push([code, reason === undefined ? 'omitted' : reason]);
                       }
                       addEventListener(type, listener, options) {
+                        this.lastAddOptions = options;
                         this.handlers.push(['add', type, listener, options]);
                       }
                       removeEventListener(type, listener, options) {
+                        this.lastRemoveOptions = options;
                         this.handlers.push(['remove', type, listener, options]);
                       }
                       dispatch(type, evt) {
@@ -122,7 +124,7 @@
                         }
                       }
                     };")]
-              [ws (websocket-new "wss://example.invalid/socket" (vector "chat"))]
+              [ws (websocket-new "wss://example.invalid/socket" "chat" 'v2)]
               [open-count 0]
               [message-count 0]
               [close-count 0]
@@ -148,7 +150,7 @@
                (lambda (_evt)
                  (set! listener-count (add1 listener-count))
                  (void))]
-              [listener* (websocket-add-event-listener! ws 'message listener)])
+              [listener* (websocket-add-event-listener! ws 'message listener #t)])
          (websocket-onopen! ws open-handler)
          (websocket-onmessage! ws message-handler)
          (websocket-onclose! ws close-handler)
@@ -157,19 +159,22 @@
          (js-send/extern/nullish ws "dispatch" (vector "open" (js-eval "({type: 'open'})")))
          (js-send/extern/nullish ws "dispatch" (vector "message" (js-eval "({type: 'message', data: 'ping'})")))
          (js-send/extern/nullish ws "dispatch" (vector "error" (js-eval "({type: 'error'})")))
-         (websocket-remove-event-listener! ws "message" listener)
+         (websocket-remove-event-listener! ws "message" listener #t)
          (js-send/extern/nullish ws "dispatch" (vector "close" (js-eval "({type: 'close'})")))
-         (websocket-close ws 1000 "done")
+         (websocket-close ws)
          (check-true (websocket? ws) "wrapper websocket? true")
          (check-false (websocket? #f) "wrapper websocket? false")
          (check-equal (websocket-url ws) "wss://example.invalid/socket" "wrapper url")
-         (check-equal (websocket-ready-state ws) 1 "wrapper readyState")
+         (check-equal (websocket-ready-state-number ws) 1 "wrapper readyState number")
+         (check-equal (websocket-ready-state ws) 'open "wrapper readyState symbol")
          (check-equal (websocket-buffered-amount ws) 7 "wrapper bufferedAmount")
          (check-equal (websocket-protocol ws) "chat" "wrapper protocol")
          (check-equal (websocket-extensions ws) "permessage-deflate" "wrapper extensions")
-         (check-equal (js-ref ws "protocols") (vector "chat") "wrapper protocols")
+         (check-equal (js-ref ws "protocols") (vector "chat" "v2") "wrapper protocols")
          (check-equal (js-ref ws "sent") (vector "hello") "wrapper send")
-         (check-equal (js-ref ws "closed") (vector (vector 1000 "done")) "wrapper close")
+         (check-equal (js-ref ws "closed") (vector (vector 1000 "omitted")) "wrapper close")
+         (check-equal (js-ref ws "lastAddOptions") #t "wrapper add listener options")
+         (check-equal (js-ref ws "lastRemoveOptions") #t "wrapper remove listener options")
          (check-equal open-count 1 "wrapper open handler")
          (check-equal message-count 1 "wrapper message handler")
          (check-equal close-count 1 "wrapper close handler")

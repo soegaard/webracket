@@ -29,16 +29,6 @@
 (define (active-socket? ws)
   (and current-socket (eq? current-socket ws)))
 
-;; socket-state-label : number? -> string?
-;;   Convert a WebSocket readyState to a readable label.
-(define (socket-state-label state)
-  (case state
-    [(0) "connecting"]
-    [(1) "open"]
-    [(2) "closing"]
-    [(3) "closed"]
-    [else (format "unknown (~a)" state)]))
-
 ;; append-log! : string? -> void?
 ;;   Add one line to the log area.
 (define (append-log! line)
@@ -50,7 +40,7 @@
 ;;   Refresh the state summary from a live WebSocket.
 (define (sync-socket-fields! ws)
   (when (active-socket? ws)
-    (obs-set! @socket-state  (socket-state-label (websocket-ready-state ws)))
+    (obs-set! @socket-state  (symbol->string (websocket-ready-state ws)))
     (obs-set! @buffered-amt  (number->string (websocket-buffered-amount ws)))
     (obs-set! @protocol      (let ([p (websocket-protocol ws)])
                                (if (string=? p "") "none" p)))
