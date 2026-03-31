@@ -23,6 +23,9 @@
 
 (define (em . xs) (apply italic xs))
 
+(define (literal-tt s)
+  (apply tt (map string (string->list s))))
+
 (define-syntax-rule (how-to-require req-form name mod-path)
   @defmodule[#:require-form (lambda (modname)
                                (list (racket (req-form name))))
@@ -31,13 +34,16 @@
              #:packages ()
              #:no-declare])
 
-;; compile-option-bar : content? ... -> block?
+;; compile-option-bar : string? string? -> block?
 ;;   Render a compile-option banner styled like the module require bar.
-(define (compile-option-bar . text)
+(define (compile-option-bar label options)
   (make-table
    (make-style "defmodule"
                (list (background-color-property "#eef5ff")))
-   (list (list (apply para (append (list (hspace 1)) text))))))
+   (list (list (para (list (hspace 1)
+                           (literal-tt label)
+                           (hspace 1)
+                           (literal-tt options)))))))
 
 ;; mdn-bar : string? string? -> block?
 ;;   Render an MDN banner linking to a browser API page.

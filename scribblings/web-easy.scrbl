@@ -66,6 +66,9 @@
 @declare-exporting[(lib "scribblings/web-easy-labels.rkt" "webracket")]
 
 @(how-to-require include-lib web-easy (lib "core.rkt" "webracket"))
+@(compile-option-bar "Compile option: " "--ffi --browser --ffi dom --ffi standard --ffi js")
+
+
 
 @section{About web-easy}
 

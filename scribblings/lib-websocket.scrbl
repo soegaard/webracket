@@ -6,7 +6,7 @@
 @title{Library: @racketid[websocket]}
 
 @(how-to-require include-lib websocket (lib "libs/websocket.rkt"))
-@(compile-option-bar (tt "Compile option: ") (tt "-") (tt "-ffi websocket"))
+@(compile-option-bar "Compile option: " "--ffi websocket")
 
 WebSockets are a browser technology for keeping a connection open
 between a web page and a server.
