@@ -12,37 +12,52 @@
   "https://cdn.jsdelivr.net/npm/@xterm/addon-fit@0.10.0/lib/addon-fit.min.js")
 
 (define (matrix-rain-page)
-  `(div (@ (class "page page--matrix-rain"))
-        ,(navbar)
-        (section (@ (class "mathjax-hero"))
-                 (div (@ (class "hero-panel"))
-                      (div (@ (class "pill-row"))
-                           (span (@ (class "pill")) "xterm.js")
-                           (span (@ (class "pill")) "Animation")
-                           (span (@ (class "pill")) "DOM + JS FFI"))
-                      (h1 (@ (class "hero-title")) "Matrix Rain")
-                      (p (@ (class "hero-lead"))
-                         "A browser-based terminal rendering a real-time digital rain animation.")))
-        (section (@ (class "section section--mathjax"))
-                 (div (@ (class "section-content"))
-                      #;(p "Tip: Type in the terminal to trigger bursts.")
-                      (div (@ (id "matrix-root")
-                              (style "width:  100%; "
-                                     "height: 90vh; "
-                                     "border-radius: 14px; "
-                                     "overflow: hidden; "
-                                     "border: 1px solid rgba(80, 110, 80, 0.5); "
-                                     "background: radial-gradient(circle at center, #050 0%, #000 60%);")))))
-        (section (@ (class "section section--mathjax-details"))
-                 (div (@ (class "section-content"))
-                      (div (@ (class "mathjax-details"))
-                           (p "This example is adapted from "
-                              (code "examples/matrix-rain/matrix-rain.rkt")
-                              ". ")
-                           (div (@ (class "mathjax-actions"))
-                                ,(code-pill (gh-file "examples/matrix-rain/matrix-rain.rkt") "Example source code")
-                                ,(code-pill (gh-file "web-site/src/examples/matrix-rain-page.rkt") "Web-site source")))))
-        ,(footer-section)))
+  (define nav-node (navbar))
+  (define source-pill-1
+    (code-pill (gh-file "examples/matrix-rain/matrix-rain.rkt")
+               "Example source code"))
+  (define source-pill-2
+    (code-pill (gh-file "web-site/src/examples/matrix-rain-page.rkt")
+               "Web-site source"))
+  (define footer-node (footer-section))
+  (define hero-section
+    '(section (@ (class "examples-hero"))
+              (div (@ (class "hero-panel"))
+                   (div (@ (class "pill-row"))
+                        (span (@ (class "pill")) "xterm.js")
+                        (span (@ (class "pill")) "Animation")
+                        (span (@ (class "pill")) "DOM + JS FFI"))
+                   (h1 (@ (class "hero-title")) "Matrix Rain")
+                   (p (@ (class "hero-lead"))
+                      "A browser-based terminal rendering a real-time digital rain animation."))))
+  (define board-section
+    '(section (@ (class "section section--examples"))
+              (div (@ (class "section-content"))
+                   (div (@ (id "matrix-root")
+                           (style "width:  100%; "
+                                  "height: 90vh; "
+                                  "border-radius: 14px; "
+                                  "overflow: hidden; "
+                                  "border: 1px solid rgba(80, 110, 80, 0.5); "
+                                  "background: radial-gradient(circle at center, #050 0%, #000 60%);"))))))
+  (define details-section
+    `(section (@ (class "section section--examples-details"))
+              (div (@ (class "section-content"))
+                   (div (@ (class "examples-details"))
+                        (p "This example is adapted from "
+                           (code "examples/matrix-rain/matrix-rain.rkt")
+                           ". ")
+                        (div (@ (class "examples-actions"))
+                             ,source-pill-1
+                             ,source-pill-2)))))
+  (define page-node
+    `(div (@ (class "page page--matrix-rain"))
+          ,nav-node
+          ,hero-section
+          ,board-section
+          ,details-section
+          ,footer-node))
+  page-node)
 
 (define matrix-rain-started? #f)
 

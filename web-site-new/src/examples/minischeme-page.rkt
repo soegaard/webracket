@@ -798,7 +798,7 @@
        (list (car item) (cadr item)))
      category-nav-items))
 
-  `(div (@ (class "minischeme-details minischeme-reference")
+  `(div (@ (class "examples-details minischeme-details minischeme-reference")
            (id "minischeme-reference-section"))
         (div (@ (class "minischeme-ref-layout"))
              (div (@ (class "minischeme-ref-main"))
@@ -972,7 +972,7 @@
                                                 (class "ms-copy-btn ms-copy-btn--output")
                                                 (aria-label "Copy output"))
                                              "Copy"))))))
-        (section (@ (class "section section--minischeme-details"))
+        (section (@ (class "section section--examples-details section--minischeme-details"))
                  (div (@ (class "section-content"))
                       ,(minischeme-reference-section)))
         (button (@ (id "minischeme-back-to-editor")
@@ -1205,11 +1205,10 @@
                           (loop)))
                       (minischeme-token-style
                        (js-value->string (js-send/extern stream "current" (vector))))])])))
-            ;; Instrumentation + guard: ensure we always advance.
+            ;; Guard: ensure tokenizer always advances.
             (define end-pos (js-number-value (js-ref stream "pos")))
             (when (and (= start-pos end-pos)
                        (not (js-send/truthy stream "eol" (vector))))
-              (js-log (format "[minischeme/overlay] non-advance start=~a end=~a" start-pos end-pos))
               (js-send stream "next" (vector)))
             result)])
      (case-lambda

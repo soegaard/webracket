@@ -483,7 +483,7 @@
           "Source"
           "This example is based on the Formula 1 parser tutorial."
           (list
-           `(div (@ (class "mathjax-actions"))
+           `(div (@ (class "examples-actions"))
                  ,(code-pill (gh-file "web-site/src/examples/formula1/formula1.rkt")
                              "Parser tutorial")
                  ,(code-pill (gh-file "web-site/src/examples/formula1-page.rkt")

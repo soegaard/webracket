@@ -3027,7 +3027,7 @@
               (h3 ,display)
               (span (@ (class "attention-percent")) ,(format "~a%" pct-num)))
         `(p (@ (class "attention-count"))
-            ,(format "~a of ~a primitives implemented" implemented-count total))
+            ,(format "~a/~a implemented" implemented-count total))
         `(p (@ (class "attention-note")) ,note)
         `(a (@ (class "attention-link")
                (href ,(string-append "#" anchor-id))
@@ -3042,13 +3042,12 @@
   `(div (@ (class "status-legend"))
         (div (@ (class "status-legend-title")) "Legend")
         (ul (@ (class "status-legend-list"))
-            (li (span (@ (class "status-legend-term")) "Implemented primitives")
-                " implemented in the WebRacket runtime.")
-            (li (span (@ (class "status-legend-term")) "Stdlib coverage")
-                " identifiers provided by the stdlib (counted as covered).")
-            (li (span (@ (class "status-legend-term")) "Missing primitives")
-                " not yet implemented in the runtime.")
-            (li "Pict is tracked separately."))))
+            (li (span (@ (class "status-legend-term")) "Implemented Primitives")
+                " Implemented in WebAssembly")
+            (li (span (@ (class "status-legend-term")) "Standard Library")
+                " Implemented in WebRacket")
+            (li (span (@ (class "status-legend-term")) "Missing Primitives")
+                " To do"))))
 
 ;; status-insight-callout: -> list?
 ;;   Render a callout highlighting strongest and weakest sections.
@@ -3277,9 +3276,16 @@
   (when section
     (js-set! section "open" #t)
     (define summary (js-element-query-selector section "summary"))
-    (js-send section "scrollIntoView"
-             (vector (js-object (vector (vector "behavior" "smooth")
-                                        (vector "block"    "start")))))
+    (define scroll-target
+      (or (js-element-query-selector section ".status-body")
+          section))
+    (js-window-set-timeout
+     (procedure->external
+      (lambda ()
+        (js-send scroll-target "scrollIntoView"
+                 (vector (js-object (vector (vector "behavior" "smooth")
+                                            (vector "block"    "start")))))))
+     20)
     (when summary
       (js-send summary "focus"
                (vector (js-object (vector (vector "preventScroll" #t))))))))
@@ -3301,6 +3307,14 @@
                     (vector (js-null) "" (string-append "#" target-id)))))))
     (remember-status-handler! handler)
     (js-add-event-listener! link "click" handler))
+  (define hashchange-handler
+    (procedure->external
+     (lambda (_evt)
+       (define next-hash (js-ref (js-window-location) "hash"))
+       (when (and (string? next-hash) (> (string-length next-hash) 1))
+         (status-open-target! (substring next-hash 1))))))
+  (remember-status-handler! hashchange-handler)
+  (js-add-event-listener! (js-window-window) "hashchange" hashchange-handler)
   (define hash (js-ref (js-window-location) "hash"))
   (when (and (string? hash) (> (string-length hash) 1))
     (status-open-target! (substring hash 1))))
@@ -3489,51 +3503,42 @@
                  (div (@ (class "hero-panel"))
                       (div (@ (class "pill-row"))
                            (span (@ (class "pill")) "Runtime primitives")
-                           (span (@ (class "pill")) "Stdlib coverage")
+                           (span (@ (class "pill")) "Standard Library")
                            (span (@ (class "pill")) "Documentation links"))
-                      (h1 (@ (class "hero-title")) "WebRacket Implementation Status Dashboard")
+                      (h1 (@ (class "hero-title")) "WebRacket Coverage Report")
                       (p (@ (class "hero-lead"))
-                         "A progress tracker for contributors and users. "
-                         "See which Racket primitives are implemented, what's missing, "
-                         "and where to help next.")
+                         "This dashboard tracks implemented Racket primitives. "
+                         "Use it to see what's done, what's missing and what to implement next.")
                       (p (@ (class "hero-sublead"))
-                         "Each function links to the Racket docs; sections expand to show "
-                         "implemented, stdlib-backed, and missing primitives.")
-                      (p (@ (class "hero-note"))
-                         "How to read this: Implemented means built into the WebRacket runtime, "
-                         "while stdlib identifiers count as covered.")))
+                         "Each section expands and reveals a list of primitives. "
+                         "Each primitive is linked to the Racket documentation.")))
         ,(section-block
           "At a glance"
-          "Summary metrics across the tracked chapters."
+          "Summary metrics."
           (list
            (card-grid
             (list
-             (list `(h3 "Implemented primitives")
-                   `(p (@ (class "status-metric"))
+             (list `(h3 "Implemented Primitives")
+                   `(p (@ (class "status-metric status-metric--implemented"))
                        ,(number->string (length implemented-primitives)))
-                   `(p "Runtime primitives. Implemented in WebAssembly."))
-             (list `(h3 "Missing primitives")
-                   `(p (@ (class "status-metric"))
+                   `(p "Implemented in WebAssembly"))
+             (list `(h3 "Missing Primitives")
+                   `(p (@ (class "status-metric status-metric--missing"))
                        ,(number->string missing-primitives))
-                   `(p "Still to be implemented in the runtime."))
-             (list `(h3 "Stdlib coverage")
-                   `(p (@ (class "status-metric"))
+                   `(p ""))
+             (list `(h3 "Standard Library")
+                   `(p (@ (class "status-metric status-metric--stdlib"))
                        ,(number->string total-standard-library-identifiers))
-                   `(p "Identifiers provided by the standard library. Implemented in WebRacket."))
-             (list `(h3 "Stdlib-only identifiers")
-                   `(p (@ (class "status-metric"))
+                   `(p "Implemented in WebRacket"))
+             (list `(h3 "WebRacket Only")
+                   `(p (@ (class "status-metric status-metric--webracket-only"))
                        ,(number->string (- (length standard-library-identifiers)
                                            total-standard-library-identifiers)))
-                   `(p "Identifiers that exist only in WebRacket (not full Racket).")))))
+                   `(p "")))))
             "status-summary-grid")
-        ,(callout
-          'info
-          "About the counts"
-          `(p "Pict functions are tracked separately and excluded from primitive totals. "
-              "Stdlib identifiers count as covered for completeness."))
         ,(section-block
           "Needs attention"
-          "Highest-impact gaps to unlock more programs."
+          "Next in line."
           (list
            (card-grid (map attention-card (needs-attention-items))
                       "attention-grid"))
@@ -3543,11 +3548,11 @@
               ,(status-insight-callout))
         ,(section-block
           "Completion by chapter"
-          "Expand a section to see which primitives are implemented or still missing."
+          #f
           (list
            (status-legend)
            `(p (@ (class "status-helper"))
-               "Click a card to expand missing primitives.")
+               "Click a card to see the list of primitives.")
            `(div (@ (class "status-chapters"))
                  ,@(map chapter-block prepared-chapters)))
           #f
@@ -3555,11 +3560,11 @@
 
         ,(section-block
           "Help close the gaps"
-          "Contribute runtime support or stdlib coverage to unlock more programs."
+          "Help by adding a primitive or expand the standard library."
           (list
            `(div (@ (class "status-cta"))
                  (div (@ (class "status-cta-actions"))
-                      (a (@ (class "cta-button")
+                      (a (@ (class "cta-link")
                             (href ,(gh-file "runtime-wasm.rkt"))
                             (target "_blank")
                             (rel "noreferrer noopener"))

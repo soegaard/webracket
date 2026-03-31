@@ -61,7 +61,7 @@
    (puzzle
     'racket-mix-1
     (list
-     (group 'yellow "Core Racket forms"     (list "CAR" "CDR" "CONS" "LAMBDA"))
+     (group 'yellow "Racket Primitives"     (list "CAR" "CDR" "CONS" "LIST"))
      (group 'green  "Git words"             (list "GIT" "MERGE" "COMMIT" "BRANCH"))
      (group 'blue   "Tennis terms"          (list "RACKET" "SERVE" "VOLLEY" "DEUCE"))
      (group 'purple "Sewing terms"          (list "THREAD" "NEEDLE" "SEAM" "PATTERN"))))

@@ -6,3 +6,10 @@ compiled/
 \#*
 .\#*
 /.local-tools/
+/html/
+/lib/web-easy/tmp/
+/lib/web-easy/examples/**/generated/
+/web-site/src/*.wat
+/web-site/src/**/*.wat
+/web-site-new/src/*.wat
+/web-site-new/src/**/*.wat

@@ -479,17 +479,15 @@
           #f
           "section--examples")
 
-        ,(section-block
-          "Source"
-          "This example is based on the Formula 1 parser tutorial."
-          (list
-           `(div (@ (class "mathjax-actions"))
-                 ,(code-pill (gh-file "web-site/src/examples/formula1/formula1.rkt")
-                             "Parser tutorial")
-                 ,(code-pill (gh-file "web-site/src/examples/formula1-page.rkt")
-                             "Website integration example")))
-          #f
-          "section--examples")
+        (section (@ (class "section section--examples-details"))
+                 (div (@ (class "section-content"))
+                      (div (@ (class "examples-details"))
+                           (p "This example is based on the Formula 1 parser tutorial.")
+                           (div (@ (class "examples-actions"))
+                                ,(code-pill (gh-file "web-site/src/examples/formula1/formula1.rkt")
+                                            "Parser tutorial")
+                                ,(code-pill (gh-file "web-site/src/examples/formula1-page.rkt")
+                                            "Website integration example")))))
 
         ,(footer-section)))
 

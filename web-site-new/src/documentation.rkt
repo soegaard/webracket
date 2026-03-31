@@ -2005,6 +2005,13 @@
                             [i (in-naturals)]
                             #:when (string=? (string-downcase (string-trim (element-text th))) "use when"))
                   i))
+              (define binding-idx
+                (for/first ([th (in-list headers)]
+                            [i (in-naturals)]
+                            #:when (let ([label (string-downcase (string-trim (element-text th)))])
+                                     (or (string=? label "binding")
+                                         (string=? label "bindings"))))
+                  i))
               (when (number? function-idx)
                 (define function-th (list-ref headers function-idx))
                 (classlist-add! function-th "ffi-function-col"))
@@ -2012,12 +2019,17 @@
               (when (number? use-when-idx)
                 (define header-th (list-ref headers use-when-idx))
                 (classlist-add! header-th "ffi-use-when-col"))
+              (when (number? binding-idx)
+                (define binding-th (list-ref headers binding-idx))
+                (classlist-add! binding-th "ffi-binding-col"))
               (for ([row (in-list rows)])
                 (define cells (node-list->list (js-element-query-selector-all row "td")))
                 (when (and (number? function-idx) (< function-idx (length cells)))
                   (classlist-add! (list-ref cells function-idx) "ffi-function-col"))
                 (when (and (number? use-when-idx) (< use-when-idx (length cells)))
-                  (classlist-add! (list-ref cells use-when-idx) "ffi-use-when-col")))))
+                  (classlist-add! (list-ref cells use-when-idx) "ffi-use-when-col"))
+                (when (and (number? binding-idx) (< binding-idx (length cells)))
+                  (classlist-add! (list-ref cells binding-idx) "ffi-binding-col")))))
           (set! toc-links (node-list->list (js-query-selector-all "[data-toc-link]")))
           (for ((heading (in-list headings)))
             (define text (element-text heading))
