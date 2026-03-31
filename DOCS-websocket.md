@@ -4,6 +4,10 @@
 
 This document describes the browser WebSocket bindings exported by `ffi/websocket.ffi` in WebRacket.
 
+The public browser-facing wrapper lives in `lib/libs/websocket.rkt` and is loaded with
+`(include-lib websocket)`. It exposes the checked `websocket-*` names for example code, while the
+raw `js-websocket-*` bindings remain the low-level FFI surface.
+
 This FFI exposes the core WebSocket surface:
 - construct a socket
 - send data
@@ -22,6 +26,7 @@ All function names are linked to MDN pages for the corresponding Web API member.
 - [2.2 Optional Argument Conventions](#22-optional-argument-conventions)
 - [2.3 Common Setup Helpers](#23-common-setup-helpers)
 - [2.4 Environment and Availability Notes](#24-environment-and-availability-notes)
+- [2.5 Public Wrapper Layer](#25-public-wrapper-layer)
 - [Chapter 3 — Construction](#chapter-3--construction)
 - [Chapter 4 — Properties](#chapter-4--properties)
 - [Chapter 5 — Methods](#chapter-5--methods)
@@ -45,15 +50,21 @@ All function names are linked to MDN pages for the corresponding Web API member.
 
 ### 2.2 Optional Argument Conventions
 
-- `js-websocket-new` takes a URL and an optional `protocols` argument.
+- `websocket-new` and `js-websocket-new` take a URL and an optional `protocols` argument.
 - Pass `(void)` to use the browser default of no subprotocols.
-- `js-websocket-close` follows the browser API shape where `code` and `reason` are optional and positional.
+- `websocket-close` and `js-websocket-close` follow the browser API shape where `code` and `reason` are optional and positional.
 - Pass `(void)` for trailing optional arguments you want to omit.
+- `websocket-onopen!`, `websocket-onmessage!`, `websocket-onclose!`, and `websocket-onerror!` accept
+  either `#f` to clear the handler or a procedure/external callback to install one.
+- `websocket-add-event-listener!` accepts a string or symbol event name and returns the installed callback value so it can be removed later.
+- `websocket-remove-event-listener!` accepts either the original listener procedure or the returned callback value.
 
 ### 2.3 Common Setup Helpers
 
 ```racket
-(define ws (js-websocket-new "wss://example.invalid/socket" (vector "chat")))
+(include-lib websocket)
+
+(define ws (websocket-new "wss://example.invalid/socket" (vector "chat")))
 (define mock-ws (js-eval "globalThis.WebSocket"))
 (define send-data "hello")
 ```
@@ -63,6 +74,39 @@ All function names are linked to MDN pages for the corresponding Web API member.
 - These bindings are browser-oriented and assume a `WebSocket` implementation is available.
 - In browsers that do not expose `WebSocket`, construction will fail.
 - In tests, it is often easier to install a mock constructor on `globalThis.WebSocket` before calling `js-websocket-new`.
+
+### 2.5 Public Wrapper Layer
+
+The checked wrapper layer is intended for application code and examples.
+
+```racket
+(include-lib websocket)
+
+(define ws (websocket-new "wss://example.invalid/socket" (vector "chat")))
+(websocket-onopen! ws (lambda (_evt) (void)))
+(websocket-onmessage! ws (lambda (_evt) (void)))
+(websocket-onclose! ws (lambda (_evt) (void)))
+(websocket-onerror! ws (lambda (_evt) (void)))
+(websocket-add-event-listener! ws 'message (lambda (_evt) (void)))
+```
+
+The wrapper exports the following checked helpers:
+- `websocket?`
+- `check-websocket`
+- `websocket-new`
+- `websocket-send`
+- `websocket-close`
+- `websocket-url`
+- `websocket-ready-state`
+- `websocket-buffered-amount`
+- `websocket-protocol`
+- `websocket-extensions`
+- `websocket-onopen!`
+- `websocket-onmessage!`
+- `websocket-onclose!`
+- `websocket-onerror!`
+- `websocket-add-event-listener!`
+- `websocket-remove-event-listener!`
 
 ## Chapter 3 — Construction
 
@@ -98,14 +142,16 @@ WebSocket API: [WebSocket](https://developer.mozilla.org/en-US/docs/Web/API/WebS
 ### Build, Send, and Inspect State
 
 ```racket
-(define ws (js-websocket-new "wss://example.invalid/socket" (vector "chat")))
-(js-websocket-send ws "hello")
-(js-websocket-close ws 1000 "done")
-(list (js-websocket-url ws)
-      (js-websocket-ready-state ws)
-      (js-websocket-buffered-amount ws)
-      (js-websocket-protocol ws)
-      (js-websocket-extensions ws))
+(include-lib websocket)
+
+(define ws (websocket-new "wss://example.invalid/socket" (vector "chat")))
+(websocket-send ws "hello")
+(websocket-close ws 1000 "done")
+(list (websocket-url ws)
+      (websocket-ready-state ws)
+      (websocket-buffered-amount ws)
+      (websocket-protocol ws)
+      (websocket-extensions ws))
 ```
 
 ### Mocked Constructor for Tests
@@ -128,8 +174,10 @@ WebSocket API: [WebSocket](https://developer.mozilla.org/en-US/docs/Web/API/WebS
 
 ## Chapter 7 — Coverage Checklist
 
-- This document covers **8** functions from `ffi/websocket.ffi`.
-- Total documented functions: **8**
+- This document covers **8** low-level functions from `ffi/websocket.ffi`.
+- This document also describes **16** checked wrapper functions from `lib/libs/websocket.rkt`.
+- Total documented functions: **24**
 - `construction`: 1 function
 - `properties`: 5 functions
 - `methods`: 2 functions
+- `wrapper core and events`: 16 functions

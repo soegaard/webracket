@@ -3,6 +3,7 @@
 ;;;
 
 (include/reader "../../main-browser.rkt" read-syntax/skip-first-line)
+(include-lib websocket)
 
 (define websocket-demo-url     "wss://echo-websocket.fly.dev/")
 (define websocket-demo-message "Hello from WebRacket")
@@ -49,55 +50,51 @@
 ;;   Refresh the state summary from a live WebSocket.
 (define (sync-socket-fields! ws)
   (when (active-socket? ws)
-    (obs-set! @socket-state  (socket-state-label (js-websocket-ready-state ws)))
-    (obs-set! @buffered-amt  (number->string (js-websocket-buffered-amount ws)))
-    (obs-set! @protocol      (let ([p (js-websocket-protocol ws)])
+    (obs-set! @socket-state  (socket-state-label (websocket-ready-state ws)))
+    (obs-set! @buffered-amt  (number->string (websocket-buffered-amount ws)))
+    (obs-set! @protocol      (let ([p (websocket-protocol ws)])
                                (if (string=? p "") "none" p)))
-    (obs-set! @extensions    (let ([e (js-websocket-extensions ws)])
+    (obs-set! @extensions    (let ([e (websocket-extensions ws)])
                                (if (string=? e "") "none" e)))))
 
 ;; install-socket-handlers! : extern -> void?
 ;;   Attach WebSocket event handlers to ws.
 (define (install-socket-handlers! ws)
   (set! open-handler
-        (procedure->external
-         (lambda (_evt)
-           (when (active-socket? ws)
-             (obs-set! @status "connected")
-             (append-log! "opened")
-             (sync-socket-fields! ws))
-           (void))))
+        (lambda (_evt)
+          (when (active-socket? ws)
+            (obs-set! @status "connected")
+            (append-log! "opened")
+            (sync-socket-fields! ws))
+          (void)))
   (set! message-handler
-        (procedure->external
-         (lambda (evt)
-           (when (active-socket? ws)
-             (define data (js-ref evt "data"))
-             (append-log! (format "received: ~a" data))
-             (sync-socket-fields! ws))
-           (void))))
+        (lambda (evt)
+          (when (active-socket? ws)
+            (define data (js-ref evt "data"))
+            (append-log! (format "received: ~a" data))
+            (sync-socket-fields! ws))
+          (void)))
   (set! close-handler
-        (procedure->external
-         (lambda (_evt)
-           (when (active-socket? ws)
-             (set! current-socket #f)
-             (obs-set! @status "closed")
-             (obs-set! @socket-state "closed")
-             (obs-set! @buffered-amt "0")
-             (obs-set! @protocol "none")
-             (obs-set! @extensions "none")
-             (append-log! "closed"))
-           (void))))
+        (lambda (_evt)
+          (when (active-socket? ws)
+            (set! current-socket #f)
+            (obs-set! @status "closed")
+            (obs-set! @socket-state "closed")
+            (obs-set! @buffered-amt "0")
+            (obs-set! @protocol "none")
+            (obs-set! @extensions "none")
+            (append-log! "closed"))
+          (void)))
   (set! error-handler
-        (procedure->external
-         (lambda (_evt)
-           (when (active-socket? ws)
-             (obs-set! @status "error")
-             (append-log! "socket error"))
-           (void))))
-  (js-set! ws "onopen"    open-handler)
-  (js-set! ws "onmessage" message-handler)
-  (js-set! ws "onclose"   close-handler)
-  (js-set! ws "onerror"   error-handler)
+        (lambda (_evt)
+          (when (active-socket? ws)
+            (obs-set! @status "error")
+            (append-log! "socket error"))
+          (void)))
+  (websocket-onopen! ws open-handler)
+  (websocket-onmessage! ws message-handler)
+  (websocket-onclose! ws close-handler)
+  (websocket-onerror! ws error-handler)
   (void))
 
 ;; connect! : -> void?
@@ -106,8 +103,8 @@
   (define url (obs-peek @server-url))
   (when current-socket
     (with-handlers ([exn? (lambda (_e) (void))])
-      (js-websocket-close current-socket 1000 "replaced")))
-  (define ws  (js-websocket-new url (void)))
+      (websocket-close current-socket 1000 "replaced")))
+  (define ws  (websocket-new url))
   (set! current-socket ws)
   (obs-set! @status "connecting")
   (append-log! (format "connecting: ~a" url))
@@ -121,7 +118,7 @@
   (cond
     [current-socket
      (define msg (obs-peek @message))
-     (js-websocket-send current-socket msg)
+     (websocket-send current-socket msg)
      (append-log! (format "sent: ~a" msg))
      (sync-socket-fields! current-socket)]
     [else
@@ -133,7 +130,7 @@
   (cond
     [current-socket
      (append-log! "closing socket")
-     (js-websocket-close current-socket 1000 "demo closed")]
+     (websocket-close current-socket 1000 "demo closed")]
     [else
      (append-log! "no socket to close")]))
 
