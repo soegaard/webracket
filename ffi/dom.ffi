@@ -113,7 +113,7 @@
   #:mdn    "Window/scrollbars"
   (-> () (extern/raw)))
 
-(define-foreign js-window-statusbar
+(define-foreign js-window-statusbar 
   #:module "window"
   #:name   "statusbar"
   #:doc    "Returns the status bar visibility interface."
@@ -126,20 +126,6 @@
   #:doc    "Returns the toolbar visibility interface."
   #:mdn    "Window/toolbar"
   (-> () (extern/raw)))
-
-(define-foreign js-window-status
-  #:module "window"
-  #:name   "status"
-  #:doc    "Returns the text shown in the status bar."
-  #:mdn    "Window/status"
-  (-> () (string)))
-
-(define-foreign js-set-window-status!
-  #:module "window"
-  #:name   "set-status!"
-  #:doc    "Sets the text shown in the status bar."
-  #:mdn    "Window/setStatus"
-  (-> (string) ()))
 
 (define-foreign js-window-closed
   #:module "window"
@@ -224,13 +210,6 @@
   #:doc    "Returns the ratio of physical to CSS pixels."
   #:mdn    "Window/devicePixelRatio"
   (-> () (f64)))
-
-(define-foreign js-window-event
-  #:module "window"
-  #:name   "event"
-  #:doc    "Returns the current Event in legacy handler contexts."
-  #:mdn    "Window/event"
-  (-> () (extern/undefined)))
 
 (define-foreign js-window-frame-element
   #:module "window"
@@ -416,12 +395,6 @@
   #:mdn    "Window/btoa"
   (-> (string) (string)))
 
-(define-foreign js-window-blur
-  #:module "window"
-  #:name   "blur"
-  #:doc    "Removes focus from the target."
-  #:mdn    "Window/blur"
-  (-> () ()))
 
 (define-foreign js-window-cancel-animation-frame
   #:module "window"
