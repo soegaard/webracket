@@ -12,7 +12,7 @@
 ;; `protocols` is optional; pass `(void)` for the default of no subprotocols.
 ;; url : string
 ;; protocols : value
-(define-foreign websocket-new
+(define-foreign js-websocket-new
   #:module "websocket"
   #:name   "new"
   (-> (string value) (extern/raw)))
@@ -21,7 +21,7 @@
 
 ;; Send data through the socket.
 ;; data : value
-(define-foreign websocket-send
+(define-foreign js-websocket-send
   #:module "websocket"
   #:name   "send"
   (-> (extern value) ()))
@@ -31,7 +31,7 @@
 ;; If `code` is omitted, WebSocket defaults to `1000`.
 ;; code : value
 ;; reason : value
-(define-foreign websocket-close
+(define-foreign js-websocket-close
   #:module "websocket"
   #:name   "close"
   (-> (extern value value) ()))
@@ -40,35 +40,35 @@
 
 ;; WebSocket URL.
 ;; ws : extern
-(define-foreign websocket-url
+(define-foreign js-websocket-url
   #:module "websocket"
   #:name   "url"
   (-> (extern) (string)))
 
 ;; WebSocket readyState.
 ;; ws : extern
-(define-foreign websocket-ready-state
+(define-foreign js-websocket-ready-state
   #:module "websocket"
   #:name   "ready-state"
   (-> (extern) (u32)))
 
 ;; WebSocket bufferedAmount.
 ;; ws : extern
-(define-foreign websocket-buffered-amount
+(define-foreign js-websocket-buffered-amount
   #:module "websocket"
   #:name   "buffered-amount"
   (-> (extern) (u32)))
 
 ;; WebSocket protocol.
 ;; ws : extern
-(define-foreign websocket-protocol
+(define-foreign js-websocket-protocol
   #:module "websocket"
   #:name   "protocol"
   (-> (extern) (string)))
 
 ;; WebSocket extensions.
 ;; ws : extern
-(define-foreign websocket-extensions
+(define-foreign js-websocket-extensions
   #:module "websocket"
   #:name   "extensions"
   (-> (extern) (string)))

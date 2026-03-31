@@ -28,14 +28,14 @@
                         this.closed.push([code, reason]);
                       }
                     };")]
-              [ws (websocket-new "wss://example.invalid/socket" (vector "chat"))]
-              [_  (websocket-send ws "hello")]
-              [_  (websocket-close ws 1000 "done")])
-         (and (equal? (websocket-url ws) "wss://example.invalid/socket")
-              (equal? (websocket-ready-state ws) 1)
-              (equal? (websocket-buffered-amount ws) 7)
-              (equal? (websocket-protocol ws) "chat")
-              (equal? (websocket-extensions ws) "permessage-deflate")
+              [ws (js-websocket-new "wss://example.invalid/socket" (vector "chat"))]
+              [_  (js-websocket-send ws "hello")]
+              [_  (js-websocket-close ws 1000 "done")])
+         (and (equal? (js-websocket-url ws) "wss://example.invalid/socket")
+              (equal? (js-websocket-ready-state ws) 1)
+              (equal? (js-websocket-buffered-amount ws) 7)
+              (equal? (js-websocket-protocol ws) "chat")
+              (equal? (js-websocket-extensions ws) "permessage-deflate")
               (equal? (js-ref ws "protocols") (vector "chat"))
               (equal? (js-ref ws "sent") (vector "hello"))
               (equal? (js-ref ws "closed") (vector (vector 1000 "done")))))))
