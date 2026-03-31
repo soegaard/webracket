@@ -87,6 +87,7 @@ Currently available libraries include:
   @item{@racket[(require-lib define)]}
   @item{@racket[(require-lib threading)]}
   @item{@racket[(include-lib web-easy)]}
+  @item{@racket[(include-lib websocket)]}
 ]
 
 See their respective documentation pages.
