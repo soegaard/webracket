@@ -75,6 +75,7 @@
                    quote
                    void
                    define-syntaxes
+                   begin-for-syntax
                    )))
 (provide (for-syntax define-syntax-rule
                      define-syntax
@@ -89,6 +90,7 @@
                      quote
                      void
                      define-syntaxes
+                     begin-for-syntax
                      ))
 
 

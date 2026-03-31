@@ -1513,6 +1513,7 @@
     (topbegin s t ...)           => (topbegin t ...)
     (topmodule s mn mp mf ...)   => (module mn mp (#%plain-module-begin mf ...))
     (#%expression s e)           => (#%expression e)
+    (begin-for-syntax s t ...)   => (topbegin-for-syntax t ...)
     g)
   (ModuleLevelForm (mf)
     (#%provide rps ...)           => (#%provide rps ...)
@@ -1814,6 +1815,8 @@
         [(module mn mp 
            (module-begin mlf ...))    `(topmodule ,T ,(syntax-e #'mn) ,(syntax-e #'mp) 
                                                   ,(ModuleLevelForm* #'(mlf ...)) ...)]
+        [(begin-for-syntax s t ...)   `(#%expression ,T ,(Expr #'#f)) ]
+
         [g                            `,(GeneralTopLevelForm #'g)])))
 
   (ModuleLevelForm : * (M) -> ModuleLevelForm ()
@@ -2379,8 +2382,10 @@
 ;;  Rewrite the bodies of λ, let-values and letrec-values to a single expression.
 ;;  This simplifies the treatment of let-values and letrec-values later on.
 ;;  (Read: Fewer rules contains the pattern e ... )
-
+    
 (define-language LFE1 (extends LFE)
+  (TopLevelForm (t)
+    (- (begin-for-syntax s t ...)))
   (Expr (e)
     (- (λ s f e ...)
        (let-values    s ([(x ...) e] ...) e0 e1 ...)
@@ -2390,6 +2395,7 @@
        (let-values     s ([(x ...) e] ...) e0) => (let-values    ([(x ...) e] ...) e0)
        (letrec-values  s ([(x ...) e] ...) e0) => (letrec-values ([(x ...) e] ...) e0)
        (case-lambda    s (f e) ...)            => (case-lambda   (f e) ...))))
+
 
 (define-language LFE2 (extends LFE1)
   (Abstraction (ab)
