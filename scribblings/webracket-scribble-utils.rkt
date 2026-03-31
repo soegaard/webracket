@@ -1,10 +1,14 @@
 #lang at-exp racket
-(require scribble/manual)
+(require scribble/manual
+         scribble/core
+         scribble/html-properties)
 
 (provide wiki
           margin-wiki
           em
-          how-to-require)
+          how-to-require
+          compile-option-bar
+          mdn-bar)
 
 (define (wiki title page)
    (hyperlink
@@ -26,3 +30,22 @@
              #:link-target? #f
              #:packages ()
              #:no-declare])
+
+;; compile-option-bar : content? ... -> block?
+;;   Render a compile-option banner styled like the module require bar.
+(define (compile-option-bar . text)
+  (make-table
+   (make-style "defmodule"
+               (list (background-color-property "#eef5ff")))
+   (list (list (apply para (append (list (hspace 1)) text))))))
+
+;; mdn-bar : string? string? -> block?
+;;   Render an MDN banner linking to a browser API page.
+(define (mdn-bar label url)
+  (make-table
+   (make-style "defmodule"
+               (list (background-color-property "#f7fbff")))
+   (list (list (para (list (hspace 1)
+                           (tt "MDN")
+                           (hspace 2)
+                           (hyperlink url (tt label))))))))
