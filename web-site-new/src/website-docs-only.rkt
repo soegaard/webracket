@@ -3735,6 +3735,7 @@ CSS
       [(doc-ffi-math)          (doc-ffi-math-page)]
       [(doc-ffi-jsxgraph)      (doc-ffi-jsxgraph-page)]
       [(doc-ffi-xtermjs)       (doc-ffi-xtermjs-page)]
+      [(doc-ffi-websocket)     (doc-ffi-websocket-page)]
       [(doc-extended-example-jsxgraph-board-points)
                                (doc-extended-example-jsxgraph-board-points-page)]
       [(doc-extended-example-jsxgraph-geometry-constructors)
@@ -3753,7 +3754,8 @@ CSS
   (when (memq (current-page)
               '(doc-js-ffi
                 doc-ffi-standard doc-ffi-dom doc-ffi-js
-                doc-ffi-math doc-ffi-jsxgraph doc-ffi-xtermjs))
+                doc-ffi-math doc-ffi-jsxgraph doc-ffi-xtermjs
+                doc-ffi-websocket))
     (init-doc-js-ffi-page!))
 
   (when (eq? (current-page) 'doc-extended-example-jsxgraph-board-points)

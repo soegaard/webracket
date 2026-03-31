@@ -440,6 +440,7 @@
 (define (doc-ffi-math-page)     (doc-ffi-page "ffi-math"))
 (define (doc-ffi-jsxgraph-page) (doc-ffi-page "ffi-jsxgraph"))
 (define (doc-ffi-xtermjs-page)  (doc-ffi-page "ffi-xtermjs"))
+(define (doc-ffi-websocket-page) (doc-ffi-page "ffi-websocket"))
 
 ;;;
 ;;; Extended Example: JSXGraph Board + Points

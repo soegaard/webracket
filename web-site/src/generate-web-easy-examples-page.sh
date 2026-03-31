@@ -52,6 +52,7 @@ EOF
     7gui-crud
     7gui-circle
     7gui-circle-extended
+    websocket
   )
 
   emit_example_items() {
