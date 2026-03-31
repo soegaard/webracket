@@ -32,4 +32,7 @@ echo "-- Publishing local/ to public/ --"
 find "${PUBLIC_DIR}" -mindepth 1 ! -name 'README.md' -exec rm -rf {} +
 cp -a "${LOCAL_DIR}/." "${PUBLIC_DIR}/"
 
+echo "-- Publishing web-easy examples --"
+bash "${SCRIPT_DIR}/publish-web-easy-examples.sh"
+
 echo "-- Done --"

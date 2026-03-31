@@ -13,3 +13,5 @@ compiled/
 /web-site/src/**/*.wat
 /web-site-new/src/*.wat
 /web-site-new/src/**/*.wat
+/web-site/public/web-easy-examples/*.wat
+/web-site/public/web-easy-examples/**/*.wat
