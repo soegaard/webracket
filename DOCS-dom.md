@@ -768,7 +768,7 @@ old-role
 
 ## Chapter 9 — Coverage Checklist
 
-- Total documented functions: **450**
+- Total documented functions: **446**
 - `window`: 89 functions
 - `performance`: 1 function
 - `document`: 39 functions
