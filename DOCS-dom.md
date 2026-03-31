@@ -166,8 +166,6 @@ MDN root: [Window](https://developer.mozilla.org/en-US/docs/Web/API/Window)
 | [`js-window-scrollbars`](https://developer.mozilla.org/en-US/docs/Web/API/Window/scrollbars) | `()` | `(extern/raw)` | no | no | yes | `(js-window-scrollbars)` | read `scrollbars` as `extern`. |
 | [`js-window-statusbar`](https://developer.mozilla.org/en-US/docs/Web/API/Window/statusbar) | `()` | `(extern/raw)` | no | no | yes | `(js-window-statusbar)` | read `statusbar` as `extern`. |
 | [`js-window-toolbar`](https://developer.mozilla.org/en-US/docs/Web/API/Window/toolbar) | `()` | `(extern/raw)` | no | no | yes | `(js-window-toolbar)` | read `toolbar` as `extern`. |
-| [`js-window-status`](https://developer.mozilla.org/en-US/docs/Web/API/Window/status) | `()` | `(string)` | no | no | no | `(js-window-status)` | read `status` as `string`. |
-| [`js-set-window-status!`](https://developer.mozilla.org/en-US/docs/Web/API/Window/status) | `(string)` | `()` | yes | no | no | `(js-set-window-status! "x")` | set `status` on a Window value. |
 | [`js-window-closed`](https://developer.mozilla.org/en-US/docs/Web/API/Window/closed) | `()` | `(i32)` | no | no | no | `(js-window-closed)` | read `closed` as `i32`. |
 | [`js-window-frames`](https://developer.mozilla.org/en-US/docs/Web/API/Window/frames) | `()` | `(extern/raw)` | no | no | yes | `(js-window-frames)` | read `frames` as `extern`. |
 | [`js-window-length`](https://developer.mozilla.org/en-US/docs/Web/API/Window/length) | `()` | `(u32)` | no | no | no | `(js-window-length)` | read `length` as `u32`. |
@@ -180,7 +178,6 @@ MDN root: [Window](https://developer.mozilla.org/en-US/docs/Web/API/Window)
 | [`js-window-origin`](https://developer.mozilla.org/en-US/docs/Web/API/Window/origin) | `()` | `(string)` | no | no | no | `(js-window-origin)` | read `origin` as `string`. |
 | [`js-window-crypto`](https://developer.mozilla.org/en-US/docs/Web/API/Window/crypto) | `()` | `(extern/raw)` | no | no | yes | `(js-window-crypto)` | read `crypto` as `extern`. |
 | [`js-window-device-pixel-ratio`](https://developer.mozilla.org/en-US/docs/Web/API/Window/devicePixelRatio) | `()` | `(f64)` | no | no | no | `(js-window-device-pixel-ratio)` | read `device-pixel-ratio` as `f64`. |
-| [`js-window-event`](https://developer.mozilla.org/en-US/docs/Web/API/Window/event) | `()` | `(extern/undefined)` | no | no | yes | `(js-window-event)` | read `event` as `extern`. |
 | [`js-window-frame-element`](https://developer.mozilla.org/en-US/docs/Web/API/Window/frameElement) | `()` | `(extern)` | no | no | yes | `(js-window-frame-element)` | read `frame-element` as `extern`. |
 | [`js-window-inner-height`](https://developer.mozilla.org/en-US/docs/Web/API/Window/innerHeight) | `()` | `(f64)` | no | no | no | `(js-window-inner-height)` | read `inner-height` as `f64`. |
 | [`js-window-inner-width`](https://developer.mozilla.org/en-US/docs/Web/API/Window/innerWidth) | `()` | `(f64)` | no | no | no | `(js-window-inner-width)` | read `inner-width` as `f64`. |
@@ -207,7 +204,6 @@ MDN root: [Window](https://developer.mozilla.org/en-US/docs/Web/API/Window)
 | [`js-window-alert`](https://developer.mozilla.org/en-US/docs/Web/API/Window/alert) | `(string)` | `()` | yes | no | no | `(js-window-alert "x")` | call `alert` for side effects. |
 | [`js-window-atob`](https://developer.mozilla.org/en-US/docs/Web/API/Window/atob) | `(string)` | `(string)` | no | no | no | `(js-window-atob "x")` | call `atob` and use the `string` result. |
 | [`js-window-btoa`](https://developer.mozilla.org/en-US/docs/Web/API/Window/btoa) | `(string)` | `(string)` | no | no | no | `(js-window-btoa "x")` | call `btoa` and use the `string` result. |
-| [`js-window-blur`](https://developer.mozilla.org/en-US/docs/Web/API/Window/blur) | `()` | `()` | yes | no | no | `(js-window-blur)` | call `blur` for side effects. |
 | [`js-window-cancel-animation-frame`](https://developer.mozilla.org/en-US/docs/Web/API/Window/cancelAnimationFrame) | `(u32)` | `()` | yes | no | no | `(js-window-cancel-animation-frame 0)` | call `cancel-animation-frame` for side effects. |
 | [`js-window-cancel-idle-callback`](https://developer.mozilla.org/en-US/docs/Web/API/Window/cancelIdleCallback) | `(u32)` | `()` | yes | yes | no | `(js-window-cancel-idle-callback 0)` | call `cancel-idle-callback` for side effects. |
 | [`js-window-clear-interval`](https://developer.mozilla.org/en-US/docs/Web/API/Window/clearInterval) | `(u32)` | `()` | yes | no | no | `(js-window-clear-interval 0)` | call `clear-interval` for side effects. |
