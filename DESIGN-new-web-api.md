@@ -18,7 +18,7 @@ The goal is not just to explain WebSocket, but to give a repeatable recipe for f
 
 The low-level layer should mirror the browser API closely, but only for the operations you really need.
 
-For WebSocket, that meant:
+For a single-object API, that often means:
 - constructor
 - `send`
 - `close`
@@ -38,6 +38,8 @@ Raw bindings should clearly look like interop primitives:
 That naming makes the boundary obvious:
 - `js-*` means “low-level browser interop”
 - wrapper names like `websocket-*` mean “checked, Rackety API”
+
+If the API is a family of browser objects rather than a single object, keep the family structure visible in the names. For example, Audio naturally splits into `AudioContext`, `AudioNode`, `AudioParam`, `AudioBuffer`, and node-specific accessors. Make the naming reflect that shape instead of flattening everything into one undifferentiated list.
 
 ### 2.3 Choose return conventions deliberately
 
@@ -62,13 +64,21 @@ That is fine at the FFI layer, but do not leak that convention into the public l
 
 Test the raw bindings with a mocked browser object rather than a live network service or real page interaction.
 
-For WebSocket, the useful checks were:
+For the raw surface, the useful checks are:
 - constructor forwards URL and protocol arguments correctly
 - `send` and `close` call through with the expected values
 - property getters return the expected low-level values
 - the FFI compiles cleanly in the browser backend
 
 If a value-shape is awkward or browser-specific, test that awkwardness at the raw layer once, then hide it in the wrapper.
+
+### 2.6 Guard browser feature detection explicitly
+
+Some browser APIs are not available in every environment, and some constructors only exist in the browser but not in tests or alternate runtimes.
+
+For those APIs, wrapper predicates should check that the constructor exists before using `js-instanceof`. That keeps the wrapper from failing with a missing-global error when the environment does not expose the browser object.
+
+This matters more for object-family APIs like Audio than for simple single-object APIs like WebSocket.
 
 ## 3. Rackety Library
 
@@ -90,7 +100,7 @@ The wrapper layer should validate arguments before calling the `js-*` primitive.
 
 The wrapper should translate browser conventions into Racket-friendly defaults.
 
-Examples that worked well for WebSocket:
+Examples that work well for a browser wrapper:
 - `websocket-new` is variadic for protocol names instead of forcing a sentinel like `(void)`
 - `websocket-close` defaults the close code to `1000`
 - event-handler setters accept `#f` to clear a handler
@@ -122,6 +132,8 @@ For event-driven APIs, consider two layers:
 
 If listener removal needs an identity token or callback wrapper, keep that bookkeeping in the wrapper library, not in example code.
 
+For event handlers, prefer a browser-native clearing convention in the wrapper. In practice that means `#f` should clear the handler slot, and the wrapper should translate that into the JS sentinel the browser expects. For many browser properties, `undefined` is a better clearing value than `null`.
+
 ### 3.5 Keep wrapper code small and boring
 
 The wrapper library should mostly be:
@@ -131,6 +143,12 @@ The wrapper library should mostly be:
 - small policy decisions
 
 Avoid reimplementing the browser API in Racket. The wrapper should make the raw API pleasant, not invent a second API.
+
+### 3.6 Promise-returning methods can start raw
+
+Some browser APIs expose methods that return promises. You do not need to design a Promise abstraction first in order to ship a useful first version of the API.
+
+If the immediate goal is to expose the browser surface faithfully, it is fine to leave those methods as raw results at first and add Promise-aware helpers later if they prove useful.
 
 ## 4. Documentation
 
@@ -146,7 +164,7 @@ Do not mix the two. The low-level page should explain the bridge and the raw bin
 
 The library docs should assume the reader may not know the browser API yet.
 
-The WebSocket chapter worked well because it included:
+The public chapter works best when it includes:
 - a short introduction to what WebSockets are
 - a quick start example
 - a use-case list
@@ -160,7 +178,7 @@ That structure should be reused for other APIs whenever possible.
 
 ### 4.3 Use the Scribble banner pattern consistently
 
-The WebSocket docs converged on a useful visual convention:
+The docs converge on a useful visual convention:
 - `include-lib` banner for the wrapper library
 - compile-option banner for the build flag
 - MDN banner under each entry
@@ -174,16 +192,48 @@ The banner pattern helps the reader answer three questions quickly:
 
 ### 4.4 Document low-level bridge behavior precisely
 
+When documenting an API made of several browser object families, group the docs the same way the implementation is grouped. For Audio, that means one reference structure for `AudioContext`, another for `AudioNode`/`AudioParam`, and separate coverage for node-specific accessors and event helpers.
+
 ### 4.5 Keep examples aligned with the implementation
 
 Examples in the docs should use the same names and conventions as the real library.
 
-For WebSocket, that meant:
+For a concrete API, that means:
 - examples use `include-lib websocket`
 - wrapper examples use `websocket-*`
 - the low-level reference uses `js-websocket-*`
 
 The docs should never force readers to think in terms of the internal raw API unless they are on the raw reference page.
+
+### 4.6 Use docs-only label modules when Scribble needs fake bindings
+
+If a library chapter shows example code in `@racketblock`, Scribble can
+only turn identifiers into links when it knows those identifiers as
+documented bindings. When the implementation lives outside ordinary
+Racket modules, or when the documented surface is generated, add a
+docs-only `*-labels.rkt` module that provides fake bindings for the
+names used in the examples.
+
+Those bindings can all be `any/c`; they exist only so Scribble has
+something to link to. In the Scribble file, require the label module
+with `for-label` and add `@declare-exporting` with the same module path.
+Then identifiers inside `@racketblock` will link automatically to the
+reference entries.
+
+This pattern works well for both checked wrapper chapters and raw FFI
+chapters. It keeps examples readable while still making the docs
+navigable.
+
+### 4.7 Add the site wiring to the checklist
+
+New browser APIs are not complete until the docs are visible in the site build and publish flow.
+
+For a new API, check that you have:
+- the raw FFI document
+- the public library document
+- the site or publish hook that makes the docs reachable
+- a mock-based test that exercises the raw bridge
+- a mock-based test that exercises the public wrapper
 
 ## 5. Suggested Workflow for a New API
 
@@ -196,6 +246,7 @@ When adding another browser-backed API, follow this order:
 5. Write the low-level reference first, then the public library docs.
 6. Add an intro, quick start, use cases, and MDN-linked per-entry documentation.
 7. Validate with mock-based tests before relying on live browser behavior.
+8. Make sure the site/publish wiring exposes the new pages.
 
 ## 6. WebSocket as the Template
 
