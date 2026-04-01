@@ -31,3 +31,7 @@ other browser-facing tests. For example:
 `racket -l errortrace -t ../webracket.rkt -- --ffi ../ffi/standard.ffi --ffi ../ffi/dom.ffi -r test-dom-window-document.rkt`
 
 `racket -l errortrace -t ../webracket.rkt -- --ffi ../ffi/standard.ffi --ffi ../ffi/dom.ffi -r test-dom-image.rkt`
+
+To run the whole DOM browser suite from `test/`, use:
+
+`./run-dom-headless.sh`
