@@ -1,0 +1,376 @@
+;;;
+;;; DOM
+;;;
+
+;; This file declares the browser DOM bindings.
+;;
+;; Return-type convention:
+;; - `(extern)` is used for nullable DOM/Web API results, so JS `null` maps to `#f`.
+;; - `(extern/raw)` is used when raw JS extern behavior is desired.
+
+;;; Element
+;;;
+
+;; The various functions in this section are documented here:   
+;;                                                              
+;;     https://developer.mozilla.org/en-US/docs/Web/API/Element 
+                                                              
+
+(define-foreign js-append-child!
+  #:module "element"
+  #:name   "append-child!"
+  #:doc    "Appends child to parent."
+  #:mdn    "Node/appendChild"
+  ;; Parameters: two external references which may be null
+  ;; Result: an external reference which may be null
+  (-> (extern extern) (extern/raw)))
+
+(define-foreign js-set-attribute!
+  #:module "element"
+  #:name   "set-attribute!"
+  #:doc    "Sets an attribute on an element."
+  #:mdn    "Element/setAttribute"
+  (-> (extern string string) ()))
+
+(define-foreign js-after!
+  #:module "element"
+  #:name   "after!"
+  #:doc    "Inserts a node or text after an element."
+  #:mdn    "Element/after"
+  ;; Variadic in JavaScript; this version handles a single node or string.
+  (-> (extern extern) ()))
+
+(define-foreign js-animate
+  #:module "element"
+  #:name   "animate"
+  #:doc    "Starts an animation on an element."
+  #:mdn    "Element/animate"
+  ;; The options argument is optional.
+  (-> (extern extern extern) (extern/raw)))
+
+(define-foreign js-append!
+  #:module "element"
+  #:name   "append!"
+  #:doc    "Appends a node or text to an element."
+  #:mdn    "Element/append"
+  ;; Variadic in JavaScript; this version handles a single node or string.
+  (-> (extern extern) ()))
+
+(define-foreign js-attach-shadow!
+  #:module "element"
+  #:name   "attach-shadow!"
+  #:doc    "Attaches a shadow root to an element."
+  #:mdn    "Element/attachShadow"
+  (-> (extern extern) (extern/raw)))
+
+(define-foreign js-before!
+  #:module "element"
+  #:name   "before!"
+  #:doc    "Inserts a node or text before an element."
+  #:mdn    "Element/before"
+  ;; Variadic in JavaScript; this version handles a single node or string.
+  (-> (extern extern) ()))
+
+(define-foreign js-closest
+  #:module "element"
+  #:name   "closest"
+  #:doc    "Finds the closest ancestor matching a selector."
+  #:mdn    "Element/closest"
+  (-> (extern string) (extern)))
+
+(define-foreign js-computed-style-map
+  #:module "element"
+  #:name   "computed-style-map"
+  #:doc    "Returns the computed style map for an element."
+  #:mdn    "Element/computedStyleMap"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-get-animations
+  #:module "element"
+  #:name   "get-animations"
+  #:doc    "Returns animations affecting an element."
+  #:mdn    "Element/getAnimations"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-get-attribute
+  #:module "element"
+  #:name   "get-attribute"
+  #:doc    "Returns the value of an attribute."
+  #:mdn    "Element/getAttribute"
+  (-> (extern string) (extern)))
+
+(define-foreign js-get-attribute-ns
+  #:module "element"
+  #:name   "get-attribute-ns"
+  #:doc    "Returns the value of a namespaced attribute."
+  #:mdn    "Element/getAttributeNS"
+  (-> (extern string string) (extern)))
+
+(define-foreign js-get-attribute-names
+  #:module "element"
+  #:name   "get-attribute-names"
+  #:doc    "Returns the attribute names on an element."
+  #:mdn    "Element/getAttributeNames"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-get-attribute-node
+  #:module "element"
+  #:name   "get-attribute-node"
+  #:doc    "Returns the attribute node for a given name."
+  #:mdn    "Element/getAttributeNode"
+  (-> (extern string) (extern)))
+
+(define-foreign js-get-attribute-node-ns
+  #:module "element"
+  #:name   "get-attribute-node-ns"
+  #:doc    "Returns the namespaced attribute node for an element."
+  #:mdn    "Element/getAttributeNodeNS"
+  (-> (extern string string) (extern)))
+
+(define-foreign js-get-bounding-client-rect
+  #:module "element"
+  #:name   "get-bounding-client-rect"
+  #:doc    "Returns an element's bounding rectangle."
+  #:mdn    "Element/getBoundingClientRect"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-get-client-rects
+  #:module "element"
+  #:name   "get-client-rects"
+  #:doc    "Returns the client rectangles for an element."
+  #:mdn    "Element/getClientRects"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-element-get-elements-by-class-name
+  #:module "element"
+  #:name   "get-elements-by-class-name"
+  #:doc    "Returns descendant elements with the given class names."
+  #:mdn    "Element/getElementsByClassName"
+  (-> (extern string) (extern/raw)))
+
+(define-foreign js-element-get-elements-by-tag-name
+  #:module "element"
+  #:name   "get-elements-by-tag-name"
+  #:doc    "Returns descendant elements with the given tag name."
+  #:mdn    "Element/getElementsByTagName"
+  (-> (extern string) (extern/raw)))
+
+(define-foreign js-element-get-elements-by-tag-name-ns
+  #:module "element"
+  #:name   "get-elements-by-tag-name-ns"
+  #:doc    "Returns descendant elements matching a namespaced tag name."
+  #:mdn    "Element/getElementsByTagNameNS"
+  (-> (extern string string) (extern/raw)))
+
+(define-foreign js-has-attribute
+  #:module "element"
+  #:name   "has-attribute"
+  #:doc    "Checks whether an element has an attribute."
+  #:mdn    "Element/hasAttribute"
+  (-> (extern string) (i32)))
+
+(define-foreign js-has-attribute-ns
+  #:module "element"
+  #:name   "has-attribute-ns"
+  #:doc    "Reports whether an element has a namespaced attribute."
+  #:mdn    "Element/hasAttributeNs"
+  (-> (extern string string) (i32)))
+
+(define-foreign js-has-attributes
+  #:module "element"
+  #:name   "has-attributes"
+  #:doc    "Reports whether an element has any attributes."
+  #:mdn    "Element/hasAttributes"
+  (-> (extern) (i32)))
+
+(define-foreign js-has-pointer-capture
+  #:module "element"
+  #:name   "has-pointer-capture"
+  #:doc    "Reports whether this element has pointer capture for a pointer id."
+  #:mdn    "Element/hasPointerCapture"
+  (-> (extern i32) (i32)))
+
+(define-foreign js-insert-adjacent-element!
+  #:module "element"
+  #:name   "insert-adjacent-element!"
+  #:doc    "Inserts an element at a position relative to another element."
+  #:mdn    "Element/insertAdjacentElement"
+  (-> (extern string extern) (extern/raw)))
+
+(define-foreign js-insert-adjacent-html!
+  #:module "element"
+  #:name   "insert-adjacent-html!"
+  #:doc    "Parses and inserts HTML at a position relative to an element."
+  #:mdn    "Element/insertAdjacentHtml"
+  (-> (extern string string) ()))
+
+(define-foreign js-insert-adjacent-text!
+  #:module "element"
+  #:name   "insert-adjacent-text!"
+  #:doc    "Inserts text at a position relative to an element."
+  #:mdn    "Element/insertAdjacentText"
+  (-> (extern string string) ()))
+
+(define-foreign js-matches
+  #:module "element"
+  #:name   "matches"
+  #:doc    "Reports whether an element matches a CSS selector."
+  #:mdn    "Element/matches"
+  (-> (extern string) (i32)))
+
+(define-foreign js-prepend!
+  #:module "element"
+  #:name   "prepend!"
+  #:doc    "Prepends a node or text to an element."
+  #:mdn    "Element/prepend"
+  ;; Variadic in JavaScript; this version handles a single node or string.
+  (-> (extern extern) ()))
+
+(define-foreign js-element-query-selector
+  #:module "element"
+  #:name   "query-selector"
+  #:doc    "Returns the first descendant matching a CSS selector."
+  #:mdn    "Element/querySelector"
+  (-> (extern string) (extern)))
+
+(define-foreign js-element-query-selector-all
+  #:module "element"
+  #:name   "query-selector-all"
+  #:doc    "Returns all descendants matching a CSS selector."
+  #:mdn    "Element/querySelectorAll"
+  (-> (extern string) (extern/raw)))
+
+(define-foreign js-release-pointer-capture!
+  #:module "element"
+  #:name   "release-pointer-capture!"
+  #:doc    "Releases pointer capture for a pointer id."
+  #:mdn    "Element/releasePointerCapture"
+  (-> (extern i32) ()))
+
+(define-foreign js-remove!
+  #:module "element"
+  #:name   "remove!"
+  #:doc    "Removes an element from the DOM."
+  #:mdn    "Element/remove"
+  (-> (extern) ()))
+
+(define-foreign js-remove-attribute!
+  #:module "element"
+  #:name   "remove-attribute!"
+  #:doc    "Removes the attribute."
+  #:mdn    "Element/removeAttribute"
+  (-> (extern string) ()))
+
+(define-foreign js-remove-attribute-ns!
+  #:module "element"
+  #:name   "remove-attribute-ns!"
+  #:doc    "Removes a namespaced attribute."
+  #:mdn    "Element/removeAttributeNs"
+  (-> (extern string string) ()))
+
+(define-foreign js-remove-attribute-node!
+  #:module "element"
+  #:name   "remove-attribute-node!"
+  #:doc    "Removes the attribute node."
+  #:mdn    "Element/removeAttributeNode"
+  (-> (extern extern) (extern/raw)))
+
+(define-foreign js-replace-children!
+  #:module "element"
+  #:name   "replace-children!"
+  #:doc    "Replaces all child nodes with the provided node."
+  #:mdn    "Element/replaceChildren"
+  ;; Variadic in JavaScript; this version handles a single node.
+  (-> (extern extern) ()))
+
+(define-foreign js-replace-with!
+  #:module "element"
+  #:name   "replace-with!"
+  #:doc    "Replaces an element with another node."
+  #:mdn    "Element/replaceWith"
+  ;; Variadic in JavaScript; this version handles a single node.
+  (-> (extern extern) ()))
+
+(define-foreign js-request-fullscreen
+  #:module "element"
+  #:name   "request-fullscreen"
+  #:doc    "Requests fullscreen display for an element."
+  #:mdn    "Element/requestFullscreen"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-request-pointer-lock
+  #:module "element"
+  #:name   "request-pointer-lock"
+  #:doc    "Requests pointer lock for an element."
+  #:mdn    "Element/requestPointerLock"
+  (-> (extern) ()))
+
+(define-foreign js-scroll!
+  #:module "element"
+  #:name   "scroll!"
+  #:doc    "Scrolls an element to an absolute position."
+  #:mdn    "Element/scroll"
+  ;; Options object variant not supported.
+  (-> (extern f64 f64) ()))
+
+(define-foreign js-scroll-by!
+  #:module "element"
+  #:name   "scroll-by!"
+  #:doc    "Scrolls an element by a relative offset."
+  #:mdn    "Element/scrollBy"
+  ;; Options object variant not supported.
+  (-> (extern f64 f64) ()))
+
+(define-foreign js-scroll-into-view!
+  #:module "element"
+  #:name   "scroll-into-view!"
+  #:doc    "Scrolls ancestors until an element is visible."
+  #:mdn    "Element/scrollIntoView"
+  ;; Only the boolean argument variant is supported.
+  (-> (extern i32) ()))
+
+(define-foreign js-scroll-to!
+  #:module "element"
+  #:name   "scroll-to!"
+  #:doc    "Scrolls an element to an absolute position."
+  #:mdn    "Element/scrollTo"
+  ;; Options object variant not supported.
+  (-> (extern f64 f64) ()))
+
+(define-foreign js-set-attribute-ns!
+  #:module "element"
+  #:name   "set-attribute-ns!"
+  #:doc    "Sets a namespaced attribute."
+  #:mdn    "Element/setAttributeNs"
+  (-> (extern string string string) ()))
+
+(define-foreign js-set-attribute-node!
+  #:module "element"
+  #:name   "set-attribute-node!"
+  #:doc    "Attaches an attribute node to an element."
+  #:mdn    "Element/setAttributeNode"
+  (-> (extern extern) (extern/raw)))
+
+(define-foreign js-set-attribute-node-ns!
+  #:module "element"
+  #:name   "set-attribute-node-ns!"
+  #:doc    "Attaches a namespaced attribute node to an element."
+  #:mdn    "Element/setAttributeNodeNs"
+  (-> (extern extern) (extern/raw)))
+
+(define-foreign js-set-pointer-capture!
+  #:module "element"
+  #:name   "set-pointer-capture!"
+  #:doc    "Captures pointer events for a pointer id."
+  #:mdn    "Element/setPointerCapture"
+  (-> (extern i32) ()))
+
+(define-foreign js-toggle-attribute!
+  #:module "element"
+  #:name   "toggle-attribute!"
+  #:doc    "Toggles an attribute and returns whether it is present."
+  #:mdn    "Element/toggleAttribute"
+  ;; The force argument is optional; pass 0/1. Undefined not supported.
+  (-> (extern string i32) (i32)))
+
+;;;

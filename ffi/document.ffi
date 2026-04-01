@@ -1,0 +1,364 @@
+;;;
+;;; DOM
+;;;
+
+;; This file declares the browser DOM bindings.
+;;
+;; Return-type convention:
+;; - `(extern)` is used for nullable DOM/Web API results, so JS `null` maps to `#f`.
+;; - `(extern/raw)` is used when raw JS extern behavior is desired.
+
+;;; Document
+;;;
+
+;; The various functions in this section are documented here:   
+;;                                                              
+;;     https://developer.mozilla.org/en-US/docs/Web/API/Document
+
+(define-foreign js-document
+  #:module "document"
+  #:name   "document"
+  #:doc    "Returns the current JavaScript document object."
+  #:mdn    "Document/document"
+  (-> () (extern/raw)))
+
+(define-foreign js-document-head
+  #:module "document"
+  #:name   "head"
+  #:doc    "Returns the document's head element."
+  #:mdn    "Document/head"
+  (-> () (extern)))
+
+(define-foreign js-document-body
+  #:module "document"
+  #:name   "body"
+  #:doc    "Returns the document's body element."
+  #:mdn    "Document/body"
+  (-> () (extern)))
+
+(define-foreign js-document-element
+  #:module "document"
+  #:name   "document-element"
+  #:doc    "Returns the root document element."
+  #:mdn    "Document/documentElement"
+  (-> () (extern/raw)))
+
+(define-foreign js-create-element
+  #:module "document"
+  #:name   "create-element"
+  #:doc    "Creates a DOM element with the given tag name."
+  #:mdn    "Document/createElement"
+  (-> (string) (extern/raw)))
+
+(define-foreign js-create-text-node
+  #:module "document"
+  #:name   "create-text-node"
+  #:doc    "Creates a Text node with the given content."
+  #:mdn    "Document/createTextNode"
+  (-> (string) (extern/raw)))
+
+(define-foreign js-adopt-node
+  #:module "document"
+  #:name   "adopt-node"
+  #:doc    "Adopts a node from another document into this document."
+  #:mdn    "Document/adoptNode"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-caret-range-from-point
+  #:module "document"
+  #:name   "caret-range-from-point"
+  #:doc    "Returns the Range at the given viewport coordinates."
+  #:mdn    "Document/caretRangeFromPoint"
+  (-> (f64 f64) (extern)))
+
+; Deprecated
+#;(define-foreign js-capture-events
+  #:module "document"
+  #:name   "capture-events"
+  (-> () ()))
+
+; Deprecated
+#;(define-foreign js-clear
+  #:module "document"
+  #:name   "clear"
+  (-> () ()))
+
+(define-foreign js-close
+  #:module "document"
+  #:name   "close"
+  #:doc    "Closes a document opened for writing."
+  #:mdn    "Document/close"
+  (-> () ()))
+
+(define-foreign js-create-attribute
+  #:module "document"
+  #:name   "create-attribute"
+  #:doc    "Creates a new Attr node with the given name."
+  #:mdn    "Document/createAttribute"
+  (-> (string) (extern/raw)))
+
+(define-foreign js-create-attribute-ns
+  #:module "document"
+  #:name   "create-attribute-ns"
+  #:doc    "Creates a namespaced Attr node."
+  #:mdn    "Document/createAttributeNs"
+  (-> (string string) (extern/raw)))
+
+(define-foreign js-create-cdata-section
+  #:module "document"
+  #:name   "create-cdata-section"
+  #:doc    "Creates a CDATASection node."
+  #:mdn    "Document/createCdataSection"
+  (-> (string) (extern/raw)))
+
+(define-foreign js-create-comment
+  #:module "document"
+  #:name   "create-comment"
+  #:doc    "Creates a Comment node."
+  #:mdn    "Document/createComment"
+  (-> (string) (extern/raw)))
+
+(define-foreign js-create-document-fragment
+  #:module "document"
+  #:name   "create-document-fragment"
+  #:doc    "Creates an empty DocumentFragment."
+  #:mdn    "Document/createDocumentFragment"
+  (-> () (extern/raw)))
+
+(define-foreign js-create-element-ns
+  #:module "document"
+  #:name   "create-element-ns"
+  #:doc    "Creates an element in the given namespace."
+  #:mdn    "Document/createElementNs"
+  (-> (string string) (extern/raw)))
+
+; Deprecated
+#;(define-foreign js-create-event
+  #:module "document"
+  #:name   "create-event"
+  (-> (string) (extern/raw)))
+
+(define-foreign js-create-expression
+  #:module "document"
+  #:name   "create-expression"
+  #:doc    "Compiles an XPath expression."
+  #:mdn    "Document/createExpression"
+  (-> (string extern) (extern/raw)))
+
+; Deprecated
+#;(define-foreign js-create-ns-resolver
+  #:module "document"
+  #:name   "create-ns-resolver"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-create-node-iterator
+  #:module "document"
+  #:name   "create-node-iterator"
+  #:doc    "Creates a NodeIterator for traversing a subtree."
+  #:mdn    "Document/createNodeIterator"
+  (-> (extern u32 extern) (extern/raw)))  ; was u32  (it's a bitmask)
+
+(define-foreign js-create-processing-instruction
+  #:module "document"
+  #:name   "create-processing-instruction"
+  #:doc    "Creates a ProcessingInstruction node."
+  #:mdn    "Document/createProcessingInstruction"
+  (-> (string string) (extern/raw)))
+
+(define-foreign js-create-range
+  #:module "document"
+  #:name   "create-range"
+  #:doc    "Creates an empty Range object."
+  #:mdn    "Document/createRange"
+  (-> () (extern/raw)))
+
+(define-foreign js-create-tree-walker
+  #:module "document"
+  #:name   "create-tree-walker"
+  #:doc    "Creates a TreeWalker for traversing a subtree."
+  #:mdn    "Document/createTreeWalker"
+  (-> (extern u32 extern) (extern/raw)))
+
+(define-foreign js-element-from-point
+  #:module "document"
+  #:name   "element-from-point"
+  #:doc    "Returns the topmost element at the given viewport coordinates."
+  #:mdn    "Document/elementFromPoint"
+  (-> (f64 f64) (extern)))
+
+(define-foreign js-elements-from-point
+  #:module "document"
+  #:name   "elements-from-point"
+  #:doc    "Returns all elements at the given viewport coordinates."
+  #:mdn    "Document/elementsFromPoint"
+  (-> (f64 f64) (extern/raw)))
+
+; Deprecated
+(define-foreign js-enable-style-sheets-for-set
+  #:module "document"
+  #:name   "enable-style-sheets-for-set"
+  #:doc    "Enables style sheets that belong to the named set."
+  #:mdn    "Document/enableStyleSheetsForSet"
+  (-> (string) ()))
+
+(define-foreign js-evaluate
+  #:module "document"
+  #:name   "evaluate"
+  #:doc    "Evaluates an XPath expression."
+  #:mdn    "Document/evaluate"
+  (-> (string extern extern i32 extern) (extern/raw)))
+
+; Deprecated
+#;(define-foreign js-exec-command
+  #:module "document"
+  #:name   "exec-command"
+  (-> (string i32 string) (i32)))
+
+(define-foreign js-exit-fullscreen
+  #:module "document"
+  #:name   "exit-fullscreen"
+  #:doc    "Exits fullscreen mode."
+  #:mdn    "Document/exitFullscreen"
+  (-> () (extern/raw)))
+
+(define-foreign js-exit-picture-in-picture
+  #:module "document"
+  #:name   "exit-picture-in-picture"
+  #:doc    "Exits picture-in-picture mode."
+  #:mdn    "Document/exitPictureInPicture"
+  (-> () (extern/raw)))
+
+(define-foreign js-exit-pointer-lock
+  #:module "document"
+  #:name   "exit-pointer-lock"
+  #:doc    "Releases pointer lock."
+  #:mdn    "Document/exitPointerLock"
+  (-> () ()))
+
+(define-foreign js-get-element-by-id
+  #:module "document"
+  #:name   "get-element-by-id"
+  #:doc    "Returns the element with the given id."
+  #:mdn    "Document/getElementById"
+  (-> (string) (extern)))
+
+(define-foreign js-get-elements-by-class-name
+  #:module "document"
+  #:name   "get-elements-by-class-name"
+  #:doc    "Returns elements that have all given class names."
+  #:mdn    "Document/getElementsByClassName"
+  (-> (string) (extern/raw)))
+
+(define-foreign js-get-elements-by-name
+  #:module "document"
+  #:name   "get-elements-by-name"
+  #:doc    "Returns elements with the given name attribute."
+  #:mdn    "Document/getElementsByName"
+  (-> (string) (extern/raw)))
+
+(define-foreign js-get-elements-by-tag-name
+  #:module "document"
+  #:name   "get-elements-by-tag-name"
+  #:doc    "Returns elements with the given tag name."
+  #:mdn    "Document/getElementsByTagName"
+  (-> (string) (extern/raw)))
+
+(define-foreign js-get-elements-by-tag-name-ns
+  #:module "document"
+  #:name   "get-elements-by-tag-name-ns"
+  #:doc    "Returns elements that match namespace and local name."
+  #:mdn    "Document/getElementsByTagNameNs"
+  (-> (string string) (extern/raw)))
+
+(define-foreign js-get-selection
+  #:module "document"
+  #:name   "get-selection"
+  #:doc    "Returns the selection."
+  #:mdn    "Document/getSelection"
+  (-> () (extern)))
+
+(define-foreign js-has-focus
+  #:module "document"
+  #:name   "has-focus"
+  #:doc    "Reports whether the document or a descendant has focus."
+  #:mdn    "Document/hasFocus"
+  (-> () (i32)))
+
+(define-foreign js-import-node
+  #:module "document"
+  #:name   "import-node"
+  #:doc    "Imports a node from another document."
+  #:mdn    "Document/importNode"
+  (-> (extern i32) (extern/raw)))
+
+(define-foreign js-open
+  #:module "document"
+  #:name   "open"
+  #:doc    "Opens a document stream for writing."
+  #:mdn    "Document/open"
+  (-> () (extern/raw)))
+
+; Deprecated
+#;(define-foreign js-query-command-enabled
+  #:module "document"
+  #:name   "query-command-enabled"
+  (-> (string) (i32)))
+
+; Deprecated
+#;(define-foreign js-query-command-indeterm
+  #:module "document"
+  #:name   "query-command-indeterm"
+  (-> (string) (i32)))
+
+; Deprecated 
+#;(define-foreign js-query-command-state
+  #:module "document"
+  #:name   "query-command-state"
+  (-> (string) (i32)))
+
+; Deprecated
+#;(define-foreign js-query-command-supported
+  #:module "document"
+  #:name   "query-command-supported"
+  (-> (string) (i32)))
+
+; Deprecated
+#;(define-foreign js-query-command-value
+  #:module "document"
+  #:name   "query-command-value"
+  (-> (string) (extern/raw)))
+
+(define-foreign js-query-selector
+  #:module "document"
+  #:name   "query-selector"
+  #:doc    "Returns the first element matching a CSS selector."
+  #:mdn    "Document/querySelector"
+  (-> (string) (extern)))
+
+(define-foreign js-query-selector-all
+  #:module "document"
+  #:name   "query-selector-all"
+  #:doc    "Returns all elements matching a CSS selector."
+  #:mdn    "Document/querySelectorAll"
+  (-> (string) (extern/raw)))
+
+(define-foreign js-release-events
+  #:module "document"
+  #:name   "release-events"
+  #:doc    "Releases captured events (legacy API)."
+  #:mdn    "Document/releaseEvents"
+  (-> () ()))
+
+; Deprecated
+#;(define-foreign js-write
+  #:module "document"
+  #:name   "write"
+  (-> (string) ()))
+
+; Deprecated
+#;(define-foreign js-writeln
+  #:module "document"
+  #:name   "writeln"
+  (-> (string) ()))
+ 
+;;;

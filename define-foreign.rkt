@@ -90,17 +90,52 @@
 
 (require (for-syntax racket/base)
          (only-in racket/list last drop-right)
+         (only-in racket/path path-only)
          "structs.rkt")
 
 
 ; read-forms-from-file : file-path -> list-of-syntax
-;   read all forms 
+;   Read all forms, expanding `include-ffi` recursively.
 (define (read-forms-from-file file-path)
-  (define source-name file-path)
-  (with-input-from-file file-path
-    (λ ()
-      (for/list ([form (in-port (λ (in) (read-syntax source-name in)))])
-        form))))
+  (define (read-forms-from-file* path seen)
+    (define canonical (simplify-path (path->complete-path path)))
+    (when (member canonical seen)
+      (error 'read-forms-from-file
+             "cyclic include-ffi reference: ~a"
+             path))
+    (define source-name canonical)
+    (with-input-from-file canonical
+      (λ ()
+        (for*/list ([form (in-port (λ (in) (read-syntax source-name in)))]
+                    [expanded (in-list (expand-ffi-form form canonical (cons canonical seen)))])
+          expanded))))
+
+  (define (expand-ffi-form form current-path seen)
+    (define maybe-list (syntax->list form))
+    (cond
+      [(and maybe-list
+            (pair? maybe-list)
+            (eq? (syntax-e (car maybe-list)) 'include-ffi))
+       (unless (= (length maybe-list) 2)
+         (raise-syntax-error 'include-ffi
+                             "expected `(include-ffi path)`"
+                             form))
+       (define include-path-stx (cadr maybe-list))
+       (unless (string? (syntax-e include-path-stx))
+         (raise-syntax-error 'include-ffi
+                             "expected a string path"
+                             form include-path-stx))
+       (define include-path
+         (let ([p (syntax-e include-path-stx)])
+           (if (path? p) p (string->path p))))
+       (define resolved
+         (build-path (or (path-only current-path) current-path)
+                     include-path))
+       (read-forms-from-file* resolved seen)]
+      [else
+       (list form)]))
+
+  (read-forms-from-file* file-path '()))
 
 
 ;; We use `syntax-case*` with the comparison function `literal=?`

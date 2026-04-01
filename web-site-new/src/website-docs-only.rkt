@@ -361,6 +361,7 @@
     [(string-suffix? path "documentation-ffi-jsxgraph.html")      'doc-ffi-jsxgraph]
     [(string-suffix? path "documentation-ffi-xtermjs.html")       'doc-ffi-xtermjs]
     [(string-suffix? path "documentation-ffi-websocket.html")     'doc-ffi-websocket]
+    [(string-suffix? path "documentation-ffi-audio.html")         'doc-ffi-audio]
     [(string-suffix? path "documentation-extended-example-jsxgraph-board-points.html")
                                                               'doc-extended-example-jsxgraph-board-points]
     [(string-suffix? path "documentation-extended-example-jsxgraph-geometry-constructors.html")
@@ -3736,6 +3737,7 @@ CSS
       [(doc-ffi-jsxgraph)      (doc-ffi-jsxgraph-page)]
       [(doc-ffi-xtermjs)       (doc-ffi-xtermjs-page)]
       [(doc-ffi-websocket)     (doc-ffi-websocket-page)]
+      [(doc-ffi-audio)         (doc-ffi-audio-page)]
       [(doc-extended-example-jsxgraph-board-points)
                                (doc-extended-example-jsxgraph-board-points-page)]
       [(doc-extended-example-jsxgraph-geometry-constructors)
@@ -3755,7 +3757,7 @@ CSS
               '(doc-js-ffi
                 doc-ffi-standard doc-ffi-dom doc-ffi-js
                 doc-ffi-math doc-ffi-jsxgraph doc-ffi-xtermjs
-                doc-ffi-websocket))
+                doc-ffi-websocket doc-ffi-audio))
     (init-doc-js-ffi-page!))
 
   (when (eq? (current-page) 'doc-extended-example-jsxgraph-board-points)

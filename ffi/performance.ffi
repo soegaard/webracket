@@ -1,0 +1,24 @@
+;;;
+;;; DOM
+;;;
+
+;; This file declares the browser DOM bindings.
+;;
+;; Return-type convention:
+;; - `(extern)` is used for nullable DOM/Web API results, so JS `null` maps to `#f`.
+;; - `(extern/raw)` is used when raw JS extern behavior is desired.
+
+;;; Performance
+;;;
+
+;; The various functions in this section are documented here:
+;;   https://developer.mozilla.org/en-US/docs/Web/API/Performance
+
+(define-foreign js-performance-now
+  #:module "performance"
+  #:name   "now"
+  #:doc    "Returns a high-resolution timestamp in milliseconds."
+  #:mdn    "Performance/now"
+  (-> () (f64)))
+
+;;;

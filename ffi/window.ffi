@@ -1,0 +1,627 @@
+;;;
+;;; DOM
+;;;
+
+;; This file declares the browser DOM bindings.
+;;
+;; Return-type convention:
+;; - `(extern)` is used for nullable DOM/Web API results, so JS `null` maps to `#f`.
+;; - `(extern/raw)` is used when raw JS extern behavior is desired.
+
+;;; Window
+;;;
+
+; The various functions in this section are documented here:
+;   https://developer.mozilla.org/en-US/docs/Web/API/Window
+
+;; Properties
+(define-foreign js-window-window
+  #:module "window"
+  #:name   "window"
+  #:doc    "Returns the current Window object."
+  #:mdn    "Window/window"
+  (-> () (extern/raw)))
+
+(define-foreign js-window-self
+  #:module "window"
+  #:name   "self"
+  #:doc    "Returns the current Window object via the self alias."
+  #:mdn    "Window/self"
+  (-> () (extern/raw)))
+
+(define-foreign js-window-document
+  #:module "window"
+  #:name   "document"
+  #:doc    "Returns the Document loaded in this window."
+  #:mdn    "Window/document"
+  (-> () (extern/raw)))
+
+(define-foreign js-window-name
+  #:module "window"
+  #:name   "name"
+  #:doc    "Returns the window name."
+  #:mdn    "Window/name"
+  (-> () (string)))
+
+(define-foreign js-set-window-name!
+  #:module "window"
+  #:name   "set-name!"
+  #:doc    "Sets the window name."
+  #:mdn    "Window/setName"
+  (-> (string) ()))
+
+(define-foreign js-window-location
+  #:module "window"
+  #:name   "location"
+  #:doc    "Returns the Location object for this window."
+  #:mdn    "Window/location"
+  (-> () (extern/raw)))
+
+(define-foreign js-set-window-location!
+  #:module "window"
+  #:name   "set-location!"
+  #:doc    "Navigates the window to a new URL or Location."
+  #:mdn    "Window/setLocation"
+  ;; Accept string or location object.
+  (-> (value) ()))
+
+(define-foreign js-window-custom-elements
+  #:module "window"
+  #:name   "custom-elements"
+  #:doc    "Returns the CustomElementRegistry for this window."
+  #:mdn    "Window/customElements"
+  (-> () (extern/raw)))
+
+(define-foreign js-window-history
+  #:module "window"
+  #:name   "history"
+  #:doc    "Returns the History object for this window."
+  #:mdn    "Window/history"
+  (-> () (extern/raw)))
+
+(define-foreign js-window-locationbar
+  #:module "window"
+  #:name   "locationbar"
+  #:doc    "Returns the location bar visibility interface."
+  #:mdn    "Window/locationbar"
+  (-> () (extern/raw)))
+
+(define-foreign js-window-menubar
+  #:module "window"
+  #:name   "menubar"
+  #:doc    "Returns the menu bar visibility interface."
+  #:mdn    "Window/menubar"
+  (-> () (extern/raw)))
+
+(define-foreign js-window-personalbar
+  #:module "window"
+  #:name   "personalbar"
+  #:doc    "Returns the personal bar visibility interface."
+  #:mdn    "Window/personalbar"
+  (-> () (extern/raw)))
+
+(define-foreign js-window-scrollbars
+  #:module "window"
+  #:name   "scrollbars"
+  #:doc    "Returns the scroll bars visibility interface."
+  #:mdn    "Window/scrollbars"
+  (-> () (extern/raw)))
+
+(define-foreign js-window-statusbar 
+  #:module "window"
+  #:name   "statusbar"
+  #:doc    "Returns the status bar visibility interface."
+  #:mdn    "Window/statusbar"
+  (-> () (extern/raw)))
+
+(define-foreign js-window-toolbar
+  #:module "window"
+  #:name   "toolbar"
+  #:doc    "Returns the toolbar visibility interface."
+  #:mdn    "Window/toolbar"
+  (-> () (extern/raw)))
+
+(define-foreign js-window-closed
+  #:module "window"
+  #:name   "closed"
+  #:doc    "Reports whether the window has been closed."
+  #:mdn    "Window/closed"
+  (-> () (i32)))
+
+(define-foreign js-window-frames
+  #:module "window"
+  #:name   "frames"
+  #:doc    "Returns the collection of child browsing contexts."
+  #:mdn    "Window/frames"
+  (-> () (extern/raw)))
+
+(define-foreign js-window-length
+  #:module "window"
+  #:name   "length"
+  #:doc    "Returns the number of child frames."
+  #:mdn    "Window/length"
+  (-> () (u32)))
+
+(define-foreign js-window-opener
+  #:module "window"
+  #:name   "opener"
+  #:doc    "Returns the window that opened this window, if any."
+  #:mdn    "Window/opener"
+  (-> () (extern)))
+
+(define-foreign js-set-window-opener!
+  #:module "window"
+  #:name   "set-opener!"
+  #:doc    "Sets or clears the opener window."
+  #:mdn    "Window/setOpener"
+  (-> (extern) ()))
+
+(define-foreign js-window-parent
+  #:module "window"
+  #:name   "parent"
+  #:doc    "Returns the parent window."
+  #:mdn    "Window/parent"
+  (-> () (extern/raw)))
+
+(define-foreign js-window-top
+  #:module "window"
+  #:name   "top"
+  #:doc    "Returns the top-level browsing context window."
+  #:mdn    "Window/top"
+  (-> () (extern/raw)))
+
+(define-foreign js-window-visual-viewport
+  #:module "window"
+  #:name   "visual-viewport"
+  #:doc    "Returns the VisualViewport for this window."
+  #:mdn    "Window/visualViewport"
+  (-> () (extern)))
+
+(define-foreign js-window-navigator
+  #:module "window"
+  #:name   "navigator"
+  #:doc    "Returns the Navigator object."
+  #:mdn    "Window/navigator"
+  (-> () (extern/raw)))
+
+(define-foreign js-window-origin
+  #:module "window"
+  #:name   "origin"
+  #:doc    "Returns the origin of the current document."
+  #:mdn    "Window/origin"
+  (-> () (string)))
+
+(define-foreign js-window-crypto
+  #:module "window"
+  #:name   "crypto"
+  #:doc    "Returns the Crypto object."
+  #:mdn    "Window/crypto"
+  (-> () (extern/raw)))
+
+(define-foreign js-window-device-pixel-ratio
+  #:module "window"
+  #:name   "device-pixel-ratio"
+  #:doc    "Returns the ratio of physical to CSS pixels."
+  #:mdn    "Window/devicePixelRatio"
+  (-> () (f64)))
+
+(define-foreign js-window-frame-element
+  #:module "window"
+  #:name   "frame-element"
+  #:doc    "Returns the embedding frame element, if any."
+  #:mdn    "Window/frameElement"
+  (-> () (extern)))
+
+(define-foreign js-window-inner-height
+  #:module "window"
+  #:name   "inner-height"
+  #:doc    "Returns the viewport height in CSS pixels."
+  #:mdn    "Window/innerHeight"
+  (-> () (f64)))
+
+(define-foreign js-window-inner-width
+  #:module "window"
+  #:name   "inner-width"
+  #:doc    "Returns the viewport width in CSS pixels."
+  #:mdn    "Window/innerWidth"
+  (-> () (f64)))
+
+(define-foreign js-window-outer-height
+  #:module "window"
+  #:name   "outer-height"
+  #:doc    "Returns the browser window height in CSS pixels."
+  #:mdn    "Window/outerHeight"
+  (-> () (f64)))
+
+(define-foreign js-window-outer-width
+  #:module "window"
+  #:name   "outer-width"
+  #:doc    "Returns the browser window width in CSS pixels."
+  #:mdn    "Window/outerWidth"
+  (-> () (f64)))
+
+(define-foreign js-window-screen-x
+  #:module "window"
+  #:name   "screen-x"
+  #:doc    "Returns the X coordinate of the viewport's left edge on screen."
+  #:mdn    "Window/screenX"
+  (-> () (f64)))
+
+(define-foreign js-window-screen-y
+  #:module "window"
+  #:name   "screen-y"
+  #:doc    "Returns the Y coordinate of the viewport's top edge on screen."
+  #:mdn    "Window/screenY"
+  (-> () (f64)))
+
+(define-foreign js-window-screen-left
+  #:module "window"
+  #:name   "screen-left"
+  #:doc    "Returns the left edge position of the viewport on screen."
+  #:mdn    "Window/screenLeft"
+  (-> () (f64)))
+
+(define-foreign js-window-screen-top
+  #:module "window"
+  #:name   "screen-top"
+  #:doc    "Returns the top edge position of the viewport on screen."
+  #:mdn    "Window/screenTop"
+  (-> () (f64)))
+
+(define-foreign js-window-page-x-offset
+  #:module "window"
+  #:name   "page-x-offset"
+  #:doc    "Returns the horizontal scroll offset."
+  #:mdn    "Window/pageXOffset"
+  (-> () (f64)))
+
+(define-foreign js-window-page-y-offset
+  #:module "window"
+  #:name   "page-y-offset"
+  #:doc    "Returns the vertical scroll offset."
+  #:mdn    "Window/pageYOffset"
+  (-> () (f64)))
+
+(define-foreign js-window-scroll-x
+  #:module "window"
+  #:name   "scroll-x"
+  #:doc    "Returns the horizontal scroll offset."
+  #:mdn    "Window/scrollX"
+  (-> () (f64)))
+
+(define-foreign js-window-scroll-y
+  #:module "window"
+  #:name   "scroll-y"
+  #:doc    "Returns the vertical scroll offset."
+  #:mdn    "Window/scrollY"
+  (-> () (f64)))
+
+(define-foreign js-window-screen
+  #:module "window"
+  #:name   "screen"
+  #:doc    "Returns the Screen object."
+  #:mdn    "Window/screen"
+  (-> () (extern/raw)))
+
+(define-foreign js-window-local-storage
+  #:module "window"
+  #:name   "local-storage"
+  #:doc    "Returns localStorage for this origin."
+  #:mdn    "Window/localStorage"
+  (-> () (extern/raw)))
+
+(define-foreign js-window-session-storage
+  #:module "window"
+  #:name   "session-storage"
+  #:doc    "Returns sessionStorage for this origin."
+  #:mdn    "Window/sessionStorage"
+  (-> () (extern/raw)))
+
+(define-foreign js-window-performance
+  #:module "window"
+  #:name   "performance"
+  #:doc    "Returns the Performance object."
+  #:mdn    "Window/performance"
+  (-> () (extern/raw)))
+
+(define-foreign js-window-indexed-db
+  #:module "window"
+  #:name   "indexed-db"
+  #:doc    "Returns the IndexedDB factory object."
+  #:mdn    "Window/indexedDb"
+  (-> () (extern/raw)))
+
+(define-foreign js-window-is-secure-context
+  #:module "window"
+  #:name   "is-secure-context"
+  #:doc    "Reports whether the context is secure."
+  #:mdn    "Window/isSecureContext"
+  (-> () (i32)))
+
+(define-foreign js-window-cross-origin-isolated
+  #:module "window"
+  #:name   "cross-origin-isolated"
+  #:doc    "Reports whether the context is cross-origin isolated."
+  #:mdn    "Window/crossOriginIsolated"
+  (-> () (i32)))
+
+(define-foreign js-window-caches
+  #:module "window"
+  #:name   "caches"
+  #:doc    "Returns the CacheStorage object."
+  #:mdn    "Window/caches"
+  (-> () (extern/raw)))
+
+(define-foreign js-window-speech-synthesis
+  #:module "window"
+  #:name   "speech-synthesis"
+  #:doc    "Returns the SpeechSynthesis object."
+  #:mdn    "Window/speechSynthesis"
+  (-> () (extern/raw)))
+
+(define-foreign js-window-style-media
+  #:module "window"
+  #:name   "style-media"
+  #:doc    "Returns the legacy StyleMedia object."
+  #:mdn    "Window/styleMedia"
+  (-> () (extern/raw)))
+
+;; Methods
+
+(define-foreign js-window-alert
+  #:module "window"
+  #:name   "alert"
+  #:doc    "Shows an alert dialog."
+  #:mdn    "Window/alert"
+  (-> (string) ()))
+
+(define-foreign js-window-atob
+  #:module "window"
+  #:name   "atob"
+  #:doc    "Decodes a Base64-encoded ASCII string."
+  #:mdn    "Window/atob"
+  (-> (string) (string)))
+
+(define-foreign js-window-btoa
+  #:module "window"
+  #:name   "btoa"
+  #:doc    "Encodes a binary string as Base64."
+  #:mdn    "Window/btoa"
+  (-> (string) (string)))
+
+
+(define-foreign js-window-cancel-animation-frame
+  #:module "window"
+  #:name   "cancel-animation-frame"
+  #:doc    "Cancels the animation frame."
+  #:mdn    "Window/cancelAnimationFrame"
+  (-> (u32) ()))
+
+(define-foreign js-window-cancel-idle-callback
+  #:module "window"
+  #:name   "cancel-idle-callback"
+  #:doc    "Cancels the idle callback."
+  #:mdn    "Window/cancelIdleCallback"
+  (-> (u32) ()))
+
+(define-foreign js-window-clear-interval
+  #:module "window"
+  #:name   "clear-interval"
+  #:doc    "Clears the interval."
+  #:mdn    "Window/clearInterval"
+  (-> (u32) ()))
+
+(define-foreign js-window-clear-timeout
+  #:module "window"
+  #:name   "clear-timeout"
+  #:doc    "Clears the timeout."
+  #:mdn    "Window/clearTimeout"
+  (-> (u32) ()))
+
+(define-foreign js-window-close
+  #:module "window"
+  #:name   "close"
+  #:doc    "Closes the associated resource."
+  #:mdn    "Window/close"
+  (-> () ()))
+
+(define-foreign js-window-confirm
+  #:module "window"
+  #:name   "confirm"
+  #:doc    "Shows a confirmation dialog."
+  #:mdn    "Window/confirm"
+  (-> (string) (i32)))
+
+(define-foreign js-window-create-image-bitmap
+  #:module "window"
+  #:name   "create-image-bitmap"
+  #:doc    "Creates an ImageBitmap from an image source."
+  #:mdn    "Window/createImageBitmap"
+  ;; Pass `(void)` for missing optional arguments.
+  (-> (extern value value value value value) (extern/raw)))
+
+(define-foreign js-window-fetch
+  #:module "window"
+  #:name   "fetch"
+  #:doc    "Starts an HTTP request and returns a promise for the response."
+  #:mdn    "Window/fetch"
+  ;; Pass `(void)` for missing init
+  (-> (value value) (extern/raw)))
+
+(define-foreign js-window-focus
+  #:module "window"
+  #:name   "focus"
+  #:doc    "Moves focus to the target."
+  #:mdn    "Window/focus"
+  (-> () ()))
+
+(define-foreign js-window-get-computed-style
+  #:module "window"
+  #:name   "get-computed-style"
+  #:doc    "Returns the computed style."
+  #:mdn    "Window/getComputedStyle"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-window-get-selection
+  #:module "window"
+  #:name   "get-selection"
+  #:doc    "Returns the selection."
+  #:mdn    "Window/getSelection"
+  (-> () (extern)))
+
+(define-foreign js-window-match-media
+  #:module "window"
+  #:name   "match-media"
+  #:doc    "Evaluates a media query and returns a MediaQueryList."
+  #:mdn    "Window/matchMedia"
+  (-> (string) (extern/raw)))
+
+(define-foreign js-window-move-by
+  #:module "window"
+  #:name   "move-by"
+  #:doc    "Moves the window by the given offset."
+  #:mdn    "Window/moveBy"
+  (-> (f64 f64) ()))
+
+(define-foreign js-window-move-to
+  #:module "window"
+  #:name   "move-to"
+  #:doc    "Moves the window to the given screen coordinates."
+  #:mdn    "Window/moveTo"
+  (-> (f64 f64) ()))
+
+(define-foreign js-window-open
+  #:module "window"
+  #:name   "open"
+  #:doc    "Opens a URL in a new browsing context."
+  #:mdn    "Window/open"
+  ;; Pass `(void)` for missing optional arguments.
+  (-> (string value value value) (extern)))
+
+(define-foreign js-window-post-message
+  #:module "window"
+  #:name   "post-message"
+  #:doc    "Posts a message to another browsing context."
+  #:mdn    "Window/postMessage"
+  ;; Pass `(void)` for missing optional arguments.
+  (-> (value string value) ()))
+
+(define-foreign js-window-print
+  #:module "window"
+  #:name   "print"
+  #:doc    "Opens the print dialog."
+  #:mdn    "Window/print"
+  (-> () ()))
+
+(define-foreign js-window-prompt
+  #:module "window"
+  #:name   "prompt"
+  #:doc    "Shows a prompt dialog and returns the entered value."
+  #:mdn    "Window/prompt"
+  ;; Pass `(void)` for missing default value.
+  (-> (string value) (value)))
+
+(define-foreign js-window-request-animation-frame
+  #:module "window"
+  #:name   "request-animation-frame"
+  #:doc    "Schedules a callback for the next repaint."
+  #:mdn    "Window/requestAnimationFrame"
+  (-> (extern) (u32)))
+
+(define-foreign js-window-request-idle-callback
+  #:module "window"
+  #:name   "request-idle-callback"
+  #:doc    "Schedules a callback to run during an idle period."
+  #:mdn    "Window/requestIdleCallback"
+  ;; Pass `(void)` for missing options.
+  (-> (extern value) (u32)))
+
+(define-foreign js-window-resize-by
+  #:module "window"
+  #:name   "resize-by"
+  #:doc    "Resizes the window by the given delta."
+  #:mdn    "Window/resizeBy"
+  (-> (f64 f64) ()))
+
+(define-foreign js-window-resize-to
+  #:module "window"
+  #:name   "resize-to"
+  #:doc    "Resizes the window to the given dimensions."
+  #:mdn    "Window/resizeTo"
+  (-> (f64 f64) ()))
+
+(define-foreign js-window-scroll
+  #:module "window"
+  #:name   "scroll"
+  #:doc    "Scrolls the document to an absolute position."
+  #:mdn    "Window/scroll"
+  ;; Pass `(void)` for missing options.
+  (-> (f64 f64 value) ()))
+
+(define-foreign js-window-scroll-by
+  #:module "window"
+  #:name   "scroll-by"
+  #:doc    "Scrolls the document by a relative offset."
+  #:mdn    "Window/scrollBy"
+  ;; Pass `(void)` for missing options.
+  (-> (f64 f64 value) ()))
+
+(define-foreign js-window-scroll-to
+  #:module "window"
+  #:name   "scroll-to"
+  #:doc    "Scrolls the document to an absolute position."
+  #:mdn    "Window/scrollTo"
+  ;; Pass `(void)` for missing options.
+  (-> (f64 f64 value) ()))
+
+(define-foreign js-window-set-interval
+  #:module "window"
+  #:name   "set-interval"
+  #:doc    "Schedules a repeated timer callback."
+  #:mdn    "Window/setInterval"
+  (-> (extern f64) (u32)))
+
+(define-foreign js-window-set-timeout
+  #:module "window"
+  #:name   "set-timeout"
+  #:doc    "Schedules a one-shot timer callback."
+  #:mdn    "Window/setTimeout"
+    (-> (extern) (u32)))
+
+(define-foreign js-window-set-timeout/delay
+  #:module "window"
+  #:name   "set-timeout/delay"
+  #:doc    "Schedules a one-shot timer callback with an explicit delay."
+  #:mdn    "Window/setTimeout"
+  (-> (extern f64) (u32)))
+
+(define-foreign js-window-stop
+  #:module "window"
+  #:name   "stop"
+  #:doc    "Stops further resource loading in this browsing context."
+  #:mdn    "Window/stop"
+  (-> () ()))
+
+(define-foreign js-window-structured-clone
+  #:module "window"
+  #:name   "structured-clone"
+  #:doc    "Creates a deep structured clone of a value."
+  #:mdn    "Window/structuredClone"
+  ;; Pass `(void)` for missing options.
+  (-> (value value) (value)))
+
+(define-foreign js-window-queue-microtask
+  #:module "window"
+  #:name   "queue-microtask"
+  #:doc    "Queues a microtask callback."
+  #:mdn    "Window/queueMicrotask"
+  (-> (extern) ()))
+
+(define-foreign js-window-report-error
+  #:module "window"
+  #:name   "report-error"
+  #:doc    "Reports an error to the host environment."
+  #:mdn    "Window/reportError"
+  (-> (value) ()))
+
+;;;

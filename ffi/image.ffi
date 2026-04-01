@@ -1,0 +1,269 @@
+;;;
+;;; DOM
+;;;
+
+;; This file declares the browser DOM bindings.
+;;
+;; Return-type convention:
+;; - `(extern)` is used for nullable DOM/Web API results, so JS `null` maps to `#f`.
+;; - `(extern/raw)` is used when raw JS extern behavior is desired.
+
+;;; HTMLImageElement
+;;;
+
+;; https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/Image
+
+(define-foreign js-image-new
+  #:module "image"
+  #:name   "new"
+  #:doc    "Creates a new HTMLImageElement."
+  #:mdn    "HTMLImageElement/new"
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (value value) (extern/raw)))
+
+;; Properties
+(define-foreign js-image-alt
+  #:module "image"
+  #:name   "alt"
+  #:doc    "Returns the fallback alt text."
+  #:mdn    "HTMLImageElement/alt"
+  (-> (extern) (string)))
+
+(define-foreign js-set-image-alt!
+  #:module "image"
+  #:name   "set-alt!"
+  #:doc    "Sets the fallback alt text."
+  #:mdn    "HTMLImageElement/setAlt"
+  (-> (extern string) ()))
+
+(define-foreign js-image-src
+  #:module "image"
+  #:name   "src"
+  #:doc    "Returns the image source URL."
+  #:mdn    "HTMLImageElement/src"
+  (-> (extern) (string)))
+
+(define-foreign js-set-image-src!
+  #:module "image"
+  #:name   "set-src!"
+  #:doc    "Sets the image source URL."
+  #:mdn    "HTMLImageElement/setSrc"
+  (-> (extern string) ()))
+
+(define-foreign js-image-srcset
+  #:module "image"
+  #:name   "srcset"
+  #:doc    "Returns the srcset descriptor string."
+  #:mdn    "HTMLImageElement/srcset"
+  (-> (extern) (string)))
+
+(define-foreign js-set-image-srcset!
+  #:module "image"
+  #:name   "set-srcset!"
+  #:doc    "Sets the srcset descriptor string."
+  #:mdn    "HTMLImageElement/setSrcset"
+  (-> (extern string) ()))
+
+(define-foreign js-image-sizes
+  #:module "image"
+  #:name   "sizes"
+  #:doc    "Returns the sizes descriptor string."
+  #:mdn    "HTMLImageElement/sizes"
+  (-> (extern) (string)))
+
+(define-foreign js-set-image-sizes!
+  #:module "image"
+  #:name   "set-sizes!"
+  #:doc    "Sets the sizes descriptor string."
+  #:mdn    "HTMLImageElement/setSizes"
+  (-> (extern string) ()))
+
+(define-foreign js-image-cross-origin
+  #:module "image"
+  #:name   "cross-origin"
+  #:doc    "Returns the CORS mode for image requests."
+  #:mdn    "HTMLImageElement/crossOrigin"
+  (-> (extern) (value)))
+
+(define-foreign js-set-image-cross-origin!
+  #:module "image"
+  #:name   "set-cross-origin!"
+  #:doc    "Sets the CORS mode for image requests."
+  #:mdn    "HTMLImageElement/setCrossOrigin"
+  (-> (extern value) ()))
+
+(define-foreign js-image-use-map
+  #:module "image"
+  #:name   "use-map"
+  #:doc    "Returns the associated client-side image map name."
+  #:mdn    "HTMLImageElement/useMap"
+  (-> (extern) (string)))
+
+(define-foreign js-set-image-use-map!
+  #:module "image"
+  #:name   "set-use-map!"
+  #:doc    "Associates the image with a client-side image map."
+  #:mdn    "HTMLImageElement/setUseMap"
+  (-> (extern string) ()))
+
+(define-foreign js-image-is-map
+  #:module "image"
+  #:name   "is-map"
+  #:doc    "Reports whether the image is used as a server-side image map."
+  #:mdn    "HTMLImageElement/isMap"
+  (-> (extern) (i32)))
+
+(define-foreign js-set-image-is-map!
+  #:module "image"
+  #:name   "set-is-map!"
+  #:doc    "Enables or disables server-side image map behavior."
+  #:mdn    "HTMLImageElement/setIsMap"
+  (-> (extern i32) ()))
+
+(define-foreign js-image-width
+  #:module "image"
+  #:name   "width"
+  #:doc    "Returns the rendered image width."
+  #:mdn    "HTMLImageElement/width"
+  (-> (extern) (u32)))
+
+(define-foreign js-set-image-width!
+  #:module "image"
+  #:name   "set-width!"
+  #:doc    "Sets the rendered image width."
+  #:mdn    "HTMLImageElement/setWidth"
+  (-> (extern u32) ()))
+
+(define-foreign js-image-height
+  #:module "image"
+  #:name   "height"
+  #:doc    "Returns the rendered image height."
+  #:mdn    "HTMLImageElement/height"
+  (-> (extern) (u32)))
+
+(define-foreign js-set-image-height!
+  #:module "image"
+  #:name   "set-height!"
+  #:doc    "Sets the rendered image height."
+  #:mdn    "HTMLImageElement/setHeight"
+  (-> (extern u32) ()))
+
+(define-foreign js-image-natural-width
+  #:module "image"
+  #:name   "natural-width"
+  #:doc    "Returns the intrinsic image width."
+  #:mdn    "HTMLImageElement/naturalWidth"
+  (-> (extern) (u32)))
+
+(define-foreign js-image-natural-height
+  #:module "image"
+  #:name   "natural-height"
+  #:doc    "Returns the intrinsic image height."
+  #:mdn    "HTMLImageElement/naturalHeight"
+  (-> (extern) (u32)))
+
+(define-foreign js-image-complete
+  #:module "image"
+  #:name   "complete"
+  #:doc    "Reports whether image loading has completed."
+  #:mdn    "HTMLImageElement/complete"
+  (-> (extern) (i32)))
+
+(define-foreign js-image-current-src
+  #:module "image"
+  #:name   "current-src"
+  #:doc    "Returns the selected image source URL."
+  #:mdn    "HTMLImageElement/currentSrc"
+  (-> (extern) (string)))
+
+(define-foreign js-image-decoding
+  #:module "image"
+  #:name   "decoding"
+  #:doc    "Returns the image decoding hint."
+  #:mdn    "HTMLImageElement/decoding"
+  (-> (extern) (string)))
+
+(define-foreign js-set-image-decoding!
+  #:module "image"
+  #:name   "set-decoding!"
+  #:doc    "Sets the image decoding hint."
+  #:mdn    "HTMLImageElement/setDecoding"
+  (-> (extern string) ()))
+
+(define-foreign js-image-fetch-priority
+  #:module "image"
+  #:name   "fetch-priority"
+  #:doc    "Returns the image fetch priority hint."
+  #:mdn    "HTMLImageElement/fetchPriority"
+  (-> (extern) (string)))
+
+(define-foreign js-set-image-fetch-priority!
+  #:module "image"
+  #:name   "set-fetch-priority!"
+  #:doc    "Sets the image fetch priority hint."
+  #:mdn    "HTMLImageElement/setFetchPriority"
+  (-> (extern string) ()))
+
+(define-foreign js-image-loading
+  #:module "image"
+  #:name   "loading"
+  #:doc    "Returns the image loading strategy."
+  #:mdn    "HTMLImageElement/loading"
+  (-> (extern) (string)))
+
+(define-foreign js-set-image-loading!
+  #:module "image"
+  #:name   "set-loading!"
+  #:doc    "Sets the image loading strategy."
+  #:mdn    "HTMLImageElement/setLoading"
+  (-> (extern string) ()))
+
+(define-foreign js-image-referrer-policy
+  #:module "image"
+  #:name   "referrer-policy"
+  #:doc    "Returns the referrer policy used for image requests."
+  #:mdn    "HTMLImageElement/referrerPolicy"
+  (-> (extern) (string)))
+
+(define-foreign js-set-image-referrer-policy!
+  #:module "image"
+  #:name   "set-referrer-policy!"
+  #:doc    "Sets the referrer policy used for image requests."
+  #:mdn    "HTMLImageElement/setReferrerPolicy"
+  (-> (extern string) ()))
+
+(define-foreign js-image-name
+  #:module "image"
+  #:name   "name"
+  #:doc    "Returns the image name attribute."
+  #:mdn    "HTMLImageElement/name"
+  (-> (extern) (string)))
+
+(define-foreign js-set-image-name!
+  #:module "image"
+  #:name   "set-name!"
+  #:doc    "Sets the image name attribute."
+  #:mdn    "HTMLImageElement/setName"
+  (-> (extern string) ()))
+
+(define-foreign js-image-x
+  #:module "image"
+  #:name   "x"
+  #:doc    "Returns the X coordinate of the image in the layout viewport."
+  #:mdn    "HTMLImageElement/x"
+  (-> (extern) (i32)))
+
+(define-foreign js-image-y
+  #:module "image"
+  #:name   "y"
+  #:doc    "Returns the Y coordinate of the image in the layout viewport."
+  #:mdn    "HTMLImageElement/y"
+  (-> (extern) (i32)))
+
+;; Methods
+(define-foreign js-image-decode
+  #:module "image"
+  #:name   "decode"
+  #:doc    "Decodes the image and returns a promise that settles when decoding finishes."
+  #:mdn    "HTMLImageElement/decode"
+  (-> (extern) (extern/raw)))

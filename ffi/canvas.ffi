@@ -1,0 +1,835 @@
+;;;
+;;; DOM
+;;;
+
+;; This file declares the browser DOM bindings.
+;;
+;; Return-type convention:
+;; - `(extern)` is used for nullable DOM/Web API results, so JS `null` maps to `#f`.
+;; - `(extern/raw)` is used when raw JS extern behavior is desired.
+
+;;; HTMLCanvasElement
+;;;
+
+;; https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement
+
+(define-foreign js-canvas-capture-stream
+  #:module "canvas"
+  #:name   "capture-stream"
+  #:doc    "Returns a MediaStream that captures canvas rendering."
+  #:mdn    "HTMLCanvasElement/captureStream"
+  (-> (extern f64) (extern/raw)))
+
+(define-foreign js-canvas-get-context
+  #:module "canvas"
+  #:name   "get-context"
+  #:doc    "Returns a drawing context for the requested context id."
+  #:mdn    "HTMLCanvasElement/getContext"
+  (-> (extern string extern) (extern)))
+
+(define-foreign js-canvas-height
+  #:module "canvas"
+  #:name   "height"
+  #:doc    "Returns the canvas height in CSS pixels."
+  #:mdn    "HTMLCanvasElement/height"
+  (-> (extern) (u32)))
+
+(define-foreign js-set-canvas-height!
+  #:module "canvas"
+  #:name   "set-height!"
+  #:doc    "Sets the canvas height in CSS pixels."
+  #:mdn    "HTMLCanvasElement/setHeight"
+  (-> (extern u32) ()))
+
+(define-foreign js-canvas-to-blob
+  #:module "canvas"
+  #:name   "to-blob"
+  #:doc    "Encodes the canvas into a Blob and passes it to a callback."
+  #:mdn    "HTMLCanvasElement/toBlob"
+  (-> (extern extern string f64) ()))
+
+(define-foreign js-canvas-to-data-url
+  #:module "canvas"
+  #:name   "to-data-url"
+  #:doc    "Encodes the canvas as a data URL string."
+  #:mdn    "HTMLCanvasElement/toDataUrl"
+  (-> (extern string f64) (string)))
+
+(define-foreign js-canvas-transfer-control-to-offscreen
+  #:module "canvas"
+  #:name   "transfer-control-to-offscreen"
+  #:doc    "Transfers a canvas to an OffscreenCanvas."
+  #:mdn    "HTMLCanvasElement/transferControlToOffscreen"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-canvas-width
+  #:module "canvas"
+  #:name   "width"
+  #:doc    "Returns the canvas width in CSS pixels."
+  #:mdn    "HTMLCanvasElement/width"
+  (-> (extern) (u32)))
+
+(define-foreign js-set-canvas-width!
+  #:module "canvas"
+  #:name   "set-width!"
+  #:doc    "Sets the canvas width in CSS pixels."
+  #:mdn    "HTMLCanvasElement/setWidth"
+  (-> (extern u32) ()))
+
+;;; CanvasRenderingContext2D
+;;;
+
+;; https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D
+
+(define-foreign js-canvas2d-canvas
+  #:module "canvas-rendering-context-2d"
+  #:name   "canvas"
+  #:doc    "Returns the canvas value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-canvas2d-direction
+  #:module "canvas-rendering-context-2d"
+  #:name   "direction"
+  #:doc    "Returns the direction value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-direction!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-direction!"
+  #:doc    "Sets the direction."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-fill-style
+  #:module "canvas-rendering-context-2d"
+  #:name   "fill-style"
+  #:doc    "Performs fill style on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-set-canvas2d-fill-style!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-fill-style!"
+  #:doc    "Sets the fill style."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern value) ()))
+
+(define-foreign js-canvas2d-filter
+  #:module "canvas-rendering-context-2d"
+  #:name   "filter"
+  #:doc    "Returns the filter value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-filter!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-filter!"
+  #:doc    "Sets the filter."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-font
+  #:module "canvas-rendering-context-2d"
+  #:name   "font"
+  #:doc    "Returns the font value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-font!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-font!"
+  #:doc    "Sets the font."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-global-alpha
+  #:module "canvas-rendering-context-2d"
+  #:name   "global-alpha"
+  #:doc    "Returns the global alpha value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-canvas2d-global-alpha!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-global-alpha!"
+  #:doc    "Sets the global alpha."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64) ()))
+
+(define-foreign js-canvas2d-global-composite-operation
+  #:module "canvas-rendering-context-2d"
+  #:name   "global-composite-operation"
+  #:doc    "Returns the global composite operation value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-global-composite-operation!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-global-composite-operation!"
+  #:doc    "Sets the global composite operation."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-image-smoothing-enabled
+  #:module "canvas-rendering-context-2d"
+  #:name   "image-smoothing-enabled"
+  #:doc    "Returns the image smoothing enabled value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (i32)))
+
+(define-foreign js-set-canvas2d-image-smoothing-enabled!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-image-smoothing-enabled!"
+  #:doc    "Sets the image smoothing enabled."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern i32) ()))
+
+(define-foreign js-canvas2d-image-smoothing-quality
+  #:module "canvas-rendering-context-2d"
+  #:name   "image-smoothing-quality"
+  #:doc    "Returns the image smoothing quality value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-image-smoothing-quality!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-image-smoothing-quality!"
+  #:doc    "Sets the image smoothing quality."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-line-cap
+  #:module "canvas-rendering-context-2d"
+  #:name   "line-cap"
+  #:doc    "Performs line cap on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-line-cap!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-line-cap!"
+  #:doc    "Sets the line cap."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-line-dash-offset
+  #:module "canvas-rendering-context-2d"
+  #:name   "line-dash-offset"
+  #:doc    "Performs line dash offset on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-canvas2d-line-dash-offset!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-line-dash-offset!"
+  #:doc    "Sets the line dash offset."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64) ()))
+
+(define-foreign js-canvas2d-line-join
+  #:module "canvas-rendering-context-2d"
+  #:name   "line-join"
+  #:doc    "Performs line join on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-line-join!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-line-join!"
+  #:doc    "Sets the line join."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-line-width
+  #:module "canvas-rendering-context-2d"
+  #:name   "line-width"
+  #:doc    "Performs line width on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-canvas2d-line-width!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-line-width!"
+  #:doc    "Sets the line width."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64) ()))
+
+(define-foreign js-canvas2d-miter-limit
+  #:module "canvas-rendering-context-2d"
+  #:name   "miter-limit"
+  #:doc    "Returns the miter limit value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-canvas2d-miter-limit!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-miter-limit!"
+  #:doc    "Sets the miter limit."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64) ()))
+
+(define-foreign js-canvas2d-shadow-blur
+  #:module "canvas-rendering-context-2d"
+  #:name   "shadow-blur"
+  #:doc    "Returns the shadow blur value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-canvas2d-shadow-blur!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-shadow-blur!"
+  #:doc    "Sets the shadow blur."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64) ()))
+
+(define-foreign js-canvas2d-shadow-color
+  #:module "canvas-rendering-context-2d"
+  #:name   "shadow-color"
+  #:doc    "Returns the shadow color value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-shadow-color!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-shadow-color!"
+  #:doc    "Sets the shadow color."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-shadow-offset-x
+  #:module "canvas-rendering-context-2d"
+  #:name   "shadow-offset-x"
+  #:doc    "Returns the shadow offset x value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-canvas2d-shadow-offset-x!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-shadow-offset-x!"
+  #:doc    "Sets the shadow offset x."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64) ()))
+
+(define-foreign js-canvas2d-shadow-offset-y
+  #:module "canvas-rendering-context-2d"
+  #:name   "shadow-offset-y"
+  #:doc    "Returns the shadow offset y value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-canvas2d-shadow-offset-y!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-shadow-offset-y!"
+  #:doc    "Sets the shadow offset y."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64) ()))
+
+(define-foreign js-canvas2d-stroke-style
+  #:module "canvas-rendering-context-2d"
+  #:name   "stroke-style"
+  #:doc    "Performs stroke style on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-set-canvas2d-stroke-style!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-stroke-style!"
+  #:doc    "Sets the stroke style."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern value) ()))
+
+(define-foreign js-canvas2d-text-align
+  #:module "canvas-rendering-context-2d"
+  #:name   "text-align"
+  #:doc    "Returns the text align value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-text-align!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-text-align!"
+  #:doc    "Sets the text align."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-text-baseline
+  #:module "canvas-rendering-context-2d"
+  #:name   "text-baseline"
+  #:doc    "Returns the text baseline value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-text-baseline!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-text-baseline!"
+  #:doc    "Sets the text baseline."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-text-rendering
+  #:module "canvas-rendering-context-2d"
+  #:name   "text-rendering"
+  #:doc    "Returns the text rendering value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-text-rendering!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-text-rendering!"
+  #:doc    "Sets the text rendering."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-font-kerning
+  #:module "canvas-rendering-context-2d"
+  #:name   "font-kerning"
+  #:doc    "Returns the font kerning value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-font-kerning!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-font-kerning!"
+  #:doc    "Sets the font kerning."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-font-stretch
+  #:module "canvas-rendering-context-2d"
+  #:name   "font-stretch"
+  #:doc    "Returns the font stretch value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-font-stretch!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-font-stretch!"
+  #:doc    "Sets the font stretch."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-font-variant-caps
+  #:module "canvas-rendering-context-2d"
+  #:name   "font-variant-caps"
+  #:doc    "Returns the font variant caps value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-font-variant-caps!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-font-variant-caps!"
+  #:doc    "Sets the font variant caps."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-font-variant-ligatures
+  #:module "canvas-rendering-context-2d"
+  #:name   "font-variant-ligatures"
+  #:doc    "Returns the font variant ligatures value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-font-variant-ligatures!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-font-variant-ligatures!"
+  #:doc    "Sets the font variant ligatures."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-font-variant-numeric
+  #:module "canvas-rendering-context-2d"
+  #:name   "font-variant-numeric"
+  #:doc    "Returns the font variant numeric value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-font-variant-numeric!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-font-variant-numeric!"
+  #:doc    "Sets the font variant numeric."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-letter-spacing
+  #:module "canvas-rendering-context-2d"
+  #:name   "letter-spacing"
+  #:doc    "Returns the letter spacing value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-letter-spacing!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-letter-spacing!"
+  #:doc    "Sets the letter spacing."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern string) ()))
+
+(define-foreign js-canvas2d-word-spacing
+  #:module "canvas-rendering-context-2d"
+  #:name   "word-spacing"
+  #:doc    "Returns the word spacing value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (string)))
+
+(define-foreign js-set-canvas2d-word-spacing!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-word-spacing!"
+  #:doc    "Sets the word spacing."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern string) ()))
+
+;; Methods
+
+(define-foreign js-canvas2d-arc
+  #:module "canvas-rendering-context-2d"
+  #:name   "arc"
+  #:doc    "Performs arc on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64 f64 f64 f64 f64 i32) ()))
+
+(define-foreign js-canvas2d-arc-to
+  #:module "canvas-rendering-context-2d"
+  #:name   "arc-to"
+  #:doc    "Performs arc to on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64 f64 f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-begin-path
+  #:module "canvas-rendering-context-2d"
+  #:name   "begin-path"
+  #:doc    "Returns the begin path value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) ()))
+
+(define-foreign js-canvas2d-bezier-curve-to
+  #:module "canvas-rendering-context-2d"
+  #:name   "bezier-curve-to"
+  #:doc    "Performs bezier curve to on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64 f64 f64 f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-clear-rect
+  #:module "canvas-rendering-context-2d"
+  #:name   "clear-rect"
+  #:doc    "Clears the rect."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64 f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-clip
+  #:module "canvas-rendering-context-2d"
+  #:name   "clip"
+  #:doc    "Performs clip on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (extern value value) ()))
+
+(define-foreign js-canvas2d-close-path
+  #:module "canvas-rendering-context-2d"
+  #:name   "close-path"
+  #:doc    "Closes the associated resource."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) ()))
+
+(define-foreign js-canvas2d-create-image-data
+  #:module "canvas-rendering-context-2d"
+  #:name   "create-image-data"
+  #:doc    "Creates the image data."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64 f64) (extern/raw)))
+
+(define-foreign js-canvas2d-create-image-data-from
+  #:module "canvas-rendering-context-2d"
+  #:name   "create-image-data-from"
+  #:doc    "Creates the image data from."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern extern) (extern/raw)))
+
+(define-foreign js-canvas2d-create-linear-gradient
+  #:module "canvas-rendering-context-2d"
+  #:name   "create-linear-gradient"
+  #:doc    "Creates the linear gradient."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64 f64 f64 f64) (extern/raw)))
+
+(define-foreign js-canvas2d-create-pattern
+  #:module "canvas-rendering-context-2d"
+  #:name   "create-pattern"
+  #:doc    "Creates the pattern."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern extern string) (extern)))
+
+(define-foreign js-canvas2d-create-radial-gradient
+  #:module "canvas-rendering-context-2d"
+  #:name   "create-radial-gradient"
+  #:doc    "Creates the radial gradient."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64 f64 f64 f64 f64 f64) (extern/raw)))
+
+(define-foreign js-canvas2d-create-conic-gradient
+  #:module "canvas-rendering-context-2d"
+  #:name   "create-conic-gradient"
+  #:doc    "Creates the conic gradient."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64 f64 f64) (extern/raw)))
+
+(define-foreign js-canvas2d-draw-focus-if-needed!
+  #:module "canvas-rendering-context-2d"
+  #:name   "draw-focus-if-needed!"
+  #:doc    "Performs draw focus if needed on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern extern) ()))
+
+(define-foreign js-canvas2d-draw-focus-if-needed-path!
+  #:module "canvas-rendering-context-2d"
+  #:name   "draw-focus-if-needed-path!"
+  #:doc    "Performs draw focus if needed path on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern extern extern) ()))
+
+(define-foreign js-canvas2d-draw-image
+  #:module "canvas-rendering-context-2d"
+  #:name   "draw-image"
+  #:doc    "Performs draw image on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern extern f64 f64) ()))
+
+(define-foreign js-canvas2d-draw-image-5
+  #:module "canvas-rendering-context-2d"
+  #:name   "draw-image-5"
+  #:doc    "Performs draw image 5 on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern extern f64 f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-draw-image-9
+  #:module "canvas-rendering-context-2d"
+  #:name   "draw-image-9"
+  #:doc    "Performs draw image 9 on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern extern f64 f64 f64 f64 f64 f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-ellipse
+  #:module "canvas-rendering-context-2d"
+  #:name   "ellipse"
+  #:doc    "Returns the ellipse value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64 f64 f64 f64 f64 f64 f64 i32) ()))
+
+(define-foreign js-canvas2d-fill
+  #:module "canvas-rendering-context-2d"
+  #:name   "fill"
+  #:doc    "Performs fill on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  #;(-> (extern) ())
+  #;(-> (extern value) ())       ; path
+  #;(-> (extern value) ())       ; fillRule
+  (-> (extern value value) ()))  ; path, fillRule
+
+(define-foreign js-canvas2d-fill-rect
+  #:module "canvas-rendering-context-2d"
+  #:name   "fill-rect"
+  #:doc    "Performs fill rect on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64 f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-fill-text
+  #:module "canvas-rendering-context-2d"
+  #:name   "fill-text"
+  #:doc    "Performs fill text on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (extern string f64 f64 value) ()))
+
+(define-foreign js-canvas2d-get-image-data
+  #:module "canvas-rendering-context-2d"
+  #:name   "get-image-data"
+  #:doc    "Returns the image data."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (extern f64 f64 f64 f64 value) (extern/raw)))
+
+(define-foreign js-canvas2d-get-line-dash
+  #:module "canvas-rendering-context-2d"
+  #:name   "get-line-dash"
+  #:doc    "Returns the line dash."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-canvas2d-get-transform
+  #:module "canvas-rendering-context-2d"
+  #:name   "get-transform"
+  #:doc    "Returns the transform."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-canvas2d-is-point-in-path
+  #:module "canvas-rendering-context-2d"
+  #:name   "is-point-in-path"
+  #:doc    "Checks whether it is point in path."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (extern value f64 f64 value) (i32)))
+
+(define-foreign js-canvas2d-is-point-in-stroke
+  #:module "canvas-rendering-context-2d"
+  #:name   "is-point-in-stroke"
+  #:doc    "Checks whether it is point in stroke."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (extern value f64 f64) (i32)))
+
+(define-foreign js-canvas2d-line-to
+  #:module "canvas-rendering-context-2d"
+  #:name   "line-to"
+  #:doc    "Performs line to on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64 f64) ()))
+
+(define-foreign js-canvas2d-measure-text
+  #:module "canvas-rendering-context-2d"
+  #:name   "measure-text"
+  #:doc    "Performs measure text on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern string) (extern/raw)))
+
+(define-foreign js-canvas2d-move-to
+  #:module "canvas-rendering-context-2d"
+  #:name   "move-to"
+  #:doc    "Performs move to on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64 f64) ()))
+
+(define-foreign js-canvas2d-put-image-data
+  #:module "canvas-rendering-context-2d"
+  #:name   "put-image-data"
+  #:doc    "Returns the put image data value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (extern extern f64 f64 value value value value) ()))
+
+(define-foreign js-canvas2d-quadratic-curve-to
+  #:module "canvas-rendering-context-2d"
+  #:name   "quadratic-curve-to"
+  #:doc    "Returns the quadratic curve to value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64 f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-rect
+  #:module "canvas-rendering-context-2d"
+  #:name   "rect"
+  #:doc    "Returns the rect value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64 f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-reset
+  #:module "canvas-rendering-context-2d"
+  #:name   "reset"
+  #:doc    "Performs reset on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) ()))
+
+(define-foreign js-canvas2d-reset-transform
+  #:module "canvas-rendering-context-2d"
+  #:name   "reset-transform"
+  #:doc    "Performs reset transform on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) ()))
+
+(define-foreign js-canvas2d-restore
+  #:module "canvas-rendering-context-2d"
+  #:name   "restore"
+  #:doc    "Performs restore on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) ()))
+
+(define-foreign js-canvas2d-rotate
+  #:module "canvas-rendering-context-2d"
+  #:name   "rotate"
+  #:doc    "Performs rotate on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64) ()))
+
+(define-foreign js-canvas2d-round-rect
+  #:module "canvas-rendering-context-2d"
+  #:name   "round-rect"
+  #:doc    "Returns the round rect value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (extern f64 f64 f64 f64 value) ()))
+
+(define-foreign js-canvas2d-save
+  #:module "canvas-rendering-context-2d"
+  #:name   "save"
+  #:doc    "Performs save on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern) ()))
+
+(define-foreign js-canvas2d-scale
+  #:module "canvas-rendering-context-2d"
+  #:name   "scale"
+  #:doc    "Performs scale on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64 f64) ()))
+
+(define-foreign js-canvas2d-set-line-dash
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-line-dash"
+  #:doc    "Sets the line dash."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern extern) ()))
+
+(define-foreign js-canvas2d-set-transform!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-transform!"
+  #:doc    "Sets the transform."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64 f64 f64 f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-set-transform-matrix!
+  #:module "canvas-rendering-context-2d"
+  #:name   "set-transform-matrix!"
+  #:doc    "Sets the transform matrix."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern extern) ()))
+
+(define-foreign js-canvas2d-stroke
+  #:module "canvas-rendering-context-2d"
+  #:name   "stroke"
+  #:doc    "Performs stroke on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (extern value) ()))
+
+(define-foreign js-canvas2d-stroke-rect
+  #:module "canvas-rendering-context-2d"
+  #:name   "stroke-rect"
+  #:doc    "Performs stroke rect on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64 f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-stroke-text
+  #:module "canvas-rendering-context-2d"
+  #:name   "stroke-text"
+  #:doc    "Performs stroke text on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (extern string f64 f64 value) ()))
+
+(define-foreign js-canvas2d-transform
+  #:module "canvas-rendering-context-2d"
+  #:name   "transform"
+  #:doc    "Returns the transform value."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64 f64 f64 f64 f64 f64) ()))
+
+(define-foreign js-canvas2d-translate
+  #:module "canvas-rendering-context-2d"
+  #:name   "translate"
+  #:doc    "Performs translate on the target."
+  #:mdn    "Canvas-Rendering-Context-2D"
+  (-> (extern f64 f64) ()))
+
+
+;;;

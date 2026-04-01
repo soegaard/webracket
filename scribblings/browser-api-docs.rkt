@@ -15,7 +15,25 @@
          console-doc-specs
          render-console-defproc
          websocket-doc-specs
-         render-websocket-defproc)
+         render-websocket-defproc
+         window-doc-specs
+         render-window-defproc
+         performance-doc-specs
+         render-performance-defproc
+         document-doc-specs
+         render-document-defproc
+         event-doc-specs
+         render-event-defproc
+         domrect-doc-specs
+         render-domrect-defproc
+         element-doc-specs
+         render-element-defproc
+         canvas-doc-specs
+         render-canvas-defproc
+         media-doc-specs
+         render-media-defproc
+         image-doc-specs
+         render-image-defproc)
 
 (define (mdn path [label #f])
   (hyperlink (string-append "https://developer.mozilla.org/en-US/docs/Web/API/" path)
@@ -42,6 +60,37 @@
                 (list (string->symbol (format "arg~a" i)) c)))
             (define result (ffi-doc-result-contract idx name))
             (list name args result))))
+
+(define (make-family-doc-set ffi-path ffi-file)
+  (define-values (idx docs specs) (make-doc-specs ffi-path))
+  (define (desc name)
+    (or (ffi-doc-description idx name)
+        (ffi-doc-default-description idx name)))
+  (define (sig name)
+    (ffi-doc-signature-line idx name ffi-file))
+  (define (return-line name)
+    (ffi-doc-return-note idx name))
+  (define (mdn-link name)
+    (define path (ffi-doc-mdn-path/default idx name))
+    (mdn path (mdn-label path)))
+  (define (render spec)
+    (define name   (list-ref spec 0))
+    (define args   (list-ref spec 1))
+    (define result (list-ref spec 2))
+    (define desc-text (desc name))
+    (define return-text (return-line name))
+    (define mdn-node (mdn-link name))
+    (define sig-text (sig name))
+    (eval
+     `(defproc* [[(,name ,@args) ,result]]
+        (para ,desc-text)
+        (if ,return-text
+            (para ,return-text)
+            (list))
+        (para (list (bold "MDN:") " " ,mdn-node))
+        (para (tt ,sig-text)))
+     scribble-ns))
+  (values idx docs specs render))
 
 (define-values (dom-ffi-index dom-ffi-docs dom-doc-specs)
   (make-doc-specs "ffi/dom.ffi"))
@@ -157,3 +206,22 @@
       (para (list (bold "MDN:") " " (websocket-mdn-link ',name)))
       (para (tt (websocket-sig ',name))))
    scribble-ns))
+
+(define-values (window-ffi-index window-ffi-docs window-doc-specs render-window-defproc)
+  (make-family-doc-set "ffi/window.ffi" "window.ffi"))
+(define-values (performance-ffi-index performance-ffi-docs performance-doc-specs render-performance-defproc)
+  (make-family-doc-set "ffi/performance.ffi" "performance.ffi"))
+(define-values (document-ffi-index document-ffi-docs document-doc-specs render-document-defproc)
+  (make-family-doc-set "ffi/document.ffi" "document.ffi"))
+(define-values (event-ffi-index event-ffi-docs event-doc-specs render-event-defproc)
+  (make-family-doc-set "ffi/event.ffi" "event.ffi"))
+(define-values (domrect-ffi-index domrect-ffi-docs domrect-doc-specs render-domrect-defproc)
+  (make-family-doc-set "ffi/domrect.ffi" "domrect.ffi"))
+(define-values (element-ffi-index element-ffi-docs element-doc-specs render-element-defproc)
+  (make-family-doc-set "ffi/element.ffi" "element.ffi"))
+(define-values (canvas-ffi-index canvas-ffi-docs canvas-doc-specs render-canvas-defproc)
+  (make-family-doc-set "ffi/canvas.ffi" "canvas.ffi"))
+(define-values (media-ffi-index media-ffi-docs media-doc-specs render-media-defproc)
+  (make-family-doc-set "ffi/media.ffi" "media.ffi"))
+(define-values (image-ffi-index image-ffi-docs image-doc-specs render-image-defproc)
+  (make-family-doc-set "ffi/image.ffi" "image.ffi"))

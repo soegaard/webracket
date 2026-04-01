@@ -1,0 +1,48 @@
+;;;
+;;; DOM
+;;;
+
+;; This file declares the browser DOM bindings.
+;;
+;; Return-type convention:
+;; - `(extern)` is used for nullable DOM/Web API results, so JS `null` maps to `#f`.
+;; - `(extern/raw)` is used when raw JS extern behavior is desired.
+
+;;; DOMRect
+;;;
+
+;; The various functions in this section are documented here:
+;;
+;;     https://developer.mozilla.org/en-US/docs/Web/API/DOMRect
+
+;; Properties
+(define-foreign js-dom-rect-left
+  #:module "dom-rect"
+  #:name   "left"
+  #:doc    "Returns the left coordinate of a DOMRect."
+  #:mdn    "DOMRect/left"
+  (-> (extern) (f64)))
+
+(define-foreign js-dom-rect-top
+  #:module "dom-rect"
+  #:name   "top"
+  #:doc    "Returns the top coordinate of a DOMRect."
+  #:mdn    "DOMRect/top"
+  (-> (extern) (f64)))
+
+(define-foreign js-dom-rect-width
+  #:module "dom-rect"
+  #:name   "width"
+  #:doc    "Returns the width of a DOMRect."
+  #:mdn    "DOMRect/width"
+  (-> (extern) (f64)))
+
+(define-foreign js-dom-rect-height
+  #:module "dom-rect"
+  #:name   "height"
+  #:doc    "Returns the height of a DOMRect."
+  #:mdn    "DOMRect/height"
+  (-> (extern) (f64)))
+
+
+;;;

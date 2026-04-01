@@ -1,0 +1,426 @@
+;;;
+;;; DOM
+;;;
+
+;; This file declares the browser DOM bindings.
+;;
+;; Return-type convention:
+;; - `(extern)` is used for nullable DOM/Web API results, so JS `null` maps to `#f`.
+;; - `(extern/raw)` is used when raw JS extern behavior is desired.
+
+;;; HTMLMediaElement
+;;;
+
+;; https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement
+
+;; Properties
+(define-foreign js-media-audio-tracks
+  #:module "media"
+  #:name   "audio-tracks"
+  #:doc    "Returns the AudioTrackList for the media element."
+  #:mdn    "HTMLMediaElement/audioTracks"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-media-autoplay
+  #:module "media"
+  #:name   "autoplay"
+  #:doc    "Reports whether the media should autoplay."
+  #:mdn    "HTMLMediaElement/autoplay"
+  (-> (extern) (i32)))
+
+(define-foreign js-set-media-autoplay!
+  #:module "media"
+  #:name   "set-autoplay!"
+  #:doc    "Enables or disables autoplay."
+  #:mdn    "HTMLMediaElement/setAutoplay"
+  (-> (extern i32) ()))
+
+(define-foreign js-media-buffered
+  #:module "media"
+  #:name   "buffered"
+  #:doc    "Returns buffered time ranges."
+  #:mdn    "HTMLMediaElement/buffered"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-media-controls
+  #:module "media"
+  #:name   "controls"
+  #:doc    "Reports whether built-in playback controls are shown."
+  #:mdn    "HTMLMediaElement/controls"
+  (-> (extern) (i32)))
+
+(define-foreign js-set-media-controls!
+  #:module "media"
+  #:name   "set-controls!"
+  #:doc    "Shows or hides built-in playback controls."
+  #:mdn    "HTMLMediaElement/setControls"
+  (-> (extern i32) ()))
+
+(define-foreign js-media-controls-list
+  #:module "media"
+  #:name   "controls-list"
+  #:doc    "Returns the controlsList policy object."
+  #:mdn    "HTMLMediaElement/controlsList"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-media-cross-origin
+  #:module "media"
+  #:name   "cross-origin"
+  #:doc    "Returns the CORS mode for media requests."
+  #:mdn    "HTMLMediaElement/crossOrigin"
+  (-> (extern) (value)))
+
+(define-foreign js-set-media-cross-origin!
+  #:module "media"
+  #:name   "set-cross-origin!"
+  #:doc    "Sets the CORS mode for media requests."
+  #:mdn    "HTMLMediaElement/setCrossOrigin"
+  (-> (extern value) ()))
+
+(define-foreign js-media-current-src
+  #:module "media"
+  #:name   "current-src"
+  #:doc    "Returns the resolved URL of the selected media resource."
+  #:mdn    "HTMLMediaElement/currentSrc"
+  (-> (extern) (string)))
+
+(define-foreign js-media-current-time
+  #:module "media"
+  #:name   "current-time"
+  #:doc    "Returns the current playback position in seconds."
+  #:mdn    "HTMLMediaElement/currentTime"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-media-current-time!
+  #:module "media"
+  #:name   "set-current-time!"
+  #:doc    "Seeks to a playback position in seconds."
+  #:mdn    "HTMLMediaElement/setCurrentTime"
+  (-> (extern f64) ()))
+
+(define-foreign js-media-default-muted
+  #:module "media"
+  #:name   "default-muted"
+  #:doc    "Reports whether the default muted state is enabled."
+  #:mdn    "HTMLMediaElement/defaultMuted"
+  (-> (extern) (i32)))
+
+(define-foreign js-set-media-default-muted!
+  #:module "media"
+  #:name   "set-default-muted!"
+  #:doc    "Sets the default muted state."
+  #:mdn    "HTMLMediaElement/setDefaultMuted"
+  (-> (extern i32) ()))
+
+(define-foreign js-media-default-playback-rate
+  #:module "media"
+  #:name   "default-playback-rate"
+  #:doc    "Returns the default playback rate."
+  #:mdn    "HTMLMediaElement/defaultPlaybackRate"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-media-default-playback-rate!
+  #:module "media"
+  #:name   "set-default-playback-rate!"
+  #:doc    "Sets the default playback rate."
+  #:mdn    "HTMLMediaElement/setDefaultPlaybackRate"
+  (-> (extern f64) ()))
+
+(define-foreign js-media-disable-remote-playback
+  #:module "media"
+  #:name   "disable-remote-playback"
+  #:doc    "Disables the remote playback."
+  #:mdn    "HTMLMediaElement/disableRemotePlayback"
+  (-> (extern) (i32)))
+
+(define-foreign js-set-media-disable-remote-playback!
+  #:module "media"
+  #:name   "set-disable-remote-playback!"
+  #:doc    "Enables or disables remote playback."
+  #:mdn    "HTMLMediaElement/setDisableRemotePlayback"
+  (-> (extern i32) ()))
+
+(define-foreign js-media-duration
+  #:module "media"
+  #:name   "duration"
+  #:doc    "Returns the media duration in seconds."
+  #:mdn    "HTMLMediaElement/duration"
+  (-> (extern) (f64)))
+
+(define-foreign js-media-ended
+  #:module "media"
+  #:name   "ended"
+  #:doc    "Reports whether playback has reached the end."
+  #:mdn    "HTMLMediaElement/ended"
+  (-> (extern) (i32)))
+
+(define-foreign js-media-error
+  #:module "media"
+  #:name   "error"
+  #:doc    "Returns the current media error, if any."
+  #:mdn    "HTMLMediaElement/error"
+  (-> (extern) (extern)))
+
+(define-foreign js-media-loop
+  #:module "media"
+  #:name   "loop"
+  #:doc    "Reports whether playback loops automatically."
+  #:mdn    "HTMLMediaElement/loop"
+  (-> (extern) (i32)))
+
+(define-foreign js-set-media-loop!
+  #:module "media"
+  #:name   "set-loop!"
+  #:doc    "Enables or disables looping playback."
+  #:mdn    "HTMLMediaElement/setLoop"
+  (-> (extern i32) ()))
+
+(define-foreign js-media-media-keys
+  #:module "media"
+  #:name   "media-keys"
+  #:doc    "Returns attached MediaKeys for encrypted media."
+  #:mdn    "HTMLMediaElement/mediaKeys"
+  (-> (extern) (extern)))
+
+(define-foreign js-media-media-group
+  #:module "media"
+  #:name   "media-group"
+  #:doc    "Returns the media group identifier."
+  #:mdn    "HTMLMediaElement/mediaGroup"
+  (-> (extern) (string)))
+
+(define-foreign js-set-media-media-group!
+  #:module "media"
+  #:name   "set-media-group!"
+  #:doc    "Sets the media group identifier."
+  #:mdn    "HTMLMediaElement/setMediaGroup"
+  (-> (extern string) ()))
+
+(define-foreign js-media-muted
+  #:module "media"
+  #:name   "muted"
+  #:doc    "Reports whether audio output is muted."
+  #:mdn    "HTMLMediaElement/muted"
+  (-> (extern) (i32)))
+
+(define-foreign js-set-media-muted!
+  #:module "media"
+  #:name   "set-muted!"
+  #:doc    "Mutes or unmutes audio output."
+  #:mdn    "HTMLMediaElement/setMuted"
+  (-> (extern i32) ()))
+
+(define-foreign js-media-network-state
+  #:module "media"
+  #:name   "network-state"
+  #:doc    "Returns the media network state code."
+  #:mdn    "HTMLMediaElement/networkState"
+  (-> (extern) (u32)))
+
+(define-foreign js-media-paused
+  #:module "media"
+  #:name   "paused"
+  #:doc    "Reports whether playback is paused."
+  #:mdn    "HTMLMediaElement/paused"
+  (-> (extern) (i32)))
+
+(define-foreign js-media-playback-rate
+  #:module "media"
+  #:name   "playback-rate"
+  #:doc    "Returns the current playback rate."
+  #:mdn    "HTMLMediaElement/playbackRate"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-media-playback-rate!
+  #:module "media"
+  #:name   "set-playback-rate!"
+  #:doc    "Sets the playback rate."
+  #:mdn    "HTMLMediaElement/setPlaybackRate"
+  (-> (extern f64) ()))
+
+(define-foreign js-media-played
+  #:module "media"
+  #:name   "played"
+  #:doc    "Returns time ranges that have been played."
+  #:mdn    "HTMLMediaElement/played"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-media-preload
+  #:module "media"
+  #:name   "preload"
+  #:doc    "Returns the media preload hint."
+  #:mdn    "HTMLMediaElement/preload"
+  (-> (extern) (string)))
+
+(define-foreign js-set-media-preload!
+  #:module "media"
+  #:name   "set-preload!"
+  #:doc    "Sets the media preload hint."
+  #:mdn    "HTMLMediaElement/setPreload"
+  (-> (extern string) ()))
+
+(define-foreign js-media-preserves-pitch
+  #:module "media"
+  #:name   "preserves-pitch"
+  #:doc    "Reports whether pitch is preserved when playback rate changes."
+  #:mdn    "HTMLMediaElement/preservesPitch"
+  (-> (extern) (i32)))
+
+(define-foreign js-set-media-preserves-pitch!
+  #:module "media"
+  #:name   "set-preserves-pitch!"
+  #:doc    "Enables or disables pitch preservation."
+  #:mdn    "HTMLMediaElement/setPreservesPitch"
+  (-> (extern i32) ()))
+
+(define-foreign js-media-ready-state
+  #:module "media"
+  #:name   "ready-state"
+  #:doc    "Returns the media ready state code."
+  #:mdn    "HTMLMediaElement/readyState"
+  (-> (extern) (u32)))
+
+(define-foreign js-media-seekable
+  #:module "media"
+  #:name   "seekable"
+  #:doc    "Returns seekable time ranges."
+  #:mdn    "HTMLMediaElement/seekable"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-media-seeking
+  #:module "media"
+  #:name   "seeking"
+  #:doc    "Reports whether a seek operation is in progress."
+  #:mdn    "HTMLMediaElement/seeking"
+  (-> (extern) (i32)))
+
+(define-foreign js-media-sink-id
+  #:module "media"
+  #:name   "sink-id"
+  #:doc    "Returns the current audio output device id."
+  #:mdn    "HTMLMediaElement/sinkId"
+  (-> (extern) (string)))
+
+(define-foreign js-media-src
+  #:module "media"
+  #:name   "src"
+  #:doc    "Returns the media source URL."
+  #:mdn    "HTMLMediaElement/src"
+  (-> (extern) (string)))
+
+(define-foreign js-set-media-src!
+  #:module "media"
+  #:name   "set-src!"
+  #:doc    "Sets the media source URL."
+  #:mdn    "HTMLMediaElement/setSrc"
+  (-> (extern string) ()))
+
+(define-foreign js-media-src-object
+  #:module "media"
+  #:name   "src-object"
+  #:doc    "Returns the MediaStream or MediaSource used as input."
+  #:mdn    "HTMLMediaElement/srcObject"
+  (-> (extern) (extern)))
+
+(define-foreign js-set-media-src-object!
+  #:module "media"
+  #:name   "set-src-object!"
+  #:doc    "Sets a MediaStream or MediaSource as input."
+  #:mdn    "HTMLMediaElement/setSrcObject"
+  (-> (extern extern) ()))
+
+(define-foreign js-media-text-tracks
+  #:module "media"
+  #:name   "text-tracks"
+  #:doc    "Returns the TextTrackList for captions and subtitles."
+  #:mdn    "HTMLMediaElement/textTracks"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-media-video-tracks
+  #:module "media"
+  #:name   "video-tracks"
+  #:doc    "Returns the VideoTrackList."
+  #:mdn    "HTMLMediaElement/videoTracks"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-media-volume
+  #:module "media"
+  #:name   "volume"
+  #:doc    "Returns playback volume in the range 0.0 to 1.0."
+  #:mdn    "HTMLMediaElement/volume"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-media-volume!
+  #:module "media"
+  #:name   "set-volume!"
+  #:doc    "Sets playback volume in the range 0.0 to 1.0."
+  #:mdn    "HTMLMediaElement/setVolume"
+  (-> (extern f64) ()))
+
+;; Methods
+(define-foreign js-media-add-text-track!
+  #:module "media"
+  #:name   "add-text-track!"
+  #:doc    "Adds the text track."
+  #:mdn    "HTMLMediaElement/addTextTrack"
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (extern string value value) (extern/raw)))
+
+(define-foreign js-media-can-play-type
+  #:module "media"
+  #:name   "can-play-type"
+  #:doc    "Returns whether the media type is supported."
+  #:mdn    "HTMLMediaElement/canPlayType"
+  (-> (extern string) (string)))
+
+(define-foreign js-media-capture-stream
+  #:module "media"
+  #:name   "capture-stream"
+  #:doc    "Returns a MediaStream captured from the media element."
+  #:mdn    "HTMLMediaElement/captureStream"
+  ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-media-fast-seek!
+  #:module "media"
+  #:name   "fast-seek!"
+  #:doc    "Performs an efficient seek to the target time."
+  #:mdn    "HTMLMediaElement/fastSeek"
+  (-> (extern f64) ()))
+
+(define-foreign js-media-load!
+  #:module "media"
+  #:name   "load!"
+  #:doc    "Resets and reloads media sources."
+  #:mdn    "HTMLMediaElement/load"
+  (-> (extern) ()))
+
+(define-foreign js-media-pause
+  #:module "media"
+  #:name   "pause"
+  #:doc    "Pauses media playback."
+  #:mdn    "HTMLMediaElement/pause"
+  (-> (extern) ()))
+
+(define-foreign js-media-play
+  #:module "media"
+  #:name   "play"
+  #:doc    "Starts or resumes media playback."
+  #:mdn    "HTMLMediaElement/play"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-media-set-media-keys!
+  #:module "media"
+  #:name   "set-media-keys!"
+  #:doc    "Attaches MediaKeys for encrypted media playback."
+  #:mdn    "HTMLMediaElement/setMediaKeys"
+  (-> (extern extern) (extern/raw)))
+
+(define-foreign js-media-set-sink-id!
+  #:module "media"
+  #:name   "set-sink-id!"
+  #:doc    "Sets the audio output device by id."
+  #:mdn    "HTMLMediaElement/setSinkId"
+  (-> (extern string) (extern/raw)))
+
+;;;
