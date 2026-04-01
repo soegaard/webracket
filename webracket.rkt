@@ -10,7 +10,15 @@
 
 ;; usage: racket webracket.rkt [ <option> ... ] [<files>] ...
 
-(require "driver.rkt")
+(require racket/format
+         racket/runtime-path
+         racket/string)
+
+(define process-start-ms (current-inexact-milliseconds))
+
+(define-runtime-path driver-rkt "driver.rkt")
+
+(define parse-start-ms (current-inexact-milliseconds))
 
 
 (define run-after       (make-parameter #f))
@@ -97,8 +105,77 @@
    #:args filenames
    filenames))
 
+(define parse-end-ms (current-inexact-milliseconds))
+
+(define drive-compilation
+  #f)
+
+(define list-available-primitives
+  #f)
+
+(define compilation-timings-driver-prelude
+  #f)
+
+(define compilation-timings-compile-total
+  #f)
+
+(define driver-load-ms 0.0)
+
+(define driver-symbol-lookups-ms 0.0)
+
+(define (load-driver!)
+  (unless drive-compilation
+    (define driver-load-start-ms (current-inexact-milliseconds))
+    (set! drive-compilation (dynamic-require driver-rkt 'drive-compilation))
+    (set! driver-load-ms (- (current-inexact-milliseconds) driver-load-start-ms))
+    (define symbol-lookups-start-ms (current-inexact-milliseconds))
+    (set! list-available-primitives
+          (dynamic-require driver-rkt 'list-available-primitives))
+    (set! compilation-timings-driver-prelude
+          (dynamic-require driver-rkt 'compilation-timings-driver-prelude))
+    (set! compilation-timings-compile-total
+          (dynamic-require driver-rkt 'compilation-timings-compile-total))
+    (set! driver-symbol-lookups-ms
+          (- (current-inexact-milliseconds) symbol-lookups-start-ms))))
+
+(define (ms->s ms) (/ ms 1000.0))
+
+(define (pct part total)
+  (if (zero? total) 0.0 (* 100.0 (/ part total))))
+
+(define (format-process-timing-table rows)
+  (define label-width
+    (for/fold ([w 0]) ([row rows])
+      (max w (string-length (first row)))))
+  (define (row->string label ms total-ms)
+    (define secs (ms->s ms))
+    (define pct-val (pct ms total-ms))
+    (define secs-str (~r secs #:min-width 6 #:precision '(= 1)))
+    (define pct-str (~r pct-val #:min-width 5 #:precision '(= 1)))
+    (define label-str (~a label #:min-width label-width))
+    (format "  ~a :  ~a  ~a%" label-str secs-str pct-str))
+  (define total-ms
+    (let ([total-row (for/first ([row rows] #:when (string=? (first row) "total")) row)])
+      (if total-row
+          (second total-row)
+          (for/sum ([row rows]) (second row)))))
+  (define header
+    (let* ([title "Timing breakdown"]
+           [secs-right (+ 2 label-width 4 6)]
+           [pct-right (+ secs-right 2 5)]
+           [pad1 (max 1 (- secs-right (string-length title) 3))]
+           [title+secs (string-append title (make-string pad1 #\space) "(s)")]
+           [pad2 (max 1 (- pct-right (string-length title+secs) 5))])
+      (string-append title+secs (make-string pad2 #\space) "(pct)")))
+  (string-join
+   (cons header
+         (for/list ([row rows])
+           (row->string (first row) (second row) total-ms)))
+   "\n"))
+
 (cond
   [(list-primitives?)
+   (load-driver!)
    (for ([name (in-list (list-available-primitives #:ffi-files (ffi-files)))])
      (displayln name))
    (exit 0)]
@@ -112,7 +189,11 @@
 ;; In the case that -r is used to run the program directly,
 ;; we propagate the exit code from `node`.
 
-(define exit-code
+(load-driver!)
+
+(define startup-end-ms (current-inexact-milliseconds))
+
+(define-values (exit-code compile-timings)
   (drive-compilation #:filename      (source-filename)
                      #:wat-filename  (wat-filename)
                      #:wasm-filename (wasm-filename)
@@ -128,6 +209,24 @@
                      #:run-after?    (run-after)
                      #:ffi-files     (ffi-files)
                      #:stdlib?       (stdlib?)))
+
+(when (and (timings?) compile-timings)
+  (define process-end-ms (current-inexact-milliseconds))
+  (define cli-init-ms (- parse-start-ms process-start-ms))
+  (define parse-ms (- parse-end-ms parse-start-ms))
+  (define driver-prelude-ms (compilation-timings-driver-prelude compile-timings))
+  (define compile-pipeline-ms (compilation-timings-compile-total compile-timings))
+  (define total-ms (- process-end-ms process-start-ms))
+  (displayln "=== Process Timings ===")
+  (displayln
+   (format-process-timing-table
+    (list (list "cli-init" cli-init-ms)
+          (list "parse-args" parse-ms)
+          (list "driver-load" driver-load-ms)
+          (list "driver-symbol-lookups" driver-symbol-lookups-ms)
+          (list "driver-prelude" driver-prelude-ms)
+          (list "compile-pipeline" compile-pipeline-ms)
+          (list "total" total-ms)))))
 
 (unless (zero? exit-code)
   (exit exit-code))

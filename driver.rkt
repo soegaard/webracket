@@ -18,6 +18,7 @@
 ;;;
 
 (provide drive-compilation
+         (struct-out compilation-timings)
          (all-defined-out))
 
 
@@ -76,6 +77,16 @@
 ;;; THE MAIN DRIVER
 ;;;
 
+(struct compilation-timings
+  (driver-prelude
+   compile
+   write-wat
+   assemble
+   write-map
+   write-host
+   compile-total)
+  #:transparent)
+
 (define (drive-compilation
          #:filename          filename
          #:wat-filename      wat-filename
@@ -93,6 +104,7 @@
          #:ffi-files         ffi-files    ; list of file paths for .ffi files
          #:stdlib?           stdlib?)     ; include standard library 
   (define exit-code 0)
+  (define compile-timings #f)
   
   ; 0. Handle ffi-files
   (define resolved-ffi-files
@@ -237,7 +249,16 @@
     (define assemble-ms   (- t-assemble-end t-assemble-start))
     (define write-map-ms  (- t-write-map-end t-write-map-start))
     (define write-host-ms (- t-write-host-end t-write-host-start))
+    (define driver-prelude-ms (- t-compile-start t0))
     (define total-ms      (- t-write-host-end t0))
+    (set! compile-timings
+          (compilation-timings driver-prelude-ms
+                               compile-ms
+                               write-wat-ms
+                               assemble-ms
+                               write-map-ms
+                               write-host-ms
+                               total-ms))
     (define overall-table
       (format-timing-table
        (list (list "compile" compile-ms)
@@ -246,7 +267,7 @@
              (list "write-map" write-map-ms)
              (list "write-host" write-host-ms)
              (list "total" total-ms))))
-    (displayln "=== Overall Compile ===")
+    (displayln "=== Compile Pipeline ===")
     (displayln overall-table)
     (define pass-table (current-pass-timing-table))
     (when pass-table
@@ -263,7 +284,7 @@
     (define runtime-js out-host)
     (set! exit-code
           (run #f #:wat out-wat #:wasm out-wasm #:runtime.js runtime-js)))
-  exit-code)
+  (values exit-code compile-timings))
 
 ;;;
 ;;; READ TOP-LEVEL FORMS FROM FILE 
