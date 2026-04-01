@@ -106,7 +106,7 @@ with the help of an LLM.
 Included bindings currently cover the Math, DOM, Canvas, MathJax, XTermJS, and JSXGraph.
 
 For a worked example of how to add a browser-backed API, see
-[`DESIGN-browser-api-guide.md`](DESIGN-browser-api-guide.md).
+[`DESIGN-new-web-api.md`](DESIGN-new-web-api.md).
 
 # The Road Ahead
 
