@@ -10,14 +10,22 @@
     body { line-height: 1.6; }
     main { max-width: 920px; margin: 0 auto; padding: 4rem 1.5rem 5rem; }
     .panel { background: var(--panel); border: 1px solid rgba(255,255,255,0.08); border-radius: 24px; padding: 2rem; box-shadow: 0 30px 80px rgba(0,0,0,0.35); }
+    .section { margin-top: 2rem; }
     h1 { margin: 0 0 0.5rem; font-size: clamp(2.5rem, 5vw, 4rem); line-height: 1.05; }
+    h2 { margin: 0 0 0.5rem; font-size: clamp(1.4rem, 2.5vw, 2rem); line-height: 1.1; }
     p { margin: 0 0 1rem; color: var(--muted); }
-    .example-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 2rem; margin-top: 1.5rem; }
+    .section-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; margin-top: 1rem; }
+    .seven-gui-layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr); gap: 1.5rem; align-items: start; }
+    .fact-box { background: rgba(143, 157, 255, 0.10); border: 1px solid rgba(143, 157, 255, 0.25); border-radius: 18px; padding: 1rem 1.1rem; color: var(--text); }
+    .fact-box h3 { margin: 0 0 0.35rem; font-size: 1rem; }
+    .fact-box p { margin: 0; }
+    .group { margin-top: 1rem; }
+    .group h3 { margin: 0 0 0.35rem; font-size: 1.1rem; }
     ul { margin: 0; padding-left: 1.2rem; }
     li { margin: 0 0 0.55rem; break-inside: avoid; }
     a { color: var(--accent); text-decoration: none; }
     a:hover { text-decoration: underline; }
-    @media (max-width: 700px) { .example-columns { grid-template-columns: 1fr; } main { padding-inline: 1rem; } .panel { padding: 1.25rem; } }
+    @media (max-width: 700px) { .seven-gui-layout { grid-template-columns: 1fr; } main { padding-inline: 1rem; } .panel { padding: 1.25rem; } }
   </style>
 </head>
 <body>
@@ -25,26 +33,62 @@
     <section class="panel">
       <h1>Web-Easy Examples</h1>
       <p>Compiled example pages from <code>lib/web-easy/examples/</code>.</p>
-      <div class="example-columns">
-        <ul>
+      <section class="section">
+        <h2>Handwritten examples</h2>
+        <p>Small starter apps written by hand to show the basic Web Easy workflow.</p>
+        <div class="section-grid">
+          <ul>
           <li><a href="web-easy-examples/hello-world/hello-world.html">Hello World</a></li>
           <li><a href="web-easy-examples/a-single-counter/a-single-counter.html">A Single Counter</a></li>
           <li><a href="web-easy-examples/multiple-counters/multiple-counters.html">Multiple Counters</a></li>
           <li><a href="web-easy-examples/dynamic-counters/dynamic-counters.html">Dynamic Counters</a></li>
           <li><a href="web-easy-examples/add-two-numbers/add-two-numbers.html">Add Two Numbers</a></li>
           <li><a href="web-easy-examples/todo-lists/todo-lists.html">Todo Lists</a></li>
-        </ul>
-        <ul>
-          <li><a href="web-easy-examples/7gui-counter/7gui-counter.html">7gui Counter</a></li>
-          <li><a href="web-easy-examples/7gui-temperature-converter/7gui-temperature-converter.html">7gui Temperature Converter</a></li>
-          <li><a href="web-easy-examples/7gui-flight-booker/7gui-flight-booker.html">7gui Flight Booker</a></li>
-          <li><a href="web-easy-examples/7gui-timer/7gui-timer.html">7gui Timer</a></li>
-          <li><a href="web-easy-examples/7gui-crud/7gui-crud.html">7gui Crud</a></li>
-          <li><a href="web-easy-examples/7gui-circle/7gui-circle.html">7gui Circle</a></li>
-          <li><a href="web-easy-examples/7gui-circle-extended/7gui-circle-extended.html">7gui Circle Extended</a></li>
-          <li><a href="web-easy-examples/websocket/websocket.html">Websocket</a></li>
-        </ul>
-      </div>
+          </ul>
+        </div>
+      </section>
+      <section class="section">
+        <h2>7 GUI Examples</h2>
+        <p>The classic 7 GUIs benchmark is a teaching set of seven small interface problems used to compare UI toolkits and architecture styles. It covers counter updates, temperature conversion, flight booking, timers, CRUD editing, and circle drawing.</p>
+        <div class="seven-gui-layout">
+          <div class="section-grid">
+            <ul>
+          <li><a href="web-easy-examples/7gui-counter/7gui-counter.html">7 GUI Counter</a></li>
+          <li><a href="web-easy-examples/7gui-temperature-converter/7gui-temperature-converter.html">7 GUI Temperature Converter</a></li>
+          <li><a href="web-easy-examples/7gui-flight-booker/7gui-flight-booker.html">7 GUI Flight Booker</a></li>
+          <li><a href="web-easy-examples/7gui-timer/7gui-timer.html">7 GUI Timer</a></li>
+          <li><a href="web-easy-examples/7gui-crud/7gui-crud.html">7 GUI Crud</a></li>
+          <li><a href="web-easy-examples/7gui-circle/7gui-circle.html">7 GUI Circle</a></li>
+          <li><a href="web-easy-examples/7gui-circle-extended/7gui-circle-extended.html">7 GUI Circle Extended</a></li>
+            </ul>
+          </div>
+          <aside class="fact-box">
+            <h3>Fact box</h3>
+            <p>7 GUI is a small benchmark suite that helps compare how different UI libraries handle common interaction patterns. The seven tasks are intentionally simple, but they reveal how much ceremony a toolkit needs for state, validation, layout, and updates.</p>
+          </aside>
+        </div>
+      </section>
+      <section class="section">
+        <h2>Machine-written examples</h2>
+        <p>Examples generated or assembled around browser APIs such as Audio and WebSocket.</p>
+        <div class="section-grid">
+          <div class="group">
+            <h3>Audio</h3>
+            <ul>
+          <li><a href="web-easy-examples/audio-oscillator/audio-oscillator.html">Audio Oscillator</a></li>
+          <li><a href="web-easy-examples/audio-buffer-playback/audio-buffer-playback.html">Audio Buffer Playback</a></li>
+          <li><a href="web-easy-examples/audio-analyser/audio-analyser.html">Audio Analyser</a></li>
+          <li><a href="web-easy-examples/audio-effects/audio-effects.html">Audio Effects</a></li>
+            </ul>
+          </div>
+          <div class="group">
+            <h3>WebSocket</h3>
+            <ul>
+          <li><a href="web-easy-examples/websocket/websocket.html">WebSocket</a></li>
+            </ul>
+          </div>
+        </div>
+      </section>
     </section>
   </main>
 </body>

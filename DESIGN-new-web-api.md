@@ -185,6 +185,10 @@ The docs converge on a useful visual convention:
 
 Keep the banners in the entry body, and keep the signature and prose readable before the banner appears.
 
+For per-entry browser API docs, use the shared `mdn-bar` helper so the
+inline MDN banner has a consistent look across wrapper chapters like
+`audio`, `websocket`, and `console`.
+
 The banner pattern helps the reader answer three questions quickly:
 - how do I require this?
 - how do I compile it?
