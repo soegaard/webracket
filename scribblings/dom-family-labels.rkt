@@ -41,9 +41,7 @@
   window-match-media
   window-get-computed-style
   window-structured-clone
-  performance-event-count-map
-  performance-event-count-map?
-  performance-event-count-map-raw
+  (struct-out performance-event-count-map)
   performance-event-count-map-size
   performance-event-count-map-entries
   performance-event-count-map-keys
@@ -258,9 +256,9 @@
 (define window-match-media any/c)
 (define window-get-computed-style any/c)
 (define window-structured-clone any/c)
-(define performance-event-count-map any/c)
-(define performance-event-count-map? any/c)
-(define performance-event-count-map-raw any/c)
+
+(struct performance-event-count-map (raw) #:transparent)
+
 (define performance-event-count-map-size any/c)
 (define performance-event-count-map-entries any/c)
 (define performance-event-count-map-keys any/c)

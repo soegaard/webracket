@@ -147,7 +147,7 @@ value as the main user-facing result.
 The map-like helpers let you inspect the counts for a particular event
 type without dropping back to the raw browser object.
 
-@defproc[(performance-event-count-map [raw external/raw]) performance-event-count-map?]{
+@defstruct[performance-event-count-map ([raw external/raw])]{
 Wraps a browser EventCounts object in the checked struct used by
 @racket[performance-event-counts].
 }
