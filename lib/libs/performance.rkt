@@ -109,16 +109,6 @@
 (define (performance-interaction-count)
   (js-performance-interaction-count))
 
-;; performance-navigation : -> external/raw
-;;   Read the legacy navigation timing object.
-(define (performance-navigation)
-  (js-performance-navigation))
-
-;; performance-timing : -> external/raw
-;;   Read the legacy timing object.
-(define (performance-timing)
-  (js-performance-timing))
-
 ;; performance-memory : -> external/raw
 ;;   Read the browser-specific memory information object.
 (define (performance-memory)

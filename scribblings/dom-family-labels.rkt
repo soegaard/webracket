@@ -51,8 +51,6 @@
   performance-event-count-map-for-each
   performance-event-counts
   performance-interaction-count
-  performance-navigation
-  performance-timing
   performance-memory
   performance-time-origin
   performance-now
@@ -268,8 +266,6 @@
 (define performance-event-count-map-for-each any/c)
 (define performance-event-counts any/c)
 (define performance-interaction-count any/c)
-(define performance-navigation any/c)
-(define performance-timing any/c)
 (define performance-memory any/c)
 (define performance-time-origin any/c)
 (define performance-now any/c)

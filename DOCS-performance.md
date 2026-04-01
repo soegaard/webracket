@@ -13,8 +13,7 @@ Assumption in examples: the program is compiled with `--ffi dom`.
 
 - `performance-now` returns a monotonic high-resolution timestamp
 - `performance-time-origin` returns the start timestamp for the page
-- `performance-event-counts`, `performance-interaction-count`,
-  `performance-navigation`, `performance-timing`, and
+- `performance-event-counts`, `performance-interaction-count`, and
   `performance-memory` expose the browser's timing metadata
 - `performance-event-counts` returns a `performance-event-count-map`
   wrapper instead of a raw browser object

@@ -113,18 +113,6 @@ Returns the browser's event-count map for the current page.
 Returns the current interaction count for the page.
 }
 
-@defproc[(performance-navigation) external/raw]{
-@(mdn-bar "Performance: navigation property"
-          "https://developer.mozilla.org/en-US/docs/Web/API/Performance/navigation")
-Returns the legacy navigation timing object.
-}
-
-@defproc[(performance-timing) external/raw]{
-@(mdn-bar "Performance: timing property"
-          "https://developer.mozilla.org/en-US/docs/Web/API/Performance/timing")
-Returns the legacy timing object.
-}
-
 @defproc[(performance-memory) external/raw]{
 @(mdn-bar "Performance: memory property"
           "https://developer.mozilla.org/en-US/docs/Web/API/Performance/memory")
@@ -139,13 +127,19 @@ Returns the high-resolution start timestamp for the page.
 
 @section{Performance EventCounts Map}
 
-The @racket[performance-event-count-map] struct keeps the browser
-EventCounts object tucked away in a single field. That gives the wrapper
-room to grow with additional helpers without exposing the raw external
-value as the main user-facing result.
+The browser's EventCounts map is a little table that records how many
+times certain event types, such as @racket["click"], have been
+dispatched on the current page. It is useful when you want to inspect
+interaction activity without dealing with the browser's raw JavaScript
+object directly.
 
 The map-like helpers let you inspect the counts for a particular event
 type without dropping back to the raw browser object.
+
+The @racket[performance-event-count-map] struct keeps that browser
+object tucked away in a single field. That gives the wrapper room to
+grow with additional helpers without exposing the raw external value as
+the main user-facing result.
 
 @defstruct[performance-event-count-map ([raw external/raw])]{
 Wraps a browser EventCounts object in the checked struct used by

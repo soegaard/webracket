@@ -29,20 +29,6 @@
   #:mdn    "Performance/interactionCount"
   (-> () (f64)))
 
-(define-foreign js-performance-navigation
-  #:module "performance"
-  #:name   "navigation"
-  #:doc    "Returns the legacy PerformanceNavigation object."
-  #:mdn    "Performance/navigation"
-  (-> () (extern/raw)))
-
-(define-foreign js-performance-timing
-  #:module "performance"
-  #:name   "timing"
-  #:doc    "Returns the legacy PerformanceTiming object."
-  #:mdn    "Performance/timing"
-  (-> () (extern/raw)))
-
 (define-foreign js-performance-memory
   #:module "performance"
   #:name   "memory"
