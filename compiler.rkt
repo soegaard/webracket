@@ -2757,13 +2757,6 @@
           (initial-binding x)))
     (define (initial-ρ)
       (ρ-set* (ρ-empty) top-bindings))
-    (define top-binding-names
-      (for/seteq ([x (in-list top-bindings)])
-        (syntax-e (variable-id x))))
-    (define (top-binding-name? x)
-      (define datum (syntax-e (variable-id (rename-env-variable x))))
-      (and (symbol? datum)
-           (set-member? top-binding-names datum)))
     (define (fresh/simple x ρ [orig-x x])
       (if (ρ-name-used? ρ x) (fresh (new-var x) ρ x) x))
     (define (fresh/full x ρ [orig-x x])
@@ -2858,14 +2851,7 @@
     [,x                                         (let ([ρx (lookup ρ x)])
                                                   (cond
                                                     [ρx
-                                                     (cond
-                                                       [(and (not (inside-module?))
-                                                             (top-binding-name? x))
-                                                        (values `(top ,#'here
-                                                                      ,(rename-env-variable x))
-                                                                ρ)]
-                                                       [else
-                                                        (values `,ρx ρ)])]
+                                                     (values `,ρx ρ)]
                                                     [else
                                                      (unless (variable? x)
                                                        (error 'here "got ~a" x))
@@ -2934,14 +2920,7 @@
                                                     (letv ((e2 ρ) (Expr e2  ρ))
                                                       (values
                                                        `(wcm ,s ,e0 ,e1 ,e2) ρ))))]
-    [(app ,s ,e0 ,e1 ...)                     (define e0*
-                                                (if (and (not (inside-module?))
-                                                         (or (variable? e0)
-                                                             (identifier? e0))
-                                                         (top-binding-name? e0))
-                                                    `(top ,s ,(rename-env-variable e0))
-                                                    e0))
-                                              (letv ((e0 ρ) (Expr e0* ρ))
+    [(app ,s ,e0 ,e1 ...)                     (letv ((e0 ρ) (Expr e0 ρ))
                                                 (letv ((e1 ρ) (Expr* e1 ρ))
                                                   (values `(app ,s ,e0 ,e1 ...) ρ)))]
     ; Until full namespace lookup is implemented, normalize known top refs
