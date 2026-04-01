@@ -47,7 +47,40 @@ Let's begin with the conventions for return value conversion.
 
 @section{Conversion of Return Values}
 
-TODO: Insert description of the @racket[value] conversion conventions.
+The @racket[value] return convention means "use the normal bridge
+conversion". This convention is also used for @racket[js-send].
+
+When a JavaScript result comes back into WebRacket, this will
+convert the JavaScript value to an ordinary WebRacket
+value when at all possible.
+
+The bridge recognizes these common JavaScript-to-WebRacket conversions:
+
+@tabular[
+ (list (list @bold{JavaScript value} @bold{WebRacket result})
+       (list @tt{number}      "Exact integers stay exact; non-integers become inexact numbers.")
+       (list @tt{string}      "Racket string.")
+       (list @tt{boolean}     "#t or #f")
+       (list @tt{array}       "Vector, with elements converted recursively.")
+       (list @tt{null}        "null")
+       (list @tt{undefined}   "void")
+       (list @tt{object}      "Usually becomes an @racket[external] value unless a more specific conversion is available."))]
+
+Exceptions to the generic @tt{object} fallback include JavaScript arrays,
+@tt{Uint8Array} values, wrapper objects that represent numbers, and the
+bridge's own tagged sentinels for characters and pairs. Those cases are
+decoded before the result reaches the final external-value fallback.
+
+The conversion is recursive, so cyclic data structures are not
+supported and can overflow the stack during encoding.
+
+If a value cannot be converted, the bridge raises an error.
+
+Use @racket[value] when the binding should behave like a regular
+WebRacket function. Use one of the @racket[extern]-based conventions
+when you need to keep the raw JavaScript object or when a result may be
+@racket[#f] or @racket[undefined] instead of a converted WebRacket
+value.
 
 
 
@@ -69,4 +102,6 @@ In this manual, entries present those tags with user-facing wording:
 ]
 
 @include-section["DOM.scrbl"]
+@include-section["ffi-audio.scrbl"]
+@include-section["ffi-console.scrbl"]
 @include-section["ffi-websocket.scrbl"]

@@ -24,6 +24,78 @@
      (define result (ffi-doc-result-contract dom-ffi-index name))
      (list name args result)))
 @(define dom-documented-bindings (map car dom-doc-specs))
+@(define audio-ffi-index (load-ffi-doc-index "ffi/audio.ffi"))
+@(define audio-ffi-docs (load-ffi-docs "ffi/audio.ffi"))
+@(define audio-doc-specs
+   (for/list ([fd (in-list audio-ffi-docs)])
+     (define name (foreign-racket-name (foreign-doc-foreign fd)))
+     (define arg-contracts (ffi-doc-argument-contracts audio-ffi-index name))
+     (define args
+       (for/list ([c (in-list arg-contracts)]
+                  [i (in-naturals 1)])
+         (list (string->symbol (format "arg~a" i)) c)))
+     (define result (ffi-doc-result-contract audio-ffi-index name))
+     (list name args result)))
+@(define audio-documented-bindings (map car audio-doc-specs))
+@(define (audio-desc name)
+   (or (ffi-doc-description audio-ffi-index name)
+       (ffi-doc-default-description audio-ffi-index name)))
+@(define (audio-sig name)
+   (ffi-doc-signature-line audio-ffi-index name "audio.ffi"))
+@(define (audio-return-line name)
+   (ffi-doc-return-note audio-ffi-index name))
+@(define (audio-mdn-link name)
+   (define path (ffi-doc-mdn-path/default audio-ffi-index name))
+   (mdn path (mdn-label path)))
+@(define (render-audio-defproc spec)
+   (define name   (list-ref spec 0))
+   (define args   (list-ref spec 1))
+   (define result (list-ref spec 2))
+   (eval
+    `(defproc* [[(,name ,@args) ,result]]
+       (para (audio-desc ',name))
+       (if (audio-return-line ',name)
+           (para (audio-return-line ',name))
+           (list))
+      (para (list (bold "MDN:") " " (audio-mdn-link ',name)))
+      (para (tt (audio-sig ',name))))
+    scribble-ns))
+@(define console-ffi-index (load-ffi-doc-index "ffi/console.ffi"))
+@(define console-ffi-docs (load-ffi-docs "ffi/console.ffi"))
+@(define console-doc-specs
+   (for/list ([fd (in-list console-ffi-docs)])
+     (define name (foreign-racket-name (foreign-doc-foreign fd)))
+     (define arg-contracts (ffi-doc-argument-contracts console-ffi-index name))
+     (define args
+       (for/list ([c (in-list arg-contracts)]
+                  [i (in-naturals 1)])
+         (list (string->symbol (format "arg~a" i)) c)))
+     (define result (ffi-doc-result-contract console-ffi-index name))
+     (list name args result)))
+@(define console-documented-bindings (map car console-doc-specs))
+@(define (console-desc name)
+   (or (ffi-doc-description console-ffi-index name)
+       (ffi-doc-default-description console-ffi-index name)))
+@(define (console-sig name)
+   (ffi-doc-signature-line console-ffi-index name "console.ffi"))
+@(define (console-return-line name)
+   (ffi-doc-return-note console-ffi-index name))
+@(define (console-mdn-link name)
+   (define path (ffi-doc-mdn-path/default console-ffi-index name))
+   (mdn path (mdn-label path)))
+@(define (render-console-defproc spec)
+   (define name   (list-ref spec 0))
+   (define args   (list-ref spec 1))
+   (define result (list-ref spec 2))
+   (eval
+    `(defproc* [[(,name ,@args) ,result]]
+       (para (console-desc ',name))
+       (if (console-return-line ',name)
+           (para (console-return-line ',name))
+           (list))
+       (para (list (bold "MDN:") " " (console-mdn-link ',name)))
+       (para (tt (console-sig ',name))))
+    scribble-ns))
 @(define (dom-desc name)
    (or (ffi-doc-description dom-ffi-index name)
        (ffi-doc-default-description dom-ffi-index name)))
@@ -64,9 +136,6 @@
 
 @include-section["Command-Line_Tool.scrbl"]
 
-
-@include-section["Browser_API.scrbl"]
-
 @;-------------------------------------------------------------------
 
 @section{Libraries}
@@ -87,6 +156,8 @@ Currently available libraries include:
   @item{@racket[(require-lib define)]}
   @item{@racket[(require-lib threading)]}
   @item{@racket[(include-lib web-easy)]}
+  @item{@racket[(include-lib audio)]}
+  @item{@racket[(include-lib console)]}
   @item{@racket[(include-lib websocket)]}
 ]
 
@@ -100,6 +171,14 @@ See their respective documentation pages.
 @;-------------------------------------------------------------------
 
 @include-section["threading.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-audio.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-console.scrbl"]
 
 @;-------------------------------------------------------------------
 
@@ -117,3 +196,5 @@ See their respective documentation pages.
 @include-section["implemented-primitives.scrbl"]
 
 @;-------------------------------------------------------------------
+
+@include-section["Browser_API.scrbl"]

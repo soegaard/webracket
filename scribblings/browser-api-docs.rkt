@@ -9,6 +9,10 @@
 
 (provide dom-doc-specs
          render-dom-defproc
+         audio-doc-specs
+         render-audio-defproc
+         console-doc-specs
+         render-console-defproc
          websocket-doc-specs
          render-websocket-defproc)
 
@@ -63,6 +67,60 @@
           (list))
       (para (list (bold "MDN:") " " (dom-mdn-link ',name)))
       (para (tt (dom-sig ',name))))
+   scribble-ns))
+
+(define-values (audio-ffi-index audio-ffi-docs audio-doc-specs)
+  (make-doc-specs "ffi/audio.ffi"))
+(define audio-documented-bindings (map car audio-doc-specs))
+(define (audio-desc name)
+  (or (ffi-doc-description audio-ffi-index name)
+      (ffi-doc-default-description audio-ffi-index name)))
+(define (audio-sig name)
+  (ffi-doc-signature-line audio-ffi-index name "audio.ffi"))
+(define (audio-return-line name)
+  (ffi-doc-return-note audio-ffi-index name))
+(define (audio-mdn-link name)
+  (define path (ffi-doc-mdn-path/default audio-ffi-index name))
+  (mdn path (mdn-label path)))
+(define (render-audio-defproc spec)
+  (define name   (list-ref spec 0))
+  (define args   (list-ref spec 1))
+  (define result (list-ref spec 2))
+  (eval
+   `(defproc* [[(,name ,@args) ,result]]
+      (para (audio-desc ',name))
+      (if (audio-return-line ',name)
+          (para (audio-return-line ',name))
+          (list))
+      (para (list (bold "MDN:") " " (audio-mdn-link ',name)))
+      (para (tt (audio-sig ',name))))
+   scribble-ns))
+
+(define-values (console-ffi-index console-ffi-docs console-doc-specs)
+  (make-doc-specs "ffi/console.ffi"))
+(define console-documented-bindings (map car console-doc-specs))
+(define (console-desc name)
+  (or (ffi-doc-description console-ffi-index name)
+      (ffi-doc-default-description console-ffi-index name)))
+(define (console-sig name)
+  (ffi-doc-signature-line console-ffi-index name "console.ffi"))
+(define (console-return-line name)
+  (ffi-doc-return-note console-ffi-index name))
+(define (console-mdn-link name)
+  (define path (ffi-doc-mdn-path/default console-ffi-index name))
+  (mdn path (mdn-label path)))
+(define (render-console-defproc spec)
+  (define name   (list-ref spec 0))
+  (define args   (list-ref spec 1))
+  (define result (list-ref spec 2))
+  (eval
+   `(defproc* [[(,name ,@args) ,result]]
+      (para (console-desc ',name))
+      (if (console-return-line ',name)
+          (para (console-return-line ',name))
+          (list))
+      (para (list (bold "MDN:") " " (console-mdn-link ',name)))
+      (para (tt (console-sig ',name))))
    scribble-ns))
 
 (define-values (websocket-ffi-index websocket-ffi-docs websocket-doc-specs)
