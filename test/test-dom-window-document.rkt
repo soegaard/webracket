@@ -8,12 +8,13 @@
 ;;   racket -l errortrace -t ../webracket.rkt -- --ffi ../ffi/standard.ffi --ffi ../ffi/dom.ffi -r test-dom-window-document.rkt
 
 (include-lib window)
+(include-lib performance)
 (include-lib document)
 (include-lib element)
 
 (define (check-equal got want label)
   (unless (equal? got want)
-    (error 'check-equal label)))
+    (error 'check-equal (format "~a: got ~s want ~s" label got want))))
 
 (define (check-true got label)
   (unless got
@@ -52,7 +53,10 @@
     host.appendChild(leaf);
     document.body.appendChild(host);
     window.__domTest.host = host;
-    window.__domTest.leaf = leaf;"))
+    window.__domTest.leaf = leaf;
+    performance.clearMarks('webracket-performance-start');
+    performance.clearMarks('webracket-performance-end');
+    performance.clearMeasures('webracket-performance-span');"))
 
 (define (dom-test-fixture name)
   (js-ref (js-var "__domTest") name))
@@ -71,7 +75,7 @@
          (check-true (external? opened) "window open result")
          (check-equal (js-ref opened "kind") "popup" "window open payload")
          (check-equal (window-set-timeout/delay (procedure->external (lambda () (set! timeout-fired (add1 timeout-fired))))
-                                                10)
+                                                10.0)
                       17
                       "window timeout handle")
          (check-equal timeout-fired 1 "window timeout callback")
@@ -79,6 +83,90 @@
          (check-true (expect-contract-error (lambda () (window-set-name! 1))) "window name validation")
          (check-true (expect-contract-error (lambda () (window-open 1))) "window open validation")
          (check-true (expect-contract-error (lambda () (window-confirm 1))) "window confirm validation")
+         #t))
+ (list "Performance wrappers"
+       (let ()
+         (install!)
+         (check-true (real? (performance-now)) "performance now")
+         (check-true (real? (performance-time-origin)) "performance time origin")
+         (check-true (real? (performance-interaction-count)) "performance interaction count")
+         (define event-counts (performance-event-counts))
+         (check-true (or (not event-counts)
+                         (performance-event-count-map? event-counts))
+                     "performance event counts")
+         (when event-counts
+           (check-true (external? (performance-event-count-map-raw event-counts))
+                       "performance event count raw")
+           (check-true (exact-nonnegative-integer? (performance-event-count-map-size event-counts))
+                       "performance event count size")
+           (check-true (boolean? (performance-event-count-map-has? event-counts "click"))
+                       "performance event count has")
+           (check-true (or (not (performance-event-count-map-get event-counts "click"))
+                           (exact-nonnegative-integer? (performance-event-count-map-get event-counts "click")))
+                       "performance event count get")
+           (check-true (external? (performance-event-count-map-entries event-counts))
+                       "performance event count entries"))
+         (check-true (or (not (performance-navigation))
+                         (external? (performance-navigation)))
+                     "performance navigation")
+         (check-true (or (not (performance-timing))
+                         (external? (performance-timing)))
+                     "performance timing")
+         (check-true (or (not (performance-memory))
+                         (external? (performance-memory)))
+                     "performance memory")
+         (performance-clear-marks "webracket-performance-start")
+         (performance-clear-marks "webracket-performance-end")
+         (performance-clear-measures "webracket-performance-span")
+         (performance-clear-resource-timings)
+         (performance-mark "webracket-performance-start")
+         (performance-mark "webracket-performance-end")
+         (performance-measure "webracket-performance-span"
+                              "webracket-performance-start"
+                              "webracket-performance-end")
+         (define marks
+           (performance-get-entries-by-name "webracket-performance-start"))
+         (define measures
+           (performance-get-entries-by-name "webracket-performance-span" "measure"))
+         (define mark-entries
+           (performance-get-entries-by-type "mark"))
+         (define performance-json
+           (performance-to-json))
+         (check-true (>= (js-ref marks "length") 1) "performance marks by name")
+         (check-true (>= (js-ref measures "length") 1) "performance measures by name")
+         (check-true (>= (js-ref mark-entries "length") 1) "performance entries by type")
+         (check-true (or (not performance-json)
+                         (external? performance-json))
+                     "performance to-json")
+         (check-true (procedure? performance-measure-user-agent-specific-memory)
+                     "performance memory estimator available")
+         (performance-set-resource-timing-buffer-size 256)
+         (check-true (expect-contract-error (lambda () (performance-clear-marks 1)))
+                     "performance clear marks validation")
+         (check-true (expect-contract-error (lambda () (performance-clear-measures 1)))
+                     "performance clear measures validation")
+         (check-true (expect-contract-error (lambda () (performance-get-entries-by-name 1)))
+                     "performance get entries by name validation")
+         (check-true (expect-contract-error (lambda () (performance-get-entries-by-type 1)))
+                     "performance get entries by type validation")
+         (check-true (expect-contract-error (lambda () (performance-event-count-map-size 1)))
+                     "performance event count map size validation")
+         (check-true (expect-contract-error (lambda () (performance-event-count-map-entries 1)))
+                     "performance event count map entries validation")
+         (check-true (expect-contract-error (lambda () (performance-event-count-map-get 1 "click")))
+                     "performance event count map get validation")
+         (check-true (expect-contract-error (lambda () (performance-event-count-map-get event-counts 1)))
+                     "performance event count map get type validation")
+         (check-true (expect-contract-error (lambda () (performance-event-count-map-has? 1 "click")))
+                     "performance event count map has validation")
+         (check-true (expect-contract-error (lambda () (performance-event-count-map-has? event-counts 1)))
+                     "performance event count map has type validation")
+         (check-true (expect-contract-error (lambda () (performance-mark 1)))
+                     "performance mark validation")
+         (check-true (expect-contract-error (lambda () (performance-measure 1)))
+                     "performance measure validation")
+         (check-true (expect-contract-error (lambda () (performance-set-resource-timing-buffer-size -1)))
+                     "performance buffer size validation")
          #t))
  (list "Document and element wrappers"
        (let ()

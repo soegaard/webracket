@@ -14,11 +14,138 @@
 ;; The various functions in this section are documented here:
 ;;   https://developer.mozilla.org/en-US/docs/Web/API/Performance
 
+;; Properties
+(define-foreign js-performance-event-counts
+  #:module "performance"
+  #:name   "event-counts"
+  #:doc    "Returns the EventCounts map for this performance object."
+  #:mdn    "Performance/eventCounts"
+  (-> () (extern/raw)))
+
+(define-foreign js-performance-interaction-count
+  #:module "performance"
+  #:name   "interaction-count"
+  #:doc    "Returns the interaction count for this page."
+  #:mdn    "Performance/interactionCount"
+  (-> () (f64)))
+
+(define-foreign js-performance-navigation
+  #:module "performance"
+  #:name   "navigation"
+  #:doc    "Returns the legacy PerformanceNavigation object."
+  #:mdn    "Performance/navigation"
+  (-> () (extern/raw)))
+
+(define-foreign js-performance-timing
+  #:module "performance"
+  #:name   "timing"
+  #:doc    "Returns the legacy PerformanceTiming object."
+  #:mdn    "Performance/timing"
+  (-> () (extern/raw)))
+
+(define-foreign js-performance-memory
+  #:module "performance"
+  #:name   "memory"
+  #:doc    "Returns the browser-specific memory info object."
+  #:mdn    "Performance/memory"
+  (-> () (extern/raw)))
+
+(define-foreign js-performance-time-origin
+  #:module "performance"
+  #:name   "time-origin"
+  #:doc    "Returns the high-resolution performance origin timestamp."
+  #:mdn    "Performance/timeOrigin"
+  (-> () (f64)))
+
 (define-foreign js-performance-now
   #:module "performance"
   #:name   "now"
   #:doc    "Returns a high-resolution timestamp in milliseconds."
   #:mdn    "Performance/now"
   (-> () (f64)))
+
+;; Methods
+(define-foreign js-performance-clear-marks
+  #:module "performance"
+  #:name   "clear-marks"
+  #:doc    "Clears performance marks, optionally filtered by name."
+  #:mdn    "Performance/clearMarks"
+  ;; Pass `(void)` for the optional name argument when omitted.
+  (-> (value) ()))
+
+(define-foreign js-performance-clear-measures
+  #:module "performance"
+  #:name   "clear-measures"
+  #:doc    "Clears performance measures, optionally filtered by name."
+  #:mdn    "Performance/clearMeasures"
+  ;; Pass `(void)` for the optional name argument when omitted.
+  (-> (value) ()))
+
+(define-foreign js-performance-clear-resource-timings
+  #:module "performance"
+  #:name   "clear-resource-timings"
+  #:doc    "Clears resource timing entries."
+  #:mdn    "Performance/clearResourceTimings"
+  (-> () ()))
+
+(define-foreign js-performance-get-entries
+  #:module "performance"
+  #:name   "get-entries"
+  #:doc    "Returns the current performance entries."
+  #:mdn    "Performance/getEntries"
+  (-> () (extern/raw)))
+
+(define-foreign js-performance-get-entries-by-name
+  #:module "performance"
+  #:name   "get-entries-by-name"
+  #:doc    "Returns performance entries filtered by name and optional type."
+  #:mdn    "Performance/getEntriesByName"
+  ;; Pass `(void)` for the optional type argument when omitted.
+  (-> (string value) (extern/raw)))
+
+(define-foreign js-performance-get-entries-by-type
+  #:module "performance"
+  #:name   "get-entries-by-type"
+  #:doc    "Returns performance entries filtered by type."
+  #:mdn    "Performance/getEntriesByType"
+  (-> (string) (extern/raw)))
+
+(define-foreign js-performance-mark
+  #:module "performance"
+  #:name   "mark"
+  #:doc    "Creates a performance mark and returns the resulting entry."
+  #:mdn    "Performance/mark"
+  ;; Pass `(void)` for the optional options argument when omitted.
+  (-> (string value) (extern/raw)))
+
+(define-foreign js-performance-measure
+  #:module "performance"
+  #:name   "measure"
+  #:doc    "Creates a performance measure and returns the resulting entry."
+  #:mdn    "Performance/measure"
+  ;; Pass `(void)` for optional arguments when omitted.
+  (-> (string value value) (extern/raw)))
+
+(define-foreign js-performance-measure-user-agent-specific-memory
+  #:module "performance"
+  #:name   "measure-user-agent-specific-memory"
+  #:doc    "Estimates user-agent-specific memory usage."
+  #:mdn    "Performance/measureUserAgentSpecificMemory"
+  ;; Experimental API. May be unavailable in some browsers.
+  (-> () (extern/raw)))
+
+(define-foreign js-performance-set-resource-timing-buffer-size
+  #:module "performance"
+  #:name   "set-resource-timing-buffer-size"
+  #:doc    "Sets the resource timing buffer size."
+  #:mdn    "Performance/setResourceTimingBufferSize"
+  (-> (u32) ()))
+
+(define-foreign js-performance-to-json
+  #:module "performance"
+  #:name   "to-json"
+  #:doc    "Returns a JSON representation of the Performance object."
+  #:mdn    "Performance/toJSON"
+  (-> () (extern/raw)))
 
 ;;;
