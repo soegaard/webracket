@@ -4,9 +4,9 @@
 ;;; Window wrappers
 ;;;
 
-;; i32->boolean : integer? -> boolean?
+;; window-i32->boolean : integer? -> boolean?
 ;;   Convert a browser i32 flag to a boolean.
-(define (i32->boolean v)
+(define (window-i32->boolean v)
   (not (zero? v)))
 
 ;; window : -> external/raw
@@ -65,7 +65,7 @@
 (define (window-confirm message)
   (unless (string? message)
     (raise-argument-error 'window-confirm "string?" message))
-  (i32->boolean (js-window-confirm message)))
+  (window-i32->boolean (js-window-confirm message)))
 
 ;; window-prompt : string? [any/c] -> any/c
 ;;   Show a prompt dialog.

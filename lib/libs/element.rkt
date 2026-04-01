@@ -4,9 +4,9 @@
 ;;; Element wrappers
 ;;;
 
-;; i32->boolean : integer? -> boolean?
+;; element-i32->boolean : integer? -> boolean?
 ;;   Convert a browser i32 flag to a boolean.
-(define (i32->boolean v)
+(define (element-i32->boolean v)
   (not (zero? v)))
 
 ;; append-child! : external? external? -> void?
@@ -108,4 +108,4 @@
 ;; toggle-attribute! : external? string? [any/c] -> boolean?
 ;;   Toggle an attribute and report whether it is now present.
 (define (toggle-attribute! element name [force #f])
-  (i32->boolean (js-toggle-attribute! element name (if force 1 0))))
+  (element-i32->boolean (js-toggle-attribute! element name (if force 1 0))))

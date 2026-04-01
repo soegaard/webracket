@@ -4,9 +4,9 @@
 ;;; Canvas wrappers
 ;;;
 
-;; i32->boolean : integer? -> boolean?
+;; canvas-i32->boolean : integer? -> boolean?
 ;;   Convert a browser i32 flag to a boolean.
-(define (i32->boolean v)
+(define (canvas-i32->boolean v)
   (not (zero? v)))
 
 ;; canvas-capture-stream : external? -> external/raw

@@ -4,9 +4,9 @@
 ;;; Image wrappers
 ;;;
 
-;; i32->boolean : integer? -> boolean?
+;; image-i32->boolean : integer? -> boolean?
 ;;   Convert a browser i32 flag to a boolean.
-(define (i32->boolean v)
+(define (image-i32->boolean v)
   (not (zero? v)))
 
 ;; image-new : [any/c] [any/c] -> external/raw
@@ -88,7 +88,7 @@
 ;; image-complete? : external? -> boolean?
 ;;   Report whether loading completed.
 (define (image-complete? img)
-  (i32->boolean (js-image-complete img)))
+  (image-i32->boolean (js-image-complete img)))
 
 ;; image-cross-origin : external? -> any/c
 ;;   Read the CORS mode.

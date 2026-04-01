@@ -4,9 +4,9 @@
 ;;; Media wrappers
 ;;;
 
-;; i32->boolean : integer? -> boolean?
+;; media-i32->boolean : integer? -> boolean?
 ;;   Convert a browser i32 flag to a boolean.
-(define (i32->boolean v)
+(define (media-i32->boolean v)
   (not (zero? v)))
 
 ;; media-current-time : external? -> real?
@@ -34,7 +34,7 @@
 ;; media-muted : external? -> boolean?
 ;;   Read the muted flag.
 (define (media-muted media)
-  (i32->boolean (js-media-muted media)))
+  (media-i32->boolean (js-media-muted media)))
 
 ;; media-set-muted! : external? any/c -> void?
 ;;   Set the muted flag.
@@ -45,7 +45,7 @@
 ;; media-default-muted : external? -> boolean?
 ;;   Read the default-muted flag.
 (define (media-default-muted media)
-  (i32->boolean (js-media-default-muted media)))
+  (media-i32->boolean (js-media-default-muted media)))
 
 ;; media-set-default-muted! : external? any/c -> void?
 ;;   Set the default-muted flag.
@@ -78,7 +78,7 @@
 ;; media-controls? : external? -> boolean?
 ;;   Read the controls flag.
 (define (media-controls? media)
-  (i32->boolean (js-media-controls media)))
+  (media-i32->boolean (js-media-controls media)))
 
 ;; media-set-controls! : external? any/c -> void?
 ;;   Set the controls flag.
@@ -89,7 +89,7 @@
 ;; media-loop? : external? -> boolean?
 ;;   Read the loop flag.
 (define (media-loop? media)
-  (i32->boolean (js-media-loop media)))
+  (media-i32->boolean (js-media-loop media)))
 
 ;; media-set-loop! : external? any/c -> void?
 ;;   Set the loop flag.
