@@ -46,8 +46,11 @@
   performance-event-count-map-raw
   performance-event-count-map-size
   performance-event-count-map-entries
+  performance-event-count-map-keys
+  performance-event-count-map-values
   performance-event-count-map-get
   performance-event-count-map-has?
+  performance-event-count-map-for-each
   performance-event-counts
   performance-interaction-count
   performance-navigation
@@ -260,8 +263,11 @@
 (define performance-event-count-map-raw any/c)
 (define performance-event-count-map-size any/c)
 (define performance-event-count-map-entries any/c)
+(define performance-event-count-map-keys any/c)
+(define performance-event-count-map-values any/c)
 (define performance-event-count-map-get any/c)
 (define performance-event-count-map-has? any/c)
+(define performance-event-count-map-for-each any/c)
 (define performance-event-counts any/c)
 (define performance-interaction-count any/c)
 (define performance-navigation any/c)

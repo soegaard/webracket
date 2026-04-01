@@ -167,6 +167,20 @@ Returns the number of recorded event types.
 Returns the browser iterator of event-count entries.
 }
 
+@defproc[(performance-event-count-map-keys [counts performance-event-count-map?])
+         external/raw]{
+@(mdn-bar "EventCounts: keys() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/EventCounts/keys")
+Returns the browser iterator of event-count event types.
+}
+
+@defproc[(performance-event-count-map-values [counts performance-event-count-map?])
+         external/raw]{
+@(mdn-bar "EventCounts: values() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/EventCounts/values")
+Returns the browser iterator of event-count values.
+}
+
 @defproc[(performance-event-count-map-get [counts performance-event-count-map?]
                                           [event-type string?])
          (or/c #f exact-nonnegative-integer?)]{
@@ -183,6 +197,17 @@ browser does not expose a value for that type.
           "https://developer.mozilla.org/en-US/docs/Web/API/EventCounts/has")
 Returns @racket[#t] when the browser exposes a count for the named
 event type.
+}
+
+@defproc[(performance-event-count-map-for-each [counts performance-event-count-map?]
+                                               [proc (or/c procedure? external?)])
+         void?]{
+@(mdn-bar "EventCounts: forEach() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/EventCounts/forEach")
+Calls @racket[proc] for each event-count entry in the browser map.
+The callback receives the count first, the event type second, and the
+EventCounts map itself third, just like the underlying JavaScript
+map-style API.
 }
 
 @section{Performance Methods}

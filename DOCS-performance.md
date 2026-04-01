@@ -21,6 +21,9 @@ Assumption in examples: the program is compiled with `--ffi dom`.
   - `performance-event-count-map-get` and
     `performance-event-count-map-has?` let you inspect individual event
     types
+  - `performance-event-count-map-keys`, `performance-event-count-map-values`,
+    and `performance-event-count-map-for-each` expose the rest of the
+    map-style iteration API
 - `performance-clear-marks`, `performance-clear-measures`, and
   `performance-clear-resource-timings` clear browser buffers
 - `performance-get-entries`, `performance-get-entries-by-name`, and
