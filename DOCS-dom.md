@@ -1,8 +1,10 @@
-# Reference: `dom.ffi` 
+# Reference: `dom.ffi`
 
 ## Chapter 1 — Introduction
 
 This document describes the browser DOM FFI exported by `ffi/dom.ffi` in WebRacket.
+The recommended Rackety entry point is `include-lib dom`, which reexports the
+family wrappers for the DOM surface.
 
 What this API gives you:
 - Window/document access and DOM tree operations
