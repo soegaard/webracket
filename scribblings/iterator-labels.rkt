@@ -5,7 +5,7 @@
 ;; Docs-only fake bindings for the Iterator Scribble page.
 
 (provide
-  iterator
+  Iterator
   iterator-prototype
   iterator-prototype-constructor
   iterator-prototype-to-string-tag
@@ -31,7 +31,9 @@
   js-Iterator
   (for-label (all-defined-out)))
 
-(define iterator any/c)
+(struct iterator (raw) #:transparent #:constructor-name make-iterator)
+
+(define Iterator any/c)
 (define iterator-prototype any/c)
 (define iterator-prototype-constructor any/c)
 (define iterator-prototype-to-string-tag any/c)

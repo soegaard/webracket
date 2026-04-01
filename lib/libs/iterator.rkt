@@ -4,9 +4,16 @@
 ;;; Iterator wrappers
 ;;;
 
-;; iterator-callback-cache : hash?
-;;   Cache JS callback wrappers so the same procedure maps to the same external.
-(define iterator-callback-cache (make-hasheq))
+;; iterator : external/raw -> iterator?
+;;   Wrap a browser Iterator object in a checked structure.
+(struct iterator (raw) #:transparent #:constructor-name make-iterator)
+
+;; iterator-unwrap : any/c -> any/c
+;;   Unwrap an iterator struct to its raw browser object.
+(define (iterator-unwrap value)
+  (if (iterator? value)
+      (iterator-raw value)
+      value))
 
 ;; iterator-prefix : (listof any/c) exact-nonnegative-integer? -> (listof any/c)
 ;;   Keep the first n values from a list.
@@ -24,8 +31,8 @@
      (js-send/value callback "call"
                     (apply vector (if (void? this-arg)
                                       (list (js-undefined))
-                                      (list this-arg))
-                           values))]
+                                      (list (iterator-unwrap this-arg)))
+                           (map iterator-unwrap values)))]
     [else
      (let loop ([n (length values)])
        (cond
@@ -34,28 +41,13 @@
           (apply callback (iterator-prefix values n))]
          [else (loop (sub1 n))]))]))
 
-;; iterator-callback->external : (or/c procedure? external?) -> external?
-;;   Normalize a Racket callback or raw JS callback into an external function.
-(define (iterator-callback->external callback)
-  (cond
-    [(external? callback) callback]
-    [else
-     (define cached (hash-ref iterator-callback-cache callback #f))
-     (cond
-       [cached cached]
-       [else
-        (define external
-          (procedure->external (lambda args (iterator-call/callback callback args))))
-        (hash-set! iterator-callback-cache callback external)
-        external])]))
-
 ;; iterator-result : any/c boolean? -> external/raw
 ;;   Build a JS iterator result record.
 (define (iterator-result value done?)
   (js-object (vector (vector "value" value)
                      (vector "done" done?))))
 
-;; iterator-collect-list : external/raw -> (listof any/c)
+;; iterator-collect-list : iterator? -> (listof any/c)
 ;;   Consume an iterator into a Racket list.
 (define (iterator-collect-list iter)
   (let loop ([acc '()])
@@ -80,7 +72,7 @@
     [(pair? entry) (cadr entry)]
     [else (error 'iterator-zip-keyed "expected entry pair, got: ~s" entry)]))
 
-;; iterator-make : (-> external/raw) [-> external/raw] -> external/raw
+;; iterator-make : (-> external/raw) [-> external/raw] -> iterator?
 ;;   Build a lightweight JS iterator object from Racket closures.
 (define (iterator-make next-proc [return-proc #f])
   (define fields
@@ -88,17 +80,17 @@
         (vector (vector "next" (procedure->external next-proc))
                 (vector "return" (procedure->external return-proc)))
         (vector (vector "next" (procedure->external next-proc)))))
-  (js-object fields))
+  (make-iterator (js-object fields)))
 
-;; iterator : -> external/raw
+;; Iterator : -> external/raw
 ;;   Read the JavaScript Iterator global constructor.
-(define (iterator)
+(define (Iterator)
   (js-Iterator))
 
 ;; iterator-prototype : -> external/raw
 ;;   Read Iterator.prototype.
 (define (iterator-prototype)
-  (js-ref/extern (iterator) "prototype"))
+  (js-ref/extern (Iterator) "prototype"))
 
 ;; iterator-prototype-constructor : -> external/raw
 ;;   Read the constructor stored on Iterator.prototype.
@@ -110,12 +102,12 @@
 (define (iterator-prototype-to-string-tag)
   "Iterator")
 
-;; iterator-from : any/c -> external/raw
+;; iterator-from : any/c -> iterator?
 ;;   Convert an iterator or iterable into a standard Iterator object.
 (define (iterator-from object)
-  (js-send (iterator) "from" (vector object)))
+  (make-iterator (js-send (Iterator) "from" (vector (iterator-unwrap object)))))
 
-;; iterator-concat : any/c ... -> external/raw
+;; iterator-concat : any/c ... -> iterator?
 ;;   Concatenate multiple iterables into one Iterator.
 (define (iterator-concat . iterables)
   (define sources (map iterator-from iterables))
@@ -138,7 +130,7 @@
                 (loop))
               (iterator-result (js-ref step "value") #f))])))))
 
-;; iterator-zip : any/c [any/c] -> external/raw
+;; iterator-zip : any/c [any/c] -> iterator?
 ;;   Zip a collection of iterables into a new Iterator.
 (define (iterator-zip iterables [options (void)])
   (define sources
@@ -162,7 +154,7 @@
                                                  steps)))
              #f))]))))
 
-;; iterator-zip-keyed : any/c [any/c] -> external/raw
+;; iterator-zip-keyed : any/c [any/c] -> iterator?
 ;;   Zip a keyed collection of iterables into a new Iterator.
 (define (iterator-zip-keyed iterables [options (void)])
   (define entries
@@ -194,39 +186,43 @@
                               steps)))
              #f))]))))
 
-;; iterator-next : external/raw -> external/raw
+;; iterator-next : iterator? -> external/raw
 ;;   Pull the next iteration result from an Iterator object.
 (define (iterator-next iter)
-  (js-send iter "next" (vector)))
+  (unless (iterator? iter)
+    (raise-argument-error 'iterator-next "iterator?" iter))
+  (js-send (iterator-raw iter) "next" (vector)))
 
-;; iterator-return : external/raw [any/c] -> external/raw
+;; iterator-return : iterator? [any/c] -> external/raw
 ;;   Ask an Iterator to finish early and return a final result.
 (define (iterator-return iter [value (void)])
+  (unless (iterator? iter)
+    (raise-argument-error 'iterator-return "iterator?" iter))
   (with-handlers ([exn:fail? (lambda (_)
                                (iterator-result value #t))])
-    (js-send/extern iter "return" (vector value))))
+    (js-send/extern (iterator-raw iter) "return" (vector value))))
 
-;; iterator-dispose! : external/raw -> void?
+;; iterator-dispose! : iterator? -> void?
 ;;   Dispose an Iterator by calling return() when available.
 (define (iterator-dispose! iter)
-  (unless (external? iter)
-    (raise-argument-error 'iterator-dispose! "external?" iter))
+  (unless (iterator? iter)
+    (raise-argument-error 'iterator-dispose! "iterator?" iter))
   (with-handlers ([exn:fail? (lambda (_) (void))])
-    (js-send/value iter "return" (vector)))
+    (js-send/value (iterator-raw iter) "return" (vector)))
   (void))
 
-;; iterator-symbol-iterator : external/raw -> external/raw
+;; iterator-symbol-iterator : iterator? -> iterator?
 ;;   Return the iterator itself, matching [Symbol.iterator].
 (define (iterator-symbol-iterator iter)
-  (unless (external? iter)
-    (raise-argument-error 'iterator-symbol-iterator "external?" iter))
+  (unless (iterator? iter)
+    (raise-argument-error 'iterator-symbol-iterator "iterator?" iter))
   iter)
 
-;; iterator-drop : external/raw exact-nonnegative-integer? -> external/raw
+;; iterator-drop : iterator? exact-nonnegative-integer? -> iterator?
 ;;   Skip a prefix of values from an Iterator.
 (define (iterator-drop iter count)
-  (unless (external? iter)
-    (raise-argument-error 'iterator-drop "external?" iter))
+  (unless (iterator? iter)
+    (raise-argument-error 'iterator-drop "iterator?" iter))
   (unless (exact-nonnegative-integer? count)
     (raise-argument-error 'iterator-drop "exact-nonnegative-integer?" count))
   (define source (iterator-from iter))
@@ -248,11 +244,11 @@
               (iterator-result (js-undefined) #t)
               (iterator-result (js-ref step "value") #f))])))))
 
-;; iterator-every : external/raw (or/c procedure? external?) [any/c] -> boolean?
+;; iterator-every : iterator? (or/c procedure? external?) [any/c] -> boolean?
 ;;   Check whether every iterated value satisfies a predicate.
 (define (iterator-every iter callback [this-arg (void)])
-  (unless (external? iter)
-    (raise-argument-error 'iterator-every "external?" iter))
+  (unless (iterator? iter)
+    (raise-argument-error 'iterator-every "iterator?" iter))
   (define source (iterator-from iter))
   (let loop ([index 0])
     (define step (iterator-next source))
@@ -265,11 +261,11 @@
                                      this-arg)
              (loop (add1 index))))))
 
-;; iterator-filter : external/raw (or/c procedure? external?) [any/c] -> external/raw
+;; iterator-filter : iterator? (or/c procedure? external?) [any/c] -> iterator?
 ;;   Keep only the values accepted by a predicate.
 (define (iterator-filter iter callback [this-arg (void)])
-  (unless (external? iter)
-    (raise-argument-error 'iterator-filter "external?" iter))
+  (unless (iterator? iter)
+    (raise-argument-error 'iterator-filter "iterator?" iter))
   (define source (iterator-from iter))
   (iterator-make
    (lambda ()
@@ -285,11 +281,11 @@
           (iterator-result (js-ref step "value") #f)]
          [else (loop (add1 index))])))))
 
-;; iterator-find : external/raw (or/c procedure? external?) [any/c] -> any/c
+;; iterator-find : iterator? (or/c procedure? external?) [any/c] -> any/c
 ;;   Return the first value accepted by a predicate.
 (define (iterator-find iter callback [this-arg (void)])
-  (unless (external? iter)
-    (raise-argument-error 'iterator-find "external?" iter))
+  (unless (iterator? iter)
+    (raise-argument-error 'iterator-find "iterator?" iter))
   (define source (iterator-from iter))
   (let loop ([index 0])
     (define step (iterator-next source))
@@ -303,11 +299,11 @@
        (js-ref step "value")]
       [else (loop (add1 index))])))
 
-;; iterator-flat-map : external/raw (or/c procedure? external?) [any/c] -> external/raw
+;; iterator-flat-map : iterator? (or/c procedure? external?) [any/c] -> iterator?
 ;;   Map each value to an iterable and flatten the results one level.
 (define (iterator-flat-map iter callback [this-arg (void)])
-  (unless (external? iter)
-    (raise-argument-error 'iterator-flat-map "external?" iter))
+  (unless (iterator? iter)
+    (raise-argument-error 'iterator-flat-map "iterator?" iter))
   (define source (iterator-from iter))
   (define inner #f)
   (iterator-make
@@ -335,11 +331,11 @@
              (set! inner (iterator-from mapped))
              (loop (add1 index))])])))))
 
-;; iterator-for-each : external/raw (or/c procedure? external?) [any/c] -> void?
+;; iterator-for-each : iterator? (or/c procedure? external?) [any/c] -> void?
 ;;   Visit each value in an Iterator for side effects.
 (define (iterator-for-each iter callback [this-arg (void)])
-  (unless (external? iter)
-    (raise-argument-error 'iterator-for-each "external?" iter))
+  (unless (iterator? iter)
+    (raise-argument-error 'iterator-for-each "iterator?" iter))
   (define source (iterator-from iter))
   (let loop ([index 0])
     (define step (iterator-next source))
@@ -352,11 +348,11 @@
       (loop (add1 index))))
   (void))
 
-;; iterator-map : external/raw (or/c procedure? external?) [any/c] -> external/raw
+;; iterator-map : iterator? (or/c procedure? external?) [any/c] -> iterator?
 ;;   Transform each iterated value.
 (define (iterator-map iter callback [this-arg (void)])
-  (unless (external? iter)
-    (raise-argument-error 'iterator-map "external?" iter))
+  (unless (iterator? iter)
+    (raise-argument-error 'iterator-map "iterator?" iter))
   (define source (iterator-from iter))
   (define index 0)
   (iterator-make
@@ -372,11 +368,11 @@
            (set! index (add1 index))
            (iterator-result mapped #f)))))))
 
-;; iterator-reduce : external/raw (or/c procedure? external?) [any/c] -> any/c
+;; iterator-reduce : iterator? (or/c procedure? external?) [any/c] -> any/c
 ;;   Collapse an Iterator to a single value.
 (define (iterator-reduce iter callback [initial-value (void)])
-  (unless (external? iter)
-    (raise-argument-error 'iterator-reduce "external?" iter))
+  (unless (iterator? iter)
+    (raise-argument-error 'iterator-reduce "iterator?" iter))
   (define source (iterator-from iter))
   (define started? (not (void? initial-value)))
   (define acc initial-value)
@@ -403,11 +399,11 @@
        (set! index (add1 index))
        (loop)])))
 
-;; iterator-some : external/raw (or/c procedure? external?) [any/c] -> boolean?
+;; iterator-some : iterator? (or/c procedure? external?) [any/c] -> boolean?
 ;;   Check whether any iterated value satisfies a predicate.
 (define (iterator-some iter callback [this-arg (void)])
-  (unless (external? iter)
-    (raise-argument-error 'iterator-some "external?" iter))
+  (unless (iterator? iter)
+    (raise-argument-error 'iterator-some "iterator?" iter))
   (define source (iterator-from iter))
   (let loop ([index 0])
     (define step (iterator-next source))
@@ -421,11 +417,11 @@
        #t]
       [else (loop (add1 index))])))
 
-;; iterator-take : external/raw exact-nonnegative-integer? -> external/raw
+;; iterator-take : iterator? exact-nonnegative-integer? -> iterator?
 ;;   Keep only the first count values from an Iterator.
 (define (iterator-take iter count)
-  (unless (external? iter)
-    (raise-argument-error 'iterator-take "external?" iter))
+  (unless (iterator? iter)
+    (raise-argument-error 'iterator-take "iterator?" iter))
   (unless (exact-nonnegative-integer? count)
     (raise-argument-error 'iterator-take "exact-nonnegative-integer?" count))
   (define source (iterator-from iter))
@@ -443,11 +439,11 @@
               (set! taken (add1 taken))
               (iterator-result (js-ref step "value") #f)))]))))
 
-;; iterator-to-array : external/raw -> value
+;; iterator-to-array : iterator? -> value
 ;;   Collect an Iterator into a WebRacket vector.
 (define (iterator-to-array iter)
-  (unless (external? iter)
-    (raise-argument-error 'iterator-to-array "external?" iter))
+  (unless (iterator? iter)
+    (raise-argument-error 'iterator-to-array "iterator?" iter))
   (list->vector
    (let loop ([acc '()] [source (iterator-from iter)])
      (define step (iterator-next source))

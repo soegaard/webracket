@@ -1,6 +1,7 @@
 #lang scribble/manual
 
 @(require scribble/manual
+          (for-label (only-in racket/base struct))
           "webracket-scribble-utils.rkt"
           (for-label (lib "scribblings/iterator-labels.rkt" "webracket")))
 
@@ -18,10 +19,27 @@ Use this library when you want to work with the JavaScript iterator helper
 family from WebRacket code. The library covers the constructor, the helper
 prototype, the static helpers, and the common iterator-transform methods.
 
+@section{Iterator Values}
+
+The wrapper keeps raw browser iterator objects tucked away in a single
+@racket[iterator] struct. That gives the library room to grow with checked
+helpers while still letting you recover the underlying browser object when you
+explicitly need it.
+
+@defstruct[iterator ([raw external/raw])]{
+Wraps a browser @tt{Iterator} object in the checked struct used by the
+library.
+}
+
+@defproc[(iterator-raw [iter iterator?]) external/raw]{
+Returns the wrapped browser Iterator object stored inside @racket[iter].
+}
+
 @section{Iterator Quick Start}
 
 Start by including the library, turning a JavaScript iterable into an
-@tt{Iterator}, and asking it for its first step.
+@tt{Iterator}, and asking it for its first step. The resulting value is an
+@racket[iterator] struct, not a raw browser object.
 
 @racketblock[
 (code:comment "Include the checked Iterator wrapper library.")
@@ -77,7 +95,7 @@ After this code runs, @racket[result] is @racket[#(2 4 6)].
 
 @section{Static Helpers}
 
-@defproc[(iterator) external/raw]{
+@defproc[(Iterator) external/raw]{
 @(mdn-bar "Iterator" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator")
 Returns the JavaScript @tt{Iterator} constructor/global object.
 }
@@ -97,25 +115,25 @@ Returns the constructor stored on @tt{Iterator.prototype}.
 Returns the default @tt{Symbol.toStringTag} value for @tt{Iterator.prototype}.
 }
 
-@defproc[(iterator-from [object any/c]) external/raw]{
+@defproc[(iterator-from [object any/c]) iterator?]{
 @(mdn-bar "Iterator.from()" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/from")
-Returns a JavaScript iterator produced from @racket[object]. The value may be
-an iterator or an iterable.
+Returns a wrapped JavaScript iterator produced from @racket[object]. The value
+may be an iterator or an iterable.
 }
 
-@defproc[(iterator-concat [iterable any/c] ...) external/raw]{
+@defproc[(iterator-concat [iterable any/c] ...) iterator?]{
 @(mdn-bar "Iterator.concat()" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/concat")
 Concatenates several iterables into a single iterator.
 }
 
-@defproc[(iterator-zip [iterables any/c] [options any/c (void)]) external/raw]{
+@defproc[(iterator-zip [iterables any/c] [options any/c (void)]) iterator?]{
 @(mdn-bar "Iterator.zip()" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/zip")
 Zips a collection of iterables into a new iterator. The optional @racket[options]
 argument is accepted for compatibility, and the wrapper follows the default
 shortest-zip behavior.
 }
 
-@defproc[(iterator-zip-keyed [iterables any/c] [options any/c (void)]) external/raw]{
+@defproc[(iterator-zip-keyed [iterables any/c] [options any/c (void)]) iterator?]{
 @(mdn-bar "Iterator.zipKeyed()" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/zipKeyed")
 Zips a keyed collection of iterables into a new iterator. The optional
 @racket[options] argument is accepted for compatibility, and the wrapper
@@ -124,67 +142,67 @@ follows the default shortest-zip behavior.
 
 @section{Instance Methods}
 
-@defproc[(iterator-next [iter external/raw]) external/raw]{
+@defproc[(iterator-next [iter iterator?]) external/raw]{
 @(mdn-bar "Iterator.prototype.next()" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/next")
 Returns the next iteration result from @racket[iter].
 }
 
-@defproc[(iterator-return [iter external/raw] [value any/c (void)]) external/raw]{
+@defproc[(iterator-return [iter iterator?] [value any/c (void)]) external/raw]{
 @(mdn-bar "Iterator.prototype.return()" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator")
 Asks @racket[iter] to finish early and returns the resulting iteration record.
 }
 
-@defproc[(iterator-drop [iter external/raw] [count exact-nonnegative-integer?]) external/raw]{
+@defproc[(iterator-drop [iter iterator?] [count exact-nonnegative-integer?]) iterator?]{
 @(mdn-bar "Iterator.prototype.drop()" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/drop")
 Skips the first @racket[count] values from @racket[iter].
 }
 
-@defproc[(iterator-every [iter external/raw] [callback (or/c procedure? external?)] [this-arg any/c (void)]) boolean?]{
+@defproc[(iterator-every [iter iterator?] [callback (or/c procedure? external?)] [this-arg any/c (void)]) boolean?]{
 @(mdn-bar "Iterator.prototype.every()" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/every")
 Checks whether every yielded value satisfies @racket[callback].
 }
 
-@defproc[(iterator-filter [iter external/raw] [callback (or/c procedure? external?)] [this-arg any/c (void)]) external/raw]{
+@defproc[(iterator-filter [iter iterator?] [callback (or/c procedure? external?)] [this-arg any/c (void)]) iterator?]{
 @(mdn-bar "Iterator.prototype.filter()" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/filter")
 Keeps only the values accepted by @racket[callback].
 }
 
-@defproc[(iterator-find [iter external/raw] [callback (or/c procedure? external?)] [this-arg any/c (void)]) any/c]{
+@defproc[(iterator-find [iter iterator?] [callback (or/c procedure? external?)] [this-arg any/c (void)]) any/c]{
 @(mdn-bar "Iterator.prototype.find()" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/find")
 Returns the first yielded value accepted by @racket[callback].
 }
 
-@defproc[(iterator-flat-map [iter external/raw] [callback (or/c procedure? external?)] [this-arg any/c (void)]) external/raw]{
+@defproc[(iterator-flat-map [iter iterator?] [callback (or/c procedure? external?)] [this-arg any/c (void)]) iterator?]{
 @(mdn-bar "Iterator.prototype.flatMap()" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/flatMap")
 Maps each yielded value to an iterable and flattens the results one level.
 }
 
-@defproc[(iterator-for-each [iter external/raw] [callback (or/c procedure? external?)] [this-arg any/c (void)]) void?]{
+@defproc[(iterator-for-each [iter iterator?] [callback (or/c procedure? external?)] [this-arg any/c (void)]) void?]{
 @(mdn-bar "Iterator.prototype.forEach()" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/forEach")
 Calls @racket[callback] for every yielded value and discards the result.
 }
 
-@defproc[(iterator-map [iter external/raw] [callback (or/c procedure? external?)] [this-arg any/c (void)]) external/raw]{
+@defproc[(iterator-map [iter iterator?] [callback (or/c procedure? external?)] [this-arg any/c (void)]) iterator?]{
 @(mdn-bar "Iterator.prototype.map()" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/map")
 Transforms each yielded value.
 }
 
-@defproc[(iterator-reduce [iter external/raw] [callback (or/c procedure? external?)] [initial-value any/c (void)]) any/c]{
+@defproc[(iterator-reduce [iter iterator?] [callback (or/c procedure? external?)] [initial-value any/c (void)]) any/c]{
 @(mdn-bar "Iterator.prototype.reduce()" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/reduce")
 Combines the iterator's values into a single result.
 }
 
-@defproc[(iterator-some [iter external/raw] [callback (or/c procedure? external?)] [this-arg any/c (void)]) boolean?]{
+@defproc[(iterator-some [iter iterator?] [callback (or/c procedure? external?)] [this-arg any/c (void)]) boolean?]{
 @(mdn-bar "Iterator.prototype.some()" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/some")
 Checks whether any yielded value satisfies @racket[callback].
 }
 
-@defproc[(iterator-take [iter external/raw] [count exact-nonnegative-integer?]) external/raw]{
+@defproc[(iterator-take [iter iterator?] [count exact-nonnegative-integer?]) iterator?]{
 @(mdn-bar "Iterator.prototype.take()" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/take")
 Keeps only the first @racket[count] values from @racket[iter].
 }
 
-@defproc[(iterator-to-array [iter external/raw]) any/c]{
+@defproc[(iterator-to-array [iter iterator?]) any/c]{
 @(mdn-bar "Iterator.prototype.toArray()" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/toArray")
 Collects the yielded values into a JavaScript array and converts the result to a
 WebRacket value.
@@ -192,12 +210,12 @@ WebRacket value.
 
 @section{Protocol Helpers}
 
-@defproc[(iterator-symbol-iterator [iter external/raw]) external/raw]{
+@defproc[(iterator-symbol-iterator [iter iterator?]) iterator?]{
 @(mdn-bar "Iterator" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator")
 Returns @racket[iter] itself, matching the behavior of @tt{[Symbol.iterator]}.
 }
 
-@defproc[(iterator-dispose! [iter external/raw]) void?]{
+@defproc[(iterator-dispose! [iter iterator?]) void?]{
 @(mdn-bar "Symbol.dispose" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/dispose")
 Disposes an iterator by calling @tt{return()} when the iterator provides it.
 }

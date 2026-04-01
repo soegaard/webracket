@@ -147,6 +147,10 @@ object tucked away in a single field. That gives the wrapper room to
 grow with additional helpers without exposing the raw external value as
 the main user-facing result.
 
+The iterator-returning helpers on the map, such as
+@racket[performance-event-count-map-entries], return wrapped
+@racket[iterator] values rather than raw browser iterator objects.
+
 @defstruct[performance-event-count-map ([raw external/raw])]{
 Wraps a browser EventCounts object in the checked struct used by
 @racket[performance-event-counts].
@@ -163,22 +167,25 @@ Returns the number of recorded event types.
 }
 
 @defproc[(performance-event-count-map-entries [counts performance-event-count-map?])
-         external/raw]{
-Returns the browser iterator of event-count entries.
+         iterator?]{
+Returns the wrapped browser iterator produced by
+@racket[EventCounts.entries()] for the current page.
 }
 
 @defproc[(performance-event-count-map-keys [counts performance-event-count-map?])
-         external/raw]{
+         iterator?]{
 @(mdn-bar "EventCounts: keys() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/EventCounts/keys")
-Returns the browser iterator of event-count event types.
+Returns the wrapped browser iterator produced by @racket[EventCounts.keys()]
+for the current page.
 }
 
 @defproc[(performance-event-count-map-values [counts performance-event-count-map?])
-         external/raw]{
+         iterator?]{
 @(mdn-bar "EventCounts: values() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/EventCounts/values")
-Returns the browser iterator of event-count values.
+Returns the wrapped browser iterator produced by
+@racket[EventCounts.values()] for the current page.
 }
 
 @defproc[(performance-event-count-map-get [counts performance-event-count-map?]

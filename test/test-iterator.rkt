@@ -21,24 +21,28 @@
 (list
  (list "Iterator constructor and prototype"
        (let ()
-         (check-true (external? (iterator)) "iterator constructor available")
-         (check-equal (js-typeof (iterator)) "function" "iterator typeof")
+         (check-true (external? (Iterator)) "Iterator constructor available")
+         (check-equal (js-typeof (Iterator)) "function" "Iterator typeof")
          (check-true (external? (iterator-prototype)) "iterator prototype available")
          (check-true (external? (iterator-prototype-constructor)) "iterator prototype constructor available")
          (check-equal (iterator-prototype-to-string-tag) "Iterator" "iterator toStringTag")
          #t))
  (list "Iterator static helpers"
        (let ()
+         (define wrapped (iterator-from (js-array/extern (vector 9 8 7))))
+         (check-true (iterator? wrapped) "iterator from wrapper")
+         (check-true (external? (iterator-raw wrapped)) "iterator raw wrapper")
          (define concatenated
            (iterator-concat (js-array/extern (vector 1 2))
                             (js-array/extern (vector 3 4))))
+         (check-true (iterator? concatenated) "iterator concat wrapper")
          (check-equal (iterator-to-array concatenated)
                       #(1 2 3 4)
                       "iterator concat")
-         (check-true (external? (iterator-zip (js-array/extern (vector (js-array/extern (vector 1 2))
-                                                                        (js-array/extern (vector 10 20))))))
+         (check-true (iterator? (iterator-zip (js-array/extern (vector (js-array/extern (vector 1 2))
+                                                                       (js-array/extern (vector 10 20))))))
                      "iterator zip available")
-         (check-true (external? (iterator-zip-keyed
+         (check-true (iterator? (iterator-zip-keyed
                                  (js-object (vector (vector "left" (js-array/extern (vector 1 2)))
                                                     (vector "right" (js-array/extern (vector 10 20)))))))
                      "iterator zipKeyed available")
@@ -46,6 +50,7 @@
  (list "Iterator instance methods"
        (let ()
          (define iter (fresh-iter))
+         (check-true (iterator? iter) "iterator wrapper available")
          (define first-step (iterator-next iter))
          (check-equal (js-ref first-step "done") #f "iterator next done")
          (check-equal (js-ref first-step "value") 1 "iterator next value")
@@ -92,7 +97,9 @@
          (define returned (iterator-return (fresh-iter) "done"))
          (check-equal (js-ref returned "done") #t "iterator return done")
          (check-equal (js-ref returned "value") "done" "iterator return value")
-         (check-true (external? (iterator-symbol-iterator (fresh-iter)))
+         (check-true (iterator? (iterator-symbol-iterator (fresh-iter)))
                      "iterator Symbol.iterator")
+         (check-true (external? (iterator-raw (iterator-symbol-iterator (fresh-iter))))
+                     "iterator Symbol.iterator raw")
          (iterator-dispose! (fresh-iter))
          #t)))

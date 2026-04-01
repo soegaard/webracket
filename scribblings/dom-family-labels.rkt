@@ -259,6 +259,7 @@
 (define window-get-computed-style any/c)
 (define window-structured-clone any/c)
 
+(struct iterator (raw) #:transparent #:constructor-name make-iterator)
 (struct performance-event-count-map (raw) #:transparent)
 (struct performance-memory-info (raw) #:transparent)
 

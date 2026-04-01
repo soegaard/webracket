@@ -4,6 +4,8 @@
 ;;; Performance wrappers
 ;;;
 
+(include-lib iterator)
+
 ;; procedure->external-cache : hash?
 ;;   Cache JS callback wrappers so the same procedure maps to the same external.
 (define procedure->external-cache (make-hasheq))
@@ -21,32 +23,32 @@
                           counts))
   (js-ref (performance-event-count-map-raw counts) "size"))
 
-;; performance-event-count-map-entries : performance-event-count-map? -> external/raw
+;; performance-event-count-map-entries : performance-event-count-map? -> iterator?
 ;;   Read the iterator of event-count entries.
 (define (performance-event-count-map-entries counts)
   (unless (performance-event-count-map? counts)
     (raise-argument-error 'performance-event-count-map-entries
                           "performance-event-count-map?"
                           counts))
-  (js-send/value (performance-event-count-map-raw counts) "entries" (vector)))
+  (make-iterator (js-send/value (performance-event-count-map-raw counts) "entries" (vector))))
 
-;; performance-event-count-map-keys : performance-event-count-map? -> external/raw
+;; performance-event-count-map-keys : performance-event-count-map? -> iterator?
 ;;   Read the iterator of event-count keys.
 (define (performance-event-count-map-keys counts)
   (unless (performance-event-count-map? counts)
     (raise-argument-error 'performance-event-count-map-keys
                           "performance-event-count-map?"
                           counts))
-  (js-send/value (performance-event-count-map-raw counts) "keys" (vector)))
+  (make-iterator (js-send/value (performance-event-count-map-raw counts) "keys" (vector))))
 
-;; performance-event-count-map-values : performance-event-count-map? -> external/raw
+;; performance-event-count-map-values : performance-event-count-map? -> iterator?
 ;;   Read the iterator of event-count values.
 (define (performance-event-count-map-values counts)
   (unless (performance-event-count-map? counts)
     (raise-argument-error 'performance-event-count-map-values
                           "performance-event-count-map?"
                           counts))
-  (js-send/value (performance-event-count-map-raw counts) "values" (vector)))
+  (make-iterator (js-send/value (performance-event-count-map-raw counts) "values" (vector))))
 
 ;; performance-event-count-map-get : performance-event-count-map? string? -> (or/c #f exact-nonnegative-integer?)
 ;;   Read the count for a specific event type.
