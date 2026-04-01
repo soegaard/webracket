@@ -10,8 +10,76 @@
 @(how-to-require include-lib image (lib "libs/image.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")
 
+The @racket[image] library is the checked wrapper for HTML image
+elements.
+
+Images are the browser's built-in way to load and display pictures. An
+image element knows its source URL, its loading state, and its natural
+size once the browser has fetched it.
+
+Use @racket[image] when you want to:
+
+@itemlist[
+  @item{create a new image element}
+  @item{set the source URL or alternative text}
+  @item{check whether the image has finished loading}
+  @item{read the browser's current source URL}
+]
+
 The @racket[image] library wraps HTMLImageElement creation and common
 image properties.
+
+@section{Image Quick Start}
+
+Start by creating an image element, pointing it at a source, and then
+checking whether the browser has finished loading it.
+
+@racketblock[
+(code:comment "Include the checked image wrapper library.")
+(include-lib image)
+
+(code:comment "Create a new image element.")
+(define img
+  (image-new))
+
+(code:comment "Set the image source and a short description.")
+(image-set-src! img "/images/logo.png")
+(image-set-alt! img "Project logo")
+
+(code:comment "Ask whether the browser has finished loading it.")
+(image-complete? img)
+]
+
+The quick start shows the main pattern: create the image, configure it,
+and then read the browser's loading state.
+
+@section{Image Example}
+
+This example shows how to prepare an image for display and then inspect
+the browser's view of it.
+
+@racketblock[
+(code:comment "Include the image wrapper library.")
+(include-lib image)
+
+(code:comment "Create an image element and configure it before use.")
+(define img
+  (image-new))
+(image-set-src! img "/images/logo.png")
+(image-set-alt! img "Project logo")
+
+(code:comment "Read the current source URL and loading state.")
+(define current
+  (image-src img))
+(define loaded?
+  (image-complete? img))
+
+(void current loaded?)
+]
+
+If you just need the basics, the main entry points are
+@racket[image-new], @racket[image-src], @racket[image-set-src!],
+@racket[image-set-alt!], and @racket[image-complete?].
 
 @defproc[(image-new [width any/c (void)] [height any/c (void)]) external/raw]{
 @(mdn-bar "HTMLImageElement: constructor"
@@ -29,4 +97,16 @@ Returns the current image source URL.
 @(mdn-bar "HTMLImageElement: complete property"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/complete")
 Reports whether the image has finished loading.
+}
+
+@defproc[(image-set-src! [img external?] [src string?]) void?]{
+@(mdn-bar "HTMLImageElement: src property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/src")
+Sets the image source URL.
+}
+
+@defproc[(image-set-alt! [img external?] [alt string?]) void?]{
+@(mdn-bar "HTMLImageElement: alt property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/alt")
+Sets the alternative text for the image.
 }
