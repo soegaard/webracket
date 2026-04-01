@@ -850,6 +850,7 @@
   check-range-generic
   check-naturals
   check-string
+  check-vector
   
   ; structures
   make-struct-type
