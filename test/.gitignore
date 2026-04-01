@@ -1,0 +1,7 @@
+test-dom-*.html
+test-dom-*.js
+test-dom-*.wasm
+test-dom-*.wasm.map.sexp
+test-dom-*.browser.html
+test-dom-*.browser.wasm
+test-dom-*.browser.wasm.map.sexp
