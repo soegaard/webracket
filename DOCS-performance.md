@@ -14,7 +14,7 @@ Assumption in examples: the program is compiled with `--ffi dom`.
 - `performance-now` returns a monotonic high-resolution timestamp
 - `performance-time-origin` returns the start timestamp for the page
 - `performance-event-counts`, `performance-interaction-count`, and
-  `performance-memory` expose the browser's timing metadata
+  `performance-memory` expose the browser's timing and memory metadata
 - `performance-event-counts` returns a `performance-event-count-map`
   wrapper instead of a raw browser object
   - `performance-event-count-map-get` and
@@ -23,6 +23,12 @@ Assumption in examples: the program is compiled with `--ffi dom`.
   - `performance-event-count-map-keys`, `performance-event-count-map-values`,
     and `performance-event-count-map-for-each` expose the rest of the
     map-style iteration API
+- `performance-memory` returns a `performance-memory-info` wrapper when
+  the browser exposes the memory object
+  - `performance-memory-info-js-heap-size-limit`,
+    `performance-memory-info-total-js-heap-size`, and
+    `performance-memory-info-used-js-heap-size` expose the browser's
+    memory counters
 - `performance-clear-marks`, `performance-clear-measures`, and
   `performance-clear-resource-timings` clear browser buffers
 - `performance-get-entries`, `performance-get-entries-by-name`, and

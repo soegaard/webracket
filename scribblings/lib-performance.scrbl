@@ -31,6 +31,10 @@ The @racket[performance-event-counts] helper returns either @racket[#f]
 or a @racket[performance-event-count-map] value that wraps the browser's
 EventCounts object.
 
+The @racket[performance-memory] helper returns either @racket[#f] or a
+@racket[performance-memory-info] value that wraps the browser's memory
+information object.
+
 @section{Performance Quick Start}
 
 Start by including the library, taking a timestamp, and measuring a
@@ -113,10 +117,11 @@ Returns the browser's event-count map for the current page.
 Returns the current interaction count for the page.
 }
 
-@defproc[(performance-memory) external/raw]{
+@defproc[(performance-memory) (or/c #f performance-memory-info?)]{
 @(mdn-bar "Performance: memory property"
           "https://developer.mozilla.org/en-US/docs/Web/API/Performance/memory")
-Returns the browser-specific memory information object.
+Returns the browser-specific memory information object when the browser
+exposes it.
 }
 
 @defproc[(performance-time-origin) real?]{
@@ -202,6 +207,33 @@ Calls @racket[proc] for each event-count entry in the browser map.
 The callback receives the count first, the event type second, and the
 EventCounts map itself third, just like the underlying JavaScript
 map-style API.
+}
+
+@section{Performance Memory Info}
+
+The browser's memory information object reports the JavaScript heap
+limits and usage for the current page. It is useful when you want to see
+how much browser-managed memory your page is using, but it is a
+browser-specific feature and may be unavailable.
+
+@defstruct[performance-memory-info ([raw external/raw])]{
+Wraps the browser memory information object used by
+@racket[performance-memory].
+}
+
+@defproc[(performance-memory-info-js-heap-size-limit [memory-info performance-memory-info?])
+         exact-nonnegative-integer?]{
+Returns the JavaScript heap size limit reported by the browser.
+}
+
+@defproc[(performance-memory-info-total-js-heap-size [memory-info performance-memory-info?])
+         exact-nonnegative-integer?]{
+Returns the browser's total JavaScript heap size.
+}
+
+@defproc[(performance-memory-info-used-js-heap-size [memory-info performance-memory-info?])
+         exact-nonnegative-integer?]{
+Returns the browser's currently used JavaScript heap size.
 }
 
 @section{Performance Methods}

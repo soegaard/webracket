@@ -109,10 +109,42 @@
 (define (performance-interaction-count)
   (js-performance-interaction-count))
 
-;; performance-memory : -> external/raw
+;; performance-memory-info : external/raw -> performance-memory-info?
+;;   Wrap the browser-specific memory information object.
+(struct performance-memory-info (raw) #:transparent)
+
+;; performance-memory-info-js-heap-size-limit : performance-memory-info? -> exact-nonnegative-integer?
+;;   Read the browser's JavaScript heap size limit.
+(define (performance-memory-info-js-heap-size-limit memory-info)
+  (unless (performance-memory-info? memory-info)
+    (raise-argument-error 'performance-memory-info-js-heap-size-limit
+                          "performance-memory-info?"
+                          memory-info))
+  (js-ref (performance-memory-info-raw memory-info) "jsHeapSizeLimit"))
+
+;; performance-memory-info-total-js-heap-size : performance-memory-info? -> exact-nonnegative-integer?
+;;   Read the browser's total JavaScript heap size.
+(define (performance-memory-info-total-js-heap-size memory-info)
+  (unless (performance-memory-info? memory-info)
+    (raise-argument-error 'performance-memory-info-total-js-heap-size
+                          "performance-memory-info?"
+                          memory-info))
+  (js-ref (performance-memory-info-raw memory-info) "totalJSHeapSize"))
+
+;; performance-memory-info-used-js-heap-size : performance-memory-info? -> exact-nonnegative-integer?
+;;   Read the browser's used JavaScript heap size.
+(define (performance-memory-info-used-js-heap-size memory-info)
+  (unless (performance-memory-info? memory-info)
+    (raise-argument-error 'performance-memory-info-used-js-heap-size
+                          "performance-memory-info?"
+                          memory-info))
+  (js-ref (performance-memory-info-raw memory-info) "usedJSHeapSize"))
+
+;; performance-memory : -> (or/c #f performance-memory-info?)
 ;;   Read the browser-specific memory information object.
 (define (performance-memory)
-  (js-performance-memory))
+  (define memory (js-performance-memory))
+  (and memory (performance-memory-info memory)))
 
 ;; performance-time-origin : -> real?
 ;;   Read the high-resolution performance origin.

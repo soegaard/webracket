@@ -51,6 +51,10 @@
   performance-event-count-map-for-each
   performance-event-counts
   performance-interaction-count
+  (struct-out performance-memory-info)
+  performance-memory-info-js-heap-size-limit
+  performance-memory-info-total-js-heap-size
+  performance-memory-info-used-js-heap-size
   performance-memory
   performance-time-origin
   performance-now
@@ -256,6 +260,7 @@
 (define window-structured-clone any/c)
 
 (struct performance-event-count-map (raw) #:transparent)
+(struct performance-memory-info (raw) #:transparent)
 
 (define performance-event-count-map-size any/c)
 (define performance-event-count-map-entries any/c)
@@ -266,6 +271,9 @@
 (define performance-event-count-map-for-each any/c)
 (define performance-event-counts any/c)
 (define performance-interaction-count any/c)
+(define performance-memory-info-js-heap-size-limit any/c)
+(define performance-memory-info-total-js-heap-size any/c)
+(define performance-memory-info-used-js-heap-size any/c)
 (define performance-memory any/c)
 (define performance-time-origin any/c)
 (define performance-now any/c)
