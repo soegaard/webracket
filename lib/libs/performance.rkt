@@ -104,7 +104,7 @@
       (performance-event-count-map counts)
       #f))
 
-;; performance-interaction-count : -> real?
+;; performance-interaction-count : -> exact-nonnegative-integer?
 ;;   Read the interaction count for the current page.
 (define (performance-interaction-count)
   (js-performance-interaction-count))

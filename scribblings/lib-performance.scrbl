@@ -111,7 +111,7 @@ mark, and then ask the browser for the recorded measure.
 Returns the browser's event-count map for the current page.
 }
 
-@defproc[(performance-interaction-count) real?]{
+@defproc[(performance-interaction-count) exact-nonnegative-integer?]{
 @(mdn-bar "Performance: interactionCount property"
           "https://developer.mozilla.org/en-US/docs/Web/API/Performance/interactionCount")
 Returns the current interaction count for the page.

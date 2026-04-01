@@ -27,7 +27,7 @@
   #:name   "interaction-count"
   #:doc    "Returns the interaction count for this page."
   #:mdn    "Performance/interactionCount"
-  (-> () (f64)))
+  (-> () (u32)))
 
 (define-foreign js-performance-memory
   #:module "performance"
