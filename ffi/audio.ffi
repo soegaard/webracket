@@ -1,0 +1,903 @@
+;;;
+;;; Audio
+;;;
+
+;; This file declares bindings for the JavaScript Web Audio API.
+;; The raw surface stays intentionally narrow: constructors, core graph
+;; nodes, numeric properties, and the small set of methods needed to build
+;; and inspect an audio graph from WebRacket.
+
+;;;
+;;; AudioContext
+;;;
+
+;; Create a new AudioContext with the browser defaults.
+;; The context options argument is intentionally omitted in this first slice.
+;; This binding returns the raw JS AudioContext object.
+(define-foreign js-audio-context-new
+  #:module "audio"
+  #:name   "context-new"
+  (-> () (extern/raw)))
+
+;; Close the audio context.
+;; ctx : extern
+;; Returns the browser Promise returned by AudioContext.close().
+(define-foreign js-audio-context-close
+  #:module "audio"
+  #:name   "context-close"
+  (-> (extern) (extern/raw)))
+
+;; Resume the audio context.
+;; ctx : extern
+;; Returns the browser Promise returned by AudioContext.resume().
+(define-foreign js-audio-context-resume
+  #:module "audio"
+  #:name   "context-resume"
+  (-> (extern) (extern/raw)))
+
+;; Suspend the audio context.
+;; ctx : extern
+;; Returns the browser Promise returned by AudioContext.suspend().
+(define-foreign js-audio-context-suspend
+  #:module "audio"
+  #:name   "context-suspend"
+  (-> (extern) (extern/raw)))
+
+;; Read the AudioContext state string.
+;; ctx : extern
+(define-foreign js-audio-context-state
+  #:module "audio"
+  #:name   "context-state"
+  (-> (extern) (string)))
+
+;; Read the current time of the AudioContext.
+;; ctx : extern
+(define-foreign js-audio-context-current-time
+  #:module "audio"
+  #:name   "context-current-time"
+  (-> (extern) (f64)))
+
+;; Read the sample rate of the AudioContext.
+;; ctx : extern
+(define-foreign js-audio-context-sample-rate
+  #:module "audio"
+  #:name   "context-sample-rate"
+  (-> (extern) (f64)))
+
+;; Read the base latency of the AudioContext.
+;; ctx : extern
+(define-foreign js-audio-context-base-latency
+  #:module "audio"
+  #:name   "context-base-latency"
+  (-> (extern) (f64)))
+
+;; Read the output latency of the AudioContext.
+;; ctx : extern
+(define-foreign js-audio-context-output-latency
+  #:module "audio"
+  #:name   "context-output-latency"
+  (-> (extern) (f64)))
+
+;; Read the destination AudioNode of the AudioContext.
+;; ctx : extern
+(define-foreign js-audio-context-destination
+  #:module "audio"
+  #:name   "context-destination"
+  (-> (extern) (extern/raw)))
+
+;; Read the listener associated with the AudioContext.
+;; ctx : extern
+(define-foreign js-audio-context-listener
+  #:module "audio"
+  #:name   "context-listener"
+  (-> (extern) (extern/raw)))
+
+;; Create a GainNode attached to the AudioContext.
+;; ctx : extern
+(define-foreign js-audio-context-create-gain
+  #:module "audio"
+  #:name   "context-create-gain"
+  (-> (extern) (extern/raw)))
+
+;; Create an OscillatorNode attached to the AudioContext.
+;; ctx : extern
+(define-foreign js-audio-context-create-oscillator
+  #:module "audio"
+  #:name   "context-create-oscillator"
+  (-> (extern) (extern/raw)))
+
+;; Create an AudioBufferSourceNode attached to the AudioContext.
+;; ctx : extern
+(define-foreign js-audio-context-create-buffer-source
+  #:module "audio"
+  #:name   "context-create-buffer-source"
+  (-> (extern) (extern/raw)))
+
+;; Create an AnalyserNode attached to the AudioContext.
+;; ctx : extern
+(define-foreign js-audio-context-create-analyser
+  #:module "audio"
+  #:name   "context-create-analyser"
+  (-> (extern) (extern/raw)))
+
+;; Create a BiquadFilterNode attached to the AudioContext.
+;; ctx : extern
+(define-foreign js-audio-context-create-biquad-filter
+  #:module "audio"
+  #:name   "context-create-biquad-filter"
+  (-> (extern) (extern/raw)))
+
+;; Create a ConstantSourceNode attached to the AudioContext.
+;; ctx : extern
+(define-foreign js-audio-context-create-constant-source
+  #:module "audio"
+  #:name   "context-create-constant-source"
+  (-> (extern) (extern/raw)))
+
+;; Create a ChannelSplitterNode attached to the AudioContext.
+;; ctx : extern
+;; channels : value
+(define-foreign js-audio-context-create-channel-splitter
+  #:module "audio"
+  #:name   "context-create-channel-splitter"
+  (-> (extern value) (extern/raw)))
+
+;; Create a ChannelMergerNode attached to the AudioContext.
+;; ctx : extern
+;; channels : value
+(define-foreign js-audio-context-create-channel-merger
+  #:module "audio"
+  #:name   "context-create-channel-merger"
+  (-> (extern value) (extern/raw)))
+
+;; Create a DynamicsCompressorNode attached to the AudioContext.
+;; ctx : extern
+(define-foreign js-audio-context-create-dynamics-compressor
+  #:module "audio"
+  #:name   "context-create-dynamics-compressor"
+  (-> (extern) (extern/raw)))
+
+;; Create a PannerNode attached to the AudioContext.
+;; ctx : extern
+(define-foreign js-audio-context-create-panner
+  #:module "audio"
+  #:name   "context-create-panner"
+  (-> (extern) (extern/raw)))
+
+;; Create a StereoPannerNode attached to the AudioContext.
+;; ctx : extern
+(define-foreign js-audio-context-create-stereo-panner
+  #:module "audio"
+  #:name   "context-create-stereo-panner"
+  (-> (extern) (extern/raw)))
+
+;; Create an AudioBuffer attached to the AudioContext.
+;; ctx : extern
+;; channels : value
+;; length : value
+;; sample-rate : value
+(define-foreign js-audio-context-create-buffer
+  #:module "audio"
+  #:name   "context-create-buffer"
+  (-> (extern value value value) (extern/raw)))
+
+;; Decode audio data and return the browser Promise.
+;; ctx : extern
+;; data : value
+(define-foreign js-audio-context-decode-audio-data
+  #:module "audio"
+  #:name   "context-decode-audio-data"
+  (-> (extern value) (extern/raw)))
+
+;;;
+;;; AudioNode
+;;;
+
+;; Read the owning AudioContext for an AudioNode.
+;; node : extern
+(define-foreign js-audio-node-context
+  #:module "audio"
+  #:name   "node-context"
+  (-> (extern) (extern/raw)))
+
+;; Connect an AudioNode to another node or AudioParam.
+;; node : extern
+;; destination : value
+;; output-index : value
+;; input-index : value
+;; Pass (void) for omitted trailing optional arguments.
+(define-foreign js-audio-node-connect
+  #:module "audio"
+  #:name   "node-connect"
+  (-> (extern value value value) (extern/raw)))
+
+;; Disconnect an AudioNode from the graph.
+;; node : extern
+;; destination : value
+;; output-index : value
+;; input-index : value
+;; Pass (void) for omitted trailing optional arguments.
+(define-foreign js-audio-node-disconnect
+  #:module "audio"
+  #:name   "node-disconnect"
+  (-> (extern value value value) ()))
+
+;;;
+;;; AudioParam
+;;;
+
+;; Read the current value of an AudioParam.
+;; param : extern
+(define-foreign js-audio-param-value
+  #:module "audio"
+  #:name   "param-value"
+  (-> (extern) (f64)))
+
+;; Set the current value of an AudioParam.
+;; param : extern
+;; value : value
+(define-foreign js-audio-param-set-value!
+  #:module "audio"
+  #:name   "param-set-value!"
+  (-> (extern value) ()))
+
+;; Schedule a value change at a given time.
+;; param : extern
+;; value : value
+;; time : value
+(define-foreign js-audio-param-set-value-at-time!
+  #:module "audio"
+  #:name   "param-set-value-at-time!"
+  (-> (extern value value) ()))
+
+;; Schedule a linear ramp.
+;; param : extern
+;; value : value
+;; time : value
+(define-foreign js-audio-param-linear-ramp-to-value-at-time!
+  #:module "audio"
+  #:name   "param-linear-ramp-to-value-at-time!"
+  (-> (extern value value) ()))
+
+;; Schedule an exponential ramp.
+;; param : extern
+;; value : value
+;; time : value
+(define-foreign js-audio-param-exponential-ramp-to-value-at-time!
+  #:module "audio"
+  #:name   "param-exponential-ramp-to-value-at-time!"
+  (-> (extern value value) ()))
+
+;; Schedule a target value.
+;; param : extern
+;; value : value
+;; time : value
+;; time-constant : value
+(define-foreign js-audio-param-set-target-at-time!
+  #:module "audio"
+  #:name   "param-set-target-at-time!"
+  (-> (extern value value value) ()))
+
+;; Schedule a value curve.
+;; param : extern
+;; values : value
+;; start-time : value
+;; duration : value
+(define-foreign js-audio-param-set-value-curve-at-time!
+  #:module "audio"
+  #:name   "param-set-value-curve-at-time!"
+  (-> (extern value value value) ()))
+
+;; Cancel scheduled values.
+;; param : extern
+;; time : value
+(define-foreign js-audio-param-cancel-scheduled-values!
+  #:module "audio"
+  #:name   "param-cancel-scheduled-values!"
+  (-> (extern value) ()))
+
+;; Cancel scheduled values and hold the current value.
+;; param : extern
+;; time : value
+(define-foreign js-audio-param-cancel-and-hold-at-time!
+  #:module "audio"
+  #:name   "param-cancel-and-hold-at-time!"
+  (-> (extern value) ()))
+
+;;;
+;;; AudioBuffer
+;;;
+
+;; Read the AudioBuffer length.
+;; buffer : extern
+(define-foreign js-audio-buffer-length
+  #:module "audio"
+  #:name   "buffer-length"
+  (-> (extern) (u32)))
+
+;; Read the AudioBuffer duration.
+;; buffer : extern
+(define-foreign js-audio-buffer-duration
+  #:module "audio"
+  #:name   "buffer-duration"
+  (-> (extern) (f64)))
+
+;; Read the AudioBuffer sample rate.
+;; buffer : extern
+(define-foreign js-audio-buffer-sample-rate
+  #:module "audio"
+  #:name   "buffer-sample-rate"
+  (-> (extern) (f64)))
+
+;; Read the AudioBuffer channel count.
+;; buffer : extern
+(define-foreign js-audio-buffer-number-of-channels
+  #:module "audio"
+  #:name   "buffer-number-of-channels"
+  (-> (extern) (u32)))
+
+;; Read the AudioBuffer channel data.
+;; buffer : extern
+;; channel : value
+(define-foreign js-audio-buffer-get-channel-data
+  #:module "audio"
+  #:name   "buffer-get-channel-data"
+  (-> (extern value) (extern/raw)))
+
+;;;
+;;; GainNode
+;;;
+
+;; Read the GainNode gain AudioParam.
+;; node : extern
+(define-foreign js-audio-gain-node-gain
+  #:module "audio"
+  #:name   "gain-node-gain"
+  (-> (extern) (extern/raw)))
+
+;;;
+;;; OscillatorNode
+;;;
+
+;; Read the OscillatorNode type string.
+;; node : extern
+(define-foreign js-audio-oscillator-node-type
+  #:module "audio"
+  #:name   "oscillator-node-type"
+  (-> (extern) (string)))
+
+;; Set the OscillatorNode type string.
+;; node : extern
+;; type : value
+(define-foreign js-audio-oscillator-node-set-type!
+  #:module "audio"
+  #:name   "oscillator-node-set-type!"
+  (-> (extern value) ()))
+
+;; Read the OscillatorNode frequency AudioParam.
+;; node : extern
+(define-foreign js-audio-oscillator-node-frequency
+  #:module "audio"
+  #:name   "oscillator-node-frequency"
+  (-> (extern) (extern/raw)))
+
+;; Read the OscillatorNode detune AudioParam.
+;; node : extern
+(define-foreign js-audio-oscillator-node-detune
+  #:module "audio"
+  #:name   "oscillator-node-detune"
+  (-> (extern) (extern/raw)))
+
+;; Start the oscillator.
+;; node : extern
+;; when : value
+;; Pass (void) to use the browser default of 0.
+(define-foreign js-audio-oscillator-node-start!
+  #:module "audio"
+  #:name   "oscillator-node-start!"
+  (-> (extern value) ()))
+
+;; Stop the oscillator.
+;; node : extern
+;; when : value
+;; Pass (void) to use the browser default of immediate stop.
+(define-foreign js-audio-oscillator-node-stop!
+  #:module "audio"
+  #:name   "oscillator-node-stop!"
+  (-> (extern value) ()))
+
+;; Set a periodic wave on the oscillator.
+;; node : extern
+;; wave : value
+(define-foreign js-audio-oscillator-node-set-periodic-wave!
+  #:module "audio"
+  #:name   "oscillator-node-set-periodic-wave!"
+  (-> (extern value) ()))
+
+;;;
+;;; AudioBufferSourceNode
+;;;
+
+;; Read the current buffer.
+;; node : extern
+(define-foreign js-audio-audio-buffer-source-node-buffer
+  #:module "audio"
+  #:name   "audio-buffer-source-node-buffer"
+  (-> (extern) (extern/raw)))
+
+;; Set the current buffer.
+;; node : extern
+;; buffer : value
+(define-foreign js-audio-audio-buffer-source-node-set-buffer!
+  #:module "audio"
+  #:name   "audio-buffer-source-node-set-buffer!"
+  (-> (extern value) ()))
+
+;; Read the playbackRate AudioParam.
+;; node : extern
+(define-foreign js-audio-audio-buffer-source-node-playback-rate
+  #:module "audio"
+  #:name   "audio-buffer-source-node-playback-rate"
+  (-> (extern) (extern/raw)))
+
+;; Read the detune AudioParam.
+;; node : extern
+(define-foreign js-audio-audio-buffer-source-node-detune
+  #:module "audio"
+  #:name   "audio-buffer-source-node-detune"
+  (-> (extern) (extern/raw)))
+
+;; Read whether the buffer source loops.
+;; node : extern
+(define-foreign js-audio-audio-buffer-source-node-loop
+  #:module "audio"
+  #:name   "audio-buffer-source-node-loop"
+  (-> (extern) (boolean)))
+
+;; Set whether the buffer source loops.
+;; node : extern
+;; flag : value
+(define-foreign js-audio-audio-buffer-source-node-set-loop!
+  #:module "audio"
+  #:name   "audio-buffer-source-node-set-loop!"
+  (-> (extern value) ()))
+
+;; Read the loop start time.
+;; node : extern
+(define-foreign js-audio-audio-buffer-source-node-loop-start
+  #:module "audio"
+  #:name   "audio-buffer-source-node-loop-start"
+  (-> (extern) (f64)))
+
+;; Set the loop start time.
+;; node : extern
+;; value : value
+(define-foreign js-audio-audio-buffer-source-node-set-loop-start!
+  #:module "audio"
+  #:name   "audio-buffer-source-node-set-loop-start!"
+  (-> (extern value) ()))
+
+;; Read the loop end time.
+;; node : extern
+(define-foreign js-audio-audio-buffer-source-node-loop-end
+  #:module "audio"
+  #:name   "audio-buffer-source-node-loop-end"
+  (-> (extern) (f64)))
+
+;; Set the loop end time.
+;; node : extern
+;; value : value
+(define-foreign js-audio-audio-buffer-source-node-set-loop-end!
+  #:module "audio"
+  #:name   "audio-buffer-source-node-set-loop-end!"
+  (-> (extern value) ()))
+
+;; Start the buffer source.
+;; node : extern
+;; when : value
+;; offset : value
+;; duration : value
+;; Pass (void) for omitted trailing optional arguments.
+(define-foreign js-audio-audio-buffer-source-node-start!
+  #:module "audio"
+  #:name   "audio-buffer-source-node-start!"
+  (-> (extern value value value) ()))
+
+;; Stop the buffer source.
+;; node : extern
+;; when : value
+;; Pass (void) to use the browser default.
+(define-foreign js-audio-audio-buffer-source-node-stop!
+  #:module "audio"
+  #:name   "audio-buffer-source-node-stop!"
+  (-> (extern value) ()))
+
+;;;
+;;; AnalyserNode
+;;;
+
+;; Read the FFT size.
+;; node : extern
+(define-foreign js-audio-analyser-node-fft-size
+  #:module "audio"
+  #:name   "analyser-node-fft-size"
+  (-> (extern) (u32)))
+
+;; Set the FFT size.
+;; node : extern
+;; size : value
+(define-foreign js-audio-analyser-node-set-fft-size!
+  #:module "audio"
+  #:name   "analyser-node-set-fft-size!"
+  (-> (extern value) ()))
+
+;; Read the frequency bin count.
+;; node : extern
+(define-foreign js-audio-analyser-node-frequency-bin-count
+  #:module "audio"
+  #:name   "analyser-node-frequency-bin-count"
+  (-> (extern) (u32)))
+
+;; Read the minimum decibels value.
+;; node : extern
+(define-foreign js-audio-analyser-node-min-decibels
+  #:module "audio"
+  #:name   "analyser-node-min-decibels"
+  (-> (extern) (f64)))
+
+;; Set the minimum decibels value.
+;; node : extern
+;; value : value
+(define-foreign js-audio-analyser-node-set-min-decibels!
+  #:module "audio"
+  #:name   "analyser-node-set-min-decibels!"
+  (-> (extern value) ()))
+
+;; Read the maximum decibels value.
+;; node : extern
+(define-foreign js-audio-analyser-node-max-decibels
+  #:module "audio"
+  #:name   "analyser-node-max-decibels"
+  (-> (extern) (f64)))
+
+;; Set the maximum decibels value.
+;; node : extern
+;; value : value
+(define-foreign js-audio-analyser-node-set-max-decibels!
+  #:module "audio"
+  #:name   "analyser-node-set-max-decibels!"
+  (-> (extern value) ()))
+
+;; Read the smoothing time constant.
+;; node : extern
+(define-foreign js-audio-analyser-node-smoothing-time-constant
+  #:module "audio"
+  #:name   "analyser-node-smoothing-time-constant"
+  (-> (extern) (f64)))
+
+;; Set the smoothing time constant.
+;; node : extern
+;; value : value
+(define-foreign js-audio-analyser-node-set-smoothing-time-constant!
+  #:module "audio"
+  #:name   "analyser-node-set-smoothing-time-constant!"
+  (-> (extern value) ()))
+
+;; Fill a byte frequency buffer.
+;; node : extern
+;; data : value
+(define-foreign js-audio-analyser-node-get-byte-frequency-data!
+  #:module "audio"
+  #:name   "analyser-node-get-byte-frequency-data!"
+  (-> (extern value) ()))
+
+;; Fill a byte time-domain buffer.
+;; node : extern
+;; data : value
+(define-foreign js-audio-analyser-node-get-byte-time-domain-data!
+  #:module "audio"
+  #:name   "analyser-node-get-byte-time-domain-data!"
+  (-> (extern value) ()))
+
+;; Fill a float frequency buffer.
+;; node : extern
+;; data : value
+(define-foreign js-audio-analyser-node-get-float-frequency-data!
+  #:module "audio"
+  #:name   "analyser-node-get-float-frequency-data!"
+  (-> (extern value) ()))
+
+;; Fill a float time-domain buffer.
+;; node : extern
+;; data : value
+(define-foreign js-audio-analyser-node-get-float-time-domain-data!
+  #:module "audio"
+  #:name   "analyser-node-get-float-time-domain-data!"
+  (-> (extern value) ()))
+
+;;;
+;;; BiquadFilterNode
+;;;
+
+;; Read the filter type string.
+;; node : extern
+(define-foreign js-audio-biquad-filter-node-type
+  #:module "audio"
+  #:name   "biquad-filter-node-type"
+  (-> (extern) (string)))
+
+;; Set the filter type string.
+;; node : extern
+;; type : value
+(define-foreign js-audio-biquad-filter-node-set-type!
+  #:module "audio"
+  #:name   "biquad-filter-node-set-type!"
+  (-> (extern value) ()))
+
+;; Read the frequency AudioParam.
+;; node : extern
+(define-foreign js-audio-biquad-filter-node-frequency
+  #:module "audio"
+  #:name   "biquad-filter-node-frequency"
+  (-> (extern) (extern/raw)))
+
+;; Read the detune AudioParam.
+;; node : extern
+(define-foreign js-audio-biquad-filter-node-detune
+  #:module "audio"
+  #:name   "biquad-filter-node-detune"
+  (-> (extern) (extern/raw)))
+
+;; Read the Q AudioParam.
+;; node : extern
+(define-foreign js-audio-biquad-filter-node-q
+  #:module "audio"
+  #:name   "biquad-filter-node-q"
+  (-> (extern) (extern/raw)))
+
+;; Read the gain AudioParam.
+;; node : extern
+(define-foreign js-audio-biquad-filter-node-gain
+  #:module "audio"
+  #:name   "biquad-filter-node-gain"
+  (-> (extern) (extern/raw)))
+
+;;;
+;;; ConstantSourceNode
+;;;
+
+;; Read the offset AudioParam.
+;; node : extern
+(define-foreign js-audio-constant-source-node-offset
+  #:module "audio"
+  #:name   "constant-source-node-offset"
+  (-> (extern) (extern/raw)))
+
+;; Start the constant source node.
+;; node : extern
+;; when : value
+;; Pass (void) to use the browser default of 0.
+(define-foreign js-audio-constant-source-node-start!
+  #:module "audio"
+  #:name   "constant-source-node-start!"
+  (-> (extern value) ()))
+
+;; Stop the constant source node.
+;; node : extern
+;; when : value
+;; Pass (void) to use the browser default of immediate stop.
+(define-foreign js-audio-constant-source-node-stop!
+  #:module "audio"
+  #:name   "constant-source-node-stop!"
+  (-> (extern value) ()))
+
+;; Read the threshold AudioParam.
+;; node : extern
+(define-foreign js-audio-dynamics-compressor-node-threshold
+  #:module "audio"
+  #:name   "dynamics-compressor-node-threshold"
+  (-> (extern) (extern/raw)))
+
+;; Read the knee AudioParam.
+;; node : extern
+(define-foreign js-audio-dynamics-compressor-node-knee
+  #:module "audio"
+  #:name   "dynamics-compressor-node-knee"
+  (-> (extern) (extern/raw)))
+
+;; Read the ratio AudioParam.
+;; node : extern
+(define-foreign js-audio-dynamics-compressor-node-ratio
+  #:module "audio"
+  #:name   "dynamics-compressor-node-ratio"
+  (-> (extern) (extern/raw)))
+
+;; Read the reduction value.
+;; node : extern
+(define-foreign js-audio-dynamics-compressor-node-reduction
+  #:module "audio"
+  #:name   "dynamics-compressor-node-reduction"
+  (-> (extern) (f64)))
+
+;; Read the attack AudioParam.
+;; node : extern
+(define-foreign js-audio-dynamics-compressor-node-attack
+  #:module "audio"
+  #:name   "dynamics-compressor-node-attack"
+  (-> (extern) (extern/raw)))
+
+;; Read the release AudioParam.
+;; node : extern
+(define-foreign js-audio-dynamics-compressor-node-release
+  #:module "audio"
+  #:name   "dynamics-compressor-node-release"
+  (-> (extern) (extern/raw)))
+
+;; Read the panning model string.
+;; node : extern
+(define-foreign js-audio-panner-node-panning-model
+  #:module "audio"
+  #:name   "panner-node-panning-model"
+  (-> (extern) (string)))
+
+;; Set the panning model string.
+;; node : extern
+;; value : value
+(define-foreign js-audio-panner-node-set-panning-model!
+  #:module "audio"
+  #:name   "panner-node-set-panning-model!"
+  (-> (extern value) ()))
+
+;; Read the distance model string.
+;; node : extern
+(define-foreign js-audio-panner-node-distance-model
+  #:module "audio"
+  #:name   "panner-node-distance-model"
+  (-> (extern) (string)))
+
+;; Set the distance model string.
+;; node : extern
+;; value : value
+(define-foreign js-audio-panner-node-set-distance-model!
+  #:module "audio"
+  #:name   "panner-node-set-distance-model!"
+  (-> (extern value) ()))
+
+;; Read the positionX AudioParam.
+;; node : extern
+(define-foreign js-audio-panner-node-position-x
+  #:module "audio"
+  #:name   "panner-node-position-x"
+  (-> (extern) (extern/raw)))
+
+;; Read the positionY AudioParam.
+;; node : extern
+(define-foreign js-audio-panner-node-position-y
+  #:module "audio"
+  #:name   "panner-node-position-y"
+  (-> (extern) (extern/raw)))
+
+;; Read the positionZ AudioParam.
+;; node : extern
+(define-foreign js-audio-panner-node-position-z
+  #:module "audio"
+  #:name   "panner-node-position-z"
+  (-> (extern) (extern/raw)))
+
+;; Read the orientationX AudioParam.
+;; node : extern
+(define-foreign js-audio-panner-node-orientation-x
+  #:module "audio"
+  #:name   "panner-node-orientation-x"
+  (-> (extern) (extern/raw)))
+
+;; Read the orientationY AudioParam.
+;; node : extern
+(define-foreign js-audio-panner-node-orientation-y
+  #:module "audio"
+  #:name   "panner-node-orientation-y"
+  (-> (extern) (extern/raw)))
+
+;; Read the orientationZ AudioParam.
+;; node : extern
+(define-foreign js-audio-panner-node-orientation-z
+  #:module "audio"
+  #:name   "panner-node-orientation-z"
+  (-> (extern) (extern/raw)))
+
+;; Read the refDistance value.
+;; node : extern
+(define-foreign js-audio-panner-node-ref-distance
+  #:module "audio"
+  #:name   "panner-node-ref-distance"
+  (-> (extern) (f64)))
+
+;; Set the refDistance value.
+;; node : extern
+;; value : value
+(define-foreign js-audio-panner-node-set-ref-distance!
+  #:module "audio"
+  #:name   "panner-node-set-ref-distance!"
+  (-> (extern value) ()))
+
+;; Read the maxDistance value.
+;; node : extern
+(define-foreign js-audio-panner-node-max-distance
+  #:module "audio"
+  #:name   "panner-node-max-distance"
+  (-> (extern) (f64)))
+
+;; Set the maxDistance value.
+;; node : extern
+;; value : value
+(define-foreign js-audio-panner-node-set-max-distance!
+  #:module "audio"
+  #:name   "panner-node-set-max-distance!"
+  (-> (extern value) ()))
+
+;; Read the rolloffFactor value.
+;; node : extern
+(define-foreign js-audio-panner-node-rolloff-factor
+  #:module "audio"
+  #:name   "panner-node-rolloff-factor"
+  (-> (extern) (f64)))
+
+;; Set the rolloffFactor value.
+;; node : extern
+;; value : value
+(define-foreign js-audio-panner-node-set-rolloff-factor!
+  #:module "audio"
+  #:name   "panner-node-set-rolloff-factor!"
+  (-> (extern value) ()))
+
+;; Read the coneInnerAngle value.
+;; node : extern
+(define-foreign js-audio-panner-node-cone-inner-angle
+  #:module "audio"
+  #:name   "panner-node-cone-inner-angle"
+  (-> (extern) (f64)))
+
+;; Set the coneInnerAngle value.
+;; node : extern
+;; value : value
+(define-foreign js-audio-panner-node-set-cone-inner-angle!
+  #:module "audio"
+  #:name   "panner-node-set-cone-inner-angle!"
+  (-> (extern value) ()))
+
+;; Read the coneOuterAngle value.
+;; node : extern
+(define-foreign js-audio-panner-node-cone-outer-angle
+  #:module "audio"
+  #:name   "panner-node-cone-outer-angle"
+  (-> (extern) (f64)))
+
+;; Set the coneOuterAngle value.
+;; node : extern
+;; value : value
+(define-foreign js-audio-panner-node-set-cone-outer-angle!
+  #:module "audio"
+  #:name   "panner-node-set-cone-outer-angle!"
+  (-> (extern value) ()))
+
+;; Read the coneOuterGain value.
+;; node : extern
+(define-foreign js-audio-panner-node-cone-outer-gain
+  #:module "audio"
+  #:name   "panner-node-cone-outer-gain"
+  (-> (extern) (f64)))
+
+;; Set the coneOuterGain value.
+;; node : extern
+;; value : value
+(define-foreign js-audio-panner-node-set-cone-outer-gain!
+  #:module "audio"
+  #:name   "panner-node-set-cone-outer-gain!"
+  (-> (extern value) ()))
+
+;; Read the pan AudioParam.
+;; node : extern
+(define-foreign js-audio-stereo-panner-node-pan
+  #:module "audio"
+  #:name   "stereo-panner-node-pan"
+  (-> (extern) (extern/raw)))

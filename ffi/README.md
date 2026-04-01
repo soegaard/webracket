@@ -46,3 +46,7 @@ Documentation: extras/xtermjs/docs/api/terminal/classes/terminal.md
 websocket.ffi
 -------------
 Bindings for the browser WebSocket API.
+
+console.ffi
+-----------
+Bindings for the browser Console API.

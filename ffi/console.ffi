@@ -1,0 +1,234 @@
+;;;
+;;; Console
+;;;
+
+;; This file declares bindings for the browser `console` API.
+;; Variadic console methods receive a single packed argument list as a value
+;; (typically a vector) and the wrapper layer decides how to normalize labels.
+
+;;;
+;;; Core output
+;;;
+
+;; Write a log message.
+;; args : value
+(define-foreign js-console-log
+  #:module "console"
+  #:name   "log"
+  #:doc    "Write a log message."
+  #:mdn    "console/log_static"
+  (-> (value) ()))
+
+;; Write an informational message.
+;; args : value
+(define-foreign js-console-info
+  #:module "console"
+  #:name   "info"
+  #:doc    "Write an informational message."
+  #:mdn    "console/info_static"
+  (-> (value) ()))
+
+;; Write a warning message.
+;; args : value
+(define-foreign js-console-warn
+  #:module "console"
+  #:name   "warn"
+  #:doc    "Write a warning message."
+  #:mdn    "console/warn_static"
+  (-> (value) ()))
+
+;; Write an error message.
+;; args : value
+(define-foreign js-console-error
+  #:module "console"
+  #:name   "error"
+  #:doc    "Write an error message."
+  #:mdn    "console/error_static"
+  (-> (value) ()))
+
+;; Write a debug message.
+;; args : value
+(define-foreign js-console-debug
+  #:module "console"
+  #:name   "debug"
+  #:doc    "Write a debug message."
+  #:mdn    "console/debug_static"
+  (-> (value) ()))
+
+;; Output an assertion failure message when the condition is false.
+;; args : value
+(define-foreign js-console-assert
+  #:module "console"
+  #:name   "assert"
+  #:doc    "Write an assertion failure message when the condition is false."
+  #:mdn    "console/assert_static"
+  (-> (value) ()))
+
+;;;
+;;; Inspection
+;;;
+
+;; Clear the console.
+;; no arguments
+(define-foreign js-console-clear
+  #:module "console"
+  #:name   "clear"
+  #:doc    "Clear the console."
+  #:mdn    "console/clear_static"
+  (-> () ()))
+
+;; Inspect an object in the console.
+;; args : value
+(define-foreign js-console-dir
+  #:module "console"
+  #:name   "dir"
+  #:doc    "Inspect an object in the console."
+  #:mdn    "console/dir_static"
+  (-> (value) ()))
+
+;; Inspect XML/HTML output in the console.
+;; args : value
+(define-foreign js-console-dirxml
+  #:module "console"
+  #:name   "dirxml"
+  #:doc    "Inspect XML/HTML output in the console."
+  #:mdn    "console/dirxml_static"
+  (-> (value) ()))
+
+;; Display tabular data.
+;; args : value
+(define-foreign js-console-table
+  #:module "console"
+  #:name   "table"
+  #:doc    "Display tabular data."
+  #:mdn    "console/table_static"
+  (-> (value) ()))
+
+;;;
+;;; Groups
+;;;
+
+;; Start a new group.
+;; args : value
+(define-foreign js-console-group
+  #:module "console"
+  #:name   "group"
+  #:doc    "Start a new group."
+  #:mdn    "console/group_static"
+  (-> (value) ()))
+
+;; Start a collapsed group.
+;; args : value
+(define-foreign js-console-group-collapsed
+  #:module "console"
+  #:name   "group-collapsed"
+  #:doc    "Start a collapsed group."
+  #:mdn    "console/groupCollapsed_static"
+  (-> (value) ()))
+
+;; End the current group.
+;; no arguments
+(define-foreign js-console-group-end
+  #:module "console"
+  #:name   "group-end"
+  #:doc    "End the current group."
+  #:mdn    "console/groupEnd_static"
+  (-> () ()))
+
+;;;
+;;; Counters and timers
+;;;
+
+;; Increment and display a counter.
+;; args : value
+(define-foreign js-console-count
+  #:module "console"
+  #:name   "count"
+  #:doc    "Increment and display a counter."
+  #:mdn    "console/count_static"
+  (-> (value) ()))
+
+;; Reset a counter.
+;; args : value
+(define-foreign js-console-count-reset
+  #:module "console"
+  #:name   "count-reset"
+  #:doc    "Reset a counter."
+  #:mdn    "console/countReset_static"
+  (-> (value) ()))
+
+;; Start a timer.
+;; args : value
+(define-foreign js-console-time
+  #:module "console"
+  #:name   "time"
+  #:doc    "Start a timer."
+  #:mdn    "console/time_static"
+  (-> (value) ()))
+
+;; End a timer.
+;; args : value
+(define-foreign js-console-time-end
+  #:module "console"
+  #:name   "time-end"
+  #:doc    "End a timer."
+  #:mdn    "console/timeEnd_static"
+  (-> (value) ()))
+
+;; Log the current timer value.
+;; args : value
+(define-foreign js-console-time-log
+  #:module "console"
+  #:name   "time-log"
+  #:doc    "Log the current timer value."
+  #:mdn    "console/timeLog_static"
+  (-> (value) ()))
+
+;; Add a performance timeline marker.
+;; args : value
+(define-foreign js-console-time-stamp
+  #:module "console"
+  #:name   "time-stamp"
+  #:doc    "Add a performance timeline marker."
+  #:mdn    "console/timeStamp_static"
+  (-> (value) ()))
+
+;;;
+;;; Stack and profiling
+;;;
+
+;; Write a stack trace.
+;; args : value
+(define-foreign js-console-trace
+  #:module "console"
+  #:name   "trace"
+  #:doc    "Write a stack trace."
+  #:mdn    "console/trace_static"
+  (-> (value) ()))
+
+;; Start a profiler session.
+;; args : value
+(define-foreign js-console-profile
+  #:module "console"
+  #:name   "profile"
+  #:doc    "Start a profiler session."
+  #:mdn    "console/profile_static"
+  (-> (value) ()))
+
+;; End a profiler session.
+;; args : value
+(define-foreign js-console-profile-end
+  #:module "console"
+  #:name   "profile-end"
+  #:doc    "End a profiler session."
+  #:mdn    "console/profileEnd_static"
+  (-> (value) ()))
+
+;; Deprecated alias for `console-error`.
+;; args : value
+(define-foreign js-console-exception
+  #:module "console"
+  #:name   "exception"
+  #:doc    "Deprecated alias for console.error."
+  #:mdn    "console/exception_static"
+  (-> (value) ()))
