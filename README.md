@@ -22,6 +22,18 @@ The ideal outcome is that the experience can be used to extend the normal Racket
 with a WebAssembly backend. In the meantime, we can have fun writing Racket programs
 that run in the browser.
 
+## Running checks
+
+If you want the DOM browser wrapper suite, run:
+
+    make dom-headless
+
+For the broader browser smoke pipeline, see:
+
+    make smoke-list
+    make smoke-headless-lite
+    make smoke-ci
+
 
 # Is WebRacket for you?
 

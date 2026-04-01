@@ -80,6 +80,8 @@ smoke-list:
 	@cd $(SMOKE_DIR) && ./headless.sh list
 	@echo "Direct style script:"
 	@echo "./check-style-headless.sh"
+	@echo "DOM browser suite:"
+	@echo "make dom-headless"
 	@echo
 	@echo "Canonical Make targets:"
 	@echo "smoke-ci"
@@ -100,6 +102,7 @@ smoke-list:
 	@echo "smoke-solar-parity"
 	@echo "smoke-solar-sections"
 	@echo "smoke-solar-sections-gate"
+	@echo "dom-headless"
 
 smoke-commands:
 	cd $(SMOKE_DIR) && ./gen-commands.sh
