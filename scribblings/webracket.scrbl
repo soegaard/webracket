@@ -155,6 +155,16 @@ Currently available libraries include:
 @itemlist[
   @item{@racket[(require-lib define)]}
   @item{@racket[(require-lib threading)]}
+  @item{@racket[(include-lib dom)]}
+  @item{@racket[(include-lib window)]}
+  @item{@racket[(include-lib performance)]}
+  @item{@racket[(include-lib document)]}
+  @item{@racket[(include-lib event)]}
+  @item{@racket[(include-lib domrect)]}
+  @item{@racket[(include-lib element)]}
+  @item{@racket[(include-lib canvas)]}
+  @item{@racket[(include-lib media)]}
+  @item{@racket[(include-lib image)]}
   @item{@racket[(include-lib web-easy)]}
   @item{@racket[(include-lib audio)]}
   @item{@racket[(include-lib console)]}
@@ -171,6 +181,46 @@ See their respective documentation pages.
 @;-------------------------------------------------------------------
 
 @include-section["threading.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-dom.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-window.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-performance.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-document.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-event.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-domrect.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-element.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-canvas.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-media.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-image.scrbl"]
 
 @;-------------------------------------------------------------------
 

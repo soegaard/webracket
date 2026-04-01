@@ -5,6 +5,7 @@
 ;; Docs-only fake bindings for the split DOM wrapper Scribble pages.
 
 (provide
+  dom
   window
   window-self
   window-document
@@ -194,6 +195,7 @@
   image-set-cross-origin!
   (for-label (all-defined-out)))
 
+(define dom any/c)
 (define window any/c)
 (define window-self any/c)
 (define window-document any/c)
