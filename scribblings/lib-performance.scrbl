@@ -1,6 +1,7 @@
 #lang scribble/manual
 
 @(require scribble/manual
+          (for-label (only-in racket/base struct))
           "webracket-scribble-utils.rkt"
           (for-label (lib "scribblings/dom-family-labels.rkt" "webracket")))
 
