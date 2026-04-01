@@ -2,8 +2,11 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
 PORT="${DOM_HEADLESS_PORT:-9991}"
 BASE_URL="http://127.0.0.1:${PORT}"
+LOCAL_NODE_MODULES="${DOM_HEADLESS_NODE_MODULES:-$ROOT_DIR/.local-tools/node_modules}"
+CHROME_EXECUTABLE="${DOM_HEADLESS_EXECUTABLE:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"
 
 compile_test() {
   local file="$1"
@@ -41,5 +44,7 @@ trap 'kill "$SERVER_PID" >/dev/null 2>&1 || true' EXIT
 sleep 1
 
 SMOKE_BASE_URL="$BASE_URL" \
+SMOKE_NODE_MODULES="$LOCAL_NODE_MODULES" \
+SMOKE_CHROME_EXECUTABLE="$CHROME_EXECUTABLE" \
 SMOKE_TESTS="test-dom-window-document.html,test-dom-canvas-media-image.html,test-dom-image.html,test-dom-event.html" \
 node "$SCRIPT_DIR/run-dom-headless.mjs"

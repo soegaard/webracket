@@ -9,6 +9,7 @@ async function main() {
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
+  const chromeExecutable = process.env.SMOKE_CHROME_EXECUTABLE || "";
 
   if (tests.length === 0) {
     console.error("SMOKE_TESTS is required.");
@@ -41,7 +42,10 @@ async function main() {
   }
 
   const { chromium } = playwrightPkg;
-  const browser = await chromium.launch({ headless: true });
+  const browser = await chromium.launch({
+    headless: true,
+    executablePath: chromeExecutable || undefined,
+  });
 
   try {
     for (const testPage of tests) {
