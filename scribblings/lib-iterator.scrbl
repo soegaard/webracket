@@ -19,7 +19,9 @@ that wants to hold on to a browser iterator without dealing with the raw
 constructor directly.
 
 Use this library when you want to adapt an existing iterator or iterable into
-an @tt{Iterator} object that can be passed around in WebRacket code.
+an @tt{Iterator} object that can be passed around in WebRacket code. Use
+@racket[iterator-next] when you want to ask the iterator for its next result
+in a Rackety way.
 
 @section{Iterator Quick Start}
 
@@ -40,7 +42,7 @@ looking at the first step.
 
 (code:comment "Ask the iterator for its first step.")
 (define first-step
-  (js-send iter "next" (vector)))
+  (iterator-next iter))
 ]
 
 The quick start shows the main idea: take an existing iterator or iterable,
@@ -68,7 +70,7 @@ result object.
 
 (code:comment "Pull the first step from the iterator.")
 (define step
-  (js-send iter "next" (vector)))
+  (iterator-next iter))
 
 (code:comment "Inspect the result object returned by next().")
 (define done?
@@ -91,4 +93,9 @@ Returns the JavaScript @tt{Iterator} constructor/global object.
 @(mdn-bar "Iterator.from()" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/from")
 Returns a JavaScript iterator produced from @racket[object]. The value may be
 an iterator or an iterable.
+}
+
+@defproc[(iterator-next [iter external/raw]) external/raw]{
+@(mdn-bar "Iterator.prototype.next()" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/next")
+Returns the next iteration result from @racket[iter].
 }

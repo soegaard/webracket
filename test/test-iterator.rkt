@@ -23,7 +23,7 @@
          (define source (js-eval "[1, 2, 3].values()"))
          (define iter (iterator-from source))
          (check-true (external? iter) "iterator-from returns external")
-         (define first-step (js-send/value iter "next" (vector)))
+         (define first-step (iterator-next iter))
          (check-equal (js-ref first-step "done") #f "iterator next done")
          (check-equal (js-ref first-step "value") 1 "iterator next value")
          #t)))
