@@ -371,6 +371,163 @@ const websocket_impl = {
   'extensions': (ws => ws.extensions)
 };
 
+const audio_impl = {
+  'context-new': (() => {
+    const ctor = globalThis.AudioContext;
+    if (typeof ctor === 'undefined') {
+      throw new Error('AudioContext not available in this environment: context-new');
+    }
+    return new ctor();
+  }),
+  'context-close': (ctx => ctx.close()),
+  'context-resume': (ctx => ctx.resume()),
+  'context-suspend': (ctx => ctx.suspend()),
+  'context-state': (ctx => ctx.state),
+  'context-current-time': (ctx => ctx.currentTime),
+  'context-sample-rate': (ctx => ctx.sampleRate),
+  'context-base-latency': (ctx => ctx.baseLatency),
+  'context-output-latency': (ctx => ctx.outputLatency),
+  'context-destination': (ctx => ctx.destination),
+  'context-listener': (ctx => ctx.listener),
+  'context-create-gain': (ctx => ctx.createGain()),
+  'context-create-oscillator': (ctx => ctx.createOscillator()),
+  'context-create-buffer-source': (ctx => ctx.createBufferSource()),
+  'context-create-analyser': (ctx => ctx.createAnalyser()),
+  'context-create-biquad-filter': (ctx => ctx.createBiquadFilter()),
+  'context-create-constant-source': (ctx => ctx.createConstantSource()),
+  'context-create-channel-splitter': ((ctx, channels) => {
+    const count = from_fasl(channels);
+    return count === undefined ? ctx.createChannelSplitter() : ctx.createChannelSplitter(count);
+  }),
+  'context-create-channel-merger': ((ctx, channels) => {
+    const count = from_fasl(channels);
+    return count === undefined ? ctx.createChannelMerger() : ctx.createChannelMerger(count);
+  }),
+  'context-create-dynamics-compressor': (ctx => ctx.createDynamicsCompressor()),
+  'context-create-panner': (ctx => ctx.createPanner()),
+  'context-create-stereo-panner': (ctx => ctx.createStereoPanner()),
+  'context-create-buffer': ((ctx, channels, length, sampleRate) =>
+    ctx.createBuffer(from_fasl(channels), from_fasl(length), from_fasl(sampleRate))),
+  'context-decode-audio-data': ((ctx, data) => ctx.decodeAudioData(from_fasl(data))),
+  'node-context': (node => node.context),
+  'node-connect': ((node, destination, outputIndex, inputIndex) => {
+    const dest = from_fasl(destination);
+    const out = from_fasl(outputIndex);
+    const input = from_fasl(inputIndex);
+    if (out === undefined && input === undefined) {
+      return node.connect(dest);
+    } else if (input === undefined) {
+      return node.connect(dest, out);
+    } else {
+      return node.connect(dest, out, input);
+    }
+  }),
+  'node-disconnect': ((node, outputIndex, inputIndex) => {
+    const out = from_fasl(outputIndex);
+    const input = from_fasl(inputIndex);
+    if (out === undefined && input === undefined) {
+      node.disconnect();
+    } else if (input === undefined) {
+      node.disconnect(out);
+    } else {
+      node.disconnect(out, input);
+    }
+  }),
+  'param-value': (param => param.value),
+  'param-set-value!': ((param, value) => { param.value = from_fasl(value); }),
+  'param-set-value-at-time!': ((param, value, time) =>
+    param.setValueAtTime(from_fasl(value), from_fasl(time))),
+  'param-linear-ramp-to-value-at-time!': ((param, value, time) =>
+    param.linearRampToValueAtTime(from_fasl(value), from_fasl(time))),
+  'param-exponential-ramp-to-value-at-time!': ((param, value, time) =>
+    param.exponentialRampToValueAtTime(from_fasl(value), from_fasl(time))),
+  'param-set-target-at-time!': ((param, value, time, timeConstant) =>
+    param.setTargetAtTime(from_fasl(value), from_fasl(time), from_fasl(timeConstant))),
+  'param-set-value-curve-at-time!': ((param, values, startTime, duration) =>
+    param.setValueCurveAtTime(from_fasl(values), from_fasl(startTime), from_fasl(duration))),
+  'param-cancel-scheduled-values!': ((param, time) =>
+    param.cancelScheduledValues(from_fasl(time))),
+  'param-cancel-and-hold-at-time!': ((param, time) =>
+    param.cancelAndHoldAtTime(from_fasl(time))),
+  'buffer-length': (buffer => buffer.length),
+  'buffer-duration': (buffer => buffer.duration),
+  'buffer-sample-rate': (buffer => buffer.sampleRate),
+  'buffer-number-of-channels': (buffer => buffer.numberOfChannels),
+  'buffer-get-channel-data': ((buffer, channel) => buffer.getChannelData(from_fasl(channel))),
+  'gain-node-gain': (node => node.gain),
+  'oscillator-node-type': (node => node.type),
+  'oscillator-node-set-type!': ((node, type) => { node.type = from_fasl(type); }),
+  'oscillator-node-frequency': (node => node.frequency),
+  'oscillator-node-detune': (node => node.detune),
+  'oscillator-node-start!': ((node, when) => node.start(from_fasl(when))),
+  'oscillator-node-stop!': ((node, when) => node.stop(from_fasl(when))),
+  'oscillator-node-set-periodic-wave!': ((node, wave) => node.setPeriodicWave(from_fasl(wave))),
+  'audio-buffer-source-node-buffer': (node => node.buffer),
+  'audio-buffer-source-node-set-buffer!': ((node, buffer) => { node.buffer = from_fasl(buffer); }),
+  'audio-buffer-source-node-playback-rate': (node => node.playbackRate),
+  'audio-buffer-source-node-detune': (node => node.detune),
+  'audio-buffer-source-node-loop': (node => node.loop),
+  'audio-buffer-source-node-set-loop!': ((node, flag) => { node.loop = from_fasl(flag); }),
+  'audio-buffer-source-node-loop-start': (node => node.loopStart),
+  'audio-buffer-source-node-set-loop-start!': ((node, value) => { node.loopStart = from_fasl(value); }),
+  'audio-buffer-source-node-loop-end': (node => node.loopEnd),
+  'audio-buffer-source-node-set-loop-end!': ((node, value) => { node.loopEnd = from_fasl(value); }),
+  'audio-buffer-source-node-start!': ((node, when, offset, duration) =>
+    node.start(from_fasl(when), from_fasl(offset), from_fasl(duration))),
+  'audio-buffer-source-node-stop!': ((node, when) => node.stop(from_fasl(when))),
+  'analyser-node-fft-size': (node => node.fftSize),
+  'analyser-node-set-fft-size!': ((node, size) => { node.fftSize = from_fasl(size); }),
+  'analyser-node-frequency-bin-count': (node => node.frequencyBinCount),
+  'analyser-node-min-decibels': (node => node.minDecibels),
+  'analyser-node-set-min-decibels!': ((node, value) => { node.minDecibels = from_fasl(value); }),
+  'analyser-node-max-decibels': (node => node.maxDecibels),
+  'analyser-node-set-max-decibels!': ((node, value) => { node.maxDecibels = from_fasl(value); }),
+  'analyser-node-smoothing-time-constant': (node => node.smoothingTimeConstant),
+  'analyser-node-set-smoothing-time-constant!': ((node, value) => { node.smoothingTimeConstant = from_fasl(value); }),
+  'analyser-node-get-byte-frequency-data!': ((node, data) => node.getByteFrequencyData(from_fasl(data))),
+  'analyser-node-get-byte-time-domain-data!': ((node, data) => node.getByteTimeDomainData(from_fasl(data))),
+  'analyser-node-get-float-frequency-data!': ((node, data) => node.getFloatFrequencyData(from_fasl(data))),
+  'analyser-node-get-float-time-domain-data!': ((node, data) => node.getFloatTimeDomainData(from_fasl(data))),
+  'biquad-filter-node-type': (node => node.type),
+  'biquad-filter-node-set-type!': ((node, type) => { node.type = from_fasl(type); }),
+  'biquad-filter-node-frequency': (node => node.frequency),
+  'biquad-filter-node-detune': (node => node.detune),
+  'biquad-filter-node-q': (node => node.q),
+  'biquad-filter-node-gain': (node => node.gain),
+  'constant-source-node-offset': (node => node.offset),
+  'constant-source-node-start!': ((node, when) => node.start(from_fasl(when))),
+  'constant-source-node-stop!': ((node, when) => node.stop(from_fasl(when))),
+  'dynamics-compressor-node-threshold': (node => node.threshold),
+  'dynamics-compressor-node-knee': (node => node.knee),
+  'dynamics-compressor-node-ratio': (node => node.ratio),
+  'dynamics-compressor-node-reduction': (node => node.reduction),
+  'dynamics-compressor-node-attack': (node => node.attack),
+  'dynamics-compressor-node-release': (node => node.release),
+  'panner-node-panning-model': (node => node.panningModel),
+  'panner-node-set-panning-model!': ((node, value) => { node.panningModel = from_fasl(value); }),
+  'panner-node-distance-model': (node => node.distanceModel),
+  'panner-node-set-distance-model!': ((node, value) => { node.distanceModel = from_fasl(value); }),
+  'panner-node-position-x': (node => node.positionX),
+  'panner-node-position-y': (node => node.positionY),
+  'panner-node-position-z': (node => node.positionZ),
+  'panner-node-orientation-x': (node => node.orientationX),
+  'panner-node-orientation-y': (node => node.orientationY),
+  'panner-node-orientation-z': (node => node.orientationZ),
+  'panner-node-ref-distance': (node => node.refDistance),
+  'panner-node-set-ref-distance!': ((node, value) => { node.refDistance = from_fasl(value); }),
+  'panner-node-max-distance': (node => node.maxDistance),
+  'panner-node-set-max-distance!': ((node, value) => { node.maxDistance = from_fasl(value); }),
+  'panner-node-rolloff-factor': (node => node.rolloffFactor),
+  'panner-node-set-rolloff-factor!': ((node, value) => { node.rolloffFactor = from_fasl(value); }),
+  'panner-node-cone-inner-angle': (node => node.coneInnerAngle),
+  'panner-node-set-cone-inner-angle!': ((node, value) => { node.coneInnerAngle = from_fasl(value); }),
+  'panner-node-cone-outer-angle': (node => node.coneOuterAngle),
+  'panner-node-set-cone-outer-angle!': ((node, value) => { node.coneOuterAngle = from_fasl(value); }),
+  'panner-node-cone-outer-gain': (node => node.coneOuterGain),
+  'panner-node-set-cone-outer-gain!': ((node, value) => { node.coneOuterGain = from_fasl(value); }),
+  'stereo-panner-node-pan': (node => node.pan)
+};
+
 function is_pair(v) {
     return v && typeof v === 'object' && v.tag === 'pair'
 }
@@ -521,6 +678,12 @@ const websocket = new Proxy({}, {
       return () => { throw new Error(`WebSocket not available in this environment: ${String(prop)}`); };
     }
     return websocket_impl[prop];
+  }
+});
+
+const audio = new Proxy({}, {
+  get(_target, prop) {
+    return audio_impl[prop];
   }
 });
 
@@ -1563,6 +1726,7 @@ var imports = {
         'now':                 (() => performance.now())
     } : new Proxy({}, { get() { throw new Error('DOM not available in this environment'); } }),
     'websocket': websocket,
+    'audio': audio,
     // Document
     'document': hasDOM ? {
         'document':                 (()                               => document),

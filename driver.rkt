@@ -78,13 +78,18 @@
 ;;;
 
 (struct compilation-timings
-  (driver-prelude
+  (ffi-setup
+   read-source
+   add-stdlib
+   preflight
    compile
    write-wat
    assemble
    write-map
    write-host
-   compile-total)
+   compile-total
+   run
+   driver-total)
   #:transparent)
 
 (define (drive-compilation
@@ -105,8 +110,10 @@
          #:stdlib?           stdlib?)     ; include standard library 
   (define exit-code 0)
   (define compile-timings #f)
+  (define t-driver-start (now-ms))
   
   ; 0. Handle ffi-files
+  (define t-ffi-setup-start (now-ms))
   (define resolved-ffi-files
     (resolve-ffi-files! 'drive-compilation ffi-files))
 
@@ -128,19 +135,23 @@
   (current-ffi-foreigns    ffi-foreigns)
   (current-ffi-imports-wat ffi-imports)
   (current-ffi-funcs-wat   ffi-funcs)
+  (define t-ffi-setup-end (now-ms))
   
   ; 1. Check that `filename` exists and is a source file.
   (ensure-source-file! 'drive-compilation filename)
 
   ; 2. Read the top-level forms from `filename`.
+  (define t-read-source-start (now-ms))
   (define stx
     (with-handlers ([exn:fail? (λ (e)
                                  (error 'drive-compilation
                                         (~a "read failed: " (exn-message e))))])
       (read-top-level-from-file filename)))
+  (define t-read-source-end (now-ms))
 
   ; 3. Prepend standard library (if enabled)
   ;     "stdlib-for-browser.rkt" includes "stdlib.rkt" and adds `sxml->dom`
+  (define t-add-stdlib-start (now-ms))
   (define stx-with-stdlib
     (cond
       [(and stdlib? browser?)
@@ -154,8 +165,9 @@
            (include/reader "stdlib/stdlib.rkt" read-syntax/skip-first-line)
            #,stx)] ; stx is a begin form      
       [else stx]))
+  (define t-add-stdlib-end (now-ms))
 
-  (define t0 (now-ms))
+  (define t-preflight-start (now-ms))
 
   ; 4. Preflight checks
 
@@ -193,6 +205,7 @@
   
   ; Preflight: ensure wasm-tools exists and can run.
   (check-wasm-tools! 'drive-compilation)
+  (define t-preflight-end (now-ms))
 
   ; 5. Compile the syntax object.
   (label-map-include-form? label-map-forms?)
@@ -243,22 +256,52 @@
   (ensure-generated-file-exists! 'drive-compilation out-host "host output file")
   (define t-write-host-end (now-ms))
 
+  ; 9. Optionally run the program via Node.js.
+  (define t-run-ms 0.0)
+  (when (and node? run-after?)
+    (define t-run-start (now-ms))
+    (ensure-generated-file-exists! 'drive-compilation out-wasm "Wasm bytecode file")
+    (define runtime-js out-host)
+    (set! exit-code
+          (run #f #:wat out-wat #:wasm out-wasm #:runtime.js runtime-js))
+    (set! t-run-ms (- (now-ms) t-run-start)))
   (when timings?
-    (define compile-ms    (- t-compile-end t-compile-start))
-    (define write-wat-ms  (- t-write-wat-end t-write-wat-start))
-    (define assemble-ms   (- t-assemble-end t-assemble-start))
-    (define write-map-ms  (- t-write-map-end t-write-map-start))
-    (define write-host-ms (- t-write-host-end t-write-host-start))
-    (define driver-prelude-ms (- t-compile-start t0))
-    (define total-ms      (- t-write-host-end t0))
+    (define ffi-setup-ms   (- t-ffi-setup-end t-ffi-setup-start))
+    (define read-source-ms (- t-read-source-end t-read-source-start))
+    (define add-stdlib-ms  (- t-add-stdlib-end t-add-stdlib-start))
+    (define preflight-ms   (- t-preflight-end t-preflight-start))
+    (define compile-ms     (- t-compile-end t-compile-start))
+    (define write-wat-ms   (- t-write-wat-end t-write-wat-start))
+    (define assemble-ms    (- t-assemble-end t-assemble-start))
+    (define write-map-ms   (- t-write-map-end t-write-map-start))
+    (define write-host-ms  (- t-write-host-end t-write-host-start))
+    (define compile-total-ms (- t-write-host-end t-compile-start))
+    (define driver-total-ms (+ (- t-write-host-end t-driver-start)
+                               t-run-ms))
     (set! compile-timings
-          (compilation-timings driver-prelude-ms
+          (compilation-timings ffi-setup-ms
+                               read-source-ms
+                               add-stdlib-ms
+                               preflight-ms
                                compile-ms
                                write-wat-ms
                                assemble-ms
                                write-map-ms
                                write-host-ms
-                               total-ms))
+                               compile-total-ms
+                               t-run-ms
+                               driver-total-ms))
+    (define driver-rows
+      (append
+       (list (list "ffi-setup" ffi-setup-ms)
+             (list "read-source" read-source-ms)
+             (list "add-stdlib" add-stdlib-ms)
+             (list "preflight" preflight-ms)
+             (list "compile-pipeline" compile-total-ms))
+       (if (zero? t-run-ms)
+           '()
+           (list (list "run" t-run-ms)))
+       (list (list "total" driver-total-ms))))
     (define overall-table
       (format-timing-table
        (list (list "compile" compile-ms)
@@ -266,7 +309,9 @@
              (list "assemble" assemble-ms)
              (list "write-map" write-map-ms)
              (list "write-host" write-host-ms)
-             (list "total" total-ms))))
+             (list "total" compile-total-ms))))
+    (displayln "=== Driver Timings ===")
+    (displayln (format-timing-table driver-rows))
     (displayln "=== Compile Pipeline ===")
     (displayln overall-table)
     (define pass-table (current-pass-timing-table))
@@ -277,13 +322,6 @@
     (when gen-table
       (displayln "=== Generate-Code Phases ===")
       (displayln gen-table)))
-
-  ; 9. Optionally run the program via Node.js.
-  (when (and node? run-after?)
-    (ensure-generated-file-exists! 'drive-compilation out-wasm "Wasm bytecode file")
-    (define runtime-js out-host)
-    (set! exit-code
-          (run #f #:wat out-wat #:wasm out-wasm #:runtime.js runtime-js)))
   (values exit-code compile-timings))
 
 ;;;
