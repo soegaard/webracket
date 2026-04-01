@@ -19,7 +19,11 @@
                            (span (@ (class "pill")) "FFI"))
                       (h1 (@ (class "hero-title")) "Documentation")
                       (p (@ (class "hero-lead"))
-                         "Reference notes for WebRacket’s compiler and runtime.")))
+                         "Reference notes for WebRacket’s compiler and runtime.")
+                      (p (@ (class "hero-actions"))
+                         (a (@ (class "doc-cta doc-cta--primary")
+                               (href "webracket/index.html"))
+                            "Open the Scribble manual"))))
         ,(section-block
           "Documentation Topics"
           "Pick a topic."
@@ -441,6 +445,8 @@
 (define (doc-ffi-jsxgraph-page) (doc-ffi-page "ffi-jsxgraph"))
 (define (doc-ffi-xtermjs-page)  (doc-ffi-page "ffi-xtermjs"))
 (define (doc-ffi-websocket-page) (doc-ffi-page "ffi-websocket"))
+(define (doc-ffi-audio-page) (doc-ffi-page "ffi-audio"))
+(define (doc-ffi-console-page) (doc-ffi-page "ffi-console"))
 
 ;;;
 ;;; Extended Example: JSXGraph Board + Points
