@@ -68,7 +68,7 @@ result object.
 
 (code:comment "Pull the first step from the iterator.")
 (define step
-  (js-send/value iter "next" (vector)))
+  (js-send iter "next" (vector)))
 
 (code:comment "Inspect the result object returned by next().")
 (define done?
