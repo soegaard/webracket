@@ -14,9 +14,13 @@ The @racket[domrect] library provides checked accessors for DOMRect
 geometry values.
 
 @defproc[(dom-rect-left [rect external?]) real?]{
+@(mdn-bar "DOMRect: left property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/DOMRect/left")
 Returns the left coordinate.
 }
 
 @defproc[(dom-rect-top [rect external?]) real?]{
+@(mdn-bar "DOMRect: top property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/DOMRect/top")
 Returns the top coordinate.
 }

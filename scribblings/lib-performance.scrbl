@@ -14,6 +14,8 @@ The @racket[performance] library exposes a checked high-resolution
 timestamp helper for the browser Performance API.
 
 @defproc[(performance-now) real?]{
+@(mdn-bar "Performance: now() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Performance/now")
 Returns a monotonic browser timestamp suitable for measuring elapsed
 time.
 }
