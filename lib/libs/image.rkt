@@ -22,6 +22,8 @@
 ;; image-set-alt! : external? string? -> void?
 ;;   Set the alt text.
 (define (image-set-alt! img alt)
+  (unless (string? alt)
+    (raise-argument-error 'image-set-alt! "string?" alt))
   (js-set-image-alt! img alt)
   (void))
 
@@ -77,12 +79,12 @@
 ;; image-loading : external? -> string?
 ;;   Read the loading strategy.
 (define (image-loading img)
-  (js-image-loading img))
+  (js-ref img "loading"))
 
 ;; image-set-loading! : external? string? -> void?
 ;;   Set the loading strategy.
 (define (image-set-loading! img loading)
-  (js-set-image-loading! img loading)
+  (js-set! img "loading" loading)
   (void))
 
 ;; image-complete? : external? -> boolean?
@@ -93,7 +95,7 @@
 ;; image-cross-origin : external? -> any/c
 ;;   Read the CORS mode.
 (define (image-cross-origin img)
-  (js-image-cross-origin img))
+  (js-ref img "crossOrigin"))
 
 ;; image-set-cross-origin! : external? any/c -> void?
 ;;   Set the CORS mode.

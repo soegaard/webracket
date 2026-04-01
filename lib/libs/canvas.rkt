@@ -79,10 +79,10 @@
   (js-set-canvas2d-direction! ctx direction)
   (void))
 
-;; canvas-2d-fill-style : external? -> external/raw
+;; canvas-2d-fill-style : external? -> string?
 ;;   Read the fill style.
 (define (canvas-2d-fill-style ctx)
-  (js-canvas2d-fill-style ctx))
+  (js-ref ctx "fillStyle"))
 
 ;; canvas-2d-set-fill-style! : external? any/c -> void?
 ;;   Set the fill style.
@@ -90,10 +90,10 @@
   (js-set-canvas2d-fill-style! ctx style)
   (void))
 
-;; canvas-2d-stroke-style : external? -> external/raw
+;; canvas-2d-stroke-style : external? -> string?
 ;;   Read the stroke style.
 (define (canvas-2d-stroke-style ctx)
-  (js-canvas2d-stroke-style ctx))
+  (js-ref ctx "strokeStyle"))
 
 ;; canvas-2d-set-stroke-style! : external? any/c -> void?
 ;;   Set the stroke style.

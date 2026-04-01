@@ -18,13 +18,19 @@
 ;; set-attribute! : external? string? string? -> void?
 ;;   Set an element attribute.
 (define (set-attribute! element name value)
+  (unless (string? name)
+    (raise-argument-error 'set-attribute! "string?" name))
+  (unless (string? value)
+    (raise-argument-error 'set-attribute! "string?" value))
   (js-set-attribute! element name value)
   (void))
 
 ;; get-attribute : external? string? -> (or/c #f string?)
 ;;   Read an element attribute.
 (define (get-attribute element name)
-  (js-get-attribute element name))
+  (unless (string? name)
+    (raise-argument-error 'get-attribute "string?" name))
+  (js-send/value element "getAttribute" (vector name)))
 
 ;; get-bounding-client-rect : external? -> external/raw
 ;;   Read the element bounding box.
@@ -102,10 +108,20 @@
 ;; set-attribute-ns! : external? string? string? string? -> void?
 ;;   Set a namespaced attribute.
 (define (set-attribute-ns! element ns name value)
+  (unless (string? ns)
+    (raise-argument-error 'set-attribute-ns! "string?" ns))
+  (unless (string? name)
+    (raise-argument-error 'set-attribute-ns! "string?" name))
+  (unless (string? value)
+    (raise-argument-error 'set-attribute-ns! "string?" value))
   (js-set-attribute-ns! element ns name value)
   (void))
 
-;; toggle-attribute! : external? string? [any/c] -> boolean?
-;;   Toggle an attribute and report whether it is now present.
-(define (toggle-attribute! element name [force #f])
-  (element-i32->boolean (js-toggle-attribute! element name (if force 1 0))))
+;; toggle-attribute! : external? string? [boolean?] -> boolean?
+;;   Toggle an attribute, or force a specific state when provided.
+(define (toggle-attribute! element name [force (void)])
+  (unless (string? name)
+    (raise-argument-error 'toggle-attribute! "string?" name))
+  (if (void? force)
+      (js-send/value element "toggleAttribute" (vector name))
+      (element-i32->boolean (js-toggle-attribute! element name (if force 1 0)))))

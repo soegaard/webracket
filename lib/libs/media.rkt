@@ -116,6 +116,8 @@
 ;; media-set-src! : external? string? -> void?
 ;;   Set the media source URL.
 (define (media-set-src! media src)
+  (unless (string? src)
+    (raise-argument-error 'media-set-src! "string?" src))
   (js-set-media-src! media src)
   (void))
 
