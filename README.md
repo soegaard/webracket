@@ -105,6 +105,9 @@ with the help of an LLM.
 
 Included bindings currently cover the Math, DOM, Canvas, MathJax, XTermJS, and JSXGraph.
 
+For a worked example of how to add a browser-backed API, see
+[`DESIGN-browser-api-guide.md`](DESIGN-browser-api-guide.md).
+
 # The Road Ahead
 
 After the initial release, the focus is to fix bugs found by early adopters.
@@ -445,4 +448,3 @@ The `threading` library has an ISC License.
 To avoid a nameclash, ~> is renamed ~~> in WebRacket.
 
 https://docs.racket-lang.org/threading/index.html
-
