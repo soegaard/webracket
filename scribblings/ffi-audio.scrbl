@@ -12,7 +12,7 @@ This page documents the low-level @racket[js-audio-*] bindings from
 @tt{ffi/audio.ffi}. The higher-level checked wrapper library is
 documented separately in the @racketid[audio] library chapter.
 
-@subsection{Low-Level FFI Surface}
+@subsection{Low-Level FFI Surface: Audio}
 
 These bindings follow the browser API directly. They are useful when you
 want to work with the JavaScript object model as-is, or when you are
