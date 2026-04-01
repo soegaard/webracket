@@ -40,7 +40,7 @@ looking at the first step.
 
 (code:comment "Ask the iterator for its first step.")
 (define first-step
-  (js-send/value iter "next" (vector)))
+  (js-send iter "next" (vector)))
 ]
 
 The quick start shows the main idea: take an existing iterator or iterable,
