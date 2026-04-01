@@ -20,6 +20,8 @@ DOM wrapper tests
 The DOM split now has a small raw smoke test and a few family-focused wrapper tests:
 
 - `test-dom.rkt` for the raw `ffi/dom.ffi` aggregate
+- `include-lib dom` for the Rackety DOM facade that reexports the family wrappers
+- `test-dom-facade.rkt` for the umbrella wrapper smoke test
 - `test-dom-window-document.rkt` for `window`, `document`, and `element`
 - `test-dom-canvas-media-image.rkt` for `canvas`, `domrect`, and `media`
 - `test-dom-image.rkt` for `image`
@@ -31,6 +33,8 @@ other browser-facing tests. For example:
 `racket -l errortrace -t ../webracket.rkt -- --ffi ../ffi/standard.ffi --ffi ../ffi/dom.ffi -r test-dom-window-document.rkt`
 
 `racket -l errortrace -t ../webracket.rkt -- --ffi ../ffi/standard.ffi --ffi ../ffi/dom.ffi -r test-dom-image.rkt`
+
+`racket -l errortrace -t ../webracket.rkt -- --ffi ../ffi/standard.ffi --ffi ../ffi/dom.ffi -r test-dom-facade.rkt`
 
 To run the whole DOM browser suite from `test/`, use:
 
