@@ -5,7 +5,8 @@
          scribble-tools
          racket/string
          "../structs.rkt"
-         "ffi-doc.rkt")
+         "ffi-doc.rkt"
+         "webracket-scribble-utils.rkt")
 
 (provide dom-doc-specs
          render-dom-defproc
@@ -109,17 +110,24 @@
 (define (console-mdn-link name)
   (define path (ffi-doc-mdn-path/default console-ffi-index name))
   (mdn path (mdn-label path)))
+(define (console-mdn-bar name)
+  (define path (ffi-doc-mdn-path/default console-ffi-index name))
+  (define leaf (last (string-split path "/")))
+  (define method-name
+    (regexp-replace #rx"_static$" leaf ""))
+  (mdn-bar (format "Console: ~a() method" method-name)
+           (string-append "https://developer.mozilla.org/en-US/docs/Web/API/" path)))
 (define (render-console-defproc spec)
   (define name   (list-ref spec 0))
   (define args   (list-ref spec 1))
   (define result (list-ref spec 2))
   (eval
    `(defproc* [[(,name ,@args) ,result]]
+      (console-mdn-bar ',name)
       (para (console-desc ',name))
       (if (console-return-line ',name)
           (para (console-return-line ',name))
           (list))
-      (para (list (bold "MDN:") " " (console-mdn-link ',name)))
       (para (tt (console-sig ',name))))
    scribble-ns))
 

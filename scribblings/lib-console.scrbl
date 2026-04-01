@@ -9,6 +9,9 @@
 
 @(how-to-require include-lib console (lib "libs/console.rkt"))
 @(compile-option-bar "Compile option: " "--ffi console")
+@(define (console-mdn-bar label path)
+   (mdn-bar label
+            (string-append "https://developer.mozilla.org/en-US/docs/Web/API/" path)))
 
 The browser console is a developer tool built into every browser. It
 shows messages, warnings, errors, and debug output from a web page.
@@ -73,6 +76,7 @@ Developer Tools and select the @tt{Console} tab.
 @subsection{Core Logging}
 
 @defproc[(console-log [v any/c] ...) void?]{
+@(console-mdn-bar "Console: log() method" "console/log_static")
 Writes a log message to the browser console.
 
 @racketblock[
@@ -82,6 +86,7 @@ Writes a log message to the browser console.
 }
 
 @defproc[(console-info [v any/c] ...) void?]{
+@(console-mdn-bar "Console: info() method" "console/info_static")
 Writes an informational message to the browser console.
 
 @racketblock[
@@ -91,10 +96,12 @@ Writes an informational message to the browser console.
 }
 
 @defproc[(console-warn [v any/c] ...) void?]{
+@(console-mdn-bar "Console: warn() method" "console/warn_static")
 Writes a warning message to the browser console.
 }
 
 @defproc[(console-error [v any/c] ...) void?]{
+@(console-mdn-bar "Console: error() method" "console/error_static")
 Writes an error message to the browser console.
 
 @racketblock[
@@ -104,10 +111,12 @@ Writes an error message to the browser console.
 }
 
 @defproc[(console-debug [v any/c] ...) void?]{
+@(console-mdn-bar "Console: debug() method" "console/debug_static")
 Writes a debug message to the browser console.
 }
 
 @defproc[(console-assert [condition any/c] [v any/c] ...) void?]{
+@(console-mdn-bar "Console: assert() method" "console/assert_static")
 Writes an assertion failure message when @racket[condition] is false.
 
 @racketblock[
@@ -121,10 +130,12 @@ Writes an assertion failure message when @racket[condition] is false.
 @subsection{Inspection}
 
 @defproc[(console-clear) void?]{
+@(console-mdn-bar "Console: clear() method" "console/clear_static")
 Clears the console output.
 }
 
 @defproc[(console-dir [v any/c] [options any/c #f]) void?]{
+@(console-mdn-bar "Console: dir() method" "console/dir_static")
 Inspects a value in the console.
 
 @racketblock[
@@ -134,6 +145,7 @@ Inspects a value in the console.
 }
 
 @defproc[(console-dirxml [v any/c] ...) void?]{
+@(console-mdn-bar "Console: dirxml() method" "console/dirxml_static")
 Inspects XML/HTML output in the console.
 
 @racketblock[
@@ -143,6 +155,7 @@ Inspects XML/HTML output in the console.
 }
 
 @defproc[(console-table [data any/c] [columns any/c #f]) void?]{
+@(console-mdn-bar "Console: table() method" "console/table_static")
 Displays tabular data in the console.
 
 @racketblock[
@@ -156,10 +169,12 @@ Displays tabular data in the console.
 @subsection{Groups}
 
 @defproc[(console-group [v any/c] ...) void?]{
+@(console-mdn-bar "Console: group() method" "console/group_static")
 Starts a new console group.
 }
 
 @defproc[(console-group-collapsed [v any/c] ...) void?]{
+@(console-mdn-bar "Console: groupCollapsed() method" "console/groupCollapsed_static")
 Starts a collapsed console group.
 
 @racketblock[
@@ -169,12 +184,14 @@ Starts a collapsed console group.
 }
 
 @defproc[(console-group-end) void?]{
+@(console-mdn-bar "Console: groupEnd() method" "console/groupEnd_static")
 Ends the current console group.
 }
 
 @subsection{Counters and Timers}
 
 @defproc[(console-count [label (or/c #f string? symbol?) #f]) void?]{
+@(console-mdn-bar "Console: count() method" "console/count_static")
 Increments and displays a counter.
 
 If @racket[label] is provided, symbols and strings are accepted and the
@@ -182,10 +199,12 @@ wrapper converts symbols to strings before calling the browser API.
 }
 
 @defproc[(console-count-reset [label (or/c #f string? symbol?) #f]) void?]{
+@(console-mdn-bar "Console: countReset() method" "console/countReset_static")
 Resets a counter.
 }
 
 @defproc[(console-time [label (or/c #f string? symbol?) #f]) void?]{
+@(console-mdn-bar "Console: time() method" "console/time_static")
 Starts a timer.
 
 If @racket[label] is provided, symbols and strings are accepted and the
@@ -193,6 +212,7 @@ wrapper converts symbols to strings before calling the browser API.
 }
 
 @defproc[(console-time-end [label (or/c #f string? symbol?) #f]) void?]{
+@(console-mdn-bar "Console: timeEnd() method" "console/timeEnd_static")
 Ends a timer.
 
 If @racket[label] is provided, symbols and strings are accepted and the
@@ -200,6 +220,7 @@ wrapper converts symbols to strings before calling the browser API.
 }
 
 @defproc[(console-time-log [label (or/c #f string? symbol?) #f] [v any/c] ...) void?]{
+@(console-mdn-bar "Console: timeLog() method" "console/timeLog_static")
 Logs the current value of a timer and any additional data.
 
 @racketblock[
@@ -208,6 +229,7 @@ Logs the current value of a timer and any additional data.
 }
 
 @defproc[(console-time-stamp [label (or/c #f string? symbol?) #f]) void?]{
+@(console-mdn-bar "Console: timeStamp() method" "console/timeStamp_static")
 Adds a timeline marker.
 
 If @racket[label] is provided, symbols and strings are accepted and the
@@ -222,10 +244,12 @@ wrapper converts symbols to strings before calling the browser API.
 @subsection{Tracing and Profiling}
 
 @defproc[(console-trace [v any/c] ...) void?]{
+@(console-mdn-bar "Console: trace() method" "console/trace_static")
 Writes a stack trace to the console.
 }
 
 @defproc[(console-profile [label (or/c #f string? symbol?) #f]) void?]{
+@(console-mdn-bar "Console: profile() method" "console/profile_static")
 Starts a browser profiler session.
 
 If @racket[label] is provided, symbols and strings are accepted and the
@@ -233,6 +257,7 @@ wrapper converts symbols to strings before calling the browser API.
 }
 
 @defproc[(console-profile-end [label (or/c #f string? symbol?) #f]) void?]{
+@(console-mdn-bar "Console: profileEnd() method" "console/profileEnd_static")
 Ends a browser profiler session.
 
 If @racket[label] is provided, symbols and strings are accepted and the
@@ -240,6 +265,7 @@ wrapper converts symbols to strings before calling the browser API.
 }
 
 @defproc[(console-exception [v any/c] ...) void?]{
+@(console-mdn-bar "Console: exception() method" "console/exception_static")
 Deprecated alias for @racket[console-error]. Prefer @racket[console-error]
 for new code.
 
