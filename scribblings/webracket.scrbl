@@ -165,6 +165,7 @@ Currently available libraries include:
   @item{@racket[(include-lib canvas)]}
   @item{@racket[(include-lib media)]}
   @item{@racket[(include-lib image)]}
+  @item{@racket[(include-lib iterator)]}
   @item{@racket[(include-lib web-easy)]}
   @item{@racket[(include-lib audio)]}
   @item{@racket[(include-lib console)]}
@@ -221,6 +222,10 @@ See their respective documentation pages.
 @;-------------------------------------------------------------------
 
 @include-section["lib-image.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-iterator.scrbl"]
 
 @;-------------------------------------------------------------------
 

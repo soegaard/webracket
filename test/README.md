@@ -23,6 +23,7 @@ The DOM split now has a small raw smoke test and a few family-focused wrapper te
 - `include-lib dom` for the Rackety DOM facade that reexports the family wrappers
 - `test-dom-facade.rkt` for the umbrella wrapper smoke test
 - `test-dom-window-document.rkt` for `window`, `document`, and `element`
+- `test-dom-window-document.rkt` also covers `performance`
 - `test-dom-canvas-media-image.rkt` for `canvas`, `domrect`, and `media`
 - `test-dom-image.rkt` for `image`
 - `test-dom-event.rkt` for `event`
@@ -39,3 +40,12 @@ other browser-facing tests. For example:
 To run the whole DOM browser suite from `test/`, use:
 
 `./run-dom-headless.sh`
+
+Iterator wrapper tests
+----------------------
+
+- `test-iterator.rkt` for the `Iterator` wrapper
+
+To run the iterator wrapper smoke test from `test/`, use:
+
+`racket -l errortrace -t ../webracket.rkt -- --ffi ../ffi/standard.ffi -r test-iterator.rkt`
