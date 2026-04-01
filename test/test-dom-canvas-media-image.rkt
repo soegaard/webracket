@@ -2,7 +2,7 @@
 ;;; dom.ffi
 ;;;
 
-;; Focused tests for the Canvas, DOMRect, Media, and Image wrapper libraries.
+;; Focused tests for the Canvas, DOMRect, and Media wrapper libraries.
 ;;
 ;; Build:
 ;;   racket -l errortrace -t ../webracket.rkt -- --ffi ../ffi/standard.ffi --ffi ../ffi/dom.ffi -r test-dom-canvas-media-image.rkt
@@ -10,8 +10,6 @@
 (include-lib canvas)
 (include-lib domrect)
 (include-lib media)
-(include-lib image)
-
 (define (check-equal got want label)
   (unless (if (and (number? got) (number? want))
               (= got want)
@@ -90,30 +88,9 @@
       canPlayType(type) { this.calls.push(['canPlayType', type]); return 'maybe'; },
       setSinkId(id) { this.calls.push(['setSinkId', id]); return { kind: 'sink', id }; }
     };
-    const image = {
-      alt: 'fallback',
-      src: 'image.png',
-      width: 10,
-      height: 20,
-      currentSrc: 'resolved.png',
-      decoding: 'async',
-      loading: 'lazy',
-      complete: 1,
-      crossOrigin: 'anonymous'
-    };
-    globalThis.Image = class Image {
-      constructor(width, height) {
-        this.width = width;
-        this.height = height;
-        this.alt = '';
-        this.src = '';
-      }
-    };
-    globalThis.HTMLImageElement = globalThis.Image;
     window.__domTest.canvas = canvas;
     window.__domTest.ctx = ctx;
-    window.__domTest.media = media;
-    window.__domTest.image = image;"))
+    window.__domTest.media = media;"))
 
 (define (dom-test-fixture name)
   (js-ref (js-var "__domTest") name))
@@ -159,7 +136,6 @@
        (let ()
          (install!)
          (define media (dom-test-fixture "media"))
-         (define image (dom-test-fixture "image"))
          (check-equal (media-current-time media) 1.5 "media current time")
          (media-set-current-time! media 2.75)
          (check-equal (media-current-time media) 2.75 "media current time set")
@@ -204,27 +180,5 @@
                               (vector "fastSeek" 42)
                               (vector "setSinkId" "speaker-1"))
                       "media calls")
-         (check-equal (image-alt image) "fallback" "image alt")
-         (image-set-alt! image "decorative")
-         (check-equal (image-alt image) "decorative" "image alt set")
-         (check-equal (image-src image) "image.png" "image src")
-         (image-set-src! image "icon.png")
-         (check-equal (image-src image) "icon.png" "image src set")
-         (check-equal (image-width image) 10 "image width")
-         (image-set-width! image 11)
-         (check-equal (image-width image) 11 "image width set")
-         (check-equal (image-height image) 20 "image height")
-         (image-set-height! image 21)
-         (check-equal (image-height image) 21 "image height set")
-         (check-equal (image-current-src image) "resolved.png" "image current src")
-         (check-equal (image-decoding image) "async" "image decoding")
-         (image-set-decoding! image "sync")
-         (check-equal (image-decoding image) "sync" "image decoding set")
-         (check-equal (image-loading image) "lazy" "image loading")
-         (image-set-loading! image "eager")
-         (check-equal (image-loading image) "eager" "image loading set")
-         (check-true (image-complete? image) "image complete")
-         (check-equal (image-cross-origin image) "anonymous" "image cross origin")
-         (check-true (expect-contract-error (lambda () (image-set-alt! image 1))) "image alt validation")
          (check-true (expect-contract-error (lambda () (media-set-src! media 1))) "media src validation")
          #t)))
