@@ -2,7 +2,8 @@
 (module+ test (require rackunit))
 (provide (all-defined-out))
 (require racket/set
-         syntax/id-set)
+         syntax/id-set
+         syntax/id-table)
 
 ;;; The following primitives are needed for regular expressions.
 ;;; When they are implemented, reneable "regexp.rkt" in "stdlib.rkt".
@@ -383,6 +384,91 @@
 
 (define (set-disjoint? s1 s2)
   (set-empty? (set-intersection s1 s2)))
+
+;;;
+;;; Environment for the α-renaming pass
+;;;
+
+(struct rename-env (lexical by-name fallback) #:transparent)
+
+;; rename-env-variable : (or/c variable? identifier?) -> variable?
+;;   Normalize alpha-rename lookup inputs to variables.
+(define (rename-env-variable x)
+  (cond
+    [(variable? x)   x]
+    [(identifier? x) (variable x)]
+    [else            (error 'rename-env-variable "expected identifier or variable, got ~a" x)]))
+
+;; rename-env-name-key : (or/c variable? identifier?) -> (or/c symbol? #f)
+;;   Compute the printed-name key used for alpha-renaming name occupancy checks.
+(define (rename-env-name-key x)
+  (define datum (syntax-e (variable-id (rename-env-variable x))))
+  (and (symbol? datum) datum))
+
+;; rename-env-fallback-key : variable? -> (or/c symbol? #f)
+;;   Compute the printed-name fallback key for non-lexical identifiers.
+(define (rename-env-fallback-key x)
+  (define id (variable-id (rename-env-variable x)))
+  (define b  (identifier-binding id))
+  (and (not (eq? b 'lexical))
+       (syntax-e id)))
+
+;; ρ-empty : -> rename-env?
+;;   Construct an empty alpha-renaming environment.
+(define (ρ-empty)
+  (rename-env (make-immutable-free-id-table) #hasheq() #hasheq()))
+
+;; ρ-ref : rename-env? variable? -> (or/c variable? #f)
+;;   Look up x in rho using lexical identity first and fallback name matching second.
+(define (ρ-ref ρ x)
+  (define v       (rename-env-variable x))
+  (define lexical (free-id-table-ref (rename-env-lexical ρ) (variable-id v) #f))
+  (cond
+    [lexical lexical]
+    [else
+     (define key    (rename-env-name-key v))
+     (define bucket (if key
+                        (hash-ref (rename-env-by-name ρ) key '())
+                        '()))
+     (define by-name (for/or ([entry (in-list bucket)])
+                       (and (id=? v (car entry))
+                            (cdr entry))))
+     (or by-name
+         (and key
+              (hash-ref (rename-env-fallback ρ) key #f)))]))
+
+;; ρ-name-used? : rename-env? (or/c variable? identifier?) -> boolean?
+;;   Check whether rho already contains some binding with x's printed name.
+(define (ρ-name-used? ρ x)
+  (define key (rename-env-name-key x))
+  (and key
+       (pair? (hash-ref (rename-env-by-name ρ) key '()))))
+
+;; ρ-set : rename-env? variable? variable? -> rename-env?
+;;   Extend rho with a mapping from original to renamed.
+(define (ρ-set ρ original renamed)
+  (define original*    (rename-env-variable original))
+  (define lexical      (free-id-table-set (rename-env-lexical ρ)
+                                          (variable-id original*) renamed))
+  (define key          (rename-env-name-key original*))
+  (define by-name      (if key
+                           (hash-set (rename-env-by-name ρ)
+                                     key
+                                     (cons (cons original* renamed)
+                                           (hash-ref (rename-env-by-name ρ) key '())))
+                           (rename-env-by-name ρ)))
+  (define fallback-key (rename-env-fallback-key original*))
+  (rename-env lexical
+              by-name
+              (if fallback-key
+                  (hash-set (rename-env-fallback ρ) fallback-key renamed)
+                  (rename-env-fallback ρ))))
+
+;; ρ-set* : rename-env? (listof variable?) -> rename-env?
+;;   Extend rho by mapping each variable in xs to itself.
+(define (ρ-set* ρ xs)
+  (for/fold ([ρ ρ]) ([x (in-list xs)])
+    (ρ-set ρ x x)))
 
 (module+ test
   (let ()
@@ -2652,7 +2738,7 @@
     [,sls `,(SpacelessSpec sls)])
 
   (SpacelessSpec : SpacelessSpec (SS) -> SpacelessSpec ()
-    [,x       `[,x ,(or (ρ x) x)]]))  ; <-- before and after renaming
+    [,x       `[,x ,(or (ρ-ref ρ x) x)]]))  ; <-- before and after renaming
 
 
 (define-pass α-rename/pass1 : LFE2 (T top-bindings) -> LFE2 (ρ)
@@ -2662,27 +2748,32 @@
       ; In WebAssembly the "user" names are prefixed with $, so
       ; there is nothing to worry about.
       #f)
-    (define (initial-ρ x)
+    (define (initial-binding x)
       (cond [(reserved-target-language-keyword? x) => values]
-            [(primitive? (variable-id x))             x]
-            [else                                    #f]))
-    (define (extend ρ original renamed)
-      ; (displayln (list original renamed))
-      (λ (x) (if (id=? x original) renamed (ρ x))))
-    (define (extend-map-to-self* ρ xs)
-      (if (null? xs)
-          ρ
-          (extend-map-to-self* (extend ρ (car xs) (car xs)) (cdr xs))))
+            [(primitive? (variable-id (rename-env-variable x))) x]
+            [else                                             #f]))
+    (define (lookup ρ x)
+      (or (ρ-ref ρ x)
+          (initial-binding x)))
+    (define (initial-ρ)
+      (ρ-set* (ρ-empty) top-bindings))
+    (define top-binding-names
+      (for/seteq ([x (in-list top-bindings)])
+        (syntax-e (variable-id x))))
+    (define (top-binding-name? x)
+      (define datum (syntax-e (variable-id (rename-env-variable x))))
+      (and (symbol? datum)
+           (set-member? top-binding-names datum)))
     (define (fresh/simple x ρ [orig-x x])
-      (if (ρ x) (fresh (new-var x) ρ x) x))
+      (if (ρ-name-used? ρ x) (fresh (new-var x) ρ x) x))
     (define (fresh/full x ρ [orig-x x])
-      (if (ρ x) (fresh (new-var x) ρ x) (new-var x)))
+      (if (ρ-name-used? ρ x) (fresh (new-var x) ρ x) (new-var x)))
     (define fresh (case (α-rename-mode)
                     [(simple) fresh/simple]
                     [(full)   fresh/full]))
     (define (rename x ρ)
       (define x* (fresh x ρ))
-      (values x* (extend ρ x x*)))
+      (values x* (ρ-set ρ x x*)))
     (define (rename*          xs ρ) (map2* rename   xs ρ))
     (define (rename**        xss ρ) (map2* rename* xss ρ))
     (define (TopLevelForm*    xs ρ) (map2* TopLevelForm xs ρ))
@@ -2743,7 +2834,7 @@
                                            ; top-level variables aren't renamed
                                            ; but in order to see that they are defined,
                                            ; they must map to themselves. 
-                                           (let ((ρ (extend-map-to-self* ρ x)))
+                                           (let ((ρ (ρ-set* ρ x)))
                                              (letv ((e _) (Expr e ρ))
                                                    (values `(define-values ,s (,x ...) ,e) ρ)))])]
     [(define-syntaxes ,s (,x ...) ,e)   (error)])
@@ -2764,10 +2855,17 @@
                                                     (letv ((e ρ) (Expr e ρ))
                                                       (values `(λ ,s ,f ,e) ρ-orig))))])
   (Expr : Expr (E ρ) -> Expr (ρ)
-    [,x                                         (let ([ρx (ρ x)])                                                  
+    [,x                                         (let ([ρx (lookup ρ x)])
                                                   (cond
                                                     [ρx
-                                                     (values `,ρx ρ)]
+                                                     (cond
+                                                       [(and (not (inside-module?))
+                                                             (top-binding-name? x))
+                                                        (values `(top ,#'here
+                                                                      ,(rename-env-variable x))
+                                                                ρ)]
+                                                       [else
+                                                        (values `,ρx ρ)])]
                                                     [else
                                                      (unless (variable? x)
                                                        (error 'here "got ~a" x))
@@ -2824,7 +2922,7 @@
                                                       (values `(letrec-values
                                                                    ,s ([(,x ...) ,e] ...)
                                                                  ,e0) ρ-orig))))]
-    [(set! ,s ,x ,e)                            (let ([x (or (ρ x) x)]) ; ignores unbound x
+    [(set! ,s ,x ,e)                            (let ([x (or (lookup ρ x) x)]) ; ignores unbound x
                                                   ; note: If x is unbound, then a module-level
                                                   ; assignment should give an error.
                                                   ; A top-level assignment is ok.
@@ -2836,16 +2934,25 @@
                                                     (letv ((e2 ρ) (Expr e2  ρ))
                                                       (values
                                                        `(wcm ,s ,e0 ,e1 ,e2) ρ))))]
-    [(app ,s ,e0 ,e1 ...)                     (letv ((e0 ρ) (Expr e0 ρ))
+    [(app ,s ,e0 ,e1 ...)                     (define e0*
+                                                (if (and (not (inside-module?))
+                                                         (or (variable? e0)
+                                                             (identifier? e0))
+                                                         (top-binding-name? e0))
+                                                    `(top ,s ,(rename-env-variable e0))
+                                                    e0))
+                                              (letv ((e0 ρ) (Expr e0* ρ))
                                                 (letv ((e1 ρ) (Expr* e1 ρ))
                                                   (values `(app ,s ,e0 ,e1 ...) ρ)))]
     ; Until full namespace lookup is implemented, normalize known top refs
     ; to the collected top-level binding so forward and non-forward refs
     ; share one variable path.
-    [(top ,s ,x)                              (values (or (ρ x) `(top ,s ,x)) ρ)]
+    [(top ,s ,x)                              (values (or (and (variable? x) (ρ-ref ρ x))
+                                                             `(top ,s ,x))
+                                                         ρ)]
     [(variable-reference ,s ,vrx)             (values E ρ)])
   
-  (let ([ρ0 (extend-map-to-self* initial-ρ top-bindings)])
+  (let ([ρ0 (initial-ρ)])
     (letv ((T ρ) (TopLevelForm T ρ0))
       (values T ρ))))
 
@@ -2881,7 +2988,27 @@
                                 (begin x y z a b c))))
                     '(let-values (((x y z) '1) ((a b c) '2))
                        (let-values (((x.1 y.2) '1) ((a.3 b.4) '2))
-                         (begin x.1 y.2 z a.3 b.4 c))))))
+                         (begin x.1 y.2 z a.3 b.4 c))))
+
+      (check-equal? (test #'(let ([x 0])
+                              (let ([x 1])
+                                (let ([x 2]
+                                      [y x])
+                                  (begin x y)))))
+                    '(let-values (((x) '0))
+                       (let-values (((x.1) '1))
+                         (let-values (((x.2) '2)
+                                      ((y)   x.1))
+                           (begin x.2 y)))))
+
+      (define (mkvar s)
+        (variable (datum->syntax #f s)))
+      (let* ([x  (mkvar 'x)]
+             [x* (mkvar 'x.1)]
+             [ρ  (ρ-set (ρ-empty) x x*)])
+        (check-equal? (unparse-variable (ρ-ref ρ x)) 'x.1)
+        (check-equal? (unparse-variable (ρ-ref ρ (datum->syntax #f 'x))) 'x.1)
+        (check-true  (ρ-name-used? ρ (datum->syntax #f 'x))))))
 
 
 ;;;
@@ -3205,12 +3332,11 @@
     (check-equal? (test #'(begin (define foo 3) (foo 1 2)))
                   ; At the top-level the expression is evaluated before
                   ; the binding is created.
-                  ; Also (#%top . foo) looks up foo in the current
-                  ; namespace by name, so it should not be renamed.
-                  ; But ... until we implement namespaces, we store
-                  ; top-level variables in a `boxed`.
+                  ; The current compiler pipeline preserves the plain
+                  ; top-level variable name here. Namespace-based #%top
+                  ; lookup is not implemented yet.
                   '(topbegin (define-values (foo) '3)
-                             (app (#%top . foo) '1 '2)))
+                             (app foo '1 '2)))
     (check-equal? (test #'((λ (x) 1) 2))
                   '(closedapp (λ (x) '1) '2))
     (check-equal? (test #'((λ (x y) 1) 2 3))
