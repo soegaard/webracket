@@ -23,3 +23,8 @@ The DOM split now has a small raw smoke test and a few family-focused wrapper te
 - `test-dom-window-document.rkt` for `window`, `document`, and `element`
 - `test-dom-canvas-media-image.rkt` for `canvas`, `domrect`, `media`, and `image`
 - `test-dom-event.rkt` for `event`
+
+To run one of the DOM wrapper tests from `test/`, use the same harness as the
+other browser-facing tests. For example:
+
+`racket -l errortrace -t ../webracket.rkt -- --ffi ../ffi/standard.ffi --ffi ../ffi/dom.ffi -r test-dom-window-document.rkt`
