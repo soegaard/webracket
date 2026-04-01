@@ -1,9 +1,11 @@
 #lang scribble/manual
 
 @(require scribble/manual
-          "webracket-scribble-utils.rkt")
+          "webracket-scribble-utils.rkt"
+          (for-label (lib "scribblings/websocket-labels.rkt" "webracket")))
 
 @title{Library: @racketid[websocket]}
+@declare-exporting[(lib "scribblings/websocket-labels.rkt" "webracket")]
 
 @(how-to-require include-lib websocket (lib "libs/websocket.rkt"))
 @(compile-option-bar "Compile option: " "--ffi websocket")
@@ -36,19 +38,24 @@ To use WebSockets, create a connection, install the handlers you need,
 and send messages when you are ready.
 
 @racketblock[
+(code:comment "Include the WebSocket library.")
 (include-lib websocket)
 
+(code:comment "Open a WebSocket connection.")
 (define ws
   (websocket-new "wss://echo-websocket.fly.dev/"))
 
+(code:comment "Run code when the connection opens.")
 (websocket-onopen! ws
   (lambda (_evt)
     (displayln "connected")))
 
+(code:comment "Run code when a message arrives.")
 (websocket-onmessage! ws
   (lambda (_evt)
     (displayln "message received")))
 
+(code:comment "Send a message over the connection.")
 (websocket-send ws "hello")
 ]
 
