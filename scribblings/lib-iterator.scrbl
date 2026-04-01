@@ -41,13 +41,12 @@ looking at the first step.
 (code:comment "Ask the iterator for its first step.")
 (define first-step
   (js-send/value iter "next" (vector)))
-
-(void source iter first-step)
 ]
 
 The quick start shows the main idea: take an existing iterator or iterable,
 normalize it with @racket[iterator-from], and then use the returned iterator
-value in later code.
+value in later code. The example stops after binding the values so you can
+inspect them or pass them to later expressions.
 
 @section{Iterator Example}
 
@@ -76,9 +75,10 @@ result object.
   (js-ref step "done"))
 (define value
   (js-ref step "value"))
-
-(void done? value)
 ]
+
+After this code runs, @racket[done?] is @racket[#f] and @racket[value] is
+@racket["red"].
 
 @section{Iterator API}
 
