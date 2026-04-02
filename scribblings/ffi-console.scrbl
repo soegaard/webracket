@@ -51,5 +51,4 @@ value when the label is present.
 (js-console-time-stamp (vector "frame"))
 ]
 
-@(for/list ([spec (in-list console-doc-specs)])
-   (render-console-defproc spec))
+@(render-ffi-docs "ffi/console.ffi" "console.ffi")

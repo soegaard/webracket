@@ -1,6 +1,10 @@
 #lang scribble/manual
 
-@(require "browser-api-docs.rkt")
+@(require "browser-api-docs.rkt"
+          (lib "scribblings/ffi-window-labels.rkt" "webracket")
+          (for-label (lib "scribblings/ffi-window-labels.rkt" "webracket")))
+
+@declare-exporting[(lib "scribblings/ffi-window-labels.rkt" "webracket")]
 
 @section{Window}
 
@@ -10,5 +14,4 @@ and access to the current document.
 This page documents the low-level @racket[js-window-*] bindings from
 @tt{ffi/window.ffi}.
 
-@(for/list ([spec (in-list window-doc-specs)])
-   (render-window-defproc spec))
+@(render-ffi-docs "ffi/window.ffi" "window.ffi")

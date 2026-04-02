@@ -21,5 +21,4 @@ These bindings follow the browser API directly. They are useful when you
 want to work with the JavaScript object model as-is, or when you are
 building a higher-level abstraction on top of the raw interop layer.
 
-@(for/list ([spec (in-list audio-doc-specs)])
-   (render-audio-defproc spec))
+@(render-ffi-docs "ffi/audio.ffi" "audio.ffi")

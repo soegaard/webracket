@@ -1,11 +1,14 @@
 #lang scribble/manual
 
-@(require "browser-api-docs.rkt")
+@(require "browser-api-docs.rkt"
+          (lib "scribblings/ffi-document-labels.rkt" "webracket")
+          (for-label (lib "scribblings/ffi-document-labels.rkt" "webracket")))
+
+@declare-exporting[(lib "scribblings/ffi-document-labels.rkt" "webracket")]
 
 @section{Document}
 
 This page documents the low-level @racket[js-document-*] bindings from
 @tt{ffi/document.ffi}.
 
-@(for/list ([spec (in-list document-doc-specs)])
-   (render-document-defproc spec))
+@(render-ffi-docs "ffi/document.ffi" "document.ffi")
