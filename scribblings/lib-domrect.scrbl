@@ -5,7 +5,7 @@
           (for-label (lib "scribblings/lib-domrect-labels.rkt" "webracket")))
 
 @title{Library: @racketid[domrect]}
-@declare-exporting[(lib "libs/domrect.rkt" "webracket")]
+@declare-exporting[(lib "scribblings/lib-domrect-labels.rkt" "webracket")]
 
 @(how-to-require include-lib domrect (lib "libs/domrect.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")
@@ -36,6 +36,30 @@ Wraps a browser DOMRect object.
 
 @defproc[(dom-rect-raw [rect dom-rect?]) external/raw]{
 Returns the wrapped browser DOMRect object.
+}
+
+@section{DOMRectList Values}
+
+@defstruct[dom-rect-list ([raw external/raw])]{
+Wraps a browser DOMRectList object, such as the value returned by the
+element getClientRects call.
+}
+
+@defproc[(dom-rect-list-raw [rect-list dom-rect-list?]) external/raw]{
+Returns the wrapped browser DOMRectList object.
+}
+
+@defproc[(dom-rect-list-length [rect-list dom-rect-list?]) exact-nonnegative-integer?]{
+@(mdn-bar "DOMRectList: length property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/DOMRectList/length")
+Returns the number of rectangles in the DOMRectList.
+}
+
+@defproc[(dom-rect-list-item [rect-list dom-rect-list?]
+                             [index exact-nonnegative-integer?]) (or/c #f dom-rect?)]{
+@(mdn-bar "DOMRectList: item() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/DOMRectList/item")
+Returns the rectangle at the given index, or @racket[#f] if there is none.
 }
 
 @section{DOMRect Quick Start}

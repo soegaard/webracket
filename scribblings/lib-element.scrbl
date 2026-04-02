@@ -5,7 +5,7 @@
           (for-label (lib "scribblings/lib-element-labels.rkt" "webracket")))
 
 @title{Library: @racketid[element]}
-@declare-exporting[(lib "libs/element.rkt" "webracket")]
+@declare-exporting[(lib "scribblings/lib-element-labels.rkt" "webracket")]
 
 @(how-to-require include-lib element (lib "libs/element.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")
@@ -357,23 +357,6 @@ Returns the element at the given index, or @racket[#f] if there is none.
 @(mdn-bar "HTMLCollection: namedItem() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection/namedItem")
 Returns the named element, or @racket[#f] if there is none.
-}
-
-@defstruct[dom-rect-list ([raw external/raw])]{
-Wraps a browser DOMRectList object.
-}
-
-@defproc[(dom-rect-list-length [rect-list dom-rect-list?]) exact-nonnegative-integer?]{
-@(mdn-bar "DOMRectList: length property"
-          "https://developer.mozilla.org/en-US/docs/Web/API/DOMRectList/length")
-Returns the number of rectangles in the DOMRectList.
-}
-
-@defproc[(dom-rect-list-item [rect-list dom-rect-list?]
-                             [index exact-nonnegative-integer?]) (or/c #f dom-rect?)]{
-@(mdn-bar "DOMRectList: item() method"
-          "https://developer.mozilla.org/en-US/docs/Web/API/DOMRectList/item")
-Returns the rectangle at the given index, or @racket[#f] if there is none.
 }
 
 @defproc[(element-children [element element?]) (or/c #f html-collection?)]{
