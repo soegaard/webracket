@@ -9,6 +9,7 @@
 
 (include-lib canvas)
 (include-lib domrect)
+(include-lib element)
 (include-lib media)
 (define (check-equal got want label)
   (unless (if (and (number? got) (number? want))
@@ -68,6 +69,46 @@
       toBlob(callback, type, quality) { this.calls.push(['toBlob', type, quality]); callback({ kind: 'blob', type, quality }); }
     };
     ctx.canvas = canvas;
+    const controlsList = {
+      value: 'nodownload',
+      length: 1,
+      contains(token) { return token === 'nodownload'; }
+    };
+    const audioTrackList = {
+      length: 2,
+      item(index) {
+        if (index === 0) return { kind: 'audio', id: 'audio-0' };
+        if (index === 1) return { kind: 'audio', id: 'audio-1' };
+        return null;
+      }
+    };
+    const textTrackList = {
+      length: 1,
+      item(index) {
+        if (index === 0) return { kind: 'subtitles', id: 'text-0' };
+        return null;
+      }
+    };
+    const videoTrackList = {
+      length: 1,
+      item(index) {
+        if (index === 0) return { kind: 'main', id: 'video-0' };
+        return null;
+      }
+    };
+    const buffered = {
+      length: 2,
+      start(index) { return index === 0 ? 0.5 : 4.0; },
+      end(index) { return index === 0 ? 1.25 : 7.5; }
+    };
+    const mediaError = {
+      code: 3,
+      message: 'media failure'
+    };
+    const mediaStream = {
+      kind: 'stream',
+      frameRate: null
+    };
     const media = {
       currentTime: 1.5,
       volume: 0.25,
@@ -80,12 +121,21 @@
       preload: 'metadata',
       src: 'song.ogg',
       currentSrc: 'resolved.ogg',
+      audioTracks: audioTrackList,
+      buffered,
+      controlsList,
+      error: mediaError,
+      played: buffered,
       calls: [],
       play() { this.calls.push(['play']); return { kind: 'play-promise' }; },
       pause() { this.calls.push(['pause']); },
       load() { this.calls.push(['load']); },
       fastSeek(t) { this.calls.push(['fastSeek', t]); },
       canPlayType(type) { this.calls.push(['canPlayType', type]); return 'maybe'; },
+      seekable: buffered,
+      textTracks: textTrackList,
+      videoTracks: videoTrackList,
+      captureStream(frameRate) { this.calls.push(['captureStream', frameRate]); return mediaStream; },
       setSinkId(id) { this.calls.push(['setSinkId', id]); return { kind: 'sink', id }; }
     };
     window.__domTest.canvas = canvas;
@@ -102,13 +152,15 @@
          (define canvas (dom-test-fixture "canvas"))
          (define options (js-eval "({ alpha: false })"))
          (define ctx (canvas-get-context canvas "2d" options))
+         (define captured (canvas-capture-stream canvas 30.0))
          (check-equal (canvas-width canvas) 320 "canvas width")
          (canvas-set-width! canvas 640)
          (check-equal (canvas-width canvas) 640 "canvas width set")
          (check-equal (canvas-height canvas) 200 "canvas height")
          (canvas-set-height! canvas 240)
          (check-equal (canvas-height canvas) 240 "canvas height set")
-         (check-equal (js-ref (canvas-capture-stream canvas 30.0) "kind") "stream" "canvas capture stream")
+         (check-true (media-stream? captured) "canvas capture stream")
+         (check-equal (js-ref (media-stream-raw captured) "kind") "stream" "canvas capture stream raw")
          (check-equal (canvas-to-data-url canvas "image/jpeg" 0.8) "image/jpeg:0.8" "canvas to data url")
          (define blobs '())
          (canvas-to-blob canvas
@@ -161,19 +213,44 @@
          (media-set-loop! media #t)
          (check-true (media-loop? media) "media loop set")
          (check-equal (media-preload media) "metadata" "media preload")
-         (media-set-preload! media "auto")
+         (media-set-preload! media 'auto)
          (check-equal (media-preload media) "auto" "media preload set")
          (check-equal (media-src media) "song.ogg" "media src")
-         (media-set-src! media "track.ogg")
+         (media-set-src! media 'track.ogg)
          (check-equal (media-src media) "track.ogg" "media src set")
-         (check-equal (media-can-play-type media "audio/ogg") "maybe" "media can-play-type")
+         (check-equal (media-can-play-type media 'audio/ogg) "maybe" "media can-play-type")
+         (define captured (media-capture-stream media 60.0))
+         (check-true (dom-token-list? (media-controls-list media)) "media controls list")
+         (check-equal (dom-token-list-value (media-controls-list media)) "nodownload" "media controls list value")
+         (check-true (dom-token-list-contains? (media-controls-list media) 'nodownload) "media controls list contains")
+         (check-true (audio-track-list? (media-audio-tracks media)) "media audio tracks")
+         (check-equal (audio-track-list-length (media-audio-tracks media)) 2 "media audio track length")
+         (check-equal (js-ref (audio-track-list-item (media-audio-tracks media) 1) "id") "audio-1" "media audio track item")
+         (check-true (time-ranges? (media-buffered media)) "media buffered")
+         (check-equal (time-ranges-length (media-buffered media)) 2 "media buffered length")
+         (check-equal (time-ranges-start (media-buffered media) 0) 0.5 "media buffered start")
+         (check-equal (time-ranges-end (media-buffered media) 1) 7.5 "media buffered end")
+         (check-true (media-error-info? (media-error media)) "media error")
+         (check-equal (media-error-info-code (media-error media)) 3 "media error code")
+         (check-equal (media-error-info-message (media-error media)) "media failure" "media error message")
+         (check-true (time-ranges? (media-played media)) "media played")
+         (check-true (time-ranges? (media-seekable media)) "media seekable")
+         (check-true (text-track-list? (media-text-tracks media)) "media text tracks")
+         (check-equal (text-track-list-length (media-text-tracks media)) 1 "media text track length")
+         (check-equal (js-ref (text-track-list-item (media-text-tracks media) 0) "id") "text-0" "media text track item")
+         (check-true (video-track-list? (media-video-tracks media)) "media video tracks")
+         (check-equal (video-track-list-length (media-video-tracks media)) 1 "media video track length")
+         (check-equal (js-ref (video-track-list-item (media-video-tracks media) 0) "id") "video-0" "media video track item")
+         (check-true (media-stream? captured) "media capture stream")
+         (check-equal (js-ref (media-stream-raw captured) "kind") "stream" "media capture stream raw")
          (check-equal (js-ref (media-play media) "kind") "play-promise" "media play")
          (media-pause media)
          (media-load! media)
          (media-fast-seek! media 42.0)
-         (check-equal (js-ref (media-set-sink-id! media "speaker-1") "id") "speaker-1" "media set sink id")
+         (check-equal (js-ref (media-set-sink-id! media 'speaker-1) "id") "speaker-1" "media set sink id")
          (check-equal (js-ref media "calls")
                       (vector (vector "canPlayType" "audio/ogg")
+                              (vector "captureStream" 60)
                               (vector "play")
                               (vector "pause")
                               (vector "load")

@@ -15,6 +15,10 @@
   (struct-out node-list)
   (struct-out html-collection)
   (struct-out dom-rect-list)
+  (struct-out audio-track-list)
+  (struct-out text-track-list)
+  (struct-out video-track-list)
+  (struct-out time-ranges)
   (struct-out node)
   (struct-out element)
   (struct-out text)
@@ -174,6 +178,8 @@
   (struct-out selection)
   (struct-out media-query-list)
   (struct-out css-style-declaration)
+  (struct-out media-stream)
+  (struct-out media-error-info)
   (struct-out performance-event-count-map)
   performance-event-count-map-size
   performance-event-count-map-entries
@@ -330,11 +336,22 @@
   media-set-preload!
   media-src
   media-set-src!
+  media-controls-list
+  media-audio-tracks
+  media-buffered
+  media-error
+  media-error-info-code
+  media-error-info-message
   media-play
   media-pause
   media-load!
   media-fast-seek!
   media-can-play-type
+  media-played
+  media-seekable
+  media-text-tracks
+  media-video-tracks
+  media-capture-stream
   media-set-sink-id!
   image-new
   image-alt
@@ -405,6 +422,10 @@
 (struct node-list (raw) #:transparent)
 (struct html-collection (raw) #:transparent)
 (struct dom-rect-list (raw) #:transparent)
+(struct audio-track-list (raw) #:transparent)
+(struct text-track-list (raw) #:transparent)
+(struct video-track-list (raw) #:transparent)
+(struct time-ranges (raw) #:transparent)
 (struct node (raw) #:transparent)
 (struct text (raw) #:transparent)
 (struct attr (raw) #:transparent)
@@ -412,6 +433,8 @@
 (struct selection (raw) #:transparent)
 (struct media-query-list (raw) #:transparent)
 (struct css-style-declaration (raw) #:transparent)
+(struct media-stream (raw) #:transparent)
+(struct media-error-info (raw) #:transparent)
 (define element-class-list any/c)
 (define element-id any/c)
 (define element-set-id! any/c)
@@ -495,6 +518,15 @@
 (define html-collection-named-item any/c)
 (define dom-rect-list-length any/c)
 (define dom-rect-list-item any/c)
+(define audio-track-list-length any/c)
+(define audio-track-list-item any/c)
+(define text-track-list-length any/c)
+(define text-track-list-item any/c)
+(define video-track-list-length any/c)
+(define video-track-list-item any/c)
+(define time-ranges-length any/c)
+(define time-ranges-start any/c)
+(define time-ranges-end any/c)
 (define element-set-attribute-ns! any/c)
 (define element-toggle-attribute! any/c)
 (define shadow-root-host any/c)
@@ -688,11 +720,22 @@
 (define media-set-preload! any/c)
 (define media-src any/c)
 (define media-set-src! any/c)
+(define media-controls-list any/c)
+(define media-audio-tracks any/c)
+(define media-buffered any/c)
+(define media-error any/c)
+(define media-error-info-code any/c)
+(define media-error-info-message any/c)
 (define media-play any/c)
 (define media-pause any/c)
 (define media-load! any/c)
 (define media-fast-seek! any/c)
 (define media-can-play-type any/c)
+(define media-played any/c)
+(define media-seekable any/c)
+(define media-text-tracks any/c)
+(define media-video-tracks any/c)
+(define media-capture-stream any/c)
 (define media-set-sink-id! any/c)
 (define image-new any/c)
 (define image-alt any/c)

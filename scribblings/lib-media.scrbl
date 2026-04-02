@@ -1,6 +1,7 @@
 #lang scribble/manual
 
 @(require scribble/manual
+          (for-label (only-in racket/base struct))
           "webracket-scribble-utils.rkt"
           (for-label (lib "scribblings/dom-family-labels.rkt" "webracket")))
 
@@ -28,6 +29,14 @@ Use @racket[media] when you want to:
 
 The @racket[media] library wraps HTMLMediaElement properties and the
 common play/pause controls.
+
+When a helper expects a browser string such as a media source, preload
+hint, codec type, or sink id, the wrapper also accepts a symbol and
+normalizes it to a string before calling the browser.
+
+Some of the browser values that media elements expose are wrapped too:
+track lists, time ranges, media errors, and captured media streams are
+all represented with checked structs instead of raw browser objects.
 
 @section{Media Quick Start}
 
@@ -115,11 +124,12 @@ The raw @racket[media] argument should be a browser
 @racketid[HTMLMediaElement] value. Returns the current media source URL.
 }
 
-@defproc[(media-set-src! [media external?] [src string?]) void?]{
+@defproc[(media-set-src! [media external?] [src (or/c string? symbol?)]) void?]{
 @(mdn-bar "HTMLMediaElement: src property"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/src")
 The raw @racket[media] argument should be a browser
-@racketid[HTMLMediaElement] value. Sets the media source URL.
+@racketid[HTMLMediaElement] value. Symbols are normalized to strings
+before the media source URL is updated.
 }
 
 @defproc[(media-controls? [media external?]) boolean?]{
@@ -134,4 +144,179 @@ The raw @racket[media] argument should be a browser
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/controls")
 The raw @racket[media] argument should be a browser
 @racketid[HTMLMediaElement] value. Shows or hides the browser's media controls.
+}
+
+@defproc[(media-preload [media external?]) string?]{
+@(mdn-bar "HTMLMediaElement: preload property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/preload")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns the preload hint.
+}
+
+@defproc[(media-set-preload! [media external?] [preload (or/c string? symbol?)]) void?]{
+@(mdn-bar "HTMLMediaElement: preload property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/preload")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Symbols are normalized to strings
+before the browser property is updated.
+}
+
+@defproc[(media-can-play-type [media external?] [type (or/c string? symbol?)]) string?]{
+@(mdn-bar "HTMLMediaElement: canPlayType() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/canPlayType")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Symbols are normalized to strings
+before the browser is asked about codec support.
+}
+
+@defproc[(media-controls-list [media external?]) dom-token-list?]{
+@(mdn-bar "HTMLMediaElement: controlsList property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/controlsList")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns the wrapped browser
+@racketid[DOMTokenList] controls policy object.
+}
+
+@defstruct[media-stream ([raw external/raw])]{
+Wraps a browser @racketid[MediaStream] value.
+}
+
+@defproc[(media-capture-stream [media external?] [frame-rate any/c (void)])
+         media-stream?]{
+@(mdn-bar "HTMLMediaElement: captureStream() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/captureStream")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns a wrapped browser
+@racketid[MediaStream] that captures the media element.
+}
+
+@defstruct[media-error-info ([raw external/raw])]{
+Wraps a browser @racketid[MediaError] value.
+}
+
+@defproc[(media-error [media external?]) (or/c #f media-error-info?)]{
+@(mdn-bar "HTMLMediaElement: error property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/error")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns a wrapped browser error
+object when one is present.
+}
+
+@defproc[(media-error-info-code [err media-error-info?]) exact-nonnegative-integer?]{
+Returns the browser error code.
+}
+
+@defproc[(media-error-info-message [err media-error-info?]) string?]{
+Returns the browser error message.
+}
+
+@defstruct[audio-track-list ([raw external/raw])]{
+Wraps a browser @racketid[AudioTrackList] value.
+}
+
+@defproc[(audio-track-list-length [tracks audio-track-list?]) exact-nonnegative-integer?]{
+Returns the number of audio tracks.
+}
+
+@defproc[(audio-track-list-item [tracks audio-track-list?] [index exact-nonnegative-integer?])
+         (or/c #f external/raw)]{
+Returns the browser @racketid[AudioTrack] at @racket[index] or @racket[#f].
+}
+
+@defstruct[text-track-list ([raw external/raw])]{
+Wraps a browser @racketid[TextTrackList] value.
+}
+
+@defproc[(text-track-list-length [tracks text-track-list?]) exact-nonnegative-integer?]{
+Returns the number of text tracks.
+}
+
+@defproc[(text-track-list-item [tracks text-track-list?] [index exact-nonnegative-integer?])
+         (or/c #f external/raw)]{
+Returns the browser @racketid[TextTrack] at @racket[index] or @racket[#f].
+}
+
+@defstruct[video-track-list ([raw external/raw])]{
+Wraps a browser @racketid[VideoTrackList] value.
+}
+
+@defproc[(video-track-list-length [tracks video-track-list?]) exact-nonnegative-integer?]{
+Returns the number of video tracks.
+}
+
+@defproc[(video-track-list-item [tracks video-track-list?] [index exact-nonnegative-integer?])
+         (or/c #f external/raw)]{
+Returns the browser @racketid[VideoTrack] at @racket[index] or @racket[#f].
+}
+
+@defstruct[time-ranges ([raw external/raw])]{
+Wraps a browser @racketid[TimeRanges] value.
+}
+
+@defproc[(time-ranges-length [ranges time-ranges?]) exact-nonnegative-integer?]{
+Returns the number of time ranges.
+}
+
+@defproc[(time-ranges-start [ranges time-ranges?] [index exact-nonnegative-integer?]) real?]{
+Returns the start time for a range.
+}
+
+@defproc[(time-ranges-end [ranges time-ranges?] [index exact-nonnegative-integer?]) real?]{
+Returns the end time for a range.
+}
+
+@defproc[(media-audio-tracks [media external?]) (or/c #f audio-track-list?)]{
+@(mdn-bar "HTMLMediaElement: audioTracks property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/audioTracks")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns the wrapped browser audio
+track list.
+}
+
+@defproc[(media-buffered [media external?]) time-ranges?]{
+@(mdn-bar "HTMLMediaElement: buffered property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/buffered")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns the wrapped buffered time
+ranges.
+}
+
+@defproc[(media-played [media external?]) time-ranges?]{
+@(mdn-bar "HTMLMediaElement: played property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/played")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns the wrapped played time
+ranges.
+}
+
+@defproc[(media-seekable [media external?]) time-ranges?]{
+@(mdn-bar "HTMLMediaElement: seekable property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/seekable")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns the wrapped seekable time
+ranges.
+}
+
+@defproc[(media-text-tracks [media external?]) (or/c #f text-track-list?)]{
+@(mdn-bar "HTMLMediaElement: textTracks property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/textTracks")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns the wrapped browser text
+track list.
+}
+
+@defproc[(media-video-tracks [media external?]) (or/c #f video-track-list?)]{
+@(mdn-bar "HTMLMediaElement: videoTracks property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/videoTracks")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns the wrapped browser video
+track list.
+}
+
+@defproc[(media-set-sink-id! [media external?] [sink-id (or/c string? symbol?)]) external/raw]{
+@(mdn-bar "HTMLMediaElement: setSinkId() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/setSinkId")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Symbols are normalized to strings
+before the browser sink is updated.
 }

@@ -9,6 +9,14 @@
 (define (media-i32->boolean v)
   (not (zero? v)))
 
+;; media-stringish->string : symbol/string -> string
+;;   Normalize a browser string argument.
+(define (media-stringish->string who value)
+  (cond
+    [(string? value) value]
+    [(symbol? value) (symbol->string value)]
+    [else (raise-argument-error who "(or/c string? symbol?)" value)]))
+
 ;; media-current-time : external? -> real?
 ;;   Read the current playback time.
 (define (media-current-time media)
@@ -102,10 +110,10 @@
 (define (media-preload media)
   (js-media-preload media))
 
-;; media-set-preload! : external? string? -> void?
+;; media-set-preload! : external? (or/c string? symbol?) -> void?
 ;;   Set the preload hint.
 (define (media-set-preload! media preload)
-  (js-set-media-preload! media preload)
+  (js-set-media-preload! media (media-stringish->string 'media-set-preload! preload))
   (void))
 
 ;; media-src : external? -> string?
@@ -113,13 +121,31 @@
 (define (media-src media)
   (js-media-src media))
 
-;; media-set-src! : external? string? -> void?
+;; media-set-src! : external? (or/c string? symbol?) -> void?
 ;;   Set the media source URL.
 (define (media-set-src! media src)
-  (unless (string? src)
-    (raise-argument-error 'media-set-src! "string?" src))
-  (js-set-media-src! media src)
+  (js-set-media-src! media (media-stringish->string 'media-set-src! src))
   (void))
+
+;; media-controls-list : external? -> dom-token-list?
+;;   Read the browser controlsList policy object.
+(define (media-controls-list media)
+  (dom-token-list-wrap (js-media-controls-list media)))
+
+;; media-audio-tracks : external? -> (or/c #f audio-track-list?)
+;;   Read the browser audio track list.
+(define (media-audio-tracks media)
+  (audio-track-list-wrap (js-media-audio-tracks media)))
+
+;; media-buffered : external? -> time-ranges?
+;;   Read the buffered time ranges.
+(define (media-buffered media)
+  (time-ranges-wrap (js-media-buffered media)))
+
+;; media-error : external? -> (or/c #f media-error-info?)
+;;   Read the current media error, if any.
+(define (media-error media)
+  (media-error-info-wrap (js-media-error media)))
 
 ;; media-play : external? -> external/raw
 ;;   Start playback.
@@ -147,9 +173,34 @@
 ;; media-can-play-type : external? string? -> string?
 ;;   Ask the browser which codecs it can play.
 (define (media-can-play-type media type)
-  (js-media-can-play-type media type))
+  (js-media-can-play-type media (media-stringish->string 'media-can-play-type type)))
 
-;; media-set-sink-id! : external? string? -> external/raw
+;; media-played : external? -> time-ranges?
+;;   Read the played time ranges.
+(define (media-played media)
+  (time-ranges-wrap (js-media-played media)))
+
+;; media-seekable : external? -> time-ranges?
+;;   Read the seekable time ranges.
+(define (media-seekable media)
+  (time-ranges-wrap (js-media-seekable media)))
+
+;; media-text-tracks : external? -> (or/c #f text-track-list?)
+;;   Read the browser text track list.
+(define (media-text-tracks media)
+  (text-track-list-wrap (js-media-text-tracks media)))
+
+;; media-video-tracks : external? -> (or/c #f video-track-list?)
+;;   Read the browser video track list.
+(define (media-video-tracks media)
+  (video-track-list-wrap (js-media-video-tracks media)))
+
+;; media-capture-stream : external? [any/c] -> media-stream?
+;;   Capture the media as a stream.
+(define (media-capture-stream media [frame-rate (void)])
+  (media-stream-wrap (js-media-capture-stream media frame-rate)))
+
+;; media-set-sink-id! : external? (or/c string? symbol?) -> external/raw
 ;;   Choose an output sink if supported.
 (define (media-set-sink-id! media sink-id)
-  (js-media-set-sink-id! media sink-id))
+  (js-media-set-sink-id! media (media-stringish->string 'media-set-sink-id! sink-id)))

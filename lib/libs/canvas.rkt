@@ -9,10 +9,10 @@
 (define (canvas-i32->boolean v)
   (not (zero? v)))
 
-;; canvas-capture-stream : external? -> external/raw
+;; canvas-capture-stream : external? -> media-stream?
 ;;   Capture the canvas stream.
 (define (canvas-capture-stream canvas [frame-rate (void)])
-  (js-canvas-capture-stream canvas frame-rate))
+  (media-stream-wrap (js-canvas-capture-stream canvas frame-rate)))
 
 ;; canvas-get-context : external? string? [any/c] -> (or/c #f external?)
 ;;   Read a drawing context from a canvas.

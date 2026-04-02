@@ -107,3 +107,12 @@ The raw @racket[ctx] argument should be a browser
 @racketid[CanvasRenderingContext2D] value. Fills a rectangle in a 2D
 canvas context.
 }
+
+@defproc[(canvas-capture-stream [canvas external?] [frame-rate any/c (void)])
+         media-stream?]{
+@(mdn-bar "HTMLCanvasElement: captureStream() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/captureStream")
+The raw @racket[canvas] argument should be a browser
+@racketid[HTMLCanvasElement] value. Returns a wrapped browser
+@racketid[MediaStream] that captures the canvas rendering.
+}

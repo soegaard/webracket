@@ -377,3 +377,166 @@
   (js-send/value (css-style-declaration-unwrap decl)
                  "removeProperty"
                  (vector (if (symbol? name) (symbol->string name) name))))
+
+;; media-stream : external/raw -> media-stream?
+;;   Wrap a browser MediaStream object.
+(struct media-stream (raw) #:transparent)
+
+;; media-stream-wrap : any/c -> any/c
+;;   Wrap a raw browser MediaStream object, leaving wrapped values alone.
+(define (media-stream-wrap value)
+  (if (or (not value) (media-stream? value))
+      value
+      (media-stream value)))
+
+;; media-stream-unwrap : any/c -> any/c
+;;   Unwrap a media-stream struct to its raw browser object.
+(define (media-stream-unwrap value)
+  (if (media-stream? value)
+      (media-stream-raw value)
+      value))
+
+;; media-error-info : external/raw -> media-error-info?
+;;   Wrap a browser MediaError object.
+(struct media-error-info (raw) #:transparent)
+
+;; media-error-info-wrap : any/c -> any/c
+;;   Wrap a raw browser MediaError object, leaving wrapped values alone.
+(define (media-error-info-wrap value)
+  (if (or (not value) (media-error-info? value))
+      value
+      (media-error-info value)))
+
+;; media-error-info-unwrap : any/c -> any/c
+;;   Unwrap a media-error-info struct to its raw browser object.
+(define (media-error-info-unwrap value)
+  (if (media-error-info? value)
+      (media-error-info-raw value)
+      value))
+
+;; media-error-info-code : media-error-info? -> exact-nonnegative-integer?
+;;   Read the browser media error code.
+(define (media-error-info-code media-error)
+  (js-ref (media-error-info-unwrap media-error) "code"))
+
+;; media-error-info-message : media-error-info? -> string?
+;;   Read the browser media error message.
+(define (media-error-info-message media-error)
+  (js-ref (media-error-info-unwrap media-error) "message"))
+
+;; audio-track-list : external/raw -> audio-track-list?
+;;   Wrap a browser AudioTrackList object.
+(struct audio-track-list (raw) #:transparent)
+
+;; audio-track-list-wrap : any/c -> any/c
+;;   Wrap a raw browser AudioTrackList object, leaving wrapped values alone.
+(define (audio-track-list-wrap value)
+  (if (or (not value) (audio-track-list? value))
+      value
+      (audio-track-list value)))
+
+;; audio-track-list-unwrap : any/c -> any/c
+;;   Unwrap an audio-track-list struct to its raw browser object.
+(define (audio-track-list-unwrap value)
+  (if (audio-track-list? value)
+      (audio-track-list-raw value)
+      value))
+
+;; audio-track-list-length : audio-track-list? -> exact-nonnegative-integer?
+;;   Read the number of audio tracks.
+(define (audio-track-list-length track-list)
+  (js-ref (audio-track-list-unwrap track-list) "length"))
+
+;; audio-track-list-item : audio-track-list? exact-nonnegative-integer? -> (or/c #f external/raw)
+;;   Read an audio track by index.
+(define (audio-track-list-item track-list index)
+  (js-send/extern/nullish (audio-track-list-unwrap track-list) "item" (vector index)))
+
+;; text-track-list : external/raw -> text-track-list?
+;;   Wrap a browser TextTrackList object.
+(struct text-track-list (raw) #:transparent)
+
+;; text-track-list-wrap : any/c -> any/c
+;;   Wrap a raw browser TextTrackList object, leaving wrapped values alone.
+(define (text-track-list-wrap value)
+  (if (or (not value) (text-track-list? value))
+      value
+      (text-track-list value)))
+
+;; text-track-list-unwrap : any/c -> any/c
+;;   Unwrap a text-track-list struct to its raw browser object.
+(define (text-track-list-unwrap value)
+  (if (text-track-list? value)
+      (text-track-list-raw value)
+      value))
+
+;; text-track-list-length : text-track-list? -> exact-nonnegative-integer?
+;;   Read the number of text tracks.
+(define (text-track-list-length track-list)
+  (js-ref (text-track-list-unwrap track-list) "length"))
+
+;; text-track-list-item : text-track-list? exact-nonnegative-integer? -> (or/c #f external/raw)
+;;   Read a text track by index.
+(define (text-track-list-item track-list index)
+  (js-send/extern/nullish (text-track-list-unwrap track-list) "item" (vector index)))
+
+;; video-track-list : external/raw -> video-track-list?
+;;   Wrap a browser VideoTrackList object.
+(struct video-track-list (raw) #:transparent)
+
+;; video-track-list-wrap : any/c -> any/c
+;;   Wrap a raw browser VideoTrackList object, leaving wrapped values alone.
+(define (video-track-list-wrap value)
+  (if (or (not value) (video-track-list? value))
+      value
+      (video-track-list value)))
+
+;; video-track-list-unwrap : any/c -> any/c
+;;   Unwrap a video-track-list struct to its raw browser object.
+(define (video-track-list-unwrap value)
+  (if (video-track-list? value)
+      (video-track-list-raw value)
+      value))
+
+;; video-track-list-length : video-track-list? -> exact-nonnegative-integer?
+;;   Read the number of video tracks.
+(define (video-track-list-length track-list)
+  (js-ref (video-track-list-unwrap track-list) "length"))
+
+;; video-track-list-item : video-track-list? exact-nonnegative-integer? -> (or/c #f external/raw)
+;;   Read a video track by index.
+(define (video-track-list-item track-list index)
+  (js-send/extern/nullish (video-track-list-unwrap track-list) "item" (vector index)))
+
+;; time-ranges : external/raw -> time-ranges?
+;;   Wrap a browser TimeRanges object.
+(struct time-ranges (raw) #:transparent)
+
+;; time-ranges-wrap : any/c -> any/c
+;;   Wrap a raw browser TimeRanges object, leaving wrapped values alone.
+(define (time-ranges-wrap value)
+  (if (or (not value) (time-ranges? value))
+      value
+      (time-ranges value)))
+
+;; time-ranges-unwrap : any/c -> any/c
+;;   Unwrap a time-ranges struct to its raw browser object.
+(define (time-ranges-unwrap value)
+  (if (time-ranges? value)
+      (time-ranges-raw value)
+      value))
+
+;; time-ranges-length : time-ranges? -> exact-nonnegative-integer?
+;;   Read the number of time ranges.
+(define (time-ranges-length time-ranges)
+  (js-ref (time-ranges-unwrap time-ranges) "length"))
+
+;; time-ranges-start : time-ranges? exact-nonnegative-integer? -> real?
+;;   Read the start time for a range.
+(define (time-ranges-start time-ranges index)
+  (js-send/value (time-ranges-unwrap time-ranges) "start" (vector index)))
+
+;; time-ranges-end : time-ranges? exact-nonnegative-integer? -> real?
+;;   Read the end time for a range.
+(define (time-ranges-end time-ranges index)
+  (js-send/value (time-ranges-unwrap time-ranges) "end" (vector index)))
