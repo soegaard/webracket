@@ -15,6 +15,7 @@
   (struct-out video-track)
   (struct-out time-ranges)
   media-current-time
+  media-duration
   media-autoplay?
   media-set-autoplay!
   media-volume
@@ -45,10 +46,15 @@
   media-set-src-object!
   media-ended?
   media-paused?
+  media-seeking?
   media-media-group
   media-set-media-group!
   media-disable-remote-playback?
   media-set-disable-remote-playback!
+  media-preserves-pitch?
+  media-set-preserves-pitch!
+  media-ready-state
+  media-ready-state-number
   media-add-text-track!
   media-audio-tracks
   media-buffered
@@ -107,6 +113,7 @@
 (struct time-ranges (raw) #:transparent)
 
 (define media-current-time any/c)
+(define media-duration any/c)
 (define media-autoplay? any/c)
 (define media-set-autoplay! any/c)
 (define media-volume any/c)
@@ -128,10 +135,15 @@
 (define media-set-loop! any/c)
 (define media-ended? any/c)
 (define media-paused? any/c)
+(define media-seeking? any/c)
 (define media-media-group any/c)
 (define media-set-media-group! any/c)
 (define media-disable-remote-playback? any/c)
 (define media-set-disable-remote-playback! any/c)
+(define media-preserves-pitch? any/c)
+(define media-set-preserves-pitch! any/c)
+(define media-ready-state any/c)
+(define media-ready-state-number any/c)
 (define media-preload any/c)
 (define media-set-preload! any/c)
 (define media-src any/c)

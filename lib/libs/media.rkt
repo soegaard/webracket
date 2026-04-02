@@ -87,6 +87,11 @@
   (js-set-media-current-time! media t)
   (void))
 
+;; media-duration : external? -> real?
+;;   Read the media duration.
+(define (media-duration media)
+  (js-media-duration media))
+
 ;; media-volume : external? -> real?
 ;;   Read the volume level.
 (define (media-volume media)
@@ -174,6 +179,11 @@
 (define (media-paused? media)
   (media-i32->boolean (js-media-paused media)))
 
+;; media-seeking? : external? -> boolean?
+;;   Read whether the media element is currently seeking.
+(define (media-seeking? media)
+  (media-i32->boolean (js-media-seeking media)))
+
 ;; media-preload : external? -> string?
 ;;   Read the preload hint.
 (define (media-preload media)
@@ -234,6 +244,33 @@
 (define (media-set-disable-remote-playback! media disabled?)
   (js-set-media-disable-remote-playback! media (if disabled? 1 0))
   (void))
+
+;; media-preserves-pitch? : external? -> boolean?
+;;   Read whether pitch should be preserved during playback-rate changes.
+(define (media-preserves-pitch? media)
+  (media-i32->boolean (js-media-preserves-pitch media)))
+
+;; media-set-preserves-pitch! : external? boolean? -> void?
+;;   Enable or disable pitch preservation during playback-rate changes.
+(define (media-set-preserves-pitch! media preserves-pitch?)
+  (js-set-media-preserves-pitch! media (if preserves-pitch? 1 0))
+  (void))
+
+;; media-ready-state-number : external? -> exact-nonnegative-integer?
+;;   Read the browser readyState code.
+(define (media-ready-state-number media)
+  (js-media-ready-state media))
+
+;; media-ready-state : external? -> symbol?
+;;   Read the browser readyState as a symbol.
+(define (media-ready-state media)
+  (case (media-ready-state-number media)
+    [(0) 'have-nothing]
+    [(1) 'have-metadata]
+    [(2) 'have-current-data]
+    [(3) 'have-future-data]
+    [(4) 'have-enough-data]
+    [else (string->symbol (format "ready-state-~a" (media-ready-state-number media)))]))
 
 ;; media-src-object : external? -> (or/c #f media-stream? media-source-info?)
 ;;   Read the current source object for the media element.

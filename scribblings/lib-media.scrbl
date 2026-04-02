@@ -157,6 +157,21 @@ The raw @racket[media] argument should be a browser
 @racketid[HTMLMediaElement] value. Reports whether playback is paused.
 }
 
+@defproc[(media-seeking? [media external?]) boolean?]{
+@(mdn-bar "HTMLMediaElement: seeking property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/seeking")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Reports whether the browser is
+currently seeking to a new time.
+}
+
+@defproc[(media-duration [media external?]) real?]{
+@(mdn-bar "HTMLMediaElement: duration property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/duration")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns the media duration in seconds.
+}
+
 @defproc[(media-media-group [media external?]) string?]{
 @(mdn-bar "HTMLMediaElement: mediaGroup property"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/mediaGroup")
@@ -188,6 +203,22 @@ The raw @racket[media] argument should be a browser
 @racketid[HTMLMediaElement] value. Enables or disables remote playback.
 }
 
+@defproc[(media-preserves-pitch? [media external?]) boolean?]{
+@(mdn-bar "HTMLMediaElement: preservesPitch property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/preservesPitch")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Reports whether the browser preserves
+the pitch when the playback rate changes.
+}
+
+@defproc[(media-set-preserves-pitch! [media external?] [preserves-pitch? boolean?]) void?]{
+@(mdn-bar "HTMLMediaElement: preservesPitch property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/preservesPitch")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Enables or disables pitch preservation
+while playback speed changes.
+}
+
 @defproc[(media-network-state [media external?]) symbol?]{
 @(mdn-bar "HTMLMediaElement: networkState property"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/networkState")
@@ -202,6 +233,23 @@ and @racket['no-source].
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/networkState")
 The raw @racket[media] argument should be a browser
 @racketid[HTMLMediaElement] value. Returns the network state code.
+}
+
+@defproc[(media-ready-state [media external?]) symbol?]{
+@(mdn-bar "HTMLMediaElement: readyState property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/readyState")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns the ready state as a symbol.
+The usual symbols are @racket['have-nothing], @racket['have-metadata],
+@racket['have-current-data], @racket['have-future-data], and
+@racket['have-enough-data].
+}
+
+@defproc[(media-ready-state-number [media external?]) exact-nonnegative-integer?]{
+@(mdn-bar "HTMLMediaElement: readyState property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/readyState")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns the ready state code.
 }
 
 @defproc[(media-sink-id [media external?]) string?]{

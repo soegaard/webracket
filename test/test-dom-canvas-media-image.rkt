@@ -204,10 +204,13 @@
       autoplay: 0,
       crossOrigin: 'anonymous',
       currentTime: 1.5,
+      duration: 3.25,
       currentSrc: 'resolved.ogg',
       disableRemotePlayback: 0,
       ended: 0,
       paused: 1,
+      seeking: 0,
+      preservesPitch: 1,
       volume: 0.25,
       muted: 1,
       defaultMuted: 0,
@@ -220,6 +223,7 @@
       src: 'song.ogg',
       currentSrc: 'resolved.ogg',
       networkState: 1,
+      readyState: 1,
       audioTracks: audioTrackList,
       buffered,
       controlsList,
@@ -367,12 +371,19 @@
          (check-true (media-disable-remote-playback? media) "media disable remote playback set")
          (check-false (media-ended? media) "media ended")
          (check-true (media-paused? media) "media paused")
+         (check-false (media-seeking? media) "media seeking")
+         (check-equal (media-duration media) 3.25 "media duration")
          (check-equal (media-media-group media) "group-a" "media group")
          (media-set-media-group! media 'group-b)
          (check-equal (media-media-group media) "group-b" "media group set")
          (check-equal (media-network-state-number media) 1 "media network state number")
          (check-equal (media-network-state media) 'idle "media network state symbol")
+         (check-equal (media-ready-state-number media) 1 "media ready state number")
+         (check-equal (media-ready-state media) 'have-metadata "media ready state symbol")
          (check-equal (media-sink-id media) "default" "media sink id")
+         (check-true (media-preserves-pitch? media) "media preserves pitch")
+         (media-set-preserves-pitch! media #f)
+         (check-false (media-preserves-pitch? media) "media preserves pitch set")
          (check-equal (media-current-time media) 1.5 "media current time")
          (media-set-current-time! media 2.75)
          (check-equal (media-current-time media) 2.75 "media current time set")
