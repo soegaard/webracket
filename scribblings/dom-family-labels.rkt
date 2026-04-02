@@ -10,6 +10,8 @@
   (struct-out window)
   (struct-out dom-token-list)
   (struct-out shadow-root)
+  (struct-out animation)
+  (struct-out computed-style-map)
   (struct-out node)
   (struct-out element)
   (struct-out text)
@@ -79,6 +81,8 @@
   shadow-root-host
   shadow-root-mode
   shadow-root-delegates-focus?
+  animation-raw
+  computed-style-map-raw
   element-get-attribute-node
   element-get-attribute-node-ns
   element-set-attribute-node!
@@ -364,6 +368,8 @@
 (struct document (raw) #:transparent)
 (struct dom-token-list (raw) #:transparent)
 (struct shadow-root (raw) #:transparent)
+(struct animation (raw) #:transparent)
+(struct computed-style-map (raw) #:transparent)
 (struct node (raw) #:transparent)
 (struct text (raw) #:transparent)
 (struct attr (raw) #:transparent)

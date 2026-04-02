@@ -117,6 +117,42 @@
       (shadow-root-raw value)
       value))
 
+;; animation : external/raw -> animation?
+;;   Wrap a browser Animation object.
+(struct animation (raw) #:transparent)
+
+;; animation-wrap : any/c -> any/c
+;;   Wrap a raw browser Animation object, leaving wrapped values alone.
+(define (animation-wrap value)
+  (if (or (not value) (animation? value))
+      value
+      (animation value)))
+
+;; animation-unwrap : any/c -> any/c
+;;   Unwrap an animation struct to its raw browser object.
+(define (animation-unwrap value)
+  (if (animation? value)
+      (animation-raw value)
+      value))
+
+;; computed-style-map : external/raw -> computed-style-map?
+;;   Wrap a browser ComputedStyleMap object.
+(struct computed-style-map (raw) #:transparent)
+
+;; computed-style-map-wrap : any/c -> any/c
+;;   Wrap a raw browser ComputedStyleMap object, leaving wrapped values alone.
+(define (computed-style-map-wrap value)
+  (if (or (not value) (computed-style-map? value))
+      value
+      (computed-style-map value)))
+
+;; computed-style-map-unwrap : any/c -> any/c
+;;   Unwrap a computed-style-map struct to its raw browser object.
+(define (computed-style-map-unwrap value)
+  (if (computed-style-map? value)
+      (computed-style-map-raw value)
+      value))
+
 ;; array-like->vector : symbol? any/c (-> any/c any/c) -> vector?
 ;;   Convert a browser array-like value into a WebRacket vector.
 (define (array-like->vector who value wrap-item)

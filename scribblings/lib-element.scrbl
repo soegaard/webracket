@@ -537,34 +537,50 @@ Inserts text relative to an element.
 
 @section{Element Style and Animation}
 
-These helpers return browser objects directly when the browser API does.
+These helpers return wrapped browser objects when the browser API does.
 The attribute-node helpers use wrapped browser @racket[attr] values,
 which are created by the document library.
 
-@defproc[(element-computed-style-map [element element?]) external/raw]{
+@defstruct[computed-style-map ([raw external/raw])]{
+Wraps a browser ComputedStyleMap object.
+}
+
+@defproc[(computed-style-map-raw [style-map computed-style-map?]) external/raw]{
+Returns the wrapped browser ComputedStyleMap object.
+}
+
+@defstruct[animation ([raw external/raw])]{
+Wraps a browser Animation object.
+}
+
+@defproc[(animation-raw [animation animation?]) external/raw]{
+Returns the wrapped browser Animation object.
+}
+
+@defproc[(element-computed-style-map [element element?]) computed-style-map?]{
 @(mdn-bar "Element: computedStyleMap() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/computedStyleMap")
-Returns the computed style map for the element.
+Returns the wrapped computed style map for the element.
 }
 
-@defproc[(element-get-animations [element element?]) external/raw]{
+@defproc[(element-get-animations [element element?]) vector?]{
 @(mdn-bar "Element: getAnimations() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/getAnimations")
-Returns the animations affecting the element.
+Returns the animations affecting the element as a WebRacket vector of wrapped animations.
 }
 
-@defproc[(element-attach-shadow! [element element?] [options any/c]) external/raw]{
+@defproc[(element-attach-shadow! [element element?] [options any/c]) shadow-root?]{
 @(mdn-bar "Element: attachShadow() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/attachShadow")
-Attaches a shadow root to the element and returns the raw browser shadow root.
+Attaches a shadow root to the element and returns the wrapped browser ShadowRoot value.
 }
 
 @defproc[(element-animate [element element?]
                           [keyframes any/c]
-                          [options any/c #f]) external/raw]{
+                          [options any/c #f]) animation?]{
 @(mdn-bar "Element: animate() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/animate")
-Starts an animation on the element and returns the raw browser animation object.
+Starts an animation on the element and returns a wrapped browser animation object.
 }
 
 @defproc[(element-get-attribute-node [element element?]

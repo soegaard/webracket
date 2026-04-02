@@ -389,12 +389,14 @@
 ;; element-computed-style-map : element? -> external/raw
 ;;   Read the computed style map for an element.
 (define (element-computed-style-map element)
-  (js-computed-style-map (element-unwrap element)))
+  (computed-style-map-wrap (js-computed-style-map (element-unwrap element))))
 
-;; element-get-animations : element? -> external/raw
+;; element-get-animations : element? -> vector?
 ;;   Read animations affecting an element.
 (define (element-get-animations element)
-  (js-get-animations (element-unwrap element)))
+  (array-like->vector 'element-get-animations
+                      (js-get-animations (element-unwrap element))
+                      animation-wrap))
 
 ;; element-shadow-root : element? -> (or/c #f shadow-root?)
 ;;   Read an element's shadow root, if one is attached.
@@ -421,12 +423,13 @@
 (define (shadow-root-delegates-focus? shadow-root)
   (element-i32->boolean (js-ref (shadow-root-unwrap shadow-root) "delegatesFocus")))
 
-;; element-animate : element? any/c [any/c] -> external/raw
+;; element-animate : element? any/c [any/c] -> animation?
 ;;   Start an animation on an element.
 (define (element-animate element keyframes [options #f])
-  (js-animate (element-unwrap element)
-              keyframes
-              (if (eq? options #f) (js-undefined) options)))
+  (animation-wrap
+   (js-animate (element-unwrap element)
+               keyframes
+               (if (eq? options #f) (js-undefined) options))))
 
 ;; element-get-attribute-node : element? (or/c string? symbol?) -> (or/c #f attr?)
 ;;   Read the attribute node for a given name.

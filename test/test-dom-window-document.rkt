@@ -383,10 +383,21 @@
                      "element offset width")
          (check-true (exact-nonnegative-integer? (element-offset-height host))
                      "element offset height")
-         (check-true (external? (element-computed-style-map host))
-                     "element computed style map")
-         (check-true (vector? (element-get-animations host))
-                     "element animations vector")
+         (define style-map (element-computed-style-map host))
+         (check-true (or (not style-map) (computed-style-map? style-map))
+                     "element computed style map wrapper")
+         (define anim
+           (element-animate host
+                            (js-array/extern
+                             (vector (js-object (vector (vector "opacity" "0")))
+                                     (js-object (vector (vector "opacity" "1")))))
+                            (js-object (vector (vector "duration" 1)))))
+         (check-true (animation? anim) "element animation wrapper")
+         (define animations (element-get-animations host))
+         (check-true (vector? animations) "element animations vector")
+         (when (positive? (vector-length animations))
+           (check-true (animation? (vector-ref animations 0))
+                       "element animations item"))
          (check-false (element-has-pointer-capture? host 1)
                       "element pointer capture default")
          (define attr-node
