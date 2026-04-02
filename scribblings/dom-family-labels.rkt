@@ -7,12 +7,8 @@
 
 (provide
   (all-from-out "dom-core-labels.rkt")
-  (struct-out dom-token-list)
-  (struct-out shadow-root)
   (struct-out animation)
   (struct-out computed-style-map)
-  (struct-out node-list)
-  (struct-out html-collection)
   (struct-out dom-rect-list)
   (struct-out audio-track-list)
   (struct-out text-track-list)
@@ -37,34 +33,22 @@
   element-prefix
   element-is-connected?
   element-has-attribute?
-  element-has-attributes?
   element-remove-attribute!
   element-remove-attribute-ns!
   element-matches?
   element-closest
   element-get-attribute-names
   element-get-attribute-ns
-  dom-token-list-raw
-  dom-token-list-value
-  dom-token-list-length
-  dom-token-list-item
-  dom-token-list-contains?
-  dom-token-list-add!
-  dom-token-list-remove!
-  dom-token-list-toggle!
-  dom-token-list-replace!
   element-children
   element-child-element-count
   element-first-element-child
   element-last-element-child
   element-query-selector
-  element-query-selector-all
   element-get-bounding-client-rect
   element-get-client-rects
   element-inner-html
   element-set-inner-html!
   element-outer-html
-  element-set-outer-html!
   element-text-content
   element-set-text-content!
   element-scroll-top
@@ -93,7 +77,6 @@
   element-computed-style-map
   element-get-animations
   element-attach-shadow!
-  element-shadow-root
   element-animate
   element-request-fullscreen
   element-request-pointer-lock
@@ -101,18 +84,10 @@
   element-scroll!
   element-scroll-by!
   element-scroll-to!
-  node-list-length
-  node-list-item
-  html-collection-length
-  html-collection-item
-  html-collection-named-item
   dom-rect-list-length
   dom-rect-list-item
   element-set-attribute-ns!
   element-toggle-attribute!
-  shadow-root-host
-  shadow-root-mode
-  shadow-root-delegates-focus?
   animation-raw
   computed-style-map-raw
   element-get-attribute-node
@@ -150,7 +125,6 @@
   window-focus
   window-stop
   window-scroll-to
-  window-scroll-by
   window-scroll
   window-resize-to
   window-resize-by
@@ -312,7 +286,6 @@
   canvas-2d-create-linear-gradient
   canvas-2d-create-radial-gradient
   media-current-time
-  media-set-current-time!
   media-volume
   media-set-volume!
   media-muted
@@ -408,7 +381,6 @@
 (define window-focus any/c)
 (define window-stop any/c)
 (define window-scroll-to any/c)
-(define window-scroll-by any/c)
 (define window-scroll any/c)
 (define window-resize-to any/c)
 (define window-resize-by any/c)
@@ -457,7 +429,6 @@
 (define element-prefix any/c)
 (define element-is-connected? any/c)
 (define element-has-attribute? any/c)
-(define element-has-attributes? any/c)
 (define element-remove-attribute! any/c)
 (define element-remove-attribute-ns! any/c)
 (define element-matches? any/c)
@@ -477,13 +448,11 @@
 (define element-first-element-child any/c)
 (define element-last-element-child any/c)
 (define element-query-selector any/c)
-(define element-query-selector-all any/c)
 (define element-get-bounding-client-rect any/c)
 (define element-get-client-rects any/c)
 (define element-inner-html any/c)
 (define element-set-inner-html! any/c)
 (define element-outer-html any/c)
-(define element-set-outer-html! any/c)
 (define element-text-content any/c)
 (define element-set-text-content! any/c)
 (define element-scroll-top any/c)
@@ -710,7 +679,6 @@
 (define canvas-2d-create-linear-gradient any/c)
 (define canvas-2d-create-radial-gradient any/c)
 (define media-current-time any/c)
-(define media-set-current-time! any/c)
 (define media-volume any/c)
 (define media-set-volume! any/c)
 (define media-muted any/c)
