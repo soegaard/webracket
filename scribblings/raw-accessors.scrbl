@@ -4,7 +4,7 @@
           "webracket-scribble-utils.rkt"
           (for-label (lib "scribblings/raw-accessors-labels.rkt" "webracket")))
 
-@title{Raw Accessors}
+@title[#:tag "raw-accessors"]{Raw Accessors}
 @declare-exporting[(lib "scribblings/raw-accessors-labels.rkt" "webracket")]
 
 This appendix collects the raw bridge accessors for the core wrapper
@@ -16,6 +16,22 @@ object.
 
 @defproc[(window-raw [win any/c]) external/raw]{
 Returns the wrapped browser Window object.
+}
+
+@defproc[(window-document-info-raw [doc any/c]) external/raw]{
+Returns the wrapped browser Document object stored in the Window wrapper.
+}
+
+@defproc[(window-location-info-raw [loc any/c]) external/raw]{
+Returns the wrapped browser Location object stored in the Window wrapper.
+}
+
+@defproc[(media-query-list-raw [query any/c]) external/raw]{
+Returns the wrapped browser MediaQueryList object.
+}
+
+@defproc[(css-style-declaration-raw [style any/c]) external/raw]{
+Returns the wrapped browser CSSStyleDeclaration object.
 }
 
 @section{Document Raw Accessors}
@@ -88,4 +104,16 @@ Returns the wrapped browser Iterator object stored inside @racket[iter].
 
 @defproc[(audio-listener-raw [listener any/c]) external/raw]{
 Returns the wrapped browser AudioListener object.
+}
+
+@section{Performance Raw Accessor}
+
+@defproc[(performance-event-count-map-raw [counts any/c]) external/raw]{
+Returns the wrapped browser EventCounts object.
+}
+
+@section{WebSocket Raw Accessor}
+
+@defproc[(websocket-raw [ws any/c]) external/raw]{
+Returns the wrapped browser WebSocket object.
 }
