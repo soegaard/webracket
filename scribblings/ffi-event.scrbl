@@ -5,7 +5,7 @@
           (for-label (lib "scribblings/ffi-event-labels.rkt" "webracket")))
 
 @section{Event}
-@declare-exporting[(lib "ffi/event.ffi" "webracket")]
+@declare-exporting[(lib "scribblings/ffi-event-labels.rkt" "webracket")]
 
 This page documents the low-level @racket[js-event-*] and
 @racket[js-mouse-event-*] bindings from @tt{ffi/event.ffi}.

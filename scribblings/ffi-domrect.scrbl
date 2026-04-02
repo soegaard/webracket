@@ -5,7 +5,7 @@
           (for-label (lib "scribblings/ffi-domrect-labels.rkt" "webracket")))
 
 @section{DOMRect}
-@declare-exporting[(lib "ffi/domrect.ffi" "webracket")]
+@declare-exporting[(lib "scribblings/ffi-domrect-labels.rkt" "webracket")]
 
 This page documents the low-level @racket[js-dom-rect-*] bindings from
 @tt{ffi/domrect.ffi}.

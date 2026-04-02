@@ -5,7 +5,7 @@
           (for-label (lib "scribblings/ffi-media-labels.rkt" "webracket")))
 
 @section{Media}
-@declare-exporting[(lib "ffi/media.ffi" "webracket")]
+@declare-exporting[(lib "scribblings/ffi-media-labels.rkt" "webracket")]
 
 This page documents the low-level @racket[js-media-*] bindings from
 @tt{ffi/media.ffi}.

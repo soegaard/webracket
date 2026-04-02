@@ -5,7 +5,7 @@
           (for-label (lib "scribblings/ffi-image-labels.rkt" "webracket")))
 
 @section{Image}
-@declare-exporting[(lib "ffi/image.ffi" "webracket")]
+@declare-exporting[(lib "scribblings/ffi-image-labels.rkt" "webracket")]
 
 This page documents the low-level @racket[js-image-*] bindings from
 @tt{ffi/image.ffi}.

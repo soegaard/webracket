@@ -5,7 +5,7 @@
           (for-label (lib "scribblings/ffi-document-labels.rkt" "webracket")))
 
 @section{Document}
-@declare-exporting[(lib "ffi/document.ffi" "webracket")]
+@declare-exporting[(lib "scribblings/ffi-document-labels.rkt" "webracket")]
 
 This page documents the low-level @racket[js-document-*] bindings from
 @tt{ffi/document.ffi}.
