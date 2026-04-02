@@ -218,3 +218,21 @@
   (if (dom-rect? value)
       (dom-rect-raw value)
       value))
+
+;; dom-rect-list : external/raw -> dom-rect-list?
+;;   Wrap a browser DOMRectList object.
+(struct dom-rect-list (raw) #:transparent)
+
+;; dom-rect-list-wrap : any/c -> any/c
+;;   Wrap a raw browser DOMRectList object, leaving wrapped values alone.
+(define (dom-rect-list-wrap value)
+  (if (or (not value) (dom-rect-list? value))
+      value
+      (dom-rect-list value)))
+
+;; dom-rect-list-unwrap : any/c -> any/c
+;;   Unwrap a dom-rect-list struct to its raw browser object.
+(define (dom-rect-list-unwrap value)
+  (if (dom-rect-list? value)
+      (dom-rect-list-raw value)
+      value))

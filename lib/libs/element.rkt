@@ -500,15 +500,23 @@
 (define (element-get-bounding-client-rect element)
   (get-bounding-client-rect element))
 
-;; get-client-rects : external? -> vector?
-;;   Read the client rect list as wrapped DOMRect values.
-(define (get-client-rects element)
-  (array-like->vector 'get-client-rects
-                      (js-get-client-rects (element-unwrap element))
-                      dom-rect-wrap))
+;; dom-rect-list-length : dom-rect-list? -> exact-nonnegative-integer?
+;;   Read the number of rectangles in a DOMRectList.
+(define (dom-rect-list-length rect-list)
+  (js-ref (dom-rect-list-unwrap rect-list) "length"))
 
-;; element-get-client-rects : element? -> vector?
-;;   Read the client rect list as wrapped DOMRect values.
+;; dom-rect-list-item : dom-rect-list? exact-nonnegative-integer? -> (or/c #f dom-rect?)
+;;   Read a rectangle at a given index.
+(define (dom-rect-list-item rect-list index)
+  (dom-rect-wrap (js-send/value (dom-rect-list-unwrap rect-list) "item" (vector index))))
+
+;; get-client-rects : external? -> dom-rect-list?
+;;   Read the client rect list as a wrapped DOMRectList.
+(define (get-client-rects element)
+  (dom-rect-list-wrap (js-get-client-rects (element-unwrap element))))
+
+;; element-get-client-rects : element? -> dom-rect-list?
+;;   Read the client rect list as a wrapped DOMRectList.
 (define (element-get-client-rects element)
   (get-client-rects element))
 

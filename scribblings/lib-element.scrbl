@@ -377,6 +377,27 @@ Returns the element at the given index, or @racket[#f] if there is none.
 Returns the named element, or @racket[#f] if there is none.
 }
 
+@defstruct[dom-rect-list ([raw external/raw])]{
+Wraps a browser DOMRectList object.
+}
+
+@defproc[(dom-rect-list-raw [rect-list dom-rect-list?]) external/raw]{
+Returns the wrapped browser DOMRectList object.
+}
+
+@defproc[(dom-rect-list-length [rect-list dom-rect-list?]) exact-nonnegative-integer?]{
+@(mdn-bar "DOMRectList: length property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/DOMRectList/length")
+Returns the number of rectangles in the DOMRectList.
+}
+
+@defproc[(dom-rect-list-item [rect-list dom-rect-list?]
+                             [index exact-nonnegative-integer?]) (or/c #f dom-rect?)]{
+@(mdn-bar "DOMRectList: item() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/DOMRectList/item")
+Returns the rectangle at the given index, or @racket[#f] if there is none.
+}
+
 @defproc[(element-children [element element?]) (or/c #f html-collection?)]{
 @(mdn-bar "Element: children property"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/children")
@@ -502,10 +523,10 @@ Returns the element's text content.
 Sets the element's text content. Symbols are accepted and normalized to strings.
 }
 
-@defproc[(element-get-client-rects [element element?]) vector?]{
+@defproc[(element-get-client-rects [element element?]) dom-rect-list?]{
 @(mdn-bar "Element: getClientRects() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/getClientRects")
-Returns the element's client rectangles as a WebRacket vector of wrapped DOMRect values.
+Returns the element's client rectangles as a wrapped DOMRectList.
 }
 
 @defproc[(element-query-selector-all [element element?]
@@ -850,11 +871,10 @@ Scrolls ancestors until the element is visible.
 Returns the element's bounding rectangle.
 }
 
-@defproc[(element-get-client-rects [element element?]) vector?]{
+@defproc[(element-get-client-rects [element element?]) dom-rect-list?]{
 @(mdn-bar "Element: getClientRects() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/getClientRects")
-Returns the element's client rectangles as a WebRacket vector of
-wrapped DOMRect values.
+Returns the element's client rectangles as a wrapped DOMRectList.
 }
 
 @defproc[(element-query-selector-all [element element?]
