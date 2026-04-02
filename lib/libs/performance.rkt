@@ -148,6 +148,14 @@
   (define memory (js-performance-memory))
   (and memory (performance-memory-info memory)))
 
+;; performance-resolve-optional : any/c -> any/c
+;;   Treat #f as omitted, and force thunks when a literal value is needed.
+(define (performance-resolve-optional value)
+  (cond
+    [(eq? value #f) (void)]
+    [(procedure? value) (value)]
+    [else value]))
+
 ;; performance-time-origin : -> real?
 ;;   Read the high-resolution performance origin.
 (define (performance-time-origin)
@@ -160,20 +168,22 @@
 
 ;; performance-clear-marks : [string?] -> void?
 ;;   Clear performance marks, optionally filtered by name.
-(define (performance-clear-marks [mark-name (void)])
-  (when (and (not (void? mark-name))
-             (not (string? mark-name)))
-    (raise-argument-error 'performance-clear-marks "(or/c void? string?)" mark-name))
-  (js-performance-clear-marks mark-name)
+(define (performance-clear-marks [mark-name #f])
+  (when (and (not (eq? mark-name #f))
+             (not (string? mark-name))
+             (not (procedure? mark-name)))
+    (raise-argument-error 'performance-clear-marks "(or/c #f string? procedure?)" mark-name))
+  (js-performance-clear-marks (performance-resolve-optional mark-name))
   (void))
 
 ;; performance-clear-measures : [string?] -> void?
 ;;   Clear performance measures, optionally filtered by name.
-(define (performance-clear-measures [measure-name (void)])
-  (when (and (not (void? measure-name))
-             (not (string? measure-name)))
-    (raise-argument-error 'performance-clear-measures "(or/c void? string?)" measure-name))
-  (js-performance-clear-measures measure-name)
+(define (performance-clear-measures [measure-name #f])
+  (when (and (not (eq? measure-name #f))
+             (not (string? measure-name))
+             (not (procedure? measure-name)))
+    (raise-argument-error 'performance-clear-measures "(or/c #f string? procedure?)" measure-name))
+  (js-performance-clear-measures (performance-resolve-optional measure-name))
   (void))
 
 ;; performance-clear-resource-timings : -> void?
@@ -189,13 +199,14 @@
 
 ;; performance-get-entries-by-name : string? [string?] -> external/raw
 ;;   Read performance entries filtered by name and optional type.
-(define (performance-get-entries-by-name name [entry-type (void)])
+(define (performance-get-entries-by-name name [entry-type #f])
   (unless (string? name)
     (raise-argument-error 'performance-get-entries-by-name "string?" name))
-  (when (and (not (void? entry-type))
-             (not (string? entry-type)))
-    (raise-argument-error 'performance-get-entries-by-name "(or/c void? string?)" entry-type))
-  (js-performance-get-entries-by-name name entry-type))
+  (when (and (not (eq? entry-type #f))
+             (not (string? entry-type))
+             (not (procedure? entry-type)))
+    (raise-argument-error 'performance-get-entries-by-name "(or/c #f string? procedure?)" entry-type))
+  (js-performance-get-entries-by-name name (performance-resolve-optional entry-type)))
 
 ;; performance-get-entries-by-type : string? -> external/raw
 ;;   Read performance entries filtered by type.
@@ -206,17 +217,19 @@
 
 ;; performance-mark : string? [any/c] -> external/raw
 ;;   Create a performance mark and return the entry.
-(define (performance-mark name [options (void)])
+(define (performance-mark name [options #f])
   (unless (string? name)
     (raise-argument-error 'performance-mark "string?" name))
-  (js-performance-mark name options))
+  (js-performance-mark name (performance-resolve-optional options)))
 
 ;; performance-measure : string? [any/c] [any/c] -> external/raw
 ;;   Create a performance measure and return the entry.
-(define (performance-measure name [start-or-options (void)] [end-mark (void)])
+(define (performance-measure name [start-or-options #f] [end-mark #f])
   (unless (string? name)
     (raise-argument-error 'performance-measure "string?" name))
-  (js-performance-measure name start-or-options end-mark))
+  (js-performance-measure name
+                          (performance-resolve-optional start-or-options)
+                          (performance-resolve-optional end-mark)))
 
 ;; performance-measure-user-agent-specific-memory : -> external/raw
 ;;   Estimate user-agent-specific memory usage.

@@ -139,6 +139,10 @@
          (performance-clear-marks "webracket-performance-end")
          (performance-clear-measures "webracket-performance-span")
          (performance-clear-resource-timings)
+         (check-true (void? (performance-clear-marks #f))
+                     "performance clear marks default")
+         (check-true (void? (performance-clear-measures #f))
+                     "performance clear measures default")
          (performance-mark "webracket-performance-start")
          (performance-mark "webracket-performance-end")
          (performance-measure "webracket-performance-span"
