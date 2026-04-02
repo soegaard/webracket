@@ -54,11 +54,20 @@ Use the low-level return convention that matches the browser behavior:
 
 If the API is naturally nullable, encode that at the raw layer instead of forcing the wrapper to guess.
 
+If the browser returns an object with identity or behavior that is worth
+preserving on the WebRacket side, prefer a checked wrapper struct instead of
+exposing the raw `external/raw` value directly. Keep a raw accessor such as
+`*-raw` only when callers genuinely need the browser object itself.
+
 ### 2.4 Keep optional arguments explicit at the raw layer
 
 Low-level bindings may use `(void)` to mean “argument omitted” when that matches the browser shape.
 
 That is fine at the FFI layer, but do not leak that convention into the public library unless there is a strong reason.
+
+In the public Rackety API, prefer `#f` for omitted optional arguments. If a
+browser call needs a literal `#f` value, the wrapper may accept a thunk such as
+`(lambda () #f)` and force it only when the real `#f` value is needed.
 
 ### 2.5 Add focused tests for the raw surface
 
@@ -110,6 +119,17 @@ The rule of thumb is:
 - keep the raw browser shape in `js-*`
 - give Racket users a nicer shape in `websocket-*`
 
+When a browser API naturally returns a collection-like object, prefer a
+wrapper type that matches the browser shape and still feels like Racket. For
+example:
+- map-like browser values can become a checked struct plus `get`, `has?`,
+  `keys`, `values`, and `for-each` helpers
+- iterator-like browser values can become a checked `iterator` struct plus a
+  small set of conversion and traversal helpers such as `iterator->vector`
+
+Name the helper to match the WebRacket result, not just the browser source
+shape. If the wrapper returns a vector, call it `*-vector`, not `*-array`.
+
 ### 3.3 Normalize awkward browser values in the wrapper
 
 The wrapper should be where browser-specific oddities disappear.
@@ -119,8 +139,17 @@ Good examples:
 - map the numeric ready-state to symbols like `'connecting`, `'open`, `'closing`, and `'closed`
 - provide both the raw number and the symbolic version if both are useful
 - give event handlers a clear “set handler / clear handler” story
+- use exact integer contracts for browser counters and real-valued contracts
+  for high-resolution timestamps
+- wrap browser event-count or memory-info objects in checked structs rather
+  than exposing raw externals
 
 If the browser API has a raw shape that is technically correct but awkward in Racket, hide that awkwardness here.
+
+For optional callback receivers or `this`-style arguments, keep the public
+contract Racket-friendly and document the convention explicitly. In our
+wrappers, `#f` means omitted, and a thunk can be used when a literal `#f`
+value is needed.
 
 ### 3.4 Add event support explicitly
 
@@ -143,6 +172,11 @@ The wrapper library should mostly be:
 - small policy decisions
 
 Avoid reimplementing the browser API in Racket. The wrapper should make the raw API pleasant, not invent a second API.
+
+When a browser helper takes a callback, make the callback arity visible in the
+public contract and explain the arguments in the docs. Spell out how boolean
+results are interpreted, especially when the callback result is treated as
+true unless it is `#f`.
 
 ### 3.6 Promise-returning methods can start raw
 
@@ -176,6 +210,15 @@ The public chapter works best when it includes:
 
 That structure should be reused for other APIs whenever possible.
 
+For browser-object families that are more specialized, make the introduction
+explain the browser concept in plain language before diving into the API
+surface. A reader should be able to understand a page like `Performance`,
+`Iterator`, or `Window` without already knowing the browser object.
+
+If the public chapter includes helper methods with callbacks, mention the
+callback argument shapes in the signature and repeat the receiver/default
+convention on each relevant entry so each section stands on its own.
+
 ### 4.3 Use the Scribble banner pattern consistently
 
 The docs converge on a useful visual convention:
@@ -198,6 +241,10 @@ The banner pattern helps the reader answer three questions quickly:
 
 When documenting an API made of several browser object families, group the docs the same way the implementation is grouped. For Audio, that means one reference structure for `AudioContext`, another for `AudioNode`/`AudioParam`, and separate coverage for node-specific accessors and event helpers.
 
+When a helper returns another browser iterator or map-like object, document the
+wrapper type and the conversion helpers together so the reader sees the full
+workflow in one place.
+
 ### 4.5 Keep examples aligned with the implementation
 
 Examples in the docs should use the same names and conventions as the real library.
@@ -208,6 +255,10 @@ For a concrete API, that means:
 - the low-level reference uses `js-websocket-*`
 
 The docs should never force readers to think in terms of the internal raw API unless they are on the raw reference page.
+
+If an example uses a helper that returns a vector, show a vector in the
+example. If an example uses a wrapped iterator, show the iterator wrapper and
+the conversion helper that consumes it.
 
 ### 4.6 Use docs-only label modules when Scribble needs fake bindings
 
@@ -238,6 +289,8 @@ For a new API, check that you have:
 - the site or publish hook that makes the docs reachable
 - a mock-based test that exercises the raw bridge
 - a mock-based test that exercises the public wrapper
+- any wrapper structs or iterator helpers documented in the manual
+- any special docs-only label modules needed for Scribble linking
 
 ## 5. Suggested Workflow for a New API
 
@@ -247,10 +300,16 @@ When adding another browser-backed API, follow this order:
 2. Decide which results should be `value`, `extern`, `extern/raw`, or a nullable variant.
 3. Add a checked wrapper library with `include-lib`.
 4. Add event helpers or other ergonomic wrappers only after the core operations work.
-5. Write the low-level reference first, then the public library docs.
-6. Add an intro, quick start, use cases, and MDN-linked per-entry documentation.
-7. Validate with mock-based tests before relying on live browser behavior.
-8. Make sure the site/publish wiring exposes the new pages.
+5. Introduce checked wrapper structs for browser objects that should not be
+   exposed as raw externals.
+6. Use `#f` for omitted optional arguments in the public API, and document the
+   thunk convention when a literal `#f` must be passed through.
+7. Write the low-level reference first, then the public library docs.
+8. Add an intro, quick start, use cases, and MDN-linked per-entry documentation.
+9. Make callback arities, truthiness conventions, and conversion helpers
+   explicit in the docs.
+10. Validate with mock-based tests before relying on live browser behavior.
+11. Make sure the site/publish wiring exposes the new pages.
 
 ## 6. WebSocket as the Template
 
