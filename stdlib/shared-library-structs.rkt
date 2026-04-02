@@ -20,6 +20,26 @@
 (define (element-unwrap value)
   (if (element? value)
       (element-raw value)
+      (if (text? value)
+          (text-raw value)
+          value)))
+
+;; text : external/raw -> text?
+;;   Wrap a browser Text node.
+(struct text (raw) #:transparent)
+
+;; text-wrap : any/c -> any/c
+;;   Wrap a raw browser Text node, leaving wrapped values alone.
+(define (text-wrap value)
+  (if (text? value)
+      value
+      (text value)))
+
+;; text-unwrap : any/c -> any/c
+;;   Unwrap a text struct to its raw browser object.
+(define (text-unwrap value)
+  (if (text? value)
+      (text-raw value)
       value))
 
 ;; dom-rect : external/raw -> dom-rect?

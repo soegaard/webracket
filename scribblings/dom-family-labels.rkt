@@ -9,6 +9,7 @@
   Window
   (struct-out window)
   (struct-out element)
+  (struct-out text)
   element-id
   element-set-id!
   element-class-name
@@ -284,6 +285,7 @@
 (define window-structured-clone any/c)
 (define Document any/c)
 (struct document (raw) #:transparent)
+(struct text (raw) #:transparent)
 (struct dom-rect (raw) #:transparent)
 (define element-id any/c)
 (define element-set-id! any/c)

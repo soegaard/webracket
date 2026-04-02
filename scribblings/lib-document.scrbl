@@ -48,6 +48,19 @@ Returns the wrapped browser Document object.
 Returns the current browser document wrapped in a checked struct.
 }
 
+@section{Text Values}
+
+The text-node helper returns wrapped browser Text values so the document
+library can hand back text nodes without exposing a raw browser object.
+
+@defstruct[text ([raw external/raw])]{
+Wraps a browser Text node.
+}
+
+@defproc[(text-raw [node text?]) external/raw]{
+Returns the wrapped browser Text node.
+}
+
 @section{Document Quick Start}
 
 Start by including the library, grabbing the current document, and
@@ -120,10 +133,10 @@ Returns the document head element, if present.
 Creates an element for @racket[tag].
 }
 
-@defproc[(document-create-text-node [text (or/c string? symbol?)]) external/raw]{
+@defproc[(document-create-text-node [text (or/c string? symbol?)]) text?]{
 @(mdn-bar "Document: createTextNode() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/createTextNode")
-Creates a text node for @racket[text].
+Creates a wrapped browser text node for @racket[text].
 }
 
 @defproc[(document-get-element-by-id [id (or/c string? symbol?)]) (or/c #f element?)]{

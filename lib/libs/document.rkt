@@ -46,7 +46,7 @@
 ;;   Create a text node.
 (define (document-create-text-node text)
   (define text* (document-stringish->string 'document-create-text-node text))
-  (js-create-text-node text*))
+  (text-wrap (js-create-text-node text*)))
 
 ;; document-get-element-by-id : (or/c string? symbol?) -> (or/c #f element?)
 ;;   Look up a single element by id.

@@ -191,7 +191,8 @@ are @racket[append-child!], @racket[set-attribute!],
 Appends a child node.
 
 If an @racket[external] is passed as an argument, it should be a browser
-@racketid[Node] value, such as an element or a text node.
+@racketid[Node] value, such as an element or a text node. Wrapped
+@racket[element] and @racket[text] values are also accepted.
 }
 
 @defproc[(set-attribute! [element element?]
