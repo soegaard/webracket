@@ -2,10 +2,12 @@
 
 @(require scribble/manual
           "webracket-scribble-utils.rkt"
+          (for-label (lib "scribblings/lib-document-labels.rkt" "webracket"))
+          (for-label (lib "scribblings/lib-element-labels.rkt" "webracket"))
           (for-label (lib "scribblings/lib-canvas-labels.rkt" "webracket")))
 
 @title{Library: @racketid[canvas]}
-@declare-exporting[(lib "libs/canvas.rkt" "webracket")]
+@declare-exporting[(lib "scribblings/lib-canvas-labels.rkt" "webracket")]
 
 @(how-to-require include-lib canvas (lib "libs/canvas.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")

@@ -3,10 +3,11 @@
 @(require scribble/manual
           (for-label (only-in racket/base struct))
           "webracket-scribble-utils.rkt"
+          (for-label (lib "scribblings/lib-document-labels.rkt" "webracket"))
           (for-label (lib "scribblings/lib-window-labels.rkt" "webracket")))
 
 @title{Library: @racketid[window]}
-@declare-exporting[(lib "libs/window.rkt" "webracket")]
+@declare-exporting[(lib "scribblings/lib-window-labels.rkt" "webracket")]
 
 @(how-to-require include-lib window (lib "libs/window.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")

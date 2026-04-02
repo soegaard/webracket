@@ -8,7 +8,6 @@
   (struct-out window-document-info)
   (struct-out window-location-info)
   (struct-out window-scroll-options)
-  (struct-out selection)
   (struct-out media-query-list)
   (struct-out css-style-declaration)
   window-self
@@ -41,7 +40,6 @@
   window-cancel-animation-frame
   window-request-idle-callback
   window-cancel-idle-callback
-  window-get-selection
   window-match-media
   window-get-computed-style
   window-structured-clone
@@ -53,7 +51,6 @@
 (struct window-document-info (raw) #:transparent)
 (struct window-location-info (raw) #:transparent)
 (struct window-scroll-options (top left behavior) #:transparent)
-(struct selection (raw) #:transparent)
 (struct media-query-list (raw) #:transparent)
 (struct css-style-declaration (raw) #:transparent)
 
@@ -87,7 +84,6 @@
 (define window-cancel-animation-frame any/c)
 (define window-request-idle-callback any/c)
 (define window-cancel-idle-callback any/c)
-(define window-get-selection any/c)
 (define window-match-media any/c)
 (define window-get-computed-style any/c)
 (define window-structured-clone any/c)

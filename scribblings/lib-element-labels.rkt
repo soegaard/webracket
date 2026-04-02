@@ -1,14 +1,14 @@
 #lang racket/base
 
-(require racket/contract/base
-         "dom-family-labels.rkt")
+(require racket/contract/base)
 
 (provide
-  (all-from-out "dom-family-labels.rkt")
   (struct-out dom-token-list)
   (struct-out shadow-root)
   (struct-out node-list)
   (struct-out html-collection)
+  (struct-out animation)
+  (struct-out computed-style-map)
   element-has-attributes?
   element-query-selector-all
   element-set-outer-html!
@@ -34,6 +34,8 @@
 (struct shadow-root (raw) #:transparent)
 (struct node-list (raw) #:transparent)
 (struct html-collection (raw) #:transparent)
+(struct animation (raw) #:transparent)
+(struct computed-style-map (raw) #:transparent)
 
 (define element-has-attributes? any/c)
 (define element-query-selector-all any/c)
