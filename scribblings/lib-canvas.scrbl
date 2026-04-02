@@ -15,11 +15,11 @@
 @(compile-option-bar "Compile option: " "--ffi dom")
 
 The @racket[canvas] library wraps HTML canvas elements and their 2D
-drawing contexts.
+drawing contexts in checked values.
 
-Canvas is the browser API for painting pixels with shapes, text, and
-images. Use it when you want to draw directly on the page instead of
-building the interface out of HTML elements.
+Canvas lets you draw pixels with shapes, text, and images. Use it when
+you want to paint directly on the page instead of building the
+interface out of HTML elements.
 
 Use @racket[canvas] when you want to:
 
@@ -30,8 +30,8 @@ Use @racket[canvas] when you want to:
   @item{clear or reshape the canvas surface}
 ]
 
-The library keeps canvas elements, 2D contexts, and their richer return
-values on the WebRacket side.
+The library keeps canvas elements, 2D contexts, and the richer values
+they produce on the WebRacket side.
 
 The main values are @racket[canvas?] and @racket[canvas-2d-context?].
 Use @racket[canvas-raw] or @racket[canvas-2d-context-raw] only when you
