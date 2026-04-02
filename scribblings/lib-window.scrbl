@@ -17,6 +17,8 @@ The @racket[window] library is the easiest way to talk to the browser
 from WebRacket when you need the page itself, not just the current DOM
 tree.
 
+@margin-note{This chapter focuses on checked wrappers.}
+
 If you are new to browser programming, think of the Window as the
 browser tab or page container. It gives you access to the current
 document, browser dialogs, timers, scrolling, resizing, and a few other
@@ -38,43 +40,7 @@ checked structs so the API stays Rackety instead of exposing raw browser
 objects at the top level. The raw accessor for @racket[window] lives in
 the @seclink["raw-accessors"]{Raw Accessors} appendix.
 
-@section{Window Values}
-
-@defstruct[window ([raw external/raw])]{
-Wraps a browser Window object.
-}
-
-@defproc[(Window) window?]{
-@(mdn-bar "Window"
-          "https://developer.mozilla.org/en-US/docs/Web/API/Window")
-Returns the current browser Window object wrapped in a checked struct.
-}
-
-@defproc[(window-self) window?]{
-@(mdn-bar "Window: self property"
-          "https://developer.mozilla.org/en-US/docs/Web/API/Window/self")
-Returns the current browser Window object via @racket[self], wrapped in
-the checked struct.
-}
-
-@defstruct[window-document-info ([raw external/raw])]{
-Wraps the current document object returned by @racket[window-document].
-}
-
-@defstruct[window-location-info ([raw external/raw])]{
-Wraps the current location object returned by @racket[window-location].
-}
-
-@defstruct[window-scroll-options ([top (or/c #f real?)]
-                                  [left (or/c #f real?)]
-                                  [behavior (or/c #f string? symbol?)])]{
-Describes the optional @tt{ScrollToOptions} dictionary used by
-@racket[window-scroll-to], @racket[window-scroll-by], and
-@racket[window-scroll]. Leave a field as @racket[#f] to omit it from the
-browser dictionary. If @racket[behavior] is present, use one of
-@racket['auto], @racket['instant], or @racket['smooth], or the matching
-string values. Construct values with @racket[make-window-scroll-options].
-}
+@margin-note{These entries are checked structs, not raw browser objects.}
 
 @section{Window Quick Start}
 
@@ -160,6 +126,44 @@ Returns the current location object wrapped in a checked struct.
 @(mdn-bar "Window: getSelection() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Window/getSelection")
 Returns the current selection as a wrapped @racket[selection] value.
+}
+
+@section{Window Values}
+
+@defstruct[window ([raw external/raw])]{
+Wraps a browser Window object.
+}
+
+@defproc[(Window) window?]{
+@(mdn-bar "Window"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Window")
+Returns the current browser Window object wrapped in a checked struct.
+}
+
+@defproc[(window-self) window?]{
+@(mdn-bar "Window: self property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Window/self")
+Returns the current browser Window object via @racket[self], wrapped in
+the checked struct.
+}
+
+@defstruct[window-document-info ([raw external/raw])]{
+Wraps the current document object returned by @racket[window-document].
+}
+
+@defstruct[window-location-info ([raw external/raw])]{
+Wraps the current location object returned by @racket[window-location].
+}
+
+@defstruct[window-scroll-options ([top (or/c #f real?)]
+                                  [left (or/c #f real?)]
+                                  [behavior (or/c #f string? symbol?)])]{
+Describes the optional @tt{ScrollToOptions} dictionary used by
+@racket[window-scroll-to], @racket[window-scroll-by], and
+@racket[window-scroll]. Leave a field as @racket[#f] to omit it from the
+browser dictionary. If @racket[behavior] is present, use one of
+@racket['auto], @racket['instant], or @racket['smooth], or the matching
+string values. Construct values with @racket[make-window-scroll-options].
 }
 
 @section{Window Browser Objects}
@@ -435,6 +439,10 @@ page itself. Symbols are accepted and converted to strings.
 Opens a new browsing context. The @racket[url], @racket[target], and
 @racket[features] arguments accept strings or symbols, and
 @racket[replace] accepts a boolean value.
+Each optional argument may also be a thunk that takes no arguments and
+returns the matching value: @racket[target] and @racket[features] must
+produce a string or symbol, while @racket[replace] must produce a
+boolean.
 The returned value is wrapped as @racket[window] when the browser opens
 the new context, or @racket[#f] if the popup is blocked. Use @racket[#f]
 to omit an optional argument. If you need a literal @racket[#f] value,
@@ -455,7 +463,9 @@ The message accepts a string or symbol and is normalized to a string.
           "https://developer.mozilla.org/en-US/docs/Web/API/Window/scrollTo")
 Scrolls the window to an absolute position. The optional @racket[options]
 argument can supply a @racket[window-scroll-options] struct to use the browser's
-dictionary form. Use @racket[#f] to omit the options argument.
+dictionary form. It may also be a thunk that takes no arguments and
+returns either @racket[#f] or a @racket[window-scroll-options] value.
+Use @racket[#f] to omit the options argument.
 }
 
 @defproc[(window-scroll-by [x real?] [y real?]
@@ -465,7 +475,9 @@ dictionary form. Use @racket[#f] to omit the options argument.
           "https://developer.mozilla.org/en-US/docs/Web/API/Window/scrollBy")
 Scrolls the window by a relative offset. The optional @racket[options]
 argument can supply a @racket[window-scroll-options] struct to use the
-browser's dictionary form. Use @racket[#f] to omit the options argument.
+browser's dictionary form. It may also be a thunk that takes no
+arguments and returns either @racket[#f] or a @racket[window-scroll-options]
+value. Use @racket[#f] to omit the options argument.
 }
 
 @defproc[(window-scroll [x real?] [y real?]
@@ -475,7 +487,9 @@ browser's dictionary form. Use @racket[#f] to omit the options argument.
           "https://developer.mozilla.org/en-US/docs/Web/API/Window/scroll")
 Scrolls the window to an absolute position. The optional @racket[options]
 argument can supply a @racket[window-scroll-options] struct to use the
-browser's dictionary form. Use @racket[#f] to omit the options argument.
+browser's dictionary form. It may also be a thunk that takes no
+arguments and returns either @racket[#f] or a @racket[window-scroll-options]
+value. Use @racket[#f] to omit the options argument.
 }
 
 @defproc[(window-set-timeout [callback external?]) exact-nonnegative-integer?]{
