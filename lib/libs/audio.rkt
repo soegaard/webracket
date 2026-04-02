@@ -211,6 +211,12 @@
   (unless (audio-buffer? x)
     (raise-argument-error who "audio-buffer?" x)))
 
+;; check-audio-periodic-wave : symbol? any/c -> void?
+;;   Ensure x is a PeriodicWave value.
+(define (check-audio-periodic-wave who x)
+  (unless (audio-periodic-wave? x)
+    (raise-argument-error who "audio-periodic-wave?" x)))
+
 ;; check-audio-stringish : symbol? any/c -> void?
 ;;   Ensure v is a string or symbol.
 (define (check-audio-stringish who v)
@@ -529,6 +535,17 @@
     (raise-argument-error 'audio-context-create-buffer "real?" sample-rate))
   (js-audio-context-create-buffer ctx channels length sample-rate))
 
+;; audio-context-create-periodic-wave : audio-context? vector? vector? -> audio-periodic-wave?
+;;   Create a PeriodicWave from real and imaginary Fourier coefficients.
+(define (audio-context-create-periodic-wave ctx real imag)
+  (check-audio-context 'audio-context-create-periodic-wave ctx)
+  (check-audio-float-vector 'audio-context-create-periodic-wave real)
+  (check-audio-float-vector 'audio-context-create-periodic-wave imag)
+  (audio-periodic-wave-wrap
+   (js-audio-context-create-periodic-wave ctx
+                                          (audio-vector->js-float32-array real)
+                                          (audio-vector->js-float32-array imag))))
+
 ;; audio-context-decode-audio-data : audio-context? (or/c bytes? external?) -> external?
 ;;   Decode audio data and return the browser Promise.
 (define (audio-context-decode-audio-data ctx data)
@@ -732,13 +749,16 @@
   (check-audio-optional-time 'audio-oscillator-node-stop! when)
   (js-audio-oscillator-node-stop! node (if when when (void))))
 
-;; audio-oscillator-node-set-periodic-wave! : audio-oscillator-node? external? -> void?
+;; audio-oscillator-node-set-periodic-wave! : audio-oscillator-node? (or/c external? audio-periodic-wave?) -> void?
 ;;   Set a periodic wave on the oscillator.
 (define (audio-oscillator-node-set-periodic-wave! node wave)
   (check-audio-oscillator-node 'audio-oscillator-node-set-periodic-wave! node)
-  (unless (external? wave)
-    (raise-argument-error 'audio-oscillator-node-set-periodic-wave! "external?" wave))
-  (js-audio-oscillator-node-set-periodic-wave! node wave))
+  (unless (or (external? wave) (audio-periodic-wave? wave))
+    (raise-argument-error 'audio-oscillator-node-set-periodic-wave! "(or/c external? audio-periodic-wave?)" wave))
+  (js-audio-oscillator-node-set-periodic-wave! node
+                                               (if (audio-periodic-wave? wave)
+                                                   (audio-periodic-wave-raw wave)
+                                                   wave)))
 
 ;; audio-buffer-source-node-buffer : audio-buffer-source-node? -> (or/c #f audio-buffer?)
 ;;   Read the current buffer.

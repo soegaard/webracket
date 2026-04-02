@@ -207,6 +207,24 @@
       (audio-listener-raw value)
       value))
 
+;; audio-periodic-wave : external/raw -> audio-periodic-wave?
+;;   Wrap a browser PeriodicWave object.
+(struct audio-periodic-wave (raw) #:transparent)
+
+;; audio-periodic-wave-wrap : any/c -> any/c
+;;   Wrap a raw browser PeriodicWave object, leaving wrapped values alone.
+(define (audio-periodic-wave-wrap value)
+  (if (or (not value) (audio-periodic-wave? value))
+      value
+      (audio-periodic-wave value)))
+
+;; audio-periodic-wave-unwrap : any/c -> any/c
+;;   Unwrap an audio-periodic-wave struct to its raw browser object.
+(define (audio-periodic-wave-unwrap value)
+  (if (audio-periodic-wave? value)
+      (audio-periodic-wave-raw value)
+      value))
+
 ;; array-like->vector : symbol? any/c (-> any/c any/c) -> vector?
 ;;   Convert a browser array-like value into a WebRacket vector.
 (define (array-like->vector who value wrap-item)

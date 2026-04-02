@@ -81,6 +81,14 @@
       }
     };
 
+    globalThis.PeriodicWave = class PeriodicWave {
+      constructor(real, imag) {
+        this.kind = 'periodic-wave';
+        this.real = real;
+        this.imag = imag;
+      }
+    };
+
     globalThis.GainNode = class GainNode extends AudioNode {
       constructor(context) {
         super(context);
@@ -313,6 +321,10 @@
         this.calls.push(['createBuffer', numberOfChannels, length, sampleRate]);
         return new AudioBuffer(numberOfChannels, length, sampleRate);
       }
+      createPeriodicWave(real, imag) {
+        this.calls.push(['createPeriodicWave', real, imag]);
+        return new PeriodicWave(real, imag);
+      }
       addEventListener(eventName, listener, options) {
         this.lastAdd = [eventName, listener, options];
       }
@@ -358,6 +370,20 @@
          (check-number= (audio-param-value (audio-oscillator-node-frequency osc)) 440 "wrapper oscillator frequency")
          (audio-param-set-value! (audio-oscillator-node-frequency osc) 523.25)
          (check-number= (audio-param-value (audio-oscillator-node-frequency osc)) 523.25 "wrapper oscillator frequency update")
+         (define periodic-wave (audio-context-create-periodic-wave ctx
+                                                                  (vector 0.0 1.0 0.0)
+                                                                  (vector 1.0 0.0 1.0)))
+         (check-true (audio-periodic-wave? periodic-wave) "wrapper periodic wave predicate")
+         (check-equal (js-ref (audio-periodic-wave-raw periodic-wave) "kind")
+                      "periodic-wave"
+                      "wrapper periodic wave raw")
+         (check-number= (js-index (js-ref (audio-periodic-wave-raw periodic-wave) "real") 1)
+                        1
+                        "wrapper periodic wave real sample")
+         (audio-oscillator-node-set-periodic-wave! osc periodic-wave)
+         (check-equal (js-ref (js-ref osc "periodicWave") "kind")
+                      "periodic-wave"
+                      "wrapper oscillator periodic wave raw")
          (audio-param-set-value-curve-at-time! (audio-oscillator-node-frequency osc)
                                                 (vector 523.25 660.0 880.0)
                                                 0.25

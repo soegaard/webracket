@@ -181,6 +181,15 @@
   #:name   "context-create-buffer"
   (-> (extern value value value) (extern/raw)))
 
+;; Create a PeriodicWave attached to the AudioContext.
+;; ctx : extern
+;; real : value
+;; imag : value
+(define-foreign js-audio-context-create-periodic-wave
+  #:module "audio"
+  #:name   "context-create-periodic-wave"
+  (-> (extern value value) (extern/raw)))
+
 ;; Decode audio data and return the browser Promise.
 ;; ctx : extern
 ;; data : value

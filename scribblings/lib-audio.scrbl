@@ -367,6 +367,26 @@ The raw @racket[ctx] argument should be a browser
 Creates an audio buffer with the requested size.
 }
 
+@defstruct[audio-periodic-wave ([raw external/raw])]{
+@racket[audio-context-create-periodic-wave] returns a wrapped browser
+@racketid[PeriodicWave] value. The raw browser object is stored in
+@racket[raw].
+}
+
+@defproc[(audio-context-create-periodic-wave [ctx audio-context?]
+                                             [real vector?]
+                                             [imag vector?])
+         audio-periodic-wave?]{
+@(mdn-bar "AudioContext: createPeriodicWave() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/createPeriodicWave")
+
+The raw @racket[ctx] argument should be a browser @racketid[AudioContext]
+value. The @racket[real] and @racket[imag] arguments should be vectors of
+real numbers that become browser @racketid[Float32Array] values.
+
+Creates a wrapped browser @racketid[PeriodicWave] value.
+}
+
 @defproc[(audio-context-decode-audio-data [ctx audio-context?]
                                           [data (or/c bytes? external?)])
          external?]{
@@ -472,13 +492,14 @@ Returns the detune parameter.
 }
 
 @defproc[(audio-oscillator-node-set-periodic-wave! [node audio-oscillator-node?]
-                                                   [wave external?])
+                                                   [wave (or/c external? audio-periodic-wave?)])
          void?]{
 @(mdn-bar "OscillatorNode: setPeriodicWave() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/OscillatorNode/setPeriodicWave")
 
 The raw @racket[wave] argument should be a browser
-@racketid[PeriodicWave] value.
+@racketid[PeriodicWave] value, or a wrapped
+@racket[audio-periodic-wave] value.
 
 Sets the oscillator's periodic wave.
 }

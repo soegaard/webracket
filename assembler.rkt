@@ -408,6 +408,8 @@ const audio_impl = {
   'context-create-stereo-panner': (ctx => ctx.createStereoPanner()),
   'context-create-buffer': ((ctx, channels, length, sampleRate) =>
     ctx.createBuffer(from_fasl(channels), from_fasl(length), from_fasl(sampleRate))),
+  'context-create-periodic-wave': ((ctx, real, imag) =>
+    ctx.createPeriodicWave(from_fasl(real), from_fasl(imag))),
   'context-decode-audio-data': ((ctx, data) => ctx.decodeAudioData(from_fasl(data))),
   'node-context': (node => node.context),
   'node-connect': ((node, destination, outputIndex, inputIndex) => {
