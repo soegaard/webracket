@@ -4,9 +4,8 @@
           (lib "scribblings/ffi-performance-labels.rkt" "webracket")
           (for-label (lib "scribblings/ffi-performance-labels.rkt" "webracket")))
 
-@declare-exporting[(lib "scribblings/ffi-performance-labels.rkt" "webracket")]
-
 @section{Performance}
+@declare-exporting[(lib "ffi/performance.ffi" "webracket")]
 
 This page documents the low-level @racket[js-performance-*] bindings
 from @tt{ffi/performance.ffi}.

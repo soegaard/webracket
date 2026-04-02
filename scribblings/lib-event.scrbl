@@ -2,10 +2,10 @@
 
 @(require scribble/manual
           "webracket-scribble-utils.rkt"
-          (for-label (lib "scribblings/dom-family-labels.rkt" "webracket")))
+          (for-label (lib "scribblings/lib-event-labels.rkt" "webracket")))
 
 @title{Library: @racketid[event]}
-@declare-exporting[(lib "scribblings/dom-family-labels.rkt" "webracket")]
+@declare-exporting[(lib "libs/event.rkt" "webracket")]
 
 @(how-to-require include-lib event (lib "libs/event.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")

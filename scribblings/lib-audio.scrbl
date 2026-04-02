@@ -2,10 +2,10 @@
 
 @(require scribble/manual
           "webracket-scribble-utils.rkt"
-          (for-label (lib "scribblings/audio-labels.rkt" "webracket")))
+          (for-label (lib "scribblings/lib-audio-labels.rkt" "webracket")))
 
 @title{Library: @racketid[audio]}
-@declare-exporting[(lib "scribblings/audio-labels.rkt" "webracket")]
+@declare-exporting[(lib "libs/audio.rkt" "webracket")]
 
 @(how-to-require include-lib audio (lib "libs/audio.rkt"))
 @(compile-option-bar "Compile option: " "--ffi audio")

@@ -1,13 +1,12 @@
 #lang racket/base
 
-(require racket/contract/base)
+(require racket/contract/base
+         "dom-core-labels.rkt")
 
 ;; Docs-only fake bindings for the split DOM wrapper Scribble pages.
 
 (provide
-  dom
-  Window
-  (struct-out window)
+  (all-from-out "dom-core-labels.rkt")
   (struct-out dom-token-list)
   (struct-out shadow-root)
   (struct-out animation)
@@ -24,10 +23,7 @@
   (struct-out video-track)
   (struct-out media-keys-info)
   (struct-out media-source-info)
-  (struct-out node)
   (struct-out element)
-  (struct-out text)
-  (struct-out attr)
   element-class-list
   element-id
   element-set-id!
@@ -143,8 +139,6 @@
   window-set-name!
   window-location
   (struct-out window-location-info)
-  (struct-out media-query-list)
-  (struct-out css-style-declaration)
   (struct-out window-scroll-options)
   window-set-location!
   window-open
@@ -177,19 +171,10 @@
   window-structured-clone
   Document
   (struct-out document)
-  (struct-out node)
-  (struct-out attr)
   (struct-out dom-rect)
   (struct-out selection)
-  (struct-out media-query-list)
-  (struct-out css-style-declaration)
-  (struct-out media-keys-info)
-  (struct-out media-source-info)
   (struct-out media-stream)
   (struct-out media-error-info)
-  (struct-out audio-track)
-  (struct-out text-track)
-  (struct-out video-track)
   (struct-out performance-event-count-map)
   performance-event-count-map-size
   performance-event-count-map-entries
@@ -404,9 +389,6 @@
   image-set-cross-origin!
   (for-label (all-defined-out)))
 
-(define dom any/c)
-(define Window any/c)
-(struct window (raw) #:transparent)
 (struct element (raw) #:transparent)
 (define window-self any/c)
 (define window-document any/c)
@@ -458,20 +440,10 @@
 (struct text-track-list (raw) #:transparent)
 (struct video-track-list (raw) #:transparent)
 (struct time-ranges (raw) #:transparent)
-(struct node (raw) #:transparent)
-(struct text (raw) #:transparent)
-(struct attr (raw) #:transparent)
 (struct dom-rect (raw) #:transparent)
 (struct selection (raw) #:transparent)
-(struct media-query-list (raw) #:transparent)
-(struct css-style-declaration (raw) #:transparent)
-(struct media-keys-info (raw) #:transparent)
-(struct media-source-info (raw) #:transparent)
 (struct media-stream (raw) #:transparent)
 (struct media-error-info (raw) #:transparent)
-(struct audio-track (raw) #:transparent)
-(struct text-track (raw) #:transparent)
-(struct video-track (raw) #:transparent)
 (define element-class-list any/c)
 (define element-id any/c)
 (define element-set-id! any/c)

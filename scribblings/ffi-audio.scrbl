@@ -3,9 +3,8 @@
 @(require "browser-api-docs.rkt"
           (for-label (lib "scribblings/ffi-audio-labels.rkt" "webracket")))
 
-@declare-exporting[(lib "scribblings/ffi-audio-labels.rkt" "webracket")]
-
 @section{Audio}
+@declare-exporting[(lib "ffi/audio.ffi" "webracket")]
 
 The Audio API exposes the browser Web Audio graph model. It lets a page
 create audio contexts, connect nodes, inspect parameters, and drive

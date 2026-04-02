@@ -3,9 +3,8 @@
 @(require "browser-api-docs.rkt"
           (for-label (lib "scribblings/ffi-websocket-labels.rkt" "webracket")))
 
-@declare-exporting[(lib "scribblings/ffi-websocket-labels.rkt" "webracket")]
-
 @section{WebSocket}
+@declare-exporting[(lib "ffi/websocket.ffi" "webracket")]
 
 WebSocket is the browser API for keeping a persistent, two-way
 connection open between the browser and a server.

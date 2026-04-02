@@ -2,10 +2,10 @@
 
 @(require scribble/manual
           "webracket-scribble-utils.rkt"
-          (for-label (lib "scribblings/websocket-labels.rkt" "webracket")))
+          (for-label (lib "scribblings/lib-websocket-labels.rkt" "webracket")))
 
 @title{Library: @racketid[websocket]}
-@declare-exporting[(lib "scribblings/websocket-labels.rkt" "webracket")]
+@declare-exporting[(lib "libs/websocket.rkt" "webracket")]
 
 @(how-to-require include-lib websocket (lib "libs/websocket.rkt"))
 @(compile-option-bar "Compile option: " "--ffi websocket")

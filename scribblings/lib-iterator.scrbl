@@ -3,10 +3,10 @@
 @(require scribble/manual
           (for-label (only-in racket/base struct))
           "webracket-scribble-utils.rkt"
-          (for-label (lib "scribblings/iterator-labels.rkt" "webracket")))
+          (for-label (lib "scribblings/lib-iterator-labels.rkt" "webracket")))
 
 @title{Library: @racketid[iterator]}
-@declare-exporting[(lib "scribblings/iterator-labels.rkt" "webracket")]
+@declare-exporting[(lib "libs/iterator.rkt" "webracket")]
 
 @(how-to-require include-lib iterator (lib "libs/iterator.rkt"))
 @(compile-option-bar "Compile option: " "--ffi standard")
