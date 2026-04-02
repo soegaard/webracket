@@ -69,13 +69,15 @@ document.
 
 @section{Window Example}
 
-This example shows how to use the current document and schedule work
-to happen a little later. The timer is useful when you want to defer a
-page update without blocking the current event handler.
+This example shows how to use the current document, schedule work to
+happen a little later, and log a message to the browser console. The
+timer is useful when you want to defer a page update without blocking
+the current event handler.
 
 @racketblock[
 (code:comment "Include the wrapper library at the top level.")
 (include-lib window)
+(include-lib console)
 
 (code:comment "Capture the current browser Window object.")
 (define win (Window))
@@ -88,7 +90,7 @@ page update without blocking the current event handler.
 (code:comment "Run a small update after a short delay.")
 (window-set-timeout
   (lambda ()
-    (displayln "Hello from the browser window")))
+    (console-log "Hello from the browser window")))
 ]
 
 If you are only reading the page and not changing it, the most useful
