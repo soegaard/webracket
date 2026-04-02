@@ -17,19 +17,23 @@
     [(procedure? value) (value)]
     [else value]))
 
-;; window : -> external/raw
+;; window : external/raw -> window?
+;;   Wrap a browser Window object.
+(struct window (raw) #:transparent)
+
+;; Window : -> window?
 ;;   Read the current window object.
-(define (window)
-  (js-window-window))
+(define (Window)
+  (window (js-window-window)))
 
 ;; window-document-info : external/raw -> window-document-info?
 ;;   Wrap the current document object.
 (struct window-document-info (raw) #:transparent)
 
-;; window-self : -> external/raw
+;; window-self : -> window?
 ;;   Read the current window via self.
 (define (window-self)
-  (js-window-self))
+  (window (js-window-self)))
 
 ;; window-document : -> window-document-info?
 ;;   Read the document for the current window.

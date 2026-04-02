@@ -31,11 +31,32 @@ Use @racket[window] when you want to:
 
 The @racket[window] library provides checked wrappers for the browser
 Window object, timers, dialogs, scrolling, and navigation helpers.
-The current document and location are wrapped in small checked structs
-so the API stays Rackety instead of exposing raw browser objects at the
-top level.
+The current Window object, document, and location are wrapped in small
+checked structs so the API stays Rackety instead of exposing raw browser
+objects at the top level.
 
 @section{Window Values}
+
+@defstruct[window ([raw external/raw])]{
+Wraps a browser Window object.
+}
+
+@defproc[(window-raw [win window?]) external/raw]{
+Returns the wrapped browser Window object.
+}
+
+@defproc[(Window) window?]{
+@(mdn-bar "Window"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Window")
+Returns the current browser Window object wrapped in a checked struct.
+}
+
+@defproc[(window-self) window?]{
+@(mdn-bar "Window: self property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Window/self")
+Returns the current browser Window object via @racket[self], wrapped in
+the checked struct.
+}
 
 @defstruct[window-document-info ([raw external/raw])]{
 Wraps the current document object returned by @racket[window-document].
@@ -64,6 +85,10 @@ calling a simple page-level helper.
 (code:comment "Include the checked Window wrapper library.")
 (include-lib window)
 
+(code:comment "Capture the current Window object as a checked wrapper.")
+(define win
+  (Window))
+
 (code:comment "Get the current document from the browser window.")
 (define doc
   (window-document))
@@ -78,8 +103,10 @@ calling a simple page-level helper.
 ]
 
 The quick start shows the three most common ideas:
-include the wrapper, reach the current document, and call a browser
-helper that affects the page.
+include the wrapper, capture the current Window object, and call a
+browser helper that affects the page. After this block, @racket[win] is
+the wrapped current Window object and @racket[doc] is the current
+document.
 
 @section{Window Example}
 
@@ -90,6 +117,10 @@ page update without blocking the current event handler.
 @racketblock[
 (code:comment "Include the wrapper library at the top level.")
 (include-lib window)
+
+(code:comment "Capture the current browser Window object.")
+(define win
+  (Window))
 
 (code:comment "Get the current document so we can inspect the page.")
 (define doc
@@ -104,7 +135,7 @@ page update without blocking the current event handler.
 ]
 
 If you are only reading the page and not changing it, the most useful
-window entry points are usually @racket[window-document],
+window entry points are usually @racket[Window], @racket[window-document],
 @racket[window-confirm], @racket[window-set-timeout], and
 @racket[window-scroll-to].
 
@@ -112,12 +143,6 @@ For optional arguments, @racket[#f] means omitted. If you need a
 literal @racket[#f] value, pass a thunk such as @racket[(lambda () #f)].
 
 @section{Window API}
-
-@defproc[(window) external/raw]{
-@(mdn-bar "Window: window property"
-          "https://developer.mozilla.org/en-US/docs/Web/API/Window/window")
-Returns the current Window object.
-}
 
 @defproc[(window-document) window-document-info?]{
 @(mdn-bar "Window: document property"

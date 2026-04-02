@@ -6,7 +6,8 @@
 
 (provide
   dom
-  window
+  Window
+  (struct-out window)
   window-self
   window-document
   (struct-out window-document-info)
@@ -225,7 +226,8 @@
   (for-label (all-defined-out)))
 
 (define dom any/c)
-(define window any/c)
+(define Window any/c)
+(struct window (raw) #:transparent)
 (define window-self any/c)
 (define window-document any/c)
 (struct window-document-info (raw) #:transparent)

@@ -22,6 +22,8 @@
 (list
  (list "DOM facade"
        (let ()
+         (check-true (procedure? Window) "Window accessor available")
+         (check-true (procedure? window?) "window struct available")
          (check-true (procedure? window-name) "window wrapper available")
          (check-true (procedure? Iterator) "iterator wrapper available")
          (check-true (procedure? performance-now) "performance wrapper available")
