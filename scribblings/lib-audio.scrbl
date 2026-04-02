@@ -29,6 +29,10 @@ programs in WebRacket. It is implemented on top of the lower-level
 @tt{ffi/audio.ffi} bindings, but application code should normally use
 the @racket[audio-*] functions documented on this page.
 
+String-like audio arguments accept either strings or symbols, and the
+wrapper converts symbols to their string names. Optional arguments use
+@racket[#f] to mean that the argument is omitted.
+
 @section{Audio Quick Start}
 
 To use the audio API, create a context, create a source node, connect it

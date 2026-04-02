@@ -32,6 +32,10 @@ programs in WebRacket. It is implemented on top of the lower-level
 @tt{ffi/websocket.ffi} bindings, but application code should normally use
 the @racket[websocket-*] functions documented on this page.
 
+String-like WebSocket arguments accept either strings or symbols, and
+the wrapper converts symbols to their string names. Optional arguments
+use @racket[#f] to mean that the argument is omitted.
+
 @section{WebSocket Quick Start}
 
 To use WebSockets, create a connection, install the handlers you need,
