@@ -55,11 +55,11 @@
   (define name* (document-stringish->string 'document-create-attribute-ns name))
   (attr-wrap (js-create-attribute-ns ns* name*)))
 
-;; document-create-text-node : (or/c string? symbol?) -> external/raw
+;; document-create-text-node : (or/c string? symbol?) -> text-node?
 ;;   Create a text node.
 (define (document-create-text-node text)
   (define text* (document-stringish->string 'document-create-text-node text))
-  (text-wrap (js-create-text-node text*)))
+  (text-node-wrap (js-create-text-node text*)))
 
 ;; document-create-comment : (or/c string? symbol?) -> node?
 ;;   Create a comment node.

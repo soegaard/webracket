@@ -40,7 +40,7 @@ Returns the wrapped browser CSSStyleDeclaration object.
 Returns the wrapped browser Document object.
 }
 
-@defproc[(text-raw [node any/c]) external/raw]{
+@defproc[(text-node-raw [node any/c]) external/raw]{
 Returns the wrapped browser Text node.
 }
 

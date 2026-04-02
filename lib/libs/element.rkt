@@ -35,7 +35,7 @@
     [(symbol? value) (symbol->string value)]
     [(node? value) (node-raw value)]
     [(element? value) (element-raw value)]
-    [(text? value) (text-raw value)]
+    [(text-node? value) (text-node-raw value)]
     [(attr? value) (attr-raw value)]
     [else value]))
 

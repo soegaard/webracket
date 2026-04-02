@@ -8,7 +8,7 @@
   Window
   (struct-out window)
   (struct-out node)
-  (struct-out text)
+  (struct-out text-node)
   (struct-out attr)
   (struct-out media-query-list)
   (struct-out css-style-declaration)
@@ -21,7 +21,7 @@
 
 (struct window (raw) #:transparent)
 (struct node (raw) #:transparent)
-(struct text (raw) #:transparent)
+(struct text-node (raw) #:transparent)
 (struct attr (raw) #:transparent)
 (struct media-query-list (raw) #:transparent)
 (struct css-style-declaration (raw) #:transparent)

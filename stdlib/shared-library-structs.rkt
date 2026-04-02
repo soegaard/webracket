@@ -20,26 +20,26 @@
 (define (element-unwrap value)
   (if (element? value)
       (element-raw value)
-      (if (text? value)
-          (text-raw value)
+      (if (text-node? value)
+          (text-node-raw value)
           value)))
 
-;; text : external/raw -> text?
+;; text-node : external/raw -> text-node?
 ;;   Wrap a browser Text node.
-(struct text (raw) #:transparent)
+(struct text-node (raw) #:transparent)
 
-;; text-wrap : any/c -> any/c
+;; text-node-wrap : any/c -> any/c
 ;;   Wrap a raw browser Text node, leaving wrapped values alone.
-(define (text-wrap value)
-  (if (text? value)
+(define (text-node-wrap value)
+  (if (text-node? value)
       value
-      (text value)))
+      (text-node value)))
 
-;; text-unwrap : any/c -> any/c
-;;   Unwrap a text struct to its raw browser object.
-(define (text-unwrap value)
-  (if (text? value)
-      (text-raw value)
+;; text-node-unwrap : any/c -> any/c
+;;   Unwrap a text-node struct to its raw browser object.
+(define (text-node-unwrap value)
+  (if (text-node? value)
+      (text-node-raw value)
       value))
 
 ;; node : external/raw -> node?
@@ -49,7 +49,7 @@
 ;; node-wrap : any/c -> any/c
 ;;   Wrap a raw browser Node object, leaving wrapped values alone.
 (define (node-wrap value)
-  (if (or (not value) (node? value) (element? value) (text? value) (attr? value))
+  (if (or (not value) (node? value) (element? value) (text-node? value) (attr? value))
       value
       (node value)))
 
@@ -59,7 +59,7 @@
   (cond
     [(node? value) (node-raw value)]
     [(element? value) (element-raw value)]
-    [(text? value) (text-raw value)]
+    [(text-node? value) (text-node-raw value)]
     [(attr? value) (attr-raw value)]
     [else value]))
 

@@ -47,12 +47,12 @@ Wraps a browser Document object.
 Returns the current browser document wrapped in a checked struct.
 }
 
-@section{Text Values}
+@section{Text Node Values}
 
 The text-node helper returns wrapped browser Text values so the document
 library can hand back text nodes without exposing a raw browser object.
 
-@defstruct[text ([raw external/raw])]{
+@defstruct[text-node ([raw external/raw])]{
 Wraps a browser Text node.
 }
 
@@ -204,7 +204,7 @@ Creates a wrapped browser attribute node for @racket[name].
 Creates a wrapped namespaced browser attribute node for @racket[name].
 }
 
-@defproc[(document-create-text-node [text (or/c string? symbol?)]) text?]{
+@defproc[(document-create-text-node [text (or/c string? symbol?)]) text-node?]{
 @(mdn-bar "Document: createTextNode() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/createTextNode")
 Creates a wrapped browser text node for @racket[text].

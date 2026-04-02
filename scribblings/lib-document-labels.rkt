@@ -6,7 +6,7 @@
   Document
   (struct-out document)
   (struct-out node)
-  (struct-out text)
+  (struct-out text-node)
   (struct-out attr)
   (struct-out selection)
   document-head
@@ -42,7 +42,7 @@
 
 (struct document (raw) #:transparent)
 (struct node (raw) #:transparent)
-(struct text (raw) #:transparent)
+(struct text-node (raw) #:transparent)
 (struct attr (raw) #:transparent)
 (struct selection (raw) #:transparent)
 
