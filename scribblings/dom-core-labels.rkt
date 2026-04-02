@@ -5,7 +5,6 @@
 ;; Docs-only fake bindings for shared DOM label values.
 
 (provide
-  dom
   Window
   (struct-out window)
   (struct-out node)
@@ -31,6 +30,4 @@
 (struct audio-track (raw) #:transparent)
 (struct text-track (raw) #:transparent)
 (struct video-track (raw) #:transparent)
-
-(define dom any/c)
 (define Window any/c)

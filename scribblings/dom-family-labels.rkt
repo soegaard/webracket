@@ -192,41 +192,6 @@
   document-open
   document-element-from-point
   document-elements-from-point
-  event?
-  mouse-event?
-  keyboard-event?
-  pointer-event?
-  focus-event?
-  input-event?
-  submit-event?
-  touch-event?
-  wheel-event?
-  touch-list?
-  touch?
-  event-type
-  event-target
-  event-current-target
-  prevent-default!
-  stop-propagation!
-  stop-immediate-propagation!
-  mouse-event-offset-x
-  mouse-event-offset-y
-  mouse-event-client-x
-  mouse-event-client-y
-  keyboard-event-key
-  keyboard-event-code
-  touch-event-touches
-  touch-event-target-touches
-  touch-event-changed-touches
-  touch-list-length
-  touch-list-ref
-  touch-identifier
-  touch-client-x
-  touch-client-y
-  touch-page-x
-  touch-page-y
-  touch-screen-x
-  touch-screen-y
   dom-rect-left
   dom-rect-top
   dom-rect-width
@@ -585,41 +550,6 @@
 (define document-close any/c)
 (define document-element-from-point any/c)
 (define document-elements-from-point any/c)
-(define event? any/c)
-(define mouse-event? any/c)
-(define keyboard-event? any/c)
-(define pointer-event? any/c)
-(define focus-event? any/c)
-(define input-event? any/c)
-(define submit-event? any/c)
-(define touch-event? any/c)
-(define wheel-event? any/c)
-(define touch-list? any/c)
-(define touch? any/c)
-(define event-type any/c)
-(define event-target any/c)
-(define event-current-target any/c)
-(define prevent-default! any/c)
-(define stop-propagation! any/c)
-(define stop-immediate-propagation! any/c)
-(define mouse-event-offset-x any/c)
-(define mouse-event-offset-y any/c)
-(define mouse-event-client-x any/c)
-(define mouse-event-client-y any/c)
-(define keyboard-event-key any/c)
-(define keyboard-event-code any/c)
-(define touch-event-touches any/c)
-(define touch-event-target-touches any/c)
-(define touch-event-changed-touches any/c)
-(define touch-list-length any/c)
-(define touch-list-ref any/c)
-(define touch-identifier any/c)
-(define touch-client-x any/c)
-(define touch-client-y any/c)
-(define touch-page-x any/c)
-(define touch-page-y any/c)
-(define touch-screen-x any/c)
-(define touch-screen-y any/c)
 (define dom-rect-left any/c)
 (define dom-rect-top any/c)
 (define dom-rect-width any/c)

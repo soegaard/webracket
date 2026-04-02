@@ -8,7 +8,7 @@
 @declare-exporting[(lib "ffi/dom.ffi" "webracket")]
 
 These entries come from @tt{ffi/dom.ffi}, and the recommended Rackety
-entry point is @racket[include-lib dom], which reexports the DOM family
+entry point is @tt{include-lib dom}, which reexports the DOM family
 wrappers.
 
 @(render-ffi-docs "ffi/dom.ffi" "dom.ffi")

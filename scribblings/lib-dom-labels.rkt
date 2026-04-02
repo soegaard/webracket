@@ -1,5 +1,11 @@
 #lang racket/base
 
-(require "dom-family-labels.rkt")
+(require racket/contract/base)
 
-(provide (all-from-out "dom-family-labels.rkt"))
+;; Docs-only fake bindings for the dom facade Scribble page.
+
+(provide
+  dom
+  (for-label (all-defined-out)))
+
+(define dom any/c)

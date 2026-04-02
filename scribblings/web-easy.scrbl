@@ -20,6 +20,7 @@
           (for-label (only-in (prefix-in racket: racket/base)
                               racket:define racket:define-values racket:lambda racket:for/list))
           (for-label (lib "scribblings/primitives-labels.rkt" "webracket"))
+          (for-label (lib "scribblings/lib-event-labels.rkt" "webracket"))
           (for-label (lib "scribblings/web-easy-labels.rkt" "webracket"))
           racket/base
           racket/file
@@ -63,7 +64,8 @@
                 #:before-last ", and "))
 
 @title{Library: @racketid[web-easy]}
-@declare-exporting[(lib "scribblings/web-easy-labels.rkt" "webracket")]
+@declare-exporting[(lib "scribblings/web-easy-labels.rkt" "webracket")
+                   (lib "scribblings/lib-event-labels.rkt" "webracket")]
 
 @(how-to-require include-lib web-easy (lib "core.rkt" "webracket"))
 @(compile-option-bar "Compile option: " "--ffi --browser --ffi dom --ffi standard --ffi js")

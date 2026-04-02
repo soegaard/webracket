@@ -5,7 +5,7 @@
           (for-label (lib "scribblings/lib-event-labels.rkt" "webracket")))
 
 @title{Library: @racketid[event]}
-@declare-exporting[(lib "libs/event.rkt" "webracket")]
+@declare-exporting[(lib "scribblings/lib-event-labels.rkt" "webracket")]
 
 @(how-to-require include-lib event (lib "libs/event.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")
@@ -94,6 +94,34 @@ Returns @racket[#t] when @racket[x] is a DOM Event value.
 @(mdn-bar "MouseEvent"
           "https://developer.mozilla.org/en-US/docs/Web/API/MouseEvent")
 Returns @racket[#t] when @racket[x] is a DOM MouseEvent value.
+}
+
+@defproc[(keyboard-event? [x any/c]) boolean?]{
+Returns @racket[#t] when @racket[x] is a DOM KeyboardEvent value.
+}
+
+@defproc[(pointer-event? [x any/c]) boolean?]{
+Returns @racket[#t] when @racket[x] is a DOM PointerEvent value.
+}
+
+@defproc[(focus-event? [x any/c]) boolean?]{
+Returns @racket[#t] when @racket[x] is a DOM FocusEvent value.
+}
+
+@defproc[(input-event? [x any/c]) boolean?]{
+Returns @racket[#t] when @racket[x] is a DOM InputEvent value.
+}
+
+@defproc[(submit-event? [x any/c]) boolean?]{
+Returns @racket[#t] when @racket[x] is a DOM SubmitEvent value.
+}
+
+@defproc[(touch-event? [x any/c]) boolean?]{
+Returns @racket[#t] when @racket[x] is a DOM TouchEvent value.
+}
+
+@defproc[(wheel-event? [x any/c]) boolean?]{
+Returns @racket[#t] when @racket[x] is a DOM WheelEvent value.
 }
 
 @defproc[(event-type [evt any/c]) string?]{

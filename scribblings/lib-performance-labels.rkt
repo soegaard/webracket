@@ -1,10 +1,8 @@
 #lang racket/base
 
-(require racket/contract/base
-         "iterator-labels.rkt")
+(require racket/contract/base)
 
 (provide
-  (all-from-out "iterator-labels.rkt")
   (struct-out performance-event-count-map)
   (struct-out performance-memory-info)
   performance-event-count-map-size
