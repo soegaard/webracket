@@ -8,6 +8,15 @@
 ;; validated `websocket-*` helpers for browser-side code loaded via
 ;; `include-lib`.
 
+;; websocket : external/raw -> websocket?
+;;   Wrap a browser WebSocket object.
+(struct websocket (raw) #:transparent)
+
+;; websocket-unwrap : websocket? -> external/raw
+;;   Extract the raw browser WebSocket object.
+(define (websocket-unwrap ws)
+  (websocket-raw ws))
+
 ;; websocket-constructor-present? : -> boolean?
 ;;   Check whether the host environment exposes a WebSocket constructor.
 (define (websocket-constructor-present?)
@@ -18,15 +27,8 @@
 ;;   Cache JS callback wrappers so the same procedure maps to the same external.
 (define procedure->external-cache (make-hasheq))
 
-;; websocket? : any/c -> boolean?
-;;   Check whether x is a WebSocket value.
-(define (websocket? x)
-  (and (external? x)
-       (websocket-constructor-present?)
-       (js-instanceof x (js-var "WebSocket"))))
-
 ;; check-websocket : symbol? any/c -> void?
-;;   Ensure x is a WebSocket value.
+;;   Ensure x is a wrapped WebSocket value.
 (define (check-websocket who x)
   (unless (websocket? x)
     (raise-argument-error who "websocket?" x)))
@@ -175,7 +177,7 @@
 ;;   Install or clear a WebSocket event handler property.
 (define (websocket-set-handler! who ws prop handler)
   (check-websocket who ws)
-  (js-set! ws prop (websocket-handler->external who handler))
+  (js-set! (websocket-unwrap ws) prop (websocket-handler->external who handler))
   (void))
 
 ;; websocket-new : (or/c string? symbol?) (or/c string? symbol?) ... -> extern/raw
@@ -184,14 +186,15 @@
   (define url* (normalize-websocket-stringish 'websocket-new url))
   (define low-level-protocols
     (normalize-websocket-protocols 'websocket-new protocols))
-  (js-websocket-new url* low-level-protocols))
+  (websocket (js-websocket-new url* low-level-protocols)))
 
 ;; websocket-send : websocket? (or/c string? symbol? bytes? external?) -> void?
 ;;   Send data through a WebSocket connection.
 (define (websocket-send ws data)
   (check-websocket 'websocket-send ws)
   (check-websocket-send-data 'websocket-send data)
-  (js-websocket-send ws (if (symbol? data) (symbol->string data) data)))
+  (js-websocket-send (websocket-unwrap ws)
+                     (if (symbol? data) (symbol->string data) data)))
 
 ;; websocket-close : websocket? [code exact-integer? 1000] [reason (or/c #f string? symbol?) #f] -> void?
 ;;   Close a WebSocket connection.
@@ -199,19 +202,23 @@
   (check-websocket 'websocket-close ws)
   (check-websocket-close-code 'websocket-close code)
   (check-websocket-close-reason 'websocket-close reason)
-  (js-websocket-close ws code (if reason (normalize-websocket-stringish 'websocket-close reason) (void))))
+  (js-websocket-close (websocket-unwrap ws)
+                      code
+                      (if reason
+                          (normalize-websocket-stringish 'websocket-close reason)
+                          (void))))
 
 ;; websocket-url : websocket? -> string?
 ;;   Read the WebSocket URL.
 (define (websocket-url ws)
   (check-websocket 'websocket-url ws)
-  (js-websocket-url ws))
+  (js-websocket-url (websocket-unwrap ws)))
 
 ;; websocket-ready-state-number : websocket? -> u32?
 ;;   Read the raw readyState number.
 (define (websocket-ready-state-number ws)
   (check-websocket 'websocket-ready-state-number ws)
-  (js-websocket-ready-state ws))
+  (js-websocket-ready-state (websocket-unwrap ws)))
 
 ;; websocket-ready-state : websocket? -> symbol?
 ;;   Read the readyState value as a symbolic label.
@@ -222,19 +229,19 @@
 ;;   Read the bufferedAmount value.
 (define (websocket-buffered-amount ws)
   (check-websocket 'websocket-buffered-amount ws)
-  (js-websocket-buffered-amount ws))
+  (js-websocket-buffered-amount (websocket-unwrap ws)))
 
 ;; websocket-protocol : websocket? -> string?
 ;;   Read the negotiated protocol string.
 (define (websocket-protocol ws)
   (check-websocket 'websocket-protocol ws)
-  (js-websocket-protocol ws))
+  (js-websocket-protocol (websocket-unwrap ws)))
 
 ;; websocket-extensions : websocket? -> string?
 ;;   Read the negotiated extensions string.
 (define (websocket-extensions ws)
   (check-websocket 'websocket-extensions ws)
-  (js-websocket-extensions ws))
+  (js-websocket-extensions (websocket-unwrap ws)))
 
 ;; websocket-onopen! : websocket? (or/c #f procedure? external?) -> void?
 ;;   Install or clear the onopen handler.
@@ -269,7 +276,7 @@
     (if (null? options)
         (vector event-name* listener*)
         (list->vector (list* event-name* listener* options))))
-  (js-send/extern/nullish ws "addEventListener" args)
+  (js-send/extern/nullish (websocket-unwrap ws) "addEventListener" args)
   listener*)
 
 ;; websocket-remove-event-listener! : websocket? (or/c string? symbol?) (or/c procedure? external?) (or/c boolean? external?) ... -> void?
@@ -285,5 +292,5 @@
     (if (null? options)
         (vector event-name* listener*)
         (list->vector (list* event-name* listener* options))))
-  (js-send/extern/nullish ws "removeEventListener" args)
+  (js-send/extern/nullish (websocket-unwrap ws) "removeEventListener" args)
   (void))

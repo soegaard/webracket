@@ -8,12 +8,15 @@
 ;; link to the documented websocket identifiers.
 
 (provide
+  (struct-out websocket)
   websocket-new
   websocket-onopen!
   websocket-onmessage!
   websocket-send
   websocket-close
   (for-label (all-defined-out)))
+
+(struct websocket (raw) #:transparent)
 
 (define websocket-new any/c)
 (define websocket-onopen! any/c)

@@ -36,6 +36,10 @@ String-like WebSocket arguments accept either strings or symbols, and
 the wrapper converts symbols to their string names. Optional arguments
 use @racket[#f] to mean that the argument is omitted.
 
+The @racket[websocket-new] constructor returns a wrapped
+@racket[websocket] value. Use @racket[websocket-raw] only when you need
+to inspect the underlying browser object directly.
+
 @section{WebSocket Quick Start}
 
 To use WebSockets, create a connection, install the handlers you need,
@@ -72,10 +76,19 @@ If your page is served over @tt{https}, use @tt{wss://} rather than
 
 @subsection{WebSocket Validation}
 
-@defproc[(websocket? [x any/c]) boolean?]{
-Returns @racket[#t] when @racket[x] is a WebSocket value.
+@defstruct[websocket ([raw external/raw])]{
+@racket[websocket-new] returns a wrapped browser WebSocket object.
+The raw browser object is stored in @racket[raw].
+}
 
-The value is the opaque browser object produced by @racket[websocket-new].
+@defproc[(websocket-raw [ws websocket?]) external/raw]{
+Returns the underlying browser WebSocket object.
+}
+
+@defproc[(websocket? [x any/c]) boolean?]{
+Returns @racket[#t] when @racket[x] is a wrapped WebSocket value.
+
+The wrapped value is produced by @racket[websocket-new].
 }
 
 @defproc[(check-websocket [who symbol?] [x any/c]) void?]{
