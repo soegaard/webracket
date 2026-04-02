@@ -1,9 +1,11 @@
 #lang scribble/manual
 
 @(require scribble/manual
+          (for-label (lib "scribblings/define-labels.rkt" "webracket"))
           "webracket-scribble-utils.rkt")
 
 @title{Library: @racketid[define]}
+@declare-exporting[(lib "libs/define.rkt" "webracket")]
 
 @(how-to-require require-lib define (lib "libs/define.rkt"))
 
