@@ -25,8 +25,18 @@ Use @racket[domrect] when you want to:
   @item{work with geometry returned by browser layout calls}
 ]
 
-The @racket[domrect] library provides checked accessors for DOMRect
+The @racket[domrect] library provides a checked wrapper for DOMRect
 geometry values.
+
+@section{DOMRect Values}
+
+@defstruct[dom-rect ([raw external/raw])]{
+Wraps a browser DOMRect object.
+}
+
+@defproc[(dom-rect-raw [rect dom-rect?]) external/raw]{
+Returns the wrapped browser DOMRect object.
+}
 
 @section{DOMRect Quick Start}
 
@@ -88,14 +98,26 @@ If all you need is geometry, the main entry points are
 @racket[dom-rect-left], @racket[dom-rect-top], @racket[dom-rect-width],
 and @racket[dom-rect-height].
 
-@defproc[(dom-rect-left [rect external?]) real?]{
+@defproc[(dom-rect-left [rect dom-rect?]) real?]{
 @(mdn-bar "DOMRect: left property"
           "https://developer.mozilla.org/en-US/docs/Web/API/DOMRect/left")
 Returns the left coordinate.
 }
 
-@defproc[(dom-rect-top [rect external?]) real?]{
+@defproc[(dom-rect-top [rect dom-rect?]) real?]{
 @(mdn-bar "DOMRect: top property"
           "https://developer.mozilla.org/en-US/docs/Web/API/DOMRect/top")
 Returns the top coordinate.
+}
+
+@defproc[(dom-rect-width [rect dom-rect?]) real?]{
+@(mdn-bar "DOMRect: width property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/DOMRect/width")
+Returns the width.
+}
+
+@defproc[(dom-rect-height [rect dom-rect?]) real?]{
+@(mdn-bar "DOMRect: height property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/DOMRect/height")
+Returns the height.
 }

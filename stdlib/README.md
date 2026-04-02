@@ -13,6 +13,7 @@ we have used the moral equivalent of `include` to combine the
 files in this folder. This happens in `stdlib.rkt` which starts:
 
     #lang webracket
+    (include/reader "shared-library-structs.rkt" read-syntax/skip-first-line)
     (include/reader "qq-and-or.rkt"   read-syntax/skip-first-line)
     (include/reader "parameters.rkt"  read-syntax/skip-first-line)
     (include/reader "exceptions.rkt"  read-syntax/skip-first-line)

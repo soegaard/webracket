@@ -29,6 +29,20 @@ Use @racket[element] when you want to:
 The @racket[element] library provides checked wrappers for common DOM
 element operations.
 
+@section{Element Values}
+
+The element helpers pass around wrapped browser element values, so the
+public API stays on the WebRacket side instead of exposing raw DOM
+nodes.
+
+@defstruct[element ([raw external/raw])]{
+Wraps a browser Element object.
+}
+
+@defproc[(element-raw [elem element?]) external/raw]{
+Returns the wrapped browser Element object.
+}
+
 @section{Element Quick Start}
 
 Start by creating an element, adding an attribute, and inserting it
@@ -79,33 +93,31 @@ rectangle, and then scroll it into view.
 
 (code:comment "Bring the card into view if needed.")
 (scroll-into-view! card #t)
-
-(void rect)
 ]
 
 When you only need a few common operations, the most useful entry points
 are @racket[append-child!], @racket[set-attribute!],
 @racket[get-bounding-client-rect], and @racket[scroll-into-view!].
 
-@defproc[(append-child! [parent external?] [child external?]) void?]{
+@defproc[(append-child! [parent (or/c element? external?)] [child (or/c element? external?)]) void?]{
 @(mdn-bar "Node: appendChild() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Node/appendChild")
 Appends a child node.
 }
 
-@defproc[(set-attribute! [element external?] [name string?] [value string?]) void?]{
+@defproc[(set-attribute! [element element?] [name string?] [value string?]) void?]{
 @(mdn-bar "Element: setAttribute() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/setAttribute")
 Sets an attribute on an element.
 }
 
-@defproc[(scroll-into-view! [element external?] [align-to-top? any/c #t]) void?]{
+@defproc[(scroll-into-view! [element element?] [align-to-top? boolean? #t]) void?]{
 @(mdn-bar "Element: scrollIntoView() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView")
 Scrolls ancestors until the element is visible.
 }
 
-@defproc[(get-bounding-client-rect [element external?]) external/raw]{
+@defproc[(get-bounding-client-rect [element element?]) dom-rect?]{
 @(mdn-bar "Element: getBoundingClientRect() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect")
 Returns the element's bounding rectangle.

@@ -17,7 +17,7 @@ If you are new to browser programming, think of the document as the
 tree of things currently on the page. It is where the page's elements
 live, and it is the starting point for finding or creating content.
 
-Use @racket[document] when you want to:
+Use @racket[Document] when you want to:
 
 @itemlist[
   @item{look up the current page}
@@ -26,8 +26,24 @@ Use @racket[document] when you want to:
   @item{inspect the document head or body}
 ]
 
-The @racket[document] library provides checked wrappers for the current
-document, element lookup, and selector queries.
+The @racket[document] library provides a checked wrapper for the current
+document, plus wrapped element helpers for lookup and selector queries.
+
+@section{Document Values}
+
+@defstruct[document ([raw external/raw])]{
+Wraps a browser Document object.
+}
+
+@defproc[(document-raw [doc document?]) external/raw]{
+Returns the wrapped browser Document object.
+}
+
+@defproc[(Document) document?]{
+@(mdn-bar "Document"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Document")
+Returns the current browser document wrapped in a checked struct.
+}
 
 @section{Document Quick Start}
 
@@ -40,7 +56,7 @@ finding a useful part of the page.
 
 (code:comment "Get the current document.")
 (define doc
-  (document))
+  (Document))
 
 (code:comment "Look for the page body or another element you care about.")
 (define body
@@ -65,7 +81,7 @@ create a new node, and prepare it to be inserted into the page.
 
 (code:comment "Get the current document and its body element.")
 (define doc
-  (document))
+  (Document))
 (define body
   (document-body))
 
@@ -76,8 +92,6 @@ create a new node, and prepare it to be inserted into the page.
 (code:comment "Use a selector when you need to find an existing part of the page.")
 (define main-area
   (document-query-selector "main"))
-
-(void doc body note main-area)
 ]
 
 If you already know the page element you want, the most useful entry
@@ -85,38 +99,50 @@ points are usually @racket[document-body], @racket[document-head],
 @racket[document-get-element-by-id], @racket[document-query-selector],
 and @racket[document-create-element].
 
-@defproc[(document) external/raw]{
-@(mdn-bar "Document"
-          "https://developer.mozilla.org/en-US/docs/Web/API/Document")
-Returns the current document object.
-}
-
-@defproc[(document-body) (or/c #f external?)]{
+@defproc[(document-body) (or/c #f element?)]{
 @(mdn-bar "Document: body property"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/body")
 Returns the document body element, if present.
 }
 
-@defproc[(document-head) (or/c #f external?)]{
+@defproc[(document-head) (or/c #f element?)]{
 @(mdn-bar "Document: head property"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/head")
 Returns the document head element, if present.
 }
 
-@defproc[(document-create-element [tag string?]) external/raw]{
+@defproc[(document-create-element [tag string?]) element?]{
 @(mdn-bar "Document: createElement() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/createElement")
 Creates an element for @racket[tag].
 }
 
-@defproc[(document-get-element-by-id [id string?]) (or/c #f external?)]{
+@defproc[(document-get-element-by-id [id string?]) (or/c #f element?)]{
 @(mdn-bar "Document: getElementById() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/getElementById")
 Looks up a single element by id.
 }
 
-@defproc[(document-query-selector [selector string?]) (or/c #f external?)]{
+@defproc[(document-query-selector [selector string?]) (or/c #f element?)]{
 @(mdn-bar "Document: querySelector() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelector")
 Returns the first matching descendant.
+}
+
+@defproc[(document-element) element?]{
+@(mdn-bar "Document: documentElement property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Document/documentElement")
+Returns the document's root element.
+}
+
+@defproc[(document-open) document?]{
+@(mdn-bar "Document: open() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Document/open")
+Opens a document stream for writing and returns the wrapped document.
+}
+
+@defproc[(document-element-from-point [x real?] [y real?]) (or/c #f element?)]{
+@(mdn-bar "Document: elementFromPoint() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Document/elementFromPoint")
+Returns the topmost element at the given viewport position, or @racket[#f].
 }

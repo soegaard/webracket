@@ -8,6 +8,7 @@
   dom
   Window
   (struct-out window)
+  (struct-out element)
   window-self
   window-document
   (struct-out window-document-info)
@@ -45,6 +46,9 @@
   window-match-media
   window-get-computed-style
   window-structured-clone
+  Document
+  (struct-out document)
+  (struct-out dom-rect)
   (struct-out performance-event-count-map)
   performance-event-count-map-size
   performance-event-count-map-entries
@@ -229,6 +233,7 @@
 (define dom any/c)
 (define Window any/c)
 (struct window (raw) #:transparent)
+(struct element (raw) #:transparent)
 (define window-self any/c)
 (define window-document any/c)
 (struct window-document-info (raw) #:transparent)
@@ -266,6 +271,9 @@
 (define window-match-media any/c)
 (define window-get-computed-style any/c)
 (define window-structured-clone any/c)
+(define Document any/c)
+(struct document (raw) #:transparent)
+(struct dom-rect (raw) #:transparent)
 
 (struct iterator (raw) #:transparent #:constructor-name make-iterator)
 (struct performance-event-count-map (raw) #:transparent)
@@ -297,7 +305,7 @@
 (define performance-measure-user-agent-specific-memory any/c)
 (define performance-set-resource-timing-buffer-size any/c)
 (define performance-to-json any/c)
-(define document any/c)
+(define document-open any/c)
 (define document-head any/c)
 (define document-body any/c)
 (define document-element any/c)
@@ -309,7 +317,6 @@
 (define document-has-focus? any/c)
 (define document-get-selection any/c)
 (define document-close any/c)
-(define document-open any/c)
 (define document-element-from-point any/c)
 (define document-elements-from-point any/c)
 (define event? any/c)

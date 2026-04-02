@@ -32,6 +32,9 @@
                      racket/path
                      setup/dirs))
 
+(begin-for-syntax
+  (define include-lib-seen (make-hash)))
+
 (define-syntax (web-lambda stx)
   (syntax-case stx ()
     [(_lambda formals body0 body ...)
@@ -106,6 +109,8 @@
 
 ;; include-lib : (include-lib lib-id) -> include/reader form
 ;;   Include `webracket/lib/libs/<lib-id>.rkt` by source inclusion.
+;;   Within one compilation run, the first include expands the library text
+;;   and later includes of the same library expand to `(void)`.
 (define-syntax (include-lib stx)
   (define who 'include-lib)
   (define context (syntax-local-context))
@@ -119,6 +124,9 @@
        (define lib-sym (syntax-e #'lib-id))
        (unless (symbol? lib-sym)
          (raise-syntax-error who "expected a library identifier" stx #'lib-id))
+       (define lib-key lib-sym)
+       (when (hash-has-key? include-lib-seen lib-key)
+         (syntax/loc stx (void)))
        (define collection-main (collection-file-path "main.rkt" "webracket"))
        (define collection-dir (or (path-only collection-main) (current-directory)))
        (define lib-file-name (string-append (symbol->string lib-sym) ".rkt"))
@@ -131,6 +139,7 @@
           #'lib-id))
        ;; Use an absolute `(file ...)` path-spec so inclusion is independent of
        ;; cwd and source file location.
+       (hash-set! include-lib-seen lib-key #t)
        (with-syntax ([lib-file (datum->syntax stx (path->string lib-path))])
          (syntax/loc stx
            (include/reader (file lib-file) read-syntax/skip-first-line))))]

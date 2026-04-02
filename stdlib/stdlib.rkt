@@ -1,4 +1,5 @@
 #lang webracket
+(include/reader "shared-library-structs.rkt" read-syntax/skip-first-line)
 (include/reader "qq-and-or.rkt"          read-syntax/skip-first-line)
 (include/reader "ellipses.rkt"           read-syntax/skip-first-line)
 (include/reader "parameters.rkt"         read-syntax/skip-first-line)
@@ -20,6 +21,8 @@
 
 
 ;; The standard library consists of the files above.
+;; The shared DOM wrapper structs are included first so later stdlib
+;; files can use them without any compiler changes.
 ;; Each file begins with `#lang webracket`.
 ;; When editing a file one can therefore run and test
 ;; everything in the standard Racket repl.

@@ -149,7 +149,7 @@
       (read-top-level-from-file filename)))
   (define t-read-source-end (now-ms))
 
-  ; 3. Prepend standard library (if enabled)
+  ; 3. Prepend the standard library (if enabled)
   ;     "stdlib-for-browser.rkt" includes "stdlib.rkt" and adds `sxml->dom`
   (define t-add-stdlib-start (now-ms))
   (define stx-with-stdlib
@@ -164,7 +164,8 @@
        #`(begin
            (include/reader "stdlib/stdlib.rkt" read-syntax/skip-first-line)
            #,stx)] ; stx is a begin form      
-      [else stx]))
+      [else
+       stx]))
   (define t-add-stdlib-end (now-ms))
 
   (define t-preflight-start (now-ms))

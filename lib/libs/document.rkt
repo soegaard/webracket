@@ -4,32 +4,36 @@
 ;;; Document wrappers
 ;;;
 
-;; document : -> external/raw
-;;   Read the current document object.
-(define (document)
-  (js-document))
+;; document : external/raw -> document?
+;;   Wrap a browser Document object.
+(struct document (raw) #:transparent)
 
-;; document-head : -> external?
+;; Document : -> document?
+;;   Read the current document object.
+(define (Document)
+  (document (js-document)))
+
+;; document-head : -> (or/c #f element?)
 ;;   Read the document head element, if present.
 (define (document-head)
-  (js-document-head))
+  (element-wrap (js-document-head)))
 
-;; document-body : -> external?
+;; document-body : -> (or/c #f element?)
 ;;   Read the document body element, if present.
 (define (document-body)
-  (js-document-body))
+  (element-wrap (js-document-body)))
 
-;; document-element : -> external/raw
+;; document-element : -> element?
 ;;   Read the root document element.
 (define (document-element)
-  (js-document-element))
+  (element-wrap (js-document-element)))
 
-;; document-create-element : string? -> external/raw
+;; document-create-element : string? -> element?
 ;;   Create an element for a tag name.
 (define (document-create-element tag)
   (unless (string? tag)
     (raise-argument-error 'document-create-element "string?" tag))
-  (js-create-element tag))
+  (element-wrap (js-create-element tag)))
 
 ;; document-create-text-node : string? -> external/raw
 ;;   Create a text node.
@@ -38,19 +42,19 @@
     (raise-argument-error 'document-create-text-node "string?" text))
   (js-create-text-node text))
 
-;; document-get-element-by-id : string? -> (or/c #f external?)
+;; document-get-element-by-id : string? -> (or/c #f element?)
 ;;   Look up a single element by id.
 (define (document-get-element-by-id id)
   (unless (string? id)
     (raise-argument-error 'document-get-element-by-id "string?" id))
-  (js-get-element-by-id id))
+  (element-wrap (js-get-element-by-id id)))
 
-;; document-query-selector : string? -> (or/c #f external?)
+;; document-query-selector : string? -> (or/c #f element?)
 ;;   Return the first element matching a selector.
 (define (document-query-selector selector)
   (unless (string? selector)
     (raise-argument-error 'document-query-selector "string?" selector))
-  (js-query-selector selector))
+  (element-wrap (js-query-selector selector)))
 
 ;; document-query-selector-all : string? -> external/raw
 ;;   Return all elements matching a selector.
@@ -75,15 +79,15 @@
   (js-close)
   (void))
 
-;; document-open : -> external/raw
+;; document-open : -> document?
 ;;   Open a document stream for writing.
 (define (document-open)
-  (js-open))
+  (document (js-open)))
 
-;; document-element-from-point : real? real? -> (or/c #f external?)
+;; document-element-from-point : real? real? -> (or/c #f element?)
 ;;   Find the topmost element at the given viewport coordinates.
 (define (document-element-from-point x y)
-  (js-element-from-point x y))
+  (element-wrap (js-element-from-point x y)))
 
 ;; document-elements-from-point : real? real? -> external/raw
 ;;   Find all elements at the given viewport coordinates.
