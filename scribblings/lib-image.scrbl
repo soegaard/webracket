@@ -2,19 +2,19 @@
 
 @(require scribble/manual
           "webracket-scribble-utils.rkt"
-          (for-label (lib "scribblings/lib-image-labels.rkt" "webracket")))
+          )
 
 @title{Library: @racketid[image]}
+@declare-exporting[(lib "scribblings/lib-image-labels.rkt" "webracket")]
 
 @(how-to-require include-lib image (lib "libs/image.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")
 
-The @racket[image] library is the checked wrapper for HTML image
-elements.
+The @racket[image] library wraps HTML image elements in checked values.
 
-Images are the browser's built-in way to load and display pictures. An
-image element knows its source URL, its loading state, and its natural
-size once the browser has fetched it.
+Images load and display pictures. An image element tracks its source
+URL, its loading state, and its natural size once the browser has
+fetched it.
 
 Use @racket[image] when you want to:
 
@@ -25,8 +25,8 @@ Use @racket[image] when you want to:
   @item{read the browser's current source URL}
 ]
 
-The @racket[image] library wraps HTMLImageElement creation and common
-image properties.
+The @racket[image] library covers image creation and common image
+properties.
 
 String-like image properties accept either strings or symbols.
 Optional size arguments use @racket[#f] to mean that the argument is
