@@ -3,6 +3,7 @@
 (require racket/contract/base)
 
 (provide
+  media
   (struct-out media-keys-info)
   (struct-out media-source-info)
   (struct-out media-stream)
@@ -100,6 +101,7 @@
   media-set-sink-id!
   (for-label (all-defined-out)))
 
+(define media any/c)
 (struct media-keys-info (raw) #:transparent)
 (struct media-source-info (raw) #:transparent)
 (struct media-stream (raw) #:transparent)

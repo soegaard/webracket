@@ -3,23 +3,25 @@
 @(require scribble/manual
           (for-label (only-in racket/base struct))
           (for-label (lib "scribblings/lib-media-labels.rkt" "webracket"))
+          (for-label (lib "scribblings/lib-document-labels.rkt" "webracket"))
           "webracket-scribble-utils.rkt"
           )
 
-@title{Library: @racketid[media]}
-@declare-exporting[(lib "scribblings/lib-media-labels.rkt" "webracket")]
+@title{Library: media}
+@declare-exporting[(lib "scribblings/lib-media-labels.rkt" "webracket")
+                   (lib "scribblings/lib-document-labels.rkt" "webracket")]
 
 @(how-to-require include-lib media (lib "libs/media.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")
 
-The @racket[media] library is the checked wrapper for HTML media
+The media library is the checked wrapper for HTML media
 elements such as audio and video.
 
 Media elements are what the browser uses for sound and video playback.
 They can point at a source file, report the current playback time, and
 play or pause when the page is ready.
 
-Use @racket[media] when you want to:
+Use media when you want to:
 
 @itemlist[
   @item{set up audio or video playback on the page}
@@ -28,8 +30,12 @@ Use @racket[media] when you want to:
   @item{start or pause playback}
 ]
 
-The @racket[media] library wraps HTMLMediaElement properties and the
-common play/pause controls.
+The media library wraps HTMLMediaElement properties and the common
+play/pause controls.
+
+@defthing[media any/c]{
+This chapter documents the media wrapper library.
+}
 
 When a helper expects a browser string such as a media source, preload
 hint, codec type, or sink id, the wrapper also accepts a symbol and
@@ -83,6 +89,7 @@ and seeks it to a new position.
 (code:comment "Create a media element and configure it for playback.")
 (define player
   (document-create-element "audio"))
+
 (media-set-src! player "/audio/theme.ogg")
 (media-set-controls! player #t)
 
@@ -272,6 +279,105 @@ The raw @racket[media] argument should be a browser
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/currentTime")
 The raw @racket[media] argument should be a browser
 @racketid[HTMLMediaElement] value. Seeks to a playback time.
+}
+
+@defproc[(media-volume [media external?]) real?]{
+@(mdn-bar "HTMLMediaElement: volume property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/volume")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns the volume level.
+}
+
+@defproc[(media-set-volume! [media external?] [volume real?]) void?]{
+@(mdn-bar "HTMLMediaElement: volume property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/volume")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Sets the volume level.
+}
+
+@defproc[(media-muted [media external?]) boolean?]{
+@(mdn-bar "HTMLMediaElement: muted property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/muted")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Reports whether the element is muted.
+}
+
+@defproc[(media-set-muted! [media external?] [muted? any/c]) void?]{
+@(mdn-bar "HTMLMediaElement: muted property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/muted")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Any true value mutes the element.
+}
+
+@defproc[(media-default-muted [media external?]) boolean?]{
+@(mdn-bar "HTMLMediaElement: defaultMuted property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/defaultMuted")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Reports whether the element starts muted.
+}
+
+@defproc[(media-set-default-muted! [media external?] [muted? any/c]) void?]{
+@(mdn-bar "HTMLMediaElement: defaultMuted property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/defaultMuted")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Any true value sets the default muted flag.
+}
+
+@defproc[(media-default-playback-rate [media external?]) real?]{
+@(mdn-bar "HTMLMediaElement: defaultPlaybackRate property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/defaultPlaybackRate")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns the default playback rate.
+}
+
+@defproc[(media-set-default-playback-rate! [media external?] [rate real?]) void?]{
+@(mdn-bar "HTMLMediaElement: defaultPlaybackRate property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/defaultPlaybackRate")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Sets the default playback rate.
+}
+
+@defproc[(media-playback-rate [media external?]) real?]{
+@(mdn-bar "HTMLMediaElement: playbackRate property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/playbackRate")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns the playback rate.
+}
+
+@defproc[(media-set-playback-rate! [media external?] [rate real?]) void?]{
+@(mdn-bar "HTMLMediaElement: playbackRate property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/playbackRate")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Sets the playback rate.
+}
+
+@defproc[(media-loop? [media external?]) boolean?]{
+@(mdn-bar "HTMLMediaElement: loop property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/loop")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Reports whether looping is enabled.
+}
+
+@defproc[(media-set-loop! [media external?] [loop? any/c]) void?]{
+@(mdn-bar "HTMLMediaElement: loop property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/loop")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Any true value enables looping.
+}
+
+@defproc[(media-load! [media external?]) void?]{
+@(mdn-bar "HTMLMediaElement: load() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/load")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Reloads the media element.
+}
+
+@defproc[(media-fast-seek! [media external?] [t real?]) void?]{
+@(mdn-bar "HTMLMediaElement: fastSeek() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/fastSeek")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Seeks to @racket[t] using a fast
+browser-supported seek when available.
 }
 
 @defproc[(media-play [media external?]) external/raw]{
