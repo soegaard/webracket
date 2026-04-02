@@ -34,19 +34,11 @@ geometry values.
 Wraps a browser DOMRect object.
 }
 
-@defproc[(dom-rect-raw [rect dom-rect?]) external/raw]{
-Returns the wrapped browser DOMRect object.
-}
-
 @section{DOMRectList Values}
 
 @defstruct[dom-rect-list ([raw external/raw])]{
 Wraps a browser DOMRectList object, such as the value returned by the
 element getClientRects call.
-}
-
-@defproc[(dom-rect-list-raw [rect-list dom-rect-list?]) external/raw]{
-Returns the wrapped browser DOMRectList object.
 }
 
 @defproc[(dom-rect-list-length [rect-list dom-rect-list?]) exact-nonnegative-integer?]{

@@ -17,6 +17,8 @@
   node-list-raw
   html-collection-raw
   dom-rect-list-raw
+  dom-rect-raw
+  audio-listener-raw
   computed-style-map-raw
   animation-raw
   iterator-raw
@@ -34,6 +36,8 @@
 (define node-list-raw any/c)
 (define html-collection-raw any/c)
 (define dom-rect-list-raw any/c)
+(define dom-rect-raw any/c)
+(define audio-listener-raw any/c)
 (define computed-style-map-raw any/c)
 (define animation-raw any/c)
 (define iterator-raw any/c)

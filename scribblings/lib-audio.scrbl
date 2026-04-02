@@ -34,8 +34,8 @@ wrapper converts symbols to their string names. Optional arguments use
 @racket[#f] to mean that the argument is omitted.
 
 The @racket[audio-context-listener] result is wrapped as an
-@racket[audio-listener] value. Use @racket[audio-listener-raw] only
-when you need the underlying browser listener object.
+@racket[audio-listener] value. The raw listener accessor is listed in
+the @seclink["raw-accessors"]{Raw Accessors} appendix.
 
 @section{Audio Quick Start}
 
@@ -224,10 +224,6 @@ Returns the final destination node for the context.
 @racket[audio-context-listener] returns a wrapped browser
 @racketid[AudioListener] object. The raw browser object is stored in
 @racket[raw].
-}
-
-@defproc[(audio-listener-raw [listener audio-listener?]) external/raw]{
-Returns the underlying browser AudioListener object.
 }
 
 @defproc[(audio-context-listener [ctx audio-context?]) audio-listener?]{

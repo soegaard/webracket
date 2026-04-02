@@ -66,6 +66,10 @@ Returns the wrapped browser HTMLCollection object.
 Returns the wrapped browser DOMRectList object.
 }
 
+@defproc[(dom-rect-raw [rect any/c]) external/raw]{
+Returns the wrapped browser DOMRect object.
+}
+
 @defproc[(computed-style-map-raw [style-map any/c]) external/raw]{
 Returns the wrapped browser ComputedStyleMap object.
 }
@@ -78,4 +82,10 @@ Returns the wrapped browser Animation object.
 
 @defproc[(iterator-raw [iter any/c]) external/raw]{
 Returns the wrapped browser Iterator object stored inside @racket[iter].
+}
+
+@section{Audio Raw Accessor}
+
+@defproc[(audio-listener-raw [listener any/c]) external/raw]{
+Returns the wrapped browser AudioListener object.
 }
