@@ -10,6 +10,7 @@
 (include-lib canvas)
 (include-lib domrect)
 (include-lib element)
+(include-lib image)
 (include-lib media)
 (define (check-equal got want label)
   (unless (if (and (number? got) (number? want))
@@ -152,8 +153,20 @@
       setMediaKeys(keys) { this.calls.push(['setMediaKeys', keys]); return { kind: 'setMediaKeys-promise' }; },
       setSinkId(id) { this.calls.push(['setSinkId', id]); return { kind: 'sink', id }; }
     };
+    const image = {
+      alt: 'Alpha',
+      src: 'photo.png',
+      width: 64,
+      height: 32,
+      currentSrc: 'photo.png',
+      decoding: 'auto',
+      loading: 'eager',
+      crossOrigin: 'anonymous',
+      complete: 1
+    };
     window.__domTest.canvas = canvas;
     window.__domTest.ctx = ctx;
+    window.__domTest.image = image;
     window.__domTest.media = media;"))
 
 (define (dom-test-fixture name)
@@ -165,7 +178,7 @@
          (install!)
          (define canvas (dom-test-fixture "canvas"))
          (define options (js-eval "({ alpha: false })"))
-         (define ctx (canvas-get-context canvas "2d" options))
+         (define ctx (canvas-get-context canvas '2d options))
          (define captured (canvas-capture-stream canvas 30.0))
          (check-equal (canvas-width canvas) 320 "canvas width")
          (canvas-set-width! canvas 640)
@@ -175,7 +188,7 @@
          (check-equal (canvas-height canvas) 240 "canvas height set")
          (check-true (media-stream? captured) "canvas capture stream")
          (check-equal (js-ref (media-stream-raw captured) "kind") "stream" "canvas capture stream raw")
-         (check-equal (canvas-to-data-url canvas "image/jpeg" 0.8) "image/jpeg:0.8" "canvas to data url")
+         (check-equal (canvas-to-data-url canvas 'image/jpeg 0.8) "image/jpeg:0.8" "canvas to data url")
          (define blobs '())
          (canvas-to-blob canvas
                          (procedure->external (lambda (blob) (set! blobs (cons blob blobs))))
@@ -187,9 +200,13 @@
          (check-equal (vector-ref get-context-call 1) "2d" "canvas get-context id")
          (check-false (js-ref (vector-ref get-context-call 2) "alpha") "canvas get-context options")
          (check-equal (js-ref ctx "direction") "ltr" "canvas context direction")
-         (canvas-2d-set-direction! ctx "rtl")
+         (canvas-2d-set-direction! ctx 'rtl)
          (check-equal (canvas-2d-direction ctx) "rtl" "canvas context direction set")
          (canvas-2d-set-fill-style! ctx "green")
+         (canvas-2d-fill ctx #f 'evenodd)
+         (define fill-call (vector-ref (js-ref ctx "calls") 0))
+         (check-equal (vector-ref fill-call 0) "fill" "canvas fill call")
+         (check-equal (vector-ref fill-call 2) "evenodd" "canvas fill rule")
          (check-equal (js-ref (canvas-2d-measure-text ctx "measure") "width") 7 "canvas measure text")
          (check-equal (dom-rect-left (js-eval "({ left: 1.25, top: 2.5, width: 3.75, height: 4.5 })")) 1.25 "domrect left")
          (check-equal (dom-rect-top (js-eval "({ left: 1.25, top: 2.5, width: 3.75, height: 4.5 })")) 2.5 "domrect top")
@@ -202,6 +219,7 @@
        (let ()
          (install!)
          (define media (dom-test-fixture "media"))
+         (define img (dom-test-fixture "image"))
          (check-equal (media-current-time media) 1.5 "media current time")
          (media-set-current-time! media 2.75)
          (check-equal (media-current-time media) 2.75 "media current time set")
@@ -253,6 +271,29 @@
          (text-track-set-mode! added-track 'showing)
          (check-equal (text-track-mode added-track) "showing" "media added track mode set")
          (define captured (media-capture-stream media 60.0))
+         (check-equal (image-alt img) "Alpha" "image alt")
+         (image-set-alt! img 'Beta)
+         (check-equal (image-alt img) "Beta" "image alt set")
+         (check-equal (image-src img) "photo.png" "image src")
+         (image-set-src! img 'sprite.png)
+         (check-equal (image-src img) "sprite.png" "image src set")
+         (check-equal (image-current-src img) "photo.png" "image current src")
+         (check-equal (image-width img) 64 "image width")
+         (image-set-width! img 80)
+         (check-equal (image-width img) 80 "image width set")
+         (check-equal (image-height img) 32 "image height")
+         (image-set-height! img 40)
+         (check-equal (image-height img) 40 "image height set")
+         (check-equal (image-decoding img) "auto" "image decoding")
+         (image-set-decoding! img 'sync)
+         (check-equal (image-decoding img) "sync" "image decoding set")
+         (check-equal (image-loading img) "eager" "image loading")
+         (image-set-loading! img 'lazy)
+         (check-equal (image-loading img) "lazy" "image loading set")
+         (check-true (image-complete? img) "image complete")
+         (check-equal (image-cross-origin img) "anonymous" "image cross origin")
+         (image-set-cross-origin! img 'use-credentials)
+         (check-equal (image-cross-origin img) "use-credentials" "image cross origin set")
          (check-true (dom-token-list? (media-controls-list media)) "media controls list")
          (check-equal (dom-token-list-value (media-controls-list media)) "nodownload" "media controls list value")
          (check-true (dom-token-list-contains? (media-controls-list media) 'nodownload) "media controls list contains")

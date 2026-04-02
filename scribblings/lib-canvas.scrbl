@@ -29,6 +29,10 @@ Use @racket[canvas] when you want to:
 The @racket[canvas] library provides checked wrappers for canvas
 elements and the 2D rendering context.
 
+String-like arguments such as context identifiers and drawing modes
+accept either strings or symbols. Optional arguments use @racket[#f]
+to mean that the argument is omitted.
+
 @section{Canvas Quick Start}
 
 Start by creating a canvas element, getting its 2D context, and drawing
@@ -45,7 +49,7 @@ a filled rectangle.
 
 (code:comment "Get the 2D drawing context from the canvas.")
 (define ctx
-  (canvas-get-context canvas-el "2d" (void)))
+  (canvas-get-context canvas-el '2d #f))
 
 (code:comment "Draw a simple filled rectangle.")
 (canvas-2d-fill-rect ctx 10 10 120 50)
@@ -75,7 +79,7 @@ This example shows how to add a canvas to the page and then paint it.
 
 (code:comment "Get the 2D drawing context and paint a box.")
 (define ctx
-  (canvas-get-context canvas-el "2d" (void)))
+  (canvas-get-context canvas-el '2d #f))
 (canvas-2d-fill-rect ctx 20 20 80 40)
 ]
 
@@ -83,7 +87,7 @@ If you are just getting started, the most useful entry points are
 @racket[canvas-get-context], @racket[canvas-width], and
 @racket[canvas-2d-fill-rect].
 
-@defproc[(canvas-get-context [canvas external?] [context-id string?] [options any/c (void)])
+@defproc[(canvas-get-context [canvas external?] [context-id (or/c string? symbol?)] [options any/c #f])
          (or/c #f external?)]{
 @(mdn-bar "HTMLCanvasElement: getContext() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/getContext")
@@ -108,7 +112,7 @@ The raw @racket[ctx] argument should be a browser
 canvas context.
 }
 
-@defproc[(canvas-capture-stream [canvas external?] [frame-rate any/c (void)])
+@defproc[(canvas-capture-stream [canvas external?] [frame-rate any/c #f])
          media-stream?]{
 @(mdn-bar "HTMLCanvasElement: captureStream() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/captureStream")

@@ -9,17 +9,32 @@
 (define (canvas-i32->boolean v)
   (not (zero? v)))
 
-;; canvas-capture-stream : external? -> media-stream?
-;;   Capture the canvas stream.
-(define (canvas-capture-stream canvas [frame-rate (void)])
-  (media-stream-wrap (js-canvas-capture-stream canvas frame-rate)))
+;; canvas-stringish->string : symbol? any/c -> string?
+;;   Normalize a browser string argument.
+(define (canvas-stringish->string who value)
+  (cond
+    [(string? value) value]
+    [(symbol? value) (symbol->string value)]
+    [else (raise-argument-error who "(or/c string? symbol?)" value)]))
 
-;; canvas-get-context : external? string? [any/c] -> (or/c #f external?)
+;; canvas-resolve-optional : any/c -> any/c
+;;   Treat #f as omitted for optional browser arguments.
+(define (canvas-resolve-optional value)
+  (if (eq? value #f)
+      (void)
+      value))
+
+;; canvas-capture-stream : external? [real? #f] -> media-stream?
+;;   Capture the canvas stream.
+(define (canvas-capture-stream canvas [frame-rate #f])
+  (media-stream-wrap
+   (js-canvas-capture-stream canvas (canvas-resolve-optional frame-rate))))
+
+;; canvas-get-context : external? (or/c string? symbol?) [any/c #f] -> (or/c #f external?)
 ;;   Read a drawing context from a canvas.
-(define (canvas-get-context canvas context-id [options (void)])
-  (unless (string? context-id)
-    (raise-argument-error 'canvas-get-context "string?" context-id))
-  (js-canvas-get-context canvas context-id options))
+(define (canvas-get-context canvas context-id [options #f])
+  (define context-id* (canvas-stringish->string 'canvas-get-context context-id))
+  (js-canvas-get-context canvas context-id* (canvas-resolve-optional options)))
 
 ;; canvas-width : external? -> exact-nonnegative-integer?
 ;;   Read the canvas width.
@@ -43,19 +58,17 @@
   (js-set-canvas-height! canvas height)
   (void))
 
-;; canvas-to-data-url : external? string? [any/c] -> string?
+;; canvas-to-data-url : external? (or/c string? symbol?) [any/c #f] -> string?
 ;;   Encode a canvas as a data URL.
-(define (canvas-to-data-url canvas [type "image/png"] [quality (void)])
-  (unless (string? type)
-    (raise-argument-error 'canvas-to-data-url "string?" type))
-  (js-canvas-to-data-url canvas type quality))
+(define (canvas-to-data-url canvas [type "image/png"] [quality #f])
+  (define type* (canvas-stringish->string 'canvas-to-data-url type))
+  (js-canvas-to-data-url canvas type* (canvas-resolve-optional quality)))
 
-;; canvas-to-blob : external? external? string? [any/c] -> void?
+;; canvas-to-blob : external? external? (or/c string? symbol?) [any/c #f] -> void?
 ;;   Encode a canvas into a Blob callback.
-(define (canvas-to-blob canvas callback [type "image/png"] [quality (void)])
-  (unless (string? type)
-    (raise-argument-error 'canvas-to-blob "string?" type))
-  (js-canvas-to-blob canvas callback type quality)
+(define (canvas-to-blob canvas callback [type "image/png"] [quality #f])
+  (define type* (canvas-stringish->string 'canvas-to-blob type))
+  (js-canvas-to-blob canvas callback type* (canvas-resolve-optional quality))
   (void))
 
 ;; canvas-transfer-control-to-offscreen : external? -> external/raw
@@ -73,10 +86,12 @@
 (define (canvas-2d-direction ctx)
   (js-canvas2d-direction ctx))
 
-;; canvas-2d-set-direction! : external? string? -> void?
+;; canvas-2d-set-direction! : external? (or/c string? symbol?) -> void?
 ;;   Set the canvas direction.
 (define (canvas-2d-set-direction! ctx direction)
-  (js-set-canvas2d-direction! ctx direction)
+  (js-set-canvas2d-direction! ctx
+                              (canvas-stringish->string 'canvas-2d-set-direction!
+                                                        direction))
   (void))
 
 ;; canvas-2d-fill-style : external? -> string?
@@ -149,16 +164,18 @@
   (js-canvas2d-clear-rect ctx x y w h)
   (void))
 
-;; canvas-2d-fill : external? [any/c] [any/c] -> void?
+;; canvas-2d-fill : external? [any/c #f] [any/c #f] -> void?
 ;;   Fill the current path.
-(define (canvas-2d-fill ctx [path (void)] [fill-rule (void)])
-  (js-canvas2d-fill ctx path fill-rule)
+(define (canvas-2d-fill ctx [path #f] [fill-rule #f])
+  (js-canvas2d-fill ctx
+                    (canvas-resolve-optional path)
+                    (canvas-resolve-optional fill-rule))
   (void))
 
-;; canvas-2d-stroke : external? [any/c] -> void?
+;; canvas-2d-stroke : external? [any/c #f] -> void?
 ;;   Stroke the current path.
-(define (canvas-2d-stroke ctx [path (void)])
-  (js-canvas2d-stroke ctx path)
+(define (canvas-2d-stroke ctx [path #f])
+  (js-canvas2d-stroke ctx (canvas-resolve-optional path))
   (void))
 
 ;; canvas-2d-save : external? -> void?
@@ -191,16 +208,16 @@
   (js-canvas2d-rotate ctx angle)
   (void))
 
-;; canvas-2d-fill-text : external? string? real? real? [any/c] -> void?
+;; canvas-2d-fill-text : external? string? real? real? [any/c #f] -> void?
 ;;   Draw filled text.
-(define (canvas-2d-fill-text ctx text x y [max-width (void)])
-  (js-canvas2d-fill-text ctx text x y max-width)
+(define (canvas-2d-fill-text ctx text x y [max-width #f])
+  (js-canvas2d-fill-text ctx text x y (canvas-resolve-optional max-width))
   (void))
 
-;; canvas-2d-stroke-text : external? string? real? real? [any/c] -> void?
+;; canvas-2d-stroke-text : external? string? real? real? [any/c #f] -> void?
 ;;   Draw stroked text.
-(define (canvas-2d-stroke-text ctx text x y [max-width (void)])
-  (js-canvas2d-stroke-text ctx text x y max-width)
+(define (canvas-2d-stroke-text ctx text x y [max-width #f])
+  (js-canvas2d-stroke-text ctx text x y (canvas-resolve-optional max-width))
   (void))
 
 ;; canvas-2d-measure-text : external? string? -> external/raw

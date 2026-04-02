@@ -29,6 +29,10 @@ Use @racket[image] when you want to:
 The @racket[image] library wraps HTMLImageElement creation and common
 image properties.
 
+String-like image properties accept either strings or symbols.
+Optional size arguments use @racket[#f] to mean that the argument is
+omitted.
+
 @section{Image Quick Start}
 
 Start by creating an image element, pointing it at a source, and then
@@ -81,7 +85,7 @@ If you just need the basics, the main entry points are
 @racket[image-new], @racket[image-src], @racket[image-set-src!],
 @racket[image-set-alt!], and @racket[image-complete?].
 
-@defproc[(image-new [width any/c (void)] [height any/c (void)]) external/raw]{
+@defproc[(image-new [width any/c #f] [height any/c #f]) external/raw]{
 @(mdn-bar "HTMLImageElement: constructor"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/Image")
 Creates a new image element.
@@ -101,14 +105,14 @@ The raw @racket[img] argument should be a browser
 @racketid[HTMLImageElement] value. Reports whether the image has finished loading.
 }
 
-@defproc[(image-set-src! [img external?] [src string?]) void?]{
+@defproc[(image-set-src! [img external?] [src (or/c string? symbol?)]) void?]{
 @(mdn-bar "HTMLImageElement: src property"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/src")
 The raw @racket[img] argument should be a browser
 @racketid[HTMLImageElement] value. Sets the image source URL.
 }
 
-@defproc[(image-set-alt! [img external?] [alt string?]) void?]{
+@defproc[(image-set-alt! [img external?] [alt (or/c string? symbol?)]) void?]{
 @(mdn-bar "HTMLImageElement: alt property"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/alt")
 The raw @racket[img] argument should be a browser
