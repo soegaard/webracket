@@ -227,6 +227,52 @@
 (define (element-set-text-content! element text)
   (element-prop-set! element "textContent" (element-stringish->string 'element-set-text-content! text)))
 
+;; element-computed-style-map : element? -> external/raw
+;;   Read the computed style map for an element.
+(define (element-computed-style-map element)
+  (js-computed-style-map (element-unwrap element)))
+
+;; element-get-animations : element? -> external/raw
+;;   Read animations affecting an element.
+(define (element-get-animations element)
+  (js-get-animations (element-unwrap element)))
+
+;; element-attach-shadow! : element? any/c -> external/raw
+;;   Attach a shadow root to an element.
+(define (element-attach-shadow! element options)
+  (js-attach-shadow! (element-unwrap element) options))
+
+;; element-animate : element? any/c [any/c] [any/c] -> external/raw
+;;   Start an animation on an element.
+(define (element-animate element keyframes [options #f] [timeline #f])
+  (js-animate (element-unwrap element)
+              keyframes
+              (if (eq? options #f) (js-undefined) options)
+              (if (eq? timeline #f) (js-undefined) timeline)))
+
+;; element-get-attribute-node : element? (or/c string? symbol?) -> (or/c #f external?)
+;;   Read the attribute node for a given name.
+(define (element-get-attribute-node element name)
+  (define name* (element-stringish->string 'element-get-attribute-node name))
+  (js-send/value (element-unwrap element) "getAttributeNode" (vector name*)))
+
+;; element-get-attribute-node-ns : element? (or/c string? symbol?) (or/c string? symbol?) -> (or/c #f external?)
+;;   Read the namespaced attribute node for an element.
+(define (element-get-attribute-node-ns element ns name)
+  (define ns* (element-stringish->string 'element-get-attribute-node-ns ns))
+  (define name* (element-stringish->string 'element-get-attribute-node-ns name))
+  (js-send/value (element-unwrap element) "getAttributeNodeNS" (vector ns* name*)))
+
+;; element-set-attribute-node! : element? any/c -> external/raw
+;;   Attach an attribute node to an element.
+(define (element-set-attribute-node! element node)
+  (js-set-attribute-node! (element-unwrap element) (element-nodeish->value node)))
+
+;; element-set-attribute-node-ns! : element? any/c -> external/raw
+;;   Attach a namespaced attribute node to an element.
+(define (element-set-attribute-node-ns! element node)
+  (js-set-attribute-node-ns! (element-unwrap element) (element-nodeish->value node)))
+
 ;; get-bounding-client-rect : element? -> dom-rect?
 ;;   Read the element bounding box.
 (define (get-bounding-client-rect element)

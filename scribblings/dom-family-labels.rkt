@@ -41,6 +41,14 @@
   element-insert-adjacent-element!
   element-insert-adjacent-html!
   element-insert-adjacent-text!
+  element-computed-style-map
+  element-get-animations
+  element-attach-shadow!
+  element-animate
+  element-get-attribute-node
+  element-get-attribute-node-ns
+  element-set-attribute-node!
+  element-set-attribute-node-ns!
   window-self
   window-document
   (struct-out window-document-info)
@@ -338,6 +346,14 @@
 (define element-insert-adjacent-element! any/c)
 (define element-insert-adjacent-html! any/c)
 (define element-insert-adjacent-text! any/c)
+(define element-computed-style-map any/c)
+(define element-get-animations any/c)
+(define element-attach-shadow! any/c)
+(define element-animate any/c)
+(define element-get-attribute-node any/c)
+(define element-get-attribute-node-ns any/c)
+(define element-set-attribute-node! any/c)
+(define element-set-attribute-node-ns! any/c)
 
 (struct iterator (raw) #:transparent #:constructor-name make-iterator)
 (struct performance-event-count-map (raw) #:transparent)

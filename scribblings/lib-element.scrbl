@@ -310,6 +310,66 @@ Inserts HTML relative to an element.
 Inserts text relative to an element.
 }
 
+@section{Element Style and Animation}
+
+These helpers return browser objects directly when the browser API does.
+
+@defproc[(element-computed-style-map [element element?]) external/raw]{
+@(mdn-bar "Element: computedStyleMap() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/computedStyleMap")
+Returns the computed style map for the element.
+}
+
+@defproc[(element-get-animations [element element?]) external/raw]{
+@(mdn-bar "Element: getAnimations() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/getAnimations")
+Returns the animations affecting the element.
+}
+
+@defproc[(element-attach-shadow! [element element?] [options any/c]) external/raw]{
+@(mdn-bar "Element: attachShadow() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/attachShadow")
+Attaches a shadow root to the element and returns the raw browser shadow root.
+}
+
+@defproc[(element-animate [element element?]
+                          [keyframes any/c]
+                          [options any/c #f]
+                          [timeline any/c #f]) external/raw]{
+@(mdn-bar "Element: animate() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/animate")
+Starts an animation on the element and returns the raw browser animation object.
+}
+
+@defproc[(element-get-attribute-node [element element?]
+                                     [name (or/c string? symbol?)]) (or/c #f external?)]{
+@(mdn-bar "Element: getAttributeNode() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/getAttributeNode")
+Returns the attribute node for the named attribute.
+}
+
+@defproc[(element-get-attribute-node-ns [element element?]
+                                        [ns (or/c string? symbol?)]
+                                        [name (or/c string? symbol?)]) (or/c #f external?)]{
+@(mdn-bar "Element: getAttributeNodeNS() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/getAttributeNodeNS")
+Returns the namespaced attribute node for the named attribute.
+}
+
+@defproc[(element-set-attribute-node! [element element?]
+                                      [node any/c]) external/raw]{
+@(mdn-bar "Element: setAttributeNode() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/setAttributeNode")
+Attaches an attribute node to the element.
+}
+
+@defproc[(element-set-attribute-node-ns! [element element?]
+                                         [node any/c]) external/raw]{
+@(mdn-bar "Element: setAttributeNodeNS() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/setAttributeNodeNS")
+Attaches a namespaced attribute node to the element.
+}
+
 @section{Element Example}
 
 This example shows how to build a small card-like element, inspect its
