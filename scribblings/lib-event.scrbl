@@ -11,7 +11,7 @@
 @(how-to-require include-lib event (lib "libs/event.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")
 
-The @racket[event] library is the checked wrapper for browser events.
+The @racket[event] library wraps browser events in checked values.
 
 Events are the messages the browser sends when something happens:
 clicks, key presses, form submissions, pointer movement, and many
@@ -26,8 +26,8 @@ Use @racket[event] when you want to:
   @item{branch on event kind inside a handler}
 ]
 
-The @racket[event] library wraps DOM event predicates and common event
-accessors.
+The @racket[event] library provides predicates and accessors for common
+browser events.
 
 @section{Event Quick Start}
 
