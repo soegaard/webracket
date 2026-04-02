@@ -29,6 +29,9 @@ Use @racket[Document] when you want to:
 The @racket[document] library provides a checked wrapper for the current
 document, plus wrapped element helpers for lookup and selector queries.
 
+When a browser method expects a string, the wrapper also accepts a
+symbol and normalizes it to a string.
+
 @section{Document Values}
 
 @defstruct[document ([raw external/raw])]{
@@ -111,22 +114,34 @@ Returns the document body element, if present.
 Returns the document head element, if present.
 }
 
-@defproc[(document-create-element [tag string?]) element?]{
+@defproc[(document-create-element [tag (or/c string? symbol?)]) element?]{
 @(mdn-bar "Document: createElement() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/createElement")
 Creates an element for @racket[tag].
 }
 
-@defproc[(document-get-element-by-id [id string?]) (or/c #f element?)]{
+@defproc[(document-create-text-node [text (or/c string? symbol?)]) external/raw]{
+@(mdn-bar "Document: createTextNode() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Document/createTextNode")
+Creates a text node for @racket[text].
+}
+
+@defproc[(document-get-element-by-id [id (or/c string? symbol?)]) (or/c #f element?)]{
 @(mdn-bar "Document: getElementById() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/getElementById")
 Looks up a single element by id.
 }
 
-@defproc[(document-query-selector [selector string?]) (or/c #f element?)]{
+@defproc[(document-query-selector [selector (or/c string? symbol?)]) (or/c #f element?)]{
 @(mdn-bar "Document: querySelector() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelector")
 Returns the first matching descendant.
+}
+
+@defproc[(document-query-selector-all [selector (or/c string? symbol?)]) external/raw]{
+@(mdn-bar "Document: querySelectorAll() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelectorAll")
+Returns all matching descendants.
 }
 
 @defproc[(document-element) element?]{

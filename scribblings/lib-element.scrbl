@@ -29,6 +29,9 @@ Use @racket[element] when you want to:
 The @racket[element] library provides checked wrappers for common DOM
 element operations.
 
+When a browser method expects a string, the wrapper also accepts a
+symbol and normalizes it to a string.
+
 @section{Element Values}
 
 The element helpers pass around wrapped browser element values, so the
@@ -108,7 +111,9 @@ If an @racket[external] is passed as an argument, it should be a browser
 @racketid[Node] value, such as an element or a text node.
 }
 
-@defproc[(set-attribute! [element element?] [name string?] [value string?]) void?]{
+@defproc[(set-attribute! [element element?]
+                         [name (or/c string? symbol?)]
+                         [value (or/c string? symbol?)]) void?]{
 @(mdn-bar "Element: setAttribute() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/setAttribute")
 Sets an attribute on an element.

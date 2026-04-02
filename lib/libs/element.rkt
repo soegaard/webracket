@@ -4,6 +4,14 @@
 ;;; Element wrappers
 ;;;
 
+;; element-stringish->string : symbol? any/c -> string?
+;;   Normalize a string-like wrapper argument to a browser string.
+(define (element-stringish->string who v)
+  (cond
+    [(string? v) v]
+    [(symbol? v) (symbol->string v)]
+    [else (raise-argument-error who "(or/c string? symbol?)" v)]))
+
 ;; element-i32->boolean : integer? -> boolean?
 ;;   Convert a browser i32 flag to a boolean.
 (define (element-i32->boolean v)
@@ -15,22 +23,19 @@
   (js-append-child! (element-unwrap parent) (element-unwrap child))
   (void))
 
-;; set-attribute! : external? string? string? -> void?
+;; set-attribute! : external? (or/c string? symbol?) (or/c string? symbol?) -> void?
 ;;   Set an element attribute.
 (define (set-attribute! element name value)
-  (unless (string? name)
-    (raise-argument-error 'set-attribute! "string?" name))
-  (unless (string? value)
-    (raise-argument-error 'set-attribute! "string?" value))
-  (js-set-attribute! (element-unwrap element) name value)
+  (define name* (element-stringish->string 'set-attribute! name))
+  (define value* (element-stringish->string 'set-attribute! value))
+  (js-set-attribute! (element-unwrap element) name* value*)
   (void))
 
-;; get-attribute : external? string? -> (or/c #f string?)
+;; get-attribute : external? (or/c string? symbol?) -> (or/c #f string?)
 ;;   Read an element attribute.
 (define (get-attribute element name)
-  (unless (string? name)
-    (raise-argument-error 'get-attribute "string?" name))
-  (js-send/value (element-unwrap element) "getAttribute" (vector name)))
+  (define name* (element-stringish->string 'get-attribute name))
+  (js-send/value (element-unwrap element) "getAttribute" (vector name*)))
 
 ;; get-bounding-client-rect : element? -> dom-rect?
 ;;   Read the element bounding box.
@@ -42,15 +47,17 @@
 (define (get-client-rects element)
   (js-get-client-rects (element-unwrap element)))
 
-;; query-selector : external? string? -> (or/c #f element?)
+;; query-selector : external? (or/c string? symbol?) -> (or/c #f element?)
 ;;   Find the first matching descendant.
 (define (query-selector element selector)
-  (element-wrap (js-element-query-selector (element-unwrap element) selector)))
+  (define selector* (element-stringish->string 'query-selector selector))
+  (element-wrap (js-element-query-selector (element-unwrap element) selector*)))
 
-;; query-selector-all : external? string? -> external/raw
+;; query-selector-all : external? (or/c string? symbol?) -> external/raw
 ;;   Find all matching descendants.
 (define (query-selector-all element selector)
-  (js-element-query-selector-all (element-unwrap element) selector))
+  (define selector* (element-stringish->string 'query-selector-all selector))
+  (js-element-query-selector-all (element-unwrap element) selector*))
 
 ;; remove! : external? -> void?
 ;;   Remove the element from the DOM.
@@ -105,23 +112,25 @@
   (js-scroll-to! (element-unwrap element) x y)
   (void))
 
-;; set-attribute-ns! : external? string? string? string? -> void?
+;; set-attribute-ns! : external? (or/c string? symbol?) (or/c string? symbol?) (or/c string? symbol?) -> void?
 ;;   Set a namespaced attribute.
 (define (set-attribute-ns! element ns name value)
-  (unless (string? ns)
-    (raise-argument-error 'set-attribute-ns! "string?" ns))
-  (unless (string? name)
-    (raise-argument-error 'set-attribute-ns! "string?" name))
-  (unless (string? value)
-    (raise-argument-error 'set-attribute-ns! "string?" value))
-  (js-set-attribute-ns! (element-unwrap element) ns name value)
+  (define ns* (element-stringish->string 'set-attribute-ns! ns))
+  (define name* (element-stringish->string 'set-attribute-ns! name))
+  (define value* (element-stringish->string 'set-attribute-ns! value))
+  (js-set-attribute-ns! (element-unwrap element) ns* name* value*)
   (void))
 
-;; toggle-attribute! : external? string? [boolean?] -> boolean?
+;; toggle-attribute! : external? (or/c string? symbol?) (or/c boolean? procedure?) -> boolean?
 ;;   Toggle an attribute, or force a specific state when provided.
-(define (toggle-attribute! element name [force (void)])
-  (unless (string? name)
-    (raise-argument-error 'toggle-attribute! "string?" name))
-  (if (void? force)
-      (js-send/value (element-unwrap element) "toggleAttribute" (vector name))
-      (element-i32->boolean (js-toggle-attribute! (element-unwrap element) name (if force 1 0)))))
+(define (toggle-attribute! element name [force #f])
+  (define name* (element-stringish->string 'toggle-attribute! name))
+  (cond
+    [(eq? force #f)
+     (js-send/value (element-unwrap element) "toggleAttribute" (vector name*))]
+    [(procedure? force)
+     (element-i32->boolean
+      (js-toggle-attribute! (element-unwrap element) name* (if (force) 1 0)))]
+    [else
+     (element-i32->boolean
+      (js-toggle-attribute! (element-unwrap element) name* (if force 1 0)))]))

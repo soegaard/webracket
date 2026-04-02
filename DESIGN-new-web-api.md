@@ -143,6 +143,8 @@ The wrapper should be where browser-specific oddities disappear.
 
 Good examples:
 - convert protocol symbols to strings
+- when a browser method expects a string argument, accept both strings and
+  symbols in the wrapper and normalize symbols to strings
 - map the numeric ready-state to symbols like `'connecting`, `'open`, `'closing`, and `'closed`
 - provide both the raw number and the symbolic version if both are useful
 - give event handlers a clear “set handler / clear handler” story
