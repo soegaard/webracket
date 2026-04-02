@@ -134,6 +134,8 @@
   window-set-name!
   window-location
   (struct-out window-location-info)
+  (struct-out media-query-list)
+  (struct-out css-style-declaration)
   (struct-out window-scroll-options)
   window-set-location!
   window-open
@@ -170,6 +172,8 @@
   (struct-out attr)
   (struct-out dom-rect)
   (struct-out selection)
+  (struct-out media-query-list)
+  (struct-out css-style-declaration)
   (struct-out performance-event-count-map)
   performance-event-count-map-size
   performance-event-count-map-entries
@@ -406,6 +410,8 @@
 (struct attr (raw) #:transparent)
 (struct dom-rect (raw) #:transparent)
 (struct selection (raw) #:transparent)
+(struct media-query-list (raw) #:transparent)
+(struct css-style-declaration (raw) #:transparent)
 (define element-class-list any/c)
 (define element-id any/c)
 (define element-set-id! any/c)
@@ -557,6 +563,15 @@
 (define selection-focus-node any/c)
 (define selection-to-string any/c)
 (define selection-remove-all-ranges! any/c)
+(define media-query-list-media any/c)
+(define media-query-list-matches? any/c)
+(define css-style-declaration-css-text any/c)
+(define css-style-declaration-set-css-text! any/c)
+(define css-style-declaration-length any/c)
+(define css-style-declaration-item any/c)
+(define css-style-declaration-get-property-value any/c)
+(define css-style-declaration-set-property! any/c)
+(define css-style-declaration-remove-property! any/c)
 (define document-close any/c)
 (define document-element-from-point any/c)
 (define document-elements-from-point any/c)

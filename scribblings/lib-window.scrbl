@@ -173,6 +173,25 @@ Returns the current location object wrapped in a checked struct.
 Returns the current selection as a wrapped @racket[selection] value.
 }
 
+@section{Window Style Values}
+
+@defproc[(window-match-media [query (or/c string? symbol?)]) media-query-list?]{
+@(mdn-bar "Window: matchMedia() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Window/matchMedia")
+Evaluates a media query and returns a wrapped @racket[media-query-list]
+value.
+}
+
+@defproc[(window-get-computed-style [element element?]
+                                    [pseudo-element (or/c #f string? symbol?) #f])
+         css-style-declaration?]{
+@(mdn-bar "Window: getComputedStyle() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Window/getComputedStyle")
+Returns the computed style for @racket[element] as a wrapped
+@racket[css-style-declaration] value. The pseudo-element argument
+accepts a string or symbol and is omitted when @racket[#f].
+}
+
 @defproc[(window-set-name! [name (or/c string? symbol?)]) void?]{
 @(mdn-bar "Window: name property"
           "https://developer.mozilla.org/en-US/docs/Web/API/Window/name")

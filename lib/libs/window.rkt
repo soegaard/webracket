@@ -313,17 +313,19 @@
 (define (window-get-selection)
   (selection-wrap (js-window-get-selection)))
 
-;; window-match-media : string? -> external/raw
+;; window-match-media : (or/c string? symbol?) -> media-query-list?
 ;;   Evaluate a media query.
 (define (window-match-media query)
-  (unless (string? query)
-    (raise-argument-error 'window-match-media "string?" query))
-  (js-window-match-media query))
+  (define query* (window-stringish->string 'window-match-media query))
+  (media-query-list-wrap (js-window-match-media query*)))
 
-;; window-get-computed-style : external? [any/c #f] -> external/raw
+;; window-get-computed-style : external? [any/c #f] -> css-style-declaration?
 ;;   Read computed style for an element.
 (define (window-get-computed-style element [pseudo-element #f])
-  (js-window-get-computed-style element (window-resolve-optional pseudo-element)))
+  (define pseudo-element* (window-resolve-stringish-optional 'window-get-computed-style
+                                                             pseudo-element))
+  (css-style-declaration-wrap
+   (js-window-get-computed-style element pseudo-element*)))
 
 ;; window-structured-clone : any/c [any/c #f] -> any/c
 ;;   Clone a value using the structured-clone algorithm.

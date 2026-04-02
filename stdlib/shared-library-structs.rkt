@@ -285,3 +285,95 @@
 (define (selection-remove-all-ranges! selection)
   (js-send (selection-unwrap selection) "removeAllRanges" (vector))
   (void))
+
+;; media-query-list : external/raw -> media-query-list?
+;;   Wrap a browser MediaQueryList object.
+(struct media-query-list (raw) #:transparent)
+
+;; media-query-list-wrap : any/c -> any/c
+;;   Wrap a raw browser MediaQueryList object, leaving wrapped values alone.
+(define (media-query-list-wrap value)
+  (if (or (not value) (media-query-list? value))
+      value
+      (media-query-list value)))
+
+;; media-query-list-unwrap : any/c -> any/c
+;;   Unwrap a media-query-list struct to its raw browser object.
+(define (media-query-list-unwrap value)
+  (if (media-query-list? value)
+      (media-query-list-raw value)
+      value))
+
+;; media-query-list-media : media-query-list? -> string?
+;;   Read the media query string.
+(define (media-query-list-media media-query-list)
+  (js-ref (media-query-list-unwrap media-query-list) "media"))
+
+;; media-query-list-matches? : media-query-list? -> boolean?
+;;   Report whether the media query currently matches.
+(define (media-query-list-matches? media-query-list)
+  (not (zero? (js-ref (media-query-list-unwrap media-query-list) "matches"))))
+
+;; css-style-declaration : external/raw -> css-style-declaration?
+;;   Wrap a browser CSSStyleDeclaration object.
+(struct css-style-declaration (raw) #:transparent)
+
+;; css-style-declaration-wrap : any/c -> any/c
+;;   Wrap a raw browser CSSStyleDeclaration object, leaving wrapped values alone.
+(define (css-style-declaration-wrap value)
+  (if (or (not value) (css-style-declaration? value))
+      value
+      (css-style-declaration value)))
+
+;; css-style-declaration-unwrap : any/c -> any/c
+;;   Unwrap a css-style-declaration struct to its raw browser object.
+(define (css-style-declaration-unwrap value)
+  (if (css-style-declaration? value)
+      (css-style-declaration-raw value)
+      value))
+
+;; css-style-declaration-css-text : css-style-declaration? -> string?
+;;   Read the CSS text for a style declaration.
+(define (css-style-declaration-css-text decl)
+  (js-ref (css-style-declaration-unwrap decl) "cssText"))
+
+;; css-style-declaration-set-css-text! : css-style-declaration? (or/c string? symbol?) -> void?
+;;   Set the CSS text for a style declaration.
+(define (css-style-declaration-set-css-text! decl text)
+  (js-set! (css-style-declaration-unwrap decl)
+           "cssText"
+           (if (symbol? text) (symbol->string text) text))
+  (void))
+
+;; css-style-declaration-length : css-style-declaration? -> exact-nonnegative-integer?
+;;   Read the number of style properties.
+(define (css-style-declaration-length decl)
+  (js-ref (css-style-declaration-unwrap decl) "length"))
+
+;; css-style-declaration-item : css-style-declaration? exact-nonnegative-integer? -> (or/c #f string?)
+;;   Read the style property name at an index.
+(define (css-style-declaration-item decl index)
+  (js-send/value (css-style-declaration-unwrap decl) "item" (vector index)))
+
+;; css-style-declaration-get-property-value : css-style-declaration? (or/c string? symbol?) -> string?
+;;   Read the value of a style property.
+(define (css-style-declaration-get-property-value decl name)
+  (js-send/value (css-style-declaration-unwrap decl)
+                 "getPropertyValue"
+                 (vector (if (symbol? name) (symbol->string name) name))))
+
+;; css-style-declaration-set-property! : css-style-declaration? (or/c string? symbol?) (or/c string? symbol?) -> void?
+;;   Set the value of a style property.
+(define (css-style-declaration-set-property! decl name value)
+  (js-send (css-style-declaration-unwrap decl)
+           "setProperty"
+           (vector (if (symbol? name) (symbol->string name) name)
+                   (if (symbol? value) (symbol->string value) value)))
+  (void))
+
+;; css-style-declaration-remove-property! : css-style-declaration? (or/c string? symbol?) -> string?
+;;   Remove a style property and return its previous value.
+(define (css-style-declaration-remove-property! decl name)
+  (js-send/value (css-style-declaration-unwrap decl)
+                 "removeProperty"
+                 (vector (if (symbol? name) (symbol->string name) name))))
