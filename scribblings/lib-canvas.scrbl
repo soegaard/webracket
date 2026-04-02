@@ -4,6 +4,7 @@
           "webracket-scribble-utils.rkt"
           (for-label (lib "scribblings/lib-document-labels.rkt" "webracket"))
           (for-label (lib "scribblings/lib-element-labels.rkt" "webracket"))
+          (for-label (lib "scribblings/lib-media-labels.rkt" "webracket"))
           (for-label (lib "scribblings/lib-canvas-labels.rkt" "webracket")))
 
 @title{Library: @racketid[canvas]}
@@ -129,3 +130,103 @@ The @racket[canvas] argument should be a wrapped canvas value or a
 browser @racketid[HTMLCanvasElement] value. Returns a wrapped browser
 @racketid[MediaStream] that captures the canvas rendering.
 }
+
+@section{Canvas Value Wrappers}
+
+The canvas library now also wraps the browser values that its richer 2D
+methods produce. The most useful accessors are:
+
+@defproc[(canvas-image-data-width [data canvas-image-data?]) exact-nonnegative-integer?]{
+Reads the width of an image buffer.
+}
+
+@defproc[(canvas-image-data-height [data canvas-image-data?]) exact-nonnegative-integer?]{
+Reads the height of an image buffer.
+}
+
+@defproc[(canvas-image-data-data [data canvas-image-data?]) bytes?]{
+Reads the pixel bytes of an image buffer as a Racket @racket[bytes]
+value.
+}
+
+@defproc[(canvas-text-metrics-width [metrics canvas-text-metrics?]) real?]{
+Reads the measured text width.
+}
+
+@defproc[(canvas-dom-matrix-a [matrix canvas-dom-matrix?]) real?]{
+Reads the @racket[a] component of a canvas transform matrix.
+}
+
+@defproc[(canvas-dom-matrix-b [matrix canvas-dom-matrix?]) real?]{
+Reads the @racket[b] component of a canvas transform matrix.
+}
+
+@defproc[(canvas-dom-matrix-c [matrix canvas-dom-matrix?]) real?]{
+Reads the @racket[c] component of a canvas transform matrix.
+}
+
+@defproc[(canvas-dom-matrix-d [matrix canvas-dom-matrix?]) real?]{
+Reads the @racket[d] component of a canvas transform matrix.
+}
+
+@defproc[(canvas-dom-matrix-e [matrix canvas-dom-matrix?]) real?]{
+Reads the @racket[e] component of a canvas transform matrix.
+}
+
+@defproc[(canvas-dom-matrix-f [matrix canvas-dom-matrix?]) real?]{
+Reads the @racket[f] component of a canvas transform matrix.
+}
+
+@defproc[(canvas-gradient-add-color-stop! [gradient (or/c canvas-gradient? external?)]
+                                          [offset real?]
+                                          [color (or/c string? symbol?)])
+         void?]{
+Adds a stop to a gradient.
+}
+
+@defproc[(canvas-pattern-set-transform! [pattern (or/c canvas-pattern? external?)]
+                                        [matrix (or/c canvas-dom-matrix? external?)])
+         void?]{
+Sets the transform used when tiling a canvas pattern.
+}
+
+@section{Canvas 2D State and Geometry}
+
+The 2D context now also exposes the usual MDN state and drawing helpers,
+including @racket[canvas-2d-fill-style], @racket[canvas-2d-stroke-style],
+@racket[canvas-2d-filter], @racket[canvas-2d-font],
+@racket[canvas-2d-global-alpha],
+@racket[canvas-2d-global-composite-operation],
+@racket[canvas-2d-image-smoothing-enabled?],
+@racket[canvas-2d-image-smoothing-quality],
+@racket[canvas-2d-line-cap], @racket[canvas-2d-line-dash-offset],
+@racket[canvas-2d-line-join], @racket[canvas-2d-line-width],
+@racket[canvas-2d-miter-limit], @racket[canvas-2d-shadow-blur],
+@racket[canvas-2d-shadow-color], @racket[canvas-2d-shadow-offset-x],
+@racket[canvas-2d-shadow-offset-y], @racket[canvas-2d-text-align],
+@racket[canvas-2d-text-baseline], @racket[canvas-2d-text-rendering],
+@racket[canvas-2d-font-kerning], @racket[canvas-2d-font-stretch],
+@racket[canvas-2d-font-variant-caps],
+@racket[canvas-2d-font-variant-ligatures],
+@racket[canvas-2d-font-variant-numeric],
+@racket[canvas-2d-letter-spacing], @racket[canvas-2d-word-spacing],
+@racket[canvas-2d-arc-to], @racket[canvas-2d-bezier-curve-to],
+@racket[canvas-2d-clip], @racket[canvas-2d-create-image-data],
+@racket[canvas-2d-create-image-data-from], @racket[canvas-2d-create-pattern],
+@racket[canvas-2d-create-linear-gradient],
+@racket[canvas-2d-create-radial-gradient],
+@racket[canvas-2d-create-conic-gradient],
+@racket[canvas-2d-draw-focus-if-needed!],
+@racket[canvas-2d-draw-focus-if-needed-path!], @racket[canvas-2d-draw-image],
+@racket[canvas-2d-ellipse], @racket[canvas-2d-get-image-data],
+@racket[canvas-2d-get-line-dash], @racket[canvas-2d-get-transform],
+@racket[canvas-2d-is-point-in-path], @racket[canvas-2d-is-point-in-stroke],
+@racket[canvas-2d-put-image-data], @racket[canvas-2d-quadratic-curve-to],
+@racket[canvas-2d-rect], @racket[canvas-2d-reset],
+@racket[canvas-2d-reset-transform], @racket[canvas-2d-round-rect],
+@racket[canvas-2d-set-line-dash], @racket[canvas-2d-set-transform!],
+@racket[canvas-2d-set-transform-matrix!], and @racket[canvas-2d-transform].
+
+For the 2D canvas API, string-like arguments continue to accept strings
+or symbols, and @racket[#f] continues to mean that an optional argument
+is omitted.

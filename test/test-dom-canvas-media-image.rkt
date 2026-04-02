@@ -11,7 +11,6 @@
 (include-lib domrect)
 (include-lib element)
 (include-lib image)
-(include-lib media)
 (define (check-equal got want label)
   (unless (if (and (number? got) (number? want))
               (= got want)
@@ -34,11 +33,64 @@
 (define (install!)
   (js-eval
    "window.__domTest = window.__domTest || {};
+    const linearGradient = {
+      kind: 'linear-gradient',
+      calls: [],
+      addColorStop(offset, color) { this.calls.push(['addColorStop', offset, color]); }
+    };
+    const radialGradient = {
+      kind: 'radial-gradient',
+      calls: [],
+      addColorStop(offset, color) { this.calls.push(['addColorStop', offset, color]); }
+    };
+    const conicGradient = {
+      kind: 'conic-gradient',
+      calls: [],
+      addColorStop(offset, color) { this.calls.push(['addColorStop', offset, color]); }
+    };
+    const pattern = {
+      kind: 'pattern',
+      calls: [],
+      setTransform(matrix) { this.calls.push(['setTransform', matrix]); }
+    };
+    const transform = { a: 1, b: 2, c: 3, d: 4, e: 5, f: 6 };
+    const imageData = {
+      kind: 'image-data',
+      width: 4,
+      height: 1,
+      data: new Uint8ClampedArray([1, 2, 3, 4])
+    };
+    const offscreen = { kind: 'offscreen', width: 320, height: 200 };
     const ctx = {
       canvas: null,
+      filter: 'none',
+      font: '16px sans-serif',
+      globalAlpha: 0.5,
+      globalCompositeOperation: 'source-over',
+      imageSmoothingEnabled: 1,
+      imageSmoothingQuality: 'low',
       direction: 'ltr',
+      lineCap: 'butt',
+      lineDashOffset: 2,
+      lineJoin: 'miter',
+      lineWidth: 1,
+      miterLimit: 10,
+      shadowBlur: 0,
+      shadowColor: '#000000',
+      shadowOffsetX: 0,
+      shadowOffsetY: 0,
       fillStyle: 'red',
       strokeStyle: 'blue',
+      textAlign: 'start',
+      textBaseline: 'alphabetic',
+      textRendering: 'auto',
+      fontKerning: 'auto',
+      fontStretch: 'normal',
+      fontVariantCaps: 'normal',
+      fontVariantLigatures: 'normal',
+      fontVariantNumeric: 'normal',
+      letterSpacing: '0px',
+      wordSpacing: '0px',
       calls: [],
       fillRect(...args) { this.calls.push(['fillRect', ...args]); },
       strokeRect(...args) { this.calls.push(['strokeRect', ...args]); },
@@ -47,7 +99,10 @@
       moveTo(...args) { this.calls.push(['moveTo', ...args]); },
       lineTo(...args) { this.calls.push(['lineTo', ...args]); },
       arc(...args) { this.calls.push(['arc', ...args]); },
+      arcTo(...args) { this.calls.push(['arcTo', ...args]); },
+      bezierCurveTo(...args) { this.calls.push(['bezierCurveTo', ...args]); },
       clearRect(...args) { this.calls.push(['clearRect', ...args]); },
+      clip(...args) { this.calls.push(['clip', ...args]); },
       fill(path, rule) { this.calls.push(['fill', path, rule]); },
       stroke(path) { this.calls.push(['stroke', path]); },
       save() { this.calls.push(['save']); },
@@ -55,17 +110,45 @@
       translate(...args) { this.calls.push(['translate', ...args]); },
       scale(...args) { this.calls.push(['scale', ...args]); },
       rotate(angle) { this.calls.push(['rotate', angle]); },
+      setLineDash(segments) { this.calls.push(['setLineDash', segments]); },
+      getLineDash() { this.calls.push(['getLineDash']); return [4, 2]; },
+      reset() { this.calls.push(['reset']); },
+      resetTransform() { this.calls.push(['resetTransform']); },
+      roundRect(...args) { this.calls.push(['roundRect', ...args]); },
+      rect(...args) { this.calls.push(['rect', ...args]); },
+      quadraticCurveTo(...args) { this.calls.push(['quadraticCurveTo', ...args]); },
+      transform(...args) { this.calls.push(['transform', ...args]); },
+      setTransform(...args) { this.calls.push(['setTransform', ...args]); },
+      getTransform() { this.calls.push(['getTransform']); return transform; },
       fillText(text, x, y, maxWidth) { this.calls.push(['fillText', text, x, y, maxWidth]); },
       strokeText(text, x, y, maxWidth) { this.calls.push(['strokeText', text, x, y, maxWidth]); },
-      measureText(text) { this.calls.push(['measureText', text]); return { width: text.length }; }
+      measureText(text) { this.calls.push(['measureText', text]); return { width: text.length }; },
+      createLinearGradient(...args) { this.calls.push(['createLinearGradient', ...args]); return linearGradient; },
+      createRadialGradient(...args) { this.calls.push(['createRadialGradient', ...args]); return radialGradient; },
+      createConicGradient(...args) { this.calls.push(['createConicGradient', ...args]); return conicGradient; },
+      createPattern(source, repetition) { this.calls.push(['createPattern', source, repetition]); return pattern; },
+      createImageData(...args) {
+        this.calls.push(['createImageData', ...args]);
+        if (args.length === 1)
+          return { kind: 'image-data-copy', width: args[0].width, height: args[0].height, data: new Uint8ClampedArray(args[0].data) };
+        return { kind: 'image-data', width: args[0], height: args[1], data: new Uint8ClampedArray(args[0] * args[1] * 4) };
+      },
+      getImageData(...args) { this.calls.push(['getImageData', ...args]); return imageData; },
+      putImageData(...args) { this.calls.push(['putImageData', ...args]); },
+      drawFocusIfNeeded(...args) { this.calls.push(['drawFocusIfNeeded', ...args]); },
+      drawImage(...args) { this.calls.push(['drawImage', ...args]); },
+      ellipse(...args) { this.calls.push(['ellipse', ...args]); },
+      isPointInPath(...args) { this.calls.push(['isPointInPath', ...args]); return 1; },
+      isPointInStroke(...args) { this.calls.push(['isPointInStroke', ...args]); return 0; }
     };
     const canvas = {
       width: 320,
       height: 200,
       calls: [],
       ctx,
-      captureStream(frameRate) { this.calls.push(['captureStream', frameRate]); return { kind: 'stream', frameRate }; },
+      captureStream(frameRate) { this.calls.push(['captureStream', frameRate]); return { kind: 'stream', frameRate, getTracks() { return []; } }; },
       getContext(contextId, options) { this.calls.push(['getContext', contextId, options]); return this.ctx; },
+      transferControlToOffscreen() { this.calls.push(['transferControlToOffscreen']); return offscreen; },
       toDataURL(type, quality) { this.calls.push(['toDataURL', type, quality]); return `${type}:${quality}`; },
       toBlob(callback, type, quality) { this.calls.push(['toBlob', type, quality]); callback({ kind: 'blob', type, quality }); }
     };
@@ -197,6 +280,9 @@
          (check-equal (canvas-height canvas) 240 "canvas height set")
          (check-true (media-stream? captured) "canvas capture stream")
          (check-equal (js-ref (media-stream-raw captured) "kind") "stream" "canvas capture stream raw")
+         (define offscreen (canvas-transfer-control-to-offscreen canvas))
+         (check-true (offscreen-canvas? offscreen) "canvas offscreen wrapper")
+         (check-equal (js-ref (offscreen-canvas-raw offscreen) "kind") "offscreen" "canvas offscreen raw")
          (check-equal (canvas-to-data-url canvas 'image/jpeg 0.8) "image/jpeg:0.8" "canvas to data url")
          (define blobs '())
          (canvas-to-blob canvas
@@ -217,6 +303,45 @@
          (define fill-call (vector-ref (js-ref (canvas-2d-context-raw ctx) "calls") 0))
          (check-equal (vector-ref fill-call 0) "fill" "canvas fill call")
          (check-equal (vector-ref fill-call 2) "evenodd" "canvas fill rule")
+         (define dash (canvas-2d-get-line-dash ctx))
+         (check-equal (vector->list dash) '(4 2) "canvas get line dash")
+         (canvas-2d-set-line-dash ctx (vector 1 3 5))
+         (define (canvas-call-recorded? name)
+           (let ([calls (js-ref (canvas-2d-context-raw ctx) "calls")])
+             (let loop ([i 0])
+               (cond
+                 [(>= i (vector-length calls)) #f]
+                 [(equal? (vector-ref (vector-ref calls i) 0) name) #t]
+                 [else (loop (add1 i))]))))
+         (check-true (canvas-call-recorded? "setLineDash") "canvas set line dash")
+         (define linear-gradient (canvas-2d-create-linear-gradient ctx 0 0 10 10))
+         (check-true (canvas-gradient? linear-gradient) "canvas linear gradient wrapper")
+         (canvas-gradient-add-color-stop! linear-gradient 0 'red)
+         (check-equal (vector-ref (js-ref (canvas-gradient-raw linear-gradient) "calls") 0) "addColorStop" "canvas gradient add color stop")
+         (define pattern (canvas-2d-create-pattern ctx canvas "repeat"))
+         (check-true (canvas-pattern? pattern) "canvas pattern wrapper")
+         (canvas-pattern-set-transform! pattern (canvas-2d-get-transform ctx))
+         (check-equal (vector-ref (js-ref (canvas-pattern-raw pattern) "calls") 0) "setTransform" "canvas pattern transform")
+         (define image-data (canvas-2d-create-image-data ctx 2 3))
+         (check-true (canvas-image-data? image-data) "canvas image data wrapper")
+         (check-equal (canvas-image-data-width image-data) 2 "canvas image data width")
+         (check-equal (canvas-image-data-height image-data) 3 "canvas image data height")
+         (check-equal (bytes-length (canvas-image-data-data image-data)) 24 "canvas image data bytes")
+         (define copied-image-data (canvas-2d-create-image-data-from ctx image-data))
+         (check-true (canvas-image-data? copied-image-data) "canvas image data copy wrapper")
+         (check-equal (canvas-image-data-width copied-image-data) 2 "canvas image data copy width")
+         (check-equal (canvas-image-data-height copied-image-data) 3 "canvas image data copy height")
+         (check-equal (bytes-length (canvas-image-data-data copied-image-data)) 24 "canvas image data copy bytes")
+         (define image-data-from-canvas (canvas-2d-get-image-data ctx 1 2 3 4))
+         (check-true (canvas-image-data? image-data-from-canvas) "canvas get image data wrapper")
+         (check-equal (canvas-image-data-width image-data-from-canvas) 4 "canvas get image data width")
+         (check-equal (canvas-image-data-height image-data-from-canvas) 1 "canvas get image data height")
+         (check-equal (bytes-length (canvas-image-data-data image-data-from-canvas)) 4 "canvas get image data bytes")
+         (define matrix (canvas-2d-get-transform ctx))
+         (check-true (canvas-dom-matrix? matrix) "canvas transform wrapper")
+         (check-equal (canvas-dom-matrix-a matrix) 1 "canvas matrix a")
+         (check-equal (canvas-dom-matrix-f matrix) 6 "canvas matrix f")
+         (check-equal (canvas-text-metrics-width (canvas-2d-measure-text ctx "measure")) 7 "canvas measure text")
          (check-equal (js-ref (canvas-2d-measure-text ctx "measure") "width") 7 "canvas measure text")
          (check-equal (dom-rect-left (js-eval "({ left: 1.25, top: 2.5, width: 3.75, height: 4.5 })")) 1.25 "domrect left")
          (check-equal (dom-rect-top (js-eval "({ left: 1.25, top: 2.5, width: 3.75, height: 4.5 })")) 2.5 "domrect top")

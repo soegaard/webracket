@@ -13,6 +13,5 @@
 (include-lib domrect)
 (include-lib element)
 (include-lib canvas)
-(include-lib media)
 (include-lib image)
 (include-lib event)
