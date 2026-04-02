@@ -214,3 +214,17 @@ Scrolls ancestors until the element is visible.
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect")
 Returns the element's bounding rectangle.
 }
+
+@defproc[(get-client-rects [element element?]) vector?]{
+@(mdn-bar "Element: getClientRects() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/getClientRects")
+Returns the element's client rectangles as a WebRacket vector of
+wrapped DOMRect values.
+}
+
+@defproc[(query-selector-all [element (or/c element? external?)]
+                             [selector (or/c string? symbol?)]) vector?]{
+@(mdn-bar "Element: querySelectorAll() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/querySelectorAll")
+Returns all matching descendants as a WebRacket vector of wrapped elements.
+}

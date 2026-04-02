@@ -151,10 +151,10 @@ Looks up a single element by id.
 Returns the first matching descendant.
 }
 
-@defproc[(document-query-selector-all [selector (or/c string? symbol?)]) external/raw]{
+@defproc[(document-query-selector-all [selector (or/c string? symbol?)]) vector?]{
 @(mdn-bar "Document: querySelectorAll() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelectorAll")
-Returns all matching descendants.
+Returns all matching descendants as a WebRacket vector of wrapped elements.
 }
 
 @defproc[(document-element) element?]{
@@ -173,4 +173,11 @@ Opens a document stream for writing and returns the wrapped document.
 @(mdn-bar "Document: elementFromPoint() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/elementFromPoint")
 Returns the topmost element at the given viewport position, or @racket[#f].
+}
+
+@defproc[(document-elements-from-point [x real?] [y real?]) vector?]{
+@(mdn-bar "Document: elementsFromPoint() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Document/elementsFromPoint")
+Returns the matching elements at the given viewport position as a
+WebRacket vector of wrapped elements.
 }

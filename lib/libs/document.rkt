@@ -60,11 +60,13 @@
   (define selector* (document-stringish->string 'document-query-selector selector))
   (element-wrap (js-query-selector selector*)))
 
-;; document-query-selector-all : (or/c string? symbol?) -> external/raw
-;;   Return all elements matching a selector.
+;; document-query-selector-all : (or/c string? symbol?) -> vector?
+;;   Return all elements matching a selector as a wrapped vector.
 (define (document-query-selector-all selector)
   (define selector* (document-stringish->string 'document-query-selector-all selector))
-  (js-query-selector-all selector*))
+  (array-like->vector 'document-query-selector-all
+                      (js-query-selector-all selector*)
+                      element-wrap))
 
 ;; document-has-focus? : -> boolean?
 ;;   Report whether the document currently has focus.
@@ -92,7 +94,9 @@
 (define (document-element-from-point x y)
   (element-wrap (js-element-from-point x y)))
 
-;; document-elements-from-point : real? real? -> external/raw
-;;   Find all elements at the given viewport coordinates.
+;; document-elements-from-point : real? real? -> vector?
+;;   Find all elements at the given viewport coordinates as a wrapped vector.
 (define (document-elements-from-point x y)
-  (js-elements-from-point x y))
+  (array-like->vector 'document-elements-from-point
+                      (js-elements-from-point x y)
+                      element-wrap))

@@ -42,6 +42,18 @@
       (text-raw value)
       value))
 
+;; array-like->vector : symbol? any/c (-> any/c any/c) -> vector?
+;;   Convert a browser array-like value into a WebRacket vector.
+(define (array-like->vector who value wrap-item)
+  (define length (js-ref value "length"))
+  (unless (exact-nonnegative-integer? length)
+    (raise-argument-error who "array-like browser value" value))
+  (let loop ([i 0] [acc '()])
+    (if (= i length)
+        (list->vector (reverse acc))
+        (loop (add1 i)
+              (cons (wrap-item (js-ref value (number->string i))) acc)))))
+
 ;; dom-rect : external/raw -> dom-rect?
 ;;   Wrap a browser DOMRect object.
 (struct dom-rect (raw) #:transparent)

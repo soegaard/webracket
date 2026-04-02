@@ -111,10 +111,12 @@
 (define (get-bounding-client-rect element)
   (dom-rect-wrap (js-get-bounding-client-rect (element-unwrap element))))
 
-;; get-client-rects : external? -> external/raw
-;;   Read the client rect list.
+;; get-client-rects : external? -> vector?
+;;   Read the client rect list as wrapped DOMRect values.
 (define (get-client-rects element)
-  (js-get-client-rects (element-unwrap element)))
+  (array-like->vector 'get-client-rects
+                      (js-get-client-rects (element-unwrap element))
+                      dom-rect-wrap))
 
 ;; query-selector : external? (or/c string? symbol?) -> (or/c #f element?)
 ;;   Find the first matching descendant.
@@ -122,11 +124,13 @@
   (define selector* (element-stringish->string 'query-selector selector))
   (element-wrap (js-element-query-selector (element-unwrap element) selector*)))
 
-;; query-selector-all : external? (or/c string? symbol?) -> external/raw
-;;   Find all matching descendants.
+;; query-selector-all : external? (or/c string? symbol?) -> vector?
+;;   Find all matching descendants as wrapped elements.
 (define (query-selector-all element selector)
   (define selector* (element-stringish->string 'query-selector-all selector))
-  (js-element-query-selector-all (element-unwrap element) selector*))
+  (array-like->vector 'query-selector-all
+                      (js-element-query-selector-all (element-unwrap element) selector*)
+                      element-wrap))
 
 ;; remove! : external? -> void?
 ;;   Remove the element from the DOM.
