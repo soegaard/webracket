@@ -2,9 +2,10 @@
 
 @(require scribble/manual
           "webracket-scribble-utils.rkt"
-          (for-label (lib "scribblings/audio-labels.rkt" "webracket")))
+          )
 
 @title{Library: @racketid[audio]}
+@declare-exporting[(lib "scribblings/audio-labels.rkt" "webracket")]
 
 @(how-to-require include-lib audio (lib "libs/audio.rkt"))
 @(compile-option-bar "Compile option: " "--ffi audio")
@@ -610,15 +611,15 @@ Schedules a target value.
 }
 
 @defproc[(audio-param-set-value-curve-at-time! [param audio-param?]
-                                               [values external?]
+                                               [values vector?]
                                                [start-time real?]
                                                [duration real?])
          void?]{
 @(mdn-bar "AudioParam: setValueCurveAtTime() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioParam/setValueCurveAtTime")
 
-The raw @racket[values] argument should be a browser
-@racketid[Float32Array] value.
+The @racket[values] argument should be a Racket vector of real
+numbers.
 
 Schedules a value curve.
 }
@@ -671,13 +672,12 @@ Returns the number of channels in the buffer.
 
 @defproc[(audio-buffer-get-channel-data [buffer audio-buffer?]
                                        [channel exact-integer?])
-         external?]{
+         vector?]{
 @(mdn-bar "AudioBuffer: getChannelData() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioBuffer/getChannelData")
 
-The raw result is a browser @racketid[Float32Array] value.
-
-Returns the channel data array for @racket[channel].
+Returns the channel data for @racket[channel] as a WebRacket vector of
+sample values.
 }
 
 @subsection{Synthesis And Playback}
@@ -795,49 +795,47 @@ Sets the smoothing time constant.
 }
 
 @defproc[(audio-analyser-node-get-byte-frequency-data! [node audio-analyser-node?]
-                                                       [data (or/c bytes? external?)])
+                                                       [data (or/c bytes? vector?)])
          void?]{
 @(mdn-bar "AnalyserNode: getByteFrequencyData() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode/getByteFrequencyData")
 
-The raw @racket[data] argument should be either Racket @racket[bytes] or
-a browser @racketid[Uint8Array] value.
+The @racket[data] argument should be either Racket @racket[bytes] or
+a Racket vector of exact integers.
 
 Fills a byte frequency buffer.
 }
 
 @defproc[(audio-analyser-node-get-byte-time-domain-data! [node audio-analyser-node?]
-                                                         [data (or/c bytes? external?)])
+                                                         [data (or/c bytes? vector?)])
          void?]{
 @(mdn-bar "AnalyserNode: getByteTimeDomainData() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode/getByteTimeDomainData")
 
-The raw @racket[data] argument should be either Racket @racket[bytes] or
-a browser @racketid[Uint8Array] value.
+The @racket[data] argument should be either Racket @racket[bytes] or
+a Racket vector of exact integers.
 
 Fills a byte time-domain buffer.
 }
 
 @defproc[(audio-analyser-node-get-float-frequency-data! [node audio-analyser-node?]
-                                                        [data external?])
+                                                        [data vector?])
          void?]{
 @(mdn-bar "AnalyserNode: getFloatFrequencyData() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode/getFloatFrequencyData")
 
-The raw @racket[data] argument should be a browser
-@racketid[Float32Array] value.
+The @racket[data] argument should be a Racket vector of real numbers.
 
 Fills a float frequency buffer.
 }
 
 @defproc[(audio-analyser-node-get-float-time-domain-data! [node audio-analyser-node?]
-                                                          [data external?])
+                                                          [data vector?])
          void?]{
 @(mdn-bar "AnalyserNode: getFloatTimeDomainData() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode/getFloatTimeDomainData")
 
-The raw @racket[data] argument should be a browser
-@racketid[Float32Array] value.
+The @racket[data] argument should be a Racket vector of real numbers.
 
 Fills a float time-domain buffer.
 }

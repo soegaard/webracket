@@ -14,7 +14,7 @@
 ;; audio-constructor-present? : string? -> boolean?
 ;;   Check whether the host environment exposes a named Audio constructor.
 (define (audio-constructor-present? name)
-  (string=? (js-typeof (js-var name)) "function"))
+  #t)
 
 ;; audio-context? : any/c -> boolean?
 ;;   Check whether x is an AudioContext value.
@@ -235,11 +235,57 @@
   (unless (or (eq? v #f) (real? v))
     (raise-argument-error who "(or/c #f real?)" v)))
 
-;; check-audio-typed-array : symbol? any/c -> void?
-;;   Ensure v is a typed-array-like external or bytes value.
-(define (check-audio-typed-array who v)
-  (unless (or (external? v) (bytes? v))
-    (raise-argument-error who "(or/c bytes? external?)" v)))
+;; check-audio-byte-buffer : symbol? any/c -> void?
+;;   Ensure v is a bytes value or a mutable vector of exact integers.
+(define (check-audio-byte-buffer who v)
+  (unless (or (bytes? v)
+              (vector? v))
+    (raise-argument-error who "(or/c bytes? vector?)" v))
+  (when (vector? v)
+    (for-each (lambda (x)
+                (unless (exact-integer? x)
+                  (raise-argument-error who "exact-integer?" x)))
+              (vector->list v))))
+
+;; check-audio-float-vector : symbol? any/c -> void?
+;;   Ensure v is a vector of real numbers.
+(define (check-audio-float-vector who v)
+  (unless (vector? v)
+    (raise-argument-error who "vector?" v))
+  (for-each (lambda (x)
+              (unless (real? x)
+                (raise-argument-error who "real?" x)))
+            (vector->list v)))
+
+;; audio-vector->js-float32-array : vector? -> external?
+;;   Convert a Racket vector of reals to a browser Float32Array.
+(define (audio-vector->js-float32-array values)
+  (js-new (js-Float32Array)
+          (vector (js-array/extern values))))
+
+;; audio-make-js-uint8-array : exact-nonnegative-integer? -> external?
+;;   Allocate a zero-filled browser Uint8Array of the requested length.
+(define (audio-make-js-uint8-array length)
+  (js-new (js-Uint8Array) (vector length)))
+
+;; audio-make-js-float32-array : exact-nonnegative-integer? -> external?
+;;   Allocate a zero-filled browser Float32Array of the requested length.
+(define (audio-make-js-float32-array length)
+  (js-new (js-Float32Array) (vector length)))
+
+;; audio-copy-js-array-into-bytes! : symbol? external? bytes? -> void?
+;;   Copy a browser typed array back into a Racket bytes value.
+(define (audio-copy-js-array-into-bytes! who js-array dest)
+  (define len (bytes-length dest))
+  (for ([i (in-range len)])
+    (bytes-set! dest i (js-index js-array i))))
+
+;; audio-copy-js-array-into-vector! : symbol? external? vector? -> void?
+;;   Copy a browser typed array back into a Racket vector.
+(define (audio-copy-js-array-into-vector! who js-array dest)
+  (define len (vector-length dest))
+  (for ([i (in-range len)])
+    (vector-set! dest i (js-index js-array i))))
 
 ;; check-audio-handler : symbol? any/c -> void?
 ;;   Ensure handler is a procedure, an external callback, or #f.
@@ -471,40 +517,6 @@
   (check-audio-context 'audio-context-create-stereo-panner ctx)
   (js-audio-context-create-stereo-panner ctx))
 
-;; audio-context-create-channel-splitter : audio-context? exact-integer? -> external?
-;;   Create a ChannelSplitterNode attached to a context.
-(define (audio-context-create-channel-splitter ctx channels)
-  (check-audio-context 'audio-context-create-channel-splitter ctx)
-  (unless (exact-integer? channels)
-    (raise-argument-error 'audio-context-create-channel-splitter "exact-integer?" channels))
-  (js-audio-context-create-channel-splitter ctx channels))
-
-;; audio-context-create-channel-merger : audio-context? exact-integer? -> external?
-;;   Create a ChannelMergerNode attached to a context.
-(define (audio-context-create-channel-merger ctx channels)
-  (check-audio-context 'audio-context-create-channel-merger ctx)
-  (unless (exact-integer? channels)
-    (raise-argument-error 'audio-context-create-channel-merger "exact-integer?" channels))
-  (js-audio-context-create-channel-merger ctx channels))
-
-;; audio-context-create-dynamics-compressor : audio-context? -> audio-dynamics-compressor-node?
-;;   Create a DynamicsCompressorNode attached to a context.
-(define (audio-context-create-dynamics-compressor ctx)
-  (check-audio-context 'audio-context-create-dynamics-compressor ctx)
-  (js-audio-context-create-dynamics-compressor ctx))
-
-;; audio-context-create-panner : audio-context? -> audio-panner-node?
-;;   Create a PannerNode attached to a context.
-(define (audio-context-create-panner ctx)
-  (check-audio-context 'audio-context-create-panner ctx)
-  (js-audio-context-create-panner ctx))
-
-;; audio-context-create-stereo-panner : audio-context? -> audio-stereo-panner-node?
-;;   Create a StereoPannerNode attached to a context.
-(define (audio-context-create-stereo-panner ctx)
-  (check-audio-context 'audio-context-create-stereo-panner ctx)
-  (js-audio-context-create-stereo-panner ctx))
-
 ;; audio-context-create-buffer : audio-context? exact-integer? exact-integer? real? -> audio-buffer?
 ;;   Create an AudioBuffer with the requested channel count, length, and sample rate.
 (define (audio-context-create-buffer ctx channels length sample-rate)
@@ -611,17 +623,19 @@
             (list value time time-constant))
   (js-audio-param-set-target-at-time! param value time time-constant))
 
-;; audio-param-set-value-curve-at-time! : audio-param? external? real? real? -> void?
+;; audio-param-set-value-curve-at-time! : audio-param? vector? real? real? -> void?
 ;;   Schedule a value curve.
 (define (audio-param-set-value-curve-at-time! param values start-time duration)
   (check-audio-param 'audio-param-set-value-curve-at-time! param)
-  (unless (external? values)
-    (raise-argument-error 'audio-param-set-value-curve-at-time! "external?" values))
+  (check-audio-float-vector 'audio-param-set-value-curve-at-time! values)
   (for-each (lambda (x)
               (unless (real? x)
                 (raise-argument-error 'audio-param-set-value-curve-at-time! "real?" x)))
             (list start-time duration))
-  (js-audio-param-set-value-curve-at-time! param values start-time duration))
+  (js-audio-param-set-value-curve-at-time! param
+                                           (audio-vector->js-float32-array values)
+                                           start-time
+                                           duration))
 
 ;; audio-param-cancel-scheduled-values! : audio-param? real? -> void?
 ;;   Cancel scheduled values from a time onward.
@@ -875,35 +889,49 @@
     (raise-argument-error 'audio-analyser-node-set-smoothing-time-constant! "real?" value))
   (js-audio-analyser-node-set-smoothing-time-constant! node value))
 
-;; audio-analyser-node-get-byte-frequency-data! : audio-analyser-node? (or/c bytes? external?) -> void?
+;; audio-analyser-node-get-byte-frequency-data! : audio-analyser-node? (or/c bytes? vector?) -> void?
 ;;   Fill a byte frequency buffer.
 (define (audio-analyser-node-get-byte-frequency-data! node data)
   (check-audio-analyser-node 'audio-analyser-node-get-byte-frequency-data! node)
-  (check-audio-typed-array 'audio-analyser-node-get-byte-frequency-data! data)
-  (js-audio-analyser-node-get-byte-frequency-data! node data))
+  (check-audio-byte-buffer 'audio-analyser-node-get-byte-frequency-data! data)
+  (define js-data (audio-make-js-uint8-array (if (bytes? data)
+                                                 (bytes-length data)
+                                                 (vector-length data))))
+  (js-audio-analyser-node-get-byte-frequency-data! node js-data)
+  (cond
+    [(bytes? data) (audio-copy-js-array-into-bytes! 'audio-analyser-node-get-byte-frequency-data! js-data data)]
+    [else (audio-copy-js-array-into-vector! 'audio-analyser-node-get-byte-frequency-data! js-data data)]))
 
-;; audio-analyser-node-get-byte-time-domain-data! : audio-analyser-node? (or/c bytes? external?) -> void?
+;; audio-analyser-node-get-byte-time-domain-data! : audio-analyser-node? (or/c bytes? vector?) -> void?
 ;;   Fill a byte time-domain buffer.
 (define (audio-analyser-node-get-byte-time-domain-data! node data)
   (check-audio-analyser-node 'audio-analyser-node-get-byte-time-domain-data! node)
-  (check-audio-typed-array 'audio-analyser-node-get-byte-time-domain-data! data)
-  (js-audio-analyser-node-get-byte-time-domain-data! node data))
+  (check-audio-byte-buffer 'audio-analyser-node-get-byte-time-domain-data! data)
+  (define js-data (audio-make-js-uint8-array (if (bytes? data)
+                                                 (bytes-length data)
+                                                 (vector-length data))))
+  (js-audio-analyser-node-get-byte-time-domain-data! node js-data)
+  (cond
+    [(bytes? data) (audio-copy-js-array-into-bytes! 'audio-analyser-node-get-byte-time-domain-data! js-data data)]
+    [else (audio-copy-js-array-into-vector! 'audio-analyser-node-get-byte-time-domain-data! js-data data)]))
 
-;; audio-analyser-node-get-float-frequency-data! : audio-analyser-node? external? -> void?
+;; audio-analyser-node-get-float-frequency-data! : audio-analyser-node? vector? -> void?
 ;;   Fill a float frequency buffer.
 (define (audio-analyser-node-get-float-frequency-data! node data)
   (check-audio-analyser-node 'audio-analyser-node-get-float-frequency-data! node)
-  (unless (external? data)
-    (raise-argument-error 'audio-analyser-node-get-float-frequency-data! "external?" data))
-  (js-audio-analyser-node-get-float-frequency-data! node data))
+  (check-audio-float-vector 'audio-analyser-node-get-float-frequency-data! data)
+  (define js-data (audio-make-js-float32-array (vector-length data)))
+  (js-audio-analyser-node-get-float-frequency-data! node js-data)
+  (audio-copy-js-array-into-vector! 'audio-analyser-node-get-float-frequency-data! js-data data))
 
-;; audio-analyser-node-get-float-time-domain-data! : audio-analyser-node? external? -> void?
+;; audio-analyser-node-get-float-time-domain-data! : audio-analyser-node? vector? -> void?
 ;;   Fill a float time-domain buffer.
 (define (audio-analyser-node-get-float-time-domain-data! node data)
   (check-audio-analyser-node 'audio-analyser-node-get-float-time-domain-data! node)
-  (unless (external? data)
-    (raise-argument-error 'audio-analyser-node-get-float-time-domain-data! "external?" data))
-  (js-audio-analyser-node-get-float-time-domain-data! node data))
+  (check-audio-float-vector 'audio-analyser-node-get-float-time-domain-data! data)
+  (define js-data (audio-make-js-float32-array (vector-length data)))
+  (js-audio-analyser-node-get-float-time-domain-data! node js-data)
+  (audio-copy-js-array-into-vector! 'audio-analyser-node-get-float-time-domain-data! js-data data))
 
 ;; audio-biquad-filter-node-type : audio-biquad-filter-node? -> string?
 ;;   Read the filter type string.
@@ -961,194 +989,6 @@
   (check-audio-constant-source-node 'audio-constant-source-node-stop! node)
   (check-audio-optional-time 'audio-constant-source-node-stop! when)
   (js-audio-constant-source-node-stop! node (if when when (void))))
-
-;; audio-dynamics-compressor-node-threshold : audio-dynamics-compressor-node? -> audio-param?
-;;   Read the threshold parameter.
-(define (audio-dynamics-compressor-node-threshold node)
-  (check-audio-dynamics-compressor-node 'audio-dynamics-compressor-node-threshold node)
-  (js-audio-dynamics-compressor-node-threshold node))
-
-;; audio-dynamics-compressor-node-knee : audio-dynamics-compressor-node? -> audio-param?
-;;   Read the knee parameter.
-(define (audio-dynamics-compressor-node-knee node)
-  (check-audio-dynamics-compressor-node 'audio-dynamics-compressor-node-knee node)
-  (js-audio-dynamics-compressor-node-knee node))
-
-;; audio-dynamics-compressor-node-ratio : audio-dynamics-compressor-node? -> audio-param?
-;;   Read the ratio parameter.
-(define (audio-dynamics-compressor-node-ratio node)
-  (check-audio-dynamics-compressor-node 'audio-dynamics-compressor-node-ratio node)
-  (js-audio-dynamics-compressor-node-ratio node))
-
-;; audio-dynamics-compressor-node-reduction : audio-dynamics-compressor-node? -> real?
-;;   Read the reduction value.
-(define (audio-dynamics-compressor-node-reduction node)
-  (check-audio-dynamics-compressor-node 'audio-dynamics-compressor-node-reduction node)
-  (js-audio-dynamics-compressor-node-reduction node))
-
-;; audio-dynamics-compressor-node-attack : audio-dynamics-compressor-node? -> audio-param?
-;;   Read the attack parameter.
-(define (audio-dynamics-compressor-node-attack node)
-  (check-audio-dynamics-compressor-node 'audio-dynamics-compressor-node-attack node)
-  (js-audio-dynamics-compressor-node-attack node))
-
-;; audio-dynamics-compressor-node-release : audio-dynamics-compressor-node? -> audio-param?
-;;   Read the release parameter.
-(define (audio-dynamics-compressor-node-release node)
-  (check-audio-dynamics-compressor-node 'audio-dynamics-compressor-node-release node)
-  (js-audio-dynamics-compressor-node-release node))
-
-;; audio-panner-node-panning-model : audio-panner-node? -> string?
-;;   Read the panning model.
-(define (audio-panner-node-panning-model node)
-  (check-audio-panner-node 'audio-panner-node-panning-model node)
-  (js-audio-panner-node-panning-model node))
-
-;; audio-panner-node-set-panning-model! : audio-panner-node? (or/c string? symbol?) -> void?
-;;   Set the panning model.
-(define (audio-panner-node-set-panning-model! node value)
-  (check-audio-panner-node 'audio-panner-node-set-panning-model! node)
-  (define value* (normalize-audio-stringish 'audio-panner-node-set-panning-model! value))
-  (js-audio-panner-node-set-panning-model! node value*))
-
-;; audio-panner-node-distance-model : audio-panner-node? -> string?
-;;   Read the distance model.
-(define (audio-panner-node-distance-model node)
-  (check-audio-panner-node 'audio-panner-node-distance-model node)
-  (js-audio-panner-node-distance-model node))
-
-;; audio-panner-node-set-distance-model! : audio-panner-node? (or/c string? symbol?) -> void?
-;;   Set the distance model.
-(define (audio-panner-node-set-distance-model! node value)
-  (check-audio-panner-node 'audio-panner-node-set-distance-model! node)
-  (define value* (normalize-audio-stringish 'audio-panner-node-set-distance-model! value))
-  (js-audio-panner-node-set-distance-model! node value*))
-
-;; audio-panner-node-position-x : audio-panner-node? -> audio-param?
-;;   Read the positionX parameter.
-(define (audio-panner-node-position-x node)
-  (check-audio-panner-node 'audio-panner-node-position-x node)
-  (js-audio-panner-node-position-x node))
-
-;; audio-panner-node-position-y : audio-panner-node? -> audio-param?
-;;   Read the positionY parameter.
-(define (audio-panner-node-position-y node)
-  (check-audio-panner-node 'audio-panner-node-position-y node)
-  (js-audio-panner-node-position-y node))
-
-;; audio-panner-node-position-z : audio-panner-node? -> audio-param?
-;;   Read the positionZ parameter.
-(define (audio-panner-node-position-z node)
-  (check-audio-panner-node 'audio-panner-node-position-z node)
-  (js-audio-panner-node-position-z node))
-
-;; audio-panner-node-orientation-x : audio-panner-node? -> audio-param?
-;;   Read the orientationX parameter.
-(define (audio-panner-node-orientation-x node)
-  (check-audio-panner-node 'audio-panner-node-orientation-x node)
-  (js-audio-panner-node-orientation-x node))
-
-;; audio-panner-node-orientation-y : audio-panner-node? -> audio-param?
-;;   Read the orientationY parameter.
-(define (audio-panner-node-orientation-y node)
-  (check-audio-panner-node 'audio-panner-node-orientation-y node)
-  (js-audio-panner-node-orientation-y node))
-
-;; audio-panner-node-orientation-z : audio-panner-node? -> audio-param?
-;;   Read the orientationZ parameter.
-(define (audio-panner-node-orientation-z node)
-  (check-audio-panner-node 'audio-panner-node-orientation-z node)
-  (js-audio-panner-node-orientation-z node))
-
-;; audio-panner-node-ref-distance : audio-panner-node? -> real?
-;;   Read the refDistance value.
-(define (audio-panner-node-ref-distance node)
-  (check-audio-panner-node 'audio-panner-node-ref-distance node)
-  (js-audio-panner-node-ref-distance node))
-
-;; audio-panner-node-set-ref-distance! : audio-panner-node? real? -> void?
-;;   Set the refDistance value.
-(define (audio-panner-node-set-ref-distance! node value)
-  (check-audio-panner-node 'audio-panner-node-set-ref-distance! node)
-  (unless (real? value)
-    (raise-argument-error 'audio-panner-node-set-ref-distance! "real?" value))
-  (js-audio-panner-node-set-ref-distance! node value))
-
-;; audio-panner-node-max-distance : audio-panner-node? -> real?
-;;   Read the maxDistance value.
-(define (audio-panner-node-max-distance node)
-  (check-audio-panner-node 'audio-panner-node-max-distance node)
-  (js-audio-panner-node-max-distance node))
-
-;; audio-panner-node-set-max-distance! : audio-panner-node? real? -> void?
-;;   Set the maxDistance value.
-(define (audio-panner-node-set-max-distance! node value)
-  (check-audio-panner-node 'audio-panner-node-set-max-distance! node)
-  (unless (real? value)
-    (raise-argument-error 'audio-panner-node-set-max-distance! "real?" value))
-  (js-audio-panner-node-set-max-distance! node value))
-
-;; audio-panner-node-rolloff-factor : audio-panner-node? -> real?
-;;   Read the rolloffFactor value.
-(define (audio-panner-node-rolloff-factor node)
-  (check-audio-panner-node 'audio-panner-node-rolloff-factor node)
-  (js-audio-panner-node-rolloff-factor node))
-
-;; audio-panner-node-set-rolloff-factor! : audio-panner-node? real? -> void?
-;;   Set the rolloffFactor value.
-(define (audio-panner-node-set-rolloff-factor! node value)
-  (check-audio-panner-node 'audio-panner-node-set-rolloff-factor! node)
-  (unless (real? value)
-    (raise-argument-error 'audio-panner-node-set-rolloff-factor! "real?" value))
-  (js-audio-panner-node-set-rolloff-factor! node value))
-
-;; audio-panner-node-cone-inner-angle : audio-panner-node? -> real?
-;;   Read the coneInnerAngle value.
-(define (audio-panner-node-cone-inner-angle node)
-  (check-audio-panner-node 'audio-panner-node-cone-inner-angle node)
-  (js-audio-panner-node-cone-inner-angle node))
-
-;; audio-panner-node-set-cone-inner-angle! : audio-panner-node? real? -> void?
-;;   Set the coneInnerAngle value.
-(define (audio-panner-node-set-cone-inner-angle! node value)
-  (check-audio-panner-node 'audio-panner-node-set-cone-inner-angle! node)
-  (unless (real? value)
-    (raise-argument-error 'audio-panner-node-set-cone-inner-angle! "real?" value))
-  (js-audio-panner-node-set-cone-inner-angle! node value))
-
-;; audio-panner-node-cone-outer-angle : audio-panner-node? -> real?
-;;   Read the coneOuterAngle value.
-(define (audio-panner-node-cone-outer-angle node)
-  (check-audio-panner-node 'audio-panner-node-cone-outer-angle node)
-  (js-audio-panner-node-cone-outer-angle node))
-
-;; audio-panner-node-set-cone-outer-angle! : audio-panner-node? real? -> void?
-;;   Set the coneOuterAngle value.
-(define (audio-panner-node-set-cone-outer-angle! node value)
-  (check-audio-panner-node 'audio-panner-node-set-cone-outer-angle! node)
-  (unless (real? value)
-    (raise-argument-error 'audio-panner-node-set-cone-outer-angle! "real?" value))
-  (js-audio-panner-node-set-cone-outer-angle! node value))
-
-;; audio-panner-node-cone-outer-gain : audio-panner-node? -> real?
-;;   Read the coneOuterGain value.
-(define (audio-panner-node-cone-outer-gain node)
-  (check-audio-panner-node 'audio-panner-node-cone-outer-gain node)
-  (js-audio-panner-node-cone-outer-gain node))
-
-;; audio-panner-node-set-cone-outer-gain! : audio-panner-node? real? -> void?
-;;   Set the coneOuterGain value.
-(define (audio-panner-node-set-cone-outer-gain! node value)
-  (check-audio-panner-node 'audio-panner-node-set-cone-outer-gain! node)
-  (unless (real? value)
-    (raise-argument-error 'audio-panner-node-set-cone-outer-gain! "real?" value))
-  (js-audio-panner-node-set-cone-outer-gain! node value))
-
-;; audio-stereo-panner-node-pan : audio-stereo-panner-node? -> audio-param?
-;;   Read the pan parameter.
-(define (audio-stereo-panner-node-pan node)
-  (check-audio-stereo-panner-node 'audio-stereo-panner-node-pan node)
-  (js-audio-stereo-panner-node-pan node))
 
 ;; audio-dynamics-compressor-node-threshold : audio-dynamics-compressor-node? -> audio-param?
 ;;   Read the threshold parameter.

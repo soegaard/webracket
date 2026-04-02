@@ -41,6 +41,10 @@
         this.calls.push(['setValueAtTime', value, time]);
         this.value = value;
       }
+      setValueCurveAtTime(values, startTime, duration) {
+        this.calls.push(['setValueCurveAtTime', values, startTime, duration]);
+        this.curve = values;
+      }
     };
 
     globalThis.AudioNode = class AudioNode {
@@ -354,6 +358,18 @@
          (check-number= (audio-param-value (audio-oscillator-node-frequency osc)) 440 "wrapper oscillator frequency")
          (audio-param-set-value! (audio-oscillator-node-frequency osc) 523.25)
          (check-number= (audio-param-value (audio-oscillator-node-frequency osc)) 523.25 "wrapper oscillator frequency update")
+         (audio-param-set-value-curve-at-time! (audio-oscillator-node-frequency osc)
+                                                (vector 523.25 660.0 880.0)
+                                                0.25
+                                                1.5)
+         (check-true (external? (js-ref (audio-oscillator-node-frequency osc) "curve"))
+                     "wrapper oscillator frequency curve type")
+         (check-number= (js-index (js-ref (audio-oscillator-node-frequency osc) "curve") 0)
+                        523.25
+                        "wrapper oscillator frequency curve sample 0")
+         (check-number= (js-index (js-ref (audio-oscillator-node-frequency osc) "curve") 2)
+                        880.0
+                        "wrapper oscillator frequency curve sample 2")
          (check-true (audio-buffer? buffer) "wrapper buffer predicate")
          (check-number= (audio-buffer-length buffer) 4 "wrapper buffer length")
          (check-number= (audio-buffer-duration buffer) (/ 4 48000) "wrapper buffer duration")
@@ -510,16 +526,20 @@
                         "wrapper analyser smoothing constant update")
          (define analyser-byte-frequency (make-bytes 8))
          (audio-analyser-node-get-byte-frequency-data! analyser analyser-byte-frequency)
-         (check-true #t "wrapper analyser byte frequency call")
-         (define analyser-byte-time-domain (make-bytes 8))
+         (check-number= (bytes-ref analyser-byte-frequency 0) 11
+                        "wrapper analyser byte frequency sample 0")
+         (define analyser-byte-time-domain (vector 0 0 0 0 0 0 0 0))
          (audio-analyser-node-get-byte-time-domain-data! analyser analyser-byte-time-domain)
-         (check-true #t "wrapper analyser byte time-domain call")
-         (define analyser-float-frequency (js-eval "new Float32Array(8)"))
+         (check-number= (vector-ref analyser-byte-time-domain 0) 22
+                        "wrapper analyser byte time-domain sample 0")
+         (define analyser-float-frequency (vector 0 0 0 0 0 0 0 0))
          (audio-analyser-node-get-float-frequency-data! analyser analyser-float-frequency)
-         (check-true #t "wrapper analyser float frequency call")
-         (define analyser-float-time-domain (js-eval "new Float32Array(8)"))
+         (check-number= (vector-ref analyser-float-frequency 0) 33.5
+                        "wrapper analyser float frequency sample 0")
+         (define analyser-float-time-domain (vector 0 0 0 0 0 0 0 0))
          (audio-analyser-node-get-float-time-domain-data! analyser analyser-float-time-domain)
-         (check-true #t "wrapper analyser float time-domain call")
+         (check-number= (vector-ref analyser-float-time-domain 0) 44.5
+                        "wrapper analyser float time-domain sample 0")
 
          (define biquad (audio-context-create-biquad-filter ctx))
          (check-true (audio-biquad-filter-node? biquad)
