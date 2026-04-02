@@ -4,6 +4,7 @@
           (for-label (only-in racket/base struct))
           "webracket-scribble-utils.rkt"
           (for-label (lib "scribblings/lib-document-labels.rkt" "webracket"))
+          (for-label (lib "scribblings/lib-iterator-labels.rkt" "webracket"))
           (for-label (lib "scribblings/lib-window-labels.rkt" "webracket")))
 
 @title{Library: @racketid[window]}
@@ -173,11 +174,35 @@ Returns the current selection as a wrapped @racket[selection] value.
 
 @section{Window Style Values}
 
+@defstruct[media-query-list ([raw external/raw])]{
+Wraps a browser @tt{MediaQueryList} object.
+}
+
+@defproc[(media-query-list-raw [query media-query-list?]) external/raw]{
+Returns the wrapped browser MediaQueryList object.
+}
+
 @defproc[(window-match-media [query (or/c string? symbol?)]) media-query-list?]{
 @(mdn-bar "Window: matchMedia() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Window/matchMedia")
 Evaluates a media query and returns a wrapped @racket[media-query-list]
 value.
+}
+
+@defproc[(media-query-list-media [query media-query-list?]) string?]{
+Returns the media query string that @racket[query] wraps.
+}
+
+@defproc[(media-query-list-matches? [query media-query-list?]) boolean?]{
+Returns @racket[#t] when the wrapped query currently matches.
+}
+
+@defstruct[css-style-declaration ([raw external/raw])]{
+Wraps a browser @tt{CSSStyleDeclaration} object.
+}
+
+@defproc[(css-style-declaration-raw [style css-style-declaration?]) external/raw]{
+Returns the wrapped browser CSSStyleDeclaration object.
 }
 
 @defproc[(window-get-computed-style [element element?]
@@ -188,6 +213,46 @@ value.
 Returns the computed style for @racket[element] as a wrapped
 @racket[css-style-declaration] value. The pseudo-element argument
 accepts a string or symbol and is omitted when @racket[#f].
+}
+
+@defproc[(css-style-declaration-css-text [style css-style-declaration?]) string?]{
+Returns the serialized CSS text for the wrapped style declaration.
+}
+
+@defproc[(css-style-declaration-set-css-text! [style css-style-declaration?]
+                                              [value (or/c string? symbol?)]) void?]{
+Sets the serialized CSS text for the wrapped style declaration.
+}
+
+@defproc[(css-style-declaration-length [style css-style-declaration?])
+         exact-nonnegative-integer?]{
+Returns the number of declared properties.
+}
+
+@defproc[(css-style-declaration-item [style css-style-declaration?]
+                                     [index exact-nonnegative-integer?])
+         (or/c #f string?)]{
+Returns the property name at @racket[index] or @racket[#f] when the
+index is out of range.
+}
+
+@defproc[(css-style-declaration-get-property-value [style css-style-declaration?]
+                                                   [property (or/c string? symbol?)])
+         string?]{
+Returns the value for @racket[property].
+}
+
+@defproc[(css-style-declaration-set-property! [style css-style-declaration?]
+                                              [property (or/c string? symbol?)]
+                                              [value (or/c string? symbol?)])
+         void?]{
+Sets the value for @racket[property].
+}
+
+@defproc[(css-style-declaration-remove-property! [style css-style-declaration?]
+                                                 [property (or/c string? symbol?)])
+         void?]{
+Removes @racket[property] from the wrapped style declaration.
 }
 
 @defproc[(window-set-name! [name (or/c string? symbol?)]) void?]{

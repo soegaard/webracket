@@ -3,10 +3,11 @@
 @(require scribble/manual
           (for-label (only-in racket/base struct))
           "webracket-scribble-utils.rkt"
+          (for-label (lib "scribblings/lib-iterator-labels.rkt" "webracket"))
           (for-label (lib "scribblings/lib-performance-labels.rkt" "webracket")))
 
 @title{Library: @racketid[performance]}
-@declare-exporting[(lib "libs/performance.rkt" "webracket")]
+@declare-exporting[(lib "scribblings/lib-performance-labels.rkt" "webracket")]
 
 @(how-to-require include-lib performance (lib "libs/performance.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")
@@ -153,7 +154,7 @@ The iterator-returning helpers on the map, such as
 @racket[performance-event-count-map-entries], return wrapped
 @racket[iterator] values rather than raw browser iterator objects, so
 you can pass them directly to helpers such as @racket[iterator->vector]
-or @racket[iterator-next].
+or inspect the next step directly with the iterator helpers.
 
 @defstruct[performance-event-count-map ([raw external/raw])]{
 Wraps a browser EventCounts object in the checked struct used by
