@@ -11,12 +11,12 @@
 @(how-to-require include-lib audio (lib "libs/audio.rkt"))
 @(compile-option-bar "Compile option: " "--ffi audio")
 
-Web Audio is the browser API for building audio graphs in the page
-itself. Instead of only playing back files, you can create oscillator
-sources, route signals through filters and gain nodes, and inspect the
-result with analysers.
+Web Audio lets you build sound graphs directly in the page. Instead of
+only playing back files, you can create oscillator sources, route
+signals through filters and gain nodes, and inspect the result with
+analysers.
 
-This is useful for:
+Use audio when you want to:
 
 @itemlist[
   @item{synthesizers and tone generators}
@@ -26,7 +26,7 @@ This is useful for:
 ]
 
 The @racket[audio] library is the checked, high-level API for Web Audio
-programs in WebRacket. It is implemented on top of the lower-level
+programs in WebRacket. It sits on top of the lower-level
 @tt{ffi/audio.ffi} bindings, but application code should normally use
 the @racket[audio-*] functions documented on this page.
 

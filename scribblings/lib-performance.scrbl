@@ -12,14 +12,13 @@
 @(how-to-require include-lib performance (lib "libs/performance.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")
 
-The @racket[performance] library gives you a checked wrapper around
-the browser's Performance API.
+The @racket[performance] library is a browser stopwatch and logbook for
+the current page.
 
-If you want to measure how long something takes, record named marks,
-or inspect timing data from the current page, this is the library to
-use. The API is browser-shaped and stays close to the MDN names, but
-the wrapper adds a little validation and keeps the common calls easy to
-read from WebRacket.
+Use it when you want to measure how long something takes, record named
+marks, or inspect timing data from the current page. The API stays
+close to the MDN names, but the wrapper adds a little validation and
+keeps the common calls easy to read from WebRacket.
 
 The Performance API is mostly about:
 

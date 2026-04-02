@@ -14,12 +14,9 @@
 @(how-to-require include-lib media (lib "libs/media.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")
 
-The media library is the checked wrapper for HTML media
-elements such as audio and video.
-
-Media elements are what the browser uses for sound and video playback.
-They can point at a source file, report the current playback time, and
-play or pause when the page is ready.
+The media library wraps HTML media elements such as audio and video.
+Use it when you want to point an element at a source file, show
+controls, and read or adjust playback state from WebRacket.
 
 Use media when you want to:
 
@@ -30,8 +27,9 @@ Use media when you want to:
   @item{start or pause playback}
 ]
 
-The media library wraps HTMLMediaElement properties and the common
-play/pause controls.
+The library keeps the common play/pause controls and HTMLMediaElement
+properties on the WebRacket side, so you can work with checked values
+instead of raw browser objects.
 
 @defthing[media any/c]{
 This chapter documents the media wrapper library.

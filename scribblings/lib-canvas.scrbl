@@ -14,12 +14,12 @@
 @(how-to-require include-lib canvas (lib "libs/canvas.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")
 
-The @racket[canvas] library is the checked wrapper for drawing on an
-HTML canvas.
+The @racket[canvas] library wraps HTML canvas elements and their 2D
+drawing contexts.
 
 Canvas is the browser API for painting pixels with shapes, text, and
-images. It is useful when you want to draw directly on the page instead
-of building the interface out of HTML elements.
+images. Use it when you want to draw directly on the page instead of
+building the interface out of HTML elements.
 
 Use @racket[canvas] when you want to:
 
@@ -30,8 +30,8 @@ Use @racket[canvas] when you want to:
   @item{clear or reshape the canvas surface}
 ]
 
-The @racket[canvas] library provides checked wrappers for canvas
-elements and the 2D rendering context.
+The library keeps canvas elements, 2D contexts, and their richer return
+values on the WebRacket side.
 
 The main values are @racket[canvas?] and @racket[canvas-2d-context?].
 Use @racket[canvas-raw] or @racket[canvas-2d-context-raw] only when you
