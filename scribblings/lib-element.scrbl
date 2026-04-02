@@ -32,9 +32,6 @@ Use @racket[element] when you want to:
 
 The @racket[element] library provides checked wrappers for common DOM
 element operations.
-The raw accessors for the element family live in the
-@seclink["raw-accessors"]{Raw Accessors} appendix.
-
 When a browser method expects a string, the wrapper also accepts a
 symbol and normalizes it to a string.
 
