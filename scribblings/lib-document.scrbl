@@ -87,6 +87,55 @@ Wraps a browser Attr node.
 Returns the wrapped browser Attr node.
 }
 
+@section{Selection Values}
+
+The selection helper returns a wrapped browser Selection object so the
+current selection stays on the WebRacket side.
+
+@defstruct[selection ([raw external/raw])]{
+Wraps a browser Selection object.
+}
+
+@defproc[(selection-raw [sel selection?]) external/raw]{
+Returns the wrapped browser Selection object.
+}
+
+@defproc[(selection-range-count [sel selection?]) exact-nonnegative-integer?]{
+@(mdn-bar "Selection: rangeCount property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Selection/rangeCount")
+Returns the number of ranges in the selection.
+}
+
+@defproc[(selection-is-collapsed? [sel selection?]) boolean?]{
+@(mdn-bar "Selection: isCollapsed property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Selection/isCollapsed")
+Reports whether the selection is collapsed.
+}
+
+@defproc[(selection-anchor-node [sel selection?]) (or/c #f node?)]{
+@(mdn-bar "Selection: anchorNode property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Selection/anchorNode")
+Returns the anchor node for the selection, if there is one.
+}
+
+@defproc[(selection-focus-node [sel selection?]) (or/c #f node?)]{
+@(mdn-bar "Selection: focusNode property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Selection/focusNode")
+Returns the focus node for the selection, if there is one.
+}
+
+@defproc[(selection-to-string [sel selection?]) string?]{
+@(mdn-bar "Selection: toString() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Selection/toString")
+Returns the selected text as a string.
+}
+
+@defproc[(selection-remove-all-ranges! [sel selection?]) void?]{
+@(mdn-bar "Selection: removeAllRanges() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Selection/removeAllRanges")
+Removes all ranges from the selection.
+}
+
 @section{Document Quick Start}
 
 Start by including the library, grabbing the current document, and
@@ -225,6 +274,12 @@ Returns the first matching descendant.
 @(mdn-bar "Document: querySelectorAll() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelectorAll")
 Returns all matching descendants as a wrapped NodeList.
+}
+
+@defproc[(document-get-selection) (or/c #f selection?)]{
+@(mdn-bar "Document: getSelection() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Document/getSelection")
+Returns the current selection as a wrapped @racket[selection] value.
 }
 
 @defproc[(document-element) element?]{

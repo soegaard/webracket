@@ -236,3 +236,52 @@
   (if (dom-rect-list? value)
       (dom-rect-list-raw value)
       value))
+
+;; selection : external/raw -> selection?
+;;   Wrap a browser Selection object.
+(struct selection (raw) #:transparent)
+
+;; selection-wrap : any/c -> any/c
+;;   Wrap a raw browser Selection object, leaving wrapped values alone.
+(define (selection-wrap value)
+  (if (or (not value) (selection? value))
+      value
+      (selection value)))
+
+;; selection-unwrap : any/c -> any/c
+;;   Unwrap a selection struct to its raw browser object.
+(define (selection-unwrap value)
+  (if (selection? value)
+      (selection-raw value)
+      value))
+
+;; selection-range-count : selection? -> exact-nonnegative-integer?
+;;   Read the number of ranges in the current selection.
+(define (selection-range-count selection)
+  (js-ref (selection-unwrap selection) "rangeCount"))
+
+;; selection-is-collapsed? : selection? -> boolean?
+;;   Report whether the current selection is collapsed.
+(define (selection-is-collapsed? selection)
+  (not (zero? (js-ref (selection-unwrap selection) "isCollapsed"))))
+
+;; selection-anchor-node : selection? -> (or/c #f node?)
+;;   Read the anchor node for the current selection.
+(define (selection-anchor-node selection)
+  (node-wrap (js-ref/extern (selection-unwrap selection) "anchorNode")))
+
+;; selection-focus-node : selection? -> (or/c #f node?)
+;;   Read the focus node for the current selection.
+(define (selection-focus-node selection)
+  (node-wrap (js-ref/extern (selection-unwrap selection) "focusNode")))
+
+;; selection-to-string : selection? -> string?
+;;   Convert the current selection to text.
+(define (selection-to-string selection)
+  (js-send/value (selection-unwrap selection) "toString" (vector)))
+
+;; selection-remove-all-ranges! : selection? -> void?
+;;   Clear all ranges from the current selection.
+(define (selection-remove-all-ranges! selection)
+  (js-send (selection-unwrap selection) "removeAllRanges" (vector))
+  (void))

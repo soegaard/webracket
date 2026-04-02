@@ -113,10 +113,10 @@
 (define (document-has-focus?)
   (not (zero? (js-has-focus))))
 
-;; document-get-selection : -> (or/c #f external?)
+;; document-get-selection : -> (or/c #f selection?)
 ;;   Read the current selection.
 (define (document-get-selection)
-  (js-get-selection))
+  (selection-wrap (js-get-selection)))
 
 ;; document-close : -> void?
 ;;   Close a document stream.

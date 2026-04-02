@@ -169,6 +169,7 @@
   (struct-out node)
   (struct-out attr)
   (struct-out dom-rect)
+  (struct-out selection)
   (struct-out performance-event-count-map)
   performance-event-count-map-size
   performance-event-count-map-entries
@@ -404,6 +405,7 @@
 (struct text (raw) #:transparent)
 (struct attr (raw) #:transparent)
 (struct dom-rect (raw) #:transparent)
+(struct selection (raw) #:transparent)
 (define element-class-list any/c)
 (define element-id any/c)
 (define element-set-id! any/c)
@@ -549,6 +551,12 @@
 (define document-query-selector-all any/c)
 (define document-has-focus? any/c)
 (define document-get-selection any/c)
+(define selection-range-count any/c)
+(define selection-is-collapsed? any/c)
+(define selection-anchor-node any/c)
+(define selection-focus-node any/c)
+(define selection-to-string any/c)
+(define selection-remove-all-ranges! any/c)
 (define document-close any/c)
 (define document-element-from-point any/c)
 (define document-elements-from-point any/c)

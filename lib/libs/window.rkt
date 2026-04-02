@@ -308,10 +308,10 @@
   (js-window-cancel-idle-callback id)
   (void))
 
-;; window-get-selection : -> (or/c #f external?)
+;; window-get-selection : -> (or/c #f selection?)
 ;;   Read the current selection object.
 (define (window-get-selection)
-  (js-window-get-selection))
+  (selection-wrap (js-window-get-selection)))
 
 ;; window-match-media : string? -> external/raw
 ;;   Evaluate a media query.

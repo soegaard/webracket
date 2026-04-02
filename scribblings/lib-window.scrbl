@@ -167,6 +167,12 @@ Returns the current document object wrapped in a checked struct.
 Returns the current location object wrapped in a checked struct.
 }
 
+@defproc[(window-get-selection) (or/c #f selection?)]{
+@(mdn-bar "Window: getSelection() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Window/getSelection")
+Returns the current selection as a wrapped @racket[selection] value.
+}
+
 @defproc[(window-set-name! [name (or/c string? symbol?)]) void?]{
 @(mdn-bar "Window: name property"
           "https://developer.mozilla.org/en-US/docs/Web/API/Window/name")
