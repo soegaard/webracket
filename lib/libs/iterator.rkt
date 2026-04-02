@@ -43,17 +43,17 @@
     [(procedure? value) (value)]
     [else value]))
 
-;; iterable?-proc : -> external/raw
-;;   JavaScript helper that checks for a callable [Symbol.iterator].
-(define iterable?-proc
-  (js-eval "(function (value) { try { return typeof Object(value)[Symbol.iterator] === 'function'; } catch (e) { return false; } })"))
-
 ;; iterable? : any/c -> boolean?
 ;;   Check whether a value has a callable [Symbol.iterator] method.
 (define (iterable? value)
   (or (iterator? value)
-      (js-send/boolean iterable?-proc "call"
-                       (vector (js-undefined) (iterator-unwrap value)))))
+      (let ([ctor (Iterator)])
+        (and (not (js-nullish? ctor))
+             (with-handlers ([exn:fail? (lambda (_) #f)])
+               (define probe
+                 (js-send/extern/nullish ctor "from"
+                                         (vector (iterator-unwrap value))))
+               (and probe #t))))))
 
 ;; iterator-prefix : (listof any/c) exact-nonnegative-integer? -> (listof any/c)
 ;;   Keep the first n values from a list.
