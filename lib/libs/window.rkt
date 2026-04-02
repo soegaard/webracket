@@ -59,40 +59,20 @@
 
 ;; window-scroll-options->raw : window-scroll-options? real? real? -> external/raw
 ;;   Convert a Rackety scroll-options struct to a browser dictionary.
-(define (window-js-literal v)
-  (cond
-    [(string? v) (format "~s" v)]
-    [(symbol? v) (format "~s" (symbol->string v))]
-    [(real? v) (number->string v)]
-    [(boolean? v) (if v "true" "false")]
-    [else (error 'window-scroll-options->raw
-                 "unsupported scroll option value: ~s"
-                 v)]))
-
 (define (window-scroll-options->raw options fallback-x fallback-y)
   (define top (window-scroll-options-top options))
   (define left (window-scroll-options-left options))
   (define behavior (window-scroll-options-behavior options))
   (define fields
-    (append (if (eq? top #f)
-                (list (vector "top" fallback-y))
-                (list (vector "top" top)))
-            (if (eq? left #f)
-                (list (vector "left" fallback-x))
-                (list (vector "left" left)))
-            (if (eq? behavior #f)
-                '()
-                (list (vector "behavior"
-                              (window-js-literal behavior))))))
-  (js-eval (string-append "{"
-                          (string-join
-                           (map (lambda (field)
-                                  (format "~a: ~a"
-                                          (vector-ref field 0)
-                                          (window-js-literal (vector-ref field 1))))
-                                fields)
-                           ", ")
-                          "}")))
+    (list (list "top" (if (eq? top #f) fallback-y top))
+          (list "left" (if (eq? left #f) fallback-x left))))
+  (define fields*
+    (if (eq? behavior #f)
+        fields
+        (append fields
+                (list (list "behavior"
+                            (window-stringish->string 'window-scroll-options->raw behavior))))))
+  (js-object (list->vector (map list->vector fields*))))
 
 ;; window : external/raw -> window?
 ;;   Wrap a browser Window object.
