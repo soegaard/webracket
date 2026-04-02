@@ -135,3 +135,107 @@ Returns the browser event type string.
           "https://developer.mozilla.org/en-US/docs/Web/API/Event/preventDefault")
 Prevents the default action for an event.
 }
+
+@section{Event Accessors}
+
+@defproc[(event-target [evt any/c]) any/c]{
+Returns the event target object.
+}
+
+@defproc[(event-current-target [evt any/c]) any/c]{
+Returns the current event target object.
+}
+
+@defproc[(stop-propagation! [evt any/c]) void?]{
+@(mdn-bar "Event: stopPropagation() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Event/stopPropagation")
+Stops the event from continuing to bubble.
+}
+
+@defproc[(stop-immediate-propagation! [evt any/c]) void?]{
+@(mdn-bar "Event: stopImmediatePropagation() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Event/stopImmediatePropagation")
+Stops the event from reaching later handlers on the same target.
+}
+
+@defproc[(mouse-event-offset-x [evt any/c]) real?]{
+Returns the horizontal offset for a mouse event.
+}
+
+@defproc[(mouse-event-offset-y [evt any/c]) real?]{
+Returns the vertical offset for a mouse event.
+}
+
+@defproc[(mouse-event-client-x [evt any/c]) real?]{
+Returns the mouse pointer's client X coordinate.
+}
+
+@defproc[(mouse-event-client-y [evt any/c]) real?]{
+Returns the mouse pointer's client Y coordinate.
+}
+
+@defproc[(keyboard-event-key [evt any/c]) string?]{
+Returns the keyboard key string for a keyboard event.
+}
+
+@defproc[(keyboard-event-code [evt any/c]) string?]{
+Returns the keyboard code string for a keyboard event.
+}
+
+@defproc[(touch-event-touches [evt any/c]) touch-list?]{
+Returns the active touch points for a touch event.
+}
+
+@defproc[(touch-event-target-touches [evt any/c]) touch-list?]{
+Returns the touches currently targeting the event target.
+}
+
+@defproc[(touch-event-changed-touches [evt any/c]) touch-list?]{
+Returns the touches that changed for the event.
+}
+
+@defproc[(touch-list? [x any/c]) boolean?]{
+Returns @racket[#t] when @racket[x] is a browser TouchList value.
+}
+
+@defproc[(touch-list-length [lst touch-list?]) exact-nonnegative-integer?]{
+Returns the number of touches in the list.
+}
+
+@defproc[(touch-list-ref [lst touch-list?] [index exact-nonnegative-integer?])
+         (or/c #f touch?)]{
+Returns the touch at @racket[index], or @racket[#f] when the index is out
+of range.
+}
+
+@defproc[(touch? [x any/c]) boolean?]{
+Returns @racket[#t] when @racket[x] is a browser Touch value.
+}
+
+@defproc[(touch-identifier [touch touch?]) exact-integer?]{
+Returns the touch identifier.
+}
+
+@defproc[(touch-client-x [touch touch?]) real?]{
+Returns the touch client X coordinate.
+}
+
+@defproc[(touch-client-y [touch touch?]) real?]{
+Returns the touch client Y coordinate.
+}
+
+@defproc[(touch-page-x [touch touch?]) real?]{
+Returns the touch page X coordinate.
+}
+
+@defproc[(touch-page-y [touch touch?]) real?]{
+Returns the touch page Y coordinate.
+}
+
+@defproc[(touch-screen-x [touch touch?]) real?]{
+Returns the touch screen X coordinate.
+}
+
+@defproc[(touch-screen-y [touch touch?]) real?]{
+Returns the touch screen Y coordinate.
+}
