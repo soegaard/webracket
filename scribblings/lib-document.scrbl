@@ -28,6 +28,8 @@ Use @racket[Document] when you want to:
 
 The @racket[document] library provides a checked wrapper for the current
 document, plus wrapped element helpers for lookup and selector queries.
+The raw accessors for the document family live in the
+@seclink["raw-accessors"]{Raw Accessors} appendix.
 
 When a browser method expects a string, the wrapper also accepts a
 symbol and normalizes it to a string.
@@ -36,10 +38,6 @@ symbol and normalizes it to a string.
 
 @defstruct[document ([raw external/raw])]{
 Wraps a browser Document object.
-}
-
-@defproc[(document-raw [doc document?]) external/raw]{
-Returns the wrapped browser Document object.
 }
 
 @defproc[(Document) document?]{
@@ -57,10 +55,6 @@ library can hand back text nodes without exposing a raw browser object.
 Wraps a browser Text node.
 }
 
-@defproc[(text-raw [node text?]) external/raw]{
-Returns the wrapped browser Text node.
-}
-
 @section{Node Values}
 
 The document node helpers return wrapped browser Node values for node
@@ -68,10 +62,6 @@ types that are not already specialized as text, element, or attr.
 
 @defstruct[node ([raw external/raw])]{
 Wraps a browser Node object.
-}
-
-@defproc[(node-raw [node node?]) external/raw]{
-Returns the wrapped browser Node object.
 }
 
 @section{Attr Values}
@@ -83,10 +73,6 @@ attribute nodes stay on the WebRacket side.
 Wraps a browser Attr node.
 }
 
-@defproc[(attr-raw [node attr?]) external/raw]{
-Returns the wrapped browser Attr node.
-}
-
 @section{Selection Values}
 
 The selection helper returns a wrapped browser Selection object so the
@@ -94,10 +80,6 @@ current selection stays on the WebRacket side.
 
 @defstruct[selection ([raw external/raw])]{
 Wraps a browser Selection object.
-}
-
-@defproc[(selection-raw [sel selection?]) external/raw]{
-Returns the wrapped browser Selection object.
 }
 
 @defproc[(selection-range-count [sel selection?]) exact-nonnegative-integer?]{

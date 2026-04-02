@@ -30,6 +30,8 @@ Use @racket[element] when you want to:
 
 The @racket[element] library provides checked wrappers for common DOM
 element operations.
+The raw accessors for the element family live in the
+@seclink["raw-accessors"]{Raw Accessors} appendix.
 
 When a browser method expects a string, the wrapper also accepts a
 symbol and normalizes it to a string.
@@ -42,10 +44,6 @@ nodes.
 
 @defstruct[element ([raw external/raw])]{
 Wraps a browser Element object.
-}
-
-@defproc[(element-raw [elem element?]) external/raw]{
-Returns the wrapped browser Element object.
 }
 
 @section{Element Quick Start}
@@ -208,10 +206,6 @@ updated from WebRacket.
 Wraps a browser DOMTokenList object.
 }
 
-@defproc[(dom-token-list-raw [class-list dom-token-list?]) external/raw]{
-Returns the wrapped browser DOMTokenList object.
-}
-
 @defproc[(element-class-list [element element?]) (or/c #f dom-token-list?)]{
 @(mdn-bar "Element: classList property"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/classList")
@@ -286,10 +280,6 @@ them directly.
 Wraps a browser ShadowRoot object.
 }
 
-@defproc[(shadow-root-raw [shadow-root shadow-root?]) external/raw]{
-Returns the wrapped browser ShadowRoot object.
-}
-
 @defproc[(element-shadow-root [element element?]) (or/c #f shadow-root?)]{
 @(mdn-bar "Element: shadowRoot property"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/shadowRoot")
@@ -332,10 +322,6 @@ collection objects that expose groups of descendants.
 Wraps a browser NodeList object.
 }
 
-@defproc[(node-list-raw [node-list node-list?]) external/raw]{
-Returns the wrapped browser NodeList object.
-}
-
 @defproc[(node-list-length [node-list node-list?]) exact-nonnegative-integer?]{
 @(mdn-bar "NodeList: length property"
           "https://developer.mozilla.org/en-US/docs/Web/API/NodeList/length")
@@ -351,10 +337,6 @@ Returns the node at the given index, or @racket[#f] if there is none.
 
 @defstruct[html-collection ([raw external/raw])]{
 Wraps a browser HTMLCollection object.
-}
-
-@defproc[(html-collection-raw [collection html-collection?]) external/raw]{
-Returns the wrapped browser HTMLCollection object.
 }
 
 @defproc[(html-collection-length [collection html-collection?]) exact-nonnegative-integer?]{
@@ -379,10 +361,6 @@ Returns the named element, or @racket[#f] if there is none.
 
 @defstruct[dom-rect-list ([raw external/raw])]{
 Wraps a browser DOMRectList object.
-}
-
-@defproc[(dom-rect-list-raw [rect-list dom-rect-list?]) external/raw]{
-Returns the wrapped browser DOMRectList object.
 }
 
 @defproc[(dom-rect-list-length [rect-list dom-rect-list?]) exact-nonnegative-integer?]{
@@ -684,16 +662,8 @@ which are created by the document library.
 Wraps a browser ComputedStyleMap object.
 }
 
-@defproc[(computed-style-map-raw [style-map computed-style-map?]) external/raw]{
-Returns the wrapped browser ComputedStyleMap object.
-}
-
 @defstruct[animation ([raw external/raw])]{
 Wraps a browser Animation object.
-}
-
-@defproc[(animation-raw [animation animation?]) external/raw]{
-Returns the wrapped browser Animation object.
 }
 
 @defproc[(element-computed-style-map [element element?]) computed-style-map?]{

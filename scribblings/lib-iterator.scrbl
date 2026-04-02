@@ -24,15 +24,12 @@ prototype, the static helpers, and the common iterator-transform methods.
 The wrapper keeps raw browser iterator objects tucked away in a single
 @racket[iterator] struct. That gives the library room to grow with checked
 helpers while still letting you recover the underlying browser object when you
-explicitly need it.
+explicitly need it. The raw accessor lives in the
+@seclink["raw-accessors"]{Raw Accessors} appendix.
 
 @defstruct[iterator ([raw external/raw])]{
 Wraps a browser @tt{Iterator} object in the checked struct used by the
 library.
-}
-
-@defproc[(iterator-raw [iter iterator?]) external/raw]{
-Returns the wrapped browser Iterator object stored inside @racket[iter].
 }
 
 @section{Iterator Quick Start}
