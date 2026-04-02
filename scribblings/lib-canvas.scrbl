@@ -190,6 +190,26 @@ Adds a stop to a gradient.
 Sets the transform used when tiling a canvas pattern.
 }
 
+@defproc[(canvas-2d-filter [ctx (or/c canvas-2d-context? external?)]) string?]{
+Returns the current filter string for the 2D context.
+}
+
+@defproc[(canvas-2d-set-filter! [ctx (or/c canvas-2d-context? external?)]
+                                [filter (or/c string? symbol?)])
+         void?]{
+Sets the filter string for the 2D context.
+}
+
+@defproc[(canvas-2d-line-join [ctx (or/c canvas-2d-context? external?)]) string?]{
+Returns the current line-join setting for the 2D context.
+}
+
+@defproc[(canvas-2d-set-line-join! [ctx (or/c canvas-2d-context? external?)]
+                                   [value (or/c string? symbol?)])
+         void?]{
+Sets the line-join setting for the 2D context.
+}
+
 @section{Canvas 2D State and Geometry}
 
 The 2D context now also exposes the usual MDN state and drawing helpers,
@@ -226,6 +246,32 @@ including @racket[canvas-2d-fill-style], @racket[canvas-2d-stroke-style],
 @racket[canvas-2d-reset-transform], @racket[canvas-2d-round-rect],
 @racket[canvas-2d-set-line-dash], @racket[canvas-2d-set-transform!],
 @racket[canvas-2d-set-transform-matrix!], and @racket[canvas-2d-transform].
+
+@defproc[(canvas-2d-filter [ctx (or/c canvas-2d-context? external?)]) string?]{
+@(mdn-bar "CanvasRenderingContext2D: filter property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/filter")
+Returns the current filter string for the 2D context.
+}
+
+@defproc[(canvas-2d-line-join [ctx (or/c canvas-2d-context? external?)]) string?]{
+@(mdn-bar "CanvasRenderingContext2D: lineJoin property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/lineJoin")
+Returns the current line-join setting for the 2D context.
+}
+
+@defproc[(canvas-2d-get-transform [ctx (or/c canvas-2d-context? external?)])
+         canvas-dom-matrix?]{
+@(mdn-bar "CanvasRenderingContext2D: getTransform() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/getTransform")
+Returns the current transform matrix as a wrapped @racket[canvas-dom-matrix]
+value.
+}
+
+@defproc[(canvas-2d-reset [ctx (or/c canvas-2d-context? external?)]) void?]{
+@(mdn-bar "CanvasRenderingContext2D: reset() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/reset")
+Resets the 2D context to its default drawing state.
+}
 
 For the 2D canvas API, string-like arguments continue to accept strings
 or symbols, and @racket[#f] continues to mean that an optional argument
