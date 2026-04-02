@@ -535,6 +535,67 @@ Inserts HTML relative to an element.
 Inserts text relative to an element.
 }
 
+@section{Element Mutation and Scrolling}
+
+These helpers use the Rackety @racket[element-] prefix and keep the
+DOM mutation operations on the WebRacket side.
+
+@defproc[(element-remove! [element element?]) void?]{
+@(mdn-bar "Element: remove() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/remove")
+Removes the element from the DOM.
+}
+
+@defproc[(element-replace-children! [element element?]
+                                    [child any/c]) void?]{
+@(mdn-bar "Element: replaceChildren() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/replaceChildren")
+Replaces the child list with one node.
+}
+
+@defproc[(element-replace-with! [element element?]
+                                [sibling any/c]) void?]{
+@(mdn-bar "Element: replaceWith() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/replaceWith")
+Replaces the element with another node.
+}
+
+@defproc[(element-request-fullscreen [element element?]) external/raw]{
+@(mdn-bar "Element: requestFullscreen() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/requestFullscreen")
+Requests fullscreen for the element and returns the raw browser result.
+}
+
+@defproc[(element-request-pointer-lock [element element?]) void?]{
+@(mdn-bar "Element: requestPointerLock() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/requestPointerLock")
+Requests pointer lock for the element.
+}
+
+@defproc[(element-scroll! [element element?]
+                          [x real?]
+                          [y real?]) void?]{
+@(mdn-bar "Element: scroll() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/scroll")
+Scrolls the element to an absolute position.
+}
+
+@defproc[(element-scroll-by! [element element?]
+                             [x real?]
+                             [y real?]) void?]{
+@(mdn-bar "Element: scrollBy() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollBy")
+Scrolls the element by a relative offset.
+}
+
+@defproc[(element-scroll-to! [element element?]
+                             [x real?]
+                             [y real?]) void?]{
+@(mdn-bar "Element: scrollTo() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollTo")
+Scrolls the element to an absolute position.
+}
+
 @section{Element Style and Animation}
 
 These helpers return wrapped browser objects when the browser API does.

@@ -452,7 +452,7 @@
                      "element release pointer capture validation")
          (check-true (toggle-attribute! host 'data-flag) "element toggle on")
          (check-false (toggle-attribute! host (lambda () #f)) "element toggle off")
-         (replace-children! host (document-create-text-node 'updated))
+         (element-replace-children! host (document-create-text-node 'updated))
          (check-equal (js-ref host "textContent") "updated" "element replace-children")
          (check-true (expect-contract-error (lambda () (document-create-element 1))) "document create-element validation")
          (check-true (document? (document-open)) "document open wrapper")

@@ -67,6 +67,9 @@
   element-prepend!
   element-before!
   element-after!
+  element-remove!
+  element-replace-children!
+  element-replace-with!
   element-get-elements-by-class-name
   element-get-elements-by-tag-name
   element-get-elements-by-tag-name-ns
@@ -78,6 +81,11 @@
   element-attach-shadow!
   element-shadow-root
   element-animate
+  element-request-fullscreen
+  element-request-pointer-lock
+  element-scroll!
+  element-scroll-by!
+  element-scroll-to!
   shadow-root-host
   shadow-root-mode
   shadow-root-delegates-focus?
@@ -424,6 +432,9 @@
 (define element-prepend! any/c)
 (define element-before! any/c)
 (define element-after! any/c)
+(define element-remove! any/c)
+(define element-replace-children! any/c)
+(define element-replace-with! any/c)
 (define element-get-elements-by-class-name any/c)
 (define element-get-elements-by-tag-name any/c)
 (define element-get-elements-by-tag-name-ns any/c)
@@ -435,6 +446,11 @@
 (define element-attach-shadow! any/c)
 (define element-shadow-root any/c)
 (define element-animate any/c)
+(define element-request-fullscreen any/c)
+(define element-request-pointer-lock any/c)
+(define element-scroll! any/c)
+(define element-scroll-by! any/c)
+(define element-scroll-to! any/c)
 (define shadow-root-host any/c)
 (define shadow-root-mode any/c)
 (define shadow-root-delegates-focus? any/c)

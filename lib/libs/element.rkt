@@ -516,11 +516,21 @@
   (js-remove! (element-unwrap element))
   (void))
 
+;; element-remove! : element? -> void?
+;;   Remove the element from the DOM.
+(define (element-remove! element)
+  (remove! element))
+
 ;; replace-children! : external? external? -> void?
 ;;   Replace the child list with one node.
 (define (replace-children! element child)
   (js-replace-children! (element-unwrap element) (element-unwrap child))
   (void))
+
+;; element-replace-children! : element? any/c -> void?
+;;   Replace the child list with one node.
+(define (element-replace-children! element child)
+  (replace-children! element child))
 
 ;; replace-with! : external? external? -> void?
 ;;   Replace the element with another node.
@@ -528,16 +538,31 @@
   (js-replace-with! (element-unwrap element) (element-unwrap sibling))
   (void))
 
+;; element-replace-with! : element? any/c -> void?
+;;   Replace the element with another node.
+(define (element-replace-with! element sibling)
+  (replace-with! element sibling))
+
 ;; request-fullscreen : external? -> external/raw
 ;;   Request fullscreen for the element.
 (define (request-fullscreen element)
   (js-request-fullscreen (element-unwrap element)))
+
+;; element-request-fullscreen : element? -> external/raw
+;;   Request fullscreen for the element.
+(define (element-request-fullscreen element)
+  (request-fullscreen element))
 
 ;; request-pointer-lock : external? -> void?
 ;;   Request pointer lock.
 (define (request-pointer-lock element)
   (js-request-pointer-lock (element-unwrap element))
   (void))
+
+;; element-request-pointer-lock : element? -> void?
+;;   Request pointer lock.
+(define (element-request-pointer-lock element)
+  (request-pointer-lock element))
 
 ;; element-set-pointer-capture! : element? exact-nonnegative-integer? -> void?
 ;;   Capture pointer events for a pointer id.
@@ -557,11 +582,21 @@
   (js-scroll! (element-unwrap element) x y)
   (void))
 
+;; element-scroll! : element? real? real? -> void?
+;;   Scroll an element to an absolute position.
+(define (element-scroll! element x y)
+  (scroll! element x y))
+
 ;; scroll-by! : external? real? real? -> void?
 ;;   Scroll an element by a relative offset.
 (define (scroll-by! element x y)
   (js-scroll-by! (element-unwrap element) x y)
   (void))
+
+;; element-scroll-by! : element? real? real? -> void?
+;;   Scroll an element by a relative offset.
+(define (element-scroll-by! element x y)
+  (scroll-by! element x y))
 
 ;; scroll-into-view! : element? [boolean?] -> void?
 ;;   Scroll ancestors until the element is visible.
@@ -574,6 +609,11 @@
 (define (scroll-to! element x y)
   (js-scroll-to! (element-unwrap element) x y)
   (void))
+
+;; element-scroll-to! : element? real? real? -> void?
+;;   Scroll an element to an absolute position.
+(define (element-scroll-to! element x y)
+  (scroll-to! element x y))
 
 ;; set-attribute-ns! : external? (or/c string? symbol?) (or/c string? symbol?) (or/c string? symbol?) -> void?
 ;;   Set a namespaced attribute.
