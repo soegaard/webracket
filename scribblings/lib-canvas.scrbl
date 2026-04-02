@@ -7,6 +7,7 @@
           (for-label (lib "scribblings/lib-canvas-labels.rkt" "webracket")))
 
 @title{Library: @racketid[canvas]}
+@declare-exporting[(lib "scribblings/lib-canvas-labels.rkt" "webracket")]
 
 @(how-to-require include-lib canvas (lib "libs/canvas.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")
@@ -29,6 +30,10 @@ Use @racket[canvas] when you want to:
 
 The @racket[canvas] library provides checked wrappers for canvas
 elements and the 2D rendering context.
+
+The main values are @racket[canvas?] and @racket[canvas-2d-context?].
+Use @racket[canvas-raw] or @racket[canvas-2d-context-raw] only when you
+need to drop back to the browser object.
 
 String-like arguments such as context identifiers and drawing modes
 accept either strings or symbols. Optional arguments use @racket[#f]
@@ -88,36 +93,39 @@ If you are just getting started, the most useful entry points are
 @racket[canvas-get-context], @racket[canvas-width], and
 @racket[canvas-2d-fill-rect].
 
-@defproc[(canvas-get-context [canvas external?] [context-id (or/c string? symbol?)] [options any/c #f])
-         (or/c #f external?)]{
+@defproc[(canvas-get-context [canvas (or/c canvas? external?)]
+                             [context-id (or/c string? symbol?)]
+                             [options any/c #f])
+         (or/c #f canvas-2d-context?)]{
 @(mdn-bar "HTMLCanvasElement: getContext() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/getContext")
-The raw @racket[canvas] argument should be a browser
-@racketid[HTMLCanvasElement] value. Returns the requested drawing
-context.
+The @racket[canvas] argument should be a wrapped canvas value or a
+browser @racketid[HTMLCanvasElement] value. Returns the requested
+drawing context.
 }
 
-@defproc[(canvas-width [canvas external?]) exact-nonnegative-integer?]{
+@defproc[(canvas-width [canvas (or/c canvas? external?)]) exact-nonnegative-integer?]{
 @(mdn-bar "HTMLCanvasElement: width property"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/width")
-The raw @racket[canvas] argument should be a browser
-@racketid[HTMLCanvasElement] value. Returns the canvas width in CSS
-pixels.
+The @racket[canvas] argument should be a wrapped canvas value or a
+browser @racketid[HTMLCanvasElement] value. Returns the canvas width in
+CSS pixels.
 }
 
-@defproc[(canvas-2d-fill-rect [ctx external?] [x real?] [y real?] [w real?] [h real?]) void?]{
+@defproc[(canvas-2d-fill-rect [ctx (or/c canvas-2d-context? external?)]
+                              [x real?] [y real?] [w real?] [h real?]) void?]{
 @(mdn-bar "CanvasRenderingContext2D: fillRect() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/fillRect")
-The raw @racket[ctx] argument should be a browser
-@racketid[CanvasRenderingContext2D] value. Fills a rectangle in a 2D
-canvas context.
+The @racket[ctx] argument should be a wrapped context value or a
+browser @racketid[CanvasRenderingContext2D] value. Fills a rectangle in
+a 2D canvas context.
 }
 
-@defproc[(canvas-capture-stream [canvas external?] [frame-rate any/c #f])
+@defproc[(canvas-capture-stream [canvas (or/c canvas? external?)] [frame-rate any/c #f])
          media-stream?]{
 @(mdn-bar "HTMLCanvasElement: captureStream() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/captureStream")
-The raw @racket[canvas] argument should be a browser
-@racketid[HTMLCanvasElement] value. Returns a wrapped browser
+The @racket[canvas] argument should be a wrapped canvas value or a
+browser @racketid[HTMLCanvasElement] value. Returns a wrapped browser
 @racketid[MediaStream] that captures the canvas rendering.
 }

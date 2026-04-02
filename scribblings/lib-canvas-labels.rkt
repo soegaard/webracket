@@ -3,6 +3,8 @@
 (require racket/contract/base)
 
 (provide
+  (struct-out canvas)
+  (struct-out canvas-2d-context)
   canvas-capture-stream
   canvas-get-context
   canvas-width
@@ -41,6 +43,8 @@
   canvas-2d-create-radial-gradient
   (for-label (all-defined-out)))
 
+(struct canvas (raw) #:transparent)
+(struct canvas-2d-context (raw) #:transparent)
 (define canvas-capture-stream any/c)
 (define canvas-get-context any/c)
 (define canvas-width any/c)
