@@ -112,16 +112,28 @@
 ;;   Ensure reason is absent or a string.
 (define (check-websocket-close-reason who reason)
   (unless (or (eq? reason #f)
-              (string? reason))
-    (raise-argument-error who "(or/c #f string?)" reason)))
+              (string? reason)
+              (symbol? reason))
+    (raise-argument-error who "(or/c #f string? symbol?)" reason)))
 
-;; check-websocket-send-data : symbol? (or/c string? bytes? external?) -> void?
+;; normalize-websocket-stringish : symbol? any/c -> string?
+;;   Convert a string-like WebSocket value to a string.
+(define (normalize-websocket-stringish who value)
+  (unless (or (string? value)
+              (symbol? value))
+    (raise-argument-error who "(or/c string? symbol?)" value))
+  (if (symbol? value)
+      (symbol->string value)
+      value))
+
+;; check-websocket-send-data : symbol? (or/c string? symbol? bytes? external?) -> void?
 ;;   Ensure data is a browser-acceptable WebSocket message body.
 (define (check-websocket-send-data who data)
   (unless (or (string? data)
+              (symbol? data)
               (bytes? data)
               (external? data))
-    (raise-argument-error who "(or/c string? bytes? external?)" data)))
+    (raise-argument-error who "(or/c string? symbol? bytes? external?)" data)))
 
 ;; check-websocket-listener-option : symbol? (or/c boolean? external?) -> void?
 ;;   Ensure an add/removeEventListener option is a boolean or JS object.
@@ -166,29 +178,28 @@
   (js-set! ws prop (websocket-handler->external who handler))
   (void))
 
-;; websocket-new : string? (or/c string? symbol?) ... -> extern/raw
+;; websocket-new : (or/c string? symbol?) (or/c string? symbol?) ... -> extern/raw
 ;;   Create a new WebSocket connection from a URL and optional subprotocol names.
 (define (websocket-new url . protocols)
-  (unless (string? url)
-    (raise-argument-error 'websocket-new "string?" url))
+  (define url* (normalize-websocket-stringish 'websocket-new url))
   (define low-level-protocols
     (normalize-websocket-protocols 'websocket-new protocols))
-  (js-websocket-new url low-level-protocols))
+  (js-websocket-new url* low-level-protocols))
 
-;; websocket-send : websocket? (or/c string? bytes? external?) -> void?
+;; websocket-send : websocket? (or/c string? symbol? bytes? external?) -> void?
 ;;   Send data through a WebSocket connection.
 (define (websocket-send ws data)
   (check-websocket 'websocket-send ws)
   (check-websocket-send-data 'websocket-send data)
-  (js-websocket-send ws data))
+  (js-websocket-send ws (if (symbol? data) (symbol->string data) data)))
 
-;; websocket-close : websocket? [code exact-integer? 1000] [reason (or/c #f string?) #f] -> void?
+;; websocket-close : websocket? [code exact-integer? 1000] [reason (or/c #f string? symbol?) #f] -> void?
 ;;   Close a WebSocket connection.
 (define (websocket-close ws [code 1000] [reason #f])
   (check-websocket 'websocket-close ws)
   (check-websocket-close-code 'websocket-close code)
   (check-websocket-close-reason 'websocket-close reason)
-  (js-websocket-close ws code (if reason reason (void))))
+  (js-websocket-close ws code (if reason (normalize-websocket-stringish 'websocket-close reason) (void))))
 
 ;; websocket-url : websocket? -> string?
 ;;   Read the WebSocket URL.

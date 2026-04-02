@@ -81,13 +81,16 @@ if not.
 
 @subsection{WebSocket Construction and State}
 
-@defproc[(websocket-new [url string?]
+@defproc[(websocket-new [url (or/c string? symbol?)]
                         [protocol (or/c string? symbol?)] ...)
          websocket?]{
 @(mdn-bar "WebSocket() constructor"
           "https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/WebSocket")
 
 Creates a new WebSocket connection to @racket[url].
+
+The raw @racket[url] argument may be a string or a symbol. Symbols are
+converted to strings before the browser constructor is called.
 
 Provide zero or more protocol names after @racket[url] to select the
 subprotocols the client is willing to speak.
@@ -159,7 +162,7 @@ if no extensions were negotiated.
 @subsection{WebSocket Sending and Closing}
 
 @defproc[(websocket-send [ws websocket?]
-                         [data (or/c string? bytes? external?)])
+                         [data (or/c string? symbol? bytes? external?)])
          void?]{
 @(mdn-bar "WebSocket: send() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/send")
@@ -168,12 +171,13 @@ Sends @racket[data] through the WebSocket connection.
 
 The raw @racket[data] argument can be a browser @racketid[ArrayBuffer],
 @racketid[Uint8Array], or @racketid[Blob] value, or a Racket
-@racket[bytes] value.
+@racket[bytes] value. If @racket[data] is a symbol, the wrapper converts
+it to its string name first.
 }
 
 @defproc[(websocket-close [ws websocket?]
                           [code exact-integer? 1000]
-                          [reason (or/c #f string?) #f])
+                          [reason (or/c #f string? symbol?) #f])
          void?]{
 @(mdn-bar "WebSocket: close() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close")
@@ -183,6 +187,8 @@ Closes the WebSocket connection.
 If @racket[code] is omitted, the wrapper uses the browser default close
 code @racket[1000].
 If @racket[reason] is omitted or @racket[#f], no reason string is sent.
+If @racket[reason] is a symbol, the wrapper converts it to its string
+name before closing the socket.
 }
 
 @subsection{WebSocket Event Handlers}

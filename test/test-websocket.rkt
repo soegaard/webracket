@@ -124,7 +124,9 @@
                         }
                       }
                     };")]
-              [ws (websocket-new "wss://example.invalid/socket" "chat" 'v2)]
+              [ws (websocket-new (string->symbol "wss://example.invalid/socket")
+                                 "chat"
+                                 'v2)]
               [open-count 0]
               [message-count 0]
               [close-count 0]
@@ -155,13 +157,13 @@
          (websocket-onmessage! ws message-handler)
          (websocket-onclose! ws close-handler)
          (websocket-onerror! ws error-handler)
-         (websocket-send ws "hello")
+         (websocket-send ws 'hello)
          (js-send/extern/nullish ws "dispatch" (vector "open" (js-eval "({type: 'open'})")))
          (js-send/extern/nullish ws "dispatch" (vector "message" (js-eval "({type: 'message', data: 'ping'})")))
          (js-send/extern/nullish ws "dispatch" (vector "error" (js-eval "({type: 'error'})")))
          (websocket-remove-event-listener! ws "message" listener #t)
          (js-send/extern/nullish ws "dispatch" (vector "close" (js-eval "({type: 'close'})")))
-         (websocket-close ws)
+         (websocket-close ws 1000 'done)
          (check-true (websocket? ws) "wrapper websocket? true")
          (check-false (websocket? #f) "wrapper websocket? false")
          (check-equal (websocket-url ws) "wss://example.invalid/socket" "wrapper url")
@@ -172,7 +174,7 @@
          (check-equal (websocket-extensions ws) "permessage-deflate" "wrapper extensions")
          (check-equal (js-ref ws "protocols") (vector "chat" "v2") "wrapper protocols")
          (check-equal (js-ref ws "sent") (vector "hello") "wrapper send")
-         (check-equal (js-ref ws "closed") (vector (vector 1000 "omitted")) "wrapper close")
+         (check-equal (js-ref ws "closed") (vector (vector 1000 "done")) "wrapper close")
          (check-equal (js-ref ws "lastAddOptions") #t "wrapper add listener options")
          (check-equal (js-ref ws "lastRemoveOptions") #t "wrapper remove listener options")
          (check-equal open-count 1 "wrapper open handler")
