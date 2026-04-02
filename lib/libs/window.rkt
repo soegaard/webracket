@@ -9,20 +9,32 @@
 (define (window-i32->boolean v)
   (not (zero? v)))
 
+;; window-resolve-optional : any/c -> any/c
+;;   Treat #f as omitted, and force thunks when a literal value is needed.
+(define (window-resolve-optional value)
+  (cond
+    [(eq? value #f) (void)]
+    [(procedure? value) (value)]
+    [else value]))
+
 ;; window : -> external/raw
 ;;   Read the current window object.
 (define (window)
   (js-window-window))
+
+;; window-document-info : external/raw -> window-document-info?
+;;   Wrap the current document object.
+(struct window-document-info (raw) #:transparent)
 
 ;; window-self : -> external/raw
 ;;   Read the current window via self.
 (define (window-self)
   (js-window-self))
 
-;; window-document : -> external/raw
+;; window-document : -> window-document-info?
 ;;   Read the document for the current window.
 (define (window-document)
-  (js-window-document))
+  (window-document-info (js-window-document)))
 
 ;; window-name : -> string?
 ;;   Read the window name.
@@ -37,10 +49,14 @@
   (js-set-window-name! name)
   (void))
 
-;; window-location : -> external/raw
+;; window-location-info : external/raw -> window-location-info?
+;;   Wrap the current window location object.
+(struct window-location-info (raw) #:transparent)
+
+;; window-location : -> window-location-info?
 ;;   Read the window location object.
 (define (window-location)
-  (js-window-location))
+  (window-location-info (js-window-location)))
 
 ;; window-set-location! : any/c -> void?
 ;;   Navigate the window to a new URL or Location.
@@ -48,17 +64,20 @@
   (js-set-window-location! loc)
   (void))
 
-;; window-open : string? [target any/c] [features any/c] [replace any/c] -> (or/c #f external?)
+;; window-open : string? [target any/c #f] [features any/c #f] [replace any/c #f] -> (or/c #f external?)
 ;;   Open a new browsing context.
-(define (window-open url [target (void)] [features (void)] [replace (void)])
+(define (window-open url [target #f] [features #f] [replace #f])
   (unless (string? url)
     (raise-argument-error 'window-open "string?" url))
-  (js-window-open url target features replace))
+  (js-window-open url
+                  (window-resolve-optional target)
+                  (window-resolve-optional features)
+                  (window-resolve-optional replace)))
 
-;; window-fetch : any/c [any/c] -> external/raw
+;; window-fetch : any/c [any/c #f] -> external/raw
 ;;   Start a fetch request.
-(define (window-fetch request [init (void)])
-  (js-window-fetch request init))
+(define (window-fetch request [init #f])
+  (js-window-fetch request (window-resolve-optional init)))
 
 ;; window-confirm : string? -> boolean?
 ;;   Show a confirmation dialog.
@@ -67,12 +86,12 @@
     (raise-argument-error 'window-confirm "string?" message))
   (window-i32->boolean (js-window-confirm message)))
 
-;; window-prompt : string? [any/c] -> any/c
+;; window-prompt : string? [any/c #f] -> any/c
 ;;   Show a prompt dialog.
-(define (window-prompt message [default-value (void)])
+(define (window-prompt message [default-value #f])
   (unless (string? message)
     (raise-argument-error 'window-prompt "string?" message))
-  (js-window-prompt message default-value))
+  (js-window-prompt message (window-resolve-optional default-value)))
 
 ;; window-alert : string? -> void?
 ;;   Show an alert dialog.
@@ -100,22 +119,22 @@
   (js-window-stop)
   (void))
 
-;; window-scroll-to : real? real? [any/c] -> void?
+;; window-scroll-to : real? real? [any/c #f] -> void?
 ;;   Scroll the window to an absolute position.
-(define (window-scroll-to x y [options (void)])
-  (js-window-scroll-to x y options)
+(define (window-scroll-to x y [options #f])
+  (js-window-scroll-to x y (window-resolve-optional options))
   (void))
 
-;; window-scroll-by : real? real? [any/c] -> void?
+;; window-scroll-by : real? real? [any/c #f] -> void?
 ;;   Scroll the window by a relative offset.
-(define (window-scroll-by x y [options (void)])
-  (js-window-scroll-by x y options)
+(define (window-scroll-by x y [options #f])
+  (js-window-scroll-by x y (window-resolve-optional options))
   (void))
 
-;; window-scroll : real? real? [any/c] -> void?
+;; window-scroll : real? real? [any/c #f] -> void?
 ;;   Scroll the document to an absolute position.
-(define (window-scroll x y [options (void)])
-  (js-window-scroll x y options)
+(define (window-scroll x y [options #f])
+  (js-window-scroll x y (window-resolve-optional options))
   (void))
 
 ;; window-resize-to : real? real? -> void?
@@ -180,10 +199,10 @@
   (js-window-cancel-animation-frame id)
   (void))
 
-;; window-request-idle-callback : external? [any/c] -> u32?
+;; window-request-idle-callback : external? [any/c #f] -> u32?
 ;;   Schedule an idle callback.
-(define (window-request-idle-callback callback [options (void)])
-  (js-window-request-idle-callback callback options))
+(define (window-request-idle-callback callback [options #f])
+  (js-window-request-idle-callback callback (window-resolve-optional options)))
 
 ;; window-cancel-idle-callback : exact-integer? -> void?
 ;;   Cancel an idle callback.
@@ -203,12 +222,12 @@
     (raise-argument-error 'window-match-media "string?" query))
   (js-window-match-media query))
 
-;; window-get-computed-style : external? [any/c] -> external/raw
+;; window-get-computed-style : external? [any/c #f] -> external/raw
 ;;   Read computed style for an element.
-(define (window-get-computed-style element [pseudo-element (void)])
-  (js-window-get-computed-style element pseudo-element))
+(define (window-get-computed-style element [pseudo-element #f])
+  (js-window-get-computed-style element (window-resolve-optional pseudo-element)))
 
-;; window-structured-clone : any/c [any/c] -> any/c
+;; window-structured-clone : any/c [any/c #f] -> any/c
 ;;   Clone a value using the structured-clone algorithm.
-(define (window-structured-clone value [options (void)])
-  (js-window-structured-clone value options))
+(define (window-structured-clone value [options #f])
+  (js-window-structured-clone value (window-resolve-optional options)))

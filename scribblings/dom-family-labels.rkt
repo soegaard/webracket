@@ -9,9 +9,11 @@
   window
   window-self
   window-document
+  (struct-out window-document-info)
   window-name
   window-set-name!
   window-location
+  (struct-out window-location-info)
   window-set-location!
   window-open
   window-fetch
@@ -226,9 +228,11 @@
 (define window any/c)
 (define window-self any/c)
 (define window-document any/c)
+(struct window-document-info (raw) #:transparent)
 (define window-name any/c)
 (define window-set-name! any/c)
 (define window-location any/c)
+(struct window-location-info (raw) #:transparent)
 (define window-set-location! any/c)
 (define window-open any/c)
 (define window-fetch any/c)

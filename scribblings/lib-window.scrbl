@@ -1,6 +1,7 @@
 #lang scribble/manual
 
 @(require scribble/manual
+          (for-label (only-in racket/base struct))
           "webracket-scribble-utils.rkt"
           (for-label (lib "scribblings/dom-family-labels.rkt" "webracket")))
 
@@ -30,6 +31,29 @@ Use @racket[window] when you want to:
 
 The @racket[window] library provides checked wrappers for the browser
 Window object, timers, dialogs, scrolling, and navigation helpers.
+The current document and location are wrapped in small checked structs
+so the API stays Rackety instead of exposing raw browser objects at the
+top level.
+
+@section{Window Values}
+
+@defstruct[window-document-info ([raw external/raw])]{
+Wraps the current document object returned by @racket[window-document].
+}
+
+@defproc[(window-document-info-raw [doc window-document-info?])
+         external/raw]{
+Returns the wrapped document object.
+}
+
+@defstruct[window-location-info ([raw external/raw])]{
+Wraps the current location object returned by @racket[window-location].
+}
+
+@defproc[(window-location-info-raw [loc window-location-info?])
+         external/raw]{
+Returns the wrapped location object.
+}
 
 @section{Window Quick Start}
 
@@ -50,7 +74,7 @@ calling a simple page-level helper.
 
 (code:comment "If the user agrees, scroll the page a little.")
 (when ok?
-  (window-scroll-to 0 240 (void)))
+  (window-scroll-to 0 240))
 ]
 
 The quick start shows the three most common ideas:
@@ -71,8 +95,7 @@ page update without blocking the current event handler.
 (define doc
   (window-document))
 
-(code:comment "Keep the document value around for later DOM work.")
-(void doc)
+(code:comment "Keep the wrapped document value around for later DOM work.")
 
 (code:comment "Run a small update after a short delay.")
 (window-set-timeout
@@ -85,6 +108,9 @@ window entry points are usually @racket[window-document],
 @racket[window-confirm], @racket[window-set-timeout], and
 @racket[window-scroll-to].
 
+For optional arguments, @racket[#f] means omitted. If you need a
+literal @racket[#f] value, pass a thunk such as @racket[(lambda () #f)].
+
 @section{Window API}
 
 @defproc[(window) external/raw]{
@@ -93,10 +119,16 @@ window entry points are usually @racket[window-document],
 Returns the current Window object.
 }
 
-@defproc[(window-document) external/raw]{
+@defproc[(window-document) window-document-info?]{
 @(mdn-bar "Window: document property"
           "https://developer.mozilla.org/en-US/docs/Web/API/Window/document")
-Returns the current document object.
+Returns the current document object wrapped in a checked struct.
+}
+
+@defproc[(window-location) window-location-info?]{
+@(mdn-bar "Window: location property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Window/location")
+Returns the current location object wrapped in a checked struct.
 }
 
 @defproc[(window-set-name! [name string?]) void?]{
@@ -106,9 +138,9 @@ Sets the window name.
 }
 
 @defproc[(window-open [url string?]
-                      [target any/c (void)]
-                      [features any/c (void)]
-                      [replace any/c (void)])
+                      [target any/c #f]
+                      [features any/c #f]
+                      [replace any/c #f])
          (or/c #f external?)]{
 @(mdn-bar "Window: open() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Window/open")
@@ -121,7 +153,7 @@ Opens a new browsing context.
 Shows a confirmation dialog and converts the browser result to a boolean.
 }
 
-@defproc[(window-scroll-to [x real?] [y real?] [options any/c (void)]) void?]{
+@defproc[(window-scroll-to [x real?] [y real?] [options any/c #f]) void?]{
 @(mdn-bar "Window: scrollTo() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Window/scrollTo")
 Scrolls the window to an absolute position.
