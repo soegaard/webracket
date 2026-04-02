@@ -189,6 +189,24 @@
       (computed-style-map-raw value)
       value))
 
+;; audio-listener : external/raw -> audio-listener?
+;;   Wrap a browser AudioListener object.
+(struct audio-listener (raw) #:transparent)
+
+;; audio-listener-wrap : any/c -> any/c
+;;   Wrap a raw browser AudioListener object, leaving wrapped values alone.
+(define (audio-listener-wrap value)
+  (if (or (not value) (audio-listener? value))
+      value
+      (audio-listener value)))
+
+;; audio-listener-unwrap : any/c -> any/c
+;;   Unwrap an audio-listener struct to its raw browser object.
+(define (audio-listener-unwrap value)
+  (if (audio-listener? value)
+      (audio-listener-raw value)
+      value))
+
 ;; array-like->vector : symbol? any/c (-> any/c any/c) -> vector?
 ;;   Convert a browser array-like value into a WebRacket vector.
 (define (array-like->vector who value wrap-item)

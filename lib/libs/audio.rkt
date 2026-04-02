@@ -399,7 +399,7 @@
 ;;   Read the listener for an AudioContext.
 (define (audio-context-listener ctx)
   (check-audio-context 'audio-context-listener ctx)
-  (js-audio-context-listener ctx))
+  (audio-listener-wrap (js-audio-context-listener ctx)))
 
 ;; audio-context-create-gain : audio-context? -> audio-gain-node?
 ;;   Create a GainNode attached to a context.

@@ -33,6 +33,10 @@ String-like audio arguments accept either strings or symbols, and the
 wrapper converts symbols to their string names. Optional arguments use
 @racket[#f] to mean that the argument is omitted.
 
+The @racket[audio-context-listener] result is wrapped as an
+@racket[audio-listener] value. Use @racket[audio-listener-raw] only
+when you need the underlying browser listener object.
+
 @section{Audio Quick Start}
 
 To use the audio API, create a context, create a source node, connect it
@@ -216,15 +220,25 @@ The raw @racket[ctx] argument should be a browser
 Returns the final destination node for the context.
 }
 
-@defproc[(audio-context-listener [ctx audio-context?]) external?]{
+@defstruct[audio-listener ([raw external/raw])]{
+@racket[audio-context-listener] returns a wrapped browser
+@racketid[AudioListener] object. The raw browser object is stored in
+@racket[raw].
+}
+
+@defproc[(audio-listener-raw [listener audio-listener?]) external/raw]{
+Returns the underlying browser AudioListener object.
+}
+
+@defproc[(audio-context-listener [ctx audio-context?]) audio-listener?]{
 @(mdn-bar "AudioContext: listener property"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/listener")
 
 The raw @racket[ctx] argument should be a browser
-@racketid[AudioContext] value. The result is a browser
-@racketid[AudioListener] object.
+@racketid[AudioContext] value.
 
-Returns the associated audio listener object.
+Returns the associated audio listener object as a wrapped
+@racket[audio-listener] value.
 }
 
 @subsection{Audio Nodes and Params}
