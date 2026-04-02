@@ -4,7 +4,7 @@
           (for-label (lib "scribblings/console-labels.rkt" "webracket")))
 
 @section{Console}
-@declare-exporting[(lib "ffi/console.ffi" "webracket")]
+@declare-exporting[(lib "scribblings/console-labels.rkt" "webracket")]
 
 The browser @racket[console] object exposes the standard developer console
 API available in web pages and web workers.
