@@ -65,6 +65,11 @@
            (element-stringish->string 'element-set-class-name! class-name))
   (void))
 
+;; element-class-list : element? -> (or/c #f dom-token-list?)
+;;   Read an element class list.
+(define (element-class-list element)
+  (dom-token-list-wrap (js-ref/extern (element-unwrap element) "classList")))
+
 ;; element-tag-name : element? -> string?
 ;;   Read the element tag name.
 (define (element-tag-name element)
@@ -182,6 +187,70 @@
 ;;   Read the names of the element's attributes.
 (define (element-get-attribute-names element)
   (js-send/value (element-unwrap element) "getAttributeNames" (vector)))
+
+;; dom-token-list-value : dom-token-list? -> (or/c #f string?)
+;;   Read the class list value.
+(define (dom-token-list-value class-list)
+  (js-ref/extern (dom-token-list-unwrap class-list) "value"))
+
+;; dom-token-list-length : dom-token-list? -> exact-nonnegative-integer?
+;;   Read the number of class tokens.
+(define (dom-token-list-length class-list)
+  (js-ref (dom-token-list-unwrap class-list) "length"))
+
+;; dom-token-list-item : dom-token-list? exact-nonnegative-integer? -> (or/c #f string?)
+;;   Read the class token at an index.
+(define (dom-token-list-item class-list index)
+  (js-send/value (dom-token-list-unwrap class-list) "item" (vector index)))
+
+;; dom-token-list-contains? : dom-token-list? (or/c string? symbol?) -> boolean?
+;;   Report whether a token is present in the class list.
+(define (dom-token-list-contains? class-list token)
+  (define token* (element-stringish->string 'dom-token-list-contains? token))
+  (js-send/boolean (dom-token-list-unwrap class-list) "contains" (vector token*)))
+
+;; dom-token-list-add! : dom-token-list? (or/c string? symbol?) ... -> void?
+;;   Add one or more tokens to the class list.
+(define (dom-token-list-add! class-list token . more-tokens)
+  (define tokens (cons token more-tokens))
+  (define token-values
+    (list->vector (map (lambda (tok)
+                         (element-stringish->string 'dom-token-list-add! tok))
+                       tokens)))
+  (js-send/extern/nullish (dom-token-list-unwrap class-list) "add" token-values)
+  (void))
+
+;; dom-token-list-remove! : dom-token-list? (or/c string? symbol?) ... -> void?
+;;   Remove one or more tokens from the class list.
+(define (dom-token-list-remove! class-list token . more-tokens)
+  (define tokens (cons token more-tokens))
+  (define token-values
+    (list->vector (map (lambda (tok)
+                         (element-stringish->string 'dom-token-list-remove! tok))
+                       tokens)))
+  (js-send/extern/nullish (dom-token-list-unwrap class-list) "remove" token-values)
+  (void))
+
+;; dom-token-list-toggle! : dom-token-list? (or/c string? symbol?) [force] -> boolean?
+;;   Toggle a token, or force a specific state when provided.
+(define (dom-token-list-toggle! class-list token [force #f])
+  (define token* (element-stringish->string 'dom-token-list-toggle! token))
+  (cond
+    [(eq? force #f)
+     (js-send/boolean (dom-token-list-unwrap class-list) "toggle" (vector token*))]
+    [(procedure? force)
+     (js-send/boolean (dom-token-list-unwrap class-list) "toggle"
+                      (vector token* (if (force) #t #f)))]
+    [else
+     (js-send/boolean (dom-token-list-unwrap class-list) "toggle"
+                      (vector token* (if force #t #f)))]))
+
+;; dom-token-list-replace! : dom-token-list? (or/c string? symbol?) (or/c string? symbol?) -> boolean?
+;;   Replace one class token with another.
+(define (dom-token-list-replace! class-list old-token new-token)
+  (define old-token* (element-stringish->string 'dom-token-list-replace! old-token))
+  (define new-token* (element-stringish->string 'dom-token-list-replace! new-token))
+  (js-send/boolean (dom-token-list-unwrap class-list) "replace" (vector old-token* new-token*)))
 
 ;; element-get-attribute-ns : element? (or/c string? symbol?) (or/c string? symbol?) -> (or/c #f string?)
 ;;   Read a namespaced element attribute.

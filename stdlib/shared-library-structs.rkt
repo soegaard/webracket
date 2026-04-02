@@ -81,6 +81,24 @@
       (attr-raw value)
       value))
 
+;; dom-token-list : external/raw -> dom-token-list?
+;;   Wrap a browser DOMTokenList object.
+(struct dom-token-list (raw) #:transparent)
+
+;; dom-token-list-wrap : any/c -> any/c
+;;   Wrap a raw browser DOMTokenList object, leaving wrapped values alone.
+(define (dom-token-list-wrap value)
+  (if (or (not value) (dom-token-list? value))
+      value
+      (dom-token-list value)))
+
+;; dom-token-list-unwrap : any/c -> any/c
+;;   Unwrap a DOMTokenList struct to its raw browser object.
+(define (dom-token-list-unwrap value)
+  (if (dom-token-list? value)
+      (dom-token-list-raw value)
+      value))
+
 ;; array-like->vector : symbol? any/c (-> any/c any/c) -> vector?
 ;;   Convert a browser array-like value into a WebRacket vector.
 (define (array-like->vector who value wrap-item)

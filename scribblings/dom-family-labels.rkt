@@ -8,10 +8,12 @@
   dom
   Window
   (struct-out window)
+  (struct-out dom-token-list)
   (struct-out node)
   (struct-out element)
   (struct-out text)
   (struct-out attr)
+  element-class-list
   element-id
   element-set-id!
   element-class-name
@@ -29,6 +31,15 @@
   element-closest
   element-get-attribute-names
   element-get-attribute-ns
+  dom-token-list-raw
+  dom-token-list-value
+  dom-token-list-length
+  dom-token-list-item
+  dom-token-list-contains?
+  dom-token-list-add!
+  dom-token-list-remove!
+  dom-token-list-toggle!
+  dom-token-list-replace!
   element-children
   element-child-element-count
   element-first-element-child
@@ -346,10 +357,12 @@
 (define window-structured-clone any/c)
 (define Document any/c)
 (struct document (raw) #:transparent)
+(struct dom-token-list (raw) #:transparent)
 (struct node (raw) #:transparent)
 (struct text (raw) #:transparent)
 (struct attr (raw) #:transparent)
 (struct dom-rect (raw) #:transparent)
+(define element-class-list any/c)
 (define element-id any/c)
 (define element-set-id! any/c)
 (define element-class-name any/c)
@@ -367,6 +380,14 @@
 (define element-closest any/c)
 (define element-get-attribute-names any/c)
 (define element-get-attribute-ns any/c)
+(define dom-token-list-value any/c)
+(define dom-token-list-length any/c)
+(define dom-token-list-item any/c)
+(define dom-token-list-contains? any/c)
+(define dom-token-list-add! any/c)
+(define dom-token-list-remove! any/c)
+(define dom-token-list-toggle! any/c)
+(define dom-token-list-replace! any/c)
 (define element-children any/c)
 (define element-child-element-count any/c)
 (define element-first-element-child any/c)

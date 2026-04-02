@@ -190,6 +190,84 @@ Returns the closest ancestor matching a CSS selector, or @racket[#f] if
 there is no match.
 }
 
+@section{Element Class Lists}
+
+The @racket[classList] property is exposed as a wrapped browser
+@racket[dom-token-list] value so class tokens can be inspected and
+updated from WebRacket.
+
+@defstruct[dom-token-list ([raw external/raw])]{
+Wraps a browser DOMTokenList object.
+}
+
+@defproc[(dom-token-list-raw [class-list dom-token-list?]) external/raw]{
+Returns the wrapped browser DOMTokenList object.
+}
+
+@defproc[(element-class-list [element element?]) (or/c #f dom-token-list?)]{
+@(mdn-bar "Element: classList property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/classList")
+Returns the element's class list, or @racket[#f] if one is not available.
+}
+
+@defproc[(dom-token-list-value [class-list dom-token-list?]) (or/c #f string?)]{
+@(mdn-bar "DOMTokenList: value property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/value")
+Returns the class list as a single string.
+}
+
+@defproc[(dom-token-list-length [class-list dom-token-list?]) exact-nonnegative-integer?]{
+@(mdn-bar "DOMTokenList: length property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/length")
+Returns the number of class tokens.
+}
+
+@defproc[(dom-token-list-item [class-list dom-token-list?]
+                              [index exact-nonnegative-integer?]) (or/c #f string?)]{
+@(mdn-bar "DOMTokenList: item() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/item")
+Returns the token at @racket[index], or @racket[#f] if the index is out of range.
+}
+
+@defproc[(dom-token-list-contains? [class-list dom-token-list?]
+                                   [token (or/c string? symbol?)]) boolean?]{
+@(mdn-bar "DOMTokenList: contains() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/contains")
+Reports whether the token is present in the class list.
+}
+
+@defproc[(dom-token-list-add! [class-list dom-token-list?]
+                              [token (or/c string? symbol?)] ...)
+         void?]{
+@(mdn-bar "DOMTokenList: add() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/add")
+Adds one or more tokens to the class list. Symbols are accepted and normalized to strings.
+}
+
+@defproc[(dom-token-list-remove! [class-list dom-token-list?]
+                                 [token (or/c string? symbol?)] ...)
+         void?]{
+@(mdn-bar "DOMTokenList: remove() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/remove")
+Removes one or more tokens from the class list. Symbols are accepted and normalized to strings.
+}
+
+@defproc[(dom-token-list-toggle! [class-list dom-token-list?]
+                                 [token (or/c string? symbol?)]
+                                 [force (or/c boolean? procedure?) #f]) boolean?]{
+@(mdn-bar "DOMTokenList: toggle() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/toggle")
+Toggles a token in the class list. Use @racket[#f] to omit @racket[force]; if you need a literal @racket[#f], pass a thunk such as @racket[(lambda () #f)].
+}
+
+@defproc[(dom-token-list-replace! [class-list dom-token-list?]
+                                  [old-token (or/c string? symbol?)]
+                                  [new-token (or/c string? symbol?)]) boolean?]{
+@(mdn-bar "DOMTokenList: replace() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList/replace")
+Replaces one token in the class list with another.
+}
+
 @section{Element Content and Collections}
 
 These helpers cover element children, HTML content, and layout
