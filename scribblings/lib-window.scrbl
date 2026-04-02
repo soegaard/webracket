@@ -2,6 +2,7 @@
 
 @(require scribble/manual
           (for-label (only-in racket/base struct))
+          (for-label (lib "scribblings/lib-window-labels.rkt" "webracket"))
           "webracket-scribble-utils.rkt"
           (for-label (lib "scribblings/lib-document-labels.rkt" "webracket"))
           (for-label (lib "scribblings/lib-iterator-labels.rkt" "webracket")))

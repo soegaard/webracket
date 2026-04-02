@@ -2,11 +2,12 @@
 
 @(require scribble/manual
           (for-label (only-in racket/base struct))
+          (for-label (lib "scribblings/lib-performance-labels.rkt" "webracket"))
           "webracket-scribble-utils.rkt"
-          (for-label (lib "scribblings/lib-iterator-labels.rkt" "webracket"))
-          (for-label (lib "scribblings/lib-performance-labels.rkt" "webracket")))
+          (for-label (lib "scribblings/lib-iterator-labels.rkt" "webracket")))
 
 @title{Library: @racketid[performance]}
+@declare-exporting[(lib "scribblings/lib-performance-labels.rkt" "webracket")]
 
 @(how-to-require include-lib performance (lib "libs/performance.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")
@@ -158,11 +159,6 @@ or inspect the next step directly with the iterator helpers.
 @defstruct[performance-event-count-map ([raw external/raw])]{
 Wraps a browser EventCounts object in the checked struct used by
 @racket[performance-event-counts].
-}
-
-@defproc[(performance-event-count-map-raw [counts performance-event-count-map?])
-         external/raw]{
-Returns the wrapped browser EventCounts object.
 }
 
 @defproc[(performance-event-count-map-size [counts performance-event-count-map?])

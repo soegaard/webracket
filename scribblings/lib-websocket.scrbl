@@ -1,10 +1,12 @@
 #lang scribble/manual
 
 @(require scribble/manual
+          (for-label (lib "scribblings/lib-websocket-labels.rkt" "webracket"))
           "webracket-scribble-utils.rkt"
-          (for-label (lib "scribblings/lib-websocket-labels.rkt" "webracket")))
+          )
 
 @title{Library: @racketid[websocket]}
+@declare-exporting[(lib "scribblings/lib-websocket-labels.rkt" "webracket")]
 
 @(how-to-require include-lib websocket (lib "libs/websocket.rkt"))
 @(compile-option-bar "Compile option: " "--ffi websocket")
@@ -78,16 +80,6 @@ If your page is served over @tt{https}, use @tt{wss://} rather than
 @defstruct[websocket ([raw external/raw])]{
 @racket[websocket-new] returns a wrapped browser WebSocket object.
 The raw browser object is stored in @racket[raw].
-}
-
-@defproc[(websocket-raw [ws websocket?]) external/raw]{
-Returns the underlying browser WebSocket object.
-}
-
-@defproc[(websocket? [x any/c]) boolean?]{
-Returns @racket[#t] when @racket[x] is a wrapped WebSocket value.
-
-The wrapped value is produced by @racket[websocket-new].
 }
 
 @defproc[(check-websocket [who symbol?] [x any/c]) void?]{

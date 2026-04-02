@@ -1,6 +1,7 @@
 #lang scribble/manual
 
 @(require scribble/manual
+          (for-label (lib "scribblings/audio-labels.rkt" "webracket"))
           "webracket-scribble-utils.rkt"
           )
 

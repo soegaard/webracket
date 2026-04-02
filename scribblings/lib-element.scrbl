@@ -1,6 +1,7 @@
 #lang scribble/manual
 
 @(require scribble/manual
+          (for-label (lib "scribblings/lib-element-labels.rkt" "webracket"))
           "webracket-scribble-utils.rkt"
           (for-label (lib "scribblings/lib-document-labels.rkt" "webracket"))
           (for-label (lib "scribblings/lib-domrect-labels.rkt" "webracket"))
