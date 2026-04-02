@@ -8,6 +8,7 @@
   dom
   Window
   (struct-out window)
+  (struct-out node)
   (struct-out element)
   (struct-out text)
   (struct-out attr)
@@ -74,6 +75,11 @@
   document-create-attribute
   document-create-attribute-ns
   document-create-text-node
+  document-create-comment
+  document-create-cdata-section
+  document-create-document-fragment
+  document-create-processing-instruction
+  document-adopt-node
   window-self
   window-document
   (struct-out window-document-info)
@@ -113,6 +119,7 @@
   window-structured-clone
   Document
   (struct-out document)
+  (struct-out node)
   (struct-out attr)
   (struct-out dom-rect)
   (struct-out performance-event-count-map)
@@ -339,6 +346,7 @@
 (define window-structured-clone any/c)
 (define Document any/c)
 (struct document (raw) #:transparent)
+(struct node (raw) #:transparent)
 (struct text (raw) #:transparent)
 (struct attr (raw) #:transparent)
 (struct dom-rect (raw) #:transparent)
@@ -405,6 +413,11 @@
 (define document-create-attribute any/c)
 (define document-create-attribute-ns any/c)
 (define document-create-text-node any/c)
+(define document-create-comment any/c)
+(define document-create-cdata-section any/c)
+(define document-create-document-fragment any/c)
+(define document-create-processing-instruction any/c)
+(define document-adopt-node any/c)
 
 (struct iterator (raw) #:transparent #:constructor-name make-iterator)
 (struct performance-event-count-map (raw) #:transparent)

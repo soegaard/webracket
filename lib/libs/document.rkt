@@ -61,6 +61,35 @@
   (define text* (document-stringish->string 'document-create-text-node text))
   (text-wrap (js-create-text-node text*)))
 
+;; document-create-comment : (or/c string? symbol?) -> node?
+;;   Create a comment node.
+(define (document-create-comment text)
+  (define text* (document-stringish->string 'document-create-comment text))
+  (node-wrap (js-create-comment text*)))
+
+;; document-create-cdata-section : (or/c string? symbol?) -> node?
+;;   Create a CDATA section node.
+(define (document-create-cdata-section text)
+  (define text* (document-stringish->string 'document-create-cdata-section text))
+  (node-wrap (js-create-cdata-section text*)))
+
+;; document-create-document-fragment : -> node?
+;;   Create an empty document fragment.
+(define (document-create-document-fragment)
+  (node-wrap (js-create-document-fragment)))
+
+;; document-create-processing-instruction : (or/c string? symbol?) (or/c string? symbol?) -> node?
+;;   Create a processing instruction node.
+(define (document-create-processing-instruction target data)
+  (define target* (document-stringish->string 'document-create-processing-instruction target))
+  (define data* (document-stringish->string 'document-create-processing-instruction data))
+  (node-wrap (js-create-processing-instruction target* data*)))
+
+;; document-adopt-node : node? -> node?
+;;   Adopt a node into the current document.
+(define (document-adopt-node node)
+  (node-wrap (js-adopt-node (node-unwrap node))))
+
 ;; document-get-element-by-id : (or/c string? symbol?) -> (or/c #f element?)
 ;;   Look up a single element by id.
 (define (document-get-element-by-id id)

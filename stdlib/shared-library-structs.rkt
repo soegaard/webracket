@@ -42,6 +42,27 @@
       (text-raw value)
       value))
 
+;; node : external/raw -> node?
+;;   Wrap a browser Node object.
+(struct node (raw) #:transparent)
+
+;; node-wrap : any/c -> any/c
+;;   Wrap a raw browser Node object, leaving wrapped values alone.
+(define (node-wrap value)
+  (if (or (not value) (node? value) (element? value) (text? value) (attr? value))
+      value
+      (node value)))
+
+;; node-unwrap : any/c -> any/c
+;;   Unwrap a node struct to its raw browser object.
+(define (node-unwrap value)
+  (cond
+    [(node? value) (node-raw value)]
+    [(element? value) (element-raw value)]
+    [(text? value) (text-raw value)]
+    [(attr? value) (attr-raw value)]
+    [else value]))
+
 ;; attr : external/raw -> attr?
 ;;   Wrap a browser Attr node.
 (struct attr (raw) #:transparent)

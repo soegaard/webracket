@@ -61,6 +61,19 @@ Wraps a browser Text node.
 Returns the wrapped browser Text node.
 }
 
+@section{Node Values}
+
+The document node helpers return wrapped browser Node values for node
+types that are not already specialized as text, element, or attr.
+
+@defstruct[node ([raw external/raw])]{
+Wraps a browser Node object.
+}
+
+@defproc[(node-raw [node node?]) external/raw]{
+Returns the wrapped browser Node object.
+}
+
 @section{Attr Values}
 
 The document attribute helpers return wrapped browser Attr values so
@@ -163,6 +176,37 @@ Creates a wrapped namespaced browser attribute node for @racket[name].
 @(mdn-bar "Document: createTextNode() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/createTextNode")
 Creates a wrapped browser text node for @racket[text].
+}
+
+@defproc[(document-create-comment [text (or/c string? symbol?)]) node?]{
+@(mdn-bar "Document: createComment() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Document/createComment")
+Creates a wrapped browser comment node for @racket[text].
+}
+
+@defproc[(document-create-cdata-section [text (or/c string? symbol?)]) node?]{
+@(mdn-bar "Document: createCDATASection() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Document/createCDATASection")
+Creates a wrapped browser CDATA section node for @racket[text].
+}
+
+@defproc[(document-create-document-fragment) node?]{
+@(mdn-bar "Document: createDocumentFragment() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Document/createDocumentFragment")
+Creates a wrapped browser document fragment.
+}
+
+@defproc[(document-create-processing-instruction [target (or/c string? symbol?)]
+                                                 [data (or/c string? symbol?)]) node?]{
+@(mdn-bar "Document: createProcessingInstruction() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Document/createProcessingInstruction")
+Creates a wrapped browser processing instruction node.
+}
+
+@defproc[(document-adopt-node [node node?]) node?]{
+@(mdn-bar "Document: adoptNode() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Document/adoptNode")
+Adopts @racket[node] into the current document and returns the wrapped result.
 }
 
 @defproc[(document-get-element-by-id [id (or/c string? symbol?)]) (or/c #f element?)]{

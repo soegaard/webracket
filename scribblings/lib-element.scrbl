@@ -359,8 +359,8 @@ Returns descendant elements with the matching namespaced tag name as a WebRacket
 
 These helpers insert nodes, text, or HTML around an element. When a raw
 @racket[external] is passed as a node, it should be a browser
-@racketid[Node] value. Wrapped @racket[element] and @racket[text]
-values are also accepted.
+@racketid[Node] value. Wrapped @racket[node], @racket[element], and
+@racket[text] values are also accepted.
 
 @defproc[(element-append! [element element?] [child any/c]) void?]{
 @(mdn-bar "Element: append() method"
