@@ -39,6 +39,43 @@
     [(void? resolved) resolved]
     [else (raise-argument-error who "(or/c string? symbol? #f procedure?)" value)]))
 
+;; media-network-state->symbol : exact-nonnegative-integer? -> symbol?
+;;   Convert a browser networkState code to a symbol.
+(define (media-network-state->symbol code)
+  (case code
+    [(0) 'empty]
+    [(1) 'idle]
+    [(2) 'loading]
+    [(3) 'no-source]
+    [else (string->symbol (number->string code))]))
+
+;; media-autoplay? : external? -> boolean?
+;;   Read whether autoplay is enabled.
+(define (media-autoplay? media)
+  (media-i32->boolean (js-media-autoplay media)))
+
+;; media-set-autoplay! : external? boolean? -> void?
+;;   Enable or disable autoplay.
+(define (media-set-autoplay! media autoplay?)
+  (js-set-media-autoplay! media (if autoplay? 1 0))
+  (void))
+
+;; media-current-src : external? -> string?
+;;   Read the resolved media source URL.
+(define (media-current-src media)
+  (js-media-current-src media))
+
+;; media-cross-origin : external? -> (or/c #f string?)
+;;   Read the CORS mode for media requests.
+(define (media-cross-origin media)
+  (js-media-cross-origin media))
+
+;; media-set-cross-origin! : external? (or/c string? symbol?) -> void?
+;;   Set the CORS mode for media requests.
+(define (media-set-cross-origin! media cross-origin)
+  (js-set-media-cross-origin! media (media-stringish->string 'media-set-cross-origin! cross-origin))
+  (void))
+
 ;; media-current-time : external? -> real?
 ;;   Read the current playback time.
 (define (media-current-time media)
@@ -127,6 +164,16 @@
   (js-set-media-loop! media (if loop? 1 0))
   (void))
 
+;; media-ended? : external? -> boolean?
+;;   Read whether playback has reached the end.
+(define (media-ended? media)
+  (media-i32->boolean (js-media-ended media)))
+
+;; media-paused? : external? -> boolean?
+;;   Read whether playback is paused.
+(define (media-paused? media)
+  (media-i32->boolean (js-media-paused media)))
+
 ;; media-preload : external? -> string?
 ;;   Read the preload hint.
 (define (media-preload media)
@@ -165,6 +212,28 @@
   (js-media-set-media-keys! media (if (media-keys-info? keys)
                                       (media-keys-info-unwrap keys)
                                       keys)))
+
+;; media-media-group : external? -> string?
+;;   Read the media group identifier.
+(define (media-media-group media)
+  (js-media-media-group media))
+
+;; media-set-media-group! : external? (or/c string? symbol?) -> void?
+;;   Set the media group identifier.
+(define (media-set-media-group! media media-group)
+  (js-set-media-media-group! media (media-stringish->string 'media-set-media-group! media-group))
+  (void))
+
+;; media-disable-remote-playback? : external? -> boolean?
+;;   Read whether remote playback is disabled.
+(define (media-disable-remote-playback? media)
+  (media-i32->boolean (js-media-disable-remote-playback media)))
+
+;; media-set-disable-remote-playback! : external? boolean? -> void?
+;;   Enable or disable remote playback.
+(define (media-set-disable-remote-playback! media disabled?)
+  (js-set-media-disable-remote-playback! media (if disabled? 1 0))
+  (void))
 
 ;; media-src-object : external? -> (or/c #f media-stream? media-source-info?)
 ;;   Read the current source object for the media element.
@@ -261,6 +330,21 @@
 ;;   Capture the media as a stream. #f omits the optional frame rate.
 (define (media-capture-stream media [frame-rate #f])
   (media-stream-wrap (js-media-capture-stream media (media-resolve-optional frame-rate))))
+
+;; media-network-state-number : external? -> exact-nonnegative-integer?
+;;   Read the browser network state code.
+(define (media-network-state-number media)
+  (js-media-network-state media))
+
+;; media-network-state : external? -> symbol?
+;;   Read the browser network state as a symbol.
+(define (media-network-state media)
+  (media-network-state->symbol (media-network-state-number media)))
+
+;; media-sink-id : external? -> string?
+;;   Read the current sink id.
+(define (media-sink-id media)
+  (js-media-sink-id media))
 
 ;; media-set-sink-id! : external? (or/c string? symbol?) -> external/raw
 ;;   Choose an output sink if supported.

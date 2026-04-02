@@ -15,6 +15,8 @@
   (struct-out video-track)
   (struct-out time-ranges)
   media-current-time
+  media-autoplay?
+  media-set-autoplay!
   media-volume
   media-set-volume!
   media-muted
@@ -25,6 +27,9 @@
   media-set-default-playback-rate!
   media-playback-rate
   media-set-playback-rate!
+  media-current-src
+  media-cross-origin
+  media-set-cross-origin!
   media-controls?
   media-set-controls!
   media-loop?
@@ -38,6 +43,12 @@
   media-set-media-keys!
   media-src-object
   media-set-src-object!
+  media-ended?
+  media-paused?
+  media-media-group
+  media-set-media-group!
+  media-disable-remote-playback?
+  media-set-disable-remote-playback!
   media-add-text-track!
   media-audio-tracks
   media-buffered
@@ -54,6 +65,9 @@
   media-text-tracks
   media-video-tracks
   media-capture-stream
+  media-network-state
+  media-network-state-number
+  media-sink-id
   audio-track-list-length
   audio-track-list-item
   audio-track-kind
@@ -93,6 +107,8 @@
 (struct time-ranges (raw) #:transparent)
 
 (define media-current-time any/c)
+(define media-autoplay? any/c)
+(define media-set-autoplay! any/c)
 (define media-volume any/c)
 (define media-set-volume! any/c)
 (define media-muted any/c)
@@ -103,10 +119,19 @@
 (define media-set-default-playback-rate! any/c)
 (define media-playback-rate any/c)
 (define media-set-playback-rate! any/c)
+(define media-current-src any/c)
+(define media-cross-origin any/c)
+(define media-set-cross-origin! any/c)
 (define media-controls? any/c)
 (define media-set-controls! any/c)
 (define media-loop? any/c)
 (define media-set-loop! any/c)
+(define media-ended? any/c)
+(define media-paused? any/c)
+(define media-media-group any/c)
+(define media-set-media-group! any/c)
+(define media-disable-remote-playback? any/c)
+(define media-set-disable-remote-playback! any/c)
 (define media-preload any/c)
 (define media-set-preload! any/c)
 (define media-src any/c)
@@ -132,6 +157,9 @@
 (define media-text-tracks any/c)
 (define media-video-tracks any/c)
 (define media-capture-stream any/c)
+(define media-network-state any/c)
+(define media-network-state-number any/c)
+(define media-sink-id any/c)
 (define audio-track-list-length any/c)
 (define audio-track-list-item any/c)
 (define audio-track-kind any/c)

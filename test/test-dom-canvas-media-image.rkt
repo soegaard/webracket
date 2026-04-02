@@ -118,7 +118,13 @@
       kind: 'keys'
     };
     const media = {
+      autoplay: 0,
+      crossOrigin: 'anonymous',
       currentTime: 1.5,
+      currentSrc: 'resolved.ogg',
+      disableRemotePlayback: 0,
+      ended: 0,
+      paused: 1,
       volume: 0.25,
       muted: 1,
       defaultMuted: 0,
@@ -127,8 +133,10 @@
       controls: 1,
       loop: 0,
       preload: 'metadata',
+      mediaGroup: 'group-a',
       src: 'song.ogg',
       currentSrc: 'resolved.ogg',
+      networkState: 1,
       audioTracks: audioTrackList,
       buffered,
       controlsList,
@@ -142,6 +150,7 @@
       fastSeek(t) { this.calls.push(['fastSeek', t]); },
       canPlayType(type) { this.calls.push(['canPlayType', type]); return 'maybe'; },
       seekable: buffered,
+      sinkId: 'default',
       srcObject: mediaSource,
       textTracks: textTrackList,
       videoTracks: videoTrackList,
@@ -220,6 +229,24 @@
          (install!)
          (define media (dom-test-fixture "media"))
          (define img (dom-test-fixture "image"))
+         (check-false (media-autoplay? media) "media autoplay")
+         (media-set-autoplay! media #t)
+         (check-true (media-autoplay? media) "media autoplay set")
+         (check-equal (media-current-src media) "resolved.ogg" "media current src")
+         (check-equal (media-cross-origin media) "anonymous" "media cross origin")
+         (media-set-cross-origin! media 'use-credentials)
+         (check-equal (media-cross-origin media) "use-credentials" "media cross origin set")
+         (check-false (media-disable-remote-playback? media) "media disable remote playback")
+         (media-set-disable-remote-playback! media #t)
+         (check-true (media-disable-remote-playback? media) "media disable remote playback set")
+         (check-false (media-ended? media) "media ended")
+         (check-true (media-paused? media) "media paused")
+         (check-equal (media-media-group media) "group-a" "media group")
+         (media-set-media-group! media 'group-b)
+         (check-equal (media-media-group media) "group-b" "media group set")
+         (check-equal (media-network-state-number media) 1 "media network state number")
+         (check-equal (media-network-state media) 'idle "media network state symbol")
+         (check-equal (media-sink-id media) "default" "media sink id")
          (check-equal (media-current-time media) 1.5 "media current time")
          (media-set-current-time! media 2.75)
          (check-equal (media-current-time media) 2.75 "media current time set")
@@ -347,6 +374,11 @@
          (media-load! media)
          (media-fast-seek! media 42.0)
          (check-equal (js-ref (media-set-sink-id! media 'speaker-1) "id") "speaker-1" "media set sink id")
+         (check-equal (js-ref media "autoplay") #t "media autoplay set raw")
+         (check-equal (js-ref media "crossOrigin") "use-credentials" "media cross origin set raw")
+         (check-equal (js-ref media "disableRemotePlayback") #t "media disable remote playback set raw")
+         (check-equal (js-ref media "mediaGroup") "group-b" "media group set raw")
+         (check-equal (js-ref media "sinkId") "default" "media sink id raw")
          (check-equal (js-ref media "calls")
                       (vector (vector "canPlayType" "audio/ogg")
                               (vector "setMediaKeys" (js-ref media "mediaKeys"))

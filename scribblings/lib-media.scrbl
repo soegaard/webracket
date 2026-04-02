@@ -3,9 +3,10 @@
 @(require scribble/manual
           (for-label (only-in racket/base struct))
           "webracket-scribble-utils.rkt"
-          (for-label (lib "scribblings/lib-media-labels.rkt" "webracket")))
+          )
 
 @title{Library: @racketid[media]}
+@declare-exporting[(lib "scribblings/lib-media-labels.rkt" "webracket")]
 
 @(how-to-require include-lib media (lib "libs/media.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")
@@ -99,6 +100,116 @@ When you only need a few helpers, the most useful entry points are
 @racket[media-src], @racket[media-set-src!], @racket[media-current-time],
 @racket[media-set-current-time!], @racket[media-controls?], and
 @racket[media-set-controls!].
+
+@subsection{Media Properties}
+
+These helpers cover common playback, source, and browser state
+properties on HTML media elements.
+
+@defproc[(media-autoplay? [media external?]) boolean?]{
+@(mdn-bar "HTMLMediaElement: autoplay property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/autoplay")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Reports whether autoplay is enabled.
+}
+
+@defproc[(media-set-autoplay! [media external?] [enabled boolean?]) void?]{
+@(mdn-bar "HTMLMediaElement: autoplay property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/autoplay")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Enables or disables autoplay.
+}
+
+@defproc[(media-current-src [media external?]) string?]{
+@(mdn-bar "HTMLMediaElement: currentSrc property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/currentSrc")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns the resolved media source URL.
+}
+
+@defproc[(media-cross-origin [media external?]) (or/c #f string?)]{
+@(mdn-bar "HTMLMediaElement: crossOrigin property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/crossOrigin")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns the CORS mode for media requests.
+}
+
+@defproc[(media-set-cross-origin! [media external?]
+                                  [cross-origin (or/c string? symbol?)]) void?]{
+@(mdn-bar "HTMLMediaElement: crossOrigin property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/crossOrigin")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Symbols are normalized to strings
+before the browser CORS mode is updated.
+}
+
+@defproc[(media-ended? [media external?]) boolean?]{
+@(mdn-bar "HTMLMediaElement: ended property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/ended")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Reports whether playback has reached the end.
+}
+
+@defproc[(media-paused? [media external?]) boolean?]{
+@(mdn-bar "HTMLMediaElement: paused property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/paused")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Reports whether playback is paused.
+}
+
+@defproc[(media-media-group [media external?]) string?]{
+@(mdn-bar "HTMLMediaElement: mediaGroup property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/mediaGroup")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns the media group identifier.
+}
+
+@defproc[(media-set-media-group! [media external?]
+                                 [media-group (or/c string? symbol?)]) void?]{
+@(mdn-bar "HTMLMediaElement: mediaGroup property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/mediaGroup")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Symbols are normalized to strings
+before the media group is updated.
+}
+
+@defproc[(media-disable-remote-playback? [media external?]) boolean?]{
+@(mdn-bar "HTMLMediaElement: disableRemotePlayback property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/disableRemotePlayback")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Reports whether remote playback is disabled.
+}
+
+@defproc[(media-set-disable-remote-playback! [media external?]
+                                             [disabled boolean?]) void?]{
+@(mdn-bar "HTMLMediaElement: disableRemotePlayback property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/disableRemotePlayback")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Enables or disables remote playback.
+}
+
+@defproc[(media-network-state [media external?]) symbol?]{
+@(mdn-bar "HTMLMediaElement: networkState property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/networkState")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns the network state as a symbol.
+The usual symbols are @racket['empty], @racket['idle], @racket['loading],
+and @racket['no-source].
+}
+
+@defproc[(media-network-state-number [media external?]) exact-nonnegative-integer?]{
+@(mdn-bar "HTMLMediaElement: networkState property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/networkState")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns the network state code.
+}
+
+@defproc[(media-sink-id [media external?]) string?]{
+@(mdn-bar "HTMLMediaElement: sinkId property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/sinkId")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns the current sink id.
+}
 
 @defproc[(media-current-time [media external?]) real?]{
 @(mdn-bar "HTMLMediaElement: currentTime property"
