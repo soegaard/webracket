@@ -12,6 +12,8 @@
   (struct-out shadow-root)
   (struct-out animation)
   (struct-out computed-style-map)
+  (struct-out node-list)
+  (struct-out html-collection)
   (struct-out node)
   (struct-out element)
   (struct-out text)
@@ -93,6 +95,13 @@
   element-scroll!
   element-scroll-by!
   element-scroll-to!
+  node-list-raw
+  node-list-length
+  node-list-item
+  html-collection-raw
+  html-collection-length
+  html-collection-item
+  html-collection-named-item
   element-set-attribute-ns!
   element-toggle-attribute!
   shadow-root-host
@@ -387,6 +396,8 @@
 (struct shadow-root (raw) #:transparent)
 (struct animation (raw) #:transparent)
 (struct computed-style-map (raw) #:transparent)
+(struct node-list (raw) #:transparent)
+(struct html-collection (raw) #:transparent)
 (struct node (raw) #:transparent)
 (struct text (raw) #:transparent)
 (struct attr (raw) #:transparent)
@@ -467,6 +478,11 @@
 (define element-scroll! any/c)
 (define element-scroll-by! any/c)
 (define element-scroll-to! any/c)
+(define node-list-length any/c)
+(define node-list-item any/c)
+(define html-collection-length any/c)
+(define html-collection-item any/c)
+(define html-collection-named-item any/c)
 (define element-set-attribute-ns! any/c)
 (define element-toggle-attribute! any/c)
 (define shadow-root-host any/c)

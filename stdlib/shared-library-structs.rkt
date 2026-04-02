@@ -81,6 +81,42 @@
       (attr-raw value)
       value))
 
+;; node-list : external/raw -> node-list?
+;;   Wrap a browser NodeList object.
+(struct node-list (raw) #:transparent)
+
+;; node-list-wrap : any/c -> any/c
+;;   Wrap a raw browser NodeList object, leaving wrapped values alone.
+(define (node-list-wrap value)
+  (if (or (not value) (node-list? value))
+      value
+      (node-list value)))
+
+;; node-list-unwrap : any/c -> any/c
+;;   Unwrap a node-list struct to its raw browser object.
+(define (node-list-unwrap value)
+  (if (node-list? value)
+      (node-list-raw value)
+      value))
+
+;; html-collection : external/raw -> html-collection?
+;;   Wrap a browser HTMLCollection object.
+(struct html-collection (raw) #:transparent)
+
+;; html-collection-wrap : any/c -> any/c
+;;   Wrap a raw browser HTMLCollection object, leaving wrapped values alone.
+(define (html-collection-wrap value)
+  (if (or (not value) (html-collection? value))
+      value
+      (html-collection value)))
+
+;; html-collection-unwrap : any/c -> any/c
+;;   Unwrap an html-collection struct to its raw browser object.
+(define (html-collection-unwrap value)
+  (if (html-collection? value)
+      (html-collection-raw value)
+      value))
+
 ;; dom-token-list : external/raw -> dom-token-list?
 ;;   Wrap a browser DOMTokenList object.
 (struct dom-token-list (raw) #:transparent)

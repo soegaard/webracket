@@ -221,10 +221,10 @@ Looks up a single element by id.
 Returns the first matching descendant.
 }
 
-@defproc[(document-query-selector-all [selector (or/c string? symbol?)]) vector?]{
+@defproc[(document-query-selector-all [selector (or/c string? symbol?)]) (or/c #f node-list?)]{
 @(mdn-bar "Document: querySelectorAll() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/querySelectorAll")
-Returns all matching descendants as a WebRacket vector of wrapped elements.
+Returns all matching descendants as a wrapped NodeList.
 }
 
 @defproc[(document-element) element?]{

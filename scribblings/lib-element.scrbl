@@ -325,13 +325,62 @@ Reports whether the shadow root delegates focus.
 
 @section{Element Content and Collections}
 
-These helpers cover element children, HTML content, and layout
-collections that are usually easiest to read as WebRacket vectors.
+These helpers cover element children, HTML content, and the browser
+collection objects that expose groups of descendants.
 
-@defproc[(element-children [element element?]) vector?]{
+@defstruct[node-list ([raw external/raw])]{
+Wraps a browser NodeList object.
+}
+
+@defproc[(node-list-raw [node-list node-list?]) external/raw]{
+Returns the wrapped browser NodeList object.
+}
+
+@defproc[(node-list-length [node-list node-list?]) exact-nonnegative-integer?]{
+@(mdn-bar "NodeList: length property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/NodeList/length")
+Returns the number of nodes in the NodeList.
+}
+
+@defproc[(node-list-item [node-list node-list?]
+                         [index exact-nonnegative-integer?]) (or/c #f node?)]{
+@(mdn-bar "NodeList: item() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/NodeList/item")
+Returns the node at the given index, or @racket[#f] if there is none.
+}
+
+@defstruct[html-collection ([raw external/raw])]{
+Wraps a browser HTMLCollection object.
+}
+
+@defproc[(html-collection-raw [collection html-collection?]) external/raw]{
+Returns the wrapped browser HTMLCollection object.
+}
+
+@defproc[(html-collection-length [collection html-collection?]) exact-nonnegative-integer?]{
+@(mdn-bar "HTMLCollection: length property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection/length")
+Returns the number of elements in the HTMLCollection.
+}
+
+@defproc[(html-collection-item [collection html-collection?]
+                               [index exact-nonnegative-integer?]) (or/c #f element?)]{
+@(mdn-bar "HTMLCollection: item() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection/item")
+Returns the element at the given index, or @racket[#f] if there is none.
+}
+
+@defproc[(html-collection-named-item [collection html-collection?]
+                                     [name (or/c string? symbol?)]) (or/c #f element?)]{
+@(mdn-bar "HTMLCollection: namedItem() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection/namedItem")
+Returns the named element, or @racket[#f] if there is none.
+}
+
+@defproc[(element-children [element element?]) (or/c #f html-collection?)]{
 @(mdn-bar "Element: children property"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/children")
-Returns the child elements as a WebRacket vector of wrapped elements.
+Returns the child elements as a wrapped HTMLCollection.
 }
 
 @defproc[(element-child-element-count [element element?]) exact-nonnegative-integer?]{
@@ -460,32 +509,32 @@ Returns the element's client rectangles as a WebRacket vector of wrapped DOMRect
 }
 
 @defproc[(element-query-selector-all [element element?]
-                                     [selector (or/c string? symbol?)]) vector?]{
+                                     [selector (or/c string? symbol?)]) (or/c #f node-list?)]{
 @(mdn-bar "Element: querySelectorAll() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/querySelectorAll")
-Returns all matching descendants as a WebRacket vector of wrapped elements.
+Returns all matching descendants as a wrapped NodeList.
 }
 
 @defproc[(element-get-elements-by-class-name [element element?]
-                                             [class-name (or/c string? symbol?)]) vector?]{
+                                             [class-name (or/c string? symbol?)]) (or/c #f html-collection?)]{
 @(mdn-bar "Element: getElementsByClassName() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/getElementsByClassName")
-Returns descendant elements with the matching class name as a WebRacket vector of wrapped elements.
+Returns descendant elements with the matching class name as a wrapped HTMLCollection.
 }
 
 @defproc[(element-get-elements-by-tag-name [element element?]
-                                           [tag-name (or/c string? symbol?)]) vector?]{
+                                           [tag-name (or/c string? symbol?)]) (or/c #f html-collection?)]{
 @(mdn-bar "Element: getElementsByTagName() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/getElementsByTagName")
-Returns descendant elements with the matching tag name as a WebRacket vector of wrapped elements.
+Returns descendant elements with the matching tag name as a wrapped HTMLCollection.
 }
 
 @defproc[(element-get-elements-by-tag-name-ns [element element?]
                                               [ns (or/c string? symbol?)]
-                                              [tag-name (or/c string? symbol?)]) vector?]{
+                                              [tag-name (or/c string? symbol?)]) (or/c #f html-collection?)]{
 @(mdn-bar "Element: getElementsByTagNameNS() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/getElementsByTagNameNS")
-Returns descendant elements with the matching namespaced tag name as a WebRacket vector of wrapped elements.
+Returns descendant elements with the matching namespaced tag name as a wrapped HTMLCollection.
 }
 
 @section{Element Insertion}
@@ -809,8 +858,8 @@ wrapped DOMRect values.
 }
 
 @defproc[(element-query-selector-all [element element?]
-                                     [selector (or/c string? symbol?)]) vector?]{
+                                     [selector (or/c string? symbol?)]) node-list?]{
 @(mdn-bar "Element: querySelectorAll() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/querySelectorAll")
-Returns all matching descendants as a WebRacket vector of wrapped elements.
+Returns all matching descendants as a wrapped NodeList.
 }

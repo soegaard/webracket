@@ -262,6 +262,32 @@
   (define new-token* (element-stringish->string 'dom-token-list-replace! new-token))
   (js-send/boolean (dom-token-list-unwrap class-list) "replace" (vector old-token* new-token*)))
 
+;; node-list-length : node-list? -> exact-nonnegative-integer?
+;;   Read the number of nodes in a NodeList.
+(define (node-list-length node-list)
+  (js-ref (node-list-unwrap node-list) "length"))
+
+;; node-list-item : node-list? exact-nonnegative-integer? -> (or/c #f node?)
+;;   Read the node at a given index.
+(define (node-list-item node-list index)
+  (node-wrap (js-send/value (node-list-unwrap node-list) "item" (vector index))))
+
+;; html-collection-length : html-collection? -> exact-nonnegative-integer?
+;;   Read the number of elements in an HTMLCollection.
+(define (html-collection-length collection)
+  (js-ref (html-collection-unwrap collection) "length"))
+
+;; html-collection-item : html-collection? exact-nonnegative-integer? -> (or/c #f element?)
+;;   Read the element at a given index.
+(define (html-collection-item collection index)
+  (element-wrap (js-send/value (html-collection-unwrap collection) "item" (vector index))))
+
+;; html-collection-named-item : html-collection? (or/c string? symbol?) -> (or/c #f element?)
+;;   Read the named element, if present.
+(define (html-collection-named-item collection name)
+  (define name* (element-stringish->string 'html-collection-named-item name))
+  (element-wrap (js-send/value (html-collection-unwrap collection) "namedItem" (vector name*))))
+
 ;; element-get-attribute-ns : element? (or/c string? symbol?) (or/c string? symbol?) -> (or/c #f string?)
 ;;   Read a namespaced element attribute.
 (define (element-get-attribute-ns element ns name)
@@ -269,37 +295,32 @@
   (define name* (element-stringish->string 'element-get-attribute-ns name))
   (js-send/value (element-unwrap element) "getAttributeNS" (vector ns* name*)))
 
-;; element-get-elements-by-class-name : element? (or/c string? symbol?) -> vector?
-;;   Read descendant elements with matching class names.
+;; element-get-elements-by-class-name : element? (or/c string? symbol?) -> html-collection?
+;;   Read descendant elements with matching class names as a wrapped HTMLCollection.
 (define (element-get-elements-by-class-name element class-name)
   (define class-name* (element-stringish->string 'element-get-elements-by-class-name class-name))
-  (array-like->vector 'element-get-elements-by-class-name
-                      (js-element-get-elements-by-class-name (element-unwrap element) class-name*)
-                      element-wrap))
+  (html-collection-wrap
+   (js-element-get-elements-by-class-name (element-unwrap element) class-name*)))
 
-;; element-get-elements-by-tag-name : element? (or/c string? symbol?) -> vector?
-;;   Read descendant elements with a matching tag name.
+;; element-get-elements-by-tag-name : element? (or/c string? symbol?) -> html-collection?
+;;   Read descendant elements with a matching tag name as a wrapped HTMLCollection.
 (define (element-get-elements-by-tag-name element tag-name)
   (define tag-name* (element-stringish->string 'element-get-elements-by-tag-name tag-name))
-  (array-like->vector 'element-get-elements-by-tag-name
-                      (js-element-get-elements-by-tag-name (element-unwrap element) tag-name*)
-                      element-wrap))
+  (html-collection-wrap
+   (js-element-get-elements-by-tag-name (element-unwrap element) tag-name*)))
 
-;; element-get-elements-by-tag-name-ns : element? (or/c string? symbol?) (or/c string? symbol?) -> vector?
-;;   Read descendant elements with a matching namespaced tag name.
+;; element-get-elements-by-tag-name-ns : element? (or/c string? symbol?) (or/c string? symbol?) -> html-collection?
+;;   Read descendant elements with a matching namespaced tag name as a wrapped HTMLCollection.
 (define (element-get-elements-by-tag-name-ns element ns tag-name)
   (define ns* (element-stringish->string 'element-get-elements-by-tag-name-ns ns))
   (define tag-name* (element-stringish->string 'element-get-elements-by-tag-name-ns tag-name))
-  (array-like->vector 'element-get-elements-by-tag-name-ns
-                      (js-element-get-elements-by-tag-name-ns (element-unwrap element) ns* tag-name*)
-                      element-wrap))
+  (html-collection-wrap
+   (js-element-get-elements-by-tag-name-ns (element-unwrap element) ns* tag-name*)))
 
-;; element-children : element? -> vector?
-;;   Read the child elements as wrapped elements.
+;; element-children : element? -> html-collection?
+;;   Read the child elements as a wrapped HTMLCollection.
 (define (element-children element)
-  (array-like->vector 'element-children
-                      (element-prop-ref element "children")
-                      element-wrap))
+  (html-collection-wrap (element-prop-ref element "children")))
 
 ;; element-scroll-top : element? -> real?
 ;;   Read an element's vertical scroll offset.
@@ -502,16 +523,15 @@
 (define (element-query-selector element selector)
   (query-selector element selector))
 
-;; query-selector-all : external? (or/c string? symbol?) -> vector?
-;;   Find all matching descendants as wrapped elements.
+;; query-selector-all : external? (or/c string? symbol?) -> node-list?
+;;   Find all matching descendants as a wrapped NodeList.
 (define (query-selector-all element selector)
   (define selector* (element-stringish->string 'query-selector-all selector))
-  (array-like->vector 'query-selector-all
-                      (js-element-query-selector-all (element-unwrap element) selector*)
-                      element-wrap))
+  (node-list-wrap
+   (js-element-query-selector-all (element-unwrap element) selector*)))
 
-;; element-query-selector-all : element? (or/c string? symbol?) -> vector?
-;;   Find all matching descendants as wrapped elements.
+;; element-query-selector-all : element? (or/c string? symbol?) -> node-list?
+;;   Find all matching descendants as a wrapped NodeList.
 (define (element-query-selector-all element selector)
   (query-selector-all element selector))
 

@@ -102,13 +102,11 @@
   (define selector* (document-stringish->string 'document-query-selector selector))
   (element-wrap (js-query-selector selector*)))
 
-;; document-query-selector-all : (or/c string? symbol?) -> vector?
-;;   Return all elements matching a selector as a wrapped vector.
+;; document-query-selector-all : (or/c string? symbol?) -> node-list?
+;;   Return all elements matching a selector as a wrapped NodeList.
 (define (document-query-selector-all selector)
   (define selector* (document-stringish->string 'document-query-selector-all selector))
-  (array-like->vector 'document-query-selector-all
-                      (js-query-selector-all selector*)
-                      element-wrap))
+  (node-list-wrap (js-query-selector-all selector*)))
 
 ;; document-has-focus? : -> boolean?
 ;;   Report whether the document currently has focus.
