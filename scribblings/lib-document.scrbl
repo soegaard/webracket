@@ -14,6 +14,8 @@
 The @racket[document] library is the checked wrapper for the browser's
 current page document.
 
+@margin-note{This chapter focuses on checked wrappers.}
+
 If you are new to browser programming, think of the document as the
 tree of things currently on the page. It is where the page's elements
 live, and it is the starting point for finding or creating content.
@@ -29,11 +31,65 @@ Use @racket[Document] when you want to:
 
 The @racket[document] library provides a checked wrapper for the current
 document, plus wrapped element helpers for lookup and selector queries.
-The raw accessors for the document family live in the
-@seclink["raw-accessors"]{Raw Accessors} appendix.
+
+@margin-note{These entries are checked structs, not raw browser objects.}
 
 When a browser method expects a string, the wrapper also accepts a
 symbol and normalizes it to a string.
+
+@section{Document Quick Start}
+
+Start by including the library, grabbing the current document, and
+finding a useful part of the page.
+
+@racketblock[
+(code:comment "Include the checked document wrapper library.")
+(include-lib document)
+
+(code:comment "Get the current document.")
+(define doc
+  (Document))
+
+(code:comment "Look for the page body or another element you care about.")
+(define body
+  (document-body))
+
+(code:comment "Create a new paragraph element for later use.")
+(define note
+  (document-create-element "p"))
+]
+
+The quick start shows the three basic ideas: access the current
+document, inspect the existing page, and create a new element.
+
+@section{Document Example}
+
+This example shows the usual pattern for page work: get the document,
+create a new node, and prepare it to be inserted into the page.
+
+@racketblock[
+(code:comment "Include the document wrapper library.")
+(include-lib document)
+
+(code:comment "Get the current document and its body element.")
+(define doc
+  (Document))
+(define body
+  (document-body))
+
+(code:comment "Create a new element that can be configured before insertion.")
+(define note
+  (document-create-element "p"))
+
+(code:comment "Use a selector when you need to find an existing part of the page.")
+(define main-area
+  (document-query-selector "main"))
+]
+
+If you already know the page element you want, the most useful entry
+points are usually @racket[document-body], @racket[document-head],
+@racket[document-get-element-by-id], @racket[document-query-selector],
+and @racket[document-create-element].
 
 @section{Document Values}
 
@@ -118,60 +174,6 @@ Returns the selected text as a string.
           "https://developer.mozilla.org/en-US/docs/Web/API/Selection/removeAllRanges")
 Removes all ranges from the selection.
 }
-
-@section{Document Quick Start}
-
-Start by including the library, grabbing the current document, and
-finding a useful part of the page.
-
-@racketblock[
-(code:comment "Include the checked document wrapper library.")
-(include-lib document)
-
-(code:comment "Get the current document.")
-(define doc
-  (Document))
-
-(code:comment "Look for the page body or another element you care about.")
-(define body
-  (document-body))
-
-(code:comment "Create a new paragraph element for later use.")
-(define note
-  (document-create-element "p"))
-]
-
-The quick start shows the three basic ideas: access the current
-document, inspect the existing page, and create a new element.
-
-@section{Document Example}
-
-This example shows the usual pattern for page work: get the document,
-create a new node, and prepare it to be inserted into the page.
-
-@racketblock[
-(code:comment "Include the document wrapper library.")
-(include-lib document)
-
-(code:comment "Get the current document and its body element.")
-(define doc
-  (Document))
-(define body
-  (document-body))
-
-(code:comment "Create a new element that can be configured before insertion.")
-(define note
-  (document-create-element "p"))
-
-(code:comment "Use a selector when you need to find an existing part of the page.")
-(define main-area
-  (document-query-selector "main"))
-]
-
-If you already know the page element you want, the most useful entry
-points are usually @racket[document-body], @racket[document-head],
-@racket[document-get-element-by-id], @racket[document-query-selector],
-and @racket[document-create-element].
 
 @defproc[(document-body) (or/c #f element?)]{
 @(mdn-bar "Document: body property"
