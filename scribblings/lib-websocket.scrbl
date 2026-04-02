@@ -51,8 +51,7 @@ and send messages when you are ready.
 (include-lib websocket)
 
 (code:comment "Open a WebSocket connection.")
-(define ws
-  (websocket-new "wss://echo-websocket.fly.dev/"))
+(define ws (websocket-new "wss://echo-websocket.fly.dev/"))
 
 (code:comment "Run code when the connection opens.")
 (websocket-onopen! ws

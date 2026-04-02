@@ -69,18 +69,14 @@ create a new node, and prepare it to be inserted into the page.
 (include-lib document)
 
 (code:comment "Get the current document and its body element.")
-(define doc
-  (Document))
-(define body
-  (document-body))
+(define doc (Document))
+(define body (document-body))
 
 (code:comment "Create a new element that can be configured before insertion.")
-(define note
-  (document-create-element "p"))
+(define note (document-create-element "p"))
 
 (code:comment "Use a selector when you need to find an existing part of the page.")
-(define main-area
-  (document-query-selector "main"))
+(define main-area (document-query-selector "main"))
 ]
 
 If you already know the page element you want, the most useful entry

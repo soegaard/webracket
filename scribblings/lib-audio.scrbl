@@ -48,12 +48,10 @@ to the destination, and start it.
 (include-lib audio)
 
 (code:comment "Create an audio context.")
-(define ctx
-  (audio-context-new))
+(define ctx (audio-context-new))
 
 (code:comment "Create an oscillator node.")
-(define osc
-  (audio-context-create-oscillator ctx))
+(define osc (audio-context-create-oscillator ctx))
 
 (code:comment "Set the oscillator shape, connect it, and start it.")
 (audio-oscillator-node-set-type! osc 'sine)

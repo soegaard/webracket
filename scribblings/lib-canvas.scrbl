@@ -118,12 +118,10 @@ a filled rectangle.
 (include-lib canvas)
 
 (code:comment "Create a new canvas element.")
-(define canvas-el
-  (document-create-element "canvas"))
+(define canvas-el (document-create-element "canvas"))
 
 (code:comment "Get the 2D drawing context from the canvas.")
-(define ctx
-  (canvas-get-context canvas-el '2d #f))
+(define ctx (canvas-get-context canvas-el '2d #f))
 
 (code:comment "Draw a simple filled rectangle.")
 (canvas-2d-fill-rect ctx 10 10 120 50)
@@ -143,8 +141,7 @@ This example shows how to add a canvas to the page and then paint it.
 (include-lib canvas)
 
 (code:comment "Create and size a canvas element.")
-(define canvas-el
-  (document-create-element "canvas"))
+(define canvas-el (document-create-element "canvas"))
 (set-attribute! canvas-el "width" "240")
 (set-attribute! canvas-el "height" "120")
 
@@ -152,8 +149,7 @@ This example shows how to add a canvas to the page and then paint it.
 (append-child! (document-body) canvas-el)
 
 (code:comment "Get the 2D drawing context and paint a box.")
-(define ctx
-  (canvas-get-context canvas-el '2d #f))
+(define ctx (canvas-get-context canvas-el '2d #f))
 (canvas-2d-fill-rect ctx 20 20 80 40)
 ]
 

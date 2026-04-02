@@ -2,9 +2,10 @@
 
 @(require scribble/manual
           "webracket-scribble-utils.rkt"
-          (for-label (lib "scribblings/lib-domrect-labels.rkt" "webracket")))
+          )
 
 @title{Library: @racketid[domrect]}
+@declare-exporting[(lib "scribblings/lib-domrect-labels.rkt" "webracket")]
 
 @(how-to-require include-lib domrect (lib "libs/domrect.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")
@@ -65,12 +66,10 @@ its basic measurements.
 (include-lib domrect)
 
 (code:comment "Find an element whose rectangle we want to inspect.")
-(define card
-  (document-query-selector ".card"))
+(define card (document-query-selector ".card"))
 
 (code:comment "Ask the browser for the rectangle around that element.")
-(define rect
-  (get-bounding-client-rect card))
+(define rect (get-bounding-client-rect card))
 
 (code:comment "Read the rectangle's position and size.")
 (list (dom-rect-left rect)
@@ -95,12 +94,10 @@ its bounding rectangle, and then read the measurements with the
 (include-lib domrect)
 
 (code:comment "Find a page element whose geometry we want to inspect.")
-(define card
-  (document-query-selector ".card"))
+(define card (document-query-selector ".card"))
 
 (code:comment "Ask the browser for the rectangle around that element.")
-(define rect
-  (get-bounding-client-rect card))
+(define rect (get-bounding-client-rect card))
 
 (code:comment "Read the rectangle values in a Racket-friendly way.")
 (list (dom-rect-left rect)

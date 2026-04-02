@@ -42,8 +42,7 @@ checking whether the browser has finished loading it.
 (include-lib image)
 
 (code:comment "Create a new image element.")
-(define img
-  (image-new))
+(define img (image-new))
 
 (code:comment "Set the image source and a short description.")
 (image-set-src! img "/images/logo.png")
@@ -66,16 +65,13 @@ the browser's view of it.
 (include-lib image)
 
 (code:comment "Create an image element and configure it before use.")
-(define img
-  (image-new))
+(define img (image-new))
 (image-set-src! img "/images/logo.png")
 (image-set-alt! img "Project logo")
 
 (code:comment "Read the current source URL and loading state.")
-(define current
-  (image-src img))
-(define loaded?
-  (image-complete? img))
+(define current (image-src img))
+(define loaded? (image-complete? img))
 
 (void current loaded?)
 ]

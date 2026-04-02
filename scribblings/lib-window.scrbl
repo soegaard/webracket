@@ -78,12 +78,10 @@ page update without blocking the current event handler.
 (include-lib window)
 
 (code:comment "Capture the current browser Window object.")
-(define win
-  (Window))
+(define win (Window))
 
 (code:comment "Get the current document so we can inspect the page.")
-(define doc
-  (window-document))
+(define doc (window-document))
 
 (code:comment "Keep the wrapped document value around for later DOM work.")
 

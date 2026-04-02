@@ -40,8 +40,7 @@ the event before acting on it.
 
 (code:comment "Define a small handler that reads the event type.")
 (define (handle-event evt)
-  (define kind
-    (event-type evt))
+  (define kind (event-type evt))
   kind)
 
 (code:comment "The handler can be used from element or window event hooks.")
@@ -64,8 +63,7 @@ own logic.
 (code:comment "Handle a browser event in a small, readable function.")
 (define (handle-click evt)
   (code:comment "Read the browser event type.")
-  (define kind
-    (event-type evt))
+  (define kind (event-type evt))
 
   (code:comment "Stop the browser from doing its default action.")
   (prevent-default! evt)

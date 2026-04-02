@@ -46,17 +46,13 @@ small piece of work.
 (include-lib performance)
 
 (code:comment "Capture the starting timestamp.")
-(define start
-  (performance-now))
+(define start (performance-now))
 
 (code:comment "Do the work you want to measure.")
-(define total
-  (for/sum ([n (in-range 1000)])
-    n))
+(define total (for/sum ([n (in-range 1000)]) n))
 
 (code:comment "Capture the ending timestamp and compute the duration.")
-(define elapsed
-  (- (performance-now) start))
+(define elapsed (- (performance-now) start))
 ]
 
 The quick start shows the simplest path: call
@@ -84,19 +80,15 @@ piece of work, not just a raw duration.
 (performance-mark "compile-start")
 
 (code:comment "Pretend to do some work.")
-(define total
-  (for/sum ([n (in-range 1000)])
-    n))
+(define total (for/sum ([n (in-range 1000)]) n))
 
 (code:comment "Record the end of the work and create a measure entry.")
 (performance-mark "compile-end")
 (performance-measure "compile-span" "compile-start" "compile-end")
 
 (code:comment "Look up the entries that were just created.")
-(define marks
-  (performance-get-entries-by-name "compile-start"))
-(define measures
-  (performance-get-entries-by-name "compile-span" "measure"))
+(define marks (performance-get-entries-by-name "compile-start"))
+(define measures (performance-get-entries-by-name "compile-span" "measure"))
 ]
 
 The example shows the usual workflow:

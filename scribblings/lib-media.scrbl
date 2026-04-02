@@ -60,8 +60,7 @@ playback position.
 (include-lib media)
 
 (code:comment "Create an audio element we can configure.")
-(define player
-  (document-create-element "audio"))
+(define player (document-create-element "audio"))
 
 (code:comment "Point the element at some media and show controls.")
 (media-set-src! player "/audio/theme.ogg")
@@ -85,15 +84,13 @@ and seeks it to a new position.
 (include-lib media)
 
 (code:comment "Create a media element and configure it for playback.")
-(define player
-  (document-create-element "audio"))
+(define player (document-create-element "audio"))
 
 (media-set-src! player "/audio/theme.ogg")
 (media-set-controls! player #t)
 
 (code:comment "Read and then adjust the playback position.")
-(define before
-  (media-current-time player))
+(define before (media-current-time player))
 (media-set-current-time! player (+ before 5))
 
 (code:comment "Check whether the browser still considers the element controlled.")

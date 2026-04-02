@@ -3,9 +3,10 @@
 @(require scribble/manual
           (for-label (only-in racket/base struct))
           "webracket-scribble-utils.rkt"
-          (for-label (lib "scribblings/lib-iterator-labels.rkt" "webracket")))
+          )
 
 @title{Library: @racketid[iterator]}
+@declare-exporting[(lib "scribblings/lib-iterator-labels.rkt" "webracket")]
 
 @(how-to-require include-lib iterator (lib "libs/iterator.rkt"))
 @(compile-option-bar "Compile option: " "--ffi standard")
@@ -42,16 +43,13 @@ Start by including the library, turning a JavaScript iterable into an
 (include-lib iterator)
 
 (code:comment "Create a JavaScript iterator in the browser.")
-(define source
-  (js-eval "[1, 2, 3].values()"))
+(define source (js-eval "[1, 2, 3].values()"))
 
 (code:comment "Convert the source into the standard Iterator form.")
-(define iter
-  (iterator-from source))
+(define iter (iterator-from source))
 
 (code:comment "Ask the iterator for its first step.")
-(define first-step
-  (iterator-next iter))
+(define first-step (iterator-next iter))
 ]
 
 The quick start shows the core pattern: convert an existing iterator or
@@ -69,12 +67,10 @@ value.
 (include-lib iterator)
 
 (code:comment "Create a JavaScript iterator from an array.")
-(define source
-  (js-eval "[1, 2, 3].values()"))
+(define source (js-eval "[1, 2, 3].values()"))
 
 (code:comment "Convert it to the standard Iterator form.")
-(define iter
-  (iterator-from source))
+(define iter (iterator-from source))
 
 (code:comment "Double each value as it flows through the iterator.")
 (define doubled
@@ -83,8 +79,7 @@ value.
                   (* n 2))))
 
 (code:comment "Take the results back into a normal WebRacket value.")
-(define result
-  (iterator->vector doubled))
+(define result (iterator->vector doubled))
 ]
 
 After this code runs, @racket[result] is @racket[#(2 4 6)].
