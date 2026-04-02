@@ -396,6 +396,149 @@
       (media-stream-raw value)
       value))
 
+;; audio-track : external/raw -> audio-track?
+;;   Wrap a browser AudioTrack object.
+(struct audio-track (raw) #:transparent)
+
+;; audio-track-wrap : any/c -> any/c
+;;   Wrap a raw browser AudioTrack object, leaving wrapped values alone.
+(define (audio-track-wrap value)
+  (if (or (not value) (audio-track? value))
+      value
+      (audio-track value)))
+
+;; audio-track-unwrap : any/c -> any/c
+;;   Unwrap an audio-track struct to its raw browser object.
+(define (audio-track-unwrap value)
+  (if (audio-track? value)
+      (audio-track-raw value)
+      value))
+
+;; audio-track-kind : audio-track? -> string?
+;;   Read the browser track kind.
+(define (audio-track-kind track)
+  (js-ref (audio-track-unwrap track) "kind"))
+
+;; audio-track-label : audio-track? -> string?
+;;   Read the browser track label.
+(define (audio-track-label track)
+  (js-ref (audio-track-unwrap track) "label"))
+
+;; audio-track-language : audio-track? -> string?
+;;   Read the browser track language.
+(define (audio-track-language track)
+  (js-ref (audio-track-unwrap track) "language"))
+
+;; audio-track-id : audio-track? -> string?
+;;   Read the browser track id.
+(define (audio-track-id track)
+  (js-ref (audio-track-unwrap track) "id"))
+
+;; audio-track-enabled? : audio-track? -> boolean?
+;;   Read whether the audio track is enabled.
+(define (audio-track-enabled? track)
+  (js-ref (audio-track-unwrap track) "enabled"))
+
+;; audio-track-set-enabled! : audio-track? boolean? -> void?
+;;   Enable or disable the audio track.
+(define (audio-track-set-enabled! track enabled?)
+  (js-set! (audio-track-unwrap track) "enabled" enabled?)
+  (void))
+
+;; text-track : external/raw -> text-track?
+;;   Wrap a browser TextTrack object.
+(struct text-track (raw) #:transparent)
+
+;; text-track-wrap : any/c -> any/c
+;;   Wrap a raw browser TextTrack object, leaving wrapped values alone.
+(define (text-track-wrap value)
+  (if (or (not value) (text-track? value))
+      value
+      (text-track value)))
+
+;; text-track-unwrap : any/c -> any/c
+;;   Unwrap a text-track struct to its raw browser object.
+(define (text-track-unwrap value)
+  (if (text-track? value)
+      (text-track-raw value)
+      value))
+
+;; text-track-kind : text-track? -> string?
+;;   Read the browser track kind.
+(define (text-track-kind track)
+  (js-ref (text-track-unwrap track) "kind"))
+
+;; text-track-label : text-track? -> string?
+;;   Read the browser track label.
+(define (text-track-label track)
+  (js-ref (text-track-unwrap track) "label"))
+
+;; text-track-language : text-track? -> string?
+;;   Read the browser track language.
+(define (text-track-language track)
+  (js-ref (text-track-unwrap track) "language"))
+
+;; text-track-id : text-track? -> string?
+;;   Read the browser track id.
+(define (text-track-id track)
+  (js-ref (text-track-unwrap track) "id"))
+
+;; text-track-mode : text-track? -> string?
+;;   Read the browser track mode.
+(define (text-track-mode track)
+  (js-ref (text-track-unwrap track) "mode"))
+
+;; text-track-set-mode! : text-track? (or/c string? symbol?) -> void?
+;;   Set the browser track mode.
+(define (text-track-set-mode! track mode)
+  (js-set! (text-track-unwrap track)
+           "mode"
+           (if (symbol? mode) (symbol->string mode) mode))
+  (void))
+
+;; video-track : external/raw -> video-track?
+;;   Wrap a browser VideoTrack object.
+(struct video-track (raw) #:transparent)
+
+;; video-track-wrap : any/c -> any/c
+;;   Wrap a raw browser VideoTrack object, leaving wrapped values alone.
+(define (video-track-wrap value)
+  (if (or (not value) (video-track? value))
+      value
+      (video-track value)))
+
+;; video-track-unwrap : any/c -> any/c
+;;   Unwrap a video-track struct to its raw browser object.
+(define (video-track-unwrap value)
+  (if (video-track? value)
+      (video-track-raw value)
+      value))
+
+;; video-track-kind : video-track? -> string?
+;;   Read the browser track kind.
+(define (video-track-kind track)
+  (js-ref (video-track-unwrap track) "kind"))
+
+;; video-track-label : video-track? -> string?
+;;   Read the browser track label.
+(define (video-track-label track)
+  (js-ref (video-track-unwrap track) "label"))
+
+;; video-track-language : video-track? -> string?
+;;   Read the browser track language.
+(define (video-track-language track)
+  (js-ref (video-track-unwrap track) "language"))
+
+;; video-track-id : video-track? -> string?
+;;   Read the browser track id.
+(define (video-track-id track)
+  (js-ref (video-track-unwrap track) "id"))
+
+;; video-track-selected? : video-track? -> boolean?
+;;   Read whether the video track is selected.
+(define (video-track-selected? track)
+  (js-ref (video-track-unwrap track) "selected"))
+
 ;; media-error-info : external/raw -> media-error-info?
 ;;   Wrap a browser MediaError object.
 (struct media-error-info (raw) #:transparent)
@@ -447,10 +590,10 @@
 (define (audio-track-list-length track-list)
   (js-ref (audio-track-list-unwrap track-list) "length"))
 
-;; audio-track-list-item : audio-track-list? exact-nonnegative-integer? -> (or/c #f external/raw)
+;; audio-track-list-item : audio-track-list? exact-nonnegative-integer? -> (or/c #f audio-track?)
 ;;   Read an audio track by index.
 (define (audio-track-list-item track-list index)
-  (js-send/extern/nullish (audio-track-list-unwrap track-list) "item" (vector index)))
+  (audio-track-wrap (js-send/extern/nullish (audio-track-list-unwrap track-list) "item" (vector index))))
 
 ;; text-track-list : external/raw -> text-track-list?
 ;;   Wrap a browser TextTrackList object.
@@ -475,10 +618,10 @@
 (define (text-track-list-length track-list)
   (js-ref (text-track-list-unwrap track-list) "length"))
 
-;; text-track-list-item : text-track-list? exact-nonnegative-integer? -> (or/c #f external/raw)
+;; text-track-list-item : text-track-list? exact-nonnegative-integer? -> (or/c #f text-track?)
 ;;   Read a text track by index.
 (define (text-track-list-item track-list index)
-  (js-send/extern/nullish (text-track-list-unwrap track-list) "item" (vector index)))
+  (text-track-wrap (js-send/extern/nullish (text-track-list-unwrap track-list) "item" (vector index))))
 
 ;; video-track-list : external/raw -> video-track-list?
 ;;   Wrap a browser VideoTrackList object.
@@ -503,10 +646,10 @@
 (define (video-track-list-length track-list)
   (js-ref (video-track-list-unwrap track-list) "length"))
 
-;; video-track-list-item : video-track-list? exact-nonnegative-integer? -> (or/c #f external/raw)
+;; video-track-list-item : video-track-list? exact-nonnegative-integer? -> (or/c #f video-track?)
 ;;   Read a video track by index.
 (define (video-track-list-item track-list index)
-  (js-send/extern/nullish (video-track-list-unwrap track-list) "item" (vector index)))
+  (video-track-wrap (js-send/extern/nullish (video-track-list-unwrap track-list) "item" (vector index))))
 
 ;; time-ranges : external/raw -> time-ranges?
 ;;   Wrap a browser TimeRanges object.

@@ -77,22 +77,22 @@
     const audioTrackList = {
       length: 2,
       item(index) {
-        if (index === 0) return { kind: 'audio', id: 'audio-0' };
-        if (index === 1) return { kind: 'audio', id: 'audio-1' };
+        if (index === 0) return { kind: 'audio', id: 'audio-0', label: 'Audio 0', language: 'en', enabled: true };
+        if (index === 1) return { kind: 'audio', id: 'audio-1', label: 'Audio 1', language: 'fr', enabled: false };
         return null;
       }
     };
     const textTrackList = {
       length: 1,
       item(index) {
-        if (index === 0) return { kind: 'subtitles', id: 'text-0' };
+        if (index === 0) return { kind: 'subtitles', id: 'text-0', label: 'Captions', language: 'en', mode: 'disabled' };
         return null;
       }
     };
     const videoTrackList = {
       length: 1,
       item(index) {
-        if (index === 0) return { kind: 'main', id: 'video-0' };
+        if (index === 0) return { kind: 'main', id: 'video-0', label: 'Main', language: 'en', selected: true };
         return null;
       }
     };
@@ -136,6 +136,10 @@
       textTracks: textTrackList,
       videoTracks: videoTrackList,
       captureStream(frameRate) { this.calls.push(['captureStream', frameRate]); return mediaStream; },
+      addTextTrack(kind, label, language) {
+        this.calls.push(['addTextTrack', kind, label, language]);
+        return { kind, label, language, id: 'added-0', mode: 'hidden' };
+      },
       setSinkId(id) { this.calls.push(['setSinkId', id]); return { kind: 'sink', id }; }
     };
     window.__domTest.canvas = canvas;
@@ -219,13 +223,31 @@
          (media-set-src! media 'track.ogg)
          (check-equal (media-src media) "track.ogg" "media src set")
          (check-equal (media-can-play-type media 'audio/ogg) "maybe" "media can-play-type")
+         (define added-track (media-add-text-track! media 'subtitles 'captions 'en))
+         (check-true (text-track? added-track) "media add text track")
+         (check-equal (text-track-kind added-track) "subtitles" "media added track kind")
+         (check-equal (text-track-label added-track) "captions" "media added track label")
+         (check-equal (text-track-language added-track) "en" "media added track language")
+         (check-equal (text-track-id added-track) "added-0" "media added track id")
+         (check-equal (text-track-mode added-track) "hidden" "media added track mode")
+         (text-track-set-mode! added-track 'showing)
+         (check-equal (text-track-mode added-track) "showing" "media added track mode set")
          (define captured (media-capture-stream media 60.0))
          (check-true (dom-token-list? (media-controls-list media)) "media controls list")
          (check-equal (dom-token-list-value (media-controls-list media)) "nodownload" "media controls list value")
          (check-true (dom-token-list-contains? (media-controls-list media) 'nodownload) "media controls list contains")
-         (check-true (audio-track-list? (media-audio-tracks media)) "media audio tracks")
-         (check-equal (audio-track-list-length (media-audio-tracks media)) 2 "media audio track length")
-         (check-equal (js-ref (audio-track-list-item (media-audio-tracks media) 1) "id") "audio-1" "media audio track item")
+         (define audio-tracks (media-audio-tracks media))
+         (check-true (audio-track-list? audio-tracks) "media audio tracks")
+         (check-equal (audio-track-list-length audio-tracks) 2 "media audio track length")
+         (define audio-track (audio-track-list-item audio-tracks 1))
+         (check-true (audio-track? audio-track) "media audio track item")
+         (check-equal (audio-track-id audio-track) "audio-1" "media audio track id")
+         (check-equal (audio-track-kind audio-track) "audio" "media audio track kind")
+         (check-equal (audio-track-label audio-track) "Audio 1" "media audio track label")
+         (check-equal (audio-track-language audio-track) "fr" "media audio track language")
+         (check-false (audio-track-enabled? audio-track) "media audio track enabled")
+         (audio-track-set-enabled! audio-track #t)
+         (check-true (audio-track-enabled? audio-track) "media audio track enabled set")
          (check-true (time-ranges? (media-buffered media)) "media buffered")
          (check-equal (time-ranges-length (media-buffered media)) 2 "media buffered length")
          (check-equal (time-ranges-start (media-buffered media) 0) 0.5 "media buffered start")
@@ -235,12 +257,28 @@
          (check-equal (media-error-info-message (media-error media)) "media failure" "media error message")
          (check-true (time-ranges? (media-played media)) "media played")
          (check-true (time-ranges? (media-seekable media)) "media seekable")
-         (check-true (text-track-list? (media-text-tracks media)) "media text tracks")
-         (check-equal (text-track-list-length (media-text-tracks media)) 1 "media text track length")
-         (check-equal (js-ref (text-track-list-item (media-text-tracks media) 0) "id") "text-0" "media text track item")
-         (check-true (video-track-list? (media-video-tracks media)) "media video tracks")
-         (check-equal (video-track-list-length (media-video-tracks media)) 1 "media video track length")
-         (check-equal (js-ref (video-track-list-item (media-video-tracks media) 0) "id") "video-0" "media video track item")
+         (define text-tracks (media-text-tracks media))
+         (check-true (text-track-list? text-tracks) "media text tracks")
+         (check-equal (text-track-list-length text-tracks) 1 "media text track length")
+         (define text-track (text-track-list-item text-tracks 0))
+         (check-true (text-track? text-track) "media text track item")
+         (check-equal (text-track-id text-track) "text-0" "media text track id")
+         (check-equal (text-track-kind text-track) "subtitles" "media text track kind")
+         (check-equal (text-track-label text-track) "Captions" "media text track label")
+         (check-equal (text-track-language text-track) "en" "media text track language")
+         (check-equal (text-track-mode text-track) "disabled" "media text track mode")
+         (text-track-set-mode! text-track 'showing)
+         (check-equal (text-track-mode text-track) "showing" "media text track mode set")
+         (define video-tracks (media-video-tracks media))
+         (check-true (video-track-list? video-tracks) "media video tracks")
+         (check-equal (video-track-list-length video-tracks) 1 "media video track length")
+         (define video-track (video-track-list-item video-tracks 0))
+         (check-true (video-track? video-track) "media video track item")
+         (check-equal (video-track-id video-track) "video-0" "media video track id")
+         (check-equal (video-track-kind video-track) "main" "media video track kind")
+         (check-equal (video-track-label video-track) "Main" "media video track label")
+         (check-equal (video-track-language video-track) "en" "media video track language")
+         (check-true (video-track-selected? video-track) "media video track selected")
          (check-true (media-stream? captured) "media capture stream")
          (check-equal (js-ref (media-stream-raw captured) "kind") "stream" "media capture stream raw")
          (check-equal (js-ref (media-play media) "kind") "play-promise" "media play")
@@ -250,6 +288,7 @@
          (check-equal (js-ref (media-set-sink-id! media 'speaker-1) "id") "speaker-1" "media set sink id")
          (check-equal (js-ref media "calls")
                       (vector (vector "canPlayType" "audio/ogg")
+                              (vector "addTextTrack" "subtitles" "captions" "en")
                               (vector "captureStream" 60)
                               (vector "play")
                               (vector "pause")

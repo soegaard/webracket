@@ -17,6 +17,28 @@
     [(symbol? value) (symbol->string value)]
     [else (raise-argument-error who "(or/c string? symbol?)" value)]))
 
+;; media-resolve-optional : any/c -> any/c
+;;   Treat #f as omitted and force thunks when a literal value is needed.
+(define (media-resolve-optional value)
+  (define resolved
+    (cond
+      [(eq? value #f) (void)]
+      [(procedure? value) (value)]
+      [else value]))
+  (if (eq? resolved #f)
+      (void)
+      resolved))
+
+;; media-resolve-stringish-optional : symbol? any/c -> any/c
+;;   Resolve an optional string-like value and normalize strings and symbols.
+(define (media-resolve-stringish-optional who value)
+  (define resolved (media-resolve-optional value))
+  (cond
+    [(string? resolved) resolved]
+    [(symbol? resolved) (symbol->string resolved)]
+    [(void? resolved) resolved]
+    [else (raise-argument-error who "(or/c string? symbol? #f procedure?)" value)]))
+
 ;; media-current-time : external? -> real?
 ;;   Read the current playback time.
 (define (media-current-time media)
@@ -132,6 +154,14 @@
 (define (media-controls-list media)
   (dom-token-list-wrap (js-media-controls-list media)))
 
+;; media-add-text-track! : external? (or/c string? symbol?) [label #f] [language #f] -> text-track?
+;;   Add a browser text track and return the wrapped track object. #f omits an optional argument.
+(define (media-add-text-track! media kind [label #f] [language #f])
+  (define kind* (media-stringish->string 'media-add-text-track! kind))
+  (define label* (media-resolve-stringish-optional 'media-add-text-track! label))
+  (define language* (media-resolve-stringish-optional 'media-add-text-track! language))
+  (text-track-wrap (js-media-add-text-track! media kind* label* language*)))
+
 ;; media-audio-tracks : external? -> (or/c #f audio-track-list?)
 ;;   Read the browser audio track list.
 (define (media-audio-tracks media)
@@ -195,10 +225,10 @@
 (define (media-video-tracks media)
   (video-track-list-wrap (js-media-video-tracks media)))
 
-;; media-capture-stream : external? [any/c] -> media-stream?
-;;   Capture the media as a stream.
-(define (media-capture-stream media [frame-rate (void)])
-  (media-stream-wrap (js-media-capture-stream media frame-rate)))
+;; media-capture-stream : external? [frame-rate #f] -> media-stream?
+;;   Capture the media as a stream. #f omits the optional frame rate.
+(define (media-capture-stream media [frame-rate #f])
+  (media-stream-wrap (js-media-capture-stream media (media-resolve-optional frame-rate))))
 
 ;; media-set-sink-id! : external? (or/c string? symbol?) -> external/raw
 ;;   Choose an output sink if supported.

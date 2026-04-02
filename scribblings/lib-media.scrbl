@@ -37,6 +37,9 @@ normalizes it to a string before calling the browser.
 Some of the browser values that media elements expose are wrapped too:
 track lists, time ranges, media errors, and captured media streams are
 all represented with checked structs instead of raw browser objects.
+Individual AudioTrack, TextTrack, and VideoTrack values are wrapped
+the same way, so the track lists and addTextTrack() helper stay within
+WebRacket values.
 
 @section{Media Quick Start}
 
@@ -177,17 +180,32 @@ The raw @racket[media] argument should be a browser
 @racketid[DOMTokenList] controls policy object.
 }
 
+@defproc[(media-add-text-track! [media external?]
+                                [kind (or/c string? symbol?)]
+                                [label (or/c string? symbol? #f) #f]
+                                [language (or/c string? symbol? #f) #f])
+         text-track?]{
+@(mdn-bar "HTMLMediaElement: addTextTrack() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/addTextTrack")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. The @racket[kind] argument accepts
+strings or symbols, and @racket[label] / @racket[language] are optional
+string-like values. Use @racket[#f] to omit an optional argument.
+Returns a wrapped browser @racketid[TextTrack] value.
+}
+
 @defstruct[media-stream ([raw external/raw])]{
 Wraps a browser @racketid[MediaStream] value.
 }
 
-@defproc[(media-capture-stream [media external?] [frame-rate any/c (void)])
+@defproc[(media-capture-stream [media external?] [frame-rate any/c #f])
          media-stream?]{
 @(mdn-bar "HTMLMediaElement: captureStream() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/captureStream")
 The raw @racket[media] argument should be a browser
-@racketid[HTMLMediaElement] value. Returns a wrapped browser
-@racketid[MediaStream] that captures the media element.
+@racketid[HTMLMediaElement] value. Use @racket[#f] to omit the optional
+frame rate. Returns a wrapped browser @racketid[MediaStream] that
+captures the media element.
 }
 
 @defstruct[media-error-info ([raw external/raw])]{
@@ -219,8 +237,37 @@ Returns the number of audio tracks.
 }
 
 @defproc[(audio-track-list-item [tracks audio-track-list?] [index exact-nonnegative-integer?])
-         (or/c #f external/raw)]{
-Returns the browser @racketid[AudioTrack] at @racket[index] or @racket[#f].
+         (or/c #f audio-track?)]{
+Returns the wrapped browser @racketid[AudioTrack] at @racket[index] or
+@racket[#f].
+}
+
+@defstruct[audio-track ([raw external/raw])]{
+Wraps a browser @racketid[AudioTrack] value.
+}
+
+@defproc[(audio-track-kind [track audio-track?]) string?]{
+Returns the track kind.
+}
+
+@defproc[(audio-track-label [track audio-track?]) string?]{
+Returns the track label.
+}
+
+@defproc[(audio-track-language [track audio-track?]) string?]{
+Returns the track language.
+}
+
+@defproc[(audio-track-id [track audio-track?]) string?]{
+Returns the track id.
+}
+
+@defproc[(audio-track-enabled? [track audio-track?]) boolean?]{
+Returns whether the audio track is enabled.
+}
+
+@defproc[(audio-track-set-enabled! [track audio-track?] [enabled boolean?]) void?]{
+Sets whether the audio track is enabled.
 }
 
 @defstruct[text-track-list ([raw external/raw])]{
@@ -232,8 +279,37 @@ Returns the number of text tracks.
 }
 
 @defproc[(text-track-list-item [tracks text-track-list?] [index exact-nonnegative-integer?])
-         (or/c #f external/raw)]{
-Returns the browser @racketid[TextTrack] at @racket[index] or @racket[#f].
+         (or/c #f text-track?)]{
+Returns the wrapped browser @racketid[TextTrack] at @racket[index] or
+@racket[#f].
+}
+
+@defstruct[text-track ([raw external/raw])]{
+Wraps a browser @racketid[TextTrack] value.
+}
+
+@defproc[(text-track-kind [track text-track?]) string?]{
+Returns the track kind.
+}
+
+@defproc[(text-track-label [track text-track?]) string?]{
+Returns the track label.
+}
+
+@defproc[(text-track-language [track text-track?]) string?]{
+Returns the track language.
+}
+
+@defproc[(text-track-id [track text-track?]) string?]{
+Returns the track id.
+}
+
+@defproc[(text-track-mode [track text-track?]) string?]{
+Returns the current track mode.
+}
+
+@defproc[(text-track-set-mode! [track text-track?] [mode (or/c string? symbol?)]) void?]{
+Sets the track mode. Symbols are normalized to strings.
 }
 
 @defstruct[video-track-list ([raw external/raw])]{
@@ -245,8 +321,33 @@ Returns the number of video tracks.
 }
 
 @defproc[(video-track-list-item [tracks video-track-list?] [index exact-nonnegative-integer?])
-         (or/c #f external/raw)]{
-Returns the browser @racketid[VideoTrack] at @racket[index] or @racket[#f].
+         (or/c #f video-track?)]{
+Returns the wrapped browser @racketid[VideoTrack] at @racket[index] or
+@racket[#f].
+}
+
+@defstruct[video-track ([raw external/raw])]{
+Wraps a browser @racketid[VideoTrack] value.
+}
+
+@defproc[(video-track-kind [track video-track?]) string?]{
+Returns the track kind.
+}
+
+@defproc[(video-track-label [track video-track?]) string?]{
+Returns the track label.
+}
+
+@defproc[(video-track-language [track video-track?]) string?]{
+Returns the track language.
+}
+
+@defproc[(video-track-id [track video-track?]) string?]{
+Returns the track id.
+}
+
+@defproc[(video-track-selected? [track video-track?]) boolean?]{
+Returns whether the video track is selected.
 }
 
 @defstruct[time-ranges ([raw external/raw])]{

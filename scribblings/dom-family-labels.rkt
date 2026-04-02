@@ -19,6 +19,9 @@
   (struct-out text-track-list)
   (struct-out video-track-list)
   (struct-out time-ranges)
+  (struct-out audio-track)
+  (struct-out text-track)
+  (struct-out video-track)
   (struct-out node)
   (struct-out element)
   (struct-out text)
@@ -180,6 +183,9 @@
   (struct-out css-style-declaration)
   (struct-out media-stream)
   (struct-out media-error-info)
+  (struct-out audio-track)
+  (struct-out text-track)
+  (struct-out video-track)
   (struct-out performance-event-count-map)
   performance-event-count-map-size
   performance-event-count-map-entries
@@ -337,6 +343,7 @@
   media-src
   media-set-src!
   media-controls-list
+  media-add-text-track!
   media-audio-tracks
   media-buffered
   media-error
@@ -352,6 +359,23 @@
   media-text-tracks
   media-video-tracks
   media-capture-stream
+  audio-track-kind
+  audio-track-label
+  audio-track-language
+  audio-track-id
+  audio-track-enabled?
+  audio-track-set-enabled!
+  text-track-kind
+  text-track-label
+  text-track-language
+  text-track-id
+  text-track-mode
+  text-track-set-mode!
+  video-track-kind
+  video-track-label
+  video-track-language
+  video-track-id
+  video-track-selected?
   media-set-sink-id!
   image-new
   image-alt
@@ -435,6 +459,9 @@
 (struct css-style-declaration (raw) #:transparent)
 (struct media-stream (raw) #:transparent)
 (struct media-error-info (raw) #:transparent)
+(struct audio-track (raw) #:transparent)
+(struct text-track (raw) #:transparent)
+(struct video-track (raw) #:transparent)
 (define element-class-list any/c)
 (define element-id any/c)
 (define element-set-id! any/c)
@@ -721,11 +748,29 @@
 (define media-src any/c)
 (define media-set-src! any/c)
 (define media-controls-list any/c)
+(define media-add-text-track! any/c)
 (define media-audio-tracks any/c)
 (define media-buffered any/c)
 (define media-error any/c)
 (define media-error-info-code any/c)
 (define media-error-info-message any/c)
+(define audio-track-kind any/c)
+(define audio-track-label any/c)
+(define audio-track-language any/c)
+(define audio-track-id any/c)
+(define audio-track-enabled? any/c)
+(define audio-track-set-enabled! boolean?)
+(define text-track-kind any/c)
+(define text-track-label any/c)
+(define text-track-language any/c)
+(define text-track-id any/c)
+(define text-track-mode any/c)
+(define text-track-set-mode! any/c)
+(define video-track-kind any/c)
+(define video-track-label any/c)
+(define video-track-language any/c)
+(define video-track-id any/c)
+(define video-track-selected? any/c)
 (define media-play any/c)
 (define media-pause any/c)
 (define media-load! any/c)
