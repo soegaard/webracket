@@ -28,6 +28,15 @@
   (js-set! (element-unwrap element) name value)
   (void))
 
+;; element-nodeish->value : any/c -> any/c
+;;   Normalize a node-like value for DOM insertion helpers.
+(define (element-nodeish->value value)
+  (cond
+    [(symbol? value) (symbol->string value)]
+    [(element? value) (element-raw value)]
+    [(text? value) (text-raw value)]
+    [else value]))
+
 ;; element-id : element? -> (or/c #f string?)
 ;;   Read an element id.
 (define (element-id element)
@@ -58,6 +67,30 @@
 ;;   Append a child node.
 (define (append-child! parent child)
   (js-append-child! (element-unwrap parent) (element-unwrap child))
+  (void))
+
+;; element-append! : element? any/c -> void?
+;;   Append a node or text to an element.
+(define (element-append! element child)
+  (js-append! (element-unwrap element) (element-nodeish->value child))
+  (void))
+
+;; element-prepend! : element? any/c -> void?
+;;   Prepend a node or text to an element.
+(define (element-prepend! element child)
+  (js-prepend! (element-unwrap element) (element-nodeish->value child))
+  (void))
+
+;; element-before! : element? any/c -> void?
+;;   Insert a node or text before an element.
+(define (element-before! element sibling)
+  (js-before! (element-unwrap element) (element-nodeish->value sibling))
+  (void))
+
+;; element-after! : element? any/c -> void?
+;;   Insert a node or text after an element.
+(define (element-after! element sibling)
+  (js-after! (element-unwrap element) (element-nodeish->value sibling))
   (void))
 
 ;; set-attribute! : external? (or/c string? symbol?) (or/c string? symbol?) -> void?
@@ -116,6 +149,31 @@
 ;;   Read the names of the element's attributes.
 (define (element-get-attribute-names element)
   (js-send/value (element-unwrap element) "getAttributeNames" (vector)))
+
+;; element-get-elements-by-class-name : element? (or/c string? symbol?) -> vector?
+;;   Read descendant elements with matching class names.
+(define (element-get-elements-by-class-name element class-name)
+  (define class-name* (element-stringish->string 'element-get-elements-by-class-name class-name))
+  (array-like->vector 'element-get-elements-by-class-name
+                      (js-element-get-elements-by-class-name (element-unwrap element) class-name*)
+                      element-wrap))
+
+;; element-get-elements-by-tag-name : element? (or/c string? symbol?) -> vector?
+;;   Read descendant elements with a matching tag name.
+(define (element-get-elements-by-tag-name element tag-name)
+  (define tag-name* (element-stringish->string 'element-get-elements-by-tag-name tag-name))
+  (array-like->vector 'element-get-elements-by-tag-name
+                      (js-element-get-elements-by-tag-name (element-unwrap element) tag-name*)
+                      element-wrap))
+
+;; element-get-elements-by-tag-name-ns : element? (or/c string? symbol?) (or/c string? symbol?) -> vector?
+;;   Read descendant elements with a matching namespaced tag name.
+(define (element-get-elements-by-tag-name-ns element ns tag-name)
+  (define ns* (element-stringish->string 'element-get-elements-by-tag-name-ns ns))
+  (define tag-name* (element-stringish->string 'element-get-elements-by-tag-name-ns tag-name))
+  (array-like->vector 'element-get-elements-by-tag-name-ns
+                      (js-element-get-elements-by-tag-name-ns (element-unwrap element) ns* tag-name*)
+                      element-wrap))
 
 ;; element-children : element? -> vector?
 ;;   Read the child elements as wrapped elements.
@@ -194,6 +252,31 @@
   (array-like->vector 'query-selector-all
                       (js-element-query-selector-all (element-unwrap element) selector*)
                       element-wrap))
+
+;; element-insert-adjacent-element! : element? (or/c string? symbol?) any/c -> (or/c #f element?)
+;;   Insert an element relative to another element.
+(define (element-insert-adjacent-element! element position child)
+  (define position* (element-stringish->string 'element-insert-adjacent-element! position))
+  (element-wrap
+   (js-insert-adjacent-element! (element-unwrap element)
+                                position*
+                                (element-nodeish->value child))))
+
+;; element-insert-adjacent-html! : element? (or/c string? symbol?) (or/c string? symbol?) -> void?
+;;   Insert HTML relative to an element.
+(define (element-insert-adjacent-html! element position html)
+  (define position* (element-stringish->string 'element-insert-adjacent-html! position))
+  (define html* (element-stringish->string 'element-insert-adjacent-html! html))
+  (js-insert-adjacent-html! (element-unwrap element) position* html*)
+  (void))
+
+;; element-insert-adjacent-text! : element? (or/c string? symbol?) (or/c string? symbol?) -> void?
+;;   Insert text relative to an element.
+(define (element-insert-adjacent-text! element position text)
+  (define position* (element-stringish->string 'element-insert-adjacent-text! position))
+  (define text* (element-stringish->string 'element-insert-adjacent-text! text))
+  (js-insert-adjacent-text! (element-unwrap element) position* text*)
+  (void))
 
 ;; remove! : external? -> void?
 ;;   Remove the element from the DOM.

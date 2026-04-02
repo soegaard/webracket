@@ -233,6 +233,83 @@ Returns the element's client rectangles as a WebRacket vector of wrapped DOMRect
 Returns all matching descendants as a WebRacket vector of wrapped elements.
 }
 
+@defproc[(element-get-elements-by-class-name [element element?]
+                                             [class-name (or/c string? symbol?)]) vector?]{
+@(mdn-bar "Element: getElementsByClassName() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/getElementsByClassName")
+Returns descendant elements with the matching class name as a WebRacket vector of wrapped elements.
+}
+
+@defproc[(element-get-elements-by-tag-name [element element?]
+                                           [tag-name (or/c string? symbol?)]) vector?]{
+@(mdn-bar "Element: getElementsByTagName() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/getElementsByTagName")
+Returns descendant elements with the matching tag name as a WebRacket vector of wrapped elements.
+}
+
+@defproc[(element-get-elements-by-tag-name-ns [element element?]
+                                              [ns (or/c string? symbol?)]
+                                              [tag-name (or/c string? symbol?)]) vector?]{
+@(mdn-bar "Element: getElementsByTagNameNS() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/getElementsByTagNameNS")
+Returns descendant elements with the matching namespaced tag name as a WebRacket vector of wrapped elements.
+}
+
+@section{Element Insertion}
+
+These helpers insert nodes, text, or HTML around an element. When a raw
+@racket[external] is passed as a node, it should be a browser
+@racketid[Node] value. Wrapped @racket[element] and @racket[text]
+values are also accepted.
+
+@defproc[(element-append! [element element?] [child any/c]) void?]{
+@(mdn-bar "Element: append() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/append")
+Appends a node or text to an element.
+}
+
+@defproc[(element-prepend! [element element?] [child any/c]) void?]{
+@(mdn-bar "Element: prepend() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/prepend")
+Prepends a node or text to an element.
+}
+
+@defproc[(element-before! [element element?] [sibling any/c]) void?]{
+@(mdn-bar "Element: before() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/before")
+Inserts a node or text before an element.
+}
+
+@defproc[(element-after! [element element?] [sibling any/c]) void?]{
+@(mdn-bar "Element: after() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/after")
+Inserts a node or text after an element.
+}
+
+@defproc[(element-insert-adjacent-element! [element element?]
+                                           [position (or/c string? symbol?)]
+                                           [child any/c]) (or/c #f element?)]{
+@(mdn-bar "Element: insertAdjacentElement() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/insertAdjacentElement")
+Inserts an element relative to another element.
+}
+
+@defproc[(element-insert-adjacent-html! [element element?]
+                                        [position (or/c string? symbol?)]
+                                        [html (or/c string? symbol?)]) void?]{
+@(mdn-bar "Element: insertAdjacentHTML() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/insertAdjacentHTML")
+Inserts HTML relative to an element.
+}
+
+@defproc[(element-insert-adjacent-text! [element element?]
+                                        [position (or/c string? symbol?)]
+                                        [text (or/c string? symbol?)]) void?]{
+@(mdn-bar "Element: insertAdjacentText() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/insertAdjacentText")
+Inserts text relative to an element.
+}
+
 @section{Element Example}
 
 This example shows how to build a small card-like element, inspect its

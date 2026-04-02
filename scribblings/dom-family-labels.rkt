@@ -31,6 +31,16 @@
   element-set-outer-html!
   element-text-content
   element-set-text-content!
+  element-append!
+  element-prepend!
+  element-before!
+  element-after!
+  element-get-elements-by-class-name
+  element-get-elements-by-tag-name
+  element-get-elements-by-tag-name-ns
+  element-insert-adjacent-element!
+  element-insert-adjacent-html!
+  element-insert-adjacent-text!
   window-self
   window-document
   (struct-out window-document-info)
@@ -318,6 +328,16 @@
 (define element-set-outer-html! any/c)
 (define element-text-content any/c)
 (define element-set-text-content! any/c)
+(define element-append! any/c)
+(define element-prepend! any/c)
+(define element-before! any/c)
+(define element-after! any/c)
+(define element-get-elements-by-class-name any/c)
+(define element-get-elements-by-tag-name any/c)
+(define element-get-elements-by-tag-name-ns any/c)
+(define element-insert-adjacent-element! any/c)
+(define element-insert-adjacent-html! any/c)
+(define element-insert-adjacent-text! any/c)
 
 (struct iterator (raw) #:transparent #:constructor-name make-iterator)
 (struct performance-event-count-map (raw) #:transparent)
