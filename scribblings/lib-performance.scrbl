@@ -149,7 +149,9 @@ the main user-facing result.
 
 The iterator-returning helpers on the map, such as
 @racket[performance-event-count-map-entries], return wrapped
-@racket[iterator] values rather than raw browser iterator objects.
+@racket[iterator] values rather than raw browser iterator objects, so
+you can pass them directly to helpers such as @racket[iterator->vector]
+or @racket[iterator-next].
 
 @defstruct[performance-event-count-map ([raw external/raw])]{
 Wraps a browser EventCounts object in the checked struct used by
