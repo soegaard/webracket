@@ -137,6 +137,14 @@ Removes a namespaced attribute.
 Returns the element's attribute names as a WebRacket vector of strings.
 }
 
+@defproc[(element-get-attribute-ns [element element?]
+                                   [ns (or/c string? symbol?)]
+                                   [name (or/c string? symbol?)]) (or/c #f string?)]{
+@(mdn-bar "Element: getAttributeNS() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/getAttributeNS")
+Returns the value of a namespaced attribute.
+}
+
 @defproc[(element-matches? [element element?]
                            [selector (or/c string? symbol?)]) boolean?]{
 @(mdn-bar "Element: matches() method"
@@ -313,6 +321,8 @@ Inserts text relative to an element.
 @section{Element Style and Animation}
 
 These helpers return browser objects directly when the browser API does.
+The attribute-node helpers use wrapped browser @racket[attr] values,
+which are created by the document library.
 
 @defproc[(element-computed-style-map [element element?]) external/raw]{
 @(mdn-bar "Element: computedStyleMap() method"
@@ -341,7 +351,7 @@ Starts an animation on the element and returns the raw browser animation object.
 }
 
 @defproc[(element-get-attribute-node [element element?]
-                                     [name (or/c string? symbol?)]) (or/c #f external?)]{
+                                     [name (or/c string? symbol?)]) (or/c #f attr?)]{
 @(mdn-bar "Element: getAttributeNode() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/getAttributeNode")
 Returns the attribute node for the named attribute.
@@ -349,14 +359,14 @@ Returns the attribute node for the named attribute.
 
 @defproc[(element-get-attribute-node-ns [element element?]
                                         [ns (or/c string? symbol?)]
-                                        [name (or/c string? symbol?)]) (or/c #f external?)]{
+                                        [name (or/c string? symbol?)]) (or/c #f attr?)]{
 @(mdn-bar "Element: getAttributeNodeNS() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/getAttributeNodeNS")
 Returns the namespaced attribute node for the named attribute.
 }
 
 @defproc[(element-set-attribute-node! [element element?]
-                                      [node any/c]) external/raw]{
+                                      [node (or/c attr? external?)]) (or/c #f attr?)]{
 @(mdn-bar "Element: setAttributeNode() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/setAttributeNode")
 Attaches an attribute node to the element. If a raw @racket[external]
@@ -364,7 +374,7 @@ is passed as the node, it should be a browser @racketid[Attr] value.
 }
 
 @defproc[(element-set-attribute-node-ns! [element element?]
-                                         [node any/c]) external/raw]{
+                                         [node (or/c attr? external?)]) (or/c #f attr?)]{
 @(mdn-bar "Element: setAttributeNodeNS() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/setAttributeNodeNS")
 Attaches a namespaced attribute node to the element. If a raw
@@ -373,7 +383,7 @@ Attaches a namespaced attribute node to the element. If a raw
 }
 
 @defproc[(element-remove-attribute-node! [element element?]
-                                         [node any/c]) external/raw]{
+                                         [node (or/c attr? external?)]) (or/c #f attr?)]{
 @(mdn-bar "Element: removeAttributeNode() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/removeAttributeNode")
 Removes an attribute node from the element. If a raw @racket[external]

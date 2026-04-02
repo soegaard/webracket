@@ -42,6 +42,24 @@
       (text-raw value)
       value))
 
+;; attr : external/raw -> attr?
+;;   Wrap a browser Attr node.
+(struct attr (raw) #:transparent)
+
+;; attr-wrap : any/c -> any/c
+;;   Wrap a raw browser Attr node, leaving wrapped values alone.
+(define (attr-wrap value)
+  (if (or (not value) (attr? value))
+      value
+      (attr value)))
+
+;; attr-unwrap : any/c -> any/c
+;;   Unwrap an attr struct to its raw browser object.
+(define (attr-unwrap value)
+  (if (attr? value)
+      (attr-raw value)
+      value))
+
 ;; array-like->vector : symbol? any/c (-> any/c any/c) -> vector?
 ;;   Convert a browser array-like value into a WebRacket vector.
 (define (array-like->vector who value wrap-item)

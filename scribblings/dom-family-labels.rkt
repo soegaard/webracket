@@ -10,6 +10,7 @@
   (struct-out window)
   (struct-out element)
   (struct-out text)
+  (struct-out attr)
   element-id
   element-set-id!
   element-class-name
@@ -21,6 +22,7 @@
   element-matches?
   element-closest
   element-get-attribute-names
+  element-get-attribute-ns
   element-children
   element-child-element-count
   element-first-element-child
@@ -53,6 +55,10 @@
   element-has-pointer-capture?
   element-set-pointer-capture!
   element-release-pointer-capture!
+  document-create-element
+  document-create-attribute
+  document-create-attribute-ns
+  document-create-text-node
   window-self
   window-document
   (struct-out window-document-info)
@@ -92,6 +98,7 @@
   window-structured-clone
   Document
   (struct-out document)
+  (struct-out attr)
   (struct-out dom-rect)
   (struct-out performance-event-count-map)
   performance-event-count-map-size
@@ -318,6 +325,7 @@
 (define Document any/c)
 (struct document (raw) #:transparent)
 (struct text (raw) #:transparent)
+(struct attr (raw) #:transparent)
 (struct dom-rect (raw) #:transparent)
 (define element-id any/c)
 (define element-set-id! any/c)
@@ -330,6 +338,7 @@
 (define element-matches? any/c)
 (define element-closest any/c)
 (define element-get-attribute-names any/c)
+(define element-get-attribute-ns any/c)
 (define element-children any/c)
 (define element-child-element-count any/c)
 (define element-first-element-child any/c)
@@ -362,6 +371,10 @@
 (define element-has-pointer-capture? any/c)
 (define element-set-pointer-capture! any/c)
 (define element-release-pointer-capture! any/c)
+(define document-create-element any/c)
+(define document-create-attribute any/c)
+(define document-create-attribute-ns any/c)
+(define document-create-text-node any/c)
 
 (struct iterator (raw) #:transparent #:constructor-name make-iterator)
 (struct performance-event-count-map (raw) #:transparent)
@@ -397,8 +410,6 @@
 (define document-head any/c)
 (define document-body any/c)
 (define document-element any/c)
-(define document-create-element any/c)
-(define document-create-text-node any/c)
 (define document-get-element-by-id any/c)
 (define document-query-selector any/c)
 (define document-query-selector-all any/c)

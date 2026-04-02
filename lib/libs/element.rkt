@@ -35,6 +35,7 @@
     [(symbol? value) (symbol->string value)]
     [(element? value) (element-raw value)]
     [(text? value) (text-raw value)]
+    [(attr? value) (attr-raw value)]
     [else value]))
 
 ;; element-id : element? -> (or/c #f string?)
@@ -156,6 +157,13 @@
 (define (element-get-attribute-names element)
   (js-send/value (element-unwrap element) "getAttributeNames" (vector)))
 
+;; element-get-attribute-ns : element? (or/c string? symbol?) (or/c string? symbol?) -> (or/c #f string?)
+;;   Read a namespaced element attribute.
+(define (element-get-attribute-ns element ns name)
+  (define ns* (element-stringish->string 'element-get-attribute-ns ns))
+  (define name* (element-stringish->string 'element-get-attribute-ns name))
+  (js-send/value (element-unwrap element) "getAttributeNS" (vector ns* name*)))
+
 ;; element-get-elements-by-class-name : element? (or/c string? symbol?) -> vector?
 ;;   Read descendant elements with matching class names.
 (define (element-get-elements-by-class-name element class-name)
@@ -255,33 +263,33 @@
               keyframes
               (if (eq? options #f) (js-undefined) options)))
 
-;; element-get-attribute-node : element? (or/c string? symbol?) -> (or/c #f external?)
+;; element-get-attribute-node : element? (or/c string? symbol?) -> (or/c #f attr?)
 ;;   Read the attribute node for a given name.
 (define (element-get-attribute-node element name)
   (define name* (element-stringish->string 'element-get-attribute-node name))
-  (js-send/value (element-unwrap element) "getAttributeNode" (vector name*)))
+  (attr-wrap (js-send/value (element-unwrap element) "getAttributeNode" (vector name*))))
 
-;; element-get-attribute-node-ns : element? (or/c string? symbol?) (or/c string? symbol?) -> (or/c #f external?)
+;; element-get-attribute-node-ns : element? (or/c string? symbol?) (or/c string? symbol?) -> (or/c #f attr?)
 ;;   Read the namespaced attribute node for an element.
 (define (element-get-attribute-node-ns element ns name)
   (define ns* (element-stringish->string 'element-get-attribute-node-ns ns))
   (define name* (element-stringish->string 'element-get-attribute-node-ns name))
-  (js-send/value (element-unwrap element) "getAttributeNodeNS" (vector ns* name*)))
+  (attr-wrap (js-send/value (element-unwrap element) "getAttributeNodeNS" (vector ns* name*))))
 
-;; element-set-attribute-node! : element? any/c -> external/raw
+;; element-set-attribute-node! : element? any/c -> (or/c #f attr?)
 ;;   Attach an attribute node to an element.
 (define (element-set-attribute-node! element node)
-  (js-set-attribute-node! (element-unwrap element) (element-nodeish->value node)))
+  (attr-wrap (js-set-attribute-node! (element-unwrap element) (element-nodeish->value node))))
 
-;; element-set-attribute-node-ns! : element? any/c -> external/raw
+;; element-set-attribute-node-ns! : element? any/c -> (or/c #f attr?)
 ;;   Attach a namespaced attribute node to an element.
 (define (element-set-attribute-node-ns! element node)
-  (js-set-attribute-node-ns! (element-unwrap element) (element-nodeish->value node)))
+  (attr-wrap (js-set-attribute-node-ns! (element-unwrap element) (element-nodeish->value node))))
 
-;; element-remove-attribute-node! : element? any/c -> external/raw
+;; element-remove-attribute-node! : element? any/c -> (or/c #f attr?)
 ;;   Remove an attribute node from an element.
 (define (element-remove-attribute-node! element node)
-  (js-remove-attribute-node! (element-unwrap element) (element-nodeish->value node)))
+  (attr-wrap (js-remove-attribute-node! (element-unwrap element) (element-nodeish->value node))))
 
 ;; get-bounding-client-rect : element? -> dom-rect?
 ;;   Read the element bounding box.

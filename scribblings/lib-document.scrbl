@@ -61,6 +61,19 @@ Wraps a browser Text node.
 Returns the wrapped browser Text node.
 }
 
+@section{Attr Values}
+
+The document attribute helpers return wrapped browser Attr values so
+attribute nodes stay on the WebRacket side.
+
+@defstruct[attr ([raw external/raw])]{
+Wraps a browser Attr node.
+}
+
+@defproc[(attr-raw [node attr?]) external/raw]{
+Returns the wrapped browser Attr node.
+}
+
 @section{Document Quick Start}
 
 Start by including the library, grabbing the current document, and
@@ -131,6 +144,19 @@ Returns the document head element, if present.
 @(mdn-bar "Document: createElement() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/createElement")
 Creates an element for @racket[tag].
+}
+
+@defproc[(document-create-attribute [name (or/c string? symbol?)]) attr?]{
+@(mdn-bar "Document: createAttribute() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Document/createAttribute")
+Creates a wrapped browser attribute node for @racket[name].
+}
+
+@defproc[(document-create-attribute-ns [ns (or/c string? symbol?)]
+                                       [name (or/c string? symbol?)]) attr?]{
+@(mdn-bar "Document: createAttributeNS() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Document/createAttributeNS")
+Creates a wrapped namespaced browser attribute node for @racket[name].
 }
 
 @defproc[(document-create-text-node [text (or/c string? symbol?)]) text?]{

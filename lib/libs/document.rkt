@@ -42,6 +42,19 @@
   (define tag* (document-stringish->string 'document-create-element tag))
   (element-wrap (js-create-element tag*)))
 
+;; document-create-attribute : (or/c string? symbol?) -> attr?
+;;   Create an attribute node for a name.
+(define (document-create-attribute name)
+  (define name* (document-stringish->string 'document-create-attribute name))
+  (attr-wrap (js-create-attribute name*)))
+
+;; document-create-attribute-ns : (or/c string? symbol?) (or/c string? symbol?) -> attr?
+;;   Create a namespaced attribute node.
+(define (document-create-attribute-ns ns name)
+  (define ns* (document-stringish->string 'document-create-attribute-ns ns))
+  (define name* (document-stringish->string 'document-create-attribute-ns name))
+  (attr-wrap (js-create-attribute-ns ns* name*)))
+
 ;; document-create-text-node : (or/c string? symbol?) -> external/raw
 ;;   Create a text node.
 (define (document-create-text-node text)
