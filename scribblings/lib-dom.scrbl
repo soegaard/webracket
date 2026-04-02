@@ -2,21 +2,22 @@
 
 @(require scribble/manual
           "webracket-scribble-utils.rkt"
-          (for-label (lib "scribblings/lib-dom-labels.rkt" "webracket")))
+          )
 
 @title{Library: dom}
+@declare-exporting[(lib "scribblings/lib-dom-labels.rkt" "webracket")]
 
 @(how-to-require include-lib dom (lib "libs/dom.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")
 
-The @tt{dom} library is the top-level Rackety facade for the split DOM
-wrapper surface. It reexports the family libraries for windows, documents,
-events, geometry, canvas, media, and images.
+The @tt{dom} library brings together the browser-facing libraries for
+windows, documents, elements, events, geometry values, canvas, media,
+and images.
 
-Use @tt{dom} when you want one import point for the browser DOM surface.
+Use @tt{dom} when you want a single import point for browser DOM work.
 
-@section{DOM Facade}
+@section{The DOM Library}
 
 @defthing[dom any/c]{
-The named top-level DOM facade library.
+The named top-level DOM library.
 }
