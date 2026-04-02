@@ -268,6 +268,53 @@ Toggles a token in the class list. Use @racket[#f] to omit @racket[force]; if yo
 Replaces one token in the class list with another.
 }
 
+@section{Element Shadow Roots}
+
+Shadow roots are the browser objects that hold shadow DOM content. The
+wrapper keeps them on the WebRacket side so element code can work with
+them directly.
+
+@defstruct[shadow-root ([raw external/raw])]{
+Wraps a browser ShadowRoot object.
+}
+
+@defproc[(shadow-root-raw [shadow-root shadow-root?]) external/raw]{
+Returns the wrapped browser ShadowRoot object.
+}
+
+@defproc[(element-shadow-root [element element?]) (or/c #f shadow-root?)]{
+@(mdn-bar "Element: shadowRoot property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/shadowRoot")
+Returns the element's shadow root, or @racket[#f] if it has none.
+}
+
+@defproc[(element-attach-shadow! [element element?]
+                                 [options any/c]) shadow-root?]{
+@(mdn-bar "Element: attachShadow() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/attachShadow")
+Attaches a shadow root to the element and returns the wrapped browser
+ShadowRoot value. If a raw @racket[external] is passed as @racket[options],
+it should be a browser @racketid[ShadowRootInit] value.
+}
+
+@defproc[(shadow-root-host [shadow-root shadow-root?]) element?]{
+@(mdn-bar "ShadowRoot: host property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/ShadowRoot/host")
+Returns the host element for the shadow root.
+}
+
+@defproc[(shadow-root-mode [shadow-root shadow-root?]) string?]{
+@(mdn-bar "ShadowRoot: mode property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/ShadowRoot/mode")
+Returns the shadow root mode string.
+}
+
+@defproc[(shadow-root-delegates-focus? [shadow-root shadow-root?]) boolean?]{
+@(mdn-bar "ShadowRoot: delegatesFocus property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/ShadowRoot/delegatesFocus")
+Reports whether the shadow root delegates focus.
+}
+
 @section{Element Content and Collections}
 
 These helpers cover element children, HTML content, and layout

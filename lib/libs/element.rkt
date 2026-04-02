@@ -396,10 +396,30 @@
 (define (element-get-animations element)
   (js-get-animations (element-unwrap element)))
 
-;; element-attach-shadow! : element? any/c -> external/raw
+;; element-shadow-root : element? -> (or/c #f shadow-root?)
+;;   Read an element's shadow root, if one is attached.
+(define (element-shadow-root element)
+  (shadow-root-wrap (js-ref/extern (element-unwrap element) "shadowRoot")))
+
+;; element-attach-shadow! : element? any/c -> shadow-root?
 ;;   Attach a shadow root to an element.
 (define (element-attach-shadow! element options)
-  (js-attach-shadow! (element-unwrap element) options))
+  (shadow-root-wrap (js-attach-shadow! (element-unwrap element) options)))
+
+;; shadow-root-host : shadow-root? -> element?
+;;   Read the host element for a shadow root.
+(define (shadow-root-host shadow-root)
+  (element-wrap (js-ref/extern (shadow-root-unwrap shadow-root) "host")))
+
+;; shadow-root-mode : shadow-root? -> string?
+;;   Read the shadow root mode.
+(define (shadow-root-mode shadow-root)
+  (js-ref (shadow-root-unwrap shadow-root) "mode"))
+
+;; shadow-root-delegates-focus? : shadow-root? -> boolean?
+;;   Report whether the shadow root delegates focus.
+(define (shadow-root-delegates-focus? shadow-root)
+  (element-i32->boolean (js-ref (shadow-root-unwrap shadow-root) "delegatesFocus")))
 
 ;; element-animate : element? any/c [any/c] -> external/raw
 ;;   Start an animation on an element.

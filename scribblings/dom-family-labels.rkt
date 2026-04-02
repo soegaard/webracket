@@ -9,6 +9,7 @@
   Window
   (struct-out window)
   (struct-out dom-token-list)
+  (struct-out shadow-root)
   (struct-out node)
   (struct-out element)
   (struct-out text)
@@ -73,7 +74,11 @@
   element-computed-style-map
   element-get-animations
   element-attach-shadow!
+  element-shadow-root
   element-animate
+  shadow-root-host
+  shadow-root-mode
+  shadow-root-delegates-focus?
   element-get-attribute-node
   element-get-attribute-node-ns
   element-set-attribute-node!
@@ -358,6 +363,7 @@
 (define Document any/c)
 (struct document (raw) #:transparent)
 (struct dom-token-list (raw) #:transparent)
+(struct shadow-root (raw) #:transparent)
 (struct node (raw) #:transparent)
 (struct text (raw) #:transparent)
 (struct attr (raw) #:transparent)
@@ -421,7 +427,11 @@
 (define element-computed-style-map any/c)
 (define element-get-animations any/c)
 (define element-attach-shadow! any/c)
+(define element-shadow-root any/c)
 (define element-animate any/c)
+(define shadow-root-host any/c)
+(define shadow-root-mode any/c)
+(define shadow-root-delegates-focus? any/c)
 (define element-get-attribute-node any/c)
 (define element-get-attribute-node-ns any/c)
 (define element-set-attribute-node! any/c)

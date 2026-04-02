@@ -56,8 +56,13 @@
     leaf.textContent = 'leaf';
     host.appendChild(leaf);
     document.body.appendChild(host);
+    const shadowHost = document.createElement('section');
+    shadowHost.id = 'shadow-host';
+    shadowHost.attachShadow({mode: 'open'});
+    document.body.appendChild(shadowHost);
     window.__domTest.host = host;
     window.__domTest.leaf = leaf;
+    window.__domTest.shadowHost = shadowHost;
     performance.clearMarks('webracket-performance-start');
     performance.clearMarks('webracket-performance-end');
     performance.clearMeasures('webracket-performance-span');"))
@@ -271,6 +276,27 @@
                         "element class list removed by toggle")
            (check-true (dom-token-list-toggle! class-list 'alpha (lambda () #f))
                        "element class list toggle forced false"))
+         (define shadow-host (dom-test-fixture "shadowHost"))
+         (check-true (or (not shadow-host) (external? shadow-host))
+                     "element shadow host fixture")
+         (define shadow-root (element-shadow-root shadow-host))
+         (check-true (or (not shadow-root) (shadow-root? shadow-root))
+                     "element shadow root wrapper")
+         (when shadow-root
+           (check-true (element? (shadow-root-host shadow-root))
+                       "shadow root host wrapper")
+           (check-equal (shadow-root-mode shadow-root) "open"
+                        "shadow root mode")
+           (check-false (shadow-root-delegates-focus? shadow-root)
+                        "shadow root delegates focus"))
+         (define shadow-probe (document-create-element 'div))
+         (define attached-shadow
+           (element-attach-shadow! shadow-probe
+                                   (js-object (vector (vector "mode" "open")))))
+         (check-true (shadow-root? attached-shadow)
+                     "attach shadow wrapper")
+         (check-true (element? (shadow-root-host attached-shadow))
+                     "attach shadow host wrapper")
          (append-child! host leaf)
          (append-child! host child)
          (append-child! body host)
