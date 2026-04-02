@@ -17,6 +17,32 @@
 (define (element-i32->boolean v)
   (not (zero? v)))
 
+;; element-id : element? -> (or/c #f string?)
+;;   Read an element id.
+(define (element-id element)
+  (js-send/value (js-var "Reflect") "get" (vector (element-unwrap element) "id")))
+
+;; element-set-id! : element? (or/c string? symbol?) -> void?
+;;   Set an element id.
+(define (element-set-id! element id)
+  (js-set! (element-unwrap element)
+           "id"
+           (element-stringish->string 'element-set-id! id))
+  (void))
+
+;; element-class-name : element? -> (or/c #f string?)
+;;   Read an element class name.
+(define (element-class-name element)
+  (js-send/value (js-var "Reflect") "get" (vector (element-unwrap element) "className")))
+
+;; element-set-class-name! : element? (or/c string? symbol?) -> void?
+;;   Set an element class name.
+(define (element-set-class-name! element class-name)
+  (js-set! (element-unwrap element)
+           "className"
+           (element-stringish->string 'element-set-class-name! class-name))
+  (void))
+
 ;; append-child! : external? external? -> void?
 ;;   Append a child node.
 (define (append-child! parent child)
@@ -36,6 +62,49 @@
 (define (get-attribute element name)
   (define name* (element-stringish->string 'get-attribute name))
   (js-send/value (element-unwrap element) "getAttribute" (vector name*)))
+
+;; element-has-attribute? : element? (or/c string? symbol?) -> boolean?
+;;   Report whether an element has an attribute.
+(define (element-has-attribute? element name)
+  (define name* (element-stringish->string 'element-has-attribute? name))
+  (element-i32->boolean (js-has-attribute (element-unwrap element) name*)))
+
+;; element-has-attributes? : element? -> boolean?
+;;   Report whether an element has any attributes.
+(define (element-has-attributes? element)
+  (element-i32->boolean (js-has-attributes (element-unwrap element))))
+
+;; element-remove-attribute! : element? (or/c string? symbol?) -> void?
+;;   Remove an attribute from an element.
+(define (element-remove-attribute! element name)
+  (define name* (element-stringish->string 'element-remove-attribute! name))
+  (js-remove-attribute! (element-unwrap element) name*)
+  (void))
+
+;; element-remove-attribute-ns! : element? (or/c string? symbol?) (or/c string? symbol?) -> void?
+;;   Remove a namespaced attribute from an element.
+(define (element-remove-attribute-ns! element ns name)
+  (define ns* (element-stringish->string 'element-remove-attribute-ns! ns))
+  (define name* (element-stringish->string 'element-remove-attribute-ns! name))
+  (js-remove-attribute-ns! (element-unwrap element) ns* name*)
+  (void))
+
+;; element-matches? : element? (or/c string? symbol?) -> boolean?
+;;   Report whether an element matches a CSS selector.
+(define (element-matches? element selector)
+  (define selector* (element-stringish->string 'element-matches? selector))
+  (element-i32->boolean (js-matches (element-unwrap element) selector*)))
+
+;; element-closest : element? (or/c string? symbol?) -> (or/c #f element?)
+;;   Find the closest ancestor matching a CSS selector.
+(define (element-closest element selector)
+  (define selector* (element-stringish->string 'element-closest selector))
+  (element-wrap (js-closest (element-unwrap element) selector*)))
+
+;; element-get-attribute-names : element? -> vector?
+;;   Read the names of the element's attributes.
+(define (element-get-attribute-names element)
+  (js-send/value (element-unwrap element) "getAttributeNames" (vector)))
 
 ;; get-bounding-client-rect : element? -> dom-rect?
 ;;   Read the element bounding box.

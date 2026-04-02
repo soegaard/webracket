@@ -20,8 +20,10 @@ visible structure of the page.
 Use @racket[element] when you want to:
 
 @itemlist[
+  @item{inspect or update an element's id or class name}
+  @item{check whether an element matches a selector or find its closest ancestor}
   @item{attach a child node to an element}
-  @item{set or read element attributes}
+  @item{set, read, remove, or test element attributes}
   @item{measure an element's position and size}
   @item{scroll an element into view}
 ]
@@ -70,6 +72,86 @@ into the page body.
 The quick start shows the basic browser pattern: create an element,
 configure it, and insert it into the DOM.
 
+@section{Element Properties and Queries}
+
+The following helpers cover the most common element identity and
+attribute operations.
+
+@defproc[(element-id [element element?]) string?]{
+@(mdn-bar "Element: id property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/id")
+Returns the element id string.
+}
+
+@defproc[(element-set-id! [element element?]
+                          [id (or/c string? symbol?)]) void?]{
+@(mdn-bar "Element: id property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/id")
+Sets the element id. Symbols are accepted and normalized to strings.
+}
+
+@defproc[(element-class-name [element element?]) string?]{
+@(mdn-bar "Element: className property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/className")
+Returns the element class name string.
+}
+
+@defproc[(element-set-class-name! [element element?]
+                                  [class-name (or/c string? symbol?)]) void?]{
+@(mdn-bar "Element: className property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/className")
+Sets the element class name. Symbols are accepted and normalized to strings.
+}
+
+@defproc[(element-has-attribute? [element element?]
+                                 [name (or/c string? symbol?)]) boolean?]{
+@(mdn-bar "Element: hasAttribute() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/hasAttribute")
+Reports whether the element has the named attribute.
+}
+
+@defproc[(element-has-attributes? [element element?]) boolean?]{
+@(mdn-bar "Element: hasAttributes() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/hasAttributes")
+Reports whether the element has any attributes.
+}
+
+@defproc[(element-remove-attribute! [element element?]
+                                    [name (or/c string? symbol?)]) void?]{
+@(mdn-bar "Element: removeAttribute() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/removeAttribute")
+Removes the named attribute.
+}
+
+@defproc[(element-remove-attribute-ns! [element element?]
+                                       [ns (or/c string? symbol?)]
+                                       [name (or/c string? symbol?)]) void?]{
+@(mdn-bar "Element: removeAttributeNS() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/removeAttributeNS")
+Removes a namespaced attribute.
+}
+
+@defproc[(element-get-attribute-names [element element?]) vector?]{
+@(mdn-bar "Element: getAttributeNames() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/getAttributeNames")
+Returns the element's attribute names as a WebRacket vector of strings.
+}
+
+@defproc[(element-matches? [element element?]
+                           [selector (or/c string? symbol?)]) boolean?]{
+@(mdn-bar "Element: matches() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/matches")
+Checks whether the element matches a CSS selector.
+}
+
+@defproc[(element-closest [element element?]
+                          [selector (or/c string? symbol?)]) (or/c #f element?)]{
+@(mdn-bar "Element: closest() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/closest")
+Returns the closest ancestor matching a CSS selector, or @racket[#f] if
+there is no match.
+}
+
 @section{Element Example}
 
 This example shows how to build a small card-like element, inspect its
@@ -100,7 +182,8 @@ rectangle, and then scroll it into view.
 
 When you only need a few common operations, the most useful entry points
 are @racket[append-child!], @racket[set-attribute!],
-@racket[get-bounding-client-rect], and @racket[scroll-into-view!].
+@racket[get-bounding-client-rect], @racket[element-id], and
+@racket[scroll-into-view!].
 
 @defproc[(append-child! [parent (or/c element? external?)] [child (or/c element? external?)]) void?]{
 @(mdn-bar "Node: appendChild() method"

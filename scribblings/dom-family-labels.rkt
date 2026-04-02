@@ -9,6 +9,17 @@
   Window
   (struct-out window)
   (struct-out element)
+  element-id
+  element-set-id!
+  element-class-name
+  element-set-class-name!
+  element-has-attribute?
+  element-has-attributes?
+  element-remove-attribute!
+  element-remove-attribute-ns!
+  element-matches?
+  element-closest
+  element-get-attribute-names
   window-self
   window-document
   (struct-out window-document-info)
@@ -274,6 +285,17 @@
 (define Document any/c)
 (struct document (raw) #:transparent)
 (struct dom-rect (raw) #:transparent)
+(define element-id any/c)
+(define element-set-id! any/c)
+(define element-class-name any/c)
+(define element-set-class-name! any/c)
+(define element-has-attribute? any/c)
+(define element-has-attributes? any/c)
+(define element-remove-attribute! any/c)
+(define element-remove-attribute-ns! any/c)
+(define element-matches? any/c)
+(define element-closest any/c)
+(define element-get-attribute-names any/c)
 
 (struct iterator (raw) #:transparent #:constructor-name make-iterator)
 (struct performance-event-count-map (raw) #:transparent)
