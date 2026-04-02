@@ -14,7 +14,7 @@
 The @racket[document] library is the checked wrapper for the browser's
 current page document.
 
-@margin-note{This chapter focuses on checked wrappers.}
+@margin-note{Checked wrappers are small Racket values that stand in for browser objects and only accept the right kind of raw value at the boundary.}
 
 If you are new to browser programming, think of the document as the
 tree of things currently on the page. It is where the page's elements
@@ -32,7 +32,7 @@ Use @racket[Document] when you want to:
 The @racket[document] library provides a checked wrapper for the current
 document, plus wrapped element helpers for lookup and selector queries.
 
-@margin-note{These entries are checked structs, not raw browser objects.}
+@margin-note{These entries are checked structs: they wrap browser objects so you work with Racket predicates and accessors instead of raw browser values.}
 
 When a browser method expects a string, the wrapper also accepts a
 symbol and normalizes it to a string.

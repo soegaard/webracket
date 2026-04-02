@@ -17,7 +17,7 @@ The @racket[window] library is the easiest way to talk to the browser
 from WebRacket when you need the page itself, not just the current DOM
 tree.
 
-@margin-note{This chapter focuses on checked wrappers.}
+@margin-note{Checked wrappers are small Racket values that stand in for browser objects and only accept the right kind of raw value at the boundary.}
 
 If you are new to browser programming, think of the Window as the
 browser tab or page container. It gives you access to the current
@@ -39,7 +39,7 @@ The current Window object, document, and location are wrapped in small
 checked structs so the API stays Rackety instead of exposing raw browser
 objects at the top level.
 
-@margin-note{These entries are checked structs, not raw browser objects.}
+@margin-note{These entries are checked structs: they wrap browser objects so you work with Racket predicates and accessors instead of raw browser values.}
 
 @section{Window Quick Start}
 
