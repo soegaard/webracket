@@ -40,6 +40,72 @@ String-like arguments such as context identifiers and drawing modes
 accept either strings or symbols. Optional arguments use @racket[#f]
 to mean that the argument is omitted.
 
+@section{Canvas Values}
+
+@defstruct[canvas ([raw external/raw])]{
+Wraps a browser @tt{HTMLCanvasElement} object.
+}
+
+@defproc[(canvas-raw [canvas canvas?]) external/raw]{
+Returns the wrapped browser @tt{HTMLCanvasElement} object.
+}
+
+@defstruct[canvas-2d-context ([raw external/raw])]{
+Wraps a browser @tt{CanvasRenderingContext2D} object.
+}
+
+@defproc[(canvas-2d-context-raw [ctx canvas-2d-context?]) external/raw]{
+Returns the wrapped browser @tt{CanvasRenderingContext2D} object.
+}
+
+@defstruct[canvas-image-data ([raw external/raw])]{
+Wraps a browser @tt{ImageData} object.
+}
+
+@defproc[(canvas-image-data-raw [data canvas-image-data?]) external/raw]{
+Returns the wrapped browser @tt{ImageData} object.
+}
+
+@defstruct[canvas-gradient ([raw external/raw])]{
+Wraps a browser @tt{CanvasGradient} object.
+}
+
+@defproc[(canvas-gradient-raw [gradient canvas-gradient?]) external/raw]{
+Returns the wrapped browser @tt{CanvasGradient} object.
+}
+
+@defstruct[canvas-pattern ([raw external/raw])]{
+Wraps a browser @tt{CanvasPattern} object.
+}
+
+@defproc[(canvas-pattern-raw [pattern canvas-pattern?]) external/raw]{
+Returns the wrapped browser @tt{CanvasPattern} object.
+}
+
+@defstruct[canvas-text-metrics ([raw external/raw])]{
+Wraps a browser @tt{TextMetrics} object.
+}
+
+@defproc[(canvas-text-metrics-raw [metrics canvas-text-metrics?]) external/raw]{
+Returns the wrapped browser @tt{TextMetrics} object.
+}
+
+@defstruct[canvas-dom-matrix ([raw external/raw])]{
+Wraps a browser @tt{DOMMatrix} object.
+}
+
+@defproc[(canvas-dom-matrix-raw [matrix canvas-dom-matrix?]) external/raw]{
+Returns the wrapped browser @tt{DOMMatrix} object.
+}
+
+@defstruct[offscreen-canvas ([raw external/raw])]{
+Wraps a browser @tt{OffscreenCanvas} object.
+}
+
+@defproc[(offscreen-canvas-raw [canvas offscreen-canvas?]) external/raw]{
+Returns the wrapped browser @tt{OffscreenCanvas} object.
+}
+
 @section{Canvas Quick Start}
 
 Start by creating a canvas element, getting its 2D context, and drawing
