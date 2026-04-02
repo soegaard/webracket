@@ -10,6 +10,10 @@
   (struct-out animation)
   (struct-out computed-style-map)
   element-has-attributes?
+  element-has-attribute-ns?
+  element-parent-element
+  element-previous-element-sibling
+  element-next-element-sibling
   element-query-selector-all
   element-set-outer-html!
   element-shadow-root
@@ -38,6 +42,10 @@
 (struct computed-style-map (raw) #:transparent)
 
 (define element-has-attributes? any/c)
+(define element-has-attribute-ns? any/c)
+(define element-parent-element any/c)
+(define element-previous-element-sibling any/c)
+(define element-next-element-sibling any/c)
 (define element-query-selector-all any/c)
 (define element-set-outer-html! any/c)
 (define element-shadow-root any/c)

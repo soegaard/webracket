@@ -295,6 +295,29 @@
   (define name* (element-stringish->string 'element-get-attribute-ns name))
   (js-send/value (element-unwrap element) "getAttributeNS" (vector ns* name*)))
 
+;; element-has-attribute-ns? : element? (or/c string? symbol?) (or/c string? symbol?) -> boolean?
+;;   Report whether an element has a namespaced attribute.
+(define (element-has-attribute-ns? element ns name)
+  (define ns* (element-stringish->string 'element-has-attribute-ns? ns))
+  (define name* (element-stringish->string 'element-has-attribute-ns? name))
+  (element-i32->boolean
+   (js-has-attribute-ns (element-unwrap element) ns* name*)))
+
+;; element-parent-element : element? -> (or/c #f element?)
+;;   Read the parent element.
+(define (element-parent-element element)
+  (element-wrap (js-ref/extern (element-unwrap element) "parentElement")))
+
+;; element-previous-element-sibling : element? -> (or/c #f element?)
+;;   Read the previous element sibling.
+(define (element-previous-element-sibling element)
+  (element-wrap (js-ref/extern (element-unwrap element) "previousElementSibling")))
+
+;; element-next-element-sibling : element? -> (or/c #f element?)
+;;   Read the next element sibling.
+(define (element-next-element-sibling element)
+  (element-wrap (js-ref/extern (element-unwrap element) "nextElementSibling")))
+
 ;; element-get-elements-by-class-name : element? (or/c string? symbol?) -> html-collection?
 ;;   Read descendant elements with matching class names as a wrapped HTMLCollection.
 (define (element-get-elements-by-class-name element class-name)

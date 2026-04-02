@@ -4,9 +4,10 @@
           "webracket-scribble-utils.rkt"
           (for-label (lib "scribblings/lib-document-labels.rkt" "webracket"))
           (for-label (lib "scribblings/lib-domrect-labels.rkt" "webracket"))
-          (for-label (lib "scribblings/lib-element-labels.rkt" "webracket")))
+          )
 
 @title{Library: @racketid[element]}
+@declare-exporting[(lib "scribblings/lib-element-labels.rkt" "webracket")]
 
 @(how-to-require include-lib element (lib "libs/element.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")
@@ -171,6 +172,14 @@ Returns the element's attribute names as a WebRacket vector of strings.
 Returns the value of a namespaced attribute.
 }
 
+@defproc[(element-has-attribute-ns? [element element?]
+                                    [ns (or/c string? symbol?)]
+                                    [name (or/c string? symbol?)]) boolean?]{
+@(mdn-bar "Element: hasAttributeNS() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/hasAttributeNS")
+Reports whether the element has a namespaced attribute.
+}
+
 @defproc[(element-matches? [element element?]
                            [selector (or/c string? symbol?)]) boolean?]{
 @(mdn-bar "Element: matches() method"
@@ -192,6 +201,28 @@ there is no match.
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/querySelector")
 Returns the first matching descendant as a wrapped element, or @racket[#f]
 if there is no match.
+}
+
+@section{Element Traversal}
+
+These helpers read the element's parent and sibling relationships.
+
+@defproc[(element-parent-element [element element?]) (or/c #f element?)]{
+@(mdn-bar "Element: parentElement property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/parentElement")
+Returns the parent element, or @racket[#f] if there is none.
+}
+
+@defproc[(element-previous-element-sibling [element element?]) (or/c #f element?)]{
+@(mdn-bar "Element: previousElementSibling property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/previousElementSibling")
+Returns the previous sibling element, or @racket[#f] if there is none.
+}
+
+@defproc[(element-next-element-sibling [element element?]) (or/c #f element?)]{
+@(mdn-bar "Element: nextElementSibling property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/nextElementSibling")
+Returns the next sibling element, or @racket[#f] if there is none.
 }
 
 @section{Element Class Lists}
@@ -659,12 +690,6 @@ Returns the wrapped computed style map for the element.
 Returns the animations affecting the element as a WebRacket vector of wrapped animations.
 }
 
-@defproc[(element-attach-shadow! [element element?] [options any/c]) shadow-root?]{
-@(mdn-bar "Element: attachShadow() method"
-          "https://developer.mozilla.org/en-US/docs/Web/API/Element/attachShadow")
-Attaches a shadow root to the element and returns the wrapped browser ShadowRoot value.
-}
-
 @defproc[(element-animate [element element?]
                           [keyframes any/c]
                           [options any/c #f]) animation?]{
@@ -761,76 +786,3 @@ rectangle, and then scroll it into view.
 (code:comment "Bring the card into view if needed.")
 (element-scroll-into-view! card #t)
 ]
-
-When you only need a few common operations, the most useful entry points
-are @racket[element-append!], @racket[element-set-attribute!],
-@racket[element-get-bounding-client-rect], @racket[element-id],
-@racket[element-children], @racket[element-inner-html], and
-@racket[element-scroll-into-view!].
-
-@defproc[(element-append! [parent element?] [child (or/c element? external?)]) void?]{
-@(mdn-bar "Node: appendChild() method"
-          "https://developer.mozilla.org/en-US/docs/Web/API/Node/appendChild")
-Appends a child node.
-
-If an @racket[external] is passed as an argument, it should be a browser
-@racketid[Node] value, such as an element or a text node. Wrapped
-@racket[element] and @racket[text] values are also accepted.
-}
-
-@defproc[(element-set-attribute! [element element?]
-                                 [name (or/c string? symbol?)]
-                                 [value (or/c string? symbol?)]) void?]{
-@(mdn-bar "Element: setAttribute() method"
-          "https://developer.mozilla.org/en-US/docs/Web/API/Element/setAttribute")
-Sets an attribute on an element.
-}
-
-@defproc[(element-get-attribute [element element?]
-                                [name (or/c string? symbol?)]) (or/c #f string?)]{
-@(mdn-bar "Element: getAttribute() method"
-          "https://developer.mozilla.org/en-US/docs/Web/API/Element/getAttribute")
-Returns an attribute value or @racket[#f] if the attribute is missing.
-}
-
-@defproc[(element-set-attribute-ns! [element element?]
-                                    [ns (or/c string? symbol?)]
-                                    [name (or/c string? symbol?)]
-                                    [value (or/c string? symbol?)]) void?]{
-@(mdn-bar "Element: setAttributeNS() method"
-          "https://developer.mozilla.org/en-US/docs/Web/API/Element/setAttributeNS")
-Sets a namespaced attribute on an element.
-}
-
-@defproc[(element-toggle-attribute! [element element?]
-                                    [name (or/c string? symbol?)]
-                                    [force (or/c boolean? procedure?) #f]) boolean?]{
-@(mdn-bar "Element: toggleAttribute() method"
-          "https://developer.mozilla.org/en-US/docs/Web/API/Element/toggleAttribute")
-Toggles an attribute or forces a specific state when @racket[force] is provided.
-}
-
-@defproc[(element-scroll-into-view! [element element?] [align-to-top? boolean? #t]) void?]{
-@(mdn-bar "Element: scrollIntoView() method"
-          "https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView")
-Scrolls ancestors until the element is visible.
-}
-
-@defproc[(element-get-bounding-client-rect [element element?]) dom-rect?]{
-@(mdn-bar "Element: getBoundingClientRect() method"
-          "https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect")
-Returns the element's bounding rectangle.
-}
-
-@defproc[(element-get-client-rects [element element?]) dom-rect-list?]{
-@(mdn-bar "Element: getClientRects() method"
-          "https://developer.mozilla.org/en-US/docs/Web/API/Element/getClientRects")
-Returns the element's client rectangles as a wrapped DOMRectList.
-}
-
-@defproc[(element-query-selector-all [element element?]
-                                     [selector (or/c string? symbol?)]) node-list?]{
-@(mdn-bar "Element: querySelectorAll() method"
-          "https://developer.mozilla.org/en-US/docs/Web/API/Element/querySelectorAll")
-Returns all matching descendants as a wrapped NodeList.
-}

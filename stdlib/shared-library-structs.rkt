@@ -11,7 +11,7 @@
 ;; element-wrap : any/c -> any/c
 ;;   Wrap a raw browser Element object, leaving wrapped values alone.
 (define (element-wrap value)
-  (if (element? value)
+  (if (or (not value) (element? value))
       value
       (element value)))
 
