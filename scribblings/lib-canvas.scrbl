@@ -47,7 +47,7 @@ a filled rectangle.
 (define canvas-el (document-create-element "canvas"))
 
 (code:comment "Get the 2D drawing context from the canvas.")
-(define ctx (canvas-get-context canvas-el '2d #f))
+(define ctx (canvas-get-context canvas-el '2d))
 
 (code:comment "Draw a simple filled rectangle.")
 (canvas-2d-fill-rect ctx 10 10 120 50)
