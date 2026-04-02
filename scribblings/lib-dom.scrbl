@@ -18,6 +18,4 @@ Use @tt{dom} when you want a single import point for browser DOM work.
 
 @section{The DOM Library}
 
-@defthing[dom any/c]{
 The named top-level DOM library.
-}
