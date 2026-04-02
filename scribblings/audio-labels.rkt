@@ -16,6 +16,7 @@
   audio-node-connect
   audio-oscillator-node-set-type!
   audio-oscillator-node-start!
+  audio-buffer-get-channel-data
   (for-label (all-defined-out)))
 
 (struct audio-listener (raw) #:transparent)
@@ -27,3 +28,4 @@
 (define audio-node-connect any/c)
 (define audio-oscillator-node-set-type! any/c)
 (define audio-oscillator-node-start! any/c)
+(define audio-buffer-get-channel-data any/c)
