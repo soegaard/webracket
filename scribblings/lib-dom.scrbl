@@ -15,7 +15,3 @@ windows, documents, elements, events, geometry values, canvas, media,
 and images.
 
 Use @tt{dom} when you want a single import point for browser DOM work.
-
-@section{The DOM Library}
-
-The named top-level DOM library.
