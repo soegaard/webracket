@@ -265,10 +265,22 @@ Returns all matching descendants as a wrapped NodeList.
 Returns the current selection as a wrapped @racket[selection] value.
 }
 
+@defproc[(document-has-focus?) boolean?]{
+@(mdn-bar "Document: hasFocus() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Document/hasFocus")
+Reports whether the document has focus.
+}
+
 @defproc[(document-element) element?]{
 @(mdn-bar "Document: documentElement property"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/documentElement")
 Returns the document's root element.
+}
+
+@defproc[(document-close) void?]{
+@(mdn-bar "Document: close() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Document/close")
+Closes the document stream.
 }
 
 @defproc[(document-open) document?]{

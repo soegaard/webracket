@@ -144,6 +144,21 @@ Reports whether the element has the named attribute.
 Reports whether the element has any attributes.
 }
 
+@defproc[(element-get-attribute [element element?]
+                                [name (or/c string? symbol?)]) (or/c #f string?)]{
+@(mdn-bar "Element: getAttribute() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/getAttribute")
+Returns the value of the named attribute.
+}
+
+@defproc[(element-set-attribute! [element element?]
+                                 [name (or/c string? symbol?)]
+                                 [value (or/c string? symbol?)]) void?]{
+@(mdn-bar "Element: setAttribute() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/setAttribute")
+Sets the named attribute. Symbols are accepted and normalized to strings.
+}
+
 @defproc[(element-remove-attribute! [element element?]
                                     [name (or/c string? symbol?)]) void?]{
 @(mdn-bar "Element: removeAttribute() method"
@@ -202,6 +217,12 @@ there is no match.
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/querySelector")
 Returns the first matching descendant as a wrapped element, or @racket[#f]
 if there is no match.
+}
+
+@defproc[(element-get-bounding-client-rect [element element?]) dom-rect?]{
+@(mdn-bar "Element: getBoundingClientRect() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect")
+Returns the element's bounding rectangle as a wrapped DOMRect.
 }
 
 @section{Element Traversal}
@@ -663,6 +684,13 @@ Scrolls the element by a relative offset.
 @(mdn-bar "Element: scrollTo() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollTo")
 Scrolls the element to an absolute position.
+}
+
+@defproc[(element-scroll-into-view! [element element?]
+                                    [options any/c #f]) void?]{
+@(mdn-bar "Element: scrollIntoView() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollIntoView")
+Scrolls the element into view. When @racket[#f] is supplied, the browser default behavior is used.
 }
 
 @section{Element Style and Animation}
