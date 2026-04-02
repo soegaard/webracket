@@ -21,6 +21,16 @@
   element-matches?
   element-closest
   element-get-attribute-names
+  element-children
+  element-child-element-count
+  element-first-element-child
+  element-last-element-child
+  element-inner-html
+  element-set-inner-html!
+  element-outer-html
+  element-set-outer-html!
+  element-text-content
+  element-set-text-content!
   window-self
   window-document
   (struct-out window-document-info)
@@ -298,6 +308,16 @@
 (define element-matches? any/c)
 (define element-closest any/c)
 (define element-get-attribute-names any/c)
+(define element-children any/c)
+(define element-child-element-count any/c)
+(define element-first-element-child any/c)
+(define element-last-element-child any/c)
+(define element-inner-html any/c)
+(define element-set-inner-html! any/c)
+(define element-outer-html any/c)
+(define element-set-outer-html! any/c)
+(define element-text-content any/c)
+(define element-set-text-content! any/c)
 
 (struct iterator (raw) #:transparent #:constructor-name make-iterator)
 (struct performance-event-count-map (raw) #:transparent)

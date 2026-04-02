@@ -17,10 +17,21 @@
 (define (element-i32->boolean v)
   (not (zero? v)))
 
+;; element-prop-ref : element? string? -> any/c
+;;   Read a property from an element.
+(define (element-prop-ref element name)
+  (js-send/value (js-var "Reflect") "get" (vector (element-unwrap element) name)))
+
+;; element-prop-set! : element? string? any/c -> void?
+;;   Write a property on an element.
+(define (element-prop-set! element name value)
+  (js-set! (element-unwrap element) name value)
+  (void))
+
 ;; element-id : element? -> (or/c #f string?)
 ;;   Read an element id.
 (define (element-id element)
-  (js-send/value (js-var "Reflect") "get" (vector (element-unwrap element) "id")))
+  (element-prop-ref element "id"))
 
 ;; element-set-id! : element? (or/c string? symbol?) -> void?
 ;;   Set an element id.
@@ -33,7 +44,7 @@
 ;; element-class-name : element? -> (or/c #f string?)
 ;;   Read an element class name.
 (define (element-class-name element)
-  (js-send/value (js-var "Reflect") "get" (vector (element-unwrap element) "className")))
+  (element-prop-ref element "className"))
 
 ;; element-set-class-name! : element? (or/c string? symbol?) -> void?
 ;;   Set an element class name.
@@ -105,6 +116,58 @@
 ;;   Read the names of the element's attributes.
 (define (element-get-attribute-names element)
   (js-send/value (element-unwrap element) "getAttributeNames" (vector)))
+
+;; element-children : element? -> vector?
+;;   Read the child elements as wrapped elements.
+(define (element-children element)
+  (array-like->vector 'element-children
+                      (element-prop-ref element "children")
+                      element-wrap))
+
+;; element-child-element-count : element? -> exact-nonnegative-integer?
+;;   Read the number of child elements.
+(define (element-child-element-count element)
+  (element-prop-ref element "childElementCount"))
+
+;; element-first-element-child : element? -> (or/c #f element?)
+;;   Read the first child element, if any.
+(define (element-first-element-child element)
+  (element-wrap (element-prop-ref element "firstElementChild")))
+
+;; element-last-element-child : element? -> (or/c #f element?)
+;;   Read the last child element, if any.
+(define (element-last-element-child element)
+  (element-wrap (element-prop-ref element "lastElementChild")))
+
+;; element-inner-html : element? -> string?
+;;   Read an element's HTML contents.
+(define (element-inner-html element)
+  (element-prop-ref element "innerHTML"))
+
+;; element-set-inner-html! : element? (or/c string? symbol?) -> void?
+;;   Replace an element's HTML contents.
+(define (element-set-inner-html! element html)
+  (element-prop-set! element "innerHTML" (element-stringish->string 'element-set-inner-html! html)))
+
+;; element-outer-html : element? -> string?
+;;   Read an element's outer HTML.
+(define (element-outer-html element)
+  (element-prop-ref element "outerHTML"))
+
+;; element-set-outer-html! : element? (or/c string? symbol?) -> void?
+;;   Replace an element's outer HTML.
+(define (element-set-outer-html! element html)
+  (element-prop-set! element "outerHTML" (element-stringish->string 'element-set-outer-html! html)))
+
+;; element-text-content : element? -> (or/c #f string?)
+;;   Read an element's text content.
+(define (element-text-content element)
+  (element-prop-ref element "textContent"))
+
+;; element-set-text-content! : element? (or/c string? symbol?) -> void?
+;;   Replace an element's text content.
+(define (element-set-text-content! element text)
+  (element-prop-set! element "textContent" (element-stringish->string 'element-set-text-content! text)))
 
 ;; get-bounding-client-rect : element? -> dom-rect?
 ;;   Read the element bounding box.

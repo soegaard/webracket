@@ -152,6 +152,87 @@ Returns the closest ancestor matching a CSS selector, or @racket[#f] if
 there is no match.
 }
 
+@section{Element Content and Collections}
+
+These helpers cover element children, HTML content, and layout
+collections that are usually easiest to read as WebRacket vectors.
+
+@defproc[(element-children [element element?]) vector?]{
+@(mdn-bar "Element: children property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/children")
+Returns the child elements as a WebRacket vector of wrapped elements.
+}
+
+@defproc[(element-child-element-count [element element?]) exact-nonnegative-integer?]{
+@(mdn-bar "Element: childElementCount property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/childElementCount")
+Returns the number of child elements.
+}
+
+@defproc[(element-first-element-child [element element?]) (or/c #f element?)]{
+@(mdn-bar "Element: firstElementChild property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/firstElementChild")
+Returns the first child element, or @racket[#f] if there is none.
+}
+
+@defproc[(element-last-element-child [element element?]) (or/c #f element?)]{
+@(mdn-bar "Element: lastElementChild property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/lastElementChild")
+Returns the last child element, or @racket[#f] if there is none.
+}
+
+@defproc[(element-inner-html [element element?]) string?]{
+@(mdn-bar "Element: innerHTML property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML")
+Returns the element's inner HTML.
+}
+
+@defproc[(element-set-inner-html! [element element?]
+                                  [html (or/c string? symbol?)]) void?]{
+@(mdn-bar "Element: innerHTML property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/innerHTML")
+Sets the element's inner HTML. Symbols are accepted and normalized to strings.
+}
+
+@defproc[(element-outer-html [element element?]) string?]{
+@(mdn-bar "Element: outerHTML property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/outerHTML")
+Returns the element's outer HTML.
+}
+
+@defproc[(element-set-outer-html! [element element?]
+                                  [html (or/c string? symbol?)]) void?]{
+@(mdn-bar "Element: outerHTML property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/outerHTML")
+Sets the element's outer HTML. Symbols are accepted and normalized to strings.
+}
+
+@defproc[(element-text-content [element element?]) (or/c #f string?)]{
+@(mdn-bar "Node: textContent property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent")
+Returns the element's text content.
+}
+
+@defproc[(element-set-text-content! [element element?]
+                                    [text (or/c string? symbol?)]) void?]{
+@(mdn-bar "Node: textContent property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Node/textContent")
+Sets the element's text content. Symbols are accepted and normalized to strings.
+}
+
+@defproc[(get-client-rects [element element?]) vector?]{
+@(mdn-bar "Element: getClientRects() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/getClientRects")
+Returns the element's client rectangles as a WebRacket vector of wrapped DOMRect values.
+}
+
+@defproc[(query-selector-all [element (or/c element? external?)]
+                             [selector (or/c string? symbol?)]) vector?]{
+@(mdn-bar "Element: querySelectorAll() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/querySelectorAll")
+Returns all matching descendants as a WebRacket vector of wrapped elements.
+}
+
 @section{Element Example}
 
 This example shows how to build a small card-like element, inspect its
@@ -182,7 +263,8 @@ rectangle, and then scroll it into view.
 
 When you only need a few common operations, the most useful entry points
 are @racket[append-child!], @racket[set-attribute!],
-@racket[get-bounding-client-rect], @racket[element-id], and
+@racket[get-bounding-client-rect], @racket[element-id],
+@racket[element-children], @racket[element-inner-html], and
 @racket[scroll-into-view!].
 
 @defproc[(append-child! [parent (or/c element? external?)] [child (or/c element? external?)]) void?]{
