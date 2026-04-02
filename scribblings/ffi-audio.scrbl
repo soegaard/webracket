@@ -1,6 +1,9 @@
 #lang scribble/manual
 
-@(require "browser-api-docs.rkt")
+@(require "browser-api-docs.rkt"
+          (for-label (lib "scribblings/ffi-audio-labels.rkt" "webracket")))
+
+@declare-exporting[(lib "scribblings/ffi-audio-labels.rkt" "webracket")]
 
 @section{Audio}
 
