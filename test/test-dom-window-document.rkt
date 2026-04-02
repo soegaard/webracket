@@ -83,11 +83,11 @@
          (check-true (external? (window-location-info-raw loc-info))
                      "window location wrapper raw")
          (check-equal (window-name) "dom-suite" "window name")
-         (window-set-name! "web-bracket")
+         (window-set-name! 'web-bracket)
          (check-equal (window-name) "web-bracket" "window set name")
-         (check-true (window-confirm "proceed?") "window confirm")
+         (check-true (window-confirm 'proceed?) "window confirm")
          (check-equal (js-ref (js-var "window") "lastConfirm") "proceed?" "window confirm arg")
-         (define opened (window-open "https://example.invalid" "tab" "noopener" #f))
+         (define opened (window-open "https://example.invalid" 'tab 'noopener #f))
          (check-true (window? opened) "window open result")
          (check-true (external? (window-raw opened)) "window open payload raw")
          (check-equal (js-ref (window-raw opened) "kind") "popup" "window open payload")
@@ -120,9 +120,9 @@
                          (performance-event-count-map? event-counts))
                      "performance event counts")
          (when event-counts
-           (check-true (external? (performance-event-count-map-raw event-counts))
+         (check-true (external? (performance-event-count-map-raw event-counts))
                        "performance event count raw")
-           (check-true (exact-nonnegative-integer? (performance-event-count-map-size event-counts))
+          (check-true (exact-nonnegative-integer? (performance-event-count-map-size event-counts))
                        "performance event count size")
            (check-true (iterator? (performance-event-count-map-entries event-counts))
                        "performance event count entries")
@@ -136,10 +136,10 @@
                        "performance event count keys vector")
            (check-true (vector? (iterator->vector (performance-event-count-map-values event-counts)))
                        "performance event count values vector")
-           (check-true (boolean? (performance-event-count-map-has? event-counts "click"))
+           (check-true (boolean? (performance-event-count-map-has? event-counts 'click))
                        "performance event count has")
-           (check-true (or (not (performance-event-count-map-get event-counts "click"))
-                           (exact-nonnegative-integer? (performance-event-count-map-get event-counts "click")))
+           (check-true (or (not (performance-event-count-map-get event-counts 'click))
+                           (exact-nonnegative-integer? (performance-event-count-map-get event-counts 'click)))
                        "performance event count get")
            (check-true (void? (performance-event-count-map-for-each
                                event-counts
@@ -159,25 +159,25 @@
                        "performance memory total js heap size")
            (check-true (exact-nonnegative-integer? (performance-memory-info-used-js-heap-size memory-info))
                        "performance memory used js heap size"))
-         (performance-clear-marks "webracket-performance-start")
-         (performance-clear-marks "webracket-performance-end")
-         (performance-clear-measures "webracket-performance-span")
+         (performance-clear-marks 'webracket-performance-start)
+         (performance-clear-marks 'webracket-performance-end)
+         (performance-clear-measures 'webracket-performance-span)
          (performance-clear-resource-timings)
          (check-true (void? (performance-clear-marks #f))
                      "performance clear marks default")
          (check-true (void? (performance-clear-measures #f))
                      "performance clear measures default")
-         (performance-mark "webracket-performance-start")
-         (performance-mark "webracket-performance-end")
-         (performance-measure "webracket-performance-span"
-                              "webracket-performance-start"
-                              "webracket-performance-end")
+         (performance-mark 'webracket-performance-start)
+         (performance-mark 'webracket-performance-end)
+         (performance-measure 'webracket-performance-span
+                              'webracket-performance-start
+                              'webracket-performance-end)
          (define marks
-           (performance-get-entries-by-name "webracket-performance-start"))
+           (performance-get-entries-by-name 'webracket-performance-start))
          (define measures
-           (performance-get-entries-by-name "webracket-performance-span" "measure"))
+           (performance-get-entries-by-name 'webracket-performance-span 'measure))
          (define mark-entries
-           (performance-get-entries-by-type "mark"))
+           (performance-get-entries-by-type 'mark))
          (define performance-json
            (performance-to-json))
          (check-true (>= (js-ref marks "length") 1) "performance marks by name")

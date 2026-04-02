@@ -193,21 +193,23 @@ Returns the wrapped browser iterator produced by
 }
 
 @defproc[(performance-event-count-map-get [counts performance-event-count-map?]
-                                          [event-type string?])
+                                          [event-type (or/c string? symbol?)])
          (or/c #f exact-nonnegative-integer?)]{
 @(mdn-bar "EventCounts: get() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/EventCounts/get")
 Returns the count for the named event type, or @racket[#f] when the
-browser does not expose a value for that type.
+browser does not expose a value for that type. The event type accepts a
+string or symbol and is normalized to a string.
 }
 
 @defproc[(performance-event-count-map-has? [counts performance-event-count-map?]
-                                           [event-type string?])
+                                           [event-type (or/c string? symbol?)])
          boolean?]{
 @(mdn-bar "EventCounts: has() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/EventCounts/has")
 Returns @racket[#t] when the browser exposes a count for the named
-event type.
+event type. The event type accepts a string or symbol and is normalized
+to a string.
 }
 
 @defproc[(performance-event-count-map-for-each [counts performance-event-count-map?]
@@ -252,20 +254,22 @@ Returns the browser's currently used JavaScript heap size.
 
 @section{Performance Methods}
 
-@defproc[(performance-clear-marks [mark-name (or/c #f string? procedure?) #f]) void?]{
+@defproc[(performance-clear-marks [mark-name (or/c #f string? symbol? procedure?) #f]) void?]{
 @(mdn-bar "Performance: clearMarks() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Performance/clearMarks")
 Clears performance marks, optionally filtered by name. Use @racket[#f] to omit
 @racket[mark-name]. If you need a literal @racket[#f] value, pass a thunk such
 as @racket[(lambda () #f)].
+The mark name accepts a string or symbol and is normalized to a string.
 }
 
-@defproc[(performance-clear-measures [measure-name (or/c #f string? procedure?) #f]) void?]{
+@defproc[(performance-clear-measures [measure-name (or/c #f string? symbol? procedure?) #f]) void?]{
 @(mdn-bar "Performance: clearMeasures() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Performance/clearMeasures")
 Clears performance measures, optionally filtered by name. Use @racket[#f] to
 omit @racket[measure-name]. If you need a literal @racket[#f] value, pass a
 thunk such as @racket[(lambda () #f)].
+The measure name accepts a string or symbol and is normalized to a string.
 }
 
 @defproc[(performance-clear-resource-timings) void?]{
@@ -280,33 +284,36 @@ Clears resource timing entries from the browser buffer.
 Returns the current list of performance entries.
 }
 
-@defproc[(performance-get-entries-by-name [name string?]
-                                          [entry-type (or/c #f string? procedure?) #f])
+@defproc[(performance-get-entries-by-name [name (or/c string? symbol?)]
+                                          [entry-type (or/c #f string? symbol? procedure?) #f])
          external/raw]{
 @(mdn-bar "Performance: getEntriesByName() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Performance/getEntriesByName")
 Returns performance entries filtered by name and optional type. Use @racket[#f]
 to omit @racket[entry-type]. If you need a literal @racket[#f] value, pass a
-thunk such as @racket[(lambda () #f)].
+thunk such as @racket[(lambda () #f)]. The name and type arguments accept
+strings or symbols and are normalized to strings.
 }
 
-@defproc[(performance-get-entries-by-type [entry-type string?]) external/raw]{
+@defproc[(performance-get-entries-by-type [entry-type (or/c string? symbol?)]) external/raw]{
 @(mdn-bar "Performance: getEntriesByType() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Performance/getEntriesByType")
-Returns performance entries filtered by type.
+Returns performance entries filtered by type. The type accepts a string or
+symbol and is normalized to a string.
 }
 
-@defproc[(performance-mark [name string?]
+@defproc[(performance-mark [name (or/c string? symbol?)]
                           [options any/c #f])
          external/raw]{
 @(mdn-bar "Performance: mark() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Performance/mark")
 Creates a named performance mark and returns the resulting entry. Use
 @racket[#f] to omit @racket[options]. If you need a literal @racket[#f]
-value, pass a thunk such as @racket[(lambda () #f)].
+value, pass a thunk such as @racket[(lambda () #f)]. The mark name accepts a
+string or symbol and is normalized to a string.
 }
 
-@defproc[(performance-measure [name string?]
+@defproc[(performance-measure [name (or/c string? symbol?)]
                               [start-or-options any/c #f]
                               [end-mark any/c #f])
          external/raw]{
@@ -316,6 +323,8 @@ Creates a named performance measure and returns the resulting entry.
 The optional arguments accept the browser's standard overload forms. Use
 @racket[#f] to omit either optional argument. If you need a literal
 @racket[#f] value, pass a thunk such as @racket[(lambda () #f)].
+The measure name, start mark, end mark, and string-style options all accept
+strings or symbols and are normalized to strings.
 }
 
 @defproc[(performance-measure-user-agent-specific-memory) external/raw]{

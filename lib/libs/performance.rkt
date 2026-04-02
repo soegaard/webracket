@@ -6,6 +6,23 @@
 
 (include-lib iterator)
 
+;; performance-stringish->string : symbol? any/c -> string?
+;;   Normalize a string-like wrapper argument to a browser string.
+(define (performance-stringish->string who v)
+  (cond
+    [(string? v) v]
+    [(symbol? v) (symbol->string v)]
+    [else (raise-argument-error who "(or/c string? symbol?)" v)]))
+
+;; performance-resolve-stringish-optional : symbol? any/c -> any/c
+;;   Resolve an optional string-like value and normalize strings and symbols.
+(define (performance-resolve-stringish-optional who value)
+  (define resolved (performance-resolve-optional value))
+  (cond
+    [(string? resolved) resolved]
+    [(symbol? resolved) (symbol->string resolved)]
+    [else resolved]))
+
 ;; procedure->external-cache : hash?
 ;;   Cache JS callback wrappers so the same procedure maps to the same external.
 (define procedure->external-cache (make-hasheq))
@@ -50,27 +67,25 @@
                           counts))
   (make-iterator (js-send/value (performance-event-count-map-raw counts) "values" (vector))))
 
-;; performance-event-count-map-get : performance-event-count-map? string? -> (or/c #f exact-nonnegative-integer?)
+;; performance-event-count-map-get : performance-event-count-map? (or/c string? symbol?) -> (or/c #f exact-nonnegative-integer?)
 ;;   Read the count for a specific event type.
 (define (performance-event-count-map-get counts event-type)
   (unless (performance-event-count-map? counts)
     (raise-argument-error 'performance-event-count-map-get
                           "performance-event-count-map?"
                           counts))
-  (unless (string? event-type)
-    (raise-argument-error 'performance-event-count-map-get "string?" event-type))
-  (js-send/value (performance-event-count-map-raw counts) "get" (vector event-type)))
+  (define event-type* (performance-stringish->string 'performance-event-count-map-get event-type))
+  (js-send/value (performance-event-count-map-raw counts) "get" (vector event-type*)))
 
-;; performance-event-count-map-has? : performance-event-count-map? string? -> boolean?
+;; performance-event-count-map-has? : performance-event-count-map? (or/c string? symbol?) -> boolean?
 ;;   Check whether a specific event type is exposed.
 (define (performance-event-count-map-has? counts event-type)
   (unless (performance-event-count-map? counts)
     (raise-argument-error 'performance-event-count-map-has?
                           "performance-event-count-map?"
                           counts))
-  (unless (string? event-type)
-    (raise-argument-error 'performance-event-count-map-has? "string?" event-type))
-  (js-send/boolean (performance-event-count-map-raw counts) "has" (vector event-type)))
+  (define event-type* (performance-stringish->string 'performance-event-count-map-has? event-type))
+  (js-send/boolean (performance-event-count-map-raw counts) "has" (vector event-type*)))
 
 ;; performance-event-count-map-for-each : performance-event-count-map? (procedure? external?) -> void?
 ;;   Iterate over event-count entries with a Map-style callback.
@@ -166,24 +181,28 @@
 (define (performance-now)
   (js-performance-now))
 
-;; performance-clear-marks : [string?] -> void?
+;; performance-clear-marks : [(or/c string? symbol?)] -> void?
 ;;   Clear performance marks, optionally filtered by name.
 (define (performance-clear-marks [mark-name #f])
   (when (and (not (eq? mark-name #f))
              (not (string? mark-name))
+             (not (symbol? mark-name))
              (not (procedure? mark-name)))
-    (raise-argument-error 'performance-clear-marks "(or/c #f string? procedure?)" mark-name))
-  (js-performance-clear-marks (performance-resolve-optional mark-name))
+    (raise-argument-error 'performance-clear-marks "(or/c #f string? symbol? procedure?)" mark-name))
+  (define mark-name* (performance-resolve-stringish-optional 'performance-clear-marks mark-name))
+  (js-performance-clear-marks mark-name*)
   (void))
 
-;; performance-clear-measures : [string?] -> void?
+;; performance-clear-measures : [(or/c string? symbol?)] -> void?
 ;;   Clear performance measures, optionally filtered by name.
 (define (performance-clear-measures [measure-name #f])
   (when (and (not (eq? measure-name #f))
              (not (string? measure-name))
+             (not (symbol? measure-name))
              (not (procedure? measure-name)))
-    (raise-argument-error 'performance-clear-measures "(or/c #f string? procedure?)" measure-name))
-  (js-performance-clear-measures (performance-resolve-optional measure-name))
+    (raise-argument-error 'performance-clear-measures "(or/c #f string? symbol? procedure?)" measure-name))
+  (define measure-name* (performance-resolve-stringish-optional 'performance-clear-measures measure-name))
+  (js-performance-clear-measures measure-name*)
   (void))
 
 ;; performance-clear-resource-timings : -> void?
@@ -197,39 +216,39 @@
 (define (performance-get-entries)
   (js-performance-get-entries))
 
-;; performance-get-entries-by-name : string? [string?] -> external/raw
+;; performance-get-entries-by-name : (or/c string? symbol?) [(or/c string? symbol?)] -> external/raw
 ;;   Read performance entries filtered by name and optional type.
 (define (performance-get-entries-by-name name [entry-type #f])
-  (unless (string? name)
-    (raise-argument-error 'performance-get-entries-by-name "string?" name))
+  (define name* (performance-stringish->string 'performance-get-entries-by-name name))
   (when (and (not (eq? entry-type #f))
              (not (string? entry-type))
+             (not (symbol? entry-type))
              (not (procedure? entry-type)))
-    (raise-argument-error 'performance-get-entries-by-name "(or/c #f string? procedure?)" entry-type))
-  (js-performance-get-entries-by-name name (performance-resolve-optional entry-type)))
+    (raise-argument-error 'performance-get-entries-by-name "(or/c #f string? symbol? procedure?)" entry-type))
+  (define entry-type* (performance-resolve-stringish-optional 'performance-get-entries-by-name entry-type))
+  (js-performance-get-entries-by-name name* entry-type*))
 
-;; performance-get-entries-by-type : string? -> external/raw
+;; performance-get-entries-by-type : (or/c string? symbol?) -> external/raw
 ;;   Read performance entries filtered by type.
 (define (performance-get-entries-by-type entry-type)
-  (unless (string? entry-type)
-    (raise-argument-error 'performance-get-entries-by-type "string?" entry-type))
-  (js-performance-get-entries-by-type entry-type))
+  (define entry-type* (performance-stringish->string 'performance-get-entries-by-type entry-type))
+  (js-performance-get-entries-by-type entry-type*))
 
-;; performance-mark : string? [any/c] -> external/raw
+;; performance-mark : (or/c string? symbol?) [any/c] -> external/raw
 ;;   Create a performance mark and return the entry.
 (define (performance-mark name [options #f])
-  (unless (string? name)
-    (raise-argument-error 'performance-mark "string?" name))
-  (js-performance-mark name (performance-resolve-optional options)))
+  (define name* (performance-stringish->string 'performance-mark name))
+  (js-performance-mark name* (performance-resolve-optional options)))
 
-;; performance-measure : string? [any/c] [any/c] -> external/raw
+;; performance-measure : (or/c string? symbol?) [any/c] [any/c] -> external/raw
 ;;   Create a performance measure and return the entry.
 (define (performance-measure name [start-or-options #f] [end-mark #f])
-  (unless (string? name)
-    (raise-argument-error 'performance-measure "string?" name))
-  (js-performance-measure name
-                          (performance-resolve-optional start-or-options)
-                          (performance-resolve-optional end-mark)))
+  (define name* (performance-stringish->string 'performance-measure name))
+  (define start-or-options* (performance-resolve-stringish-optional 'performance-measure start-or-options))
+  (define end-mark* (performance-resolve-stringish-optional 'performance-measure end-mark))
+  (js-performance-measure name*
+                          start-or-options*
+                          end-mark*))
 
 ;; performance-measure-user-agent-specific-memory : -> external/raw
 ;;   Estimate user-agent-specific memory usage.

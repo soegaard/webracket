@@ -167,33 +167,35 @@ Returns the current document object wrapped in a checked struct.
 Returns the current location object wrapped in a checked struct.
 }
 
-@defproc[(window-set-name! [name string?]) void?]{
+@defproc[(window-set-name! [name (or/c string? symbol?)]) void?]{
 @(mdn-bar "Window: name property"
           "https://developer.mozilla.org/en-US/docs/Web/API/Window/name")
 Sets the browsing context name used by the browser for targeting,
 reusing windows, and script access. This does not visibly change the
-page itself.
+page itself. Symbols are accepted and converted to strings.
 }
 
-@defproc[(window-open [url string?]
-                      [target (or/c string? procedure?) #f]
-                      [features (or/c string? procedure?) #f]
+@defproc[(window-open [url (or/c string? symbol?)]
+                      [target (or/c string? symbol? procedure?) #f]
+                      [features (or/c string? symbol? procedure?) #f]
                       [replace (or/c boolean? procedure?) #f])
          (or/c #f window?)]{
 @(mdn-bar "Window: open() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Window/open")
-Opens a new browsing context. The @racket[target] and @racket[features]
-arguments accept strings, and @racket[replace] accepts a boolean value.
+Opens a new browsing context. The @racket[url], @racket[target], and
+@racket[features] arguments accept strings or symbols, and
+@racket[replace] accepts a boolean value.
 The returned value is wrapped as @racket[window] when the browser opens
 the new context, or @racket[#f] if the popup is blocked. Use @racket[#f]
 to omit an optional argument. If you need a literal @racket[#f] value,
 pass a thunk such as @racket[(lambda () #f)].
 }
 
-@defproc[(window-confirm [message string?]) boolean?]{
+@defproc[(window-confirm [message (or/c string? symbol?)]) boolean?]{
 @(mdn-bar "Window: confirm() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Window/confirm")
 Shows a confirmation dialog and converts the browser result to a boolean.
+The message accepts a string or symbol and is normalized to a string.
 }
 
 @defproc[(window-scroll-to [x real?] [y real?]

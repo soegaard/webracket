@@ -9,6 +9,14 @@
 (define (window-i32->boolean v)
   (not (zero? v)))
 
+;; window-stringish->string : symbol? any/c -> string?
+;;   Normalize a string-like wrapper argument to a browser string.
+(define (window-stringish->string who v)
+  (cond
+    [(string? v) v]
+    [(symbol? v) (symbol->string v)]
+    [else (raise-argument-error who "(or/c string? symbol?)" v)]))
+
 ;; window-resolve-optional : any/c -> any/c
 ;;   Treat #f as omitted, and force thunks when a literal value is needed.
 (define (window-resolve-optional value)
@@ -16,6 +24,15 @@
     [(eq? value #f) (void)]
     [(procedure? value) (value)]
     [else value]))
+
+;; window-resolve-stringish-optional : symbol? any/c -> any/c
+;;   Resolve an optional string-like argument and normalize strings and symbols.
+(define (window-resolve-stringish-optional who value)
+  (define resolved (window-resolve-optional value))
+  (cond
+    [(string? resolved) resolved]
+    [(symbol? resolved) (symbol->string resolved)]
+    [else resolved]))
 
 ;; window-scroll-options : any/c any/c any/c -> void?
 ;;   Validate a browser ScrollToOptions dictionary wrapper.
@@ -42,6 +59,16 @@
 
 ;; window-scroll-options->raw : window-scroll-options? real? real? -> external/raw
 ;;   Convert a Rackety scroll-options struct to a browser dictionary.
+(define (window-js-literal v)
+  (cond
+    [(string? v) (format "~s" v)]
+    [(symbol? v) (format "~s" (symbol->string v))]
+    [(real? v) (number->string v)]
+    [(boolean? v) (if v "true" "false")]
+    [else (error 'window-scroll-options->raw
+                 "unsupported scroll option value: ~s"
+                 v)]))
+
 (define (window-scroll-options->raw options fallback-x fallback-y)
   (define top (window-scroll-options-top options))
   (define left (window-scroll-options-left options))
@@ -56,10 +83,16 @@
             (if (eq? behavior #f)
                 '()
                 (list (vector "behavior"
-                              (if (symbol? behavior)
-                                  (symbol->string behavior)
-                                  behavior))))))
-  (js-object (list->vector fields)))
+                              (window-js-literal behavior))))))
+  (js-eval (string-append "{"
+                          (string-join
+                           (map (lambda (field)
+                                  (format "~a: ~a"
+                                          (vector-ref field 0)
+                                          (window-js-literal (vector-ref field 1))))
+                                fields)
+                           ", ")
+                          "}")))
 
 ;; window : external/raw -> window?
 ;;   Wrap a browser Window object.
@@ -95,12 +128,11 @@
 (define (window-name)
   (js-window-name))
 
-;; window-set-name! : string? -> void?
+;; window-set-name! : (or/c string? symbol?) -> void?
 ;;   Set the window name.
 (define (window-set-name! name)
-  (unless (string? name)
-    (raise-argument-error 'window-set-name! "string?" name))
-  (js-set-window-name! name)
+  (define name* (window-stringish->string 'window-set-name! name))
+  (js-set-window-name! name*)
   (void))
 
 ;; window-location-info : external/raw -> window-location-info?
@@ -118,50 +150,46 @@
   (js-set-window-location! loc)
   (void))
 
-;; window-open : string? [target (or/c string? procedure?) #f] [features (or/c string? procedure?) #f] [replace (or/c boolean? procedure?) #f] -> (or/c #f window?)
+;; window-open : (or/c string? symbol?) [target (or/c string? symbol? procedure?) #f] [features (or/c string? symbol? procedure?) #f] [replace (or/c boolean? procedure?) #f] -> (or/c #f window?)
 ;;   Open a new browsing context.
 (define (window-open url [target #f] [features #f] [replace #f])
-  (unless (string? url)
-    (raise-argument-error 'window-open "string?" url))
-  (define target* (window-resolve-optional target))
-  (define features* (window-resolve-optional features))
+  (define url* (window-stringish->string 'window-open url))
+  (define target* (window-resolve-stringish-optional 'window-open target))
+  (define features* (window-resolve-stringish-optional 'window-open features))
   (define replace* (window-resolve-optional replace))
   (when (and (not (eq? target* (void)))
-             (not (string? target*)))
-    (raise-argument-error 'window-open "(or/c #f string? procedure?)" target))
+             (not (or (string? target*) (eq? target* #f))))
+    (raise-argument-error 'window-open "(or/c #f string? symbol? procedure?)" target))
   (when (and (not (eq? features* (void)))
-             (not (string? features*)))
-    (raise-argument-error 'window-open "(or/c #f string? procedure?)" features))
+             (not (or (string? features*) (eq? features* #f))))
+    (raise-argument-error 'window-open "(or/c #f string? symbol? procedure?)" features))
   (when (and (not (eq? replace* (void)))
              (not (boolean? replace*)))
     (raise-argument-error 'window-open "(or/c #f boolean? procedure?)" replace))
-  (window-wrap-optional (js-window-open url target* features* replace*)))
+  (window-wrap-optional (js-window-open url* target* features* replace*)))
 
 ;; window-fetch : any/c [any/c #f] -> external/raw
 ;;   Start a fetch request.
 (define (window-fetch request [init #f])
   (js-window-fetch request (window-resolve-optional init)))
 
-;; window-confirm : string? -> boolean?
+;; window-confirm : (or/c string? symbol?) -> boolean?
 ;;   Show a confirmation dialog.
 (define (window-confirm message)
-  (unless (string? message)
-    (raise-argument-error 'window-confirm "string?" message))
-  (window-i32->boolean (js-window-confirm message)))
+  (define message* (window-stringish->string 'window-confirm message))
+  (window-i32->boolean (js-window-confirm message*)))
 
-;; window-prompt : string? [any/c #f] -> any/c
+;; window-prompt : (or/c string? symbol?) [any/c #f] -> any/c
 ;;   Show a prompt dialog.
 (define (window-prompt message [default-value #f])
-  (unless (string? message)
-    (raise-argument-error 'window-prompt "string?" message))
-  (js-window-prompt message (window-resolve-optional default-value)))
+  (define message* (window-stringish->string 'window-prompt message))
+  (js-window-prompt message* (window-resolve-optional default-value)))
 
-;; window-alert : string? -> void?
+;; window-alert : (or/c string? symbol?) -> void?
 ;;   Show an alert dialog.
 (define (window-alert message)
-  (unless (string? message)
-    (raise-argument-error 'window-alert "string?" message))
-  (js-window-alert message)
+  (define message* (window-stringish->string 'window-alert message))
+  (js-window-alert message*)
   (void))
 
 ;; window-print : -> void?
