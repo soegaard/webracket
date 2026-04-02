@@ -59,6 +59,13 @@ preserving on the WebRacket side, prefer a checked wrapper struct instead of
 exposing the raw `external/raw` value directly. Keep a raw accessor such as
 `*-raw` only when callers genuinely need the browser object itself.
 
+If multiple wrapper libraries need to share the same checked structs or
+unwrap helpers, put those shared definitions in
+`stdlib/shared-library-structs.rkt` and have the compiler include that file
+before the main program. In other words: use
+`stdlib/shared-library-structs.rkt` for shared wrapper types, not compiler
+changes or nested wrapper includes.
+
 ### 2.4 Keep optional arguments explicit at the raw layer
 
 Low-level bindings may use `(void)` to mean “argument omitted” when that matches the browser shape.
@@ -150,6 +157,11 @@ For optional callback receivers or `this`-style arguments, keep the public
 contract Racket-friendly and document the convention explicitly. In our
 wrappers, `#f` means omitted, and a thunk can be used when a literal `#f`
 value is needed.
+
+When a wrapper returns another browser object that is shared across multiple
+APIs, define the wrapper type once in `stdlib/shared-library-structs.rkt`
+and reuse it from the public libraries. That keeps the public API consistent
+without requiring module-style sharing in the compiler.
 
 ### 3.4 Add event support explicitly
 

@@ -1,4 +1,6 @@
 #lang webracket
+;; Shared wrapper structs and helpers come first so later stdlib files
+;; can reuse them without compiler changes.
 (include/reader "shared-library-structs.rkt" read-syntax/skip-first-line)
 (include/reader "qq-and-or.rkt"          read-syntax/skip-first-line)
 (include/reader "ellipses.rkt"           read-syntax/skip-first-line)

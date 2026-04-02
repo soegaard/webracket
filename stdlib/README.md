@@ -18,6 +18,11 @@ files in this folder. This happens in `stdlib.rkt` which starts:
     (include/reader "parameters.rkt"  read-syntax/skip-first-line)
     (include/reader "exceptions.rkt"  read-syntax/skip-first-line)
     ...
+
+The file `shared-library-structs.rkt` is included first so shared
+wrapper structs like `element` and `dom-rect` are available to later
+stdlib files and to the public DOM wrapper libraries without any
+compiler changes.
     
 Note that `stdlib-for-browser.rkt` includes `stdlib.rkt` and `browser.rkt`.
 The file `browser.rkt` is only used when the target is the browser.
