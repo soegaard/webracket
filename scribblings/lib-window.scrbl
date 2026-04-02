@@ -37,8 +37,7 @@ The @racket[window] library provides checked wrappers for the browser
 Window object, timers, dialogs, scrolling, and navigation helpers.
 The current Window object, document, and location are wrapped in small
 checked structs so the API stays Rackety instead of exposing raw browser
-objects at the top level. The raw accessor for @racket[window] lives in
-the @seclink["raw-accessors"]{Raw Accessors} appendix.
+objects at the top level.
 
 @margin-note{These entries are checked structs, not raw browser objects.}
 
