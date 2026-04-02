@@ -57,13 +57,14 @@ small piece of work.
 (code:comment "Capture the ending timestamp and compute the duration.")
 (define elapsed
   (- (performance-now) start))
-
-(void total elapsed)
 ]
 
 The quick start shows the simplest path: call
 @racket[performance-now] before and after the work you care about, and
 subtract the results.
+After this block, @racket[start] holds the starting timestamp,
+@racket[elapsed] holds the duration, and @racket[total] holds the
+computed sum.
 
 @section{Performance Example}
 
@@ -96,13 +97,14 @@ piece of work, not just a raw duration.
   (performance-get-entries-by-name "compile-start"))
 (define measures
   (performance-get-entries-by-name "compile-span" "measure"))
-
-(void total marks measures)
 ]
 
 The example shows the usual workflow:
 clear any old entries, create a start mark, do the work, create an end
 mark, and then ask the browser for the recorded measure.
+After this block, @racket[marks] and @racket[measures] hold the browser
+entry lists for the mark and measure names, and @racket[total] holds the
+computed sum.
 
 @section{Performance Properties}
 
