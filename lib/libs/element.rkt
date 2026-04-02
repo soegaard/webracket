@@ -133,11 +133,21 @@
   (js-set-attribute! (element-unwrap element) name* value*)
   (void))
 
+;; element-set-attribute! : element? (or/c string? symbol?) (or/c string? symbol?) -> void?
+;;   Set an element attribute.
+(define (element-set-attribute! element name value)
+  (set-attribute! element name value))
+
 ;; get-attribute : external? (or/c string? symbol?) -> (or/c #f string?)
 ;;   Read an element attribute.
 (define (get-attribute element name)
   (define name* (element-stringish->string 'get-attribute name))
   (js-send/value (element-unwrap element) "getAttribute" (vector name*)))
+
+;; element-get-attribute : element? (or/c string? symbol?) -> (or/c #f string?)
+;;   Read an element attribute.
+(define (element-get-attribute element name)
+  (get-attribute element name))
 
 ;; element-has-attribute? : element? (or/c string? symbol?) -> boolean?
 ;;   Report whether an element has an attribute.
@@ -464,6 +474,11 @@
 (define (get-bounding-client-rect element)
   (dom-rect-wrap (js-get-bounding-client-rect (element-unwrap element))))
 
+;; element-get-bounding-client-rect : element? -> dom-rect?
+;;   Read the element bounding box.
+(define (element-get-bounding-client-rect element)
+  (get-bounding-client-rect element))
+
 ;; get-client-rects : external? -> vector?
 ;;   Read the client rect list as wrapped DOMRect values.
 (define (get-client-rects element)
@@ -471,11 +486,21 @@
                       (js-get-client-rects (element-unwrap element))
                       dom-rect-wrap))
 
+;; element-get-client-rects : element? -> vector?
+;;   Read the client rect list as wrapped DOMRect values.
+(define (element-get-client-rects element)
+  (get-client-rects element))
+
 ;; query-selector : external? (or/c string? symbol?) -> (or/c #f element?)
 ;;   Find the first matching descendant.
 (define (query-selector element selector)
   (define selector* (element-stringish->string 'query-selector selector))
   (element-wrap (js-element-query-selector (element-unwrap element) selector*)))
+
+;; element-query-selector : element? (or/c string? symbol?) -> (or/c #f element?)
+;;   Find the first matching descendant.
+(define (element-query-selector element selector)
+  (query-selector element selector))
 
 ;; query-selector-all : external? (or/c string? symbol?) -> vector?
 ;;   Find all matching descendants as wrapped elements.
@@ -484,6 +509,11 @@
   (array-like->vector 'query-selector-all
                       (js-element-query-selector-all (element-unwrap element) selector*)
                       element-wrap))
+
+;; element-query-selector-all : element? (or/c string? symbol?) -> vector?
+;;   Find all matching descendants as wrapped elements.
+(define (element-query-selector-all element selector)
+  (query-selector-all element selector))
 
 ;; element-insert-adjacent-element! : element? (or/c string? symbol?) any/c -> (or/c #f element?)
 ;;   Insert an element relative to another element.
@@ -604,6 +634,11 @@
   (js-scroll-into-view! (element-unwrap element) (if align-to-top? 1 0))
   (void))
 
+;; element-scroll-into-view! : element? [boolean?] -> void?
+;;   Scroll ancestors until the element is visible.
+(define (element-scroll-into-view! element [align-to-top? #t])
+  (scroll-into-view! element align-to-top?))
+
 ;; scroll-to! : external? real? real? -> void?
 ;;   Scroll an element to an absolute position.
 (define (scroll-to! element x y)
@@ -624,6 +659,11 @@
   (js-set-attribute-ns! (element-unwrap element) ns* name* value*)
   (void))
 
+;; element-set-attribute-ns! : element? (or/c string? symbol?) (or/c string? symbol?) (or/c string? symbol?) -> void?
+;;   Set a namespaced attribute.
+(define (element-set-attribute-ns! element ns name value)
+  (set-attribute-ns! element ns name value))
+
 ;; toggle-attribute! : external? (or/c string? symbol?) (or/c boolean? procedure?) -> boolean?
 ;;   Toggle an attribute, or force a specific state when provided.
 (define (toggle-attribute! element name [force #f])
@@ -637,3 +677,8 @@
     [else
      (element-i32->boolean
       (js-toggle-attribute! (element-unwrap element) name* (if force 1 0)))]))
+
+;; element-toggle-attribute! : element? (or/c string? symbol?) (or/c boolean? procedure?) -> boolean?
+;;   Toggle an attribute, or force a specific state when provided.
+(define (element-toggle-attribute! element name [force #f])
+  (toggle-attribute! element name force))

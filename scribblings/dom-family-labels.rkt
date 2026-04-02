@@ -21,6 +21,8 @@
   element-set-id!
   element-class-name
   element-set-class-name!
+  element-set-attribute!
+  element-get-attribute
   element-tag-name
   element-local-name
   element-namespace-uri
@@ -47,6 +49,10 @@
   element-child-element-count
   element-first-element-child
   element-last-element-child
+  element-query-selector
+  element-query-selector-all
+  element-get-bounding-client-rect
+  element-get-client-rects
   element-inner-html
   element-set-inner-html!
   element-outer-html
@@ -83,9 +89,12 @@
   element-animate
   element-request-fullscreen
   element-request-pointer-lock
+  element-scroll-into-view!
   element-scroll!
   element-scroll-by!
   element-scroll-to!
+  element-set-attribute-ns!
+  element-toggle-attribute!
   shadow-root-host
   shadow-root-mode
   shadow-root-delegates-focus?
@@ -387,6 +396,8 @@
 (define element-set-id! any/c)
 (define element-class-name any/c)
 (define element-set-class-name! any/c)
+(define element-set-attribute! any/c)
+(define element-get-attribute any/c)
 (define element-tag-name any/c)
 (define element-local-name any/c)
 (define element-namespace-uri any/c)
@@ -412,6 +423,10 @@
 (define element-child-element-count any/c)
 (define element-first-element-child any/c)
 (define element-last-element-child any/c)
+(define element-query-selector any/c)
+(define element-query-selector-all any/c)
+(define element-get-bounding-client-rect any/c)
+(define element-get-client-rects any/c)
 (define element-inner-html any/c)
 (define element-set-inner-html! any/c)
 (define element-outer-html any/c)
@@ -448,9 +463,12 @@
 (define element-animate any/c)
 (define element-request-fullscreen any/c)
 (define element-request-pointer-lock any/c)
+(define element-scroll-into-view! any/c)
 (define element-scroll! any/c)
 (define element-scroll-by! any/c)
 (define element-scroll-to! any/c)
+(define element-set-attribute-ns! any/c)
+(define element-toggle-attribute! any/c)
 (define shadow-root-host any/c)
 (define shadow-root-mode any/c)
 (define shadow-root-delegates-focus? any/c)
