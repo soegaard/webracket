@@ -359,14 +359,46 @@ Returns the namespaced attribute node for the named attribute.
                                       [node any/c]) external/raw]{
 @(mdn-bar "Element: setAttributeNode() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/setAttributeNode")
-Attaches an attribute node to the element.
+Attaches an attribute node to the element. If a raw @racket[external]
+is passed as the node, it should be a browser @racketid[Attr] value.
 }
 
 @defproc[(element-set-attribute-node-ns! [element element?]
                                          [node any/c]) external/raw]{
 @(mdn-bar "Element: setAttributeNodeNS() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/setAttributeNodeNS")
-Attaches a namespaced attribute node to the element.
+Attaches a namespaced attribute node to the element. If a raw
+@racket[external] is passed as the node, it should be a browser
+@racketid[Attr] value.
+}
+
+@defproc[(element-remove-attribute-node! [element element?]
+                                         [node any/c]) external/raw]{
+@(mdn-bar "Element: removeAttributeNode() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/removeAttributeNode")
+Removes an attribute node from the element. If a raw @racket[external]
+is passed as the node, it should be a browser @racketid[Attr] value.
+}
+
+@defproc[(element-has-pointer-capture? [element element?]
+                                       [pointer-id exact-nonnegative-integer?]) boolean?]{
+@(mdn-bar "Element: hasPointerCapture() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/hasPointerCapture")
+Reports whether the element currently has pointer capture for the given pointer id.
+}
+
+@defproc[(element-set-pointer-capture! [element element?]
+                                      [pointer-id exact-nonnegative-integer?]) void?]{
+@(mdn-bar "Element: setPointerCapture() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/setPointerCapture")
+Captures pointer events for the given pointer id.
+}
+
+@defproc[(element-release-pointer-capture! [element element?]
+                                           [pointer-id exact-nonnegative-integer?]) void?]{
+@(mdn-bar "Element: releasePointerCapture() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/releasePointerCapture")
+Releases pointer capture for the given pointer id.
 }
 
 @section{Element Example}

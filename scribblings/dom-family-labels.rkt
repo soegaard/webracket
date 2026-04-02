@@ -49,6 +49,10 @@
   element-get-attribute-node-ns
   element-set-attribute-node!
   element-set-attribute-node-ns!
+  element-remove-attribute-node!
+  element-has-pointer-capture?
+  element-set-pointer-capture!
+  element-release-pointer-capture!
   window-self
   window-document
   (struct-out window-document-info)
@@ -354,6 +358,10 @@
 (define element-get-attribute-node-ns any/c)
 (define element-set-attribute-node! any/c)
 (define element-set-attribute-node-ns! any/c)
+(define element-remove-attribute-node! any/c)
+(define element-has-pointer-capture? any/c)
+(define element-set-pointer-capture! any/c)
+(define element-release-pointer-capture! any/c)
 
 (struct iterator (raw) #:transparent #:constructor-name make-iterator)
 (struct performance-event-count-map (raw) #:transparent)

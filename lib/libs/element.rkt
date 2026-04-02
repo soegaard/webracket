@@ -118,6 +118,12 @@
 (define (element-has-attributes? element)
   (element-i32->boolean (js-has-attributes (element-unwrap element))))
 
+;; element-has-pointer-capture? : element? exact-nonnegative-integer? -> boolean?
+;;   Report whether this element has pointer capture for a pointer id.
+(define (element-has-pointer-capture? element pointer-id)
+  (element-i32->boolean
+   (js-has-pointer-capture (element-unwrap element) pointer-id)))
+
 ;; element-remove-attribute! : element? (or/c string? symbol?) -> void?
 ;;   Remove an attribute from an element.
 (define (element-remove-attribute! element name)
@@ -272,6 +278,11 @@
 (define (element-set-attribute-node-ns! element node)
   (js-set-attribute-node-ns! (element-unwrap element) (element-nodeish->value node)))
 
+;; element-remove-attribute-node! : element? any/c -> external/raw
+;;   Remove an attribute node from an element.
+(define (element-remove-attribute-node! element node)
+  (js-remove-attribute-node! (element-unwrap element) (element-nodeish->value node)))
+
 ;; get-bounding-client-rect : element? -> dom-rect?
 ;;   Read the element bounding box.
 (define (get-bounding-client-rect element)
@@ -350,6 +361,18 @@
 ;;   Request pointer lock.
 (define (request-pointer-lock element)
   (js-request-pointer-lock (element-unwrap element))
+  (void))
+
+;; element-set-pointer-capture! : element? exact-nonnegative-integer? -> void?
+;;   Capture pointer events for a pointer id.
+(define (element-set-pointer-capture! element pointer-id)
+  (js-set-pointer-capture! (element-unwrap element) pointer-id)
+  (void))
+
+;; element-release-pointer-capture! : element? exact-nonnegative-integer? -> void?
+;;   Release pointer capture for a pointer id.
+(define (element-release-pointer-capture! element pointer-id)
+  (js-release-pointer-capture! (element-unwrap element) pointer-id)
   (void))
 
 ;; scroll! : external? real? real? -> void?
