@@ -242,13 +242,12 @@
 (define (element-attach-shadow! element options)
   (js-attach-shadow! (element-unwrap element) options))
 
-;; element-animate : element? any/c [any/c] [any/c] -> external/raw
+;; element-animate : element? any/c [any/c] -> external/raw
 ;;   Start an animation on an element.
-(define (element-animate element keyframes [options #f] [timeline #f])
+(define (element-animate element keyframes [options #f])
   (js-animate (element-unwrap element)
               keyframes
-              (if (eq? options #f) (js-undefined) options)
-              (if (eq? timeline #f) (js-undefined) timeline)))
+              (if (eq? options #f) (js-undefined) options)))
 
 ;; element-get-attribute-node : element? (or/c string? symbol?) -> (or/c #f external?)
 ;;   Read the attribute node for a given name.

@@ -334,8 +334,7 @@ Attaches a shadow root to the element and returns the raw browser shadow root.
 
 @defproc[(element-animate [element element?]
                           [keyframes any/c]
-                          [options any/c #f]
-                          [timeline any/c #f]) external/raw]{
+                          [options any/c #f]) external/raw]{
 @(mdn-bar "Element: animate() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/animate")
 Starts an animation on the element and returns the raw browser animation object.
