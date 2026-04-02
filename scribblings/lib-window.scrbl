@@ -229,5 +229,8 @@ browser's dictionary form. Use @racket[#f] to omit the options argument.
 @defproc[(window-set-timeout [callback external?]) exact-nonnegative-integer?]{
 @(mdn-bar "Window: setTimeout() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Window/setTimeout")
+The raw @racket[callback] argument should be a browser JavaScript
+function value.
+
 Schedules a one-shot timer callback.
 }

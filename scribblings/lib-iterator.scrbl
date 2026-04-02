@@ -153,6 +153,9 @@ Calls @racket[callback] with three arguments:
  @item{the zero-based index, and}
  @item{the wrapped source iterator.}
 ]
+If @racket[callback] is an external browser value, it should be a
+browser JavaScript function. The function receives the yielded value,
+the zero-based index, and the wrapped source iterator.
 Use @racket[#f] to omit @racket[this-arg]. If you need a literal @racket[#f]
 receiver, pass a thunk such as @racket[(lambda () #f)].
 The callback result is treated as true unless it is @racket[#f]. The result is
@@ -164,6 +167,8 @@ The callback result is treated as true unless it is @racket[#f]. The result is
 Calls @racket[callback] with the same three arguments as
 @racket[iterator-every]. Keep the values for which the callback result is
 treated as true unless it is @racket[#f].
+If @racket[callback] is an external browser value, it should be a browser
+JavaScript function with the same argument shape as @racket[iterator-every].
 Use @racket[#f] to omit @racket[this-arg]. If you need a literal @racket[#f]
 receiver, pass a thunk such as @racket[(lambda () #f)].
 }
@@ -174,6 +179,8 @@ Calls @racket[callback] with the same three arguments as
 @racket[iterator-every]. Returns the first yielded value for which the callback
 result is treated as true unless it is @racket[#f], or @racket[#f] if no value
 matches.
+If @racket[callback] is an external browser value, it should be a browser
+JavaScript function with the same argument shape as @racket[iterator-every].
 Use @racket[#f] to omit @racket[this-arg]. If you need a literal @racket[#f]
 receiver, pass a thunk such as @racket[(lambda () #f)].
 }
@@ -183,6 +190,8 @@ receiver, pass a thunk such as @racket[(lambda () #f)].
 Calls @racket[callback] with the same three arguments as
 @racket[iterator-every]. The callback should return an iterable value, and the
 wrapper flattens those results one level.
+If @racket[callback] is an external browser value, it should be a browser
+JavaScript function with the same argument shape as @racket[iterator-every].
 Use @racket[#f] to omit @racket[this-arg]. If you need a literal @racket[#f]
 receiver, pass a thunk such as @racket[(lambda () #f)].
 }
@@ -191,6 +200,8 @@ receiver, pass a thunk such as @racket[(lambda () #f)].
 @(mdn-bar "Iterator.prototype.forEach()" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/forEach")
 Calls @racket[callback] with the same three arguments as
 @racket[iterator-every]. The return value is ignored.
+If @racket[callback] is an external browser value, it should be a browser
+JavaScript function with the same argument shape as @racket[iterator-every].
 Use @racket[#f] to omit @racket[this-arg]. If you need a literal @racket[#f]
 receiver, pass a thunk such as @racket[(lambda () #f)].
 }
@@ -199,6 +210,8 @@ receiver, pass a thunk such as @racket[(lambda () #f)].
 @(mdn-bar "Iterator.prototype.map()" "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Iterator/map")
 Calls @racket[callback] with the same three arguments as
 @racket[iterator-every]. The callback result becomes the next yielded value.
+If @racket[callback] is an external browser value, it should be a browser
+JavaScript function with the same argument shape as @racket[iterator-every].
 Use @racket[#f] to omit @racket[this-arg]. If you need a literal @racket[#f]
 receiver, pass a thunk such as @racket[(lambda () #f)].
 }
@@ -212,6 +225,9 @@ Calls @racket[callback] with four arguments:
  @item{the zero-based index, and}
  @item{the wrapped source iterator.}
 ]
+If @racket[callback] is an external browser value, it should be a browser
+JavaScript function with the same argument shape as @racket[iterator-every],
+plus the accumulator as the first argument.
 Use @racket[#f] to omit @racket[initial-value]. If you need a literal
 @racket[#f] initial value, pass a thunk such as @racket[(lambda () #f)].
 The callback result becomes the next accumulator value.
@@ -222,6 +238,8 @@ The callback result becomes the next accumulator value.
 Calls @racket[callback] with the same three arguments as
 @racket[iterator-every]. Returns @racket[#t] as soon as one callback call
 produces a result that is treated as true unless it is @racket[#f].
+If @racket[callback] is an external browser value, it should be a browser
+JavaScript function with the same argument shape as @racket[iterator-every].
 Use @racket[#f] to omit @racket[this-arg]. If you need a literal @racket[#f]
 receiver, pass a thunk such as @racket[(lambda () #f)].
 }

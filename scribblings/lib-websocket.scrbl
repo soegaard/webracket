@@ -166,8 +166,9 @@ if no extensions were negotiated.
 
 Sends @racket[data] through the WebSocket connection.
 
-The message body can be a string, bytes, or an external browser value
-such as @tt{ArrayBuffer}, @tt{Uint8Array}, or @tt{Blob}.
+The raw @racket[data] argument can be a browser @racketid[ArrayBuffer],
+@racketid[Uint8Array], or @racketid[Blob] value, or a Racket
+@racket[bytes] value.
 }
 
 @defproc[(websocket-close [ws websocket?]
@@ -198,6 +199,10 @@ that callback for future events.
 @(mdn-bar "WebSocket: open event"
           "https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/open_event")
 
+The raw @racket[handler] argument, when supplied as an external, should
+be a browser event-handler function that receives a browser
+@racketid[Event] value.
+
 Installs @racket[handler] as the @tt{onopen} event handler, or clears
 the handler when @racket[handler] is @racket[#f].
 }
@@ -207,6 +212,10 @@ the handler when @racket[handler] is @racket[#f].
          void?]{
 @(mdn-bar "WebSocket: message event"
           "https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/message_event")
+
+The raw @racket[handler] argument, when supplied as an external, should
+be a browser event-handler function that receives a browser
+@racketid[MessageEvent] value.
 
 Installs @racket[handler] as the @tt{onmessage} event handler, or clears
 the handler when @racket[handler] is @racket[#f].
@@ -218,6 +227,10 @@ the handler when @racket[handler] is @racket[#f].
 @(mdn-bar "WebSocket: close event"
           "https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/close_event")
 
+The raw @racket[handler] argument, when supplied as an external, should
+be a browser event-handler function that receives a browser
+@racketid[CloseEvent] value.
+
 Installs @racket[handler] as the @tt{onclose} event handler, or clears
 the handler when @racket[handler] is @racket[#f].
 }
@@ -227,6 +240,10 @@ the handler when @racket[handler] is @racket[#f].
          void?]{
 @(mdn-bar "WebSocket: error event"
           "https://developer.mozilla.org/en-US/docs/Web/API/WebSocket/error_event")
+
+The raw @racket[handler] argument, when supplied as an external, should
+be a browser event-handler function that receives a browser
+@racketid[Event] value.
 
 Installs @racket[handler] as the @tt{onerror} event handler, or clears
 the handler when @racket[handler] is @racket[#f].
@@ -241,6 +258,10 @@ the handler when @racket[handler] is @racket[#f].
          external?]{
 @(mdn-bar "EventTarget: addEventListener() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener")
+
+The raw @racket[listener] argument, when supplied as an external, should
+be a browser callback function. The optional @racket[options] values can
+be booleans or a browser @racketid[AddEventListenerOptions] object.
 
 Registers @racket[listener] for the named browser event and returns the
 installed callback token.
@@ -260,6 +281,10 @@ fields such as @tt{capture}, @tt{once}, @tt{passive}, and @tt{signal}.
          void?]{
 @(mdn-bar "EventTarget: removeEventListener() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener")
+
+The raw @racket[listener] argument, when supplied as an external, should
+be a browser callback function. The optional @racket[options] values can
+be booleans or a browser @racketid[AddEventListenerOptions] object.
 
 Removes a previously registered listener for the named browser event.
 

@@ -90,23 +90,27 @@ Creates a new image element.
 @defproc[(image-src [img external?]) string?]{
 @(mdn-bar "HTMLImageElement: src property"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/src")
-Returns the current image source URL.
+The raw @racket[img] argument should be a browser
+@racketid[HTMLImageElement] value. Returns the current image source URL.
 }
 
 @defproc[(image-complete? [img external?]) boolean?]{
 @(mdn-bar "HTMLImageElement: complete property"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/complete")
-Reports whether the image has finished loading.
+The raw @racket[img] argument should be a browser
+@racketid[HTMLImageElement] value. Reports whether the image has finished loading.
 }
 
 @defproc[(image-set-src! [img external?] [src string?]) void?]{
 @(mdn-bar "HTMLImageElement: src property"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/src")
-Sets the image source URL.
+The raw @racket[img] argument should be a browser
+@racketid[HTMLImageElement] value. Sets the image source URL.
 }
 
 @defproc[(image-set-alt! [img external?] [alt string?]) void?]{
 @(mdn-bar "HTMLImageElement: alt property"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLImageElement/alt")
-Sets the alternative text for the image.
+The raw @racket[img] argument should be a browser
+@racketid[HTMLImageElement] value. Sets the alternative text for the image.
 }

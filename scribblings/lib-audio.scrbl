@@ -129,6 +129,9 @@ Creates a new audio context with the browser defaults.
 @(mdn-bar "AudioContext: close() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/close")
 
+The raw @racket[ctx] argument should be a browser
+@racketid[AudioContext] value.
+
 Closes the context and returns the browser promise.
 }
 
@@ -136,12 +139,18 @@ Closes the context and returns the browser promise.
 @(mdn-bar "AudioContext: resume() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/resume")
 
+The raw @racket[ctx] argument should be a browser
+@racketid[AudioContext] value.
+
 Resumes a suspended context and returns the browser promise.
 }
 
 @defproc[(audio-context-suspend [ctx audio-context?]) external?]{
 @(mdn-bar "AudioContext: suspend() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/suspend")
+
+The raw @racket[ctx] argument should be a browser
+@racketid[AudioContext] value.
 
 Suspends the context and returns the browser promise.
 }
@@ -157,12 +166,18 @@ Returns the current browser state string.
 @(mdn-bar "AudioContext: currentTime property"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/currentTime")
 
+The raw @racket[ctx] argument should be a browser
+@racketid[AudioContext] value.
+
 Returns the current time of the context clock.
 }
 
 @defproc[(audio-context-sample-rate [ctx audio-context?]) real?]{
 @(mdn-bar "AudioContext: sampleRate property"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/sampleRate")
+
+The raw @racket[ctx] argument should be a browser
+@racketid[AudioContext] value.
 
 Returns the sample rate used by the context.
 }
@@ -171,12 +186,18 @@ Returns the sample rate used by the context.
 @(mdn-bar "AudioContext: baseLatency property"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/baseLatency")
 
+The raw @racket[ctx] argument should be a browser
+@racketid[AudioContext] value.
+
 Returns the estimated base latency of the audio pipeline.
 }
 
 @defproc[(audio-context-output-latency [ctx audio-context?]) real?]{
 @(mdn-bar "AudioContext: outputLatency property"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/outputLatency")
+
+The raw @racket[ctx] argument should be a browser
+@racketid[AudioContext] value.
 
 Returns the estimated output latency of the audio pipeline.
 }
@@ -185,12 +206,19 @@ Returns the estimated output latency of the audio pipeline.
 @(mdn-bar "AudioContext: destination property"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/destination")
 
+The raw @racket[ctx] argument should be a browser
+@racketid[AudioContext] value.
+
 Returns the final destination node for the context.
 }
 
 @defproc[(audio-context-listener [ctx audio-context?]) external?]{
 @(mdn-bar "AudioContext: listener property"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/listener")
+
+The raw @racket[ctx] argument should be a browser
+@racketid[AudioContext] value. The result is a browser
+@racketid[AudioListener] object.
 
 Returns the associated audio listener object.
 }
@@ -201,12 +229,18 @@ Returns the associated audio listener object.
 @(mdn-bar "AudioContext: createGain() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/createGain")
 
+The raw @racket[ctx] argument should be a browser
+@racketid[AudioContext] value.
+
 Creates a gain node attached to @racket[ctx].
 }
 
 @defproc[(audio-context-create-oscillator [ctx audio-context?]) audio-oscillator-node?]{
 @(mdn-bar "AudioContext: createOscillator() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/createOscillator")
+
+The raw @racket[ctx] argument should be a browser
+@racketid[AudioContext] value.
 
 Creates an oscillator node attached to @racket[ctx].
 }
@@ -215,12 +249,18 @@ Creates an oscillator node attached to @racket[ctx].
 @(mdn-bar "AudioContext: createBufferSource() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/createBufferSource")
 
+The raw @racket[ctx] argument should be a browser
+@racketid[AudioContext] value.
+
 Creates a buffer source node attached to @racket[ctx].
 }
 
 @defproc[(audio-context-create-analyser [ctx audio-context?]) audio-analyser-node?]{
 @(mdn-bar "AudioContext: createAnalyser() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/createAnalyser")
+
+The raw @racket[ctx] argument should be a browser
+@racketid[AudioContext] value.
 
 Creates an analyser node attached to @racket[ctx].
 }
@@ -229,12 +269,18 @@ Creates an analyser node attached to @racket[ctx].
 @(mdn-bar "AudioContext: createBiquadFilter() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/createBiquadFilter")
 
+The raw @racket[ctx] argument should be a browser
+@racketid[AudioContext] value.
+
 Creates a biquad filter node attached to @racket[ctx].
 }
 
 @defproc[(audio-context-create-constant-source [ctx audio-context?]) audio-constant-source-node?]{
 @(mdn-bar "AudioContext: createConstantSource() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/createConstantSource")
+
+The raw @racket[ctx] argument should be a browser
+@racketid[AudioContext] value.
 
 Creates a constant source node attached to @racket[ctx].
 }
@@ -245,6 +291,9 @@ Creates a constant source node attached to @racket[ctx].
 @(mdn-bar "AudioContext: createChannelSplitter() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/createChannelSplitter")
 
+The raw @racket[ctx] argument should be a browser
+@racketid[AudioContext] value.
+
 Creates a channel splitter node attached to @racket[ctx].
 }
 
@@ -254,12 +303,18 @@ Creates a channel splitter node attached to @racket[ctx].
 @(mdn-bar "AudioContext: createChannelMerger() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/createChannelMerger")
 
+The raw @racket[ctx] argument should be a browser
+@racketid[AudioContext] value.
+
 Creates a channel merger node attached to @racket[ctx].
 }
 
 @defproc[(audio-context-create-dynamics-compressor [ctx audio-context?]) audio-dynamics-compressor-node?]{
 @(mdn-bar "AudioContext: createDynamicsCompressor() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/createDynamicsCompressor")
+
+The raw @racket[ctx] argument should be a browser
+@racketid[AudioContext] value.
 
 Creates a dynamics compressor node attached to @racket[ctx].
 }
@@ -268,12 +323,18 @@ Creates a dynamics compressor node attached to @racket[ctx].
 @(mdn-bar "AudioContext: createPanner() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/createPanner")
 
+The raw @racket[ctx] argument should be a browser
+@racketid[AudioContext] value.
+
 Creates a panner node attached to @racket[ctx].
 }
 
 @defproc[(audio-context-create-stereo-panner [ctx audio-context?]) audio-stereo-panner-node?]{
 @(mdn-bar "AudioContext: createStereoPanner() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/createStereoPanner")
+
+The raw @racket[ctx] argument should be a browser
+@racketid[AudioContext] value.
 
 Creates a stereo panner node attached to @racket[ctx].
 }
@@ -286,6 +347,9 @@ Creates a stereo panner node attached to @racket[ctx].
 @(mdn-bar "AudioContext: createBuffer() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/createBuffer")
 
+The raw @racket[ctx] argument should be a browser
+@racketid[AudioContext] value.
+
 Creates an audio buffer with the requested size.
 }
 
@@ -294,6 +358,11 @@ Creates an audio buffer with the requested size.
          external?]{
 @(mdn-bar "AudioContext: decodeAudioData() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/decodeAudioData")
+
+The raw @racket[ctx] argument should be a browser
+@racketid[AudioContext] value. The @racket[data] argument should be
+either Racket @racket[bytes] or a browser @racketid[ArrayBuffer] or
+typed-array value.
 
 Decodes audio data and returns the browser promise.
 }
@@ -306,6 +375,10 @@ Decodes audio data and returns the browser promise.
 @(mdn-bar "AudioNode: connect() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioNode/connect")
 
+The raw @racket[node] argument should be a browser @racketid[AudioNode]
+value. The raw @racket[destination] argument should be either a browser
+@racketid[AudioNode] or @racketid[AudioParam] value.
+
 Connects @racket[node] to another node or parameter.
 }
 
@@ -317,12 +390,19 @@ Connects @racket[node] to another node or parameter.
 @(mdn-bar "AudioNode: disconnect() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioNode/disconnect")
 
+The raw @racket[node] argument should be a browser @racketid[AudioNode]
+value. The raw @racket[destination] argument, when supplied, should be
+either a browser @racketid[AudioNode] or @racketid[AudioParam] value.
+
 Disconnects @racket[node] from the current audio graph.
 }
 
 @defproc[(audio-node-context [node audio-node?]) audio-context?]{
 @(mdn-bar "AudioNode: context property"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioNode/context")
+
+The raw @racket[node] argument should be a browser @racketid[AudioNode]
+value.
 
 Returns the audio context that owns the node.
 }
@@ -331,12 +411,18 @@ Returns the audio context that owns the node.
 @(mdn-bar "AudioParam: value property"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioParam/value")
 
+The raw @racket[param] argument should be a browser @racketid[AudioParam]
+value.
+
 Returns the current parameter value.
 }
 
 @defproc[(audio-gain-node-gain [node audio-gain-node?]) audio-param?]{
 @(mdn-bar "GainNode: gain property"
           "https://developer.mozilla.org/en-US/docs/Web/API/GainNode/gain")
+
+The raw @racket[node] argument should be a browser @racketid[GainNode]
+value.
 
 Returns the gain parameter.
 }
@@ -376,6 +462,9 @@ Returns the detune parameter.
          void?]{
 @(mdn-bar "OscillatorNode: setPeriodicWave() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/OscillatorNode/setPeriodicWave")
+
+The raw @racket[wave] argument should be a browser
+@racketid[PeriodicWave] value.
 
 Sets the oscillator's periodic wave.
 }
@@ -515,6 +604,9 @@ Schedules a target value.
 @(mdn-bar "AudioParam: setValueCurveAtTime() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioParam/setValueCurveAtTime")
 
+The raw @racket[values] argument should be a browser
+@racketid[Float32Array] value.
+
 Schedules a value curve.
 }
 
@@ -569,6 +661,8 @@ Returns the number of channels in the buffer.
          external?]{
 @(mdn-bar "AudioBuffer: getChannelData() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioBuffer/getChannelData")
+
+The raw result is a browser @racketid[Float32Array] value.
 
 Returns the channel data array for @racket[channel].
 }
@@ -693,6 +787,9 @@ Sets the smoothing time constant.
 @(mdn-bar "AnalyserNode: getByteFrequencyData() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode/getByteFrequencyData")
 
+The raw @racket[data] argument should be either Racket @racket[bytes] or
+a browser @racketid[Uint8Array] value.
+
 Fills a byte frequency buffer.
 }
 
@@ -701,6 +798,9 @@ Fills a byte frequency buffer.
          void?]{
 @(mdn-bar "AnalyserNode: getByteTimeDomainData() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode/getByteTimeDomainData")
+
+The raw @racket[data] argument should be either Racket @racket[bytes] or
+a browser @racketid[Uint8Array] value.
 
 Fills a byte time-domain buffer.
 }
@@ -711,6 +811,9 @@ Fills a byte time-domain buffer.
 @(mdn-bar "AnalyserNode: getFloatFrequencyData() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode/getFloatFrequencyData")
 
+The raw @racket[data] argument should be a browser
+@racketid[Float32Array] value.
+
 Fills a float frequency buffer.
 }
 
@@ -719,6 +822,9 @@ Fills a float frequency buffer.
          void?]{
 @(mdn-bar "AnalyserNode: getFloatTimeDomainData() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/AnalyserNode/getFloatTimeDomainData")
+
+The raw @racket[data] argument should be a browser
+@racketid[Float32Array] value.
 
 Fills a float time-domain buffer.
 }
@@ -1023,6 +1129,10 @@ Returns the pan parameter.
 @(mdn-bar "AudioContext: onstatechange property"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/onstatechange")
 
+The raw @racket[handler] argument, when supplied as an external, should
+be a browser event-handler function value that receives a browser
+@racketid[Event] value.
+
 Installs or clears the context state-change handler.
 }
 
@@ -1031,6 +1141,10 @@ Installs or clears the context state-change handler.
          void?]{
 @(mdn-bar "OscillatorNode: onended property"
           "https://developer.mozilla.org/en-US/docs/Web/API/OscillatorNode/onended")
+
+The raw @racket[handler] argument, when supplied as an external, should
+be a browser event-handler function value that receives a browser
+@racketid[Event] value.
 
 Installs or clears the oscillator ended handler.
 }
@@ -1041,6 +1155,10 @@ Installs or clears the oscillator ended handler.
 @(mdn-bar "AudioBufferSourceNode: onended property"
           "https://developer.mozilla.org/en-US/docs/Web/API/AudioBufferSourceNode/onended")
 
+The raw @racket[handler] argument, when supplied as an external, should
+be a browser event-handler function value that receives a browser
+@racketid[Event] value.
+
 Installs or clears the buffer-source ended handler.
 }
 
@@ -1049,6 +1167,9 @@ Installs or clears the buffer-source ended handler.
          void?]{
 @(mdn-bar "ConstantSourceNode: onended property"
           "https://developer.mozilla.org/en-US/docs/Web/API/ConstantSourceNode/onended")
+
+The raw @racket[handler] argument, when supplied as an external, should
+be a browser event-handler function value.
 
 Installs or clears the constant-source ended handler.
 }
@@ -1061,6 +1182,13 @@ Installs or clears the constant-source ended handler.
 @(mdn-bar "EventTarget: addEventListener() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener")
 
+The raw @racket[target] argument should be a browser @racketid[AudioContext]
+or @racketid[AudioNode] value. The raw @racket[listener] argument, when
+supplied as an external, should be a browser event-listener function
+value. The optional @racket[option] values are the browser's listener
+options, such as booleans or an @racketid[AddEventListenerOptions]
+dictionary.
+
 Adds an event listener and returns the installed callback token.
 }
 
@@ -1071,6 +1199,13 @@ Adds an event listener and returns the installed callback token.
          void?]{
 @(mdn-bar "EventTarget: removeEventListener() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener")
+
+The raw @racket[target] argument should be a browser @racketid[AudioContext]
+or @racketid[AudioNode] value. The raw @racket[listener] argument, when
+supplied as an external, should be a browser event-listener function
+value. The optional @racket[option] values are the browser's listener
+options, such as booleans or an @racketid[AddEventListenerOptions]
+dictionary.
 
 Removes a previously registered event listener.
 }

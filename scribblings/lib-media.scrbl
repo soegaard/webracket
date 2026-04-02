@@ -89,41 +89,49 @@ When you only need a few helpers, the most useful entry points are
 @defproc[(media-current-time [media external?]) real?]{
 @(mdn-bar "HTMLMediaElement: currentTime property"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/currentTime")
-Returns the current playback time.
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns the current playback time.
 }
 
 @defproc[(media-set-current-time! [media external?] [t real?]) void?]{
 @(mdn-bar "HTMLMediaElement: currentTime property"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/currentTime")
-Seeks to a playback time.
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Seeks to a playback time.
 }
 
 @defproc[(media-play [media external?]) external/raw]{
 @(mdn-bar "HTMLMediaElement: play() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/play")
-Starts playback and returns the browser promise.
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Starts playback and returns the
+browser promise.
 }
 
 @defproc[(media-src [media external?]) string?]{
 @(mdn-bar "HTMLMediaElement: src property"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/src")
-Returns the current media source URL.
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns the current media source URL.
 }
 
 @defproc[(media-set-src! [media external?] [src string?]) void?]{
 @(mdn-bar "HTMLMediaElement: src property"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/src")
-Sets the media source URL.
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Sets the media source URL.
 }
 
 @defproc[(media-controls? [media external?]) boolean?]{
 @(mdn-bar "HTMLMediaElement: controls property"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/controls")
-Reports whether browser controls are shown.
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Reports whether browser controls are shown.
 }
 
 @defproc[(media-set-controls! [media external?] [enabled any/c]) void?]{
 @(mdn-bar "HTMLMediaElement: controls property"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/controls")
-Shows or hides the browser's media controls.
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Shows or hides the browser's media controls.
 }

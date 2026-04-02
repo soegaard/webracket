@@ -103,6 +103,9 @@ are @racket[append-child!], @racket[set-attribute!],
 @(mdn-bar "Node: appendChild() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Node/appendChild")
 Appends a child node.
+
+If an @racket[external] is passed as an argument, it should be a browser
+@racketid[Node] value, such as an element or a text node.
 }
 
 @defproc[(set-attribute! [element element?] [name string?] [value string?]) void?]{

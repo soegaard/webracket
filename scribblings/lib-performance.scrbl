@@ -215,7 +215,9 @@ event type.
          void?]{
 @(mdn-bar "EventCounts: forEach() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/EventCounts/forEach")
-Calls @racket[proc] for each event-count entry in the browser map.
+The raw @racket[proc] argument, when supplied as an external, should be a
+browser JavaScript function value. Calls @racket[proc] for each
+event-count entry in the browser map.
 The callback receives the count first, the event type second, and the
 EventCounts map itself third, just like the underlying JavaScript
 map-style API.
