@@ -15,6 +15,7 @@
   window-set-name!
   window-location
   (struct-out window-location-info)
+  (struct-out window-scroll-options)
   window-set-location!
   window-open
   window-fetch
@@ -235,6 +236,7 @@
 (define window-set-name! any/c)
 (define window-location any/c)
 (struct window-location-info (raw) #:transparent)
+(struct window-scroll-options (top left behavior) #:transparent)
 (define window-set-location! any/c)
 (define window-open any/c)
 (define window-fetch any/c)

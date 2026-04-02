@@ -37,6 +37,9 @@
       window.lastOpen = [url, target, features, replace];
       return { kind: 'popup', url, target, features, replace };
     };
+    window.scrollTo = function (x, y, options) {
+      window.lastScrollTo = [x, y, options];
+    };
     window.setTimeout = function (callback, delay) {
       window.lastTimeout = [callback, delay];
       callback();
@@ -84,8 +87,15 @@
          (check-true (window-confirm "proceed?") "window confirm")
          (check-equal (js-ref (js-var "window") "lastConfirm") "proceed?" "window confirm arg")
          (define opened (window-open "https://example.invalid" "tab" "noopener" #f))
-         (check-true (external? opened) "window open result")
-         (check-equal (js-ref opened "kind") "popup" "window open payload")
+         (check-true (window? opened) "window open result")
+         (check-true (external? (window-raw opened)) "window open payload raw")
+         (check-equal (js-ref (window-raw opened) "kind") "popup" "window open payload")
+         (define scroll-options (make-window-scroll-options #f #f 'smooth))
+         (window-scroll-to 11 22 scroll-options)
+         (define scroll-record (js-ref (js-var "window") "lastScrollTo"))
+         (check-equal (js-ref (vector-ref scroll-record 0) "top") 22 "window scroll top")
+         (check-equal (js-ref (vector-ref scroll-record 0) "left") 11 "window scroll left")
+         (check-equal (js-ref (vector-ref scroll-record 0) "behavior") "smooth" "window scroll behavior")
          (check-equal (window-set-timeout/delay (procedure->external (lambda () (set! timeout-fired (add1 timeout-fired))))
                                                 10.0)
                       17

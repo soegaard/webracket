@@ -17,6 +17,50 @@
     [(procedure? value) (value)]
     [else value]))
 
+;; window-scroll-options : any/c any/c any/c -> void?
+;;   Validate a browser ScrollToOptions dictionary wrapper.
+(struct window-scroll-options (top left behavior)
+  #:transparent
+  #:constructor-name make-window-scroll-options
+  #:guard (lambda (top left behavior name)
+            (unless (or (eq? top #f) (real? top))
+              (raise-argument-error name "(or/c #f real?)" top))
+            (unless (or (eq? left #f) (real? left))
+              (raise-argument-error name "(or/c #f real?)" left))
+            (unless (or (eq? behavior #f) (string? behavior) (symbol? behavior))
+              (raise-argument-error name "(or/c #f string? symbol?)" behavior))
+            (values top left behavior)))
+
+;; window-resolve-scroll-options : any/c -> (or/c #f window-scroll-options?)
+;;   Treat #f as omitted and force thunks for scroll option values.
+(define (window-resolve-scroll-options value)
+  (define resolved (window-resolve-optional value))
+  (cond
+    [(eq? resolved (void)) #f]
+    [(eq? resolved #f) #f]
+    [else resolved]))
+
+;; window-scroll-options->raw : window-scroll-options? real? real? -> external/raw
+;;   Convert a Rackety scroll-options struct to a browser dictionary.
+(define (window-scroll-options->raw options fallback-x fallback-y)
+  (define top (window-scroll-options-top options))
+  (define left (window-scroll-options-left options))
+  (define behavior (window-scroll-options-behavior options))
+  (define fields
+    (append (if (eq? top #f)
+                (list (vector "top" fallback-y))
+                (list (vector "top" top)))
+            (if (eq? left #f)
+                (list (vector "left" fallback-x))
+                (list (vector "left" left)))
+            (if (eq? behavior #f)
+                '()
+                (list (vector "behavior"
+                              (if (symbol? behavior)
+                                  (symbol->string behavior)
+                                  behavior))))))
+  (js-object (list->vector fields)))
+
 ;; window : external/raw -> window?
 ;;   Wrap a browser Window object.
 (struct window (raw) #:transparent)
@@ -25,6 +69,12 @@
 ;;   Read the current window object.
 (define (Window)
   (window (js-window-window)))
+
+;; window-wrap-optional : any/c -> (or/c #f window?)
+;;   Wrap a browser Window-like value when one is present.
+(define (window-wrap-optional value)
+  (and (not (eq? value #f))
+       (window value)))
 
 ;; window-document-info : external/raw -> window-document-info?
 ;;   Wrap the current document object.
@@ -68,15 +118,24 @@
   (js-set-window-location! loc)
   (void))
 
-;; window-open : string? [target any/c #f] [features any/c #f] [replace any/c #f] -> (or/c #f external?)
+;; window-open : string? [target (or/c string? procedure?) #f] [features (or/c string? procedure?) #f] [replace (or/c boolean? procedure?) #f] -> (or/c #f window?)
 ;;   Open a new browsing context.
 (define (window-open url [target #f] [features #f] [replace #f])
   (unless (string? url)
     (raise-argument-error 'window-open "string?" url))
-  (js-window-open url
-                  (window-resolve-optional target)
-                  (window-resolve-optional features)
-                  (window-resolve-optional replace)))
+  (define target* (window-resolve-optional target))
+  (define features* (window-resolve-optional features))
+  (define replace* (window-resolve-optional replace))
+  (when (and (not (eq? target* (void)))
+             (not (string? target*)))
+    (raise-argument-error 'window-open "(or/c #f string? procedure?)" target))
+  (when (and (not (eq? features* (void)))
+             (not (string? features*)))
+    (raise-argument-error 'window-open "(or/c #f string? procedure?)" features))
+  (when (and (not (eq? replace* (void)))
+             (not (boolean? replace*)))
+    (raise-argument-error 'window-open "(or/c #f boolean? procedure?)" replace))
+  (window-wrap-optional (js-window-open url target* features* replace*)))
 
 ;; window-fetch : any/c [any/c #f] -> external/raw
 ;;   Start a fetch request.
@@ -123,22 +182,49 @@
   (js-window-stop)
   (void))
 
-;; window-scroll-to : real? real? [any/c #f] -> void?
+;; window-scroll-to : real? real? [or/c #f window-scroll-options? procedure?] -> void?
 ;;   Scroll the window to an absolute position.
 (define (window-scroll-to x y [options #f])
-  (js-window-scroll-to x y (window-resolve-optional options))
+  (define options* (window-resolve-scroll-options options))
+  (cond
+    [(eq? options* #f)
+     (js-window-scroll-to x y (void))]
+    [(window-scroll-options? options*)
+     (js-window-scroll-to x y (window-scroll-options->raw options* x y))]
+    [else
+     (raise-argument-error 'window-scroll-to
+                           "(or/c #f window-scroll-options? procedure?)"
+                           options)])
   (void))
 
-;; window-scroll-by : real? real? [any/c #f] -> void?
+;; window-scroll-by : real? real? [or/c #f window-scroll-options? procedure?] -> void?
 ;;   Scroll the window by a relative offset.
 (define (window-scroll-by x y [options #f])
-  (js-window-scroll-by x y (window-resolve-optional options))
+  (define options* (window-resolve-scroll-options options))
+  (cond
+    [(eq? options* #f)
+     (js-window-scroll-by x y (void))]
+    [(window-scroll-options? options*)
+     (js-window-scroll-by x y (window-scroll-options->raw options* x y))]
+    [else
+     (raise-argument-error 'window-scroll-by
+                           "(or/c #f window-scroll-options? procedure?)"
+                           options)])
   (void))
 
-;; window-scroll : real? real? [any/c #f] -> void?
+;; window-scroll : real? real? [or/c #f window-scroll-options? procedure?] -> void?
 ;;   Scroll the document to an absolute position.
 (define (window-scroll x y [options #f])
-  (js-window-scroll x y (window-resolve-optional options))
+  (define options* (window-resolve-scroll-options options))
+  (cond
+    [(eq? options* #f)
+     (js-window-scroll x y (void))]
+    [(window-scroll-options? options*)
+     (js-window-scroll x y (window-scroll-options->raw options* x y))]
+    [else
+     (raise-argument-error 'window-scroll
+                           "(or/c #f window-scroll-options? procedure?)"
+                           options)])
   (void))
 
 ;; window-resize-to : real? real? -> void?

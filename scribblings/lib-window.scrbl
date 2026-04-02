@@ -76,6 +76,17 @@ Wraps the current location object returned by @racket[window-location].
 Returns the wrapped location object.
 }
 
+@defstruct[window-scroll-options ([top (or/c #f real?)]
+                                  [left (or/c #f real?)]
+                                  [behavior (or/c #f string? symbol?)])]{
+Describes the optional @tt{ScrollToOptions} dictionary used by
+@racket[window-scroll-to], @racket[window-scroll-by], and
+@racket[window-scroll]. Leave a field as @racket[#f] to omit it from the
+browser dictionary. If @racket[behavior] is present, use one of
+@racket['auto], @racket['instant], or @racket['smooth], or the matching
+string values. Construct values with @racket[make-window-scroll-options].
+}
+
 @section{Window Quick Start}
 
 Start by including the library, getting the current document, and
@@ -159,17 +170,24 @@ Returns the current location object wrapped in a checked struct.
 @defproc[(window-set-name! [name string?]) void?]{
 @(mdn-bar "Window: name property"
           "https://developer.mozilla.org/en-US/docs/Web/API/Window/name")
-Sets the window name.
+Sets the browsing context name used by the browser for targeting,
+reusing windows, and script access. This does not visibly change the
+page itself.
 }
 
 @defproc[(window-open [url string?]
-                      [target any/c #f]
-                      [features any/c #f]
-                      [replace any/c #f])
-         (or/c #f external?)]{
+                      [target (or/c string? procedure?) #f]
+                      [features (or/c string? procedure?) #f]
+                      [replace (or/c boolean? procedure?) #f])
+         (or/c #f window?)]{
 @(mdn-bar "Window: open() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Window/open")
-Opens a new browsing context.
+Opens a new browsing context. The @racket[target] and @racket[features]
+arguments accept strings, and @racket[replace] accepts a boolean value.
+The returned value is wrapped as @racket[window] when the browser opens
+the new context, or @racket[#f] if the popup is blocked. Use @racket[#f]
+to omit an optional argument. If you need a literal @racket[#f] value,
+pass a thunk such as @racket[(lambda () #f)].
 }
 
 @defproc[(window-confirm [message string?]) boolean?]{
@@ -178,10 +196,34 @@ Opens a new browsing context.
 Shows a confirmation dialog and converts the browser result to a boolean.
 }
 
-@defproc[(window-scroll-to [x real?] [y real?] [options any/c #f]) void?]{
+@defproc[(window-scroll-to [x real?] [y real?]
+                           [options (or/c #f window-scroll-options? procedure?) #f])
+         void?]{
 @(mdn-bar "Window: scrollTo() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Window/scrollTo")
-Scrolls the window to an absolute position.
+Scrolls the window to an absolute position. The optional @racket[options]
+argument can supply a @racket[window-scroll-options] struct to use the browser's
+dictionary form. Use @racket[#f] to omit the options argument.
+}
+
+@defproc[(window-scroll-by [x real?] [y real?]
+                           [options (or/c #f window-scroll-options? procedure?) #f])
+         void?]{
+@(mdn-bar "Window: scrollBy() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Window/scrollBy")
+Scrolls the window by a relative offset. The optional @racket[options]
+argument can supply a @racket[window-scroll-options] struct to use the
+browser's dictionary form. Use @racket[#f] to omit the options argument.
+}
+
+@defproc[(window-scroll [x real?] [y real?]
+                        [options (or/c #f window-scroll-options? procedure?) #f])
+         void?]{
+@(mdn-bar "Window: scroll() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Window/scroll")
+Scrolls the window to an absolute position. The optional @racket[options]
+argument can supply a @racket[window-scroll-options] struct to use the
+browser's dictionary form. Use @racket[#f] to omit the options argument.
 }
 
 @defproc[(window-set-timeout [callback external?]) exact-nonnegative-integer?]{
