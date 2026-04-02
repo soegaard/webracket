@@ -4,10 +4,10 @@
           (for-label (only-in racket/base struct))
           "webracket-scribble-utils.rkt"
           (for-label (lib "scribblings/lib-document-labels.rkt" "webracket"))
-          (for-label (lib "scribblings/lib-iterator-labels.rkt" "webracket"))
-          (for-label (lib "scribblings/lib-window-labels.rkt" "webracket")))
+          (for-label (lib "scribblings/lib-iterator-labels.rkt" "webracket")))
 
 @title{Library: @racketid[window]}
+@declare-exporting[(lib "scribblings/lib-window-labels.rkt" "webracket")]
 
 @(how-to-require include-lib window (lib "libs/window.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")
@@ -60,18 +60,8 @@ the checked struct.
 Wraps the current document object returned by @racket[window-document].
 }
 
-@defproc[(window-document-info-raw [doc window-document-info?])
-         external/raw]{
-Returns the wrapped document object.
-}
-
 @defstruct[window-location-info ([raw external/raw])]{
 Wraps the current location object returned by @racket[window-location].
-}
-
-@defproc[(window-location-info-raw [loc window-location-info?])
-         external/raw]{
-Returns the wrapped location object.
 }
 
 @defstruct[window-scroll-options ([top (or/c #f real?)]
@@ -171,14 +161,190 @@ Returns the current location object wrapped in a checked struct.
 Returns the current selection as a wrapped @racket[selection] value.
 }
 
+@section{Window Browser Objects}
+
+@defstruct[window-custom-elements-info ([raw external/raw])]{
+Wraps the browser @tt{CustomElementRegistry} object.
+}
+
+@defproc[(window-custom-elements) window-custom-elements-info?]{
+Returns the browser custom-elements registry wrapped in a checked struct.
+}
+
+@defstruct[window-history-info ([raw external/raw])]{
+Wraps the browser @tt{History} object.
+}
+
+@defproc[(window-history) window-history-info?]{
+Returns the browser history object wrapped in a checked struct.
+}
+
+@defstruct[window-visual-viewport-info ([raw external/raw])]{
+Wraps the browser @tt{VisualViewport} object.
+}
+
+@defproc[(window-visual-viewport) (or/c #f window-visual-viewport-info?)]{
+Returns the browser visual viewport when present.
+}
+
+@defstruct[window-navigator-info ([raw external/raw])]{
+Wraps the browser @tt{Navigator} object.
+}
+
+@defproc[(window-navigator) window-navigator-info?]{
+Returns the browser navigator wrapped in a checked struct.
+}
+
+@defstruct[window-screen-info ([raw external/raw])]{
+Wraps the browser @tt{Screen} object.
+}
+
+@defproc[(window-screen) window-screen-info?]{
+Returns the browser screen wrapped in a checked struct.
+}
+
+@defstruct[window-performance-info ([raw external/raw])]{
+Wraps the browser @tt{Performance} object.
+}
+
+@defproc[(window-performance) window-performance-info?]{
+Returns the browser performance object wrapped in a checked struct.
+}
+
+@defstruct[window-local-storage-info ([raw external/raw])]{
+Wraps the browser @tt{Storage} object from @racket[localStorage].
+}
+
+@defproc[(window-local-storage) window-local-storage-info?]{
+Returns the browser @tt{localStorage} object wrapped in a checked struct.
+}
+
+@defstruct[window-session-storage-info ([raw external/raw])]{
+Wraps the browser @tt{Storage} object from @racket[sessionStorage].
+}
+
+@defproc[(window-session-storage) window-session-storage-info?]{
+Returns the browser @tt{sessionStorage} object wrapped in a checked struct.
+}
+
+@defstruct[window-indexed-db-info ([raw external/raw])]{
+Wraps the browser @tt{indexedDB} factory object.
+}
+
+@defproc[(window-indexed-db) window-indexed-db-info?]{
+Returns the browser indexedDB factory wrapped in a checked struct.
+}
+
+@defstruct[window-caches-info ([raw external/raw])]{
+Wraps the browser @tt{CacheStorage} object.
+}
+
+@defproc[(window-caches) window-caches-info?]{
+Returns the browser cache storage object wrapped in a checked struct.
+}
+
+@defstruct[window-speech-synthesis-info ([raw external/raw])]{
+Wraps the browser @tt{SpeechSynthesis} object.
+}
+
+@defproc[(window-speech-synthesis) window-speech-synthesis-info?]{
+Returns the browser speech-synthesis object wrapped in a checked struct.
+}
+
+@defstruct[window-style-media-info ([raw external/raw])]{
+Wraps the browser @tt{StyleMedia} object.
+}
+
+@defproc[(window-style-media) window-style-media-info?]{
+Returns the browser style-media object wrapped in a checked struct.
+}
+
+@defstruct[window-crypto-info ([raw external/raw])]{
+Wraps the browser @tt{Crypto} object.
+}
+
+@defproc[(window-crypto) window-crypto-info?]{
+Returns the browser crypto object wrapped in a checked struct.
+}
+
+@section{Window Properties}
+
+@defproc[(window-closed?) boolean?]{
+Returns @racket[#t] when the browsing context is closed.
+}
+
+@defproc[(window-length) exact-nonnegative-integer?]{
+Returns the number of child browsing contexts.
+}
+
+@defproc[(window-origin) string?]{
+Returns the browsing-context origin string.
+}
+
+@defproc[(window-device-pixel-ratio) real?]{
+Returns the current device pixel ratio.
+}
+
+@defproc[(window-inner-height) real?]{
+Returns the inner viewport height.
+}
+
+@defproc[(window-inner-width) real?]{
+Returns the inner viewport width.
+}
+
+@defproc[(window-outer-height) real?]{
+Returns the outer window height.
+}
+
+@defproc[(window-outer-width) real?]{
+Returns the outer window width.
+}
+
+@defproc[(window-screen-x) real?]{
+Returns the screen x coordinate.
+}
+
+@defproc[(window-screen-y) real?]{
+Returns the screen y coordinate.
+}
+
+@defproc[(window-screen-left) real?]{
+Returns the screen's left edge.
+}
+
+@defproc[(window-screen-top) real?]{
+Returns the screen's top edge.
+}
+
+@defproc[(window-page-x-offset) real?]{
+Returns the horizontal page offset.
+}
+
+@defproc[(window-page-y-offset) real?]{
+Returns the vertical page offset.
+}
+
+@defproc[(window-scroll-x) real?]{
+Returns the horizontal scroll offset.
+}
+
+@defproc[(window-scroll-y) real?]{
+Returns the vertical scroll offset.
+}
+
+@defproc[(window-is-secure-context?) boolean?]{
+Returns @racket[#t] when the browsing context is secure.
+}
+
+@defproc[(window-cross-origin-isolated?) boolean?]{
+Returns @racket[#t] when the browsing context is cross-origin isolated.
+}
+
 @section{Window Style Values}
 
 @defstruct[media-query-list ([raw external/raw])]{
 Wraps a browser @tt{MediaQueryList} object.
-}
-
-@defproc[(media-query-list-raw [query media-query-list?]) external/raw]{
-Returns the wrapped browser MediaQueryList object.
 }
 
 @defproc[(window-match-media [query (or/c string? symbol?)]) media-query-list?]{
@@ -198,10 +364,6 @@ Returns @racket[#t] when the wrapped query currently matches.
 
 @defstruct[css-style-declaration ([raw external/raw])]{
 Wraps a browser @tt{CSSStyleDeclaration} object.
-}
-
-@defproc[(css-style-declaration-raw [style css-style-declaration?]) external/raw]{
-Returns the wrapped browser CSSStyleDeclaration object.
 }
 
 @defproc[(window-get-computed-style [element element?]
