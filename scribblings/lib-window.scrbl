@@ -48,16 +48,13 @@ calling a simple page-level helper.
 (include-lib window)
 
 (code:comment "Capture the current Window object as a checked wrapper.")
-(define win
-  (Window))
+(define win (Window))
 
 (code:comment "Get the current document from the browser window.")
-(define doc
-  (window-document))
+(define doc (window-document))
 
 (code:comment "Show a simple confirmation dialog.")
-(define ok?
-  (window-confirm "Continue with this action?"))
+(define ok? (window-confirm "Continue with this action?"))
 
 (code:comment "If the user agrees, scroll the page a little.")
 (when ok?

@@ -47,16 +47,13 @@ finding a useful part of the page.
 (include-lib document)
 
 (code:comment "Get the current document.")
-(define doc
-  (Document))
+(define doc (Document))
 
 (code:comment "Look for the page body or another element you care about.")
-(define body
-  (document-body))
+(define body (document-body))
 
 (code:comment "Create a new paragraph element for later use.")
-(define note
-  (document-create-element "p"))
+(define note (document-create-element "p"))
 ]
 
 The quick start shows the three basic ideas: access the current
