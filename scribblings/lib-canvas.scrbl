@@ -33,6 +33,52 @@ Use @racket[canvas] when you want to:
 The library keeps canvas elements, 2D contexts, and the richer values
 they produce on the WebRacket side.
 
+@section{Canvas Quick Start}
+
+Start by creating a canvas element, getting its 2D context, and drawing
+a filled rectangle.
+
+@racketblock[
+(code:comment "Include the document and canvas wrapper libraries.")
+(include-lib document)
+(include-lib canvas)
+
+(code:comment "Create a new canvas element.")
+(define canvas-el (document-create-element "canvas"))
+
+(code:comment "Get the 2D drawing context from the canvas.")
+(define ctx (canvas-get-context canvas-el '2d #f))
+
+(code:comment "Draw a simple filled rectangle.")
+(canvas-2d-fill-rect ctx 10 10 120 50)
+]
+
+The quick start shows the usual pattern: create a canvas, ask for a
+context, and draw something simple.
+
+@section{Canvas Example}
+
+This example shows how to add a canvas to the page and then paint it.
+
+@racketblock[
+(code:comment "Include the libraries needed for page insertion and drawing.")
+(include-lib document)
+(include-lib element)
+(include-lib canvas)
+
+(code:comment "Create and size a canvas element.")
+(define canvas-el (document-create-element "canvas"))
+(set-attribute! canvas-el "width" "240")
+(set-attribute! canvas-el "height" "120")
+
+(code:comment "Insert the canvas into the page body.")
+(append-child! (document-body) canvas-el)
+
+(code:comment "Get the 2D drawing context and paint a box.")
+(define ctx (canvas-get-context canvas-el '2d #f))
+(canvas-2d-fill-rect ctx 20 20 80 40)
+]
+
 The main values are @racket[canvas?] and @racket[canvas-2d-context?].
 Use @racket[canvas-raw] or @racket[canvas-2d-context-raw] only when you
 need to drop back to the browser object.
@@ -106,52 +152,6 @@ Wraps a browser @tt{OffscreenCanvas} object.
 @defproc[(offscreen-canvas-raw [canvas offscreen-canvas?]) external/raw]{
 Returns the wrapped browser @tt{OffscreenCanvas} object.
 }
-
-@section{Canvas Quick Start}
-
-Start by creating a canvas element, getting its 2D context, and drawing
-a filled rectangle.
-
-@racketblock[
-(code:comment "Include the document and canvas wrapper libraries.")
-(include-lib document)
-(include-lib canvas)
-
-(code:comment "Create a new canvas element.")
-(define canvas-el (document-create-element "canvas"))
-
-(code:comment "Get the 2D drawing context from the canvas.")
-(define ctx (canvas-get-context canvas-el '2d #f))
-
-(code:comment "Draw a simple filled rectangle.")
-(canvas-2d-fill-rect ctx 10 10 120 50)
-]
-
-The quick start shows the usual pattern: create a canvas, ask for a
-context, and draw something simple.
-
-@section{Canvas Example}
-
-This example shows how to add a canvas to the page and then paint it.
-
-@racketblock[
-(code:comment "Include the libraries needed for page insertion and drawing.")
-(include-lib document)
-(include-lib element)
-(include-lib canvas)
-
-(code:comment "Create and size a canvas element.")
-(define canvas-el (document-create-element "canvas"))
-(set-attribute! canvas-el "width" "240")
-(set-attribute! canvas-el "height" "120")
-
-(code:comment "Insert the canvas into the page body.")
-(append-child! (document-body) canvas-el)
-
-(code:comment "Get the 2D drawing context and paint a box.")
-(define ctx (canvas-get-context canvas-el '2d #f))
-(canvas-2d-fill-rect ctx 20 20 80 40)
-]
 
 If you are just getting started, the most useful entry points are
 @racket[canvas-get-context], @racket[canvas-width], and
