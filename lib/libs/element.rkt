@@ -64,6 +64,31 @@
            (element-stringish->string 'element-set-class-name! class-name))
   (void))
 
+;; element-tag-name : element? -> string?
+;;   Read the element tag name.
+(define (element-tag-name element)
+  (element-prop-ref element "tagName"))
+
+;; element-local-name : element? -> string?
+;;   Read the element local name.
+(define (element-local-name element)
+  (element-prop-ref element "localName"))
+
+;; element-namespace-uri : element? -> (or/c #f string?)
+;;   Read the element namespace URI.
+(define (element-namespace-uri element)
+  (element-prop-ref element "namespaceURI"))
+
+;; element-prefix : element? -> (or/c #f string?)
+;;   Read the element namespace prefix.
+(define (element-prefix element)
+  (element-prop-ref element "prefix"))
+
+;; element-is-connected? : element? -> boolean?
+;;   Report whether the element is connected to a document.
+(define (element-is-connected? element)
+  (element-i32->boolean (element-prop-ref element "isConnected")))
+
 ;; append-child! : external? external? -> void?
 ;;   Append a child node.
 (define (append-child! parent child)
@@ -195,6 +220,56 @@
   (array-like->vector 'element-children
                       (element-prop-ref element "children")
                       element-wrap))
+
+;; element-scroll-top : element? -> real?
+;;   Read an element's vertical scroll offset.
+(define (element-scroll-top element)
+  (element-prop-ref element "scrollTop"))
+
+;; element-set-scroll-top! : element? real? -> void?
+;;   Set an element's vertical scroll offset.
+(define (element-set-scroll-top! element value)
+  (element-prop-set! element "scrollTop" value))
+
+;; element-scroll-left : element? -> real?
+;;   Read an element's horizontal scroll offset.
+(define (element-scroll-left element)
+  (element-prop-ref element "scrollLeft"))
+
+;; element-set-scroll-left! : element? real? -> void?
+;;   Set an element's horizontal scroll offset.
+(define (element-set-scroll-left! element value)
+  (element-prop-set! element "scrollLeft" value))
+
+;; element-scroll-width : element? -> exact-nonnegative-integer?
+;;   Read an element's scroll width.
+(define (element-scroll-width element)
+  (element-prop-ref element "scrollWidth"))
+
+;; element-scroll-height : element? -> exact-nonnegative-integer?
+;;   Read an element's scroll height.
+(define (element-scroll-height element)
+  (element-prop-ref element "scrollHeight"))
+
+;; element-client-width : element? -> exact-nonnegative-integer?
+;;   Read an element's client width.
+(define (element-client-width element)
+  (element-prop-ref element "clientWidth"))
+
+;; element-client-height : element? -> exact-nonnegative-integer?
+;;   Read an element's client height.
+(define (element-client-height element)
+  (element-prop-ref element "clientHeight"))
+
+;; element-offset-width : element? -> exact-nonnegative-integer?
+;;   Read an element's offset width.
+(define (element-offset-width element)
+  (element-prop-ref element "offsetWidth"))
+
+;; element-offset-height : element? -> exact-nonnegative-integer?
+;;   Read an element's offset height.
+(define (element-offset-height element)
+  (element-prop-ref element "offsetHeight"))
 
 ;; element-child-element-count : element? -> exact-nonnegative-integer?
 ;;   Read the number of child elements.

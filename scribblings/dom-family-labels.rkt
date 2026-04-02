@@ -15,6 +15,11 @@
   element-set-id!
   element-class-name
   element-set-class-name!
+  element-tag-name
+  element-local-name
+  element-namespace-uri
+  element-prefix
+  element-is-connected?
   element-has-attribute?
   element-has-attributes?
   element-remove-attribute!
@@ -33,6 +38,16 @@
   element-set-outer-html!
   element-text-content
   element-set-text-content!
+  element-scroll-top
+  element-set-scroll-top!
+  element-scroll-left
+  element-set-scroll-left!
+  element-scroll-width
+  element-scroll-height
+  element-client-width
+  element-client-height
+  element-offset-width
+  element-offset-height
   element-append!
   element-prepend!
   element-before!
@@ -331,6 +346,11 @@
 (define element-set-id! any/c)
 (define element-class-name any/c)
 (define element-set-class-name! any/c)
+(define element-tag-name any/c)
+(define element-local-name any/c)
+(define element-namespace-uri any/c)
+(define element-prefix any/c)
+(define element-is-connected? any/c)
 (define element-has-attribute? any/c)
 (define element-has-attributes? any/c)
 (define element-remove-attribute! any/c)
@@ -349,6 +369,16 @@
 (define element-set-outer-html! any/c)
 (define element-text-content any/c)
 (define element-set-text-content! any/c)
+(define element-scroll-top any/c)
+(define element-set-scroll-top! any/c)
+(define element-scroll-left any/c)
+(define element-set-scroll-left! any/c)
+(define element-scroll-width any/c)
+(define element-scroll-height any/c)
+(define element-client-width any/c)
+(define element-client-height any/c)
+(define element-offset-width any/c)
+(define element-offset-height any/c)
 (define element-append! any/c)
 (define element-prepend! any/c)
 (define element-before! any/c)

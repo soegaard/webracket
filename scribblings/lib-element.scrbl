@@ -103,6 +103,36 @@ Returns the element class name string.
 Sets the element class name. Symbols are accepted and normalized to strings.
 }
 
+@defproc[(element-tag-name [element element?]) string?]{
+@(mdn-bar "Element: tagName property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/tagName")
+Returns the element tag name.
+}
+
+@defproc[(element-local-name [element element?]) string?]{
+@(mdn-bar "Element: localName property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/localName")
+Returns the element local name.
+}
+
+@defproc[(element-namespace-uri [element element?]) (or/c #f string?)]{
+@(mdn-bar "Element: namespaceURI property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/namespaceURI")
+Returns the element namespace URI, or @racket[#f] if there is none.
+}
+
+@defproc[(element-prefix [element element?]) (or/c #f string?)]{
+@(mdn-bar "Element: prefix property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/prefix")
+Returns the element namespace prefix, or @racket[#f] if there is none.
+}
+
+@defproc[(element-is-connected? [element element?]) boolean?]{
+@(mdn-bar "Element: isConnected property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/isConnected")
+Reports whether the element is connected to a document.
+}
+
 @defproc[(element-has-attribute? [element element?]
                                  [name (or/c string? symbol?)]) boolean?]{
 @(mdn-bar "Element: hasAttribute() method"
@@ -187,6 +217,68 @@ Returns the first child element, or @racket[#f] if there is none.
 @(mdn-bar "Element: lastElementChild property"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/lastElementChild")
 Returns the last child element, or @racket[#f] if there is none.
+}
+
+@defproc[(element-scroll-top [element element?]) real?]{
+@(mdn-bar "Element: scrollTop property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollTop")
+Returns the element's vertical scroll offset.
+}
+
+@defproc[(element-set-scroll-top! [element element?]
+                                  [value real?]) void?]{
+@(mdn-bar "Element: scrollTop property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollTop")
+Sets the element's vertical scroll offset.
+}
+
+@defproc[(element-scroll-left [element element?]) real?]{
+@(mdn-bar "Element: scrollLeft property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollLeft")
+Returns the element's horizontal scroll offset.
+}
+
+@defproc[(element-set-scroll-left! [element element?]
+                                   [value real?]) void?]{
+@(mdn-bar "Element: scrollLeft property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollLeft")
+Sets the element's horizontal scroll offset.
+}
+
+@defproc[(element-scroll-width [element element?]) exact-nonnegative-integer?]{
+@(mdn-bar "Element: scrollWidth property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollWidth")
+Returns the element's scroll width.
+}
+
+@defproc[(element-scroll-height [element element?]) exact-nonnegative-integer?]{
+@(mdn-bar "Element: scrollHeight property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/scrollHeight")
+Returns the element's scroll height.
+}
+
+@defproc[(element-client-width [element element?]) exact-nonnegative-integer?]{
+@(mdn-bar "Element: clientWidth property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/clientWidth")
+Returns the element's client width.
+}
+
+@defproc[(element-client-height [element element?]) exact-nonnegative-integer?]{
+@(mdn-bar "Element: clientHeight property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/clientHeight")
+Returns the element's client height.
+}
+
+@defproc[(element-offset-width [element element?]) exact-nonnegative-integer?]{
+@(mdn-bar "Element: offsetWidth property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/offsetWidth")
+Returns the element's offset width.
+}
+
+@defproc[(element-offset-height [element element?]) exact-nonnegative-integer?]{
+@(mdn-bar "Element: offsetHeight property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Element/offsetHeight")
+Returns the element's offset height.
 }
 
 @defproc[(element-inner-html [element element?]) string?]{
