@@ -8,12 +8,52 @@
 ;;   Wrap a browser Iterator object in a checked structure.
 (struct iterator (raw) #:transparent #:constructor-name make-iterator)
 
+;; iterator-zip-options : symbol? any/c -> iterator-zip-options?
+;;   Describe how Iterator.zip and Iterator.zipKeyed should combine lengths.
+(struct iterator-zip-options (mode padding)
+  #:transparent
+  #:constructor-name make-iterator-zip-options
+  #:guard (lambda (mode padding name)
+            (unless (memq mode '(shortest longest strict))
+              (raise-argument-error name
+                                    "(or/c 'shortest 'longest 'strict)"
+                                    mode))
+            (values mode padding)))
+
 ;; iterator-unwrap : any/c -> any/c
 ;;   Unwrap an iterator struct to its raw browser object.
 (define (iterator-unwrap value)
   (if (iterator? value)
       (iterator-raw value)
       value))
+
+;; iterator-resolve-this-arg : any/c -> any/c
+;;   Use #f as the omission marker, and force thunks when a literal value is needed.
+(define (iterator-resolve-this-arg this-arg)
+  (cond
+    [(eq? this-arg #f) (js-undefined)]
+    [(procedure? this-arg) (this-arg)]
+    [else this-arg]))
+
+;; iterator-resolve-optional : any/c -> any/c
+;;   Use #f as the omission marker, and force thunks when a literal value is needed.
+(define (iterator-resolve-optional value)
+  (cond
+    [(eq? value #f) #f]
+    [(procedure? value) (value)]
+    [else value]))
+
+;; iterable?-proc : -> external/raw
+;;   JavaScript helper that checks for a callable [Symbol.iterator].
+(define iterable?-proc
+  (js-eval "(function (value) { try { return typeof Object(value)[Symbol.iterator] === 'function'; } catch (e) { return false; } })"))
+
+;; iterable? : any/c -> boolean?
+;;   Check whether a value has a callable [Symbol.iterator] method.
+(define (iterable? value)
+  (or (iterator? value)
+      (js-send/boolean iterable?-proc "call"
+                       (vector (js-undefined) (iterator-unwrap value)))))
 
 ;; iterator-prefix : (listof any/c) exact-nonnegative-integer? -> (listof any/c)
 ;;   Keep the first n values from a list.
@@ -25,13 +65,11 @@
 
 ;; iterator-call/callback : (or/c procedure? external?) (listof any/c) any/c -> any/c
 ;;   Call a callback, truncating extra arguments for Racket procedures.
-(define (iterator-call/callback callback values [this-arg (void)])
+(define (iterator-call/callback callback values [this-arg #f])
   (cond
     [(external? callback)
      (js-send/value callback "call"
-                    (apply vector (if (void? this-arg)
-                                      (list (js-undefined))
-                                      (list (iterator-unwrap this-arg)))
+                    (apply vector (list (iterator-unwrap (iterator-resolve-this-arg this-arg)))
                            (map iterator-unwrap values)))]
     [else
      (let loop ([n (length values)])
@@ -102,12 +140,14 @@
 (define (iterator-prototype-to-string-tag)
   "Iterator")
 
-;; iterator-from : any/c -> iterator?
+;; iterator-from : iterable? -> iterator?
 ;;   Convert an iterator or iterable into a standard Iterator object.
 (define (iterator-from object)
+  (unless (iterable? object)
+    (raise-argument-error 'iterator-from "iterable?" object))
   (make-iterator (js-send (Iterator) "from" (vector (iterator-unwrap object)))))
 
-;; iterator-concat : any/c ... -> iterator?
+;; iterator-concat : iterable? ... -> iterator?
 ;;   Concatenate multiple iterables into one Iterator.
 (define (iterator-concat . iterables)
   (define sources (map iterator-from iterables))
@@ -130,9 +170,14 @@
                 (loop))
               (iterator-result (js-ref step "value") #f))])))))
 
-;; iterator-zip : any/c [any/c] -> iterator?
+;; iterator-zip : iterable? [or/c #f iterator-zip-options?] -> iterator?
 ;;   Zip a collection of iterables into a new Iterator.
-(define (iterator-zip iterables [options (void)])
+(define (iterator-zip iterables [options #f])
+  (when options
+    (unless (iterator-zip-options? options)
+      (raise-argument-error 'iterator-zip
+                            "(or/c #f iterator-zip-options?)"
+                            options)))
   (define sources
     (map iterator-from
          (iterator-collect-list (iterator-from iterables))))
@@ -154,9 +199,14 @@
                                                  steps)))
              #f))]))))
 
-;; iterator-zip-keyed : any/c [any/c] -> iterator?
+;; iterator-zip-keyed : iterable? [or/c #f iterator-zip-options?] -> iterator?
 ;;   Zip a keyed collection of iterables into a new Iterator.
-(define (iterator-zip-keyed iterables [options (void)])
+(define (iterator-zip-keyed iterables [options #f])
+  (when options
+    (unless (iterator-zip-options? options)
+      (raise-argument-error 'iterator-zip-keyed
+                            "(or/c #f iterator-zip-options?)"
+                            options)))
   (define entries
     (map (lambda (entry)
            (cons (iterator-entry-key entry)
@@ -246,7 +296,7 @@
 
 ;; iterator-every : iterator? (or/c procedure? external?) [any/c] -> boolean?
 ;;   Check whether every iterated value satisfies a predicate.
-(define (iterator-every iter callback [this-arg (void)])
+(define (iterator-every iter callback [this-arg #f])
   (unless (iterator? iter)
     (raise-argument-error 'iterator-every "iterator?" iter))
   (define source (iterator-from iter))
@@ -263,7 +313,7 @@
 
 ;; iterator-filter : iterator? (or/c procedure? external?) [any/c] -> iterator?
 ;;   Keep only the values accepted by a predicate.
-(define (iterator-filter iter callback [this-arg (void)])
+(define (iterator-filter iter callback [this-arg #f])
   (unless (iterator? iter)
     (raise-argument-error 'iterator-filter "iterator?" iter))
   (define source (iterator-from iter))
@@ -283,7 +333,7 @@
 
 ;; iterator-find : iterator? (or/c procedure? external?) [any/c] -> any/c
 ;;   Return the first value accepted by a predicate.
-(define (iterator-find iter callback [this-arg (void)])
+(define (iterator-find iter callback [this-arg #f])
   (unless (iterator? iter)
     (raise-argument-error 'iterator-find "iterator?" iter))
   (define source (iterator-from iter))
@@ -301,7 +351,7 @@
 
 ;; iterator-flat-map : iterator? (or/c procedure? external?) [any/c] -> iterator?
 ;;   Map each value to an iterable and flatten the results one level.
-(define (iterator-flat-map iter callback [this-arg (void)])
+(define (iterator-flat-map iter callback [this-arg #f])
   (unless (iterator? iter)
     (raise-argument-error 'iterator-flat-map "iterator?" iter))
   (define source (iterator-from iter))
@@ -333,7 +383,7 @@
 
 ;; iterator-for-each : iterator? (or/c procedure? external?) [any/c] -> void?
 ;;   Visit each value in an Iterator for side effects.
-(define (iterator-for-each iter callback [this-arg (void)])
+(define (iterator-for-each iter callback [this-arg #f])
   (unless (iterator? iter)
     (raise-argument-error 'iterator-for-each "iterator?" iter))
   (define source (iterator-from iter))
@@ -350,7 +400,7 @@
 
 ;; iterator-map : iterator? (or/c procedure? external?) [any/c] -> iterator?
 ;;   Transform each iterated value.
-(define (iterator-map iter callback [this-arg (void)])
+(define (iterator-map iter callback [this-arg #f])
   (unless (iterator? iter)
     (raise-argument-error 'iterator-map "iterator?" iter))
   (define source (iterator-from iter))
@@ -370,12 +420,12 @@
 
 ;; iterator-reduce : iterator? (or/c procedure? external?) [any/c] -> any/c
 ;;   Collapse an Iterator to a single value.
-(define (iterator-reduce iter callback [initial-value (void)])
+(define (iterator-reduce iter callback [initial-value #f])
   (unless (iterator? iter)
     (raise-argument-error 'iterator-reduce "iterator?" iter))
   (define source (iterator-from iter))
-  (define started? (not (void? initial-value)))
-  (define acc initial-value)
+  (define started? (not (eq? initial-value #f)))
+  (define acc (iterator-resolve-optional initial-value))
   (define index 0)
   (let loop ()
     (define step (iterator-next source))
@@ -401,7 +451,7 @@
 
 ;; iterator-some : iterator? (or/c procedure? external?) [any/c] -> boolean?
 ;;   Check whether any iterated value satisfies a predicate.
-(define (iterator-some iter callback [this-arg (void)])
+(define (iterator-some iter callback [this-arg #f])
   (unless (iterator? iter)
     (raise-argument-error 'iterator-some "iterator?" iter))
   (define source (iterator-from iter))
@@ -439,11 +489,11 @@
               (set! taken (add1 taken))
               (iterator-result (js-ref step "value") #f)))]))))
 
-;; iterator-to-array : iterator? -> value
+;; iterator->vector : iterator? -> vector?
 ;;   Collect an Iterator into a WebRacket vector.
-(define (iterator-to-array iter)
+(define (iterator->vector iter)
   (unless (iterator? iter)
-    (raise-argument-error 'iterator-to-array "iterator?" iter))
+    (raise-argument-error 'iterator->vector "iterator?" iter))
   (list->vector
    (let loop ([acc '()] [source (iterator-from iter)])
      (define step (iterator-next source))

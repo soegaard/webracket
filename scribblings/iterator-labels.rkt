@@ -9,6 +9,11 @@
   iterator-prototype
   iterator-prototype-constructor
   iterator-prototype-to-string-tag
+  iterable?
+  iterator-zip-options
+  iterator-zip-options-mode
+  iterator-zip-options-padding
+  make-iterator-zip-options
   iterator-from
   iterator-concat
   iterator-zip
@@ -27,16 +32,20 @@
   iterator-reduce
   iterator-some
   iterator-take
-  iterator-to-array
+  iterator->vector
   js-Iterator
   (for-label (all-defined-out)))
 
 (struct iterator (raw) #:transparent #:constructor-name make-iterator)
+(struct iterator-zip-options (mode padding)
+  #:transparent
+  #:constructor-name make-iterator-zip-options)
 
 (define Iterator any/c)
 (define iterator-prototype any/c)
 (define iterator-prototype-constructor any/c)
 (define iterator-prototype-to-string-tag any/c)
+(define iterable? any/c)
 (define iterator-from any/c)
 (define iterator-concat any/c)
 (define iterator-zip any/c)
@@ -55,5 +64,5 @@
 (define iterator-reduce any/c)
 (define iterator-some any/c)
 (define iterator-take any/c)
-(define iterator-to-array any/c)
+(define iterator->vector vector?)
 (define js-Iterator any/c)
