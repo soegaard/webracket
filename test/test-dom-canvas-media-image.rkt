@@ -107,7 +107,14 @@
     };
     const mediaStream = {
       kind: 'stream',
-      frameRate: null
+      frameRate: null,
+      getTracks() { return []; }
+    };
+    const mediaSource = {
+      kind: 'source'
+    };
+    const mediaKeys = {
+      kind: 'keys'
     };
     const media = {
       currentTime: 1.5,
@@ -125,6 +132,7 @@
       buffered,
       controlsList,
       error: mediaError,
+      mediaKeys,
       played: buffered,
       calls: [],
       play() { this.calls.push(['play']); return { kind: 'play-promise' }; },
@@ -133,6 +141,7 @@
       fastSeek(t) { this.calls.push(['fastSeek', t]); },
       canPlayType(type) { this.calls.push(['canPlayType', type]); return 'maybe'; },
       seekable: buffered,
+      srcObject: mediaSource,
       textTracks: textTrackList,
       videoTracks: videoTrackList,
       captureStream(frameRate) { this.calls.push(['captureStream', frameRate]); return mediaStream; },
@@ -140,6 +149,7 @@
         this.calls.push(['addTextTrack', kind, label, language]);
         return { kind, label, language, id: 'added-0', mode: 'hidden' };
       },
+      setMediaKeys(keys) { this.calls.push(['setMediaKeys', keys]); return { kind: 'setMediaKeys-promise' }; },
       setSinkId(id) { this.calls.push(['setSinkId', id]); return { kind: 'sink', id }; }
     };
     window.__domTest.canvas = canvas;
@@ -223,6 +233,16 @@
          (media-set-src! media 'track.ogg)
          (check-equal (media-src media) "track.ogg" "media src set")
          (check-equal (media-can-play-type media 'audio/ogg) "maybe" "media can-play-type")
+         (check-true (media-keys-info? (media-keys media)) "media keys")
+         (check-equal (js-ref (media-keys-info-raw (media-keys media)) "kind") "keys" "media keys raw")
+         (check-equal (js-ref (media-set-media-keys! media (media-keys media)) "kind")
+                      "setMediaKeys-promise"
+                      "media set keys")
+         (check-true (media-source-info? (media-src-object media)) "media src object")
+         (check-equal (js-ref (media-source-info-raw (media-src-object media)) "kind") "source" "media src object raw")
+         (media-set-src-object! media (js-ref media "srcObject"))
+         (check-true (media-stream? (media-src-object media)) "media src object stream")
+         (check-equal (js-ref (media-stream-raw (media-src-object media)) "kind") "stream" "media src object stream raw")
          (define added-track (media-add-text-track! media 'subtitles 'captions 'en))
          (check-true (text-track? added-track) "media add text track")
          (check-equal (text-track-kind added-track) "subtitles" "media added track kind")
@@ -288,6 +308,7 @@
          (check-equal (js-ref (media-set-sink-id! media 'speaker-1) "id") "speaker-1" "media set sink id")
          (check-equal (js-ref media "calls")
                       (vector (vector "canPlayType" "audio/ogg")
+                              (vector "setMediaKeys" (js-ref media "mediaKeys"))
                               (vector "addTextTrack" "subtitles" "captions" "en")
                               (vector "captureStream" 60)
                               (vector "play")

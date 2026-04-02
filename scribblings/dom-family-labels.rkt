@@ -22,6 +22,8 @@
   (struct-out audio-track)
   (struct-out text-track)
   (struct-out video-track)
+  (struct-out media-keys-info)
+  (struct-out media-source-info)
   (struct-out node)
   (struct-out element)
   (struct-out text)
@@ -181,6 +183,8 @@
   (struct-out selection)
   (struct-out media-query-list)
   (struct-out css-style-declaration)
+  (struct-out media-keys-info)
+  (struct-out media-source-info)
   (struct-out media-stream)
   (struct-out media-error-info)
   (struct-out audio-track)
@@ -343,6 +347,10 @@
   media-src
   media-set-src!
   media-controls-list
+  media-keys
+  media-set-media-keys!
+  media-src-object
+  media-set-src-object!
   media-add-text-track!
   media-audio-tracks
   media-buffered
@@ -457,6 +465,8 @@
 (struct selection (raw) #:transparent)
 (struct media-query-list (raw) #:transparent)
 (struct css-style-declaration (raw) #:transparent)
+(struct media-keys-info (raw) #:transparent)
+(struct media-source-info (raw) #:transparent)
 (struct media-stream (raw) #:transparent)
 (struct media-error-info (raw) #:transparent)
 (struct audio-track (raw) #:transparent)
@@ -748,6 +758,10 @@
 (define media-src any/c)
 (define media-set-src! any/c)
 (define media-controls-list any/c)
+(define media-keys any/c)
+(define media-set-media-keys! any/c)
+(define media-src-object any/c)
+(define media-set-src-object! any/c)
 (define media-add-text-track! any/c)
 (define media-audio-tracks any/c)
 (define media-buffered any/c)

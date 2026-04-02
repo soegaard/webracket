@@ -154,6 +154,38 @@
 (define (media-controls-list media)
   (dom-token-list-wrap (js-media-controls-list media)))
 
+;; media-keys : external? -> (or/c #f media-keys-info?)
+;;   Read the attached MediaKeys object.
+(define (media-keys media)
+  (media-keys-info-wrap (js-media-media-keys media)))
+
+;; media-set-media-keys! : external? (or/c media-keys-info? external/raw) -> external/raw
+;;   Attach MediaKeys for encrypted media playback.
+(define (media-set-media-keys! media keys)
+  (js-media-set-media-keys! media (if (media-keys-info? keys)
+                                      (media-keys-info-unwrap keys)
+                                      keys)))
+
+;; media-src-object : external? -> (or/c #f media-stream? media-source-info?)
+;;   Read the current source object for the media element.
+(define (media-src-object media)
+  (define src-object (js-media-src-object media))
+  (cond
+    [(not src-object) #f]
+    [(js-ref src-object "getTracks") (media-stream-wrap src-object)]
+    [else (media-source-info-wrap src-object)]))
+
+;; media-set-src-object! : external? (or/c #f media-stream? media-source-info? external/raw) -> void?
+;;   Set the source object for the media element.
+(define (media-set-src-object! media src-object)
+  (js-set-media-src-object! media
+                            (cond
+                              [(not src-object) #f]
+                              [(media-stream? src-object) (media-stream-unwrap src-object)]
+                              [(media-source-info? src-object) (media-source-info-unwrap src-object)]
+                              [else src-object]))
+  (void))
+
 ;; media-add-text-track! : external? (or/c string? symbol?) [label #f] [language #f] -> text-track?
 ;;   Add a browser text track and return the wrapped track object. #f omits an optional argument.
 (define (media-add-text-track! media kind [label #f] [language #f])

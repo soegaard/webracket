@@ -40,6 +40,9 @@ all represented with checked structs instead of raw browser objects.
 Individual AudioTrack, TextTrack, and VideoTrack values are wrapped
 the same way, so the track lists and addTextTrack() helper stay within
 WebRacket values.
+The attached MediaKeys object and the current source object are wrapped
+too, so the media wrapper stays within checked values at those edges as
+well.
 
 @section{Media Quick Start}
 
@@ -178,6 +181,51 @@ before the browser is asked about codec support.
 The raw @racket[media] argument should be a browser
 @racketid[HTMLMediaElement] value. Returns the wrapped browser
 @racketid[DOMTokenList] controls policy object.
+}
+
+@defstruct[media-keys-info ([raw external/raw])]{
+Wraps a browser @racketid[MediaKeys] value.
+}
+
+@defproc[(media-keys [media external?]) (or/c #f media-keys-info?)]{
+@(mdn-bar "HTMLMediaElement: mediaKeys property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/mediaKeys")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns the wrapped browser
+@racketid[MediaKeys] object, or @racket[#f] when none is attached.
+}
+
+@defproc[(media-set-media-keys! [media external?] [keys (or/c media-keys-info? external/raw)]) external/raw]{
+@(mdn-bar "HTMLMediaElement: setMediaKeys() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/setMediaKeys")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. The @racket[keys] argument can be a
+wrapped @racketid[MediaKeys] object or a raw browser object.
+Returns the browser promise from the underlying call.
+}
+
+@defstruct[media-source-info ([raw external/raw])]{
+Wraps a browser @racketid[MediaSource] value.
+}
+
+@defproc[(media-src-object [media external?]) (or/c #f media-stream? media-source-info?)]{
+@(mdn-bar "HTMLMediaElement: srcObject property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/srcObject")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. Returns a wrapped browser
+@racketid[MediaStream] or @racketid[MediaSource] value, or @racket[#f]
+when the source object is empty.
+}
+
+@defproc[(media-set-src-object! [media external?]
+                                [src-object (or/c #f media-stream? media-source-info? external/raw)])
+         void?]{
+@(mdn-bar "HTMLMediaElement: srcObject property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/srcObject")
+The raw @racket[media] argument should be a browser
+@racketid[HTMLMediaElement] value. The source object can be a wrapped
+@racketid[MediaStream], a wrapped @racketid[MediaSource], a raw browser
+object, or @racket[#f].
 }
 
 @defproc[(media-add-text-track! [media external?]
