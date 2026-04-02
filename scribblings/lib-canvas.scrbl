@@ -7,7 +7,6 @@
           (for-label (lib "scribblings/lib-canvas-labels.rkt" "webracket")))
 
 @title{Library: @racketid[canvas]}
-@declare-exporting[(lib "scribblings/lib-canvas-labels.rkt" "webracket")]
 
 @(how-to-require include-lib canvas (lib "libs/canvas.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")

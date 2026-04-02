@@ -7,7 +7,6 @@
           (for-label (lib "scribblings/lib-element-labels.rkt" "webracket")))
 
 @title{Library: @racketid[element]}
-@declare-exporting[(lib "scribblings/lib-element-labels.rkt" "webracket")]
 
 @(how-to-require include-lib element (lib "libs/element.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")

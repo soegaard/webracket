@@ -498,7 +498,7 @@ strings, symbols, numbers, booleans, characters, or observables whose
 current value is one of those.
 }
 
-@section{Event}
+@section{Event Handling}
 
 The following thin convenience wrappers are available on top of the raw
 event object passed to primitive @racket[#:on-*] callbacks:

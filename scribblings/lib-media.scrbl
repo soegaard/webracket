@@ -6,7 +6,6 @@
           (for-label (lib "scribblings/lib-media-labels.rkt" "webracket")))
 
 @title{Library: @racketid[media]}
-@declare-exporting[(lib "libs/media.rkt" "webracket")]
 
 @(how-to-require include-lib media (lib "libs/media.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")

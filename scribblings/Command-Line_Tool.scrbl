@@ -204,7 +204,7 @@ FFI and linker flags:
   @item{@tt{-l} / @tt{--link-flags <flag>}: Accepted but currently ignored by the driver.}
 ]
 
-@section{Examples}
+@section{Command-Line Examples}
 
 @itemlist[
   @item{@shell-code{racket webracket.rkt program.rkt}}

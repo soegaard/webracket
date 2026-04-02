@@ -6,7 +6,6 @@
           (for-label (lib "scribblings/lib-iterator-labels.rkt" "webracket")))
 
 @title{Library: @racketid[iterator]}
-@declare-exporting[(lib "libs/iterator.rkt" "webracket")]
 
 @(how-to-require include-lib iterator (lib "libs/iterator.rkt"))
 @(compile-option-bar "Compile option: " "--ffi standard")
@@ -251,7 +250,7 @@ Keeps only the first @racket[count] values from @racket[iter].
 Collects the yielded values into a WebRacket vector.
 }
 
-@section{Raw Accessors}
+@section{Iterator Raw Accessors}
 
 These helpers expose the underlying browser constructor object or raw
 iteration records. They are useful when you need to interoperate with lower

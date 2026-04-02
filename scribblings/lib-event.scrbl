@@ -5,7 +5,6 @@
           (for-label (lib "scribblings/lib-event-labels.rkt" "webracket")))
 
 @title{Library: @racketid[event]}
-@declare-exporting[(lib "scribblings/lib-event-labels.rkt" "webracket")]
 
 @(how-to-require include-lib event (lib "libs/event.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")

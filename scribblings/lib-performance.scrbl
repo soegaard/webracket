@@ -7,7 +7,6 @@
           (for-label (lib "scribblings/lib-performance-labels.rkt" "webracket")))
 
 @title{Library: @racketid[performance]}
-@declare-exporting[(lib "scribblings/lib-performance-labels.rkt" "webracket")]
 
 @(how-to-require include-lib performance (lib "libs/performance.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")

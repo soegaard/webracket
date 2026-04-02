@@ -5,7 +5,6 @@
           (for-label (lib "scribblings/lib-dom-labels.rkt" "webracket")))
 
 @title{Library: dom}
-@declare-exporting[(lib "scribblings/lib-dom-labels.rkt" "webracket")]
 
 @(how-to-require include-lib dom (lib "libs/dom.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")

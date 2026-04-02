@@ -5,7 +5,6 @@
           (for-label (lib "scribblings/console-labels.rkt" "webracket")))
 
 @title{Library: @racketid[console]}
-@declare-exporting[(lib "scribblings/console-labels.rkt" "webracket")]
 
 @(how-to-require include-lib console (lib "libs/console.rkt"))
 @(compile-option-bar "Compile option: " "--ffi console")
@@ -47,7 +46,7 @@ Developer Tools and select the @tt{Console} tab.
 (code:comment "This whole block can be pasted into a WebRacket page.")
 ]
 
-@section{Examples}
+@section{Console Examples}
 
 @racketblock[
 (code:comment "Labels may be symbols or strings.")

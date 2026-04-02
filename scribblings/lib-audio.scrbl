@@ -5,7 +5,6 @@
           (for-label (lib "scribblings/audio-labels.rkt" "webracket")))
 
 @title{Library: @racketid[audio]}
-@declare-exporting[(lib "scribblings/audio-labels.rkt" "webracket")]
 
 @(how-to-require include-lib audio (lib "libs/audio.rkt"))
 @(compile-option-bar "Compile option: " "--ffi audio")
