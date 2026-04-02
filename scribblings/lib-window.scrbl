@@ -38,8 +38,6 @@ The current Window object, document, and location are wrapped in small
 checked structs so the API stays Rackety instead of exposing raw browser
 objects at the top level.
 
-@margin-note{These entries are checked structs: they wrap browser objects so you work with Racket predicates and accessors instead of raw browser values.}
-
 @section{Window Quick Start}
 
 Start by including the library, getting the current document, and
