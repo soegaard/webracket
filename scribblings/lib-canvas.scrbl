@@ -197,6 +197,63 @@ browser @racketid[CanvasRenderingContext2D] value. Fills a rectangle in
 a 2D canvas context.
 }
 
+@defproc[(canvas-2d-clear-rect [ctx (or/c canvas-2d-context? external?)]
+                               [x real?] [y real?] [w real?] [h real?]) void?]{
+@(mdn-bar "CanvasRenderingContext2D: clearRect() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/clearRect")
+Clears a rectangle in a 2D canvas context.
+}
+
+@defproc[(canvas-2d-stroke-rect [ctx (or/c canvas-2d-context? external?)]
+                                [x real?] [y real?] [w real?] [h real?]) void?]{
+@(mdn-bar "CanvasRenderingContext2D: strokeRect() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/strokeRect")
+Strokes a rectangle in a 2D canvas context.
+}
+
+@defproc[(canvas-2d-begin-path [ctx (or/c canvas-2d-context? external?)]) void?]{
+@(mdn-bar "CanvasRenderingContext2D: beginPath() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/beginPath")
+Begins a new path.
+}
+
+@defproc[(canvas-2d-move-to [ctx (or/c canvas-2d-context? external?)]
+                            [x real?]
+                            [y real?])
+         void?]{
+@(mdn-bar "CanvasRenderingContext2D: moveTo() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/moveTo")
+Moves the current path point.
+}
+
+@defproc[(canvas-2d-line-to [ctx (or/c canvas-2d-context? external?)]
+                            [x real?]
+                            [y real?])
+         void?]{
+@(mdn-bar "CanvasRenderingContext2D: lineTo() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/lineTo")
+Adds a line segment to the current path.
+}
+
+@defproc[(canvas-2d-stroke [ctx (or/c canvas-2d-context? external?)]
+                           [path any/c #f])
+         void?]{
+@(mdn-bar "CanvasRenderingContext2D: stroke() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/stroke")
+Strokes the current path, or a supplied path when one is given.
+}
+
+@defproc[(canvas-2d-fill-text [ctx (or/c canvas-2d-context? external?)]
+                              [text string?]
+                              [x real?]
+                              [y real?]
+                              [max-width any/c #f])
+         void?]{
+@(mdn-bar "CanvasRenderingContext2D: fillText() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/fillText")
+Draws filled text at the given position.
+}
+
 @defproc[(canvas-capture-stream [canvas (or/c canvas? external?)] [frame-rate any/c #f])
          media-stream?]{
 @(mdn-bar "HTMLCanvasElement: captureStream() method"
@@ -328,10 +385,26 @@ including @racket[canvas-2d-fill-style], @racket[canvas-2d-stroke-style],
 Returns the current filter string for the 2D context.
 }
 
+@defproc[(canvas-2d-set-fill-style! [ctx (or/c canvas-2d-context? external?)]
+                                    [style any/c])
+         void?]{
+@(mdn-bar "CanvasRenderingContext2D: fillStyle property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/fillStyle")
+Sets the fill style for the 2D context.
+}
+
 @defproc[(canvas-2d-line-join [ctx (or/c canvas-2d-context? external?)]) string?]{
 @(mdn-bar "CanvasRenderingContext2D: lineJoin property"
           "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/lineJoin")
 Returns the current line-join setting for the 2D context.
+}
+
+@defproc[(canvas-2d-set-stroke-style! [ctx (or/c canvas-2d-context? external?)]
+                                      [style any/c])
+         void?]{
+@(mdn-bar "CanvasRenderingContext2D: strokeStyle property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/strokeStyle")
+Sets the stroke style for the 2D context.
 }
 
 @defproc[(canvas-2d-get-transform [ctx (or/c canvas-2d-context? external?)])
@@ -346,6 +419,14 @@ value.
 @(mdn-bar "CanvasRenderingContext2D: reset() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/reset")
 Resets the 2D context to its default drawing state.
+}
+
+@defproc[(canvas-2d-set-font! [ctx (or/c canvas-2d-context? external?)]
+                              [font (or/c string? symbol?)])
+         void?]{
+@(mdn-bar "CanvasRenderingContext2D: font property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/font")
+Sets the CSS font used for text rendering.
 }
 
 @section{Canvas 2D Extras}
