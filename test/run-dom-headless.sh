@@ -13,6 +13,7 @@ compile_test() {
   racket ../webracket.rkt \
     --browser \
     --ffi ../ffi/standard.ffi \
+    --ffi ../ffi/js.ffi \
     --ffi ../ffi/dom.ffi \
     "$file"
 }

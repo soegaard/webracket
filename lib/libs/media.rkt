@@ -49,21 +49,58 @@
     [(3) 'no-source]
     [else (string->symbol (number->string code))]))
 
+;; media-boolean->i32 : any/c boolean? -> exact-integer?
+;;   Convert a Racket boolean to a browser i32 flag.
+(define (media-boolean->i32 _who value)
+  (if value 1 0))
+
+;; media-value->value : any/c -> any/c
+;;   Preserve a browser value unchanged.
+(define (media-value->value value)
+  value)
+
+;; media-value->self : any/c any/c -> any/c
+;;   Preserve a browser value unchanged in a setter helper.
+(define (media-value->self _who value)
+  value)
+
+;; define-media-getter : syntax -> syntax
+;;   Define a simple media property getter.
+(define-syntax-rule (define-media-getter racket-name foreign-proc convert)
+  (define (racket-name media)
+    (convert (foreign-proc media))))
+
+;; define-media-setter : syntax -> syntax
+;;   Define a simple media property setter.
+(define-syntax-rule (define-media-setter racket-name foreign-proc who convert)
+  (define (racket-name media value)
+    (foreign-proc media (convert who value))
+    (void)))
+
+;; define-media-wrapped-getter : syntax -> syntax
+;;   Define a media property getter that wraps a browser object result.
+(define-syntax-rule (define-media-wrapped-getter racket-name foreign-proc wrap)
+  (define (racket-name media)
+    (wrap (foreign-proc media))))
+
+;; define-media-wrapped-setter : syntax -> syntax
+;;   Define a media property setter that unwraps a wrapped browser object.
+(define-syntax-rule (define-media-wrapped-setter racket-name foreign-proc unwrap)
+  (define (racket-name media value)
+    (foreign-proc media (unwrap value))
+    (void)))
+
 ;; media-autoplay? : external? -> boolean?
 ;;   Read whether autoplay is enabled.
-(define (media-autoplay? media)
-  (media-i32->boolean (js-media-autoplay media)))
+(define-media-getter media-autoplay? js-media-autoplay media-i32->boolean)
 
 ;; media-set-autoplay! : external? boolean? -> void?
 ;;   Enable or disable autoplay.
-(define (media-set-autoplay! media autoplay?)
-  (js-set-media-autoplay! media (if autoplay? 1 0))
-  (void))
+(define-media-setter media-set-autoplay! js-set-media-autoplay! 'media-set-autoplay! media-boolean->i32)
 
 ;; media-current-src : external? -> string?
 ;;   Read the resolved media source URL.
-(define (media-current-src media)
-  (js-media-current-src media))
+(define-media-getter media-current-src js-media-current-src media-value->value)
 
 ;; media-cross-origin : external? -> (or/c #f string?)
 ;;   Read the CORS mode for media requests.
@@ -72,20 +109,15 @@
 
 ;; media-set-cross-origin! : external? (or/c string? symbol?) -> void?
 ;;   Set the CORS mode for media requests.
-(define (media-set-cross-origin! media cross-origin)
-  (js-set! media "crossOrigin" (media-stringish->string 'media-set-cross-origin! cross-origin))
-  (void))
+(define-media-setter media-set-cross-origin! js-set-media-cross-origin! 'media-set-cross-origin! media-stringish->string)
 
 ;; media-current-time : external? -> real?
 ;;   Read the current playback time.
-(define (media-current-time media)
-  (js-media-current-time media))
+(define-media-getter media-current-time js-media-current-time media-value->value)
 
 ;; media-set-current-time! : external? real? -> void?
 ;;   Seek to a playback time.
-(define (media-set-current-time! media t)
-  (js-set-media-current-time! media t)
-  (void))
+(define-media-setter media-set-current-time! js-set-media-current-time! 'media-set-current-time! media-value->self)
 
 ;; media-duration : external? -> real?
 ;;   Read the media duration.
@@ -94,127 +126,95 @@
 
 ;; media-volume : external? -> real?
 ;;   Read the volume level.
-(define (media-volume media)
-  (js-media-volume media))
+(define-media-getter media-volume js-media-volume media-value->value)
 
 ;; media-set-volume! : external? real? -> void?
 ;;   Set the volume level.
-(define (media-set-volume! media volume)
-  (js-set-media-volume! media volume)
-  (void))
+(define-media-setter media-set-volume! js-set-media-volume! 'media-set-volume! media-value->self)
 
 ;; media-muted : external? -> boolean?
 ;;   Read the muted flag.
-(define (media-muted media)
-  (media-i32->boolean (js-media-muted media)))
+(define-media-getter media-muted js-media-muted media-i32->boolean)
 
 ;; media-set-muted! : external? any/c -> void?
 ;;   Set the muted flag.
-(define (media-set-muted! media muted?)
-  (js-set-media-muted! media (if muted? 1 0))
-  (void))
+(define-media-setter media-set-muted! js-set-media-muted! 'media-set-muted! media-boolean->i32)
 
 ;; media-default-muted : external? -> boolean?
 ;;   Read the default-muted flag.
-(define (media-default-muted media)
-  (media-i32->boolean (js-media-default-muted media)))
+(define-media-getter media-default-muted js-media-default-muted media-i32->boolean)
 
 ;; media-set-default-muted! : external? any/c -> void?
 ;;   Set the default-muted flag.
-(define (media-set-default-muted! media muted?)
-  (js-set-media-default-muted! media (if muted? 1 0))
-  (void))
+(define-media-setter media-set-default-muted! js-set-media-default-muted! 'media-set-default-muted! media-boolean->i32)
 
 ;; media-default-playback-rate : external? -> real?
 ;;   Read the default playback rate.
-(define (media-default-playback-rate media)
-  (js-media-default-playback-rate media))
+(define-media-getter media-default-playback-rate js-media-default-playback-rate media-value->value)
 
 ;; media-set-default-playback-rate! : external? real? -> void?
 ;;   Set the default playback rate.
-(define (media-set-default-playback-rate! media rate)
-  (js-set-media-default-playback-rate! media rate)
-  (void))
+(define-media-setter media-set-default-playback-rate! js-set-media-default-playback-rate! 'media-set-default-playback-rate! media-value->self)
 
 ;; media-playback-rate : external? -> real?
 ;;   Read the playback rate.
-(define (media-playback-rate media)
-  (js-media-playback-rate media))
+(define-media-getter media-playback-rate js-media-playback-rate media-value->value)
 
 ;; media-set-playback-rate! : external? real? -> void?
 ;;   Set the playback rate.
-(define (media-set-playback-rate! media rate)
-  (js-set-media-playback-rate! media rate)
-  (void))
+(define-media-setter media-set-playback-rate! js-set-media-playback-rate! 'media-set-playback-rate! media-value->self)
 
 ;; media-controls? : external? -> boolean?
 ;;   Read the controls flag.
-(define (media-controls? media)
-  (media-i32->boolean (js-media-controls media)))
+(define-media-getter media-controls? js-media-controls media-i32->boolean)
 
 ;; media-set-controls! : external? any/c -> void?
 ;;   Set the controls flag.
-(define (media-set-controls! media controls?)
-  (js-set-media-controls! media (if controls? 1 0))
-  (void))
+(define-media-setter media-set-controls! js-set-media-controls! 'media-set-controls! media-boolean->i32)
 
 ;; media-loop? : external? -> boolean?
 ;;   Read the loop flag.
-(define (media-loop? media)
-  (media-i32->boolean (js-media-loop media)))
+(define-media-getter media-loop? js-media-loop media-i32->boolean)
 
 ;; media-set-loop! : external? any/c -> void?
 ;;   Set the loop flag.
-(define (media-set-loop! media loop?)
-  (js-set-media-loop! media (if loop? 1 0))
-  (void))
+(define-media-setter media-set-loop! js-set-media-loop! 'media-set-loop! media-boolean->i32)
 
 ;; media-ended? : external? -> boolean?
 ;;   Read whether playback has reached the end.
-(define (media-ended? media)
-  (media-i32->boolean (js-media-ended media)))
+(define-media-getter media-ended? js-media-ended media-i32->boolean)
 
 ;; media-paused? : external? -> boolean?
 ;;   Read whether playback is paused.
-(define (media-paused? media)
-  (media-i32->boolean (js-media-paused media)))
+(define-media-getter media-paused? js-media-paused media-i32->boolean)
 
 ;; media-seeking? : external? -> boolean?
 ;;   Read whether the media element is currently seeking.
-(define (media-seeking? media)
-  (media-i32->boolean (js-media-seeking media)))
+(define-media-getter media-seeking? js-media-seeking media-i32->boolean)
 
 ;; media-preload : external? -> string?
 ;;   Read the preload hint.
-(define (media-preload media)
-  (js-media-preload media))
+(define-media-getter media-preload js-media-preload media-value->value)
 
 ;; media-set-preload! : external? (or/c string? symbol?) -> void?
 ;;   Set the preload hint.
-(define (media-set-preload! media preload)
-  (js-set-media-preload! media (media-stringish->string 'media-set-preload! preload))
-  (void))
+(define-media-setter media-set-preload! js-set-media-preload! 'media-set-preload! media-stringish->string)
 
 ;; media-src : external? -> string?
 ;;   Read the media source URL.
-(define (media-src media)
-  (js-media-src media))
+(define-media-getter media-src js-media-src media-value->value)
 
 ;; media-set-src! : external? (or/c string? symbol?) -> void?
 ;;   Set the media source URL.
-(define (media-set-src! media src)
-  (js-set-media-src! media (media-stringish->string 'media-set-src! src))
-  (void))
+(define-media-setter media-set-src! js-set-media-src! 'media-set-src! media-stringish->string)
 
 ;; media-controls-list : external? -> dom-token-list?
 ;;   Read the browser controlsList policy object.
-(define (media-controls-list media)
-  (dom-token-list-wrap (js-media-controls-list media)))
+(define-media-wrapped-getter media-controls-list js-media-controls-list dom-token-list-wrap)
 
 ;; media-keys : external? -> (or/c #f media-keys-info?)
 ;;   Read the attached MediaKeys object.
-(define (media-keys media)
-  (media-keys-info-wrap (js-media-media-keys media)))
+(define-media-wrapped-getter media-keys js-media-media-keys media-keys-info-wrap)
 
 ;; media-set-media-keys! : external? (or/c media-keys-info? external/raw) -> external/raw
 ;;   Attach MediaKeys for encrypted media playback.
@@ -225,41 +225,34 @@
 
 ;; media-media-group : external? -> string?
 ;;   Read the media group identifier.
-(define (media-media-group media)
-  (js-media-media-group media))
+(define-media-getter media-media-group js-media-media-group media-value->value)
 
 ;; media-set-media-group! : external? (or/c string? symbol?) -> void?
 ;;   Set the media group identifier.
-(define (media-set-media-group! media media-group)
-  (js-set-media-media-group! media (media-stringish->string 'media-set-media-group! media-group))
-  (void))
+(define-media-setter media-set-media-group! js-set-media-media-group! 'media-set-media-group! media-stringish->string)
 
 ;; media-disable-remote-playback? : external? -> boolean?
 ;;   Read whether remote playback is disabled.
-(define (media-disable-remote-playback? media)
-  (media-i32->boolean (js-media-disable-remote-playback media)))
+(define-media-getter media-disable-remote-playback? js-media-disable-remote-playback media-i32->boolean)
 
 ;; media-set-disable-remote-playback! : external? boolean? -> void?
 ;;   Enable or disable remote playback.
-(define (media-set-disable-remote-playback! media disabled?)
-  (js-set-media-disable-remote-playback! media (if disabled? 1 0))
-  (void))
+(define-media-setter media-set-disable-remote-playback! js-set-media-disable-remote-playback! 'media-set-disable-remote-playback! media-boolean->i32)
 
 ;; media-preserves-pitch? : external? -> boolean?
 ;;   Read whether pitch should be preserved during playback-rate changes.
 (define (media-preserves-pitch? media)
-  (media-i32->boolean (js-media-preserves-pitch media)))
+  (media-i32->boolean (js-ref media "preservesPitch")))
 
 ;; media-set-preserves-pitch! : external? boolean? -> void?
 ;;   Enable or disable pitch preservation during playback-rate changes.
-(define (media-set-preserves-pitch! media preserves-pitch?)
-  (js-set-media-preserves-pitch! media (if preserves-pitch? 1 0))
+(define (media-set-preserves-pitch! media value)
+  (js-set! media "preservesPitch" (media-boolean->i32 'media-set-preserves-pitch! value))
   (void))
 
 ;; media-ready-state-number : external? -> exact-nonnegative-integer?
 ;;   Read the browser readyState code.
-(define (media-ready-state-number media)
-  (js-media-ready-state media))
+(define-media-getter media-ready-state-number js-media-ready-state media-value->value)
 
 ;; media-ready-state : external? -> symbol?
 ;;   Read the browser readyState as a symbol.
@@ -372,8 +365,7 @@
 
 ;; media-network-state-number : external? -> exact-nonnegative-integer?
 ;;   Read the browser network state code.
-(define (media-network-state-number media)
-  (js-media-network-state media))
+(define-media-getter media-network-state-number js-media-network-state media-value->value)
 
 ;; media-network-state : external? -> symbol?
 ;;   Read the browser network state as a symbol.
@@ -382,10 +374,8 @@
 
 ;; media-sink-id : external? -> string?
 ;;   Read the current sink id.
-(define (media-sink-id media)
-  (js-media-sink-id media))
+(define-media-getter media-sink-id js-media-sink-id media-value->value)
 
 ;; media-set-sink-id! : external? (or/c string? symbol?) -> external/raw
 ;;   Choose an output sink if supported.
-(define (media-set-sink-id! media sink-id)
-  (js-media-set-sink-id! media (media-stringish->string 'media-set-sink-id! sink-id)))
+(define-media-setter media-set-sink-id! js-media-set-sink-id! 'media-set-sink-id! media-stringish->string)

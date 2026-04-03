@@ -26,16 +26,22 @@ For interop conventions and helper selection, see the `JS interop conventions` s
   - Why it matters: this is a core boundary issue between Racket values and JS property access.
   - Future fix area: `js-ref` / property lookup semantics or clearer API docs.
 
-- Missing or wrong accessors and setters for DOM properties
+- `media-current-time` bridge mismatch
+  - Category: JS interop
+  - What happened: the `currentTime` media wrapper still trips a bridge/runtime error in the browser probe even though the raw JS property reads correctly.
+  - Why it matters: this is a good example of a browser field that looks simple but still needs the right bridge shape.
+  - Future fix area: media property bridging and the direct FFI wrapper path.
+
+- One-off wrapper-shape fixes for DOM properties
   - Category: DOM bridge / interop
-  - What happened: properties like `crossOrigin`, `srcObject`, and `controlsList` needed direct property access or corrected wrapper paths instead of the initial binding shape.
+  - What happened: a handful of properties needed the wrapper shape adjusted to match the actual browser object.
   - Examples:
-    - `media-cross-origin`
-    - `media-src-object`
-    - `media-set-src-object!`
-    - `dom-token-list-value`
-  - Why it matters: these are the exact places where a property looks simple but needs special handling.
-  - Future fix area: generated accessor and setter coverage plus property naming conventions.
+    - `media-cross-origin` needed direct property access through `crossOrigin`
+    - `media-src-object` needed to distinguish `MediaSource`-style values from `MediaStream`
+    - `media-set-src-object!` needed direct property assignment to `srcObject`
+    - `dom-token-list-value` exposed the need to use the indexed-access helper instead of stringifying numeric indices
+  - Why it matters: these were mostly one-off fixes, but they show how easy it is to pick the wrong JS bridge shape on the first pass.
+  - Future fix area: wrapper generation and JS bridge conventions.
 
 - Canvas image-data bridge methods
   - Category: JS interop
@@ -120,9 +126,13 @@ For interop conventions and helper selection, see the `JS interop conventions` s
   - This is a core JS interop issue.
   - We should decide whether `js-ref` should support numeric indexing consistently for array-like objects or whether the DOM layer should keep avoiding that shape.
 
-- Missing or wrong accessors and setters for DOM properties
-  - This includes cases like `crossOrigin`, `srcObject`, and `controlsList`.
-  - If we can standardize the bridge for these, it will reduce ad hoc property handling in the DOM libraries.
+- `media-current-time` bridge mismatch
+  - The raw JS `currentTime` property reads as expected in the browser fixture.
+  - The WebRacket wrapper still trips a bridge/runtime error, so this needs a closer look at the media accessor path.
+
+- One-off wrapper-shape fixes for DOM properties
+  - These are mostly individual cases, not one recurring bug.
+  - They show up when a browser object wants direct property access, a different return classification, or an indexed-access helper instead of a stringified property lookup.
 
 - Canvas image-data bridge methods
   - `createImageData` and `getImageData` needed browser calling conventions fixed up.

@@ -175,10 +175,10 @@
     [(list? arr) (list->vector arr)]
     [else
      (define len (js-ref arr "length"))
-     (let loop ([i 0] [acc '()])
-       (if (= i len)
-           (list->vector (reverse acc))
-           (loop (add1 i) (cons (js-ref arr (number->string i)) acc))))]))
+       (let loop ([i 0] [acc '()])
+         (if (= i len)
+             (list->vector (reverse acc))
+             (loop (add1 i) (cons (js-index arr i) acc))))]))
 
 ;; canvas-js-array->bytes : any/c -> bytes?
 ;;   Convert a browser byte array to a Racket bytes value.
@@ -186,7 +186,7 @@
   (define len (js-ref arr "length"))
   (define bs (make-bytes len))
   (for ([i (in-range len)])
-    (bytes-set! bs i (inexact->exact (js-ref arr (number->string i)))))
+    (bytes-set! bs i (inexact->exact (js-index arr i))))
   bs)
 
 ;; canvas-sequence->js-array : (or/c list? vector?) -> any/c
