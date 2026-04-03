@@ -1,0 +1,23 @@
+;;;
+;;; temp.ffi
+;;;
+
+;; Temporary benchmark-only bindings.
+;;
+;; Keep this file tiny so it is easy to delete after the benchmark is done.
+
+;; temp-x : external/raw -> any/c
+;;   Read the benchmark property directly.
+(define-foreign js-temp-x
+  #:module "temp"
+  #:name   "x"
+  #:doc    "Read the benchmark property directly."
+  (-> (extern) (value)))
+
+;; temp-set-x! : external/raw any/c -> void?
+;;   Set the benchmark property directly.
+(define-foreign js-temp-set-x!
+  #:module "temp"
+  #:name   "set-x!"
+  #:doc    "Set the benchmark property directly."
+  (-> (extern value) ()))

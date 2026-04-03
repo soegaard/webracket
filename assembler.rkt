@@ -1162,6 +1162,47 @@ var imports = {
       'Intl.RelativeTimeFormat':   (() => ('RelativeTimeFormat' in Intl ? Intl.RelativeTimeFormat : undefined)),
       'Intl.Segmenter':            (() => ('Segmenter' in Intl ? Intl.Segmenter : undefined))
     },
+    'console': {
+      'log':                       (args => console.log(...(from_fasl(args) || []))),
+      'info':                      (args => console.info(...(from_fasl(args) || []))),
+      'warn':                      (args => console.warn(...(from_fasl(args) || []))),
+      'error':                     (args => console.error(...(from_fasl(args) || []))),
+      'debug':                     (args => console.debug(...(from_fasl(args) || []))),
+      'assert':                    (args => {
+                                     const as = from_fasl(args) || [];
+                                     console.assert(...as);
+                                   }),
+      'clear':                     (() => console.clear()),
+      'dir':                       (args => console.dir(...(from_fasl(args) || []))),
+      'dirxml':                    (args => {
+                                     const as = from_fasl(args) || [];
+                                     (console.dirxml || console.log)(...(as));
+                                   }),
+      'table':                     (args => {
+                                     const as = from_fasl(args) || [];
+                                     (console.table || console.log)(...(as));
+                                   }),
+      'group':                     (args => console.group(...(from_fasl(args) || []))),
+      'group-collapsed':           (args => console.groupCollapsed(...(from_fasl(args) || []))),
+      'group-end':                 (() => console.groupEnd()),
+      'count':                     (args => console.count(...(from_fasl(args) || []))),
+      'count-reset':               (args => {
+                                     const as = from_fasl(args) || [];
+                                     (console.countReset || console.count)(...(as));
+                                   }),
+      'time':                      (args => console.time(...(from_fasl(args) || []))),
+      'time-end':                  (args => console.timeEnd(...(from_fasl(args) || []))),
+      'time-log':                  (args => console.timeLog(...(from_fasl(args) || []))),
+      'time-stamp':                (args => (console.timeStamp || (() => {}))(...(from_fasl(args) || []))),
+      'trace':                     (args => console.trace(...(from_fasl(args) || []))),
+      'profile':                   (args => (console.profile || (() => {}))(...(from_fasl(args) || []))),
+      'profile-end':               (args => (console.profileEnd || (() => {}))(...(from_fasl(args) || []))),
+      'exception':                 (args => console.error(...(from_fasl(args) || []))),
+    },
+    'temp': {
+      'x':                         ((o) => to_fasl(o.x)),
+      'set-x!':                    ((o, v) => { o.x = from_fasl(v); }),
+    },
     'math': {
         'abs':    ((x)       => Math.abs(x)),
         'acos':   ((x)       => Math.acos(x)),
