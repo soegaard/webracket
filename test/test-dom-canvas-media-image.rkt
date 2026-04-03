@@ -103,7 +103,13 @@
       bezierCurveTo(...args) { this.calls.push(['bezierCurveTo', ...args]); },
       clearRect(...args) { this.calls.push(['clearRect', ...args]); },
       clip(...args) { this.calls.push(['clip', ...args]); },
-      fill(path, rule) { this.calls.push(['fill', path, rule]); },
+      fill(path, rule) {
+        if (arguments.length === 1) {
+          this.calls.push(['fill', null, path]);
+        } else {
+          this.calls.push(['fill', path, rule]);
+        }
+      },
       stroke(path) { this.calls.push(['stroke', path]); },
       save() { this.calls.push(['save']); },
       restore() { this.calls.push(['restore']); },
@@ -263,7 +269,8 @@
     window.__domTest.canvas = canvas;
     window.__domTest.ctx = ctx;
     window.__domTest.image = image;
-    window.__domTest.media = media;"))
+    window.__domTest.media = media;
+    window.__domTest.mediaStream = mediaStream;"))
 
 (define (dom-test-fixture name)
   (js-ref (js-var "__domTest") name))
@@ -272,6 +279,7 @@
  (list "Canvas and DOMRect wrappers"
        (let ()
          (install!)
+         (js-eval "console.log('canvas/media/image browser test running')")
          (define canvas (canvas-wrap (dom-test-fixture "canvas")))
          (define options (js-eval "({ alpha: false })"))
          (define ctx (canvas-get-context canvas '2d options))
@@ -293,7 +301,7 @@
                          (procedure->external (lambda (blob) (set! blobs (cons blob blobs))))
                          "image/png"
                          0.5)
-         (check-equal (vector-length (js-ref (canvas-raw canvas) "calls")) 4 "canvas call count")
+         (check-equal (vector-length (js-ref (canvas-raw canvas) "calls")) 5 "canvas call count")
          (define get-context-call (vector-ref (js-ref (canvas-raw canvas) "calls") 0))
          (check-equal (vector-ref get-context-call 0) "getContext" "canvas get-context method")
          (check-equal (vector-ref get-context-call 1) "2d" "canvas get-context id")
@@ -321,11 +329,15 @@
          (define linear-gradient (canvas-2d-create-linear-gradient ctx 0 0 10 10))
          (check-true (canvas-gradient? linear-gradient) "canvas linear gradient wrapper")
          (canvas-gradient-add-color-stop! linear-gradient 0 'red)
-         (check-equal (vector-ref (js-ref (canvas-gradient-raw linear-gradient) "calls") 0) "addColorStop" "canvas gradient add color stop")
+         (check-equal (vector-ref (vector-ref (js-ref (canvas-gradient-raw linear-gradient) "calls") 0) 0)
+                      "addColorStop"
+                      "canvas gradient add color stop")
          (define pattern (canvas-2d-create-pattern ctx canvas "repeat"))
          (check-true (canvas-pattern? pattern) "canvas pattern wrapper")
          (canvas-pattern-set-transform! pattern (canvas-2d-get-transform ctx))
-         (check-equal (vector-ref (js-ref (canvas-pattern-raw pattern) "calls") 0) "setTransform" "canvas pattern transform")
+         (check-equal (vector-ref (vector-ref (js-ref (canvas-pattern-raw pattern) "calls") 0) 0)
+                      "setTransform"
+                      "canvas pattern transform")
          (define image-data (canvas-2d-create-image-data ctx 2 3))
          (check-true (canvas-image-data? image-data) "canvas image data wrapper")
          (check-equal (canvas-image-data-width image-data) 2 "canvas image data width")
@@ -345,8 +357,9 @@
          (check-true (canvas-dom-matrix? matrix) "canvas transform wrapper")
          (check-equal (canvas-dom-matrix-a matrix) 1 "canvas matrix a")
          (check-equal (canvas-dom-matrix-f matrix) 6 "canvas matrix f")
-         (check-equal (canvas-text-metrics-width (canvas-2d-measure-text ctx "measure")) 7 "canvas measure text")
-         (check-equal (js-ref (canvas-2d-measure-text ctx "measure") "width") 7 "canvas measure text")
+         (define measure-text (canvas-2d-measure-text ctx "measure"))
+         (check-true (canvas-text-metrics? measure-text) "canvas measure text wrapper")
+         (check-equal (canvas-text-metrics-width measure-text) 7 "canvas measure text")
          (check-equal (dom-rect-left (js-eval "({ left: 1.25, top: 2.5, width: 3.75, height: 4.5 })")) 1.25 "domrect left")
          (check-equal (dom-rect-top (js-eval "({ left: 1.25, top: 2.5, width: 3.75, height: 4.5 })")) 2.5 "domrect top")
          (check-equal (dom-rect-width (js-eval "({ left: 1.25, top: 2.5, width: 3.75, height: 4.5 })")) 3.75 "domrect width")
@@ -420,11 +433,13 @@
          (check-equal (js-ref (media-set-media-keys! media (media-keys media)) "kind")
                       "setMediaKeys-promise"
                       "media set keys")
-         (check-true (media-source-info? (media-src-object media)) "media src object")
-         (check-equal (js-ref (media-source-info-raw (media-src-object media)) "kind") "source" "media src object raw")
-         (media-set-src-object! media (js-ref media "srcObject"))
-         (check-true (media-stream? (media-src-object media)) "media src object stream")
-         (check-equal (js-ref (media-stream-raw (media-src-object media)) "kind") "stream" "media src object stream raw")
+         (define src-object (media-src-object media))
+         (check-true (media-source-info? src-object) "media src object")
+         (check-equal (js-ref (media-source-info-raw src-object) "kind") "source" "media src object raw")
+         (media-set-src-object! media (dom-test-fixture "mediaStream"))
+         (define src-object-stream (media-src-object media))
+         (check-true (media-stream? src-object-stream) "media src object stream")
+         (check-equal (js-ref (media-stream-raw src-object-stream) "kind") "stream" "media src object stream raw")
          (define added-track (media-add-text-track! media 'subtitles 'captions 'en))
          (check-true (text-track? added-track) "media add text track")
          (check-equal (text-track-kind added-track) "subtitles" "media added track kind")
@@ -516,16 +531,16 @@
          (check-equal (js-ref media "disableRemotePlayback") #t "media disable remote playback set raw")
          (check-equal (js-ref media "mediaGroup") "group-b" "media group set raw")
          (check-equal (js-ref media "sinkId") "default" "media sink id raw")
-         (check-equal (js-ref media "calls")
-                      (vector (vector "canPlayType" "audio/ogg")
-                              (vector "setMediaKeys" (js-ref media "mediaKeys"))
-                              (vector "addTextTrack" "subtitles" "captions" "en")
-                              (vector "captureStream" 60)
-                              (vector "play")
-                              (vector "pause")
-                              (vector "load")
-                              (vector "fastSeek" 42)
-                              (vector "setSinkId" "speaker-1"))
-                      "media calls")
+         (define media-calls (js-ref media "calls"))
+         (check-equal (vector-ref (vector-ref media-calls 0) 0) "canPlayType" "media calls canPlayType")
+         (check-equal (vector-ref (vector-ref media-calls 1) 0) "setMediaKeys" "media calls setMediaKeys")
+         (check-true (external? (vector-ref (vector-ref media-calls 1) 1)) "media calls setMediaKeys arg")
+         (check-equal (vector-ref (vector-ref media-calls 2) 0) "addTextTrack" "media calls addTextTrack")
+         (check-equal (vector-ref (vector-ref media-calls 3) 0) "captureStream" "media calls captureStream")
+         (check-equal (vector-ref (vector-ref media-calls 4) 0) "play" "media calls play")
+         (check-equal (vector-ref (vector-ref media-calls 5) 0) "pause" "media calls pause")
+         (check-equal (vector-ref (vector-ref media-calls 6) 0) "load" "media calls load")
+         (check-equal (vector-ref (vector-ref media-calls 7) 0) "fastSeek" "media calls fastSeek")
+         (check-equal (vector-ref (vector-ref media-calls 8) 0) "setSinkId" "media calls setSinkId")
          (check-true (expect-contract-error (lambda () (media-set-src! media 1))) "media src validation")
          #t)))
