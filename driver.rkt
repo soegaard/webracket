@@ -108,22 +108,22 @@
          #:run-after?        run-after?
          #:ffi-files         ffi-files    ; list of file paths for .ffi files
          #:stdlib?           stdlib?)     ; include standard library 
-  (define exit-code 0)
+
+  (define exit-code       0)
   (define compile-timings #f)
   (define t-driver-start (now-ms))
   
   ; 0. Handle ffi-files
-  (define t-ffi-setup-start (now-ms))
-  (define resolved-ffi-files
-    (resolve-ffi-files! 'drive-compilation ffi-files))
+  (define t-ffi-setup-start  (now-ms))
+  (define resolved-ffi-files (resolve-ffi-files! 'drive-compilation ffi-files))
 
   (define ffi-foreigns  '()) ; list of `foreign` structures
   (define ffi-imports   '()) ; list of wat
   (define ffi-funcs     '()) ; list of wat
 
   (for ([ffi-filename resolved-ffi-files])
-    (define fs (ffi-file->foreigns ffi-filename))
-    (define ims   (map foreign->import fs))
+    (define fs    (ffi-file->foreigns ffi-filename))
+    (define ims   (map foreign->import    fs))
     (define prims (map foreign->primitive fs))
     (set! ffi-foreigns (cons fs    ffi-foreigns))
     (set! ffi-imports  (cons ims   ffi-imports))
