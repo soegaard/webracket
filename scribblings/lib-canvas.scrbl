@@ -74,9 +74,21 @@ This example shows how to add a canvas to the page and then paint it.
 (code:comment "Insert the canvas into the page body.")
 (append-child! (document-body) canvas-el)
 
-(code:comment "Get the 2D drawing context and paint a box.")
-(define ctx (canvas-get-context canvas-el '2d #f))
+(code:comment "Get the 2D drawing context and draw a small scene.")
+(define ctx (canvas-get-context canvas-el '2d))
+(canvas-2d-clear-rect ctx 0 0 240 120)
+(canvas-2d-set-fill-style! ctx "hsl(210, 60%, 60%)")
 (canvas-2d-fill-rect ctx 20 20 80 40)
+(canvas-2d-set-stroke-style! ctx "black")
+(canvas-2d-stroke-rect ctx 20 20 80 40)
+(canvas-2d-begin-path ctx)
+(canvas-2d-move-to ctx 20 80)
+(canvas-2d-line-to ctx 100 80)
+(canvas-2d-line-to ctx 60 100)
+(canvas-2d-stroke ctx)
+(canvas-2d-set-font! ctx "16px sans-serif")
+(canvas-2d-set-fill-style! ctx "black")
+(canvas-2d-fill-text ctx "Hello, canvas!" 20 112)
 ]
 
 The main values are @racket[canvas?] and @racket[canvas-2d-context?].
