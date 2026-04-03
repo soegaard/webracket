@@ -31,21 +31,6 @@ Use @racket[element] when you want to:
   @item{scroll an element into view}
 ]
 
-The @racket[element] library provides checked wrappers for common DOM
-element operations.
-When a browser method expects a string, the wrapper also accepts a
-symbol and normalizes it to a string.
-
-@section{Element Values}
-
-The element helpers pass around wrapped browser element values, so the
-public API stays on the WebRacket side instead of exposing raw DOM
-nodes.
-
-@defstruct[element ([raw external/raw])]{
-Wraps a browser Element object.
-}
-
 @section{Element Quick Start}
 
 Start by creating an element, adding an attribute, and inserting it
@@ -97,6 +82,21 @@ rectangle, and then scroll it into view.
 (code:comment "Bring the card into view if needed.")
 (element-scroll-into-view! card #t)
 ]
+
+The @racket[element] library provides checked wrappers for common DOM
+element operations.
+When a browser method expects a string, the wrapper also accepts a
+symbol and normalizes it to a string.
+
+@section{Element Values}
+
+The element helpers pass around wrapped browser element values, so the
+public API stays on the WebRacket side instead of exposing raw DOM
+nodes.
+
+@defstruct[element ([raw external/raw])]{
+Wraps a browser Element object.
+}
 
 @section{Element Properties and Queries}
 
