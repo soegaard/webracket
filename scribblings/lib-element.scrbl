@@ -70,6 +70,34 @@ into the page body.
 The quick start shows the basic browser pattern: create an element,
 configure it, and insert it into the DOM.
 
+@section{Element Example}
+
+This example shows how to build a small card-like element, inspect its
+rectangle, and then scroll it into view.
+
+@racketblock[
+(code:comment "Include the DOM helper libraries.")
+(include-lib document)
+(include-lib element)
+
+(code:comment "Create a section element to act as a card.")
+(define card
+  (document-create-element "section"))
+
+(code:comment "Add attributes before inserting it.")
+(element-set-attribute! card "class" "card")
+
+(code:comment "Insert the card into the page body.")
+(element-append! (document-body) card)
+
+(code:comment "Measure where the card lands on the page.")
+(define rect
+  (element-get-bounding-client-rect card))
+
+(code:comment "Bring the card into view if needed.")
+(element-scroll-into-view! card #t)
+]
+
 @section{Element Properties and Queries}
 
 The following helpers cover the most common element identity and
@@ -787,31 +815,3 @@ Captures pointer events for the given pointer id.
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/releasePointerCapture")
 Releases pointer capture for the given pointer id.
 }
-
-@section{Element Example}
-
-This example shows how to build a small card-like element, inspect its
-rectangle, and then scroll it into view.
-
-@racketblock[
-(code:comment "Include the DOM helper libraries.")
-(include-lib document)
-(include-lib element)
-
-(code:comment "Create a section element to act as a card.")
-(define card
-  (document-create-element "section"))
-
-(code:comment "Add attributes before inserting it.")
-(element-set-attribute! card "class" "card")
-
-(code:comment "Insert the card into the page body.")
-(element-append! (document-body) card)
-
-(code:comment "Measure where the card lands on the page.")
-(define rect
-  (element-get-bounding-client-rect card))
-
-(code:comment "Bring the card into view if needed.")
-(element-scroll-into-view! card #t)
-]
