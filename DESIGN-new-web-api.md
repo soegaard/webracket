@@ -251,7 +251,30 @@ The banner pattern helps the reader answer three questions quickly:
 - how do I compile it?
 - what is this API on the browser side?
 
-### 4.4 Document low-level bridge behavior precisely
+### 4.4 Make cross references canonical
+
+Scribble warnings are easiest to avoid when every cross-reference target has
+one obvious home.
+
+Use these rules for new APIs and doc refactors:
+- Give every appendix, section, or subsection that is meant to be linked a
+  unique explicit Scribble tag with `#:tag`.
+- Put raw bridge accessors in one canonical appendix instead of repeating them
+  across wrapper chapters.
+- Keep shared docs-only label modules small and chapter-local; use them for
+  `for-label` resolution, but keep `@declare-exporting` on the real
+  implementation chapter.
+- Document each shared wrapper type in the chapter where users expect to find
+  it. For example, `DOMRectList` belongs with `DOMRect`, and collection types
+  that belong to `Element` should be documented in the `Element` chapter.
+- Do not document the same identifier in multiple chapters unless one chapter
+  is clearly the canonical owner and the others only reference it.
+
+The practical goal is simple: a reader should be able to click the obvious
+name and land in one stable place, with no duplicate Scribble anchors and no
+missing-tag warnings.
+
+### 4.5 Document low-level bridge behavior precisely
 
 When documenting an API made of several browser object families, group the docs the same way the implementation is grouped. For Audio, that means one reference structure for `AudioContext`, another for `AudioNode`/`AudioParam`, and separate coverage for node-specific accessors and event helpers.
 
@@ -274,7 +297,36 @@ If an example uses a helper that returns a vector, show a vector in the
 example. If an example uses a wrapped iterator, show the iterator wrapper and
 the conversion helper that consumes it.
 
-### 4.6 Use docs-only label modules when Scribble needs fake bindings
+### 4.6 JS interop conventions
+
+Use the JS bridge helpers that match the shape of the value you are working
+with.
+
+| Need | Use | Example | Notes |
+|---|---|---|---|
+| Named JS property access | `js-ref` | `(js-ref obj "width")` | Best for ordinary properties and getters. |
+| Numeric/indexed access on array-like JS values | `js-index` | `(js-index arr i)` | Preferred over stringifying the index. |
+| JS method call that returns a converted WebRacket value | `js-send` | `(js-send obj "slice" (vector 1))` | Use when the result should be converted. |
+| JS method call that returns a raw extern value | `js-send/extern` | `(js-send/extern obj "createImageData" (vector 2 3))` | Use when you need the exact JS value back. |
+| JS method call with an enforced result type | `js-send/boolean`, `js-send/value`, etc. | `(js-send/boolean arr "includes" (vector 2))` | Use the most specific helper that matches the expected result. |
+| JS Arrays and Array-specific operations | `js-array-*` helpers | `js-array-ref`, `js-array-length`, `js-array-map` | Use only for real JS `Array` values or Array-centric operations. |
+| Browser object fields and named properties | `js-ref` / `js-set!` | `crossOrigin`, `srcObject`, `value`, `length` | Keep these as property access, not method calls. |
+
+Do not:
+- fake indexed access with `(js-ref arr (number->string i))`
+- use `js-array-*` helpers for DOM collections or non-Array browser objects unless you really want Array semantics
+- use `js-send` for a property lookup
+- use `js-ref` when the value is really an index access
+
+Rules of thumb:
+- Use `js-index` for anything that is really “element at position `i`”.
+- Use `js-ref` for named properties.
+- Use `js-send` for method calls, not property lookups.
+- If you need a raw external value, prefer the `/extern` variant rather than converting and re-wrapping.
+
+The general rule is: match the helper to the JS shape you actually have. If the value is a named property, use `js-ref`. If it is indexed, use `js-index`. If it is a method call, use `js-send` or one of its typed variants.
+
+### 4.7 Use docs-only label modules when Scribble needs fake bindings
 
 If a library chapter shows example code in `@racketblock`, Scribble can
 only turn identifiers into links when it knows those identifiers as
@@ -293,7 +345,7 @@ This pattern works well for both checked wrapper chapters and raw FFI
 chapters. It keeps examples readable while still making the docs
 navigable.
 
-### 4.7 Add the site wiring to the checklist
+### 4.8 Add the site wiring to the checklist
 
 New browser APIs are not complete until the docs are visible in the site build and publish flow.
 
