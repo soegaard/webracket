@@ -2,9 +2,10 @@
 
 @(require scribble/manual
           "webracket-scribble-utils.rkt"
-          (for-label (lib "scribblings/console-labels.rkt" "webracket")))
+          )
 
 @title{Library: @racketid[console]}
+@declare-exporting[(lib "scribblings/console-labels.rkt" "webracket")]
 
 @(how-to-require include-lib console (lib "libs/console.rkt"))
 @(compile-option-bar "Compile option: " "--ffi console")
