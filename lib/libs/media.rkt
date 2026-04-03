@@ -68,12 +68,12 @@
 ;; media-cross-origin : external? -> (or/c #f string?)
 ;;   Read the CORS mode for media requests.
 (define (media-cross-origin media)
-  (js-media-cross-origin media))
+  (js-ref media "crossOrigin"))
 
 ;; media-set-cross-origin! : external? (or/c string? symbol?) -> void?
 ;;   Set the CORS mode for media requests.
 (define (media-set-cross-origin! media cross-origin)
-  (js-set-media-cross-origin! media (media-stringish->string 'media-set-cross-origin! cross-origin))
+  (js-set! media "crossOrigin" (media-stringish->string 'media-set-cross-origin! cross-origin))
   (void))
 
 ;; media-current-time : external? -> real?
@@ -275,21 +275,23 @@
 ;; media-src-object : external? -> (or/c #f media-stream? media-source-info?)
 ;;   Read the current source object for the media element.
 (define (media-src-object media)
-  (define src-object (js-media-src-object media))
+  (define src-object (js-ref media "srcObject"))
   (cond
     [(not src-object) #f]
-    [(js-ref src-object "getTracks") (media-stream-wrap src-object)]
+    [(not (js-nullish? (js-ref/extern src-object "getTracks")))
+     (media-stream-wrap src-object)]
     [else (media-source-info-wrap src-object)]))
 
 ;; media-set-src-object! : external? (or/c #f media-stream? media-source-info? external/raw) -> void?
 ;;   Set the source object for the media element.
 (define (media-set-src-object! media src-object)
-  (js-set-media-src-object! media
-                            (cond
-                              [(not src-object) #f]
-                              [(media-stream? src-object) (media-stream-unwrap src-object)]
-                              [(media-source-info? src-object) (media-source-info-unwrap src-object)]
-                              [else src-object]))
+  (js-set! media
+           "srcObject"
+           (cond
+             [(not src-object) #f]
+             [(media-stream? src-object) (media-stream-unwrap src-object)]
+             [(media-source-info? src-object) (media-source-info-unwrap src-object)]
+             [else src-object]))
   (void))
 
 ;; media-add-text-track! : external? (or/c string? symbol?) [label #f] [language #f] -> text-track?

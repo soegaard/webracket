@@ -37,11 +37,15 @@
 ;; window-resolve-scroll-options : any/c -> (or/c #f window-scroll-options?)
 ;;   Treat #f as omitted and force thunks for scroll option values.
 (define (window-resolve-scroll-options value)
-  (define resolved (window-resolve-optional value))
   (cond
-    [(eq? resolved (void)) #f]
-    [(eq? resolved #f) #f]
-    [else resolved]))
+    [(window-scroll-options? value) value]
+    [else
+     (define resolved (window-resolve-optional value))
+     (cond
+       [(eq? resolved (void)) #f]
+       [(eq? resolved #f) #f]
+       [(window-scroll-options? resolved) resolved]
+       [else resolved])]))
 
 ;; window-scroll-options : any/c any/c any/c -> void?
 ;;   Validate a browser ScrollToOptions dictionary wrapper.

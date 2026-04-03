@@ -556,7 +556,7 @@
   #:doc    "Scrolls the document to an absolute position."
   #:mdn    "Window/scroll"
   ;; Pass `(void)` for missing options.
-  (-> (f64 f64 value) ()))
+  (-> (f64 f64 extern) ()))
 
 (define-foreign js-window-scroll-by
   #:module "window"
@@ -564,7 +564,7 @@
   #:doc    "Scrolls the document by a relative offset."
   #:mdn    "Window/scrollBy"
   ;; Pass `(void)` for missing options.
-  (-> (f64 f64 value) ()))
+  (-> (f64 f64 extern) ()))
 
 (define-foreign js-window-scroll-to
   #:module "window"
@@ -572,7 +572,7 @@
   #:doc    "Scrolls the document to an absolute position."
   #:mdn    "Window/scrollTo"
   ;; Pass `(void)` for missing options.
-  (-> (f64 f64 value) ()))
+  (-> (f64 f64 extern) ()))
 
 (define-foreign js-window-set-interval
   #:module "window"

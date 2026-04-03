@@ -201,7 +201,7 @@
 ;; dom-token-list-value : dom-token-list? -> (or/c #f string?)
 ;;   Read the class list value.
 (define (dom-token-list-value class-list)
-  (js-ref/extern (dom-token-list-unwrap class-list) "value"))
+  (js-ref (dom-token-list-unwrap class-list) "value"))
 
 ;; dom-token-list-length : dom-token-list? -> exact-nonnegative-integer?
 ;;   Read the number of class tokens.
