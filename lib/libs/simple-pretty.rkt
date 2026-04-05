@@ -1,4 +1,4 @@
-;; #lang racket/base
+#lang webracket
 
 ;; (require racket/match         
 ;;          racket/string
@@ -12,12 +12,18 @@
 ;;          default-pretty-options
 ;;          fluid-let)
 
-(define-syntax-rule (fluid-let ([x v] ...) body ...)
-  (let ([old-x x] ...)
-    (set! x v) ...
-    (begin0
-      body ...
-      (set! x old-x) ...)))
+(define-values (simple-pretty-print
+                simple-pretty-write
+                simple-pretty-display
+                simple-pretty-format
+                default-pretty-options)
+  (let ()
+    (define-syntax-rule (fluid-let ([x v] ...) body ...)
+      (let ([old-x x] ...)
+        (set! x v) ...
+        (begin0
+          body ...
+          (set! x old-x) ...)))
 
 ;; (define-syntax-rule (fluid-let ([x v] ...) body ...)
 ;;   (let ([old-x x] ...)
@@ -1064,3 +1070,9 @@
 ;;               (simple-pretty-format value `((columns . ,columns)))))
 ;;        value)))
 ;;   ) ; module+
+
+    (values simple-pretty-print
+            simple-pretty-write
+            simple-pretty-display
+            simple-pretty-format
+            default-pretty-options)))

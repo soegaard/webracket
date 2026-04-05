@@ -1,0 +1,3 @@
+
+(js-log (string? "foo"))
+
