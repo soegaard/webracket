@@ -33,13 +33,13 @@
 ;;      (lambda () (set! x old-x) ...))))
 
 (define default-pretty-options
-  '((columns                . 79)
-    (depth                  . #f)
-    (newline?               . #t)
-    (show-inexactness       . #f)
-    (exact-as-decimal       . #f)
-    (.-symbol-without-bars  . #f)
-    (abbreviate-read-macros . #t)))
+  '((columns                . 79)   ; maximum line width before breaking
+    (depth                  . #f)   ; max nesting depth (#f = no limit)
+    (newline?               . #t)   ; append newline after output?
+    (show-inexactness       . #f)   ; show #i/#e prefixes on numbers?
+    (exact-as-decimal       . #f)   ; print exact numbers as decimals?
+    (.-symbol-without-bars  . #f)   ; print symbols without |...| when possible?
+    (abbreviate-read-macros . #t))) ; use ', `, , ,@ abbreviations?
 
 (define allowed-option-keys
   '(columns
