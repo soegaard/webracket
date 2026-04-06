@@ -26104,6 +26104,7 @@
                                           $maybe-resize-hasheqv
                                           $maybe-resize-hashequal
                                           $maybe-resize-hashalw)])
+             
              `(func ,set!/checked
                     (param $table (ref ,type))
                     (param $key   (ref eq))
@@ -26173,8 +26174,22 @@
                                         ;; Next probe
                                         (local.set $step (i32.add (local.get $step) (i32.const 1)))
                                         (br $probe)))
-                           ;; Table full (no missing or tombstone slots available)
-                           (call $raise-hash-insert:table-full))))
+                           ;; Table full — but insert into tombstone if one was found
+                           (if (i32.ne (local.get $first-tombstone) (i32.const -1))
+                               (then
+                                (local.set $slot  (local.get $first-tombstone))
+                                (array.set $Array (local.get $entries) (local.get $slot) (local.get $key))
+                                (array.set $Array (local.get $entries)
+                                                  (i32.add (local.get $slot) (i32.const 1))
+                                                  (local.get $val))
+                                (struct.set ,type $count
+                                            (local.get $table)
+                                            (i32.add (struct.get ,type $count (local.get $table))
+                                                     (i32.const 1)))
+                                (br $done)))
+                           
+                           (call $raise-hash-insert:table-full)))
+             )
 
 
          (func $hash-ref! (type $Prim3)
@@ -28856,9 +28871,17 @@
                     (local.set $h    (struct.get $Heap $hash (local.get $heap)))
                     (if (result i32)
                         (i32.eqz (local.get $h))
+                        ;; If the current stored hash value is zero,
+                        ;; it means the hash value hasn't been computed yet.
                         (then (local.set $h (call $splitmix32))
+                              ;; If $splitmix32 happens to return 0, we need a different
+                              ;; value - since 0 means "not computed yet".
+                              (if (i32.eqz (local.get $h))
+                                  (then (local.set $h (i32.const 2))))
+                              ; Store we newly computed hash value.
                               (struct.set $Heap $hash (local.get $heap) (local.get $h))
                               (local.get $h))
+                        ;; Just use the existing hash value.
                         (else (local.get $h))))))
 
 
@@ -28917,9 +28940,17 @@
                          (local.set $h (struct.get $Heap $hash (local.get $heap)))
                          (if (result i32)
                              (i32.eqz (local.get $h))
+                             ;; If the current stored hash value is zero,
+                             ;; it means the hash value hasn't been computed yet.
                              (then (local.set $h (call $splitmix32))
+                                   ;; If $splitmix32 happens to return 0, we need a different
+                                   ;; value - since 0 means "not computed yet".
+                                   (if (i32.eqz (local.get $h))
+                                       (then (local.set $h (i32.const 2))))
+                                   ; Store the newly computed hash value.
                                    (struct.set $Heap $hash (local.get $heap) (local.get $h))
                                    (local.get $h))
+                             ;; Just use the existing hash value.
                              (else (local.get $h))))))))
 
 
@@ -29303,7 +29334,7 @@
                (local $entries  (ref $Array))
                ;; Initial capacity is 16, so total entries = 2 * 16 = 32
                (local.set $entries
-                          (array.new $Array (global.get $missing) (i32.const 1024))) ; todo: was 32
+                          (array.new $Array (global.get $missing) (i32.const 1024))) ; todo: was 32 - was 1024
                (struct.new $SymbolTable
                            (local.get $entries)  ;; $entries
                            (i32.const 0)))       ;; $count
