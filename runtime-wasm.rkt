@@ -29516,6 +29516,8 @@
 
 
          ;  Fowler–Noll–Vo hash function
+         ;    Note: Since 0 means "hash not computed yet", $string-hash/i32 must
+         ;          return a non-zero value.
          (func $string-hash/i32
                (param $s (ref $String))
                (result i32)
@@ -29547,6 +29549,9 @@
                                              (i32.const 16777619))) ; prime
                                  (local.set $i (i32.add (local.get $i) (i32.const 1)))
                                  (br $loop)))
+                    ;; Ensure non-zero before memoizing
+                    (if (i32.eqz (local.get $hash))
+                        (then (local.set $hash (i32.const 2))))
                     ;; Memoize
                     (struct.set $String $hash (local.get $s) (local.get $hash))
                     (local.get $hash))))
