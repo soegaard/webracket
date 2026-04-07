@@ -1,8 +1,24 @@
 #lang webracket
 
 ;;;
-;;; Iterator wrappers
+;;; Iterator
 ;;;
+
+
+;; EXPERIMENTAL
+
+;; zip and zipKeyed 
+;;   Only FireFox supports zip and zipKeyed for the moment.
+;;   So iterator-zip and iterator-zip-keyed reimplements the
+;;   functions from scratch.
+
+;; BASELINE 2025 / 2026
+;; - Most  methods are newly available from 2025.
+;; - A few methods are newly available from 2026.
+
+;; TODO
+;; - iterator-zip and iterator-zip-keyed are ignoring the `options` argument
+
 
 ;; iterator : external/raw -> iterator?
 ;;   Wrap a browser Iterator object in a checked structure.
