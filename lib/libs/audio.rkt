@@ -1,15 +1,45 @@
 #lang webracket
 
 ;;;
-;;; Audio wrappers
+;;; Web Audio API
 ;;;
+
+;; This library brings the Web Audio API to WebRacket.
+
+;; https://developer.mozilla.org/en-US/docs/Web/API/Web_Audio_API
 
 ;; This library wraps the low-level `js-audio-*` bindings with checked
 ;; `audio-*` helpers for browser-side code loaded via `include-lib`.
 
+
+;; TODO
+;;  - Reorder functions into "chapters".
+;;  - Add more chapter headers
+
+;;; -------------------------------------------------------------------
+;;; Callback Caching 
+;;; -------------------------------------------------------------------
+
+;; Callbacks are cached, so the same procedure always maps to the same external.
+
 ;; procedure->external-cache : hash?
 ;;   Cache JS callback wrappers so the same procedure maps to the same external.
 (define procedure->external-cache (make-hasheq))
+
+;; procedure->stable-external : procedure? -> external?
+;;   Reuse a cached callback wrapper for a procedure when possible.
+(define (procedure->stable-external proc)
+  (define cached (hash-ref procedure->external-cache proc #f))
+  (cond
+    [cached cached]
+    [else
+     (define external (procedure->external proc))
+     (hash-set! procedure->external-cache proc external)
+     external]))
+
+;;; -------------------------------------------------------------------
+;;; Predicates
+;;; -------------------------------------------------------------------
 
 ;; audio-constructor-present? : string? -> boolean?
 ;;   Check whether the host environment exposes a named Audio constructor.
@@ -120,6 +150,10 @@
   (and (external? x)
        (audio-constructor-present? "ChannelMergerNode")
        (js-instanceof x (js-var "ChannelMergerNode"))))
+
+;;; -------------------------------------------------------------------
+;;; Checkers
+;;; -------------------------------------------------------------------
 
 ;; check-audio-context : symbol? any/c -> void?
 ;;   Ensure x is an AudioContext value.
@@ -263,6 +297,11 @@
                 (raise-argument-error who "real?" x)))
             (vector->list v)))
 
+;;; -------------------------------------------------------------------
+;;; Constructors
+;;; -------------------------------------------------------------------
+
+
 ;; audio-vector->js-float32-array : vector? -> external?
 ;;   Convert a Racket vector of reals to a browser Float32Array.
 (define (audio-vector->js-float32-array values)
@@ -311,16 +350,6 @@
   (unless (or (boolean? option) (external? option))
     (raise-argument-error who "(or/c boolean? external?)" option)))
 
-;; procedure->stable-external : procedure? -> external?
-;;   Reuse a cached callback wrapper for a procedure when possible.
-(define (procedure->stable-external proc)
-  (define cached (hash-ref procedure->external-cache proc #f))
-  (cond
-    [cached cached]
-    [else
-     (define external (procedure->external proc))
-     (hash-set! procedure->external-cache proc external)
-     external]))
 
 ;; audio-handler->external : symbol? any/c -> any/c
 ;;   Convert a handler to an external callback or JS null.
@@ -387,6 +416,10 @@
         (list->vector (list* event-name* listener* options))))
   (js-send/extern/nullish target "removeEventListener" args)
   (void))
+
+;;; -------------------------------------------------------------------
+;;; Audio Context
+;;; -------------------------------------------------------------------
 
 ;; audio-context-new : -> audio-context?
 ;;   Create a new AudioContext.
@@ -553,6 +586,11 @@
   (unless (or (bytes? data) (external? data))
     (raise-argument-error 'audio-context-decode-audio-data "(or/c bytes? external?)" data))
   (js-audio-context-decode-audio-data ctx data))
+
+;;; -------------------------------------------------------------------
+;;; Audio Node
+;;; -------------------------------------------------------------------
+
 
 ;; audio-node-context : audio-node? -> audio-context?
 ;;   Read the owning AudioContext for a node.
