@@ -57,7 +57,7 @@
 
 ;; Lookup generic primitive DOM event callback by event name string.
 (define (node-event-handler node event-name)
-  (define p (assoc event-name (dom-node-event-handlers node)))
+  (define p (assoc event-name (view-node-event-handlers node)))
   (and p (cdr p)))
 
 ;; Check the standard mixed-content shape produced by text-or-children primitives.
@@ -65,29 +65,29 @@
   (define prefix (if label
                      (format "~a: " label)
                      ""))
-  (define children (dom-node-children node))
-  (check-equal (dom-node-tag node)
+  (define children (view-node-children node))
+  (check-equal (view-node-tag node)
                expected-tag
                (string-append prefix "root tag matches"))
   (check-equal (length children)
                3
                (string-append prefix "mixed content keeps three ordered children"))
-  (check-equal (dom-node-tag (list-ref children 0))
+  (check-equal (view-node-tag (list-ref children 0))
                'text
                (string-append prefix "leading text becomes raw text child"))
-  (check-equal (dom-node-text (list-ref children 0))
+  (check-equal (view-node-text (list-ref children 0))
                "Lead "
                (string-append prefix "leading text preserved"))
-  (check-equal (dom-node-tag (list-ref children 1))
+  (check-equal (view-node-tag (list-ref children 1))
                'span
                (string-append prefix "middle child view preserved"))
-  (check-equal (dom-node-text (list-ref children 1))
+  (check-equal (view-node-text (list-ref children 1))
                "mid"
                (string-append prefix "middle child view text preserved"))
-  (check-equal (dom-node-tag (list-ref children 2))
+  (check-equal (view-node-tag (list-ref children 2))
                'text
                (string-append prefix "trailing text becomes raw text child"))
-  (check-equal (dom-node-text (list-ref children 2))
+  (check-equal (view-node-text (list-ref children 2))
                " tail"
                (string-append prefix "trailing text preserved")))
 
@@ -121,9 +121,9 @@
 (define spec-guard-img-node (node-child spec-guard-panel 1))
 (define spec-guard-base-href-node (node-child spec-guard-panel 2))
 (define spec-guard-base-target-node (node-child spec-guard-panel 3))
-(check-equal (dom-node-tag spec-guard-h1-node) 'h1 "spec guard: H1 tag available")
-(check-equal (dom-node-tag spec-guard-img-node) 'img "spec guard: Img tag available")
-(check-equal (dom-node-tag spec-guard-base-href-node) 'base "spec guard: Base tag available")
+(check-equal (view-node-tag spec-guard-h1-node) 'h1 "spec guard: H1 tag available")
+(check-equal (view-node-tag spec-guard-img-node) 'img "spec guard: Img tag available")
+(check-equal (view-node-tag spec-guard-base-href-node) 'base "spec guard: Base tag available")
 (check-node-attrs spec-guard-h1-node '((align "left")) "SpecGuard/H1")
 (check-node-attrs spec-guard-img-node '((src "guard.png")) "SpecGuard/Img")
 (check-node-attrs spec-guard-base-href-node '((href "https://example.test/")) "SpecGuard/BaseHref")
@@ -148,12 +148,12 @@
 (define reg-img-node (node-child primitive-initial-tags-panel 3))
 (define reg-div-node (node-child primitive-initial-tags-panel 4))
 (define reg-div-child-node (node-child reg-div-node 0))
-(check-equal (dom-node-tag reg-h1-node) 'h1 "H1 initial primitive tag remains h1 (no div fallback)")
-(check-equal (dom-node-tag reg-p-node) 'p "P initial primitive tag remains p (no div fallback)")
-(check-equal (dom-node-tag reg-span-node) 'span "Span initial primitive tag remains span (no div fallback)")
-(check-equal (dom-node-tag reg-img-node) 'img "Img initial primitive tag remains img (no div fallback)")
-(check-equal (dom-node-tag reg-div-node) 'div "Div initial primitive tag remains div")
-(check-equal (dom-node-tag reg-div-child-node) 'span "Div child primitive tag remains span")
+(check-equal (view-node-tag reg-h1-node) 'h1 "H1 initial primitive tag remains h1 (no div fallback)")
+(check-equal (view-node-tag reg-p-node) 'p "P initial primitive tag remains p (no div fallback)")
+(check-equal (view-node-tag reg-span-node) 'span "Span initial primitive tag remains span (no div fallback)")
+(check-equal (view-node-tag reg-img-node) 'img "Img initial primitive tag remains img (no div fallback)")
+(check-equal (view-node-tag reg-div-node) 'div "Div initial primitive tag remains div")
+(check-equal (view-node-tag reg-div-child-node) 'span "Div child primitive tag remains span")
 
 ;; H1 renders as a primitive h1 tag and accepts allowed attributes (including spec-listed align)
 (define r-h1-basic
@@ -165,8 +165,8 @@
          #:id "hero-title")))))
 (define h1-basic-panel (node-child (renderer-root r-h1-basic) 0))
 (define h1-basic-node  (node-child h1-basic-panel 0))
-(check-equal (dom-node-tag h1-basic-node) 'h1 "H1 primitive tag is h1")
-(check-equal (dom-node-text h1-basic-node) "Plain H1" "H1 text content")
+(check-equal (view-node-tag h1-basic-node) 'h1 "H1 primitive tag is h1")
+(check-equal (view-node-text h1-basic-node) "Plain H1" "H1 text content")
 (check-node-attrs h1-basic-node
                   '((align "left")
                     (id "hero-title")
@@ -188,11 +188,11 @@
 (define h4-node (node-child hx-panel 2))
 (define h5-node (node-child hx-panel 3))
 (define h6-node (node-child hx-panel 4))
-(check-equal (dom-node-tag h2-node) 'h2 "H2 primitive tag is h2")
-(check-equal (dom-node-tag h3-node) 'h3 "H3 primitive tag is h3")
-(check-equal (dom-node-tag h4-node) 'h4 "H4 primitive tag is h4")
-(check-equal (dom-node-tag h5-node) 'h5 "H5 primitive tag is h5")
-(check-equal (dom-node-tag h6-node) 'h6 "H6 primitive tag is h6")
+(check-equal (view-node-tag h2-node) 'h2 "H2 primitive tag is h2")
+(check-equal (view-node-tag h3-node) 'h3 "H3 primitive tag is h3")
+(check-equal (view-node-tag h4-node) 'h4 "H4 primitive tag is h4")
+(check-equal (view-node-tag h5-node) 'h5 "H5 primitive tag is h5")
+(check-equal (view-node-tag h6-node) 'h6 "H6 primitive tag is h6")
 (check-node-attrs h2-node '((align "left")))
 (check-node-attrs h3-node '((align "center")))
 (check-node-attrs h4-node '((align "right")))
@@ -209,13 +209,13 @@
 (define hx-children-panel (node-child (renderer-root r-hx-children) 0))
 (define h1-children-node (node-child hx-children-panel 0))
 (define h3-children-node (node-child hx-children-panel 1))
-(check-equal (dom-node-tag h1-children-node) 'h1 "H1 supports child views")
+(check-equal (view-node-tag h1-children-node) 'h1 "H1 supports child views")
 (check-node-attrs h1-children-node '((align "center")))
-(check-equal (length (dom-node-children h1-children-node)) 2
+(check-equal (length (view-node-children h1-children-node)) 2
              "H1 preserves multiple child views")
-(check-equal (dom-node-tag h3-children-node) 'h3 "H3 supports child views")
+(check-equal (view-node-tag h3-children-node) 'h3 "H3 supports child views")
 (check-node-attrs h3-children-node '((align "left")))
-(check-equal (length (dom-node-children h3-children-node)) 2
+(check-equal (length (view-node-children h3-children-node)) 2
              "H3 preserves multiple child views")
 
 ;; H1 rejects unknown attributes early
@@ -382,7 +382,7 @@
          "Keyword order ok")))))
 (define h1-order-panel (node-child (renderer-root r-h1-keyword-order) 0))
 (define h1-order-node  (node-child h1-order-panel 0))
-(check-equal (dom-node-text h1-order-node) "Keyword order ok" "H1 supports positional content after keywords")
+(check-equal (view-node-text h1-order-node) "Keyword order ok" "H1 supports positional content after keywords")
 (check-node-attrs h1-order-node '((id "ordered-id")))
 
 (define r-h1-attrs-false
@@ -425,7 +425,7 @@
              h1-ref-node
              "primitive #:ref stores mounted node handle")
 (check-node-attrs h1-ref-node '((id "h1-ref")) "H1 ref node attrs preserved")
-(check-equal (if (assq 'ref (dom-node-attrs h1-ref-node)) #t #f)
+(check-equal (if (assq 'ref (view-node-attrs h1-ref-node)) #t #f)
              #f
              "primitive #:ref is not emitted as DOM attribute")
 (renderer-destroy r-h1-ref)
@@ -481,8 +481,8 @@
 (define p-span-panel (node-child (renderer-root r-p-span-basic) 0))
 (define p-node (node-child p-span-panel 0))
 (define span-node (node-child p-span-panel 1))
-(check-equal (dom-node-tag p-node) 'p "P primitive tag is p")
-(check-equal (dom-node-tag span-node) 'span "Span primitive tag is span")
+(check-equal (view-node-tag p-node) 'p "P primitive tag is p")
+(check-equal (view-node-tag span-node) 'span "Span primitive tag is span")
 (check-node-attrs p-node
                   '((align "left")
                     (id "p1")))
@@ -502,17 +502,17 @@
 (define p-span-children-panel (node-child (renderer-root r-p-span-children) 0))
 (define p-children-node (node-child p-span-children-panel 0))
 (define span-children-node (node-child p-span-children-panel 1))
-(check-equal (dom-node-tag p-children-node) 'p "P supports child views")
+(check-equal (view-node-tag p-children-node) 'p "P supports child views")
 (check-node-attrs p-children-node '((align "center")))
-(check-equal (length (dom-node-children p-children-node)) 2
+(check-equal (length (view-node-children p-children-node)) 2
              "P preserves multiple child views")
-(check-equal (dom-node-tag (car (dom-node-children p-children-node))) 'strong
+(check-equal (view-node-tag (car (view-node-children p-children-node))) 'strong
              "P child views keep order")
-(check-equal (dom-node-tag span-children-node) 'span "Span supports child views")
+(check-equal (view-node-tag span-children-node) 'span "Span supports child views")
 (check-node-attrs span-children-node '((lang "da")))
-(check-equal (length (dom-node-children span-children-node)) 2
+(check-equal (length (view-node-children span-children-node)) 2
              "Span preserves multiple child views")
-(check-equal (dom-node-tag (car (dom-node-children span-children-node))) 'em
+(check-equal (view-node-tag (car (view-node-children span-children-node))) 'em
              "Span child views keep order")
 (check-call-rejected (P)
                      "P rejects missing content")
@@ -551,18 +551,18 @@
 (define small-node (node-child inline-block-panel 4))
 (define br-node (node-child inline-block-panel 5))
 (define hr-node (node-child inline-block-panel 6))
-(check-equal (dom-node-tag strong-node) 'strong "Strong primitive tag is strong")
-(check-equal (dom-node-tag em-node) 'em "Em primitive tag is em")
-(check-equal (dom-node-tag code-node) 'code "Code primitive tag is code")
-(check-equal (dom-node-tag pre-node) 'pre "Pre primitive tag is pre")
-(check-equal (dom-node-tag small-node) 'small "Small primitive tag is small")
-(check-equal (dom-node-tag br-node) 'br "Br primitive tag is br")
-(check-equal (dom-node-tag hr-node) 'hr "Hr primitive tag is hr")
-(check-equal (dom-node-text strong-node) "Strong text" "Strong renders text")
-(check-equal (dom-node-text em-node) "Em text" "Em renders text")
-(check-equal (dom-node-text code-node) "x := 1" "Code renders text")
-(check-equal (dom-node-text pre-node) "line 1\nline 2" "Pre preserves text payload")
-(check-equal (dom-node-text small-node) "small print" "Small renders text")
+(check-equal (view-node-tag strong-node) 'strong "Strong primitive tag is strong")
+(check-equal (view-node-tag em-node) 'em "Em primitive tag is em")
+(check-equal (view-node-tag code-node) 'code "Code primitive tag is code")
+(check-equal (view-node-tag pre-node) 'pre "Pre primitive tag is pre")
+(check-equal (view-node-tag small-node) 'small "Small primitive tag is small")
+(check-equal (view-node-tag br-node) 'br "Br primitive tag is br")
+(check-equal (view-node-tag hr-node) 'hr "Hr primitive tag is hr")
+(check-equal (view-node-text strong-node) "Strong text" "Strong renders text")
+(check-equal (view-node-text em-node) "Em text" "Em renders text")
+(check-equal (view-node-text code-node) "x := 1" "Code renders text")
+(check-equal (view-node-text pre-node) "line 1\nline 2" "Pre preserves text payload")
+(check-equal (view-node-text small-node) "small print" "Small renders text")
 (define r-inline-children-primitives
   (render
    (window
@@ -588,25 +588,25 @@
 (define code-children-node (node-child inline-children-panel 2))
 (define pre-children-node (node-child inline-children-panel 3))
 (define small-children-node (node-child inline-children-panel 4))
-(check-equal (dom-node-tag strong-children-node) 'strong "Strong supports child views")
+(check-equal (view-node-tag strong-children-node) 'strong "Strong supports child views")
 (check-node-attrs strong-children-node '((title "importance")))
-(check-equal (length (dom-node-children strong-children-node)) 2
+(check-equal (length (view-node-children strong-children-node)) 2
              "Strong preserves multiple child views")
-(check-equal (dom-node-tag em-children-node) 'em "Em supports child views")
+(check-equal (view-node-tag em-children-node) 'em "Em supports child views")
 (check-node-attrs em-children-node '((lang "da")))
-(check-equal (length (dom-node-children em-children-node)) 2
+(check-equal (length (view-node-children em-children-node)) 2
              "Em preserves multiple child views")
-(check-equal (dom-node-tag code-children-node) 'code "Code supports child views")
+(check-equal (view-node-tag code-children-node) 'code "Code supports child views")
 (check-node-attrs code-children-node '((data-testid "code-2")))
-(check-equal (length (dom-node-children code-children-node)) 2
+(check-equal (length (view-node-children code-children-node)) 2
              "Code preserves multiple child views")
-(check-equal (dom-node-tag pre-children-node) 'pre "Pre supports child views")
+(check-equal (view-node-tag pre-children-node) 'pre "Pre supports child views")
 (check-node-attrs pre-children-node '((width 40)))
-(check-equal (length (dom-node-children pre-children-node)) 2
+(check-equal (length (view-node-children pre-children-node)) 2
              "Pre preserves multiple child views")
-(check-equal (dom-node-tag small-children-node) 'small "Small supports child views")
+(check-equal (view-node-tag small-children-node) 'small "Small supports child views")
 (check-node-attrs small-children-node '((id "small-2")))
-(check-equal (length (dom-node-children small-children-node)) 2
+(check-equal (length (view-node-children small-children-node)) 2
              "Small preserves multiple child views")
 (check-node-attrs pre-node '((width 80)))
 (check-node-attrs br-node '((clear "left")))
@@ -679,16 +679,16 @@
 (define kbd-node (node-child inline-text-panel-2 7))
 (define samp-node (node-child inline-text-panel-2 8))
 (define var-node (node-child inline-text-panel-2 9))
-(check-equal (dom-node-tag b-node) 'b "B primitive tag is b")
-(check-equal (dom-node-tag i-node) 'i "I primitive tag is i")
-(check-equal (dom-node-tag u-node) 'u "U primitive tag is u")
-(check-equal (dom-node-tag s-node) 's "S primitive tag is s")
-(check-equal (dom-node-tag mark-node) 'mark "Mark primitive tag is mark")
-(check-equal (dom-node-tag sub-node) 'sub "Sub primitive tag is sub")
-(check-equal (dom-node-tag sup-node) 'sup "Sup primitive tag is sup")
-(check-equal (dom-node-tag kbd-node) 'kbd "Kbd primitive tag is kbd")
-(check-equal (dom-node-tag samp-node) 'samp "Samp primitive tag is samp")
-(check-equal (dom-node-tag var-node) 'var "Var primitive tag is var")
+(check-equal (view-node-tag b-node) 'b "B primitive tag is b")
+(check-equal (view-node-tag i-node) 'i "I primitive tag is i")
+(check-equal (view-node-tag u-node) 'u "U primitive tag is u")
+(check-equal (view-node-tag s-node) 's "S primitive tag is s")
+(check-equal (view-node-tag mark-node) 'mark "Mark primitive tag is mark")
+(check-equal (view-node-tag sub-node) 'sub "Sub primitive tag is sub")
+(check-equal (view-node-tag sup-node) 'sup "Sup primitive tag is sup")
+(check-equal (view-node-tag kbd-node) 'kbd "Kbd primitive tag is kbd")
+(check-equal (view-node-tag samp-node) 'samp "Samp primitive tag is samp")
+(check-equal (view-node-tag var-node) 'var "Var primitive tag is var")
 (define r-bi-u-children
   (render
    (window
@@ -706,17 +706,17 @@
 (define b-children-node (node-child bi-u-children-panel 0))
 (define i-children-node (node-child bi-u-children-panel 1))
 (define u-children-node (node-child bi-u-children-panel 2))
-(check-equal (dom-node-tag b-children-node) 'b "B supports child views")
+(check-equal (view-node-tag b-children-node) 'b "B supports child views")
 (check-node-attrs b-children-node '((title "b2")))
-(check-equal (length (dom-node-children b-children-node)) 2
+(check-equal (length (view-node-children b-children-node)) 2
              "B preserves multiple child views")
-(check-equal (dom-node-tag i-children-node) 'i "I supports child views")
+(check-equal (view-node-tag i-children-node) 'i "I supports child views")
 (check-node-attrs i-children-node '((lang "da")))
-(check-equal (length (dom-node-children i-children-node)) 2
+(check-equal (length (view-node-children i-children-node)) 2
              "I preserves multiple child views")
-(check-equal (dom-node-tag u-children-node) 'u "U supports child views")
+(check-equal (view-node-tag u-children-node) 'u "U supports child views")
 (check-node-attrs u-children-node '((data-testid "u-2")))
-(check-equal (length (dom-node-children u-children-node)) 2
+(check-equal (length (view-node-children u-children-node)) 2
              "U preserves multiple child views")
 (define r-s-mark-children
   (render
@@ -731,13 +731,13 @@
 (define s-mark-children-panel (node-child (renderer-root r-s-mark-children) 0))
 (define s-children-node (node-child s-mark-children-panel 0))
 (define mark-children-node (node-child s-mark-children-panel 1))
-(check-equal (dom-node-tag s-children-node) 's "S supports child views")
+(check-equal (view-node-tag s-children-node) 's "S supports child views")
 (check-node-attrs s-children-node '((id "s-2")))
-(check-equal (length (dom-node-children s-children-node)) 2
+(check-equal (length (view-node-children s-children-node)) 2
              "S preserves multiple child views")
-(check-equal (dom-node-tag mark-children-node) 'mark "Mark supports child views")
+(check-equal (view-node-tag mark-children-node) 'mark "Mark supports child views")
 (check-node-attrs mark-children-node '((aria-label "mark-2")))
-(check-equal (length (dom-node-children mark-children-node)) 2
+(check-equal (length (view-node-children mark-children-node)) 2
              "Mark preserves multiple child views")
 (define r-subsup-kbd-samp-var-children
   (render
@@ -765,25 +765,25 @@
 (define kbd-children-node (node-child subsup-kbd-samp-var-panel 2))
 (define samp-children-node (node-child subsup-kbd-samp-var-panel 3))
 (define var-children-node (node-child subsup-kbd-samp-var-panel 4))
-(check-equal (dom-node-tag sub-children-node) 'sub "Sub supports child views")
+(check-equal (view-node-tag sub-children-node) 'sub "Sub supports child views")
 (check-node-attrs sub-children-node '((class "sub2")))
-(check-equal (length (dom-node-children sub-children-node)) 2
+(check-equal (length (view-node-children sub-children-node)) 2
              "Sub preserves multiple child views")
-(check-equal (dom-node-tag sup-children-node) 'sup "Sup supports child views")
+(check-equal (view-node-tag sup-children-node) 'sup "Sup supports child views")
 (check-node-attrs sup-children-node '((class "sup2")))
-(check-equal (length (dom-node-children sup-children-node)) 2
+(check-equal (length (view-node-children sup-children-node)) 2
              "Sup preserves multiple child views")
-(check-equal (dom-node-tag kbd-children-node) 'kbd "Kbd supports child views")
+(check-equal (view-node-tag kbd-children-node) 'kbd "Kbd supports child views")
 (check-node-attrs kbd-children-node '((title "kbd2")))
-(check-equal (length (dom-node-children kbd-children-node)) 2
+(check-equal (length (view-node-children kbd-children-node)) 2
              "Kbd preserves multiple child views")
-(check-equal (dom-node-tag samp-children-node) 'samp "Samp supports child views")
+(check-equal (view-node-tag samp-children-node) 'samp "Samp supports child views")
 (check-node-attrs samp-children-node '((title "samp2")))
-(check-equal (length (dom-node-children samp-children-node)) 2
+(check-equal (length (view-node-children samp-children-node)) 2
              "Samp preserves multiple child views")
-(check-equal (dom-node-tag var-children-node) 'var "Var supports child views")
+(check-equal (view-node-tag var-children-node) 'var "Var supports child views")
 (check-node-attrs var-children-node '((title "var2")))
-(check-equal (length (dom-node-children var-children-node)) 2
+(check-equal (length (view-node-children var-children-node)) 2
              "Var preserves multiple child views")
 (check-node-attrs mark-node '((aria-label "mark")))
 (check-call-rejected (B "Bad B attr" #:foo "x")
@@ -856,12 +856,12 @@
 (define abbr-node (node-child inline-semantic-panel 3))
 (define time-node (node-child inline-semantic-panel 4))
 (define data-node (node-child inline-semantic-panel 5))
-(check-equal (dom-node-tag q-node) 'q "Q primitive tag is q")
-(check-equal (dom-node-tag cite-node) 'cite "Cite primitive tag is cite")
-(check-equal (dom-node-tag dfn-node) 'dfn "Dfn primitive tag is dfn")
-(check-equal (dom-node-tag abbr-node) 'abbr "Abbr primitive tag is abbr")
-(check-equal (dom-node-tag time-node) 'time "Time primitive tag is time")
-(check-equal (dom-node-tag data-node) 'data "Data primitive tag is data")
+(check-equal (view-node-tag q-node) 'q "Q primitive tag is q")
+(check-equal (view-node-tag cite-node) 'cite "Cite primitive tag is cite")
+(check-equal (view-node-tag dfn-node) 'dfn "Dfn primitive tag is dfn")
+(check-equal (view-node-tag abbr-node) 'abbr "Abbr primitive tag is abbr")
+(check-equal (view-node-tag time-node) 'time "Time primitive tag is time")
+(check-equal (view-node-tag data-node) 'data "Data primitive tag is data")
 (define r-inline-semantic-children
   (render
    (window
@@ -892,29 +892,29 @@
 (define abbr-children-node (node-child inline-semantic-children-panel 3))
 (define time-children-node (node-child inline-semantic-children-panel 4))
 (define data-children-node (node-child inline-semantic-children-panel 5))
-(check-equal (dom-node-tag q-children-node) 'q "Q supports child views")
+(check-equal (view-node-tag q-children-node) 'q "Q supports child views")
 (check-node-attrs q-children-node '((cite "https://example.test/quote-2")))
-(check-equal (length (dom-node-children q-children-node)) 2
+(check-equal (length (view-node-children q-children-node)) 2
              "Q preserves multiple child views")
-(check-equal (dom-node-tag cite-children-node) 'cite "Cite supports child views")
+(check-equal (view-node-tag cite-children-node) 'cite "Cite supports child views")
 (check-node-attrs cite-children-node '((lang "da")))
-(check-equal (length (dom-node-children cite-children-node)) 2
+(check-equal (length (view-node-children cite-children-node)) 2
              "Cite preserves multiple child views")
-(check-equal (dom-node-tag dfn-children-node) 'dfn "Dfn supports child views")
+(check-equal (view-node-tag dfn-children-node) 'dfn "Dfn supports child views")
 (check-node-attrs dfn-children-node '((title "Defined term 2")))
-(check-equal (length (dom-node-children dfn-children-node)) 2
+(check-equal (length (view-node-children dfn-children-node)) 2
              "Dfn preserves multiple child views")
-(check-equal (dom-node-tag abbr-children-node) 'abbr "Abbr supports child views")
+(check-equal (view-node-tag abbr-children-node) 'abbr "Abbr supports child views")
 (check-node-attrs abbr-children-node '((title "World Wide Web")))
-(check-equal (length (dom-node-children abbr-children-node)) 2
+(check-equal (length (view-node-children abbr-children-node)) 2
              "Abbr preserves multiple child views")
-(check-equal (dom-node-tag time-children-node) 'time "Time supports child views")
+(check-equal (view-node-tag time-children-node) 'time "Time supports child views")
 (check-node-attrs time-children-node '((datetime "11:00")))
-(check-equal (length (dom-node-children time-children-node)) 2
+(check-equal (length (view-node-children time-children-node)) 2
              "Time preserves multiple child views")
-(check-equal (dom-node-tag data-children-node) 'data "Data supports child views")
+(check-equal (view-node-tag data-children-node) 'data "Data supports child views")
 (check-node-attrs data-children-node '((value "43")))
-(check-equal (length (dom-node-children data-children-node)) 2
+(check-equal (length (view-node-children data-children-node)) 2
              "Data preserves multiple child views")
 (check-node-attrs q-node '((cite "https://example.test/quote")))
 (check-node-attrs time-node '((datetime "10:00")))
@@ -962,9 +962,9 @@
 (define del-node (node-child edit-break-panel 0))
 (define ins-node (node-child edit-break-panel 1))
 (define wbr-node (node-child edit-break-panel 2))
-(check-equal (dom-node-tag del-node) 'del "Del primitive tag is del")
-(check-equal (dom-node-tag ins-node) 'ins "Ins primitive tag is ins")
-(check-equal (dom-node-tag wbr-node) 'wbr "Wbr primitive tag is wbr")
+(check-equal (view-node-tag del-node) 'del "Del primitive tag is del")
+(check-equal (view-node-tag ins-node) 'ins "Ins primitive tag is ins")
+(check-equal (view-node-tag wbr-node) 'wbr "Wbr primitive tag is wbr")
 (define r-edit-children-primitives
   (render
    (window
@@ -978,17 +978,17 @@
 (define edit-children-panel (node-child (renderer-root r-edit-children-primitives) 0))
 (define del-children-node (node-child edit-children-panel 0))
 (define ins-children-node (node-child edit-children-panel 1))
-(check-equal (dom-node-tag del-children-node) 'del "Del supports child views")
+(check-equal (view-node-tag del-children-node) 'del "Del supports child views")
 (check-node-attrs del-children-node
                   '((cite "https://example.test/rev-c")
                     (datetime "2026-03-21")))
-(check-equal (length (dom-node-children del-children-node)) 2
+(check-equal (length (view-node-children del-children-node)) 2
              "Del preserves multiple child views")
-(check-equal (dom-node-tag ins-children-node) 'ins "Ins supports child views")
+(check-equal (view-node-tag ins-children-node) 'ins "Ins supports child views")
 (check-node-attrs ins-children-node
                   '((cite "https://example.test/rev-d")
                     (datetime "2026-03-22")))
-(check-equal (length (dom-node-children ins-children-node)) 2
+(check-equal (length (view-node-children ins-children-node)) 2
              "Ins preserves multiple child views")
 (check-node-attrs del-node
                   '((cite "https://example.test/rev-a")
@@ -1068,12 +1068,12 @@
           #:data-testid "avatar-img")))))
 (define img-basic-panel (node-child (renderer-root r-img-basic) 0))
 (define img-basic-node  (node-child img-basic-panel 0))
-(check-equal (dom-node-tag img-basic-node) 'img "Img primitive tag is img")
+(check-equal (view-node-tag img-basic-node) 'img "Img primitive tag is img")
 (check-node-attrs img-basic-node
                   '((src "avatar-a.png")
                     (alt "Avatar")
                     (data-testid "avatar-img")))
-(check-equal (dom-node-text img-basic-node) "" "Img uses empty leaf text payload")
+(check-equal (view-node-text img-basic-node) "" "Img uses empty leaf text payload")
 
 (define @img-src-html (@ "avatar-b.png"))
 (define r-img-reactive
@@ -1113,8 +1113,8 @@
 (define a-button-panel (node-child (renderer-root r-a-button-basic) 0))
 (define a-node      (node-child a-button-panel 0))
 (define button-node (node-child a-button-panel 1))
-(check-equal (dom-node-tag a-node) 'a "A primitive tag is a")
-(check-equal (dom-node-tag button-node) 'button "Button primitive tag is button")
+(check-equal (view-node-tag a-node) 'a "A primitive tag is a")
+(check-equal (view-node-tag button-node) 'button "Button primitive tag is button")
 (check-node-attrs a-node
                   '((href "/docs")
                     (target "_blank")))
@@ -1141,14 +1141,14 @@
      (Strong " docs")))))
 (define a-children-node
   (node-child (renderer-root r-a-children) 0))
-(check-equal (dom-node-tag a-children-node) 'a "A supports child views")
+(check-equal (view-node-tag a-children-node) 'a "A supports child views")
 (check-node-attrs a-children-node
                   '((href "/docs")))
-(check-equal (length (dom-node-children a-children-node)) 2
+(check-equal (length (view-node-children a-children-node)) 2
              "A preserves multiple child views")
-(check-equal (dom-node-tag (car (dom-node-children a-children-node))) 'span
+(check-equal (view-node-tag (car (view-node-children a-children-node))) 'span
              "A child views keep order")
-(check-equal (dom-node-tag (cadr (dom-node-children a-children-node))) 'strong
+(check-equal (view-node-tag (cadr (view-node-children a-children-node))) 'strong
              "A child views keep all descendants")
 (check-call-rejected (A)
                      "A rejects missing content")
@@ -1211,14 +1211,14 @@
 (define button-content-panel (node-child (renderer-root r-button-content-modes) 0))
 (define button-observable-node (node-child button-content-panel 0))
 (define button-children-node   (node-child button-content-panel 1))
-(check-equal (dom-node-tag button-observable-node) 'button "Button observable-content primitive tag is button")
-(check-equal (dom-node-text button-observable-node) "Start" "Button supports observable text content")
+(check-equal (view-node-tag button-observable-node) 'button "Button observable-content primitive tag is button")
+(check-equal (view-node-text button-observable-node) "Start" "Button supports observable text content")
 (:= @button-text "Finish")
-(check-equal (dom-node-text button-observable-node) "Finish" "Button observable text content updates")
-(check-equal (dom-node-tag button-children-node) 'button "Button child-view primitive tag is button")
-(check-equal (length (dom-node-children button-children-node)) 2 "Button child-view form keeps both children")
-(check-equal (dom-node-tag (node-child button-children-node 0)) 'strong "Button child-view form keeps nested strong tag")
-(check-equal (dom-node-tag (node-child button-children-node 1)) 'span "Button child-view form keeps nested span tag")
+(check-equal (view-node-text button-observable-node) "Finish" "Button observable text content updates")
+(check-equal (view-node-tag button-children-node) 'button "Button child-view primitive tag is button")
+(check-equal (length (view-node-children button-children-node)) 2 "Button child-view form keeps both children")
+(check-equal (view-node-tag (node-child button-children-node 0)) 'strong "Button child-view form keeps nested strong tag")
+(check-equal (view-node-tag (node-child button-children-node 1)) 'span "Button child-view form keeps nested span tag")
 (check-node-attrs button-children-node
                   '((name "rich-save")))
 (define @button-mixed-prefix (@ "Lead "))
@@ -1235,7 +1235,7 @@
                   '((name "mixed-save")))
 (check-mixed-content-node* button-mixed-reactive-node 'button "Button reactive mixed content")
 (:= @button-mixed-prefix "Start ")
-(check-equal (dom-node-text (node-child button-mixed-reactive-node 0))
+(check-equal (view-node-text (node-child button-mixed-reactive-node 0))
              "Start "
              "Button reactive mixed content updates raw text child")
 (check-call-rejected (Button)
@@ -1267,14 +1267,14 @@
 (define section-node (node-child div-node 0))
 (define section-h2-node (node-child section-node 0))
 (define section-p-node  (node-child section-node 1))
-(check-equal (dom-node-tag div-node) 'div "Div primitive tag is div")
+(check-equal (view-node-tag div-node) 'div "Div primitive tag is div")
 (check-node-attrs div-node
                   '((id "page-root")
                     (data-testid "page")))
-(check-equal (dom-node-tag section-node) 'section "Section primitive tag is section")
+(check-equal (view-node-tag section-node) 'section "Section primitive tag is section")
 (check-node-attrs section-node '((title "Main section")))
-(check-equal (dom-node-tag section-h2-node) 'h2 "Section child H2 renders")
-(check-equal (dom-node-text section-p-node) "Paragraph in section" "Section child P renders")
+(check-equal (view-node-tag section-h2-node) 'h2 "Section child H2 renders")
+(check-equal (view-node-text section-p-node) "Paragraph in section" "Section child P renders")
 (check-call-rejected (Div #:foo "x" (P "bad"))
                      "Div rejects unknown attrs")
 (check-call-rejected (Section #:foo "x" (P "bad"))
@@ -1298,11 +1298,11 @@
 (define main-node (node-child (renderer-root r-article-nav-main) 0))
 (define nav-node (node-child main-node 0))
 (define article-node (node-child main-node 1))
-(check-equal (dom-node-tag main-node) 'main "Main primitive tag is main")
+(check-equal (view-node-tag main-node) 'main "Main primitive tag is main")
 (check-node-attrs main-node '((id "main-root")))
-(check-equal (dom-node-tag nav-node) 'nav "Nav primitive tag is nav")
+(check-equal (view-node-tag nav-node) 'nav "Nav primitive tag is nav")
 (check-node-attrs nav-node '((aria-label "Primary nav")))
-(check-equal (dom-node-tag article-node) 'article "Article primitive tag is article")
+(check-equal (view-node-tag article-node) 'article "Article primitive tag is article")
 (check-node-attrs article-node
                   '((title "Post")
                     (data-testid "article-1")))
@@ -1330,12 +1330,12 @@
 (define header-h2-node (node-child header-node 0))
 (define aside-node (node-child header-node 1))
 (define footer-node (node-child header-node 2))
-(check-equal (dom-node-tag header-node) 'header "Header primitive tag is header")
+(check-equal (view-node-tag header-node) 'header "Header primitive tag is header")
 (check-node-attrs header-node '((id "site-header")))
-(check-equal (dom-node-tag header-h2-node) 'h2 "Header child renders")
-(check-equal (dom-node-tag aside-node) 'aside "Aside primitive tag is aside")
+(check-equal (view-node-tag header-h2-node) 'h2 "Header child renders")
+(check-equal (view-node-tag aside-node) 'aside "Aside primitive tag is aside")
 (check-node-attrs aside-node '((title "Sidebar")))
-(check-equal (dom-node-tag footer-node) 'footer "Footer primitive tag is footer")
+(check-equal (view-node-tag footer-node) 'footer "Footer primitive tag is footer")
 (check-node-attrs footer-node '((data-testid "site-footer")))
 (check-call-rejected (Header #:foo "x" (P "bad"))
                      "Header rejects unknown attrs")
@@ -1359,7 +1359,7 @@
      (P "Body")))))
 (define form-node (node-child (renderer-root r-form-label) 0))
 (define form-label-node (node-child form-node 0))
-(check-equal (dom-node-tag form-node) 'form "Form primitive tag is form")
+(check-equal (view-node-tag form-node) 'form "Form primitive tag is form")
 (check-node-attrs form-node
                   '((action "/submit")
                     (method "post")))
@@ -1374,15 +1374,15 @@
 ((node-event-handler submit-form-node "submit") 'submit-token)
 (check-equal recorded-form-submit 'submit-token
              "Form submit callback receives raw event payload")
-(check-equal (dom-node-tag form-label-node) 'label "Label primitive tag is label")
-(check-equal (dom-node-text form-label-node) "Name" "Label content supports observables")
+(check-equal (view-node-tag form-label-node) 'label "Label primitive tag is label")
+(check-equal (view-node-text form-label-node) "Name" "Label content supports observables")
 (check-node-attrs form-label-node
                   '((for "name-input")
                     (aria-label "Name label")))
 (:= @form-action "/save")
 (:= @label-text "Full name")
 (check-node-attrs form-node '((action "/save")))
-(check-equal (dom-node-text form-label-node) "Full name" "Label updates reactive text")
+(check-equal (view-node-text form-label-node) "Full name" "Label updates reactive text")
 (define r-label-children
   (render
    (window
@@ -1392,14 +1392,14 @@
      (Strong " name")))))
 (define label-children-node
   (node-child (renderer-root r-label-children) 0))
-(check-equal (dom-node-tag label-children-node) 'label "Label supports child views")
+(check-equal (view-node-tag label-children-node) 'label "Label supports child views")
 (check-node-attrs label-children-node
                   '((for "name-input")))
-(check-equal (length (dom-node-children label-children-node)) 2
+(check-equal (length (view-node-children label-children-node)) 2
              "Label preserves multiple child views")
-(check-equal (dom-node-tag (car (dom-node-children label-children-node))) 'span
+(check-equal (view-node-tag (car (view-node-children label-children-node))) 'span
              "Label child views keep order")
-(check-equal (dom-node-tag (cadr (dom-node-children label-children-node))) 'strong
+(check-equal (view-node-tag (cadr (view-node-children label-children-node))) 'strong
              "Label child views keep all descendants")
 (check-call-rejected (Label)
                      "Label rejects missing content")
@@ -1431,15 +1431,15 @@
 (define ul-li1 (node-child ul-node 0))
 (define ul-li2 (node-child ul-node 1))
 (define ol-li1 (node-child ol-node 0))
-(check-equal (dom-node-tag ul-node) 'ul "Ul primitive tag is ul")
+(check-equal (view-node-tag ul-node) 'ul "Ul primitive tag is ul")
 (check-node-attrs ul-node '((type "disc")))
-(check-equal (dom-node-tag ul-li1) 'li "Ul child Li renders")
-(check-equal (dom-node-text (node-child ul-li2 0)) "Two" "Ul second Li child text renders")
-(check-equal (dom-node-tag ol-node) 'ol "Ol primitive tag is ol")
+(check-equal (view-node-tag ul-li1) 'li "Ul child Li renders")
+(check-equal (view-node-text (node-child ul-li2 0)) "Two" "Ul second Li child text renders")
+(check-equal (view-node-tag ol-node) 'ol "Ol primitive tag is ol")
 (check-node-attrs ol-node
                   '((start 3)
                     (reversed #t)))
-(check-equal (dom-node-tag ol-li1) 'li "Ol child Li renders")
+(check-equal (view-node-tag ol-li1) 'li "Ol child Li renders")
 (check-call-rejected (Ul #:foo "x" (Li (Span "bad")))
                      "Ul rejects unknown attrs")
 (check-call-rejected (Ol #:foo "x" (Li (Span "bad")))
@@ -1460,12 +1460,12 @@
 (define dl-node (node-child (renderer-root r-description-list) 0))
 (define dt1-node (node-child dl-node 0))
 (define dd1-node (node-child dl-node 1))
-(check-equal (dom-node-tag dl-node) 'dl "Dl primitive tag is dl")
+(check-equal (view-node-tag dl-node) 'dl "Dl primitive tag is dl")
 (check-node-attrs dl-node '((compact #t)))
-(check-equal (dom-node-tag dt1-node) 'dt "Dt primitive tag is dt")
-(check-equal (dom-node-tag dd1-node) 'dd "Dd primitive tag is dd")
-(check-equal (dom-node-text (node-child dt1-node 0)) "CPU" "Dt child text renders")
-(check-equal (dom-node-text (node-child dd1-node 0)) "Central Processing Unit" "Dd child text renders")
+(check-equal (view-node-tag dt1-node) 'dt "Dt primitive tag is dt")
+(check-equal (view-node-tag dd1-node) 'dd "Dd primitive tag is dd")
+(check-equal (view-node-text (node-child dt1-node 0)) "CPU" "Dt child text renders")
+(check-equal (view-node-text (node-child dd1-node 0)) "Central Processing Unit" "Dd child text renders")
 (check-call-rejected (Dl #:foo "x" (Dt (Span "bad")))
                      "Dl rejects unknown attrs")
 (check-call-rejected (Dt #:foo "x" (Span "bad"))
@@ -1502,34 +1502,34 @@
 (define html-head-th-node (node-child html-head-tr-node 0))
 (define html-body-tr-node (node-child html-tbody-node 0))
 (define html-body-td-node (node-child html-body-tr-node 0))
-(check-equal (dom-node-tag html-table-node) 'table "Table primitive tag is table")
+(check-equal (view-node-tag html-table-node) 'table "Table primitive tag is table")
 (check-node-attrs html-table-node
                   '((summary "Release table")
                     (width "100%"))
                   "Table")
-(check-equal (dom-node-tag html-caption-node) 'caption "Caption primitive tag is caption")
+(check-equal (view-node-tag html-caption-node) 'caption "Caption primitive tag is caption")
 (check-node-attrs html-caption-node
                   '((align "top"))
                   "Table/Caption")
-(check-equal (dom-node-tag html-thead-node) 'thead "Thead primitive tag is thead")
+(check-equal (view-node-tag html-thead-node) 'thead "Thead primitive tag is thead")
 (check-node-attrs html-thead-node
                   '((valign "middle"))
                   "Table/Thead")
-(check-equal (dom-node-tag html-tbody-node) 'tbody "Tbody primitive tag is tbody")
+(check-equal (view-node-tag html-tbody-node) 'tbody "Tbody primitive tag is tbody")
 (check-node-attrs html-tbody-node
                   '((align "left"))
                   "Table/Tbody")
-(check-equal (dom-node-tag html-tfoot-node) 'tfoot "Tfoot primitive tag is tfoot")
+(check-equal (view-node-tag html-tfoot-node) 'tfoot "Tfoot primitive tag is tfoot")
 (check-node-attrs html-tfoot-node
                   '((char "."))
                   "Table/Tfoot")
-(check-equal (dom-node-tag html-head-tr-node) 'tr "Tr primitive tag is tr")
-(check-equal (dom-node-tag html-head-th-node) 'th "Th primitive tag is th")
+(check-equal (view-node-tag html-head-tr-node) 'tr "Tr primitive tag is tr")
+(check-equal (view-node-tag html-head-th-node) 'th "Th primitive tag is th")
 (check-node-attrs html-head-th-node
                   '((scope "col")
                     (colspan 2))
                   "Table/Th")
-(check-equal (dom-node-tag html-body-td-node) 'td "Td primitive tag is td")
+(check-equal (view-node-tag html-body-td-node) 'td "Td primitive tag is td")
 (check-node-attrs html-body-td-node
                   '((headers "v-major"))
                   "Table/Td")
@@ -1578,29 +1578,29 @@
 (define audio-track-node (node-child audio-node 1))
 (define video-source-node (node-child video-node 0))
 (define video-track-node (node-child video-node 1))
-(check-equal (dom-node-tag audio-node) 'audio "Audio primitive tag is audio")
+(check-equal (view-node-tag audio-node) 'audio "Audio primitive tag is audio")
 (check-node-attrs audio-node
                   '((controls #t)
                     (preload "metadata"))
                   "Audio")
-(check-equal (dom-node-tag audio-source-node) 'source "Source primitive tag is source")
+(check-equal (view-node-tag audio-source-node) 'source "Source primitive tag is source")
 (check-node-attrs audio-source-node
                   '((src "clip.ogg")
                     (type "audio/ogg"))
                   "Audio/Source")
-(check-equal (dom-node-tag audio-track-node) 'track "Track primitive tag is track")
+(check-equal (view-node-tag audio-track-node) 'track "Track primitive tag is track")
 (check-node-attrs audio-track-node
                   '((kind "captions")
                     (srclang "en"))
                   "Audio/Track")
-(check-equal (dom-node-tag video-node) 'video "Video primitive tag is video")
+(check-equal (view-node-tag video-node) 'video "Video primitive tag is video")
 (check-node-attrs video-node
                   '((poster "poster.png")
                     (width 640)
                     (height 360))
                   "Video")
-(check-equal (dom-node-tag video-source-node) 'source "Video Source primitive tag is source")
-(check-equal (dom-node-tag video-track-node) 'track "Video Track primitive tag is track")
+(check-equal (view-node-tag video-source-node) 'source "Video Source primitive tag is source")
+(check-equal (view-node-tag video-track-node) 'track "Video Track primitive tag is track")
 (check-call-rejected (Audio #:foo "x" (Source #:src "bad"))
                      "Audio rejects unknown attrs")
 (check-call-rejected (Video #:foo "x" (Source #:src "bad"))
@@ -1658,22 +1658,22 @@
 (define anchor-node (node-child frame-panel 1))
 (define iframe-node (node-child frame-panel 2))
 (define embed-node  (node-child frame-panel 3))
-(check-equal (dom-node-tag canvas-node) 'canvas "Canvas primitive tag is canvas")
+(check-equal (view-node-tag canvas-node) 'canvas "Canvas primitive tag is canvas")
 (check-node-attrs canvas-node
                   '((width 320)
                     (height 200)))
 (check-equal (node-attr canvas-node 'on-mouseup) #f "Canvas generic event keywords do not become DOM attrs")
 (check-equal (node-attr canvas-node 'on-pointerdown) #f "Canvas pointer event keyword stays off DOM attrs")
-(check-equal (dom-node-text (node-child canvas-node 0)) "Canvas fallback" "Canvas child fallback text renders")
-(check-equal (dom-node-tag anchor-node) 'a "A primitive tag remains a with generic click event")
+(check-equal (view-node-text (node-child canvas-node 0)) "Canvas fallback" "Canvas child fallback text renders")
+(check-equal (view-node-tag anchor-node) 'a "A primitive tag remains a with generic click event")
 (check-node-attrs anchor-node '((href "/evented")))
-(check-equal (dom-node-tag iframe-node) 'iframe "Iframe primitive tag is iframe")
+(check-equal (view-node-tag iframe-node) 'iframe "Iframe primitive tag is iframe")
 (check-node-attrs iframe-node
                   '((src "/frame.html")
                     (loading "lazy")
                     (width 640)))
-(check-equal (dom-node-text (node-child iframe-node 0)) "Iframe fallback" "Iframe child fallback text renders")
-(check-equal (dom-node-tag embed-node) 'embed "Embed primitive tag is embed")
+(check-equal (view-node-text (node-child iframe-node 0)) "Iframe fallback" "Iframe child fallback text renders")
+(check-equal (view-node-tag embed-node) 'embed "Embed primitive tag is embed")
 (check-node-attrs embed-node
                   '((src "/doc.pdf")
                     (type "application/pdf")
@@ -1706,7 +1706,7 @@
            #:attrs (list (cons 'on-click-action
                                (lambda ()
                                  (set! recorded-legacy-click #t)))))))
-(check-equal (procedure? (dom-node-on-click legacy-click-node)) #t
+(check-equal (procedure? (view-node-on-click legacy-click-node)) #t
              "Legacy on-click-action remains wired on primitive click channel")
 (check-equal (procedure? (node-event-handler legacy-click-node "click")) #t
              "Generic primitive on-click coexists with legacy click action")
@@ -1909,7 +1909,7 @@
 (define html-textarea-node (node-child form-panel 2))
 (define html-option1-node (node-child html-select-node 0))
 (define html-option2-node (node-child html-select-node 1))
-(check-equal (dom-node-tag html-input-node) 'input "Input primitive tag is input")
+(check-equal (view-node-tag html-input-node) 'input "Input primitive tag is input")
 (check-node-attrs html-input-node
                   '((type "text")
                     (placeholder "Your name")))
@@ -1939,17 +1939,17 @@
           #:attrs (list (cons 'on-change-action
                               (lambda ()
                                 (void)))))))
-(check-equal (procedure? (dom-node-on-change legacy-change-node)) #t
+(check-equal (procedure? (view-node-on-change legacy-change-node)) #t
              "Legacy on-change-action remains wired on primitive change channel")
 (check-equal (procedure? (node-event-handler legacy-change-node "change")) #t
              "Generic primitive on-change coexists with legacy change action")
-(check-equal (dom-node-tag html-select-node) 'select "Select primitive tag is select")
+(check-equal (view-node-tag html-select-node) 'select "Select primitive tag is select")
 (check-node-attrs html-select-node
                   '((multiple #t)
                     (required #t)))
-(check-equal (dom-node-tag html-option1-node) 'option "Option primitive tag is option")
+(check-equal (view-node-tag html-option1-node) 'option "Option primitive tag is option")
 (check-node-attrs html-option1-node '((value "free")))
-(check-equal (dom-node-tag html-option2-node) 'option "Option second primitive tag is option")
+(check-equal (view-node-tag html-option2-node) 'option "Option second primitive tag is option")
 (check-node-attrs html-option2-node '((selected #t)))
 (define r-option-text
   (render
@@ -1957,11 +1957,11 @@
     (Option #:value "basic" "Basic"))))
 (define option-text-node
   (node-child (renderer-root r-option-text) 0))
-(check-equal (dom-node-tag option-text-node) 'option "Option supports direct text content")
-(check-equal (dom-node-text option-text-node) "Basic" "Option direct text content renders")
+(check-equal (view-node-tag option-text-node) 'option "Option supports direct text content")
+(check-equal (view-node-text option-text-node) "Basic" "Option direct text content renders")
 (check-node-attrs option-text-node '((value "basic")))
-(check-equal (dom-node-tag html-textarea-node) 'textarea "Textarea primitive tag is textarea")
-(check-equal (dom-node-text html-textarea-node) "Initial notes" "Textarea supports text content")
+(check-equal (view-node-tag html-textarea-node) 'textarea "Textarea primitive tag is textarea")
+(check-equal (view-node-text html-textarea-node) "Initial notes" "Textarea supports text content")
 (check-node-attrs html-textarea-node
                   '((rows 4)
                     (wrap "soft")))
@@ -2001,14 +2001,14 @@
 (define figure-node (node-child disclosure-panel 1))
 (define summary-node (node-child details-node 0))
 (define figcaption-node (node-child figure-node 1))
-(check-equal (dom-node-tag details-node) 'details "Details primitive tag is details")
+(check-equal (view-node-tag details-node) 'details "Details primitive tag is details")
 (check-node-attrs details-node '((open #t)))
-(check-equal (dom-node-tag summary-node) 'summary "Summary primitive tag is summary")
-(check-equal (dom-node-text (node-child summary-node 0)) "More info" "Summary child text renders")
-(check-equal (dom-node-tag figure-node) 'figure "Figure primitive tag is figure")
+(check-equal (view-node-tag summary-node) 'summary "Summary primitive tag is summary")
+(check-equal (view-node-text (node-child summary-node 0)) "More info" "Summary child text renders")
+(check-equal (view-node-tag figure-node) 'figure "Figure primitive tag is figure")
 (check-node-attrs figure-node '((id "fig-1")))
-(check-equal (dom-node-tag figcaption-node) 'figcaption "Figcaption primitive tag is figcaption")
-(check-equal (dom-node-text (node-child figcaption-node 0)) "Figure caption" "Figcaption child text renders")
+(check-equal (view-node-tag figcaption-node) 'figcaption "Figcaption primitive tag is figcaption")
+(check-equal (view-node-text (node-child figcaption-node 0)) "Figure caption" "Figcaption child text renders")
 (check-call-rejected (Details #:foo "x" (Summary (Span "bad")))
                      "Details rejects unknown attrs")
 (check-call-rejected (Summary #:foo "x" (Span "bad"))
@@ -2041,20 +2041,20 @@
 (define menu-prim-node (node-child dmos-panel 1))
 (define object-node (node-child dmos-panel 2))
 (define slot-node (node-child dmos-panel 3))
-(check-equal (dom-node-tag dialog-node-2) 'dialog "Dialog primitive tag is dialog")
+(check-equal (view-node-tag dialog-node-2) 'dialog "Dialog primitive tag is dialog")
 (check-node-attrs dialog-node-2 '((open #t)))
-(check-equal (dom-node-text (node-child dialog-node-2 0)) "Dialog body" "Dialog child text renders")
-(check-equal (dom-node-tag menu-prim-node) 'menu "Menu primitive tag is menu")
+(check-equal (view-node-text (node-child dialog-node-2 0)) "Dialog body" "Dialog child text renders")
+(check-equal (view-node-tag menu-prim-node) 'menu "Menu primitive tag is menu")
 (check-node-attrs menu-prim-node '((compact #t)))
-(check-equal (dom-node-tag (node-child menu-prim-node 0)) 'li "Menu child Li renders")
-(check-equal (dom-node-tag object-node) 'object "Object primitive tag is object")
+(check-equal (view-node-tag (node-child menu-prim-node 0)) 'li "Menu child Li renders")
+(check-equal (view-node-tag object-node) 'object "Object primitive tag is object")
 (check-node-attrs object-node
                   '((data "/movie.bin")
                     (type "application/octet-stream")))
-(check-equal (dom-node-text (node-child object-node 0)) "Object fallback" "Object fallback child text renders")
-(check-equal (dom-node-tag slot-node) 'slot "Slot primitive tag is slot")
+(check-equal (view-node-text (node-child object-node 0)) "Object fallback" "Object fallback child text renders")
+(check-equal (view-node-tag slot-node) 'slot "Slot primitive tag is slot")
 (check-node-attrs slot-node '((name "hero")))
-(check-equal (dom-node-text (node-child slot-node 0)) "Slot fallback" "Slot fallback child text renders")
+(check-equal (view-node-text (node-child slot-node 0)) "Slot fallback" "Slot fallback child text renders")
 (check-call-rejected (Dialog #:foo "x" (P "bad"))
                      "Dialog rejects unknown attrs")
 (check-call-rejected (Menu #:foo "x" (Li (Span "bad")))
@@ -2083,11 +2083,11 @@
 (define hgroup-node (node-child group-addr-quote-panel 0))
 (define address-node (node-child group-addr-quote-panel 1))
 (define blockquote-prim-node (node-child group-addr-quote-panel 2))
-(check-equal (dom-node-tag hgroup-node) 'hgroup "Hgroup primitive tag is hgroup")
+(check-equal (view-node-tag hgroup-node) 'hgroup "Hgroup primitive tag is hgroup")
 (check-node-attrs hgroup-node '((id "hero-headings")))
-(check-equal (dom-node-tag address-node) 'address "Address primitive tag is address")
+(check-equal (view-node-tag address-node) 'address "Address primitive tag is address")
 (check-node-attrs address-node '((lang "en")))
-(check-equal (dom-node-tag blockquote-prim-node) 'blockquote "Blockquote primitive tag is blockquote")
+(check-equal (view-node-tag blockquote-prim-node) 'blockquote "Blockquote primitive tag is blockquote")
 (check-node-attrs blockquote-prim-node '((cite "https://example.test/quote-source")))
 (check-call-rejected (Hgroup #:foo "x" (H1 "bad"))
                      "Hgroup rejects unknown attrs")
@@ -2119,13 +2119,13 @@
 (define bdo-node (node-child ruby-bidi-panel 2))
 (define rt-node (node-child ruby-node 1))
 (define rp-node (node-child ruby-node 2))
-(check-equal (dom-node-tag ruby-node) 'ruby "Ruby primitive tag is ruby")
+(check-equal (view-node-tag ruby-node) 'ruby "Ruby primitive tag is ruby")
 (check-node-attrs ruby-node '((lang "ja")))
-(check-equal (dom-node-tag rt-node) 'rt "Rt primitive tag is rt")
-(check-equal (dom-node-tag rp-node) 'rp "Rp primitive tag is rp")
-(check-equal (dom-node-tag bdi-node) 'bdi "Bdi primitive tag is bdi")
+(check-equal (view-node-tag rt-node) 'rt "Rt primitive tag is rt")
+(check-equal (view-node-tag rp-node) 'rp "Rp primitive tag is rp")
+(check-equal (view-node-tag bdi-node) 'bdi "Bdi primitive tag is bdi")
 (check-node-attrs bdi-node '((lang "ar")))
-(check-equal (dom-node-tag bdo-node) 'bdo "Bdo primitive tag is bdo")
+(check-equal (view-node-tag bdo-node) 'bdo "Bdo primitive tag is bdo")
 (check-node-attrs bdo-node '((dir "rtl")))
 (check-call-rejected (Ruby #:foo "x" (Span "bad"))
                      "Ruby rejects unknown attrs")
@@ -2164,17 +2164,17 @@
 (define progress-prim-node (node-child pmo-panel 0))
 (define meter-node (node-child pmo-panel 1))
 (define output-node (node-child pmo-panel 2))
-(check-equal (dom-node-tag progress-prim-node) 'progress "Progress primitive tag is progress")
+(check-equal (view-node-tag progress-prim-node) 'progress "Progress primitive tag is progress")
 (check-node-attrs progress-prim-node
                   '((max 100)
                     (value 65)))
-(check-equal (dom-node-tag meter-node) 'meter "Meter primitive tag is meter")
+(check-equal (view-node-tag meter-node) 'meter "Meter primitive tag is meter")
 (check-node-attrs meter-node
                   '((min 0)
                     (high 80)
                     (optimum 90)
                     (value 72)))
-(check-equal (dom-node-tag output-node) 'output "Output primitive tag is output")
+(check-equal (view-node-tag output-node) 'output "Output primitive tag is output")
 (check-node-attrs output-node
                   '((for "salary tax")
                     (form "calc-form")
@@ -2209,12 +2209,12 @@
 (define datalist-node (node-child fieldset-node 2))
 (define select-node-2 (node-child fieldset-node 3))
 (define optgroup-node (node-child select-node-2 0))
-(check-equal (dom-node-tag fieldset-node) 'fieldset "Fieldset primitive tag is fieldset")
+(check-equal (view-node-tag fieldset-node) 'fieldset "Fieldset primitive tag is fieldset")
 (check-node-attrs fieldset-node
                   '((disabled #t)
                     (form "signup-form")
                     (name "account-group")))
-(check-equal (dom-node-tag legend-node) 'legend "Legend primitive tag is legend")
+(check-equal (view-node-tag legend-node) 'legend "Legend primitive tag is legend")
 (check-node-attrs legend-node '((align "left")))
 (define r-legend-text
   (render
@@ -2222,12 +2222,12 @@
     (Legend #:align "center" "Profile"))))
 (define legend-text-node
   (node-child (renderer-root r-legend-text) 0))
-(check-equal (dom-node-tag legend-text-node) 'legend "Legend supports direct text content")
-(check-equal (dom-node-text legend-text-node) "Profile" "Legend direct text content renders")
+(check-equal (view-node-tag legend-text-node) 'legend "Legend supports direct text content")
+(check-equal (view-node-text legend-text-node) "Profile" "Legend direct text content renders")
 (check-node-attrs legend-text-node '((align "center")))
-(check-equal (dom-node-tag datalist-node) 'datalist "Datalist primitive tag is datalist")
+(check-equal (view-node-tag datalist-node) 'datalist "Datalist primitive tag is datalist")
 (check-node-attrs datalist-node '((id "user-suggestions")))
-(check-equal (dom-node-tag optgroup-node) 'optgroup "Optgroup primitive tag is optgroup")
+(check-equal (view-node-tag optgroup-node) 'optgroup "Optgroup primitive tag is optgroup")
 (check-node-attrs optgroup-node
                   '((label "Team")
                     (disabled #f)))
@@ -2259,14 +2259,14 @@
 (define colgroup-node (node-child col-table-node 0))
 (define col-node-1 (node-child colgroup-node 0))
 (define col-node-2 (node-child colgroup-node 1))
-(check-equal (dom-node-tag colgroup-node) 'colgroup "Colgroup primitive tag is colgroup")
+(check-equal (view-node-tag colgroup-node) 'colgroup "Colgroup primitive tag is colgroup")
 (check-node-attrs colgroup-node
                   '((span 2)
                     (align "center")
                     (charoff 1)))
-(check-equal (dom-node-tag col-node-1) 'col "Col primitive tag is col")
+(check-equal (view-node-tag col-node-1) 'col "Col primitive tag is col")
 (check-node-attrs col-node-1 '((width "20%")))
-(check-equal (dom-node-tag col-node-2) 'col "Second Col primitive tag is col")
+(check-equal (view-node-tag col-node-2) 'col "Second Col primitive tag is col")
 (check-node-attrs col-node-2 '((width "80%")))
 (check-call-rejected (Colgroup #:foo "x" (Col #:width "50%"))
                      "Colgroup rejects unknown attrs")
@@ -2291,10 +2291,10 @@
 (define map-area-img-node (node-child map-area-panel 0))
 (define map-node (node-child map-area-panel 1))
 (define area-node (node-child map-node 0))
-(check-equal (dom-node-tag map-node) 'map "Map primitive tag is map")
+(check-equal (view-node-tag map-node) 'map "Map primitive tag is map")
 (check-node-attrs map-node '((name "diagram-map")))
 (check-node-attrs map-area-img-node '((usemap "#diagram-map")))
-(check-equal (dom-node-tag area-node) 'area "Area primitive tag is area")
+(check-equal (view-node-tag area-node) 'area "Area primitive tag is area")
 (check-node-attrs area-node
                   '((shape "rect")
                     (coords "0,0,100,100")
@@ -2326,17 +2326,17 @@
 (define script-node (node-child resource-panel 0))
 (define link-prim-node (node-child resource-panel 1))
 (define meta-node (node-child resource-panel 2))
-(check-equal (dom-node-tag script-node) 'script "Script primitive tag is script")
+(check-equal (view-node-tag script-node) 'script "Script primitive tag is script")
 (check-node-attrs script-node
                   '((src "/app.js")
                     (type "module")
                     (defer #t)))
-(check-equal (dom-node-tag link-prim-node) 'link "Link primitive tag is link")
+(check-equal (view-node-tag link-prim-node) 'link "Link primitive tag is link")
 (check-node-attrs link-prim-node
                   '((rel "stylesheet")
                     (href "/app.css")
                     (media "screen")))
-(check-equal (dom-node-tag meta-node) 'meta "Meta primitive tag is meta")
+(check-equal (view-node-tag meta-node) 'meta "Meta primitive tag is meta")
 (check-node-attrs meta-node
                   '((name "description")
                     (content "Demo page")
@@ -2370,16 +2370,16 @@
 (define base-node-only (node-child head-panel 1))
 (define base-node (node-child head-panel 2))
 (define style-node (node-child head-panel 3))
-(check-equal (dom-node-tag title-node) 'title "Title primitive tag is title")
-(check-equal (dom-node-text title-node) "Demo Page" "Title supports text content")
-(check-equal (dom-node-tag base-node-only) 'base "Base href-only primitive tag is base")
+(check-equal (view-node-tag title-node) 'title "Title primitive tag is title")
+(check-equal (view-node-text title-node) "Demo Page" "Title supports text content")
+(check-equal (view-node-tag base-node-only) 'base "Base href-only primitive tag is base")
 (check-node-attrs base-node-only '((href "https://example.test/base-only/")))
-(check-equal (dom-node-tag base-node) 'base "Base primitive tag is base")
+(check-equal (view-node-tag base-node) 'base "Base primitive tag is base")
 (check-node-attrs base-node
                   '((href "https://example.test/")
                     (target "_blank")))
-(check-equal (dom-node-tag style-node) 'style "Style primitive tag is style")
-(check-equal (dom-node-text style-node) "body { color: red; }" "Style supports text content")
+(check-equal (view-node-tag style-node) 'style "Style primitive tag is style")
+(check-equal (view-node-text style-node) "body { color: red; }" "Style supports text content")
 (check-node-attrs style-node
                   '((type "text/css")
                     (media "screen")))
@@ -2400,21 +2400,21 @@
    (define head-reactive-panel (node-child (renderer-root r-head-reactive) 0))
    (define title-reactive-node (node-child head-reactive-panel 0))
    (define style-reactive-node (node-child head-reactive-panel 1))
-   (check-equal (dom-node-text title-reactive-node) "Demo Page 2"
+   (check-equal (view-node-text title-reactive-node) "Demo Page 2"
                 "Title supports observable string content")
-   (check-equal (dom-node-text style-reactive-node) "body { color: blue; }"
+   (check-equal (view-node-text style-reactive-node) "body { color: blue; }"
                 "Style supports observable string content")
    (:= @title-text #f)
    (:= @style-text #f)
-   (check-equal (dom-node-text title-reactive-node) ""
+   (check-equal (view-node-text title-reactive-node) ""
                 "Title maps observable #f to empty text")
-   (check-equal (dom-node-text style-reactive-node) ""
+   (check-equal (view-node-text style-reactive-node) ""
                 "Style maps observable #f to empty text")
    (:= @title-text 42)
    (:= @style-text '(bad))
-   (check-equal (dom-node-text title-reactive-node) ""
+   (check-equal (view-node-text title-reactive-node) ""
                 "Title ignores invalid observable text updates")
-   (check-equal (dom-node-text style-reactive-node) ""
+   (check-equal (view-node-text style-reactive-node) ""
                 "Style ignores invalid observable text updates")))
 (check-equal (length title-style-warning-messages) 2
              "Title/Style invalid observable updates emit warnings")
@@ -2438,8 +2438,8 @@
 (define base-order-valid-root (renderer-root r-base-order-valid))
 (define base-order-valid-base-node (node-child base-order-valid-root 0))
 (define base-order-valid-link-node (node-child base-order-valid-root 1))
-(check-equal (dom-node-tag base-order-valid-base-node) 'base "Base can appear before URL-bearing primitives in direct window children")
-(check-equal (dom-node-tag base-order-valid-link-node) 'link "Link renders after Base in valid window order")
+(check-equal (view-node-tag base-order-valid-base-node) 'base "Base can appear before URL-bearing primitives in direct window children")
+(check-equal (view-node-tag base-order-valid-link-node) 'link "Link renders after Base in valid window order")
 (check-call-rejected (render
                       (window
                        (Link #:rel "stylesheet" #:href "/bad.css")
@@ -2453,8 +2453,8 @@
     (Link #:rel "stylesheet" #:href "/no-base.css")
     (Script #:src "/no-base.js"))))
 (define base-order-no-base-root (renderer-root r-base-order-no-base))
-(check-equal (dom-node-tag (node-child base-order-no-base-root 0)) 'link "Window without Base still renders URL-bearing primitives")
-(check-equal (dom-node-tag (node-child base-order-no-base-root 1)) 'script "Window without Base renders subsequent URL-bearing primitive")
+(check-equal (view-node-tag (node-child base-order-no-base-root 0)) 'link "Window without Base still renders URL-bearing primitives")
+(check-equal (view-node-tag (node-child base-order-no-base-root 1)) 'script "Window without Base renders subsequent URL-bearing primitive")
 
 ;; Empty-string URL attrs do not count as URL-bearing for conservative Base ordering.
 (define r-base-order-empty-url
@@ -2463,5 +2463,5 @@
     (Link #:rel "stylesheet" #:href "")
     (Base #:href "https://example.test/empty-ok"))))
 (define base-order-empty-url-root (renderer-root r-base-order-empty-url))
-(check-equal (dom-node-tag (node-child base-order-empty-url-root 0)) 'link "Empty href link renders before Base without triggering order violation")
-(check-equal (dom-node-tag (node-child base-order-empty-url-root 1)) 'base "Base after empty URL-bearing attrs is accepted")
+(check-equal (view-node-tag (node-child base-order-empty-url-root 0)) 'link "Empty href link renders before Base without triggering order violation")
+(check-equal (view-node-tag (node-child base-order-empty-url-root 1)) 'base "Base after empty URL-bearing attrs is accepted")
