@@ -171,11 +171,7 @@
 ;; canvas-js-array->bytes : any/c -> bytes?
 ;;   Convert a browser byte array to a Racket bytes value.
 (define (canvas-js-array->bytes arr)
-  (define len (array-length arr))
-  (define bs (make-bytes len))
-  (for ([i (in-range len)])
-    (bytes-set! bs i (inexact->exact (array-ref arr i))))
-  bs)
+  (js-array->bytes arr))
 
 ;; offscreen-canvas-wrap : any/c -> offscreen-canvas?
 ;;   Wrap a browser OffscreenCanvas value.

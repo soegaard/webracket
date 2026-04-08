@@ -10,6 +10,7 @@ var externals = [];
 var callback_export;
 var callback_accepts_argc_export;
 var callback_expected_arity_export;
+var callback_name_export;
 
 function read_u32(arr, i) {
   return ((arr[i] << 24) | (arr[i + 1] << 16) |
@@ -265,6 +266,192 @@ function js_value_to_fasl(v) {
   return Uint8Array.from(out);
 }
 
+const websocket_impl = {
+  'new': ((url, protocols) => {
+    const u = from_fasl(url);
+    const p = from_fasl(protocols);
+    return p === undefined ? new WebSocket(u) : new WebSocket(u, p);
+  }),
+  'send': ((ws, data) => ws.send(from_fasl(data))),
+  'close': ((ws, code, reason) => {
+    const c = from_fasl(code);
+    const r = from_fasl(reason);
+    if (c === undefined && r === undefined) {
+      ws.close();
+    } else if (r === undefined) {
+      ws.close(c);
+    } else if (c === undefined) {
+      ws.close(1000, r);
+    } else {
+      ws.close(c, r);
+    }
+  }),
+  'url': (ws => ws.url),
+  'ready-state': (ws => ws.readyState),
+  'buffered-amount': (ws => ws.bufferedAmount),
+  'protocol': (ws => ws.protocol),
+  'extensions': (ws => ws.extensions)
+};
+
+const audio_impl = {
+  'context-new': (() => {
+    const ctor = globalThis.AudioContext;
+    if (typeof ctor === 'undefined') {
+      throw new Error('AudioContext not available in this environment: context-new');
+    }
+    return new ctor();
+  }),
+  'context-close': (ctx => ctx.close()),
+  'context-resume': (ctx => ctx.resume()),
+  'context-suspend': (ctx => ctx.suspend()),
+  'context-state': (ctx => ctx.state),
+  'context-current-time': (ctx => ctx.currentTime),
+  'context-sample-rate': (ctx => ctx.sampleRate),
+  'context-base-latency': (ctx => ctx.baseLatency),
+  'context-output-latency': (ctx => ctx.outputLatency),
+  'context-destination': (ctx => ctx.destination),
+  'context-listener': (ctx => ctx.listener),
+  'context-create-gain': (ctx => ctx.createGain()),
+  'context-create-oscillator': (ctx => ctx.createOscillator()),
+  'context-create-buffer-source': (ctx => ctx.createBufferSource()),
+  'context-create-analyser': (ctx => ctx.createAnalyser()),
+  'context-create-biquad-filter': (ctx => ctx.createBiquadFilter()),
+  'context-create-constant-source': (ctx => ctx.createConstantSource()),
+  'context-create-channel-splitter': ((ctx, channels) => {
+    const count = from_fasl(channels);
+    return count === undefined ? ctx.createChannelSplitter() : ctx.createChannelSplitter(count);
+  }),
+  'context-create-channel-merger': ((ctx, channels) => {
+    const count = from_fasl(channels);
+    return count === undefined ? ctx.createChannelMerger() : ctx.createChannelMerger(count);
+  }),
+  'context-create-dynamics-compressor': (ctx => ctx.createDynamicsCompressor()),
+  'context-create-panner': (ctx => ctx.createPanner()),
+  'context-create-stereo-panner': (ctx => ctx.createStereoPanner()),
+  'context-create-buffer': ((ctx, channels, length, sampleRate) =>
+    ctx.createBuffer(from_fasl(channels), from_fasl(length), from_fasl(sampleRate))),
+  'context-create-periodic-wave': ((ctx, real, imag) =>
+    ctx.createPeriodicWave(from_fasl(real), from_fasl(imag))),
+  'context-decode-audio-data': ((ctx, data) => ctx.decodeAudioData(from_fasl(data))),
+  'node-context': (node => node.context),
+  'node-connect': ((node, destination, outputIndex, inputIndex) => {
+    const dest = from_fasl(destination);
+    const out = from_fasl(outputIndex);
+    const input = from_fasl(inputIndex);
+    if (out === undefined && input === undefined) {
+      return node.connect(dest);
+    } else if (input === undefined) {
+      return node.connect(dest, out);
+    } else {
+      return node.connect(dest, out, input);
+    }
+  }),
+  'node-disconnect': ((node, outputIndex, inputIndex) => {
+    const out = from_fasl(outputIndex);
+    const input = from_fasl(inputIndex);
+    if (out === undefined && input === undefined) {
+      node.disconnect();
+    } else if (input === undefined) {
+      node.disconnect(out);
+    } else {
+      node.disconnect(out, input);
+    }
+  }),
+  'param-value': (param => param.value),
+  'param-set-value!': ((param, value) => { param.value = from_fasl(value); }),
+  'param-set-value-at-time!': ((param, value, time) =>
+    param.setValueAtTime(from_fasl(value), from_fasl(time))),
+  'param-linear-ramp-to-value-at-time!': ((param, value, time) =>
+    param.linearRampToValueAtTime(from_fasl(value), from_fasl(time))),
+  'param-exponential-ramp-to-value-at-time!': ((param, value, time) =>
+    param.exponentialRampToValueAtTime(from_fasl(value), from_fasl(time))),
+  'param-set-target-at-time!': ((param, value, time, timeConstant) =>
+    param.setTargetAtTime(from_fasl(value), from_fasl(time), from_fasl(timeConstant))),
+  'param-set-value-curve-at-time!': ((param, values, startTime, duration) =>
+    param.setValueCurveAtTime(from_fasl(values), from_fasl(startTime), from_fasl(duration))),
+  'param-cancel-scheduled-values!': ((param, time) =>
+    param.cancelScheduledValues(from_fasl(time))),
+  'param-cancel-and-hold-at-time!': ((param, time) =>
+    param.cancelAndHoldAtTime(from_fasl(time))),
+  'buffer-length': (buffer => buffer.length),
+  'buffer-duration': (buffer => buffer.duration),
+  'buffer-sample-rate': (buffer => buffer.sampleRate),
+  'buffer-number-of-channels': (buffer => buffer.numberOfChannels),
+  'buffer-get-channel-data': ((buffer, channel) => buffer.getChannelData(from_fasl(channel))),
+  'gain-node-gain': (node => node.gain),
+  'oscillator-node-type': (node => node.type),
+  'oscillator-node-set-type!': ((node, type) => { node.type = from_fasl(type); }),
+  'oscillator-node-frequency': (node => node.frequency),
+  'oscillator-node-detune': (node => node.detune),
+  'oscillator-node-start!': ((node, when) => node.start(from_fasl(when))),
+  'oscillator-node-stop!': ((node, when) => node.stop(from_fasl(when))),
+  'oscillator-node-set-periodic-wave!': ((node, wave) => node.setPeriodicWave(from_fasl(wave))),
+  'audio-buffer-source-node-buffer': (node => node.buffer),
+  'audio-buffer-source-node-set-buffer!': ((node, buffer) => { node.buffer = from_fasl(buffer); }),
+  'audio-buffer-source-node-playback-rate': (node => node.playbackRate),
+  'audio-buffer-source-node-detune': (node => node.detune),
+  'audio-buffer-source-node-loop': (node => node.loop),
+  'audio-buffer-source-node-set-loop!': ((node, flag) => { node.loop = from_fasl(flag); }),
+  'audio-buffer-source-node-loop-start': (node => node.loopStart),
+  'audio-buffer-source-node-set-loop-start!': ((node, value) => { node.loopStart = from_fasl(value); }),
+  'audio-buffer-source-node-loop-end': (node => node.loopEnd),
+  'audio-buffer-source-node-set-loop-end!': ((node, value) => { node.loopEnd = from_fasl(value); }),
+  'audio-buffer-source-node-start!': ((node, when, offset, duration) =>
+    node.start(from_fasl(when), from_fasl(offset), from_fasl(duration))),
+  'audio-buffer-source-node-stop!': ((node, when) => node.stop(from_fasl(when))),
+  'analyser-node-fft-size': (node => node.fftSize),
+  'analyser-node-set-fft-size!': ((node, size) => { node.fftSize = from_fasl(size); }),
+  'analyser-node-frequency-bin-count': (node => node.frequencyBinCount),
+  'analyser-node-min-decibels': (node => node.minDecibels),
+  'analyser-node-set-min-decibels!': ((node, value) => { node.minDecibels = from_fasl(value); }),
+  'analyser-node-max-decibels': (node => node.maxDecibels),
+  'analyser-node-set-max-decibels!': ((node, value) => { node.maxDecibels = from_fasl(value); }),
+  'analyser-node-smoothing-time-constant': (node => node.smoothingTimeConstant),
+  'analyser-node-set-smoothing-time-constant!': ((node, value) => { node.smoothingTimeConstant = from_fasl(value); }),
+  'analyser-node-get-byte-frequency-data!': ((node, data) => node.getByteFrequencyData(from_fasl(data))),
+  'analyser-node-get-byte-time-domain-data!': ((node, data) => node.getByteTimeDomainData(from_fasl(data))),
+  'analyser-node-get-float-frequency-data!': ((node, data) => node.getFloatFrequencyData(from_fasl(data))),
+  'analyser-node-get-float-time-domain-data!': ((node, data) => node.getFloatTimeDomainData(from_fasl(data))),
+  'biquad-filter-node-type': (node => node.type),
+  'biquad-filter-node-set-type!': ((node, type) => { node.type = from_fasl(type); }),
+  'biquad-filter-node-frequency': (node => node.frequency),
+  'biquad-filter-node-detune': (node => node.detune),
+  'biquad-filter-node-q': (node => node.q),
+  'biquad-filter-node-gain': (node => node.gain),
+  'constant-source-node-offset': (node => node.offset),
+  'constant-source-node-start!': ((node, when) => node.start(from_fasl(when))),
+  'constant-source-node-stop!': ((node, when) => node.stop(from_fasl(when))),
+  'dynamics-compressor-node-threshold': (node => node.threshold),
+  'dynamics-compressor-node-knee': (node => node.knee),
+  'dynamics-compressor-node-ratio': (node => node.ratio),
+  'dynamics-compressor-node-reduction': (node => node.reduction),
+  'dynamics-compressor-node-attack': (node => node.attack),
+  'dynamics-compressor-node-release': (node => node.release),
+  'panner-node-panning-model': (node => node.panningModel),
+  'panner-node-set-panning-model!': ((node, value) => { node.panningModel = from_fasl(value); }),
+  'panner-node-distance-model': (node => node.distanceModel),
+  'panner-node-set-distance-model!': ((node, value) => { node.distanceModel = from_fasl(value); }),
+  'panner-node-position-x': (node => node.positionX),
+  'panner-node-position-y': (node => node.positionY),
+  'panner-node-position-z': (node => node.positionZ),
+  'panner-node-orientation-x': (node => node.orientationX),
+  'panner-node-orientation-y': (node => node.orientationY),
+  'panner-node-orientation-z': (node => node.orientationZ),
+  'panner-node-ref-distance': (node => node.refDistance),
+  'panner-node-set-ref-distance!': ((node, value) => { node.refDistance = from_fasl(value); }),
+  'panner-node-max-distance': (node => node.maxDistance),
+  'panner-node-set-max-distance!': ((node, value) => { node.maxDistance = from_fasl(value); }),
+  'panner-node-rolloff-factor': (node => node.rolloffFactor),
+  'panner-node-set-rolloff-factor!': ((node, value) => { node.rolloffFactor = from_fasl(value); }),
+  'panner-node-cone-inner-angle': (node => node.coneInnerAngle),
+  'panner-node-set-cone-inner-angle!': ((node, value) => { node.coneInnerAngle = from_fasl(value); }),
+  'panner-node-cone-outer-angle': (node => node.coneOuterAngle),
+  'panner-node-set-cone-outer-angle!': ((node, value) => { node.coneOuterAngle = from_fasl(value); }),
+  'panner-node-cone-outer-gain': (node => node.coneOuterGain),
+  'panner-node-set-cone-outer-gain!': ((node, value) => { node.coneOuterGain = from_fasl(value); }),
+  'stereo-panner-node-pan': (node => node.pan)
+};
+
 function is_pair(v) {
     return v && typeof v === 'object' && v.tag === 'pair'
 }
@@ -409,6 +596,21 @@ const hasDOM = typeof document !== 'undefined' && typeof document.createTextNode
 // const hasXterm = typeof Terminal !== 'undefined';
 const hasXterm = true;
 
+const websocket = new Proxy({}, {
+  get(_target, prop) {
+    if (typeof globalThis.WebSocket === 'undefined') {
+      return () => { throw new Error(`WebSocket not available in this environment: ${String(prop)}`); };
+    }
+    return websocket_impl[prop];
+  }
+});
+
+const audio = new Proxy({}, {
+  get(_target, prop) {
+    return audio_impl[prop];
+  }
+});
+
 function from_fasl(index) {
     return fasl_to_js_value(new Uint8Array(memory.buffer), index)[0]
 }
@@ -440,6 +642,26 @@ function callback_expected_arity_text(id) {
     return fasl_to_js_value(new Uint8Array(memory.buffer, 0, len))[0];
 }
 
+function callback_name_text(id) {
+    if (!callback_name_export) {
+        return null;
+    }
+    const len = callback_name_export(id);
+    const value = fasl_to_js_value(new Uint8Array(memory.buffer, 0, len))[0];
+    if (typeof value === 'symbol') {
+        return Symbol.keyFor(value) ?? value.description ?? String(value);
+    }
+    if (typeof value === 'string' && value.length > 0) {
+        return value;
+    }
+    return null;
+}
+
+function callback_label_text(id) {
+    const name = callback_name_text(id);
+    return name ? `${name} (callback id ${id})` : `callback id ${id}`;
+}
+
 export function make_callback(id) {
     return (...args) => {
         const argc = args.length;
@@ -447,14 +669,25 @@ export function make_callback(id) {
             callback_accepts_argc_export(id, argc) === 0) {
             const expected = callback_expected_arity_text(id);
             throw new TypeError(
-                `WebRacket callback arity mismatch (callback id ${id}): expected ${expected}, given ${argc}.`
+                `WebRacket callback arity mismatch (${callback_label_text(id)}): expected ${expected}, given ${argc}.`
             );
         }
         try {
             const fasl = js_value_to_fasl(Array.from(args));
             new Uint8Array(memory.buffer).set(fasl, 0);
             const len = callback_export(id, 0);
-            return fasl_to_js_value(new Uint8Array(memory.buffer, 0, len))[0];
+            const [ok, payload] =
+                fasl_to_js_value(new Uint8Array(memory.buffer, 0, len))[0];
+            if (ok) {
+                return payload;
+            }
+            const message =
+                (typeof payload === 'string' && payload.length > 0)
+                ? payload
+                : 'The callback raised a WebRacket exception.';
+            throw new Error(
+                `WebRacket callback failed\n(${callback_label_text(id)}, argc ${argc}):\n\n${message}`
+            );
         } catch (err) {
             const isWasmException = (typeof WebAssembly.Exception !== 'undefined') &&
                                     (err instanceof WebAssembly.Exception);
@@ -465,11 +698,12 @@ export function make_callback(id) {
                 if (isArityMismatch) {
                     const expected = callback_expected_arity_text(id);
                     throw new TypeError(
-                        `WebRacket callback arity mismatch (callback id ${id}): expected ${expected}, given ${argc}.`
+                        `WebRacket callback arity mismatch (${callback_label_text(id)}): expected ${expected}, given ${argc}.`
                     );
                 }
+                const label = callback_label_text(id);
                 const wrapped = new Error(
-                    `WebRacket callback failed (callback id ${id}, argc ${argc}). The callback raised a WebRacket exception.`
+                    `WebRacket callback failed\n(${label}, argc ${argc}):\n\nThe callback raised a WebRacket exception.`
                 );
                 wrapped.cause = err;
                 throw wrapped;
@@ -502,19 +736,67 @@ function to_string(v) {
   return to_fasl(v);
 }
 
+if (typeof WebAssembly.Tag === 'undefined' || typeof WebAssembly.Exception === 'undefined') {
+  throw new Error('WebRacket requires WebAssembly exception handling (Tag + Exception).');
+}
+
+const foreign_error_tag = new WebAssembly.Tag({ parameters: ['externref'] });
+
+function wrap_ffi_host_exceptions(fn) {
+  return (...args) => {
+    try {
+      return fn(...args);
+    } catch (err) {
+      if (err instanceof WebAssembly.Exception) {
+        throw err;
+      }
+      throw new WebAssembly.Exception(foreign_error_tag, [err]);
+    }
+  };
+}
+
+function install_ffi_exception_bridge(imports) {
+  // IMPORTANT:
+  // Wrap only user FFI modules here (the modules loaded from `.ffi` files).
+  // Do *not* wrap core runtime modules:
+  // - env: memory import table, not foreign procedure calls
+  // - primitives/math/char: internal runtime imports used all over the VM
+  //
+  // Reason: only calls produced via define-foreign are wrapped in wasm
+  // with a `(catch $ffi-host-exn ...)` path. If we also wrapped core modules,
+  // internal runtime errors would be rethrown as foreign-call exceptions and
+  // could bypass the intended internal error handling/debug flow.
+  const skipModules = new Set(['env', 'primitives', 'math', 'char']);
+  for (const [moduleName, table] of Object.entries(imports)) {
+    if (skipModules.has(moduleName)) {
+      continue;
+    }
+    if (!table || typeof table !== 'object') {
+      continue;
+    }
+    for (const key of Object.keys(table)) {
+      const value = table[key];
+      if (typeof value === 'function') {
+        table[key] = wrap_ffi_host_exceptions(value);
+      }
+    }
+  }
+}
+
 var imports = {
     'env': {
         'memory': memory
     },
     'primitives': {
-      'console_log': ((x)   => console.log(x)),
+      'console_log': ((x)   => console.error(x)),
       'add':         ((x,y) => x+y),
+      'foreign_error_tag': foreign_error_tag,
       'make_callback': make_callback,
       'js_output':   ((x)   => output_string.push(x)),
       'js_print_fasl': ((start, len) => {
         const bytes = new Uint8Array(memory.buffer).slice(start, start + len);
         const [v] = fasl_to_js_value(bytes);
-        console.log(v);
+        console.error(v);
       }),
       'register_external': (obj => { externals.push(obj); return externals.length - 1; }),
       'lookup_external':   (idx => externals[idx]),
@@ -527,6 +809,8 @@ var imports = {
          ? to_string(obj)
          : (obj instanceof String ? to_string(obj.valueOf())
                                    : to_string(String(obj))))),
+      'external_nullish': (obj => ((obj === null) || (obj === undefined)) ? 1 : 0),
+      'external_undefined': (obj => (obj === undefined) ? 1 : 0),
       'char_upcase': ((cp) => {
         const s = String.fromCodePoint(cp).toUpperCase();
         const arr = Array.from(s);
@@ -639,15 +923,21 @@ var imports = {
       'infinity':                  (() => Infinity),
       'nan':                       (() => NaN),
       'undefined':                 (() => undefined),
+      'nullish?':                  ((v) => ((v === null) || (v === undefined)) ? 1 : 0),
+      'null?':                     ((v) => (v === null) ? 1 : 0),
+      'undefined?':                ((v) => (v === undefined) ? 1 : 0),
+      'truthy?':                   ((v) => v ? 1 : 0),
       'eval':                      ((code) => eval(from_fasl(code))),
       'is-finite':                 ((x) => isFinite(x) ? 1 : 0),
+      'finite?':                   ((x) => isFinite(x) ? 1 : 0),
       'is-nan':                    ((x) => isNaN(x) ? 1 : 0),
+      'nan?':                      ((x) => isNaN(x) ? 1 : 0),
       'parse-float':               ((s) => parseFloat(from_fasl(s))),
       'parse-int':                 ((s) => parseInt(from_fasl(s))),
-      'decode-uri':                ((s) => to_string( decodeURI(from_fasl(s)))),
-      'decode-uri-component':      ((s) => to_string( decodeURIComponent(from_fasl(s)))),
-      'encode-uri':                ((s) => to_string( encodeURI(from_fasl(s)))),
-      'encode-uri-component':      ((s) => to_string( encodeURIComponent(from_fasl(s)))),
+      'decode-uri':                ((s) => decodeURI(from_fasl(s))),
+      'decode-uri-component':      ((s) => decodeURIComponent(from_fasl(s))),
+      'encode-uri':                ((s) => encodeURI(from_fasl(s))),
+      'encode-uri-component':      ((s) => encodeURIComponent(from_fasl(s))),
       'var':                       ((name) => globalThis[from_fasl(name)]),
       'ref/value':                 ((obj, key) => to_fasl(obj[from_fasl(key)])),
       'ref/extern':                ((obj, key) => obj[from_fasl(key)]),
@@ -660,8 +950,11 @@ var imports = {
       // - send/value   => JS result converted via FASL
       // - send/boolean => strict boolean result; throws on non-boolean
       // - send/truthy  => JS truthiness to 0/1
-      // Current default `send` is kept as raw extern during migration.
-      'send':                      ((obj, name, args) => obj[from_fasl(name)](...(from_fasl(args) || [])) ),
+      // Default `send` mirrors `send/value`.
+      'send':                      ((obj, name, args) => {
+                                    const x = obj[from_fasl(name)](...(from_fasl(args) || []));
+                                    return to_fasl(x);
+                                   }),
       'send/extern':               ((obj, name, args) => obj[from_fasl(name)](...(from_fasl(args) || [])) ),
       'send/value':                ((obj, name, args) => {
                                     const x = obj[from_fasl(name)](...(from_fasl(args) || []));
@@ -705,8 +998,8 @@ var imports = {
       'array/extern':               (args => { const as = from_fasl(args);
                                               return [...( as ? as : [])]
                                     }),
-      'typeof':                    ((obj) => to_string(typeof obj)),
-      'value->string':             ((obj) => to_string(String(obj))),
+      'typeof':                    ((obj) => typeof obj),
+      'value->string':             ((obj) => String(obj)),
       'instanceof':                ((obj, type) => (obj instanceof type) ? 1 : 0),
       'operator':                  ((op, operands) => {
                                      const o = from_fasl(op);
@@ -770,11 +1063,11 @@ var imports = {
       'Iterator':                  (() => (typeof Iterator === 'undefined' ? undefined : Iterator)),
       'AsyncIterator':             (() => (typeof AsyncIterator === 'undefined' ? undefined : AsyncIterator)),
       'Promise':                   (() => Promise),
-      'GeneratorFunction':         (() => (typeof GeneratorFunction === 'undefined' ? undefined : GeneratorFunction)),
-      'AsyncGeneratorFunction':    (() => (typeof AsyncGeneratorFunction === 'undefined' ? undefined : AsyncGeneratorFunction)),
-      'Generator':                 (() => (typeof Generator === 'undefined' ? undefined : Generator)),
-      'AsyncGenerator':            (() => (typeof AsyncGenerator === 'undefined' ? undefined : AsyncGenerator)),
-      'AsyncFunction':             (() => (typeof AsyncFunction === 'undefined' ? undefined : AsyncFunction)),
+      'GeneratorFunction':         (() => (function*(){}).constructor),
+      'AsyncGeneratorFunction':    (() => (async function*(){}).constructor),
+      'Generator':                 (() => Object.getPrototypeOf(function*(){}())),
+      'AsyncGenerator':            (() => Object.getPrototypeOf(async function*(){}())),
+      'AsyncFunction':             (() => (async function(){}).constructor),
       'DisposableStack':           (() => (typeof DisposableStack === 'undefined' ? undefined : DisposableStack)),
       'AsyncDisposableStack':     (() => (typeof AsyncDisposableStack === 'undefined' ? undefined : AsyncDisposableStack)),
       'Reflect':                   (() => Reflect),
@@ -790,6 +1083,47 @@ var imports = {
       'Intl.PluralRules':          (() => ('PluralRules' in Intl ? Intl.PluralRules : undefined)),
       'Intl.RelativeTimeFormat':   (() => ('RelativeTimeFormat' in Intl ? Intl.RelativeTimeFormat : undefined)),
       'Intl.Segmenter':            (() => ('Segmenter' in Intl ? Intl.Segmenter : undefined))
+    },
+    'console': {
+      'log':                       (args => console.log(...(from_fasl(args) || []))),
+      'info':                      (args => console.info(...(from_fasl(args) || []))),
+      'warn':                      (args => console.warn(...(from_fasl(args) || []))),
+      'error':                     (args => console.error(...(from_fasl(args) || []))),
+      'debug':                     (args => console.debug(...(from_fasl(args) || []))),
+      'assert':                    (args => {
+                                     const as = from_fasl(args) || [];
+                                     console.assert(...as);
+                                   }),
+      'clear':                     (() => console.clear()),
+      'dir':                       (args => console.dir(...(from_fasl(args) || []))),
+      'dirxml':                    (args => {
+                                     const as = from_fasl(args) || [];
+                                     (console.dirxml || console.log)(...(as));
+                                   }),
+      'table':                     (args => {
+                                     const as = from_fasl(args) || [];
+                                     (console.table || console.log)(...(as));
+                                   }),
+      'group':                     (args => console.group(...(from_fasl(args) || []))),
+      'group-collapsed':           (args => console.groupCollapsed(...(from_fasl(args) || []))),
+      'group-end':                 (() => console.groupEnd()),
+      'count':                     (args => console.count(...(from_fasl(args) || []))),
+      'count-reset':               (args => {
+                                     const as = from_fasl(args) || [];
+                                     (console.countReset || console.count)(...(as));
+                                   }),
+      'time':                      (args => console.time(...(from_fasl(args) || []))),
+      'time-end':                  (args => console.timeEnd(...(from_fasl(args) || []))),
+      'time-log':                  (args => console.timeLog(...(from_fasl(args) || []))),
+      'time-stamp':                (args => (console.timeStamp || (() => {}))(...(from_fasl(args) || []))),
+      'trace':                     (args => console.trace(...(from_fasl(args) || []))),
+      'profile':                   (args => (console.profile || (() => {}))(...(from_fasl(args) || []))),
+      'profile-end':               (args => (console.profileEnd || (() => {}))(...(from_fasl(args) || []))),
+      'exception':                 (args => console.error(...(from_fasl(args) || []))),
+    },
+    'temp': {
+      'x':                         ((o) => to_fasl(o.x)),
+      'set-x!':                    ((o, v) => { o.x = from_fasl(v); }),
     },
     'math': {
         'abs':    ((x)       => Math.abs(x)),
@@ -860,30 +1194,29 @@ var imports = {
         // Convert number to exponential notation.
         'to-exponential':    ((x, fd) => {
                                  const d = from_fasl(fd);
-                                 const r = d === undefined ? x.toExponential() : x.toExponential(d);
-                                 return to_fasl(r);
+                                 return d === undefined ? x.toExponential() : x.toExponential(d);
                                }),
         // Format number with fixed-point notation.
         'to-fixed':          ((x, digits) => {
                                  const d = from_fasl(digits);
-                                 return to_fasl( d === undefined ? x.toFixed() : x.toFixed(d) );
+                                 return d === undefined ? x.toFixed() : x.toFixed(d);
                                }),
         // Format number using locale-specific rules.
-        'to-locale-string':  ((x, locales, options) => to_fasl( x.toLocaleString(from_fasl(locales), from_fasl(options))) ),
+        'to-locale-string':  ((x, locales, options) => x.toLocaleString(from_fasl(locales), from_fasl(options))),
         // Format number with specified precision.
         'to-precision':      ((x, precision) => {
                                  const p = from_fasl(precision);
-                                 return to_fasl( p === undefined ? x.toPrecision() : x.toPrecision(p) );
+                                 return p === undefined ? x.toPrecision() : x.toPrecision(p);
                                }),
         // Convert number to string with optional radix.
         'to-string':         ((x, radix) => {
                                  const r = from_fasl(radix);
-                                 return to_fasl( r === undefined ? x.toString() : x.toString(r) );
+                                 return r === undefined ? x.toString() : x.toString(r);
                                }),
         // Extract primitive numeric value.
         'value-of':          (x => x.valueOf())
     },
-    'array': {
+      'array': {
         'length':            (arr => arr.length),
         'set-length!':       ((arr, len) => { arr.length = len; }),
         'from':              ((arrLike, mapFn, thisArg) => {
@@ -911,6 +1244,8 @@ var imports = {
             }
         }),
         'is-array':          (v => Array.isArray(from_fasl(v)) ? 1 : 0),
+        'to-vector':         (arr => to_fasl(Array.from(arr))),
+        'to-bytes':          (arr => to_fasl(Uint8Array.from(arr))),
         'of':                (items => Array.of(...(from_fasl(items) || []))),
         'at':                ((arr, index) => arr.at(index)),
         'concat':            ((arr, items) => arr.concat(...(from_fasl(items) || []))),
@@ -1064,6 +1399,16 @@ var imports = {
         'close-path': (ctx => ctx.closePath()),
         'create-image-data': ((ctx, sw, sh) => ctx.createImageData(sw, sh)),
         'create-image-data-from': ((ctx, data) => ctx.createImageData(data)),
+        'image-data-width': ((data) => data.width),
+        'image-data-height': ((data) => data.height),
+        'image-data-data': ((data) => data.data),
+        'text-metrics-width': ((metrics) => metrics.width),
+        'dom-matrix-a': ((matrix) => matrix.a),
+        'dom-matrix-b': ((matrix) => matrix.b),
+        'dom-matrix-c': ((matrix) => matrix.c),
+        'dom-matrix-d': ((matrix) => matrix.d),
+        'dom-matrix-e': ((matrix) => matrix.e),
+        'dom-matrix-f': ((matrix) => matrix.f),
         'create-linear-gradient': ((ctx, x0, y0, x1, y1) => ctx.createLinearGradient(x0, y0, x1, y1)),
         'create-pattern': ((ctx, img, rep) => ctx.createPattern(img, from_fasl(rep))),
         'create-radial-gradient': ((ctx, x0, y0, r0, x1, y1, r1) => ctx.createRadialGradient(x0, y0, r0, x1, y1, r1)),
@@ -1180,6 +1525,22 @@ var imports = {
         }),
         'transform': ((ctx, a, b, c, d, e, f) => ctx.transform(a, b, c, d, e, f)),
         'translate': ((ctx, x, y) => ctx.translate(x, y)),
+    } : new Proxy({}, { get() { throw new Error('DOM not available in this environment'); } }),
+    'image-data': hasDOM ? {
+        'width':   (data => data.width),
+        'height':  (data => data.height),
+        'data':    (data => data.data)
+    } : new Proxy({}, { get() { throw new Error('DOM not available in this environment'); } }),
+    'text-metrics': hasDOM ? {
+        'width':   (metrics => metrics.width)
+    } : new Proxy({}, { get() { throw new Error('DOM not available in this environment'); } }),
+    'dom-matrix': hasDOM ? {
+        'a':       (matrix => matrix.a),
+        'b':       (matrix => matrix.b),
+        'c':       (matrix => matrix.c),
+        'd':       (matrix => matrix.d),
+        'e':       (matrix => matrix.e),
+        'f':       (matrix => matrix.f)
     } : new Proxy({}, { get() { throw new Error('DOM not available in this environment'); } }),
     // Window
     'window': hasDOM ? {
@@ -1410,6 +1771,16 @@ var imports = {
         'set-resource-timing-buffer-size': ((size) => performance.setResourceTimingBufferSize(size)),
         'to-json':             (() => performance.toJSON())
     } : new Proxy({}, { get() { throw new Error('DOM not available in this environment'); } }),
+    'performance-event-count-map': hasDOM ? {
+        'size':                (list => list.length)
+    } : new Proxy({}, { get() { throw new Error('DOM not available in this environment'); } }),
+    'performance-memory-info': hasDOM ? {
+        'js-heap-size-limit':  (mem => mem.jsHeapSizeLimit),
+        'total-js-heap-size':  (mem => mem.totalJSHeapSize),
+        'used-js-heap-size':   (mem => mem.usedJSHeapSize)
+    } : new Proxy({}, { get() { throw new Error('DOM not available in this environment'); } }),
+    'websocket': websocket,
+    'audio': audio,
     // Document
     'document': hasDOM ? {
         'document':                 (()                               => document),
@@ -1753,6 +2124,7 @@ var imports = {
                 return new Event(t, i);
             }
         }),
+        'event?': (evt => evt instanceof Event),
         'type': (evt => evt.type),
         'target': (evt => evt.target),
         'current-target': (evt => evt.currentTarget),
@@ -1765,10 +2137,43 @@ var imports = {
         'time-stamp': (evt => evt.timeStamp),
         'composed-path': (evt => evt.composedPath()),
         'prevent-default': (evt => evt.preventDefault()),
+        'mouse-offset-x': (evt => evt.offsetX),
+        'mouse-offset-y': (evt => evt.offsetY),
+        'mouse-client-x': (evt => evt.clientX),
+        'mouse-client-y': (evt => evt.clientY),
+        'mouse-page-x': (evt => evt.pageX),
+        'mouse-page-y': (evt => evt.pageY),
+        'mouse-screen-x': (evt => evt.screenX),
+        'mouse-screen-y': (evt => evt.screenY),
+        'mouse-button': (evt => evt.button),
+        'mouse-buttons': (evt => evt.buttons),
+        'mouse-alt-key': (evt => evt.altKey ? 1 : 0),
+        'mouse-ctrl-key': (evt => evt.ctrlKey ? 1 : 0),
+        'mouse-meta-key': (evt => evt.metaKey ? 1 : 0),
+        'mouse-shift-key': (evt => evt.shiftKey ? 1 : 0),
+        'mouse-event?': (evt => evt instanceof MouseEvent),
+        'keyboard-key': (evt => evt.key),
+        'keyboard-code': (evt => evt.code),
+        'keyboard-event?': (evt => evt instanceof KeyboardEvent),
+        'alt-key': (evt => evt.altKey ? 1 : 0),
+        'ctrl-key': (evt => evt.ctrlKey ? 1 : 0),
+        'meta-key': (evt => evt.metaKey ? 1 : 0),
+        'shift-key': (evt => evt.shiftKey ? 1 : 0),
+        'keyboard-repeat': (evt => evt.repeat ? 1 : 0),
+        'pointer-event?': (evt => (typeof PointerEvent !== 'undefined') && (evt instanceof PointerEvent)),
+        'focus-event?': (evt => (typeof FocusEvent !== 'undefined') && (evt instanceof FocusEvent)),
+        'input-event?': (evt => (typeof InputEvent !== 'undefined') && (evt instanceof InputEvent)),
+        'submit-event?': (evt => (typeof SubmitEvent !== 'undefined') && (evt instanceof SubmitEvent)),
+        'touch-event?': (evt => (typeof TouchEvent !== 'undefined') && (evt instanceof TouchEvent)),
+        'touches': (evt => evt.touches),
+        'target-touches': (evt => evt.targetTouches),
+        'changed-touches': (evt => evt.changedTouches),
+        'wheel-event?': (evt => (typeof WheelEvent !== 'undefined') && (evt instanceof WheelEvent)),
         'stop-propagation': (evt => evt.stopPropagation()),
         'stop-immediate-propagation': (evt => evt.stopImmediatePropagation())
     } : {
         'new'() { throw new Error('DOM not available in this environment'); },
+        'event?'() { throw new Error('DOM not available in this environment'); },
         'type'() { throw new Error('DOM not available in this environment'); },
         'target'() { throw new Error('DOM not available in this environment'); },
         'current-target'() { throw new Error('DOM not available in this environment'); },
@@ -1781,8 +2186,110 @@ var imports = {
         'time-stamp'() { throw new Error('DOM not available in this environment'); },
         'composed-path'() { throw new Error('DOM not available in this environment'); },
         'prevent-default'() { throw new Error('DOM not available in this environment'); },
+        'mouse-offset-x'() { throw new Error('DOM not available in this environment'); },
+        'mouse-offset-y'() { throw new Error('DOM not available in this environment'); },
+        'mouse-client-x'() { throw new Error('DOM not available in this environment'); },
+        'mouse-client-y'() { throw new Error('DOM not available in this environment'); },
+        'mouse-page-x'() { throw new Error('DOM not available in this environment'); },
+        'mouse-page-y'() { throw new Error('DOM not available in this environment'); },
+        'mouse-screen-x'() { throw new Error('DOM not available in this environment'); },
+        'mouse-screen-y'() { throw new Error('DOM not available in this environment'); },
+        'mouse-button'() { throw new Error('DOM not available in this environment'); },
+        'mouse-buttons'() { throw new Error('DOM not available in this environment'); },
+        'mouse-alt-key'() { throw new Error('DOM not available in this environment'); },
+        'mouse-ctrl-key'() { throw new Error('DOM not available in this environment'); },
+        'mouse-meta-key'() { throw new Error('DOM not available in this environment'); },
+        'mouse-shift-key'() { throw new Error('DOM not available in this environment'); },
+        'mouse-event?'() { throw new Error('DOM not available in this environment'); },
+        'keyboard-key'() { throw new Error('DOM not available in this environment'); },
+        'keyboard-code'() { throw new Error('DOM not available in this environment'); },
+        'keyboard-event?'() { throw new Error('DOM not available in this environment'); },
+        'alt-key'() { throw new Error('DOM not available in this environment'); },
+        'ctrl-key'() { throw new Error('DOM not available in this environment'); },
+        'meta-key'() { throw new Error('DOM not available in this environment'); },
+        'shift-key'() { throw new Error('DOM not available in this environment'); },
+        'keyboard-repeat'() { throw new Error('DOM not available in this environment'); },
+        'pointer-event?'() { throw new Error('DOM not available in this environment'); },
+        'focus-event?'() { throw new Error('DOM not available in this environment'); },
+        'input-event?'() { throw new Error('DOM not available in this environment'); },
+        'submit-event?'() { throw new Error('DOM not available in this environment'); },
+        'touch-event?'() { throw new Error('DOM not available in this environment'); },
+        'touches'() { throw new Error('DOM not available in this environment'); },
+        'target-touches'() { throw new Error('DOM not available in this environment'); },
+        'changed-touches'() { throw new Error('DOM not available in this environment'); },
+        'wheel-event?'() { throw new Error('DOM not available in this environment'); },
         'stop-propagation'() { throw new Error('DOM not available in this environment'); },
         'stop-immediate-propagation'() { throw new Error('DOM not available in this environment'); }
+    },
+    // MessageEvent
+    'message-event': hasDOM ? {
+        'message-event?': (evt => evt instanceof MessageEvent),
+        'data': (evt => evt.data),
+        'origin': (evt => evt.origin),
+        'last-event-id': (evt => evt.lastEventId),
+        'source': (evt => evt.source),
+        'ports': (evt => evt.ports)
+    } : {
+        'message-event?'() { throw new Error('DOM not available in this environment'); },
+        'data'() { throw new Error('DOM not available in this environment'); },
+        'origin'() { throw new Error('DOM not available in this environment'); },
+        'last-event-id'() { throw new Error('DOM not available in this environment'); },
+        'source'() { throw new Error('DOM not available in this environment'); },
+        'ports'() { throw new Error('DOM not available in this environment'); }
+    },
+    // CloseEvent
+    'close-event': hasDOM ? {
+        'close-event?': (evt => evt instanceof CloseEvent),
+        'was-clean': (evt => evt.wasClean ? 1 : 0),
+        'code': (evt => evt.code),
+        'reason': (evt => evt.reason)
+    } : {
+        'close-event?'() { throw new Error('DOM not available in this environment'); },
+        'was-clean'() { throw new Error('DOM not available in this environment'); },
+        'code'() { throw new Error('DOM not available in this environment'); },
+        'reason'() { throw new Error('DOM not available in this environment'); }
+    },
+    // TouchList
+    'touch-list': hasDOM ? {
+        'touch-list?': (xs => (typeof TouchList !== 'undefined') && (xs instanceof TouchList)),
+        'length': (xs => xs.length),
+        'ref': ((xs, i) => xs.item(i))
+    } : {
+        'touch-list?'() { throw new Error('DOM not available in this environment'); },
+        'length'() { throw new Error('DOM not available in this environment'); },
+        'ref'() { throw new Error('DOM not available in this environment'); }
+    },
+    // Touch
+    'touch': hasDOM ? {
+        'touch?': (t => (typeof Touch !== 'undefined') && (t instanceof Touch)),
+        'identifier': (t => t.identifier),
+        'client-x': (t => t.clientX),
+        'client-y': (t => t.clientY),
+        'page-x': (t => t.pageX),
+        'page-y': (t => t.pageY),
+        'screen-x': (t => t.screenX),
+        'screen-y': (t => t.screenY)
+    } : {
+        'touch?'() { throw new Error('DOM not available in this environment'); },
+        'identifier'() { throw new Error('DOM not available in this environment'); },
+        'client-x'() { throw new Error('DOM not available in this environment'); },
+        'client-y'() { throw new Error('DOM not available in this environment'); },
+        'page-x'() { throw new Error('DOM not available in this environment'); },
+        'page-y'() { throw new Error('DOM not available in this environment'); },
+        'screen-x'() { throw new Error('DOM not available in this environment'); },
+        'screen-y'() { throw new Error('DOM not available in this environment'); }
+    },
+    // DOMRect
+    'dom-rect': hasDOM ? {
+        'left':   (rect => rect.left),
+        'top':    (rect => rect.top),
+        'width':  (rect => rect.width),
+        'height': (rect => rect.height)
+    } : {
+        'left'()   { throw new Error('DOM not available in this environment'); },
+        'top'()    { throw new Error('DOM not available in this environment'); },
+        'width'()  { throw new Error('DOM not available in this environment'); },
+        'height'() { throw new Error('DOM not available in this environment'); }
     },
     // EventTarget
     'event-target': hasDOM ? {
@@ -1792,6 +2299,53 @@ var imports = {
     },
     // Element
     'element': hasDOM ? {
+        'class-list':              (elem => elem.classList),
+        'id':                      (elem => elem.id),
+        'set-id!':                 ((elem, id) => { elem.id = from_fasl(id); }),
+        'class-name':              (elem => elem.className),
+        'set-class-name!':         ((elem, name) => { elem.className = from_fasl(name); }),
+        'tag-name':                (elem => elem.tagName),
+        'local-name':              (elem => elem.localName),
+        'namespace-uri':           (elem => elem.namespaceURI),
+        'prefix':                  (elem => elem.prefix),
+        'is-connected':            (elem => elem.isConnected ? 1 : 0),
+        'children':                (elem => elem.children),
+        'scroll-top':              (elem => elem.scrollTop),
+        'set-scroll-top!':         ((elem, value) => { elem.scrollTop = from_fasl(value); }),
+        'scroll-left':             (elem => elem.scrollLeft),
+        'set-scroll-left!':        ((elem, value) => { elem.scrollLeft = from_fasl(value); }),
+        'scroll-width':            (elem => elem.scrollWidth),
+        'scroll-height':           (elem => elem.scrollHeight),
+        'client-width':            (elem => elem.clientWidth),
+        'client-height':           (elem => elem.clientHeight),
+        'offset-width':            (elem => elem.offsetWidth),
+        'offset-height':           (elem => elem.offsetHeight),
+        'child-element-count':      (elem => elem.childElementCount),
+        'first-element-child':     (elem => elem.firstElementChild),
+        'last-element-child':      (elem => elem.lastElementChild),
+        'parent-element':          (elem => elem.parentElement),
+        'previous-element-sibling': (elem => elem.previousElementSibling),
+        'next-element-sibling':    (elem => elem.nextElementSibling),
+        'inner-html':              (elem => elem.innerHTML),
+        'set-inner-html!':         ((elem, html) => { elem.innerHTML = from_fasl(html); }),
+        'outer-html':              (elem => elem.outerHTML),
+        'set-outer-html!':         ((elem, html) => { elem.outerHTML = from_fasl(html); }),
+        'text-content':            (elem => elem.textContent),
+        'set-text-content!':       ((elem, text) => { elem.textContent = from_fasl(text); }),
+        'shadow-root':             (elem => elem.shadowRoot),
+        'dom-token-list-value':    (list => list.value),
+        'dom-token-list-length':   (list => list.length),
+        'dom-token-list-item':     ((list, index)         => list.item(index)),
+        'node-list-length':       (list => list.length),
+        'node-list-item':         ((list, index)         => list.item(index)),
+        'html-collection-length': (list => list.length),
+        'html-collection-item':   ((list, index)         => list.item(index)),
+        'html-collection-named-item': ((list, name)      => list.namedItem(from_fasl(name))),
+        'shadow-root-host':       (root => root.host),
+        'shadow-root-mode':       (root => root.mode),
+        'shadow-root-delegates-focus': (root => root.delegatesFocus ? 1 : 0),
+        'dom-rect-list-length':   (list => list.length),
+        'dom-rect-list-item':     ((list, index)         => list.item(index)),
         'append-child!':           ((parent, child)          => parent.appendChild(child)),
         'set-attribute!':          ((elem, name, value)      => elem.setAttribute(from_fasl(name), from_fasl(value))),
         'after!':                  ((elem, node)            => elem.after(node)),
@@ -1841,7 +2395,55 @@ var imports = {
         'set-attribute-node-ns!':  ((elem, attr)           => elem.setAttributeNodeNS(attr)),
         'set-pointer-capture!':    ((elem, id)             => elem.setPointerCapture(id)),
         'toggle-attribute!':       ((elem, name, force)    => elem.toggleAttribute(from_fasl(name), !!force) ? 1 : 0),
+        'toggle-attribute':        ((elem, name)           => elem.toggleAttribute(from_fasl(name)) ? 1 : 0),
     } : {
+        'class-list'() { throw new Error('DOM not available in this environment'); },
+        'id'() { throw new Error('DOM not available in this environment'); },
+        'set-id!'() { throw new Error('DOM not available in this environment'); },
+        'class-name'() { throw new Error('DOM not available in this environment'); },
+        'set-class-name!'() { throw new Error('DOM not available in this environment'); },
+        'tag-name'() { throw new Error('DOM not available in this environment'); },
+        'local-name'() { throw new Error('DOM not available in this environment'); },
+        'namespace-uri'() { throw new Error('DOM not available in this environment'); },
+        'prefix'() { throw new Error('DOM not available in this environment'); },
+        'is-connected'() { throw new Error('DOM not available in this environment'); },
+        'children'() { throw new Error('DOM not available in this environment'); },
+        'scroll-top'() { throw new Error('DOM not available in this environment'); },
+        'set-scroll-top!'() { throw new Error('DOM not available in this environment'); },
+        'scroll-left'() { throw new Error('DOM not available in this environment'); },
+        'set-scroll-left!'() { throw new Error('DOM not available in this environment'); },
+        'scroll-width'() { throw new Error('DOM not available in this environment'); },
+        'scroll-height'() { throw new Error('DOM not available in this environment'); },
+        'client-width'() { throw new Error('DOM not available in this environment'); },
+        'client-height'() { throw new Error('DOM not available in this environment'); },
+        'offset-width'() { throw new Error('DOM not available in this environment'); },
+        'offset-height'() { throw new Error('DOM not available in this environment'); },
+        'child-element-count'() { throw new Error('DOM not available in this environment'); },
+        'first-element-child'() { throw new Error('DOM not available in this environment'); },
+        'last-element-child'() { throw new Error('DOM not available in this environment'); },
+        'parent-element'() { throw new Error('DOM not available in this environment'); },
+        'previous-element-sibling'() { throw new Error('DOM not available in this environment'); },
+        'next-element-sibling'() { throw new Error('DOM not available in this environment'); },
+        'inner-html'() { throw new Error('DOM not available in this environment'); },
+        'set-inner-html!'() { throw new Error('DOM not available in this environment'); },
+        'outer-html'() { throw new Error('DOM not available in this environment'); },
+        'set-outer-html!'() { throw new Error('DOM not available in this environment'); },
+        'text-content'() { throw new Error('DOM not available in this environment'); },
+        'set-text-content!'() { throw new Error('DOM not available in this environment'); },
+        'shadow-root'() { throw new Error('DOM not available in this environment'); },
+        'dom-token-list-value'() { throw new Error('DOM not available in this environment'); },
+        'dom-token-list-length'() { throw new Error('DOM not available in this environment'); },
+        'dom-token-list-item'() { throw new Error('DOM not available in this environment'); },
+        'node-list-length'() { throw new Error('DOM not available in this environment'); },
+        'node-list-item'() { throw new Error('DOM not available in this environment'); },
+        'html-collection-length'() { throw new Error('DOM not available in this environment'); },
+        'html-collection-item'() { throw new Error('DOM not available in this environment'); },
+        'html-collection-named-item'() { throw new Error('DOM not available in this environment'); },
+        'shadow-root-host'() { throw new Error('DOM not available in this environment'); },
+        'shadow-root-mode'() { throw new Error('DOM not available in this environment'); },
+        'shadow-root-delegates-focus'() { throw new Error('DOM not available in this environment'); },
+        'dom-rect-list-length'() { throw new Error('DOM not available in this environment'); },
+        'dom-rect-list-item'() { throw new Error('DOM not available in this environment'); },
         'append-child!'()             { throw new Error('DOM not available in this environment'); },
         'set-attribute!'()            { throw new Error('DOM not available in this environment'); },
         'after!'()                    { throw new Error('DOM not available in this environment'); },
@@ -1891,6 +2493,7 @@ var imports = {
         'set-attribute-node-ns!'()    { throw new Error('DOM not available in this environment'); },
         'set-pointer-capture!'()      { throw new Error('DOM not available in this environment'); },
         'toggle-attribute!'()         { throw new Error('DOM not available in this environment'); },
+        'toggle-attribute'()          { throw new Error('DOM not available in this environment'); },
     },
     'xterm-terminal': hasXterm ? {
         'create': (options => {
@@ -2134,16 +2737,32 @@ var imports = {
     }
 };
 
+install_ffi_exception_bridge(imports);
+
 const wasmModule
       = await WebAssembly
       .instantiate(wasmBuffer, imports)
       .then(results  => { const { entry, get_bytes, copy_bytes_to_memory, callback,
                                   ['callback-accepts-argc']: callback_accepts_argc,
-                                  ['callback-expected-arity']: callback_expected_arity } = results.instance.exports;
+                                  ['callback-expected-arity']: callback_expected_arity,
+                                  ['callback-name']: callback_name } = results.instance.exports;
                           callback_export = callback;
                           callback_accepts_argc_export = callback_accepts_argc;
                           callback_expected_arity_export = callback_expected_arity;
-                          var result = entry();
+                          callback_name_export = callback_name;
+                          var result;
+                          try {
+                            result = entry();
+                          } catch (err) {
+                            const isWasmException =
+                              (typeof WebAssembly.Exception !== 'undefined') &&
+                              (err instanceof WebAssembly.Exception);
+                            if (isWasmException) {
+                              console.error("-----");
+                              console.error("[Host] Uncaught WebAssembly exception:");
+                            }
+                            throw err;
+                          }
                           // console.log( "Output:")
                           // console.log( output_string );
                           // console.log( "Result:")
@@ -2153,3 +2772,4 @@ const wasmModule
                           const bytes  = new Uint8Array(memory.buffer, 0, result);
                           console.log(new TextDecoder().decode(bytes));
                         });
+

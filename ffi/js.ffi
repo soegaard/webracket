@@ -26,6 +26,18 @@
   #:name   "is-array"
   (-> (value) (i32)))
 
+(define-foreign js-array->vector
+  #:module "array"
+  #:name   "to-vector"
+  ;; `arr` should be a JavaScript array or array-like value.
+  (-> (extern) (value)))
+
+(define-foreign js-array->bytes
+  #:module "array"
+  #:name   "to-bytes"
+  ;; `arr` should be a JavaScript byte array or typed array.
+  (-> (extern) (value)))
+
 (define-foreign js-array-of
   #:module "array"
   #:name   "of"
@@ -268,4 +280,3 @@
   #:module "array"
   #:name   "with"
   (-> (extern i32 value) (extern/raw)))
-
