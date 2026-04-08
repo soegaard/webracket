@@ -207,6 +207,39 @@ stored in a property such as @tt{onopen} or @tt{onmessage}. Setting the
 handler to @racket[#f] clears it, which means the browser stops calling
 that callback for future events.
 
+The shared @racket[event] library provides the browser event accessors
+used by message and close handlers, such as @racket[message-event-data]
+and @racket[close-event-code].
+
+@subsection{WebSocket Event Example}
+
+This example shows the usual pattern: include both libraries, install
+handlers, and inspect the browser event values with the shared
+@racket[event] helpers.
+
+@racketblock[
+(code:comment "Include the checked WebSocket and event libraries.")
+(include-lib websocket)
+(include-lib event)
+
+(code:comment "Open a WebSocket connection.")
+(define ws (websocket-new "wss://echo-websocket.fly.dev/"))
+
+(code:comment "Log the message payload when a message arrives.")
+(websocket-onmessage! ws
+  (lambda (evt)
+    (displayln (message-event-data evt))))
+
+(code:comment "Log the close code when the connection closes.")
+(websocket-onclose! ws
+  (lambda (evt)
+    (displayln (close-event-code evt))))
+]
+
+The event accessors shown here are shared with the standalone
+@racket[event] library, so other browser code can use the same
+@racketid[MessageEvent] and @racketid[CloseEvent] helpers.
+
 @defproc[(websocket-onopen! [ws websocket?]
                             [handler (or/c #f procedure? external?)])
          void?]{
