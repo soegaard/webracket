@@ -646,7 +646,9 @@
                 (list (build-path system-ffi-directory filename))
                 '())))
   (for/or ([candidate (in-list candidates)])
-    (and candidate (file-exists? candidate) candidate)))
+    (and candidate
+         (file-exists? candidate)
+         (path->complete-path candidate (current-directory)))))
 
 
 

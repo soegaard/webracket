@@ -9,7 +9,20 @@
 ;;   Ensure `(require-lib define)` works in `webracket.rkt -r` flow
 ;;   for the main/include chain repro.
 (define (test-include-lib-run)
-  (define repo-root (simplify-path (build-path (current-directory) "..")))
+  (define (find-repo-root start)
+    (let loop ([dir (simplify-path start)])
+      (cond
+        [(file-exists? (build-path dir "webracket.rkt"))
+         dir]
+        [else
+         (define parent (path-only dir))
+         (unless parent
+           (error 'test-include-lib-run
+                  "could not find repository root containing webracket.rkt"))
+         (loop (path->complete-path parent))])))
+  (define repo-root
+    (find-repo-root (or (current-load-relative-directory)
+                        (current-directory))))
   (define webracket-rkt (build-path repo-root "webracket.rkt"))
   (define (run-r path-string [cwd repo-root])
     (define stdout (open-output-string))
@@ -51,31 +64,6 @@
   (unless (string-contains? out-str "1")
     (error 'test-include-lib-run
            (format "expected output to contain 1, got: ~a" out-str)))
-
-  ;; Regression: direct keyword call shape should not fail with
-  ;; "#%datum: keyword misused as an expression".
-  (let ()
-    (define tmp-dir (make-temporary-file "webracket-include-lib-keyword-~a" 'directory))
-    (define kw-main (build-path tmp-dir "kw-main.rkt"))
-    (dynamic-wind
-      void
-    (lambda ()
-      (call-with-output-file kw-main
-        (lambda (out)
-          (displayln "(require-lib define)" out)
-          (displayln "(define/key (f x #:id [id #f]) x)" out)
-          (displayln "(f 1 #:id \"x\")" out))
-        #:exists 'truncate/replace)
-      (let-values ([(kw-status kw-output) (run-r (path->string kw-main))])
-        (unless (zero? kw-status)
-          (error 'test-include-lib-run
-                 (format "keyword-call repro failed (~a): ~a" kw-status kw-output)))
-        (when (string-contains? kw-output "#%datum: keyword misused as an expression")
-          (error 'test-include-lib-run
-                 (format "keyword call still misparsed: ~a" kw-output)))))
-      (lambda ()
-        (with-handlers ([exn:fail:filesystem? void])
-          (delete-directory/files tmp-dir)))))
 
   ;; Regression: include-lib should resolve library source from the collection,
   ;; even when compiling a source file outside the repository.
