@@ -29,6 +29,10 @@ Use @racket[event] when you want to:
 The @racket[event] library provides predicates and accessors for common
 browser events.
 
+The @racket[message-event?] and @racket[close-event?] helpers cover
+browser @racketid[MessageEvent] and @racketid[CloseEvent] values, which
+are especially useful for WebSocket handlers.
+
 @section{Event Quick Start}
 
 Start by including the library and writing a tiny handler that inspects
@@ -87,6 +91,66 @@ and @racket[prevent-default!].
 @(mdn-bar "Event"
           "https://developer.mozilla.org/en-US/docs/Web/API/Event")
 Returns @racket[#t] when @racket[x] is a DOM Event value.
+}
+
+@defproc[(message-event? [x any/c]) boolean?]{
+@(mdn-bar "MessageEvent"
+          "https://developer.mozilla.org/en-US/docs/Web/API/MessageEvent")
+Returns @racket[#t] when @racket[x] is a DOM MessageEvent value.
+}
+
+@defproc[(message-event-data [evt any/c]) any/c]{
+@(mdn-bar "MessageEvent: data property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/MessageEvent/data")
+Returns the message payload carried by @racket[evt].
+}
+
+@defproc[(message-event-origin [evt any/c]) string?]{
+@(mdn-bar "MessageEvent: origin property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/MessageEvent/origin")
+Returns the origin string associated with @racket[evt].
+}
+
+@defproc[(message-event-last-event-id [evt any/c]) string?]{
+@(mdn-bar "MessageEvent: lastEventId property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/MessageEvent/lastEventId")
+Returns the event id string associated with @racket[evt].
+}
+
+@defproc[(message-event-source [evt any/c]) any/c]{
+@(mdn-bar "MessageEvent: source property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/MessageEvent/source")
+Returns the source object associated with @racket[evt].
+}
+
+@defproc[(message-event-ports [evt any/c]) any/c]{
+@(mdn-bar "MessageEvent: ports property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/MessageEvent/ports")
+Returns the transferred ports associated with @racket[evt].
+}
+
+@defproc[(close-event? [x any/c]) boolean?]{
+@(mdn-bar "CloseEvent"
+          "https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent")
+Returns @racket[#t] when @racket[x] is a DOM CloseEvent value.
+}
+
+@defproc[(close-event-was-clean [evt any/c]) boolean?]{
+@(mdn-bar "CloseEvent: wasClean property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/wasClean")
+Returns whether @racket[evt] closed cleanly.
+}
+
+@defproc[(close-event-code [evt any/c]) exact-nonnegative-integer?]{
+@(mdn-bar "CloseEvent: code property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/code")
+Returns the numeric close code for @racket[evt].
+}
+
+@defproc[(close-event-reason [evt any/c]) string?]{
+@(mdn-bar "CloseEvent: reason property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent/reason")
+Returns the close reason string for @racket[evt].
 }
 
 @defproc[(mouse-event? [x any/c]) boolean?]{

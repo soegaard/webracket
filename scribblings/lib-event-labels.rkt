@@ -9,6 +9,10 @@
 
 (provide
   event?
+  MessageEvent
+  CloseEvent
+  message-event?
+  close-event?
   mouse-event?
   keyboard-event?
   pointer-event?
@@ -20,6 +24,14 @@
   touch-list?
   touch?
   event-type
+  message-event-data
+  message-event-origin
+  message-event-last-event-id
+  message-event-source
+  message-event-ports
+  close-event-was-clean
+  close-event-code
+  close-event-reason
   event-target
   event-current-target
   prevent-default!
@@ -46,6 +58,10 @@
   (for-label (all-defined-out)))
 
 (define event? any/c)
+(define MessageEvent any/c)
+(define CloseEvent any/c)
+(define message-event? any/c)
+(define close-event? any/c)
 (define mouse-event? any/c)
 (define keyboard-event? any/c)
 (define pointer-event? any/c)
@@ -57,6 +73,14 @@
 (define touch-list? any/c)
 (define touch? any/c)
 (define event-type any/c)
+(define message-event-data any/c)
+(define message-event-origin any/c)
+(define message-event-last-event-id any/c)
+(define message-event-source any/c)
+(define message-event-ports any/c)
+(define close-event-was-clean any/c)
+(define close-event-code any/c)
+(define close-event-reason any/c)
 (define event-target any/c)
 (define event-current-target any/c)
 (define prevent-default! any/c)

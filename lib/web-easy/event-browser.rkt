@@ -8,6 +8,8 @@
 ;;
 ;; Exports:
 ;;   event?                          Check whether value is a DOM Event.
+;;   message-event?                  Check whether value is a DOM MessageEvent.
+;;   close-event?                    Check whether value is a DOM CloseEvent.
 ;;   mouse-event?                    Check whether value is a DOM MouseEvent.
 ;;   keyboard-event?                 Check whether value is a DOM KeyboardEvent.
 ;;   pointer-event?                  Check whether value is a DOM PointerEvent.
@@ -19,6 +21,14 @@
 ;;   touch-list?                     Check whether value is a DOM TouchList.
 ;;   touch?                          Check whether value is a DOM Touch.
 ;;   event-type                       Read event type string.
+;;   message-event-data               Read MessageEvent payload.
+;;   message-event-origin             Read MessageEvent origin string.
+;;   message-event-last-event-id      Read MessageEvent lastEventId string.
+;;   message-event-source             Read MessageEvent source object.
+;;   message-event-ports              Read MessageEvent transferred ports.
+;;   close-event-was-clean            Read CloseEvent wasClean flag.
+;;   close-event-code                 Read CloseEvent code.
+;;   close-event-reason               Read CloseEvent reason string.
 ;;   event-target                     Read original dispatch target.
 ;;   event-current-target             Read current listener target.
 ;;   prevent-default!                 Prevent default event action.
@@ -60,6 +70,8 @@
 
 (define-values
   (event?
+   message-event?
+   close-event?
    mouse-event?
    keyboard-event?
    pointer-event?
@@ -146,6 +158,18 @@
       (unless (event? evt)
         (raise-argument-error who "event?" evt)))
 
+    ;; check-message-event : symbol? any/c -> void?
+    ;;   Ensure evt is a DOM MessageEvent object.
+    (define (check-message-event who evt)
+      (unless (message-event? evt)
+        (raise-argument-error who "message-event?" evt)))
+
+    ;; check-close-event : symbol? any/c -> void?
+    ;;   Ensure evt is a DOM CloseEvent object.
+    (define (check-close-event who evt)
+      (unless (close-event? evt)
+        (raise-argument-error who "close-event?" evt)))
+
     ;; check-mouse-event : symbol? any/c -> void?
     ;;   Ensure evt is a DOM MouseEvent object.
     (define (check-mouse-event who evt)
@@ -181,6 +205,18 @@
     (define (event? evt)
       (and (external? evt)
            (js-event? evt)))
+
+    ;; message-event? : any/c -> boolean?
+    ;;   Report whether evt is a DOM MessageEvent object.
+    (define (message-event? evt)
+      (and (external? evt)
+           (js-message-event? evt)))
+
+    ;; close-event? : any/c -> boolean?
+    ;;   Report whether evt is a DOM CloseEvent object.
+    (define (close-event? evt)
+      (and (external? evt)
+           (js-close-event? evt)))
 
     ;; mouse-event? : any/c -> boolean?
     ;;   Report whether evt is a DOM MouseEvent object.
@@ -247,6 +283,55 @@
     (define (event-type evt)
       (check-event 'event-type evt)
       (js-event-type evt))
+
+    ;; message-event-data : any/c -> any/c
+    ;;   Return the message payload for a MessageEvent.
+    (define (message-event-data evt)
+      (check-message-event 'message-event-data evt)
+      (js-message-event-data evt))
+
+    ;; message-event-origin : any/c -> string?
+    ;;   Return the origin string for a MessageEvent.
+    (define (message-event-origin evt)
+      (check-message-event 'message-event-origin evt)
+      (js-message-event-origin evt))
+
+    ;; message-event-last-event-id : any/c -> string?
+    ;;   Return the event id string for a MessageEvent.
+    (define (message-event-last-event-id evt)
+      (check-message-event 'message-event-last-event-id evt)
+      (js-message-event-last-event-id evt))
+
+    ;; message-event-source : any/c -> any/c
+    ;;   Return the source object for a MessageEvent.
+    (define (message-event-source evt)
+      (check-message-event 'message-event-source evt)
+      (js-message-event-source evt))
+
+    ;; message-event-ports : any/c -> external?
+    ;;   Return the transferred ports for a MessageEvent.
+    (define (message-event-ports evt)
+      (check-message-event 'message-event-ports evt)
+      (js-message-event-ports evt))
+
+    ;; close-event-was-clean : any/c -> boolean?
+    ;;   Report whether a CloseEvent was clean.
+    (define (close-event-was-clean evt)
+      (check-close-event 'close-event-was-clean evt)
+      (js-flag->boolean/internal
+       (js-close-event-was-clean evt)))
+
+    ;; close-event-code : any/c -> exact-nonnegative-integer?
+    ;;   Return the close code for a CloseEvent.
+    (define (close-event-code evt)
+      (check-close-event 'close-event-code evt)
+      (js-close-event-code evt))
+
+    ;; close-event-reason : any/c -> string?
+    ;;   Return the close reason string for a CloseEvent.
+    (define (close-event-reason evt)
+      (check-close-event 'close-event-reason evt)
+      (js-close-event-reason evt))
 
     ;; event-target : any/c -> any/c
     ;;   Return the original dispatch target.
@@ -468,6 +553,8 @@
       (js-touch-screen-y t))
 
     (values event?
+            message-event?
+            close-event?
             mouse-event?
             keyboard-event?
             pointer-event?
@@ -479,6 +566,14 @@
             touch-list?
             touch?
             event-type
+            message-event-data
+            message-event-origin
+            message-event-last-event-id
+            message-event-source
+            message-event-ports
+            close-event-was-clean
+            close-event-code
+            close-event-reason
             event-target
             event-current-target
             prevent-default!

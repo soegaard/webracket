@@ -2,6 +2,7 @@
 
 @(require scribble/manual
           (for-label (lib "scribblings/lib-websocket-labels.rkt" "webracket"))
+          (for-label (lib "scribblings/lib-event-labels.rkt" "webracket"))
           "webracket-scribble-utils.rkt"
           )
 

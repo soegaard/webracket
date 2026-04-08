@@ -2273,6 +2273,34 @@ var imports = {
         'stop-propagation'() { throw new Error('DOM not available in this environment'); },
         'stop-immediate-propagation'() { throw new Error('DOM not available in this environment'); }
     },
+    // MessageEvent
+    'message-event': hasDOM ? {
+        'message-event?': (evt => evt instanceof MessageEvent),
+        'data': (evt => evt.data),
+        'origin': (evt => evt.origin),
+        'last-event-id': (evt => evt.lastEventId),
+        'source': (evt => evt.source),
+        'ports': (evt => evt.ports)
+    } : {
+        'message-event?'() { throw new Error('DOM not available in this environment'); },
+        'data'() { throw new Error('DOM not available in this environment'); },
+        'origin'() { throw new Error('DOM not available in this environment'); },
+        'last-event-id'() { throw new Error('DOM not available in this environment'); },
+        'source'() { throw new Error('DOM not available in this environment'); },
+        'ports'() { throw new Error('DOM not available in this environment'); }
+    },
+    // CloseEvent
+    'close-event': hasDOM ? {
+        'close-event?': (evt => evt instanceof CloseEvent),
+        'was-clean': (evt => evt.wasClean ? 1 : 0),
+        'code': (evt => evt.code),
+        'reason': (evt => evt.reason)
+    } : {
+        'close-event?'() { throw new Error('DOM not available in this environment'); },
+        'was-clean'() { throw new Error('DOM not available in this environment'); },
+        'code'() { throw new Error('DOM not available in this environment'); },
+        'reason'() { throw new Error('DOM not available in this environment'); }
+    },
     // TouchList
     'touch-list': hasDOM ? {
         'touch-list?': (xs => (typeof TouchList !== 'undefined') && (xs instanceof TouchList)),

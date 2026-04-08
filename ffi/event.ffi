@@ -147,6 +147,96 @@
   (-> (extern) ()))
 
 
+;;; MessageEvent
+;;;
+
+;; The various functions in this section are documented here:
+;;
+;;     https://developer.mozilla.org/en-US/docs/Web/API/MessageEvent
+
+;; Predicates
+(define-foreign js-message-event?
+  #:module "message-event"
+  #:name   "message-event?"
+  #:doc    "Reports whether the external value is a JavaScript MessageEvent object."
+  #:mdn    "MessageEvent"
+  (-> (extern) (boolean)))
+
+;; Properties
+(define-foreign js-message-event-data
+  #:module "message-event"
+  #:name   "data"
+  #:doc    "Returns the event payload."
+  #:mdn    "MessageEvent/data"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-message-event-origin
+  #:module "message-event"
+  #:name   "origin"
+  #:doc    "Returns the origin string associated with the message."
+  #:mdn    "MessageEvent/origin"
+  (-> (extern) (string)))
+
+(define-foreign js-message-event-last-event-id
+  #:module "message-event"
+  #:name   "last-event-id"
+  #:doc    "Returns the event identifier string."
+  #:mdn    "MessageEvent/lastEventId"
+  (-> (extern) (string)))
+
+(define-foreign js-message-event-source
+  #:module "message-event"
+  #:name   "source"
+  #:doc    "Returns the message source object when present."
+  #:mdn    "MessageEvent/source"
+  (-> (extern) (extern)))
+
+(define-foreign js-message-event-ports
+  #:module "message-event"
+  #:name   "ports"
+  #:doc    "Returns the transferred message ports."
+  #:mdn    "MessageEvent/ports"
+  (-> (extern) (extern/raw)))
+
+
+;;; CloseEvent
+;;;
+
+;; The various functions in this section are documented here:
+;;
+;;     https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent
+
+;; Predicates
+(define-foreign js-close-event?
+  #:module "close-event"
+  #:name   "close-event?"
+  #:doc    "Reports whether the external value is a JavaScript CloseEvent object."
+  #:mdn    "CloseEvent"
+  (-> (extern) (boolean)))
+
+;; Properties
+(define-foreign js-close-event-was-clean
+  #:module "close-event"
+  #:name   "was-clean"
+  #:doc    "Reports whether the close was clean."
+  #:mdn    "CloseEvent/wasClean"
+  (-> (extern) (i32)))
+
+(define-foreign js-close-event-code
+  #:module "close-event"
+  #:name   "code"
+  #:doc    "Returns the close code."
+  #:mdn    "CloseEvent/code"
+  (-> (extern) (u32)))
+
+(define-foreign js-close-event-reason
+  #:module "close-event"
+  #:name   "reason"
+  #:doc    "Returns the close reason string."
+  #:mdn    "CloseEvent/reason"
+  (-> (extern) (string)))
+
+
 ;;;
 ;;; MouseEvent
 ;;;
