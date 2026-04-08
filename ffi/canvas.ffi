@@ -8,6 +8,9 @@
 ;; - `(extern)` is used for nullable DOM/Web API results, so JS `null` maps to `#f`.
 ;; - `(extern/raw)` is used when raw JS extern behavior is desired.
 
+(include-ffi "array.ffi")
+(include-ffi "media.ffi")
+
 ;;; HTMLCanvasElement
 ;;;
 

@@ -27,7 +27,7 @@
 ;;;
 
 (require (only-in syntax/modread    with-module-reading-parameterization)
-         (only-in racket/path       path-only path-get-extension)
+         (only-in racket/path       file-name-from-path path-only path-get-extension)
          (only-in racket/file       make-directory* make-temporary-file)
          (only-in racket/port       open-output-nowhere with-output-to-string)
          (only-in racket/pretty     pretty-write)
@@ -35,7 +35,7 @@
          (only-in racket/system     system*)
          #;(only-in "lang/reader.rkt" read-syntax)
          (only-in "assembler.rkt"   run wat->wasm runtime)
-         (only-in racket/list       append* remove-duplicates)
+         (only-in racket/list       append* append-map remove-duplicates)
          (only-in "parameters.rkt"  current-ffi-foreigns
                                     current-ffi-imports-wat
                                     current-ffi-funcs-wat)
@@ -56,16 +56,91 @@
              (~a "ffi file not found: " ffi-filename)))
     resolved))
 
+;; include-lib->ffi-filename : symbol? -> (or/c path-string? #f)
+;;   Return the ffi bundle corresponding to a public include-lib library name.
+(define include-lib->ffi-filename-table
+  '((array      . "array.ffi")
+    (audio      . "audio.ffi")
+    (canvas     . "canvas.ffi")
+    (console    . "console.ffi")
+    (document   . "document.ffi")
+    (dom        . "dom.ffi")
+    (domrect    . "domrect.ffi")
+    (element    . "element.ffi")
+    (event      . "event.ffi")
+    (image      . "image.ffi")
+    (iterator   . "iterator.ffi")
+    (media      . "media.ffi")
+    (performance . "performance.ffi")
+    (websocket  . "websocket.ffi")
+    (window     . "window.ffi")))
+
+(define (include-lib->ffi-filename lib-name)
+  (define maybe (assq lib-name include-lib->ffi-filename-table))
+  (and maybe (cdr maybe)))
+
+;; ffi-filename-basename : path-string? -> string?
+;;   Return the last path component for an ffi file specification.
+(define (ffi-filename-basename ffi-filename)
+  (define pathish (if (path? ffi-filename)
+                      ffi-filename
+                      (string->path ffi-filename)))
+  (define basename (file-name-from-path pathish))
+  (and basename (path->string basename)))
+
+;; bundle->suppressed-include-lib-names : string? -> (listof symbol?)
+;;   Return include-lib names that are already covered by an explicit ffi bundle.
+;;   This keeps umbrella bundles like `dom.ffi` from re-adding the sublibs
+;;   they already include transitively.
+(define bundle->suppressed-include-lib-names-table
+  '(("dom.ffi"    . (array canvas document domrect element event image media performance window))
+    ("canvas.ffi" . (array media))))
+
+(define (bundle->suppressed-include-lib-names ffi-filename)
+  (define basename (ffi-filename-basename ffi-filename))
+  (define maybe (and basename (assoc basename bundle->suppressed-include-lib-names-table)))
+  (if maybe
+      (cdr maybe)
+      '()))
+
+;; source->inferred-ffi-files : syntax? (listof path-string?) -> (listof path-string?)
+;;   Infer direct ffi bundles from top-level `(include-lib ...)` forms in source.
+(define (source->inferred-ffi-files stx ffi-files)
+  (define suppressed-include-libs
+    (remove-duplicates
+     (append-map bundle->suppressed-include-lib-names ffi-files)))
+  (define (top-level-include-lib-names datum)
+    (cond
+      [(and (pair? datum)
+            (memq (car datum) '(begin begin0)))
+       (append-map top-level-include-lib-names (cdr datum))]
+      [(and (pair? datum)
+            (eq? (car datum) 'include-lib)
+            (pair? (cdr datum))
+            (symbol? (cadr datum))
+            (null? (cddr datum)))
+       (if (memq (cadr datum) suppressed-include-libs)
+           '()
+           (list (cadr datum)))]
+      [else
+       '()]))
+  (define inferred
+    (for/list ([lib-name (in-list (top-level-include-lib-names (syntax->datum stx)))]
+               #:when (include-lib->ffi-filename lib-name))
+      (include-lib->ffi-filename lib-name)))
+  (remove-duplicates inferred))
+
 ;; default-ffi-files : (listof path-string?) -> (listof path-string?)
 ;;   Return the default FFI file that is always loaded unless the caller
-;;   already supplied the bundled Array FFI file.
+;;   already supplied the bundled Array or Standard FFI file.
 (define (default-ffi-files ffi-files)
-  (define array-ffi?
+  (define suppress-default?
     (for/or ([ffi-filename ffi-files])
-      (regexp-match? #rx"(^|/)array\\.ffi$" (~a ffi-filename))))
-  (if array-ffi?
+      (member (ffi-filename-basename ffi-filename)
+              '("array.ffi" "dom.ffi" "standard.ffi"))))
+  (if suppress-default?
       '()
-      (list (resolve-ffi-filename "ffi/standard.ffi"))))
+      (list "standard.ffi")))
 
 ;; list-available-primitives : [#:ffi-files (listof path-string?)] -> (listof symbol?)
 ;;   Return a sorted list of known primitives, optionally extended with FFI primitives.
@@ -75,9 +150,9 @@
      (resolve-ffi-files! 'list-available-primitives
                          (append (default-ffi-files ffi-files) ffi-files))))
   (define requested-ffi-primitives
-    (append*
-     (for/list ([ffi-filename resolved-ffi-files])
-       (foreigns->primitive-names (ffi-file->foreigns ffi-filename)))))
+    (append-map (λ (ffi-filename)
+                  (foreigns->primitive-names (ffi-file->foreigns ffi-filename)))
+                resolved-ffi-files))
   ; `primitives` may already include previously registered ffi primitives.
   ; Keep core primitives stable, then add only explicitly requested ffi primitives.
   (define core-primitives
@@ -125,13 +200,29 @@
   (define exit-code       0)
   (define compile-timings #f)
   (define t-driver-start (now-ms))
-  
-  ; 0. Handle ffi-files
+
+  ; 0. Check that `filename` exists and is a source file.
+  (ensure-source-file! 'drive-compilation filename)
+
+  ; 1. Read the top-level forms from `filename`.
+  (define t-read-source-start (now-ms))
+  (define stx
+    (with-handlers ([exn:fail? (λ (e)
+                                 (error 'drive-compilation
+                                        (~a "read failed: " (exn-message e))))])
+      (read-top-level-from-file filename)))
+  (define t-read-source-end (now-ms))
+
+  ; 2. Handle ffi-files.
   (define t-ffi-setup-start  (now-ms))
+  (define inferred-ffi-files
+    (source->inferred-ffi-files stx ffi-files))
+  (define user-ffi-files (append ffi-files inferred-ffi-files))
   (define resolved-ffi-files
     (remove-duplicates
      (resolve-ffi-files! 'drive-compilation
-                         (append (default-ffi-files ffi-files) ffi-files))))
+                         (append (default-ffi-files user-ffi-files)
+                                 user-ffi-files))))
 
   (define ffi-foreigns  '()) ; list of `foreign` structures
   (define ffi-imports   '()) ; list of wat
@@ -152,18 +243,6 @@
   (current-ffi-imports-wat ffi-imports)
   (current-ffi-funcs-wat   ffi-funcs)
   (define t-ffi-setup-end (now-ms))
-  
-  ; 1. Check that `filename` exists and is a source file.
-  (ensure-source-file! 'drive-compilation filename)
-
-  ; 2. Read the top-level forms from `filename`.
-  (define t-read-source-start (now-ms))
-  (define stx
-    (with-handlers ([exn:fail? (λ (e)
-                                 (error 'drive-compilation
-                                        (~a "read failed: " (exn-message e))))])
-      (read-top-level-from-file filename)))
-  (define t-read-source-end (now-ms))
 
   ; 3. Prepend the standard library (if enabled)
   ;     "stdlib-for-browser.rkt" includes "stdlib.rkt" and adds `sxml->dom`

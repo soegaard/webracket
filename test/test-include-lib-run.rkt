@@ -54,10 +54,11 @@
 
   ;; Regression: direct keyword call shape should not fail with
   ;; "#%datum: keyword misused as an expression".
-  (define tmp-dir (make-temporary-file "webracket-include-lib-keyword-~a" 'directory))
-  (define kw-main (build-path tmp-dir "kw-main.rkt"))
-  (dynamic-wind
-    void
+  (let ()
+    (define tmp-dir (make-temporary-file "webracket-include-lib-keyword-~a" 'directory))
+    (define kw-main (build-path tmp-dir "kw-main.rkt"))
+    (dynamic-wind
+      void
     (lambda ()
       (call-with-output-file kw-main
         (lambda (out)
@@ -65,39 +66,68 @@
           (displayln "(define/key (f x #:id [id #f]) x)" out)
           (displayln "(f 1 #:id \"x\")" out))
         #:exists 'truncate/replace)
-      (define-values (kw-status kw-output) (run-r (path->string kw-main)))
-      (unless (zero? kw-status)
-        (error 'test-include-lib-run
-               (format "keyword-call repro failed (~a): ~a" kw-status kw-output)))
-      (when (string-contains? kw-output "#%datum: keyword misused as an expression")
-        (error 'test-include-lib-run
-               (format "keyword call still misparsed: ~a" kw-output))))
-    (lambda ()
-      (with-handlers ([exn:fail:filesystem? void])
-        (delete-directory/files tmp-dir))))
+      (let-values ([(kw-status kw-output) (run-r (path->string kw-main))])
+        (unless (zero? kw-status)
+          (error 'test-include-lib-run
+                 (format "keyword-call repro failed (~a): ~a" kw-status kw-output)))
+        (when (string-contains? kw-output "#%datum: keyword misused as an expression")
+          (error 'test-include-lib-run
+                 (format "keyword call still misparsed: ~a" kw-output)))))
+      (lambda ()
+        (with-handlers ([exn:fail:filesystem? void])
+          (delete-directory/files tmp-dir)))))
 
   ;; Regression: include-lib should resolve library source from the collection,
   ;; even when compiling a source file outside the repository.
-  (define outside-src (build-path repo-root "test" "test-sxml-lib.rkt"))
-  (define outside-copy (make-temporary-file "webracket-include-lib-outside-~a.rkt"))
-  (dynamic-wind
-    void
-    (lambda ()
-      (copy-file outside-src outside-copy #t)
-      (define outside-cwd (find-system-path 'temp-dir))
-      (define-values (outside-status outside-output)
-        (run-r (path->string outside-copy) outside-cwd))
-      (unless (zero? outside-status)
-        (error 'test-include-lib-run
-               (format "outside include-lib repro failed (~a): ~a"
-                       outside-status outside-output)))
-      (unless (string-contains? outside-output "12345")
-        (error 'test-include-lib-run
-               (format "outside include-lib repro missing sentinel: ~a"
-                       outside-output))))
-    (lambda ()
-      (with-handlers ([exn:fail:filesystem? void])
-        (delete-file outside-copy)))))
+  (let ()
+    (define outside-src (build-path repo-root "test" "test-sxml-lib.rkt"))
+    (define outside-copy (make-temporary-file "webracket-include-lib-outside-~a.rkt"))
+    (dynamic-wind
+      void
+      (lambda ()
+        (copy-file outside-src outside-copy #t)
+        (define outside-cwd (find-system-path 'temp-dir))
+        (let-values ([(outside-status outside-output)
+                      (run-r (path->string outside-copy) outside-cwd)])
+          (unless (zero? outside-status)
+            (error 'test-include-lib-run
+                   (format "outside include-lib repro failed (~a): ~a"
+                           outside-status outside-output)))
+          (unless (string-contains? outside-output "12345")
+            (error 'test-include-lib-run
+                   (format "outside include-lib repro missing sentinel: ~a"
+                           outside-output)))))
+      (lambda ()
+        (with-handlers ([exn:fail:filesystem? void])
+          (delete-file outside-copy)))))
+
+  ;; Regression: `(include-lib audio)` should work in `webracket.rkt -r`
+  ;; without requiring an explicit `--ffi audio` flag.
+  (let ()
+    (define audio-main (make-temporary-file "webracket-include-lib-audio-~a.rkt"))
+    (dynamic-wind
+      void
+      (lambda ()
+        (call-with-output-file audio-main
+          (lambda (out)
+            (displayln "(include-lib audio)" out)
+            (displayln "(begin (audio-context? #f) 12345)" out))
+          #:exists 'truncate/replace)
+        (let-values ([(audio-status audio-output)
+                      (run-r (path->string audio-main))])
+          (unless (zero? audio-status)
+            (error 'test-include-lib-run
+                   (format "audio include-lib repro failed (~a): ~a"
+                           audio-status audio-output)))
+          (unless (string-contains? audio-output "12345")
+            (error 'test-include-lib-run
+                   (format "audio include-lib repro missing sentinel: ~a"
+                           audio-output)))))
+      (lambda ()
+        (with-handlers ([exn:fail:filesystem? void])
+          (delete-file audio-main)))))
+
+  )
 
 (module+ main
   (test-include-lib-run)

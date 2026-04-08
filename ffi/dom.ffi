@@ -15,5 +15,4 @@
 (include-ffi "domrect.ffi")
 (include-ffi "element.ffi")
 (include-ffi "canvas.ffi")
-(include-ffi "media.ffi")
 (include-ffi "image.ffi")
