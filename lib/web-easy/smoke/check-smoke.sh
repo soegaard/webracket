@@ -17,6 +17,7 @@ labels=(
   "smoke-all capsules (smoke/input/checkbox/list/branch/destroy/controls/progress/width/theme-vars/theme-dialog-vars/theme-menu-vars/theme-token-contract/menu-keys/menu-full/dropdown/link/toolbar/divider/choice-labeled/choice-decode/dropdown-labeled/button-icons/menu-icons/card-variants/theme-token-api/navigation-bar/navigation-bar-advanced/group/layout-primitives/button-group/button-toolbar/card/alert/badge/spinner/pagination/breadcrumb/list-group/toast/toast-timing/collapse/accordion/offcanvas/close-button/placeholder/headings/hero/carousel/carousel-advanced/scrollspy/scrollspy-docs/tooltip/popover/dialog/modal/dialog-no-desc/table-align/operators/tab-panel/tab-panel-disabled/tab-panel-dynamic)"
   "visual-check"
   "theme-showcase"
+  "7gui-circle popup"
   "parity-all capsules (hello/counter/dynamic-list/counters/button-group/button-toolbar/card/alert/badge/spinner/pagination/breadcrumb/list-group/toast/toast-timing/collapse/accordion/offcanvas/close-button/placeholder/headings/hero/carousel/carousel-advanced/scrollspy/scrollspy-docs/tabs/tabs-disabled/tabs-dynamic/profile/settings/progress/table/theme-vars/theme-dialog-vars/theme-menu-vars/menu-keys/menu-full/dropdown/choice-decode/navigation-bar/navigation-bar-advanced/tooltip/popover/dialog/modal/dialog-no-desc/table-align/list/todo/incident/release/workspace)"
 )
 
@@ -24,6 +25,7 @@ cmds=(
   "$SCRIPT_DIR/run-browser-smoke-all-compile.sh"
   "$SCRIPT_DIR/run-browser-visual-check-compile.sh"
   "$SCRIPT_DIR/run-browser-theme-showcase-compile.sh"
+  "$SCRIPT_DIR/run-browser-7gui-circle-compile.sh"
   "$SCRIPT_DIR/run-browser-parity-all-compile.sh"
 )
 
