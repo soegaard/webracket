@@ -6,6 +6,7 @@ This document describes the JavaScript Array bindings exported by `ffi/js.ffi` i
 
 What this API gives you:
 - `Array` static functions (`from`, `fromAsync`, `isArray`, `of`)
+- Bulk conversion helpers (`to-vector`, `to-bytes`)
 - Array property access (`length`)
 - Array instance methods, including immutable variants (`toReversed`, `toSorted`, `toSpliced`, `with`)
 
@@ -22,6 +23,7 @@ All function names are linked to MDN pages for the corresponding `Array` member.
 - [2.3 Common Setup Helpers](#23-common-setup-helpers)
 - [Chapter 3 — Quick Navigation by Goal](#chapter-3--quick-navigation-by-goal)
 - [Chapter 4 — Static Methods](#chapter-4--static-methods)
+- [4.1 Bulk Conversion Helpers](#41-bulk-conversion-helpers)
 - [Chapter 5 — Properties](#chapter-5--properties)
 - [Chapter 6 — Instance Methods](#chapter-6--instance-methods)
 - [Chapter 7 — Callback Signatures](#chapter-7--callback-signatures)
@@ -88,6 +90,13 @@ MDN root: [Array](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Refere
 | [`js-array-from-async`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/fromAsync) | `(value extern value)` | `(extern/raw)` | n/a | yes | `(js-array-from-async (vector 1 2 3) (void) (void))` | build Array asynchronously from async input source. |
 | [`js-array-is-array`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/isArray) | `(value)` | `(i32)` | n/a | no | `(js-array-is-array arr)` | check whether a value is an Array (`1`/`0`). |
 | [`js-array-of`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/of) | `(value)` | `(extern/raw)` | n/a | no | `(js-array-of (vector 4 5))` | construct an Array from explicit items. |
+
+### 4.1 Bulk Conversion Helpers
+
+| Function | Input types | Output type | Mutates receiver? | Callback? | Example | Use when |
+|---|---|---|---|---|---|---|
+| [`js-array->vector`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/from) | `(extern)` | `(value)` | no | no | `(js-array->vector arr)` | copy a JS Array into a WebRacket vector in one bridge crossing. |
+| [`js-array->bytes`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array/from) | `(extern)` | `(value)` | no | no | `(js-array->bytes arr)` | copy a JS byte array or typed array into WebRacket bytes in one bridge crossing. |
 
 ## Chapter 5 — Properties
 
@@ -283,8 +292,9 @@ replaced
 
 ## Chapter 11 — Coverage Checklist
 
-- This document covers **45** functions from `ffi/js.ffi`.
-- Total documented functions: **45**
+- This document covers **47** functions from `ffi/js.ffi`.
+- Total documented functions: **47**
 - `static methods`: 4 functions
+- `bulk conversion helpers`: 2 functions
 - `properties`: 2 functions
 - `instance methods`: 39 functions

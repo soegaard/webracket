@@ -4,6 +4,7 @@ This document defines the design rules for the **new** WebRacket website, based 
 
 - Front page (`index.html`)
 - Compiler overview page (`documentation-compiler-overview.html`)
+- Status page (`implementation-status.html`)
 
 ## 1. Core Intent
 
@@ -123,3 +124,48 @@ This document defines the design rules for the **new** WebRacket website, based 
 - Toolchain content is integrated into section body (no mismatched floating panel).
 - JSXGraph extended examples show board status and initialize correctly.
 - New/Old switch alignment and active/inactive affordance are clear.
+
+## 14. Status Page Rules
+
+- The status page is a scan-first dashboard.
+- Prioritize readability and fast visual parsing over decorative effects.
+- Keep body/meta text at high enough contrast for long reading.
+- Use subtle shadows only; avoid attention-grabbing elevation.
+- Keep link styling simple and consistent; avoid double-underline effects.
+
+## 15. Status Components
+
+- Section titles use a left vertical accent bar.
+- At-a-glance metric cards:
+  - large centered numeric value
+  - concise labels
+  - consistent title case across cards
+  - avoid unnecessary trailing punctuation in microcopy
+- Needs-attention cards:
+  - compact density
+  - concise “count implemented” line
+  - no pill styling for percentage values
+- Completion-by-chapter grid:
+  - compact spacing due to high card count
+  - hover state should be clear but restrained
+  - expanded cards should not add noisy split-band hover backgrounds
+- Expanded-card controls:
+  - if only one status exists, hide status filter chips
+  - collapse is handled by clicking the card header (`summary`)
+  - do not add a separate “Close to collapse” control
+
+## 16. Status Copy Rules
+
+- Prefer short, direct phrasing for helper text.
+- Keep terminology consistent:
+  - `Implemented Primitives`
+  - `Standard Library`
+  - `Missing Primitives`
+- Avoid duplicate explanatory notes when a legend already defines terms.
+
+## 17. Build and Publish Workflow
+
+- Unless explicitly stated otherwise, treat screenshots as coming from `local/`.
+- During development, build scripts must update `local/` only.
+- Do not write to `public/` from build scripts.
+- Only `publish.sh` copies from `local/` to `public/`.
