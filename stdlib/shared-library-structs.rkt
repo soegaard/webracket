@@ -235,7 +235,7 @@
     (if (= i length)
         (list->vector (reverse acc))
         (loop (add1 i)
-              (cons (wrap-item (js-ref value (number->string i))) acc)))))
+              (cons (wrap-item (js-index value i)) acc)))))
 
 ;; dom-rect : external/raw -> dom-rect?
 ;;   Wrap a browser DOMRect object.

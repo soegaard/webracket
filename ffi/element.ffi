@@ -277,12 +277,33 @@
   #:mdn    "NodeList/length"
   (-> (extern) (u32)))
 
+(define-foreign js-node-list-item
+  #:module "element"
+  #:name   "node-list-item"
+  #:doc    "Returns the node at a given index."
+  #:mdn    "NodeList/item"
+  (-> (extern i32) (extern)))
+
 (define-foreign js-html-collection-length
   #:module "element"
   #:name   "html-collection-length"
   #:doc    "Returns the number of elements."
   #:mdn    "HTMLCollection/length"
   (-> (extern) (u32)))
+
+(define-foreign js-html-collection-item
+  #:module "element"
+  #:name   "html-collection-item"
+  #:doc    "Returns the element at a given index."
+  #:mdn    "HTMLCollection/item"
+  (-> (extern i32) (extern)))
+
+(define-foreign js-html-collection-named-item
+  #:module "element"
+  #:name   "html-collection-named-item"
+  #:doc    "Returns the named element, if present."
+  #:mdn    "HTMLCollection/namedItem"
+  (-> (extern string) (extern)))
 
 (define-foreign js-shadow-root-host
   #:module "element"
@@ -311,6 +332,13 @@
   #:doc    "Returns the number of rectangles."
   #:mdn    "DOMRectList/length"
   (-> (extern) (u32)))
+
+(define-foreign js-dom-rect-list-item
+  #:module "element"
+  #:name   "dom-rect-list-item"
+  #:doc    "Returns the rectangle at a given index."
+  #:mdn    "DOMRectList/item"
+  (-> (extern i32) (extern)))
 
 (define-foreign js-append-child!
   #:module "element"
@@ -408,6 +436,13 @@
   #:doc    "Returns the attribute names on an element."
   #:mdn    "Element/getAttributeNames"
   (-> (extern) (extern/raw)))
+
+(define-foreign js-dom-token-list-item
+  #:module "element"
+  #:name   "dom-token-list-item"
+  #:doc    "Returns the token at a given index."
+  #:mdn    "DOMTokenList/item"
+  (-> (extern i32) (extern)))
 
 (define-foreign js-get-attribute-node
   #:module "element"
@@ -668,5 +703,12 @@
   #:mdn    "Element/toggleAttribute"
   ;; The force argument is optional; pass 0/1. Undefined not supported.
   (-> (extern string i32) (i32)))
+
+(define-foreign js-toggle-attribute
+  #:module "element"
+  #:name   "toggle-attribute"
+  #:doc    "Toggles an attribute and returns whether it is present."
+  #:mdn    "Element/toggleAttribute"
+  (-> (extern string) (i32)))
 
 ;;;

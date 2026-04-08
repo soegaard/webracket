@@ -144,7 +144,7 @@
 ;;   Read an element attribute.
 (define (get-attribute element name)
   (define name* (element-stringish->string 'get-attribute name))
-  (js-send/value (element-unwrap element) "getAttribute" (vector name*)))
+  (js-get-attribute (element-unwrap element) name*))
 
 ;; element-get-attribute : element? (or/c string? symbol?) -> (or/c #f string?)
 ;;   Read an element attribute.
@@ -198,7 +198,9 @@
 ;; element-get-attribute-names : element? -> vector?
 ;;   Read the names of the element's attributes.
 (define (element-get-attribute-names element)
-  (js-send/value (element-unwrap element) "getAttributeNames" (vector)))
+  (array-like->vector 'element-get-attribute-names
+                      (js-get-attribute-names (element-unwrap element))
+                      values))
 
 ;; dom-token-list-value : dom-token-list? -> (or/c #f string?)
 ;;   Read the class list value.
@@ -211,7 +213,7 @@
 ;; dom-token-list-item : dom-token-list? exact-nonnegative-integer? -> (or/c #f string?)
 ;;   Read the class token at an index.
 (define (dom-token-list-item class-list index)
-  (js-send/value (dom-token-list-unwrap class-list) "item" (vector index)))
+  (js-dom-token-list-item (dom-token-list-unwrap class-list) index))
 
 ;; dom-token-list-contains? : dom-token-list? (or/c string? symbol?) -> boolean?
 ;;   Report whether a token is present in the class list.
@@ -269,7 +271,7 @@
 ;; node-list-item : node-list? exact-nonnegative-integer? -> (or/c #f node?)
 ;;   Read the node at a given index.
 (define (node-list-item node-list index)
-  (node-wrap (js-send/value (node-list-unwrap node-list) "item" (vector index))))
+  (node-wrap (js-node-list-item (node-list-unwrap node-list) index)))
 
 ;; html-collection-length : html-collection? -> exact-nonnegative-integer?
 ;;   Read the number of elements in an HTMLCollection.
@@ -278,20 +280,20 @@
 ;; html-collection-item : html-collection? exact-nonnegative-integer? -> (or/c #f element?)
 ;;   Read the element at a given index.
 (define (html-collection-item collection index)
-  (element-wrap (js-send/value (html-collection-unwrap collection) "item" (vector index))))
+  (element-wrap (js-html-collection-item (html-collection-unwrap collection) index)))
 
 ;; html-collection-named-item : html-collection? (or/c string? symbol?) -> (or/c #f element?)
 ;;   Read the named element, if present.
 (define (html-collection-named-item collection name)
   (define name* (element-stringish->string 'html-collection-named-item name))
-  (element-wrap (js-send/value (html-collection-unwrap collection) "namedItem" (vector name*))))
+  (element-wrap (js-html-collection-named-item (html-collection-unwrap collection) name*)))
 
 ;; element-get-attribute-ns : element? (or/c string? symbol?) (or/c string? symbol?) -> (or/c #f string?)
 ;;   Read a namespaced element attribute.
 (define (element-get-attribute-ns element ns name)
   (define ns* (element-stringish->string 'element-get-attribute-ns ns))
   (define name* (element-stringish->string 'element-get-attribute-ns name))
-  (js-send/value (element-unwrap element) "getAttributeNS" (vector ns* name*)))
+  (js-get-attribute-ns (element-unwrap element) ns* name*))
 
 ;; element-has-attribute-ns? : element? (or/c string? symbol?) (or/c string? symbol?) -> boolean?
 ;;   Report whether an element has a namespaced attribute.
@@ -472,14 +474,14 @@
 ;;   Read the attribute node for a given name.
 (define (element-get-attribute-node element name)
   (define name* (element-stringish->string 'element-get-attribute-node name))
-  (attr-wrap (js-send/value (element-unwrap element) "getAttributeNode" (vector name*))))
+  (attr-wrap (js-get-attribute-node (element-unwrap element) name*)))
 
 ;; element-get-attribute-node-ns : element? (or/c string? symbol?) (or/c string? symbol?) -> (or/c #f attr?)
 ;;   Read the namespaced attribute node for an element.
 (define (element-get-attribute-node-ns element ns name)
   (define ns* (element-stringish->string 'element-get-attribute-node-ns ns))
   (define name* (element-stringish->string 'element-get-attribute-node-ns name))
-  (attr-wrap (js-send/value (element-unwrap element) "getAttributeNodeNS" (vector ns* name*))))
+  (attr-wrap (js-get-attribute-node-ns (element-unwrap element) ns* name*)))
 
 ;; element-set-attribute-node! : element? any/c -> (or/c #f attr?)
 ;;   Attach an attribute node to an element.
@@ -513,7 +515,7 @@
 ;; dom-rect-list-item : dom-rect-list? exact-nonnegative-integer? -> (or/c #f dom-rect?)
 ;;   Read a rectangle at a given index.
 (define (dom-rect-list-item rect-list index)
-  (dom-rect-wrap (js-send/value (dom-rect-list-unwrap rect-list) "item" (vector index))))
+  (dom-rect-wrap (js-dom-rect-list-item (dom-rect-list-unwrap rect-list) index)))
 
 ;; get-client-rects : external? -> dom-rect-list?
 ;;   Read the client rect list as a wrapped DOMRectList.
@@ -703,7 +705,8 @@
   (define name* (element-stringish->string 'toggle-attribute! name))
   (cond
     [(eq? force #f)
-     (js-send/value (element-unwrap element) "toggleAttribute" (vector name*))]
+     (element-i32->boolean
+      (js-toggle-attribute (element-unwrap element) name*))]
     [(procedure? force)
      (element-i32->boolean
       (js-toggle-attribute! (element-unwrap element) name* (if (force) 1 0)))]

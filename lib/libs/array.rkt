@@ -106,6 +106,11 @@
 (define (array->list arr)
   (vector->list (array->vector arr)))
 
+;; array->bytes : any/c -> bytes?
+;;   Convert a JavaScript byte array or typed array into Racket bytes.
+(define (array->bytes arr)
+  (js-array->bytes (array-unwrap arr)))
+
 ;; vector->array : vector? -> array?
 ;;   Convert a Racket vector into a JavaScript array.
 (define (vector->array vec)

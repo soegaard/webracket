@@ -88,16 +88,24 @@
   (define basename (file-name-from-path pathish))
   (and basename (path->string basename)))
 
+;; ffi-filename-stem : path-string? -> (or/c string? #f)
+;;   Return the ffi filename without its .ffi extension.
+(define (ffi-filename-stem ffi-filename)
+  (define basename (ffi-filename-basename ffi-filename))
+  (and basename
+       (path->string
+        (path-replace-extension (string->path basename) #""))))
+
 ;; bundle->suppressed-include-lib-names : string? -> (listof symbol?)
 ;;   Return include-lib names that are already covered by an explicit ffi bundle.
 ;;   This keeps umbrella bundles like `dom.ffi` from re-adding the sublibs
 ;;   they already include transitively.
 (define bundle->suppressed-include-lib-names-table
-  '(("dom.ffi"    . (array canvas document domrect element event image media performance window))
-    ("canvas.ffi" . (array media))))
+  '(("dom"    . (array canvas document domrect element event image media performance window))
+    ("canvas" . (array media))))
 
 (define (bundle->suppressed-include-lib-names ffi-filename)
-  (define basename (ffi-filename-basename ffi-filename))
+  (define basename (ffi-filename-stem ffi-filename))
   (define maybe (and basename (assoc basename bundle->suppressed-include-lib-names-table)))
   (if maybe
       (cdr maybe)
@@ -136,8 +144,8 @@
 (define (default-ffi-files ffi-files)
   (define suppress-default?
     (for/or ([ffi-filename ffi-files])
-      (member (ffi-filename-basename ffi-filename)
-              '("array.ffi" "dom.ffi" "standard.ffi"))))
+      (member (ffi-filename-stem ffi-filename)
+              '("array" "canvas" "dom" "standard"))))
   (if suppress-default?
       '()
       (list "standard.ffi")))
