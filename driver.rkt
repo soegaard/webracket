@@ -58,7 +58,7 @@
 
 ;; include-lib->ffi-filename : symbol? -> (or/c path-string? #f)
 ;;   Return the ffi bundle corresponding to a public include-lib library name.
-(define include-lib->ffi-filename-table
+    (define include-lib->ffi-filename-table
   '((array      . "array.ffi")
     (audio      . "audio.ffi")
     (canvas     . "canvas.ffi")
@@ -71,6 +71,7 @@
     (image      . "image.ffi")
     (iterator   . "iterator.ffi")
     (media      . "media.ffi")
+    (query      . "dom.ffi")
     (performance . "performance.ffi")
     (websocket  . "websocket.ffi")
     (window     . "window.ffi")))

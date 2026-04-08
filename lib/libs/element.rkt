@@ -266,7 +266,8 @@
 
 ;; node-list-length : node-list? -> exact-nonnegative-integer?
 ;;   Read the number of nodes in a NodeList.
-(define-element-getter node-list-length js-node-list-length)
+(define (node-list-length node-list)
+  (js-node-list-length (node-list-unwrap node-list)))
 
 ;; node-list-item : node-list? exact-nonnegative-integer? -> (or/c #f dom-node?)
 ;;   Read the node at a given index.

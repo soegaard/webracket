@@ -33,6 +33,11 @@ Array wrapper tests
 
 - `test-array.rkt` for the standalone `array` wrapper
 
+Query wrapper tests
+-------------------
+
+- `test-query.rkt` for the browser-side `query` wrapper
+
 To run one of the DOM wrapper tests from `test/`, use the same harness as the
 other browser-facing tests. For example:
 
@@ -41,6 +46,8 @@ other browser-facing tests. For example:
 `racket -l errortrace -t ../webracket.rkt -- --ffi ../ffi/standard.ffi --ffi ../ffi/dom.ffi -r test-dom-image.rkt`
 
 `racket -l errortrace -t ../webracket.rkt -- --ffi ../ffi/standard.ffi --ffi ../ffi/dom.ffi -r test-dom-facade.rkt`
+
+`racket -l errortrace -t ../webracket.rkt -- --browser test-query.rkt`
 
 To run the whole DOM browser suite from `test/`, use:
 
