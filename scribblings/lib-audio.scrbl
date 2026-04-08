@@ -36,8 +36,6 @@ wrapper converts symbols to their string names. Optional arguments use
 
 The @racket[audio-context-listener] result is wrapped as an
 @racket[audio-listener] value. The raw listener accessor is listed in
-the @seclink["raw-accessors"]{Raw Accessors} appendix.
-
 @section{Audio Quick Start}
 
 To use the audio API, create a context, create a source node, connect it
