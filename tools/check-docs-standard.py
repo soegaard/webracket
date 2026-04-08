@@ -43,6 +43,7 @@ class DocCheckConfig:
     legacy_section_heading_pattern: str | None = None
     require_table_example_use_when: bool = False
     require_index_coverage: bool = False
+    strict_ffi_coverage: bool = True
     required_function_table_columns: tuple[str, ...] = ()
     allowed_url_prefixes: tuple[str, ...] = ("https://developer.mozilla.org/",)
 
@@ -68,6 +69,7 @@ CONFIGS: tuple[DocCheckConfig, ...] = (
         legacy_section_heading_pattern=None,
         require_table_example_use_when=True,
         require_index_coverage=False,
+        strict_ffi_coverage=False,
         required_function_table_columns=(
             "Side effects?",
             "Callback?",
@@ -142,6 +144,24 @@ CONFIGS: tuple[DocCheckConfig, ...] = (
 
 def extract_ffi_functions(text: str) -> list[str]:
     return re.findall(rf"^\(define-foreign\s+({FN_PATTERN})", text, flags=re.MULTILINE)
+
+
+def extract_ffi_functions_recursive(path: Path, visited: set[Path] | None = None) -> list[str]:
+    if visited is None:
+        visited = set()
+
+    real_path = path.resolve()
+    if real_path in visited:
+        return []
+    visited.add(real_path)
+
+    text = real_path.read_text(encoding="utf-8")
+    funcs = extract_ffi_functions(text)
+
+    for included in re.findall(r'^\(include-ffi\s+"([^"]+)"\s*\)\s*$', text, flags=re.MULTILINE):
+        funcs.extend(extract_ffi_functions_recursive(real_path.parent / included, visited))
+
+    return funcs
 
 
 def extract_doc_table_rows(text: str) -> list[tuple[str, str]]:
@@ -266,7 +286,7 @@ def run_check(cfg: DocCheckConfig) -> tuple[list[str], tuple[int, int, int]]:
     doc_text = cfg.doc_path.read_text(encoding="utf-8")
     ffi_text = cfg.ffi_path.read_text(encoding="utf-8")
 
-    ffi_funcs = extract_ffi_functions(ffi_text)
+    ffi_funcs = extract_ffi_functions_recursive(cfg.ffi_path)
     ffi_set = set(ffi_funcs)
 
     rows = extract_doc_table_rows(doc_text)
@@ -359,13 +379,16 @@ def run_check(cfg: DocCheckConfig) -> tuple[list[str], tuple[int, int, int]]:
     if unknown:
         errors.append(f"[{cfg.label}] documented table functions missing in {cfg.ffi_path.name}: {unknown}")
 
-    # Docs table should cover all non-legacy ffi functions.
-    missing = sorted(expected_doc_set - doc_set)
-    extra = sorted(doc_set - expected_doc_set)
-    if missing:
-        errors.append(f"[{cfg.label}] ffi functions missing from docs tables (excluding legacy): {missing}")
-    if extra:
-        errors.append(f"[{cfg.label}] unexpected functions in docs tables: {extra}")
+    # Some docs files are umbrella overviews rather than exhaustive lists.
+    # For those, keep the row/link sanity checks but skip the exhaustive
+    # coverage comparison against the recursive ffi surface.
+    if cfg.strict_ffi_coverage:
+        missing = sorted(expected_doc_set - doc_set)
+        extra = sorted(doc_set - expected_doc_set)
+        if missing:
+            errors.append(f"[{cfg.label}] ffi functions missing from docs tables (excluding legacy): {missing}")
+        if extra:
+            errors.append(f"[{cfg.label}] unexpected functions in docs tables: {extra}")
 
     coverage = extract_coverage_count(doc_text, cfg.coverage_patterns)
     if coverage is None:
@@ -376,7 +399,7 @@ def run_check(cfg: DocCheckConfig) -> tuple[list[str], tuple[int, int, int]]:
                 f"[{cfg.label}] coverage count mismatch: docs says {coverage}, "
                 f"table rows are {len(doc_set)}"
             )
-        if coverage != len(expected_doc_set):
+        if cfg.strict_ffi_coverage and coverage != len(expected_doc_set):
             errors.append(
                 f"[{cfg.label}] coverage count mismatch against {cfg.ffi_path}: "
                 f"expected {len(expected_doc_set)} "
