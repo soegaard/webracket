@@ -22,7 +22,13 @@ files in this folder. This happens in `stdlib.rkt` which starts:
 The file `shared-library-structs.rkt` is included first so shared
 wrapper structs like `element` and `dom-rect` are available to later
 stdlib files and to the public DOM wrapper libraries without any
-compiler changes.
+compiler changes. It is a special shared-helper file rather than a
+normal stdlib primitive file.
+
+When a docs page needs to link to a shared appendix or section, give
+that target an explicit Scribble tag with `#:tag`. This keeps the
+cross references stable and avoids undefined-tag warnings in the
+rendered manual.
     
 Note that `stdlib-for-browser.rkt` includes `stdlib.rkt` and `browser.rkt`.
 The file `browser.rkt` is only used when the target is the browser.

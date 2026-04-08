@@ -56,11 +56,24 @@
              (~a "ffi file not found: " ffi-filename)))
     resolved))
 
+;; default-ffi-files : (listof path-string?) -> (listof path-string?)
+;;   Return the default FFI file that is always loaded unless the caller
+;;   already supplied the bundled Array FFI file.
+(define (default-ffi-files ffi-files)
+  (define array-ffi?
+    (for/or ([ffi-filename ffi-files])
+      (regexp-match? #rx"(^|/)array\\.ffi$" (~a ffi-filename))))
+  (if array-ffi?
+      '()
+      (list (resolve-ffi-filename "ffi/standard.ffi"))))
+
 ;; list-available-primitives : [#:ffi-files (listof path-string?)] -> (listof symbol?)
 ;;   Return a sorted list of known primitives, optionally extended with FFI primitives.
 (define (list-available-primitives #:ffi-files [ffi-files '()])
   (define resolved-ffi-files
-    (resolve-ffi-files! 'list-available-primitives ffi-files))
+    (remove-duplicates
+     (resolve-ffi-files! 'list-available-primitives
+                         (append (default-ffi-files ffi-files) ffi-files))))
   (define requested-ffi-primitives
     (append*
      (for/list ([ffi-filename resolved-ffi-files])
@@ -115,7 +128,10 @@
   
   ; 0. Handle ffi-files
   (define t-ffi-setup-start  (now-ms))
-  (define resolved-ffi-files (resolve-ffi-files! 'drive-compilation ffi-files))
+  (define resolved-ffi-files
+    (remove-duplicates
+     (resolve-ffi-files! 'drive-compilation
+                         (append (default-ffi-files ffi-files) ffi-files))))
 
   (define ffi-foreigns  '()) ; list of `foreign` structures
   (define ffi-imports   '()) ; list of wat
