@@ -9,7 +9,7 @@ mkdir -p generated
 
 BASENAME="audio-buffer-playback"
 
-racket "$ROOT_DIR/webracket.rkt" --browser --ffi dom --ffi standard --ffi js --ffi audio "$BASENAME.rkt"
+racket "$ROOT_DIR/webracket.rkt" --browser --ffi dom --ffi audio "$BASENAME.rkt"
 
 for ext in html js wasm wasm.map.sexp wat; do
   src="$BASENAME.$ext"
