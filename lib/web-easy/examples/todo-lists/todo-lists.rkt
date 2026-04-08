@@ -85,7 +85,8 @@
                         (if (= (todo-id entry) id)
                             (set-todo-done entry done?)
                             entry))
-                      todos))))
+                      todos)))
+  (void))
 
 ;; mark-all-done! : -> void?
 ;;   Mark every todo as done.
@@ -94,7 +95,8 @@
                (lambda (todos)
                  (map (lambda (entry)
                         (set-todo-done entry #t))
-                      todos))))
+                      todos)))
+  (void))
 
 ;; add-todo! : -> void?
 ;;   Append a new unchecked todo from draft text when non-empty.

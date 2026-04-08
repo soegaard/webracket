@@ -83,6 +83,14 @@
    touch-list?
    touch?
    event-type
+   message-event-data
+   message-event-origin
+   message-event-last-event-id
+   message-event-source
+   message-event-ports
+   close-event-was-clean
+   close-event-code
+   close-event-reason
    event-target
    event-current-target
    prevent-default!
