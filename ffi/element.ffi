@@ -240,14 +240,14 @@
   #:name   "text-content"
   #:doc    "Returns the text content."
   #:mdn    "Element/textContent"
-  (-> (extern) (value)))
+  (-> (extern) (string)))
 
 (define-foreign js-set-element-text-content!
   #:module "element"
   #:name   "set-text-content!"
   #:doc    "Sets the text content."
   #:mdn    "Element/textContent"
-  (-> (extern value) ()))
+  (-> (extern string) ()))
 
 (define-foreign js-element-shadow-root
   #:module "element"

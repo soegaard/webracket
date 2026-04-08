@@ -6,6 +6,7 @@
 
 (include-lib document)
 (include-lib element)
+(require-lib query-chain)
 
 ;; safe-list-ref : (listof any/c) exact-nonnegative-integer? -> (or/c #f any/c)
 ;;   Return the list element at i when it is in range, otherwise #f.
@@ -78,7 +79,9 @@
   (define xs ($selection-elements sel))
   (cond
     [(vector? xs)    (safe-vector-ref xs i)]
-    [(dom-node-list? xs) (node-list-item xs i)]
+    [(dom-node-list? xs)
+     (define node (node-list-item xs i))
+     (and node (element-wrap (dom-node-raw node)))]
     [else
      (error '$ref
             "internal error: unexpected elements payload: ~a"
@@ -98,8 +101,9 @@
   (cond
     [(vector? xs)    xs]
     [(dom-node-list? xs)
-     (define external-array (js-array-from (dom-node-list-raw xs) (void) (void)))
-     (js-send external-array "slice" (vector))]
+     (define n (node-list-length xs))
+     (for/vector #:length n ([i (in-range n)])
+       ($ref sel i))]
     [else
      (error '$selection->vector
             "internal error: unexpected elements payload: ~a"
