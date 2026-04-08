@@ -3,7 +3,7 @@
 @(require "browser-api-docs.rkt"
           (for-label (lib "scribblings/console-labels.rkt" "webracket")))
 
-@section{Console}
+@title{Console}
 @declare-exporting[(lib "scribblings/console-labels.rkt" "webracket")]
 
 The browser @racket[console] object exposes the standard developer console
@@ -13,7 +13,7 @@ This page documents the raw @racket[js-console-*] bindings from
 @tt{ffi/console.ffi}. The checked @racket[console-*] wrappers are
 documented separately in the @racketid[console] library chapter.
 
-@subsection{Low-Level FFI Surface: Console}
+@section{Low-Level FFI Surface: Console}
 
 These bindings follow the browser API directly. They are useful when you
 want to work with the JavaScript object model as-is, or when you are
@@ -25,7 +25,7 @@ value, typically a vector.
 Methods with an optional label or timer name also use a packed single
 value when the label is present.
 
-@subsubsection{Examples}
+@subsection{Examples}
 
 @racketblock[
 (code:comment "A single raw call that logs two values.")

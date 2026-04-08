@@ -45,7 +45,7 @@ be taken when calling invoking JavaScript methods dynamically.
 Let's begin with the conventions for return value conversion.
 
 
-@section{Conversion of Return Values}
+@subsection{Conversion of Return Values}
 
 The @racket[value] return convention means "use the normal bridge
 conversion". This convention is also used for @racket[js-send].

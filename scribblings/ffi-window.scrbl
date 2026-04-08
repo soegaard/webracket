@@ -4,7 +4,7 @@
           (lib "scribblings/ffi-window-labels.rkt" "webracket")
           (for-label (lib "scribblings/ffi-window-labels.rkt" "webracket")))
 
-@section{Window}
+@title{Window}
 @declare-exporting[(lib "scribblings/ffi-window-labels.rkt" "webracket")]
 
 The Window API is the browser entry point for dialogs, timers, scrolling,

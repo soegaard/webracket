@@ -4,7 +4,7 @@
           (lib "scribblings/ffi-canvas-labels.rkt" "webracket")
           (for-label (lib "scribblings/ffi-canvas-labels.rkt" "webracket")))
 
-@section{Canvas}
+@title{Canvas}
 @declare-exporting[(lib "scribblings/ffi-canvas-labels.rkt" "webracket")]
 
 This page documents the low-level @racket[js-canvas-*] and

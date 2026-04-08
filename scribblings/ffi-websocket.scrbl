@@ -3,7 +3,7 @@
 @(require "browser-api-docs.rkt"
           (for-label (lib "scribblings/ffi-websocket-labels.rkt" "webracket")))
 
-@section{WebSocket}
+@title{WebSocket}
 @declare-exporting[(lib "scribblings/ffi-websocket-labels.rkt" "webracket")]
 
 WebSocket is the browser API for keeping a persistent, two-way
@@ -16,7 +16,7 @@ This page documents the low-level @racket[js-websocket-*] bindings from
 @tt{ffi/websocket.ffi}. The higher-level checked wrapper library is
 documented separately in the @racketid[websocket] library chapter.
 
-@subsection{Low-Level FFI Surface: WebSocket}
+@section{Low-Level FFI Surface: WebSocket}
 
 These bindings follow the browser API directly. They are useful when you
 want to work with the JavaScript object model as-is, or when you are

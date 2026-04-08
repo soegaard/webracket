@@ -3,7 +3,7 @@
 @(require "browser-api-docs.rkt"
           (lib "scribblings/lib-dom-labels.rkt" "webracket"))
 
-@section{The DOM Library}
+@title{The DOM Library}
 @declare-exporting[(lib "ffi/dom.ffi" "webracket")]
 
 The @tt{dom} library brings together the browser-facing libraries for

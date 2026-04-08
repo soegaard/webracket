@@ -4,7 +4,7 @@
           (lib "scribblings/ffi-element-labels.rkt" "webracket")
           (for-label (lib "scribblings/ffi-element-labels.rkt" "webracket")))
 
-@section{Element}
+@title{Element}
 @declare-exporting[(lib "scribblings/ffi-element-labels.rkt" "webracket")]
 
 This page documents the low-level @racket[js-*] bindings for generic DOM

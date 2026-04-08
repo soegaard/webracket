@@ -4,7 +4,7 @@
           (lib "scribblings/ffi-event-labels.rkt" "webracket")
           (for-label (lib "scribblings/ffi-event-labels.rkt" "webracket")))
 
-@section{Event}
+@title{Event}
 @declare-exporting[(lib "scribblings/ffi-event-labels.rkt" "webracket")]
 
 This page documents the low-level @racket[js-event-*] and
