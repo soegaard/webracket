@@ -546,6 +546,76 @@
   #:mdn    "Canvas-Rendering-Context-2D"
   (-> (extern extern) (extern/raw)))
 
+(define-foreign js-canvas-image-data-width
+  #:module "image-data"
+  #:name   "width"
+  #:doc    "Returns the image data width."
+  #:mdn    "ImageData/width"
+  (-> (extern) (u32)))
+
+(define-foreign js-canvas-image-data-height
+  #:module "image-data"
+  #:name   "height"
+  #:doc    "Returns the image data height."
+  #:mdn    "ImageData/height"
+  (-> (extern) (u32)))
+
+(define-foreign js-canvas-image-data-data
+  #:module "image-data"
+  #:name   "data"
+  #:doc    "Returns the image data bytes."
+  #:mdn    "ImageData/data"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-canvas-text-metrics-width
+  #:module "text-metrics"
+  #:name   "width"
+  #:doc    "Returns the measured text width."
+  #:mdn    "TextMetrics/width"
+  (-> (extern) (f64)))
+
+(define-foreign js-canvas-dom-matrix-a
+  #:module "dom-matrix"
+  #:name   "a"
+  #:doc    "Returns the A component."
+  #:mdn    "DOMMatrixReadOnly/a"
+  (-> (extern) (f64)))
+
+(define-foreign js-canvas-dom-matrix-b
+  #:module "dom-matrix"
+  #:name   "b"
+  #:doc    "Returns the B component."
+  #:mdn    "DOMMatrixReadOnly/b"
+  (-> (extern) (f64)))
+
+(define-foreign js-canvas-dom-matrix-c
+  #:module "dom-matrix"
+  #:name   "c"
+  #:doc    "Returns the C component."
+  #:mdn    "DOMMatrixReadOnly/c"
+  (-> (extern) (f64)))
+
+(define-foreign js-canvas-dom-matrix-d
+  #:module "dom-matrix"
+  #:name   "d"
+  #:doc    "Returns the D component."
+  #:mdn    "DOMMatrixReadOnly/d"
+  (-> (extern) (f64)))
+
+(define-foreign js-canvas-dom-matrix-e
+  #:module "dom-matrix"
+  #:name   "e"
+  #:doc    "Returns the E component."
+  #:mdn    "DOMMatrixReadOnly/e"
+  (-> (extern) (f64)))
+
+(define-foreign js-canvas-dom-matrix-f
+  #:module "dom-matrix"
+  #:name   "f"
+  #:doc    "Returns the F component."
+  #:mdn    "DOMMatrixReadOnly/f"
+  (-> (extern) (f64)))
+
 (define-foreign js-canvas2d-create-linear-gradient
   #:module "canvas-rendering-context-2d"
   #:name   "create-linear-gradient"

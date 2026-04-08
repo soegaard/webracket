@@ -16,6 +16,302 @@
 ;;     https://developer.mozilla.org/en-US/docs/Web/API/Element 
                                                               
 
+;; Properties
+
+(define-foreign js-element-class-list
+  #:module "element"
+  #:name   "class-list"
+  #:doc    "Returns the DOMTokenList of class tokens."
+  #:mdn    "Element/classList"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-element-id
+  #:module "element"
+  #:name   "id"
+  #:doc    "Returns the element id."
+  #:mdn    "Element/id"
+  (-> (extern) (string)))
+
+(define-foreign js-set-element-id!
+  #:module "element"
+  #:name   "set-id!"
+  #:doc    "Sets the element id."
+  #:mdn    "Element/id"
+  (-> (extern string) ()))
+
+(define-foreign js-element-class-name
+  #:module "element"
+  #:name   "class-name"
+  #:doc    "Returns the element class name."
+  #:mdn    "Element/className"
+  (-> (extern) (value)))
+
+(define-foreign js-set-element-class-name!
+  #:module "element"
+  #:name   "set-class-name!"
+  #:doc    "Sets the element class name."
+  #:mdn    "Element/className"
+  (-> (extern value) ()))
+
+(define-foreign js-element-tag-name
+  #:module "element"
+  #:name   "tag-name"
+  #:doc    "Returns the element tag name."
+  #:mdn    "Element/tagName"
+  (-> (extern) (string)))
+
+(define-foreign js-element-local-name
+  #:module "element"
+  #:name   "local-name"
+  #:doc    "Returns the element local name."
+  #:mdn    "Element/localName"
+  (-> (extern) (string)))
+
+(define-foreign js-element-namespace-uri
+  #:module "element"
+  #:name   "namespace-uri"
+  #:doc    "Returns the element namespace URI."
+  #:mdn    "Element/namespaceURI"
+  (-> (extern) (value)))
+
+(define-foreign js-element-prefix
+  #:module "element"
+  #:name   "prefix"
+  #:doc    "Returns the element namespace prefix."
+  #:mdn    "Element/prefix"
+  (-> (extern) (value)))
+
+(define-foreign js-element-is-connected
+  #:module "element"
+  #:name   "is-connected"
+  #:doc    "Reports whether the element is connected."
+  #:mdn    "Element/isConnected"
+  (-> (extern) (boolean)))
+
+(define-foreign js-element-children
+  #:module "element"
+  #:name   "children"
+  #:doc    "Returns the child elements collection."
+  #:mdn    "Element/children"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-element-scroll-top
+  #:module "element"
+  #:name   "scroll-top"
+  #:doc    "Returns the vertical scroll offset."
+  #:mdn    "Element/scrollTop"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-element-scroll-top!
+  #:module "element"
+  #:name   "set-scroll-top!"
+  #:doc    "Sets the vertical scroll offset."
+  #:mdn    "Element/scrollTop"
+  (-> (extern f64) ()))
+
+(define-foreign js-element-scroll-left
+  #:module "element"
+  #:name   "scroll-left"
+  #:doc    "Returns the horizontal scroll offset."
+  #:mdn    "Element/scrollLeft"
+  (-> (extern) (f64)))
+
+(define-foreign js-set-element-scroll-left!
+  #:module "element"
+  #:name   "set-scroll-left!"
+  #:doc    "Sets the horizontal scroll offset."
+  #:mdn    "Element/scrollLeft"
+  (-> (extern f64) ()))
+
+(define-foreign js-element-scroll-width
+  #:module "element"
+  #:name   "scroll-width"
+  #:doc    "Returns the scroll width."
+  #:mdn    "Element/scrollWidth"
+  (-> (extern) (u32)))
+
+(define-foreign js-element-scroll-height
+  #:module "element"
+  #:name   "scroll-height"
+  #:doc    "Returns the scroll height."
+  #:mdn    "Element/scrollHeight"
+  (-> (extern) (u32)))
+
+(define-foreign js-element-client-width
+  #:module "element"
+  #:name   "client-width"
+  #:doc    "Returns the client width."
+  #:mdn    "Element/clientWidth"
+  (-> (extern) (u32)))
+
+(define-foreign js-element-client-height
+  #:module "element"
+  #:name   "client-height"
+  #:doc    "Returns the client height."
+  #:mdn    "Element/clientHeight"
+  (-> (extern) (u32)))
+
+(define-foreign js-element-offset-width
+  #:module "element"
+  #:name   "offset-width"
+  #:doc    "Returns the offset width."
+  #:mdn    "Element/offsetWidth"
+  (-> (extern) (u32)))
+
+(define-foreign js-element-offset-height
+  #:module "element"
+  #:name   "offset-height"
+  #:doc    "Returns the offset height."
+  #:mdn    "Element/offsetHeight"
+  (-> (extern) (u32)))
+
+(define-foreign js-element-child-element-count
+  #:module "element"
+  #:name   "child-element-count"
+  #:doc    "Returns the number of child elements."
+  #:mdn    "Element/childElementCount"
+  (-> (extern) (u32)))
+
+(define-foreign js-element-first-element-child
+  #:module "element"
+  #:name   "first-element-child"
+  #:doc    "Returns the first child element, if present."
+  #:mdn    "Element/firstElementChild"
+  (-> (extern) (extern)))
+
+(define-foreign js-element-last-element-child
+  #:module "element"
+  #:name   "last-element-child"
+  #:doc    "Returns the last child element, if present."
+  #:mdn    "Element/lastElementChild"
+  (-> (extern) (extern)))
+
+(define-foreign js-element-parent-element
+  #:module "element"
+  #:name   "parent-element"
+  #:doc    "Returns the parent element, if present."
+  #:mdn    "Element/parentElement"
+  (-> (extern) (extern)))
+
+(define-foreign js-element-previous-element-sibling
+  #:module "element"
+  #:name   "previous-element-sibling"
+  #:doc    "Returns the previous element sibling, if present."
+  #:mdn    "Element/previousElementSibling"
+  (-> (extern) (extern)))
+
+(define-foreign js-element-next-element-sibling
+  #:module "element"
+  #:name   "next-element-sibling"
+  #:doc    "Returns the next element sibling, if present."
+  #:mdn    "Element/nextElementSibling"
+  (-> (extern) (extern)))
+
+(define-foreign js-element-inner-html
+  #:module "element"
+  #:name   "inner-html"
+  #:doc    "Returns the inner HTML."
+  #:mdn    "Element/innerHTML"
+  (-> (extern) (string)))
+
+(define-foreign js-set-element-inner-html!
+  #:module "element"
+  #:name   "set-inner-html!"
+  #:doc    "Sets the inner HTML."
+  #:mdn    "Element/innerHTML"
+  (-> (extern string) ()))
+
+(define-foreign js-element-outer-html
+  #:module "element"
+  #:name   "outer-html"
+  #:doc    "Returns the outer HTML."
+  #:mdn    "Element/outerHTML"
+  (-> (extern) (string)))
+
+(define-foreign js-set-element-outer-html!
+  #:module "element"
+  #:name   "set-outer-html!"
+  #:doc    "Sets the outer HTML."
+  #:mdn    "Element/outerHTML"
+  (-> (extern string) ()))
+
+(define-foreign js-element-text-content
+  #:module "element"
+  #:name   "text-content"
+  #:doc    "Returns the text content."
+  #:mdn    "Element/textContent"
+  (-> (extern) (value)))
+
+(define-foreign js-set-element-text-content!
+  #:module "element"
+  #:name   "set-text-content!"
+  #:doc    "Sets the text content."
+  #:mdn    "Element/textContent"
+  (-> (extern value) ()))
+
+(define-foreign js-element-shadow-root
+  #:module "element"
+  #:name   "shadow-root"
+  #:doc    "Returns the shadow root, if present."
+  #:mdn    "Element/shadowRoot"
+  (-> (extern) (extern)))
+
+(define-foreign js-dom-token-list-value
+  #:module "element"
+  #:name   "dom-token-list-value"
+  #:doc    "Returns the token list value."
+  #:mdn    "DOMTokenList/value"
+  (-> (extern) (string)))
+
+(define-foreign js-dom-token-list-length
+  #:module "element"
+  #:name   "dom-token-list-length"
+  #:doc    "Returns the number of tokens."
+  #:mdn    "DOMTokenList/length"
+  (-> (extern) (u32)))
+
+(define-foreign js-node-list-length
+  #:module "element"
+  #:name   "node-list-length"
+  #:doc    "Returns the number of nodes."
+  #:mdn    "NodeList/length"
+  (-> (extern) (u32)))
+
+(define-foreign js-html-collection-length
+  #:module "element"
+  #:name   "html-collection-length"
+  #:doc    "Returns the number of elements."
+  #:mdn    "HTMLCollection/length"
+  (-> (extern) (u32)))
+
+(define-foreign js-shadow-root-host
+  #:module "element"
+  #:name   "shadow-root-host"
+  #:doc    "Returns the host element."
+  #:mdn    "ShadowRoot/host"
+  (-> (extern) (extern/raw)))
+
+(define-foreign js-shadow-root-mode
+  #:module "element"
+  #:name   "shadow-root-mode"
+  #:doc    "Returns the shadow root mode."
+  #:mdn    "ShadowRoot/mode"
+  (-> (extern) (string)))
+
+(define-foreign js-shadow-root-delegates-focus
+  #:module "element"
+  #:name   "shadow-root-delegates-focus"
+  #:doc    "Reports whether the shadow root delegates focus."
+  #:mdn    "ShadowRoot/delegatesFocus"
+  (-> (extern) (boolean)))
+
+(define-foreign js-dom-rect-list-length
+  #:module "element"
+  #:name   "dom-rect-list-length"
+  #:doc    "Returns the number of rectangles."
+  #:mdn    "DOMRectList/length"
+  (-> (extern) (u32)))
+
 (define-foreign js-append-child!
   #:module "element"
   #:name   "append-child!"
