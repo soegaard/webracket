@@ -2,7 +2,8 @@
 
 ## Chapter 1 — Introduction
 
-This document describes the browser DOM FFI exported by `ffi/dom.ffi` in WebRacket.
+This document is an umbrella reference for the browser DOM FFI exported by
+`ffi/dom.ffi` in WebRacket.
 The recommended Rackety entry point is `include-lib dom`, which reexports the
 family wrappers for the DOM surface.
 
@@ -11,6 +12,7 @@ What this API gives you:
 - Event construction and listener wiring
 - Canvas 2D drawing bindings
 - HTML media and image bindings
+- Representative lower-level helpers that support those wrapper families
 
 Assumption in examples: the program is compiled with `--ffi dom`.
 
@@ -782,5 +784,9 @@ old-role
 - `canvas-rendering-context-2d`: 105 functions
 - `media`: 58 functions
 - `image`: 36 functions
+
+This page is an umbrella overview, so the coverage count tracks the documented
+rows on this page rather than every transitive binding reachable from
+`ffi/dom.ffi`.
 
 Deprecated forms that are commented out in `ffi/dom.ffi` are intentionally excluded.
