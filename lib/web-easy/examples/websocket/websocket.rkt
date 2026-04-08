@@ -60,7 +60,7 @@
   (set! message-handler
         (lambda (evt)
           (when (active-socket? ws)
-            (define data (js-ref evt "data"))
+            (define data (js-message-event-data evt))
             (append-log! (format "received: ~a" data))
             (sync-socket-fields! ws))
           (void)))
