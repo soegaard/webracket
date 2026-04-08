@@ -3,7 +3,7 @@
 (require racket/contract/base)
 
 (provide
-  array-is-array?
+  (struct-out array)
   array-from
   array-from-async
   array-of
@@ -36,7 +36,8 @@
   array-with
   (for-label (all-defined-out)))
 
-(define array-is-array? any/c)
+(struct array (raw) #:transparent)
+
 (define array-from any/c)
 (define array-from-async any/c)
 (define array-of any/c)

@@ -241,7 +241,8 @@
                   ))
 (provide          for  for/list  for/vector  for/sum  for/fold  for/or  for/and  for/first
                   for* for*/list for*/vector for*/sum for*/fold for*/or for*/and for*/first
-                  in-list in-vector in-range in-naturals in-string)
+                  in-list in-vector in-range in-naturals in-string
+                  )
 
 ;; 3.19 Continuations marks
 ;; (require (only-in racket/base with-continuation-mark))

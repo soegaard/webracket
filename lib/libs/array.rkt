@@ -41,13 +41,10 @@
 (define (array-items->vector items)
   (list->vector (map array-unwrap items)))
 
-;; array-is-array? : any/c -> boolean?
-;;   Report whether a value is a JavaScript Array.
-(define (array-is-array? value)
-  (not (zero? (js-array-is-array (array-unwrap value)))))
-
-;; array-from : any/c [any/c #f] [any/c #f] -> array?
+;; array-from : any/c [(or/c procedure? external?) #f] [any/c #f] -> array?
 ;;   Build an array from an iterable or array-like value.
+;;   When map-function is supplied, it is called with each element and its
+;;   index; this-arg becomes the JavaScript this value during those calls.
 (define (array-from source [map-function #f] [this-arg #f])
   (define source* (array-unwrap source))
   (cond
@@ -59,8 +56,10 @@
      (array-wrap (js-send/extern (js-var "Array") "from"
                                  (vector source* map-function (array-unwrap this-arg))))]))
 
-;; array-from-async : any/c [any/c #f] [any/c #f] -> array?
+;; array-from-async : any/c [(or/c procedure? external?) #f] [any/c #f] -> array?
 ;;   Build an array from an async iterable or array-like value.
+;;   When map-function is supplied, it is called with each element and its
+;;   index; this-arg becomes the JavaScript this value during those calls.
 (define (array-from-async source [map-function #f] [this-arg #f])
   (define source* (array-unwrap source))
   (cond
@@ -131,6 +130,7 @@
 
 ;; array-slice : any/c [any/c #f] [any/c #f] -> array?
 ;;   Return a sliced copy of the array.
+;;   start and end are forwarded to JavaScript's slice method unchanged.
 (define (array-slice arr [start #f] [end #f])
   (define arr* (array-unwrap arr))
   (cond
@@ -148,6 +148,7 @@
 
 ;; array-copy-within! : any/c exact-integer? exact-integer? [any/c #f] -> array?
 ;;   Copy a slice of the array within the array itself.
+;;   The optional end index is forwarded to JavaScript unchanged.
 (define (array-copy-within! arr target start [end #f])
   (define arr* (array-unwrap arr))
   (if (eq? end #f)
@@ -156,6 +157,7 @@
 
 ;; array-fill! : any/c any/c [any/c #f] [any/c #f] -> array?
 ;;   Fill a range of the array in place.
+;;   start and end are forwarded to JavaScript's fill method unchanged.
 (define (array-fill! arr value [start #f] [end #f])
   (define arr* (array-unwrap arr))
   (cond
@@ -186,8 +188,10 @@
 (define (array-shift arr)
   (js-send/value (array-unwrap arr) "shift" (vector)))
 
-;; array-sort! : any/c [any/c #f] -> array?
+;; array-sort! : any/c [(or/c procedure? external?) #f] -> array?
 ;;   Sort the array in place.
+;;   When compare-function is supplied, it is called with two elements and
+;;   should return a negative, zero, or positive value.
 (define (array-sort! arr [compare-function #f])
   (define arr* (array-unwrap arr))
   (if (eq? compare-function #f)
@@ -220,6 +224,7 @@
 
 ;; array-flat : any/c [any/c #f] -> array?
 ;;   Flatten one level or an explicit depth.
+;;   depth is forwarded to JavaScript's flat method unchanged.
 (define (array-flat arr [depth #f])
   (define arr* (array-unwrap arr))
   (if (eq? depth #f)
@@ -231,8 +236,10 @@
 (define (array-to-reversed arr)
   (array-wrap (js-array-to-reversed (array-unwrap arr))))
 
-;; array-to-sorted : any/c [any/c #f] -> array?
+;; array-to-sorted : any/c [(or/c procedure? external?) #f] -> array?
 ;;   Return a sorted copy of the array.
+;;   When compare-function is supplied, it is called with two elements and
+;;   should return a negative, zero, or positive value.
 (define (array-to-sorted arr [compare-function #f])
   (define arr* (array-unwrap arr))
   (if (eq? compare-function #f)
@@ -241,6 +248,7 @@
 
 ;; array-to-spliced : any/c exact-integer? exact-integer? any/c ... -> array?
 ;;   Return the result of splicing without mutating the original array.
+;;   start and delete-count are array positions.
 (define (array-to-spliced arr start delete-count . items)
   (array-wrap
    (js-array-to-spliced (array-unwrap arr)
@@ -248,5 +256,6 @@
 
 ;; array-with : any/c exact-integer? any/c -> array?
 ;;   Return a copy of the array with one value replaced.
+;;   index is an array position.
 (define (array-with arr index value)
   (array-wrap (js-array-with (array-unwrap arr) index (array-unwrap value))))
