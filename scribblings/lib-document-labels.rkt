@@ -4,11 +4,11 @@
 
 (provide
   Document
-  (struct-out document)
-  (struct-out node)
-  (struct-out text-node)
-  (struct-out attr)
-  (struct-out selection)
+  (struct-out dom-document)
+  (struct-out dom-node)
+  (struct-out dom-text)
+  (struct-out dom-attr)
+  (struct-out dom-selection)
   document-head
   document-body
   document-element
@@ -40,11 +40,11 @@
 
 (define Document any/c)
 
-(struct document (raw) #:transparent)
-(struct node (raw) #:transparent)
-(struct text-node (raw) #:transparent)
-(struct attr (raw) #:transparent)
-(struct selection (raw) #:transparent)
+(struct dom-document (raw) #:transparent)
+(struct dom-node (raw) #:transparent)
+(struct dom-text (raw) #:transparent)
+(struct dom-attr (raw) #:transparent)
+(struct dom-selection (raw) #:transparent)
 
 (define document-head any/c)
 (define document-body any/c)

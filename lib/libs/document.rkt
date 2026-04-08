@@ -12,14 +12,14 @@
     [(symbol? v) (symbol->string v)]
     [else (raise-argument-error who "(or/c string? symbol?)" v)]))
 
-;; document : external/raw -> document?
+;; dom-document : external/raw -> dom-document?
 ;;   Wrap a browser Document object.
-(struct document (raw) #:transparent)
+(struct dom-document (raw) #:transparent)
 
-;; Document : -> document?
+;; Document : -> dom-document?
 ;;   Read the current document object.
 (define (Document)
-  (document (js-document)))
+  (dom-document (js-document)))
 
 ;; document-head : -> (or/c #f element?)
 ;;   Read the document head element, if present.
@@ -42,53 +42,53 @@
   (define tag* (document-stringish->string 'document-create-element tag))
   (element-wrap (js-create-element tag*)))
 
-;; document-create-attribute : (or/c string? symbol?) -> attr?
+;; document-create-attribute : (or/c string? symbol?) -> dom-attr?
 ;;   Create an attribute node for a name.
 (define (document-create-attribute name)
   (define name* (document-stringish->string 'document-create-attribute name))
-  (attr-wrap (js-create-attribute name*)))
+  (dom-attr-wrap (js-create-attribute name*)))
 
-;; document-create-attribute-ns : (or/c string? symbol?) (or/c string? symbol?) -> attr?
+;; document-create-attribute-ns : (or/c string? symbol?) (or/c string? symbol?) -> dom-attr?
 ;;   Create a namespaced attribute node.
 (define (document-create-attribute-ns ns name)
   (define ns* (document-stringish->string 'document-create-attribute-ns ns))
   (define name* (document-stringish->string 'document-create-attribute-ns name))
-  (attr-wrap (js-create-attribute-ns ns* name*)))
+  (dom-attr-wrap (js-create-attribute-ns ns* name*)))
 
-;; document-create-text-node : (or/c string? symbol?) -> text-node?
+;; document-create-text-node : (or/c string? symbol?) -> dom-text?
 ;;   Create a text node.
 (define (document-create-text-node text)
   (define text* (document-stringish->string 'document-create-text-node text))
-  (text-node-wrap (js-create-text-node text*)))
+  (dom-text-wrap (js-create-text-node text*)))
 
-;; document-create-comment : (or/c string? symbol?) -> node?
+;; document-create-comment : (or/c string? symbol?) -> dom-node?
 ;;   Create a comment node.
 (define (document-create-comment text)
   (define text* (document-stringish->string 'document-create-comment text))
-  (node-wrap (js-create-comment text*)))
+  (dom-node-wrap (js-create-comment text*)))
 
-;; document-create-cdata-section : (or/c string? symbol?) -> node?
+;; document-create-cdata-section : (or/c string? symbol?) -> dom-node?
 ;;   Create a CDATA section node.
 (define (document-create-cdata-section text)
   (define text* (document-stringish->string 'document-create-cdata-section text))
-  (node-wrap (js-create-cdata-section text*)))
+  (dom-node-wrap (js-create-cdata-section text*)))
 
-;; document-create-document-fragment : -> node?
+;; document-create-document-fragment : -> dom-node?
 ;;   Create an empty document fragment.
 (define (document-create-document-fragment)
-  (node-wrap (js-create-document-fragment)))
+  (dom-node-wrap (js-create-document-fragment)))
 
-;; document-create-processing-instruction : (or/c string? symbol?) (or/c string? symbol?) -> node?
+;; document-create-processing-instruction : (or/c string? symbol?) (or/c string? symbol?) -> dom-node?
 ;;   Create a processing instruction node.
 (define (document-create-processing-instruction target data)
   (define target* (document-stringish->string 'document-create-processing-instruction target))
   (define data* (document-stringish->string 'document-create-processing-instruction data))
-  (node-wrap (js-create-processing-instruction target* data*)))
+  (dom-node-wrap (js-create-processing-instruction target* data*)))
 
-;; document-adopt-node : node? -> node?
+;; document-adopt-node : dom-node? -> dom-node?
 ;;   Adopt a node into the current document.
 (define (document-adopt-node node)
-  (node-wrap (js-adopt-node (node-unwrap node))))
+  (dom-node-wrap (js-adopt-node (dom-node-unwrap node))))
 
 ;; document-get-element-by-id : (or/c string? symbol?) -> (or/c #f element?)
 ;;   Look up a single element by id.
@@ -113,10 +113,10 @@
 (define (document-has-focus?)
   (not (zero? (js-has-focus))))
 
-;; document-get-selection : -> (or/c #f selection?)
+;; document-get-selection : -> (or/c #f dom-selection?)
 ;;   Read the current selection.
 (define (document-get-selection)
-  (selection-wrap (js-get-selection)))
+  (dom-selection-wrap (js-get-selection)))
 
 ;; document-close : -> void?
 ;;   Close a document stream.
@@ -124,10 +124,10 @@
   (js-close)
   (void))
 
-;; document-open : -> document?
+;; document-open : -> dom-document?
 ;;   Open a document stream for writing.
 (define (document-open)
-  (document (js-open)))
+  (dom-document (js-open)))
 
 ;; document-element-from-point : real? real? -> (or/c #f element?)
 ;;   Find the topmost element at the given viewport coordinates.

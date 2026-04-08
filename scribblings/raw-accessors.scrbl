@@ -14,7 +14,7 @@ object.
 
 @section{Window Raw Accessor}
 
-@defproc[(window-raw [win any/c]) external/raw]{
+@defproc[(dom-window-raw [win any/c]) external/raw]{
 Returns the wrapped browser Window object.
 }
 
@@ -36,29 +36,29 @@ Returns the wrapped browser CSSStyleDeclaration object.
 
 @section{Document Raw Accessors}
 
-@defproc[(document-raw [doc any/c]) external/raw]{
+@defproc[(dom-document-raw [doc any/c]) external/raw]{
 Returns the wrapped browser Document object.
 }
 
-@defproc[(text-node-raw [node any/c]) external/raw]{
+@defproc[(dom-text-raw [node any/c]) external/raw]{
 Returns the wrapped browser Text node.
 }
 
-@defproc[(node-raw [node any/c]) external/raw]{
+@defproc[(dom-node-raw [node any/c]) external/raw]{
 Returns the wrapped browser Node object.
 }
 
-@defproc[(attr-raw [node any/c]) external/raw]{
+@defproc[(dom-attr-raw [node any/c]) external/raw]{
 Returns the wrapped browser Attr node.
 }
 
-@defproc[(selection-raw [sel any/c]) external/raw]{
+@defproc[(dom-selection-raw [sel any/c]) external/raw]{
 Returns the wrapped browser Selection object.
 }
 
 @section{Element Raw Accessors}
 
-@defproc[(element-raw [elem any/c]) external/raw]{
+@defproc[(dom-element-raw [elem any/c]) external/raw]{
 Returns the wrapped browser Element object.
 }
 
@@ -66,11 +66,11 @@ Returns the wrapped browser Element object.
 Returns the wrapped browser DOMTokenList object.
 }
 
-@defproc[(shadow-root-raw [shadow-root any/c]) external/raw]{
+@defproc[(dom-shadow-root-raw [shadow-root any/c]) external/raw]{
 Returns the wrapped browser ShadowRoot object.
 }
 
-@defproc[(node-list-raw [node-list any/c]) external/raw]{
+@defproc[(dom-node-list-raw [node-list any/c]) external/raw]{
 Returns the wrapped browser NodeList object.
 }
 
@@ -86,11 +86,11 @@ Returns the wrapped browser DOMRectList object.
 Returns the wrapped browser DOMRect object.
 }
 
-@defproc[(computed-style-map-raw [style-map any/c]) external/raw]{
+@defproc[(dom-computed-style-map-raw [style-map any/c]) external/raw]{
 Returns the wrapped browser ComputedStyleMap object.
 }
 
-@defproc[(animation-raw [animation any/c]) external/raw]{
+@defproc[(dom-animation-raw [animation any/c]) external/raw]{
 Returns the wrapped browser Animation object.
 }
 

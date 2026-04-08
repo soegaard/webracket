@@ -80,29 +80,29 @@
                                 behavior))))))
   (js-object (list->vector (map list->vector fields*))))
 
-;; window : external/raw -> window?
+;; dom-window : external/raw -> dom-window?
 ;;   Wrap a browser Window object.
-(struct window (raw) #:transparent)
+(struct dom-window (raw) #:transparent)
 
-;; Window : -> window?
+;; Window : -> dom-window?
 ;;   Read the current window object.
 (define (Window)
-  (window (js-window-window)))
+  (dom-window (js-window-window)))
 
-;; window-wrap-optional : any/c -> (or/c #f window?)
+;; window-wrap-optional : any/c -> (or/c #f dom-window?)
 ;;   Wrap a browser Window-like value when one is present.
 (define (window-wrap-optional value)
   (and (not (eq? value #f))
-       (window value)))
+       (dom-window value)))
 
 ;; window-document-info : external/raw -> window-document-info?
 ;;   Wrap the current document object.
 (struct window-document-info (raw) #:transparent)
 
-;; window-self : -> window?
+;; window-self : -> dom-window?
 ;;   Read the current window via self.
 (define (window-self)
-  (window (js-window-self)))
+  (dom-window (js-window-self)))
 
 ;; window-document : -> window-document-info?
 ;;   Read the document for the current window.
@@ -523,10 +523,10 @@
   (js-window-cancel-idle-callback id)
   (void))
 
-;; window-get-selection : -> (or/c #f selection?)
+;; window-get-selection : -> (or/c #f dom-selection?)
 ;;   Read the current selection object.
 (define (window-get-selection)
-  (selection-wrap (js-window-get-selection)))
+  (dom-selection-wrap (js-window-get-selection)))
 
 ;; window-match-media : (or/c string? symbol?) -> media-query-list?
 ;;   Evaluate a media query.

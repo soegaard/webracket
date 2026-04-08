@@ -4,99 +4,99 @@
 ;;; Shared DOM structs.
 ;;;
 
-;; element : external/raw -> element?
+;; dom-element : external/raw -> dom-element?
 ;;   Wrap a browser Element object.
-(struct element (raw) #:transparent)
+(struct dom-element (raw) #:transparent)
 
 ;; element-wrap : any/c -> any/c
 ;;   Wrap a raw browser Element object, leaving wrapped values alone.
 (define (element-wrap value)
-  (if (or (not value) (element? value))
+  (if (or (not value) (dom-element? value))
       value
-      (element value)))
+      (dom-element value)))
 
 ;; element-unwrap : any/c -> any/c
 ;;   Unwrap an element struct to its raw browser object.
 (define (element-unwrap value)
-  (if (element? value)
-      (element-raw value)
-      (if (text-node? value)
-          (text-node-raw value)
+  (if (dom-element? value)
+      (dom-element-raw value)
+      (if (dom-text? value)
+          (dom-text-raw value)
           value)))
 
-;; text-node : external/raw -> text-node?
+;; dom-text : external/raw -> dom-text?
 ;;   Wrap a browser Text node.
-(struct text-node (raw) #:transparent)
+(struct dom-text (raw) #:transparent)
 
-;; text-node-wrap : any/c -> any/c
+;; dom-text-wrap : any/c -> any/c
 ;;   Wrap a raw browser Text node, leaving wrapped values alone.
-(define (text-node-wrap value)
-  (if (text-node? value)
+(define (dom-text-wrap value)
+  (if (dom-text? value)
       value
-      (text-node value)))
+      (dom-text value)))
 
-;; text-node-unwrap : any/c -> any/c
-;;   Unwrap a text-node struct to its raw browser object.
-(define (text-node-unwrap value)
-  (if (text-node? value)
-      (text-node-raw value)
+;; dom-text-unwrap : any/c -> any/c
+;;   Unwrap a dom-text struct to its raw browser object.
+(define (dom-text-unwrap value)
+  (if (dom-text? value)
+      (dom-text-raw value)
       value))
 
-;; node : external/raw -> node?
+;; dom-node : external/raw -> dom-node?
 ;;   Wrap a browser Node object.
-(struct node (raw) #:transparent)
+(struct dom-node (raw) #:transparent)
 
-;; node-wrap : any/c -> any/c
+;; dom-node-wrap : any/c -> any/c
 ;;   Wrap a raw browser Node object, leaving wrapped values alone.
-(define (node-wrap value)
-  (if (or (not value) (node? value) (element? value) (text-node? value) (attr? value))
+(define (dom-node-wrap value)
+  (if (or (not value) (dom-node? value) (dom-element? value) (dom-text? value) (dom-attr? value))
       value
-      (node value)))
+      (dom-node value)))
 
-;; node-unwrap : any/c -> any/c
-;;   Unwrap a node struct to its raw browser object.
-(define (node-unwrap value)
+;; dom-node-unwrap : any/c -> any/c
+;;   Unwrap a dom-node struct to its raw browser object.
+(define (dom-node-unwrap value)
   (cond
-    [(node? value) (node-raw value)]
-    [(element? value) (element-raw value)]
-    [(text-node? value) (text-node-raw value)]
-    [(attr? value) (attr-raw value)]
+    [(dom-node? value) (dom-node-raw value)]
+    [(dom-element? value) (dom-element-raw value)]
+    [(dom-text? value) (dom-text-raw value)]
+    [(dom-attr? value) (dom-attr-raw value)]
     [else value]))
 
-;; attr : external/raw -> attr?
+;; dom-attr : external/raw -> dom-attr?
 ;;   Wrap a browser Attr node.
-(struct attr (raw) #:transparent)
+(struct dom-attr (raw) #:transparent)
 
-;; attr-wrap : any/c -> any/c
+;; dom-attr-wrap : any/c -> any/c
 ;;   Wrap a raw browser Attr node, leaving wrapped values alone.
-(define (attr-wrap value)
-  (if (or (not value) (attr? value))
+(define (dom-attr-wrap value)
+  (if (or (not value) (dom-attr? value))
       value
-      (attr value)))
+      (dom-attr value)))
 
-;; attr-unwrap : any/c -> any/c
-;;   Unwrap an attr struct to its raw browser object.
-(define (attr-unwrap value)
-  (if (attr? value)
-      (attr-raw value)
+;; dom-attr-unwrap : any/c -> any/c
+;;   Unwrap a dom-attr struct to its raw browser object.
+(define (dom-attr-unwrap value)
+  (if (dom-attr? value)
+      (dom-attr-raw value)
       value))
 
-;; node-list : external/raw -> node-list?
+;; dom-node-list : external/raw -> dom-node-list?
 ;;   Wrap a browser NodeList object.
-(struct node-list (raw) #:transparent)
+(struct dom-node-list (raw) #:transparent)
 
 ;; node-list-wrap : any/c -> any/c
 ;;   Wrap a raw browser NodeList object, leaving wrapped values alone.
 (define (node-list-wrap value)
-  (if (or (not value) (node-list? value))
+  (if (or (not value) (dom-node-list? value))
       value
-      (node-list value)))
+      (dom-node-list value)))
 
 ;; node-list-unwrap : any/c -> any/c
 ;;   Unwrap a node-list struct to its raw browser object.
 (define (node-list-unwrap value)
-  (if (node-list? value)
-      (node-list-raw value)
+  (if (dom-node-list? value)
+      (dom-node-list-raw value)
       value))
 
 ;; html-collection : external/raw -> html-collection?
@@ -135,58 +135,58 @@
       (dom-token-list-raw value)
       value))
 
-;; shadow-root : external/raw -> shadow-root?
+;; dom-shadow-root : external/raw -> dom-shadow-root?
 ;;   Wrap a browser ShadowRoot object.
-(struct shadow-root (raw) #:transparent)
+(struct dom-shadow-root (raw) #:transparent)
 
 ;; shadow-root-wrap : any/c -> any/c
 ;;   Wrap a raw browser ShadowRoot object, leaving wrapped values alone.
 (define (shadow-root-wrap value)
-  (if (or (not value) (shadow-root? value))
+  (if (or (not value) (dom-shadow-root? value))
       value
-      (shadow-root value)))
+      (dom-shadow-root value)))
 
 ;; shadow-root-unwrap : any/c -> any/c
 ;;   Unwrap a shadow-root struct to its raw browser object.
 (define (shadow-root-unwrap value)
-  (if (shadow-root? value)
-      (shadow-root-raw value)
+  (if (dom-shadow-root? value)
+      (dom-shadow-root-raw value)
       value))
 
-;; animation : external/raw -> animation?
+;; dom-animation : external/raw -> dom-animation?
 ;;   Wrap a browser Animation object.
-(struct animation (raw) #:transparent)
+(struct dom-animation (raw) #:transparent)
 
 ;; animation-wrap : any/c -> any/c
 ;;   Wrap a raw browser Animation object, leaving wrapped values alone.
 (define (animation-wrap value)
-  (if (or (not value) (animation? value))
+  (if (or (not value) (dom-animation? value))
       value
-      (animation value)))
+      (dom-animation value)))
 
 ;; animation-unwrap : any/c -> any/c
 ;;   Unwrap an animation struct to its raw browser object.
 (define (animation-unwrap value)
-  (if (animation? value)
-      (animation-raw value)
+  (if (dom-animation? value)
+      (dom-animation-raw value)
       value))
 
-;; computed-style-map : external/raw -> computed-style-map?
+;; dom-computed-style-map : external/raw -> dom-computed-style-map?
 ;;   Wrap a browser ComputedStyleMap object.
-(struct computed-style-map (raw) #:transparent)
+(struct dom-computed-style-map (raw) #:transparent)
 
 ;; computed-style-map-wrap : any/c -> any/c
 ;;   Wrap a raw browser ComputedStyleMap object, leaving wrapped values alone.
 (define (computed-style-map-wrap value)
-  (if (or (not value) (computed-style-map? value))
+  (if (or (not value) (dom-computed-style-map? value))
       value
-      (computed-style-map value)))
+      (dom-computed-style-map value)))
 
 ;; computed-style-map-unwrap : any/c -> any/c
 ;;   Unwrap a computed-style-map struct to its raw browser object.
 (define (computed-style-map-unwrap value)
-  (if (computed-style-map? value)
-      (computed-style-map-raw value)
+  (if (dom-computed-style-map? value)
+      (dom-computed-style-map-raw value)
       value))
 
 ;; audio-listener : external/raw -> audio-listener?
@@ -273,53 +273,53 @@
       (dom-rect-list-raw value)
       value))
 
-;; selection : external/raw -> selection?
+;; dom-selection : external/raw -> dom-selection?
 ;;   Wrap a browser Selection object.
-(struct selection (raw) #:transparent)
+(struct dom-selection (raw) #:transparent)
 
-;; selection-wrap : any/c -> any/c
+;; dom-selection-wrap : any/c -> any/c
 ;;   Wrap a raw browser Selection object, leaving wrapped values alone.
-(define (selection-wrap value)
-  (if (or (not value) (selection? value))
+(define (dom-selection-wrap value)
+  (if (or (not value) (dom-selection? value))
       value
-      (selection value)))
+      (dom-selection value)))
 
-;; selection-unwrap : any/c -> any/c
-;;   Unwrap a selection struct to its raw browser object.
-(define (selection-unwrap value)
-  (if (selection? value)
-      (selection-raw value)
+;; dom-selection-unwrap : any/c -> any/c
+;;   Unwrap a dom-selection struct to its raw browser object.
+(define (dom-selection-unwrap value)
+  (if (dom-selection? value)
+      (dom-selection-raw value)
       value))
 
-;; selection-range-count : selection? -> exact-nonnegative-integer?
+;; selection-range-count : dom-selection? -> exact-nonnegative-integer?
 ;;   Read the number of ranges in the current selection.
 (define (selection-range-count selection)
-  (js-ref (selection-unwrap selection) "rangeCount"))
+  (js-ref (dom-selection-unwrap selection) "rangeCount"))
 
-;; selection-is-collapsed? : selection? -> boolean?
+;; selection-is-collapsed? : dom-selection? -> boolean?
 ;;   Report whether the current selection is collapsed.
 (define (selection-is-collapsed? selection)
-  (not (zero? (js-ref (selection-unwrap selection) "isCollapsed"))))
+  (not (zero? (js-ref (dom-selection-unwrap selection) "isCollapsed"))))
 
-;; selection-anchor-node : selection? -> (or/c #f node?)
+;; selection-anchor-node : dom-selection? -> (or/c #f dom-node?)
 ;;   Read the anchor node for the current selection.
 (define (selection-anchor-node selection)
-  (node-wrap (js-ref/extern (selection-unwrap selection) "anchorNode")))
+  (dom-node-wrap (js-ref/extern (dom-selection-unwrap selection) "anchorNode")))
 
-;; selection-focus-node : selection? -> (or/c #f node?)
+;; selection-focus-node : dom-selection? -> (or/c #f dom-node?)
 ;;   Read the focus node for the current selection.
 (define (selection-focus-node selection)
-  (node-wrap (js-ref/extern (selection-unwrap selection) "focusNode")))
+  (dom-node-wrap (js-ref/extern (dom-selection-unwrap selection) "focusNode")))
 
-;; selection-to-string : selection? -> string?
+;; selection-to-string : dom-selection? -> string?
 ;;   Convert the current selection to text.
 (define (selection-to-string selection)
-  (js-send/value (selection-unwrap selection) "toString" (vector)))
+  (js-send/value (dom-selection-unwrap selection) "toString" (vector)))
 
-;; selection-remove-all-ranges! : selection? -> void?
+;; selection-remove-all-ranges! : dom-selection? -> void?
 ;;   Clear all ranges from the current selection.
 (define (selection-remove-all-ranges! selection)
-  (js-send (selection-unwrap selection) "removeAllRanges" (vector))
+  (js-send (dom-selection-unwrap selection) "removeAllRanges" (vector))
   (void))
 
 ;; media-query-list : external/raw -> media-query-list?

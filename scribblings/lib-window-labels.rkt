@@ -4,7 +4,7 @@
 
 (provide
   Window
-  (struct-out window)
+  (struct-out dom-window)
   (struct-out window-document-info)
   (struct-out window-location-info)
   (struct-out window-custom-elements-info)
@@ -91,7 +91,7 @@
 
 (define Window any/c)
 
-(struct window (raw) #:transparent)
+(struct dom-window (raw) #:transparent)
 (struct window-document-info (raw) #:transparent)
 (struct window-location-info (raw) #:transparent)
 (struct window-custom-elements-info (raw) #:transparent)

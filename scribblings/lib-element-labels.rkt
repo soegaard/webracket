@@ -9,12 +9,17 @@
 
 (provide
   (struct-out element)
+  (struct-out dom-element)
   (struct-out dom-token-list)
   (struct-out shadow-root)
+  (struct-out dom-shadow-root)
   (struct-out node-list)
+  (struct-out dom-node-list)
   (struct-out html-collection)
   (struct-out animation)
+  (struct-out dom-animation)
   (struct-out computed-style-map)
+  (struct-out dom-computed-style-map)
   element-id
   element-set-id!
   element-class-name
@@ -113,12 +118,17 @@
   (for-label (all-defined-out)))
 
 (struct element (raw) #:transparent)
+(struct dom-element (raw) #:transparent)
 (struct dom-token-list (raw) #:transparent)
 (struct shadow-root (raw) #:transparent)
+(struct dom-shadow-root (raw) #:transparent)
 (struct node-list (raw) #:transparent)
+(struct dom-node-list (raw) #:transparent)
 (struct html-collection (raw) #:transparent)
 (struct animation (raw) #:transparent)
+(struct dom-animation (raw) #:transparent)
 (struct computed-style-map (raw) #:transparent)
+(struct dom-computed-style-map (raw) #:transparent)
 
 (define element-id any/c)
 (define element-set-id! any/c)

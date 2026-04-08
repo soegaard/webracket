@@ -115,25 +115,25 @@ Returns the current document object wrapped in a checked struct.
 Returns the current location object wrapped in a checked struct.
 }
 
-@defproc[(window-get-selection) (or/c #f selection?)]{
+@defproc[(window-get-selection) (or/c #f dom-selection?)]{
 @(mdn-bar "Window: getSelection() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Window/getSelection")
-Returns the current selection as a wrapped @racket[selection] value.
+Returns the current selection as a wrapped @racket[dom-selection] value.
 }
 
 @section{Window Values}
 
-@defstruct[window ([raw external/raw])]{
+@defstruct[dom-window ([raw external/raw])]{
 Wraps a browser Window object.
 }
 
-@defproc[(Window) window?]{
+@defproc[(Window) dom-window?]{
 @(mdn-bar "Window"
           "https://developer.mozilla.org/en-US/docs/Web/API/Window")
 Returns the current browser Window object wrapped in a checked struct.
 }
 
-@defproc[(window-self) window?]{
+@defproc[(window-self) dom-window?]{
 @(mdn-bar "Window: self property"
           "https://developer.mozilla.org/en-US/docs/Web/API/Window/self")
 Returns the current browser Window object via @racket[self], wrapped in
@@ -426,7 +426,7 @@ page itself. Symbols are accepted and converted to strings.
                       [target (or/c string? symbol? procedure?) #f]
                       [features (or/c string? symbol? procedure?) #f]
                       [replace (or/c boolean? procedure?) #f])
-         (or/c #f window?)]{
+         (or/c #f dom-window?)]{
 @(mdn-bar "Window: open() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Window/open")
 Opens a new browsing context. The @racket[url], @racket[target], and
@@ -436,7 +436,7 @@ Each optional argument may also be a thunk that takes no arguments and
 returns the matching value: @racket[target] and @racket[features] must
 produce a string or symbol, while @racket[replace] must produce a
 boolean.
-The returned value is wrapped as @racket[window] when the browser opens
+The returned value is wrapped as @racket[dom-window] when the browser opens
 the new context, or @racket[#f] if the popup is blocked. Use @racket[#f]
 to omit an optional argument. If you need a literal @racket[#f] value,
 pass a thunk such as @racket[(lambda () #f)].

@@ -408,7 +408,7 @@ Returns the number of nodes in the NodeList.
 }
 
 @defproc[(node-list-item [node-list node-list?]
-                         [index exact-nonnegative-integer?]) (or/c #f node?)]{
+                         [index exact-nonnegative-integer?]) (or/c #f dom-node?)]{
 @(mdn-bar "NodeList: item() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/NodeList/item")
 Returns the node at the given index, or @racket[#f] if there is none.
@@ -602,8 +602,8 @@ Returns descendant elements with the matching namespaced tag name as a wrapped H
 
 These helpers insert nodes, text, or HTML around an element. When a raw
 @racket[external] is passed as a node, it should be a browser
-@racketid[Node] value. Wrapped @racket[node], @racket[element], and
-@racket[text] values are also accepted.
+@racketid[Node] value. Wrapped @racket[dom-node], @racket[element], and
+@racket[dom-text] values are also accepted.
 
 @defproc[(element-append! [element element?] [child any/c]) void?]{
 @(mdn-bar "Element: append() method"
@@ -724,7 +724,7 @@ Scrolls the element into view. When @racket[#f] is supplied, the browser default
 @section{Element Style and Animation}
 
 These helpers return wrapped browser objects when the browser API does.
-The attribute-node helpers use wrapped browser @racket[attr] values,
+The attribute-node helpers use wrapped browser @racket[dom-attr] values,
 which are created by the document library.
 
 @defstruct[computed-style-map ([raw external/raw])]{
@@ -756,7 +756,7 @@ Starts an animation on the element and returns a wrapped browser animation objec
 }
 
 @defproc[(element-get-attribute-node [element element?]
-                                     [name (or/c string? symbol?)]) (or/c #f attr?)]{
+                                     [name (or/c string? symbol?)]) (or/c #f dom-attr?)]{
 @(mdn-bar "Element: getAttributeNode() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/getAttributeNode")
 Returns the attribute node for the named attribute.
@@ -764,14 +764,14 @@ Returns the attribute node for the named attribute.
 
 @defproc[(element-get-attribute-node-ns [element element?]
                                         [ns (or/c string? symbol?)]
-                                        [name (or/c string? symbol?)]) (or/c #f attr?)]{
+                                        [name (or/c string? symbol?)]) (or/c #f dom-attr?)]{
 @(mdn-bar "Element: getAttributeNodeNS() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/getAttributeNodeNS")
 Returns the namespaced attribute node for the named attribute.
 }
 
 @defproc[(element-set-attribute-node! [element element?]
-                                      [node (or/c attr? external?)]) (or/c #f attr?)]{
+                                      [node (or/c dom-attr? external?)]) (or/c #f dom-attr?)]{
 @(mdn-bar "Element: setAttributeNode() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/setAttributeNode")
 Attaches an attribute node to the element. If a raw @racket[external]
@@ -779,7 +779,7 @@ is passed as the node, it should be a browser @racketid[Attr] value.
 }
 
 @defproc[(element-set-attribute-node-ns! [element element?]
-                                         [node (or/c attr? external?)]) (or/c #f attr?)]{
+                                         [node (or/c dom-attr? external?)]) (or/c #f dom-attr?)]{
 @(mdn-bar "Element: setAttributeNodeNS() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/setAttributeNodeNS")
 Attaches a namespaced attribute node to the element. If a raw
@@ -788,7 +788,7 @@ Attaches a namespaced attribute node to the element. If a raw
 }
 
 @defproc[(element-remove-attribute-node! [element element?]
-                                         [node (or/c attr? external?)]) (or/c #f attr?)]{
+                                         [node (or/c dom-attr? external?)]) (or/c #f dom-attr?)]{
 @(mdn-bar "Element: removeAttributeNode() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/removeAttributeNode")
 Removes an attribute node from the element. If a raw @racket[external]

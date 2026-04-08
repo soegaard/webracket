@@ -6,10 +6,10 @@
 
 (provide
   Window
-  (struct-out window)
-  (struct-out node)
-  (struct-out text-node)
-  (struct-out attr)
+  (struct-out dom-window)
+  (struct-out dom-node)
+  (struct-out dom-text)
+  (struct-out dom-attr)
   (struct-out media-query-list)
   (struct-out css-style-declaration)
   (struct-out media-keys-info)
@@ -19,10 +19,10 @@
   (struct-out video-track)
   (for-label (all-defined-out)))
 
-(struct window (raw) #:transparent)
-(struct node (raw) #:transparent)
-(struct text-node (raw) #:transparent)
-(struct attr (raw) #:transparent)
+(struct dom-window (raw) #:transparent)
+(struct dom-node (raw) #:transparent)
+(struct dom-text (raw) #:transparent)
+(struct dom-attr (raw) #:transparent)
 (struct media-query-list (raw) #:transparent)
 (struct css-style-declaration (raw) #:transparent)
 (struct media-keys-info (raw) #:transparent)

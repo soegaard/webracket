@@ -47,10 +47,10 @@
 (define (element-nodeish->value value)
   (cond
     [(symbol? value) (symbol->string value)]
-    [(node? value) (node-raw value)]
-    [(element? value) (element-raw value)]
-    [(text-node? value) (text-node-raw value)]
-    [(attr? value) (attr-raw value)]
+    [(dom-node? value) (dom-node-raw value)]
+    [(dom-element? value) (dom-element-raw value)]
+    [(dom-text? value) (dom-text-raw value)]
+    [(dom-attr? value) (dom-attr-raw value)]
     [else value]))
 
 ;; element-id : element? -> (or/c #f string?)
@@ -268,10 +268,10 @@
 ;;   Read the number of nodes in a NodeList.
 (define-element-getter node-list-length js-node-list-length)
 
-;; node-list-item : node-list? exact-nonnegative-integer? -> (or/c #f node?)
+;; node-list-item : node-list? exact-nonnegative-integer? -> (or/c #f dom-node?)
 ;;   Read the node at a given index.
 (define (node-list-item node-list index)
-  (node-wrap (js-node-list-item (node-list-unwrap node-list) index)))
+  (dom-node-wrap (js-node-list-item (node-list-unwrap node-list) index)))
 
 ;; html-collection-length : html-collection? -> exact-nonnegative-integer?
 ;;   Read the number of elements in an HTMLCollection.
@@ -470,33 +470,33 @@
                keyframes
                (if (eq? options #f) (js-undefined) options))))
 
-;; element-get-attribute-node : element? (or/c string? symbol?) -> (or/c #f attr?)
+;; element-get-attribute-node : element? (or/c string? symbol?) -> (or/c #f dom-attr?)
 ;;   Read the attribute node for a given name.
 (define (element-get-attribute-node element name)
   (define name* (element-stringish->string 'element-get-attribute-node name))
-  (attr-wrap (js-get-attribute-node (element-unwrap element) name*)))
+  (dom-attr-wrap (js-get-attribute-node (element-unwrap element) name*)))
 
-;; element-get-attribute-node-ns : element? (or/c string? symbol?) (or/c string? symbol?) -> (or/c #f attr?)
+;; element-get-attribute-node-ns : element? (or/c string? symbol?) (or/c string? symbol?) -> (or/c #f dom-attr?)
 ;;   Read the namespaced attribute node for an element.
 (define (element-get-attribute-node-ns element ns name)
   (define ns* (element-stringish->string 'element-get-attribute-node-ns ns))
   (define name* (element-stringish->string 'element-get-attribute-node-ns name))
-  (attr-wrap (js-get-attribute-node-ns (element-unwrap element) ns* name*)))
+  (dom-attr-wrap (js-get-attribute-node-ns (element-unwrap element) ns* name*)))
 
-;; element-set-attribute-node! : element? any/c -> (or/c #f attr?)
+;; element-set-attribute-node! : element? any/c -> (or/c #f dom-attr?)
 ;;   Attach an attribute node to an element.
 (define (element-set-attribute-node! element node)
-  (attr-wrap (js-set-attribute-node! (element-unwrap element) (element-nodeish->value node))))
+  (dom-attr-wrap (js-set-attribute-node! (element-unwrap element) (element-nodeish->value node))))
 
-;; element-set-attribute-node-ns! : element? any/c -> (or/c #f attr?)
+;; element-set-attribute-node-ns! : element? any/c -> (or/c #f dom-attr?)
 ;;   Attach a namespaced attribute node to an element.
 (define (element-set-attribute-node-ns! element node)
-  (attr-wrap (js-set-attribute-node-ns! (element-unwrap element) (element-nodeish->value node))))
+  (dom-attr-wrap (js-set-attribute-node-ns! (element-unwrap element) (element-nodeish->value node))))
 
-;; element-remove-attribute-node! : element? any/c -> (or/c #f attr?)
+;; element-remove-attribute-node! : element? any/c -> (or/c #f dom-attr?)
 ;;   Remove an attribute node from an element.
 (define (element-remove-attribute-node! element node)
-  (attr-wrap (js-remove-attribute-node! (element-unwrap element) (element-nodeish->value node))))
+  (dom-attr-wrap (js-remove-attribute-node! (element-unwrap element) (element-nodeish->value node))))
 
 ;; get-bounding-client-rect : element? -> dom-rect?
 ;;   Read the element bounding box.

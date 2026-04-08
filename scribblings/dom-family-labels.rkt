@@ -7,8 +7,8 @@
 
 (provide
   (all-from-out "dom-core-labels.rkt")
-  (struct-out animation)
-  (struct-out computed-style-map)
+  (struct-out dom-animation)
+  (struct-out dom-computed-style-map)
   (struct-out dom-rect-list)
   (struct-out audio-track-list)
   (struct-out text-track-list)
@@ -19,7 +19,7 @@
   (struct-out video-track)
   (struct-out media-keys-info)
   (struct-out media-source-info)
-  (struct-out element)
+  (struct-out dom-element)
   element-class-list
   element-id
   element-set-id!
@@ -88,8 +88,8 @@
   dom-rect-list-item
   element-set-attribute-ns!
   element-toggle-attribute!
-  animation-raw
-  computed-style-map-raw
+  dom-animation-raw
+  dom-computed-style-map-raw
   element-get-attribute-node
   element-get-attribute-node-ns
   element-set-attribute-node!
@@ -144,9 +144,9 @@
   window-get-computed-style
   window-structured-clone
   Document
-  (struct-out document)
+  (struct-out dom-document)
   (struct-out dom-rect)
-  (struct-out selection)
+  (struct-out dom-selection)
   (struct-out media-stream)
   (struct-out media-error-info)
   (struct-out performance-event-count-map)
@@ -177,7 +177,6 @@
   performance-measure-user-agent-specific-memory
   performance-set-resource-timing-buffer-size
   performance-to-json
-  document
   document-head
   document-body
   document-element
@@ -327,7 +326,7 @@
   image-set-cross-origin!
   (for-label (all-defined-out)))
 
-(struct element (raw) #:transparent)
+(struct dom-element (raw) #:transparent)
 (define window-self any/c)
 (define window-document any/c)
 (struct window-document-info (raw) #:transparent)
@@ -365,12 +364,12 @@
 (define window-get-computed-style any/c)
 (define window-structured-clone any/c)
 (define Document any/c)
-(struct document (raw) #:transparent)
+(struct dom-document (raw) #:transparent)
 (struct dom-token-list (raw) #:transparent)
-(struct shadow-root (raw) #:transparent)
-(struct animation (raw) #:transparent)
-(struct computed-style-map (raw) #:transparent)
-(struct node-list (raw) #:transparent)
+(struct dom-shadow-root (raw) #:transparent)
+(struct dom-animation (raw) #:transparent)
+(struct dom-computed-style-map (raw) #:transparent)
+(struct dom-node-list (raw) #:transparent)
 (struct html-collection (raw) #:transparent)
 (struct dom-rect-list (raw) #:transparent)
 (struct audio-track-list (raw) #:transparent)
@@ -378,7 +377,7 @@
 (struct video-track-list (raw) #:transparent)
 (struct time-ranges (raw) #:transparent)
 (struct dom-rect (raw) #:transparent)
-(struct selection (raw) #:transparent)
+(struct dom-selection (raw) #:transparent)
 (struct media-stream (raw) #:transparent)
 (struct media-error-info (raw) #:transparent)
 (define element-class-list any/c)

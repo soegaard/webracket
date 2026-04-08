@@ -86,11 +86,11 @@ and @racket[document-create-element].
 
 @section{Document Values}
 
-@defstruct[document ([raw external/raw])]{
+@defstruct[dom-document ([raw external/raw])]{
 Wraps a browser Document object.
 }
 
-@defproc[(Document) document?]{
+@defproc[(Document) dom-document?]{
 @(mdn-bar "Document"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document")
 Returns the current browser document wrapped in a checked struct.
@@ -98,71 +98,71 @@ Returns the current browser document wrapped in a checked struct.
 
 @section{Text Node Values}
 
-The text-node helper returns wrapped browser Text values so the document
+The dom-text helper returns wrapped browser Text values so the document
 library can hand back text nodes without exposing a raw browser object.
 
-@defstruct[text-node ([raw external/raw])]{
+@defstruct[dom-text ([raw external/raw])]{
 Wraps a browser Text node.
 }
 
 @section{Node Values}
 
-The document node helpers return wrapped browser Node values for node
+The dom-node helpers return wrapped browser Node values for node
 types that are not already specialized as text, element, or attr.
 
-@defstruct[node ([raw external/raw])]{
+@defstruct[dom-node ([raw external/raw])]{
 Wraps a browser Node object.
 }
 
 @section{Attr Values}
 
-The document attribute helpers return wrapped browser Attr values so
+The dom-attr helpers return wrapped browser Attr values so
 attribute nodes stay on the WebRacket side.
 
-@defstruct[attr ([raw external/raw])]{
+@defstruct[dom-attr ([raw external/raw])]{
 Wraps a browser Attr node.
 }
 
 @section{Selection Values}
 
-The selection helper returns a wrapped browser Selection object so the
+The dom-selection helper returns a wrapped browser Selection object so the
 current selection stays on the WebRacket side.
 
-@defstruct[selection ([raw external/raw])]{
+@defstruct[dom-selection ([raw external/raw])]{
 Wraps a browser Selection object.
 }
 
-@defproc[(selection-range-count [sel selection?]) exact-nonnegative-integer?]{
+@defproc[(selection-range-count [sel dom-selection?]) exact-nonnegative-integer?]{
 @(mdn-bar "Selection: rangeCount property"
           "https://developer.mozilla.org/en-US/docs/Web/API/Selection/rangeCount")
 Returns the number of ranges in the selection.
 }
 
-@defproc[(selection-is-collapsed? [sel selection?]) boolean?]{
+@defproc[(selection-is-collapsed? [sel dom-selection?]) boolean?]{
 @(mdn-bar "Selection: isCollapsed property"
           "https://developer.mozilla.org/en-US/docs/Web/API/Selection/isCollapsed")
 Reports whether the selection is collapsed.
 }
 
-@defproc[(selection-anchor-node [sel selection?]) (or/c #f node?)]{
+@defproc[(selection-anchor-node [sel dom-selection?]) (or/c #f dom-node?)]{
 @(mdn-bar "Selection: anchorNode property"
           "https://developer.mozilla.org/en-US/docs/Web/API/Selection/anchorNode")
 Returns the anchor node for the selection, if there is one.
 }
 
-@defproc[(selection-focus-node [sel selection?]) (or/c #f node?)]{
+@defproc[(selection-focus-node [sel dom-selection?]) (or/c #f dom-node?)]{
 @(mdn-bar "Selection: focusNode property"
           "https://developer.mozilla.org/en-US/docs/Web/API/Selection/focusNode")
 Returns the focus node for the selection, if there is one.
 }
 
-@defproc[(selection-to-string [sel selection?]) string?]{
+@defproc[(selection-to-string [sel dom-selection?]) string?]{
 @(mdn-bar "Selection: toString() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Selection/toString")
 Returns the selected text as a string.
 }
 
-@defproc[(selection-remove-all-ranges! [sel selection?]) void?]{
+@defproc[(selection-remove-all-ranges! [sel dom-selection?]) void?]{
 @(mdn-bar "Selection: removeAllRanges() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Selection/removeAllRanges")
 Removes all ranges from the selection.
@@ -186,51 +186,51 @@ Returns the document head element, if present.
 Creates an element for @racket[tag].
 }
 
-@defproc[(document-create-attribute [name (or/c string? symbol?)]) attr?]{
+@defproc[(document-create-attribute [name (or/c string? symbol?)]) dom-attr?]{
 @(mdn-bar "Document: createAttribute() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/createAttribute")
 Creates a wrapped browser attribute node for @racket[name].
 }
 
 @defproc[(document-create-attribute-ns [ns (or/c string? symbol?)]
-                                       [name (or/c string? symbol?)]) attr?]{
+                                       [name (or/c string? symbol?)]) dom-attr?]{
 @(mdn-bar "Document: createAttributeNS() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/createAttributeNS")
 Creates a wrapped namespaced browser attribute node for @racket[name].
 }
 
-@defproc[(document-create-text-node [text (or/c string? symbol?)]) text-node?]{
+@defproc[(document-create-text-node [text (or/c string? symbol?)]) dom-text?]{
 @(mdn-bar "Document: createTextNode() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/createTextNode")
 Creates a wrapped browser text node for @racket[text].
 }
 
-@defproc[(document-create-comment [text (or/c string? symbol?)]) node?]{
+@defproc[(document-create-comment [text (or/c string? symbol?)]) dom-node?]{
 @(mdn-bar "Document: createComment() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/createComment")
 Creates a wrapped browser comment node for @racket[text].
 }
 
-@defproc[(document-create-cdata-section [text (or/c string? symbol?)]) node?]{
+@defproc[(document-create-cdata-section [text (or/c string? symbol?)]) dom-node?]{
 @(mdn-bar "Document: createCDATASection() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/createCDATASection")
 Creates a wrapped browser CDATA section node for @racket[text].
 }
 
-@defproc[(document-create-document-fragment) node?]{
+@defproc[(document-create-document-fragment) dom-node?]{
 @(mdn-bar "Document: createDocumentFragment() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/createDocumentFragment")
 Creates a wrapped browser document fragment.
 }
 
 @defproc[(document-create-processing-instruction [target (or/c string? symbol?)]
-                                                 [data (or/c string? symbol?)]) node?]{
+                                                 [data (or/c string? symbol?)]) dom-node?]{
 @(mdn-bar "Document: createProcessingInstruction() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/createProcessingInstruction")
 Creates a wrapped browser processing instruction node.
 }
 
-@defproc[(document-adopt-node [node node?]) node?]{
+@defproc[(document-adopt-node [node dom-node?]) dom-node?]{
 @(mdn-bar "Document: adoptNode() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/adoptNode")
 Adopts @racket[node] into the current document and returns the wrapped result.
@@ -254,10 +254,10 @@ Returns the first matching descendant.
 Returns all matching descendants as a wrapped NodeList.
 }
 
-@defproc[(document-get-selection) (or/c #f selection?)]{
+@defproc[(document-get-selection) (or/c #f dom-selection?)]{
 @(mdn-bar "Document: getSelection() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/getSelection")
-Returns the current selection as a wrapped @racket[selection] value.
+Returns the current selection as a wrapped @racket[dom-selection] value.
 }
 
 @defproc[(document-has-focus?) boolean?]{
@@ -278,7 +278,7 @@ Returns the document's root element.
 Closes the document stream.
 }
 
-@defproc[(document-open) document?]{
+@defproc[(document-open) dom-document?]{
 @(mdn-bar "Document: open() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/open")
 Opens a document stream for writing and returns the wrapped document.
