@@ -35,7 +35,8 @@ wrapper converts symbols to their string names. Optional arguments use
 @racket[#f] to mean that the argument is omitted.
 
 The @racket[audio-context-listener] result is wrapped as an
-@racket[audio-listener] value. The raw listener accessor is listed in
+@racket[audio-listener] value. Use @racket[audio-listener-raw] only
+when you need the underlying browser object directly.
 @section{Audio Quick Start}
 
 To use the audio API, create a context, create a source node, connect it

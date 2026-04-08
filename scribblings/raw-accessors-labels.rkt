@@ -5,6 +5,7 @@
 ;; Docs-only fake bindings for raw bridge accessors.
 
 (provide
+  (struct-out array)
   window-raw
   window-document-info-raw
   window-location-info-raw
@@ -29,6 +30,8 @@
   iterator-raw
   websocket-raw
   (for-label (all-defined-out)))
+
+(struct array (raw) #:transparent)
 
 (define window-raw any/c)
 (define window-document-info-raw any/c)

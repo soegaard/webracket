@@ -94,6 +94,12 @@ Returns the wrapped browser ComputedStyleMap object.
 Returns the wrapped browser Animation object.
 }
 
+@section{Array Raw Accessor}
+
+@defproc[(array-raw [arr any/c]) external/raw]{
+Returns the wrapped browser Array object.
+}
+
 @section{Iterator Raw Accessor}
 
 @defproc[(iterator-raw [iter any/c]) external/raw]{

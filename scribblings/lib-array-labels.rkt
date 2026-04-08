@@ -12,6 +12,7 @@
   array-at
   array->vector
   array->list
+  array->bytes
   vector->array
   list->array
   sequence->array
@@ -46,6 +47,7 @@
 (define array-at any/c)
 (define array->vector any/c)
 (define array->list any/c)
+(define array->bytes any/c)
 (define vector->array any/c)
 (define list->array any/c)
 (define sequence->array any/c)

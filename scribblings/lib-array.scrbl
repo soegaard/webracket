@@ -23,6 +23,7 @@ Use @racket[array] when you want to:
   @item{build a JavaScript array from Racket values}
   @item{read array elements or lengths}
   @item{convert a JavaScript array to a vector or list}
+  @item{convert a byte array or typed array to Racket bytes}
   @item{apply the common non-callback Array methods used by WebRacket}
 ]
 
@@ -39,6 +40,8 @@ The expensive direction, from JavaScript arrays into Racket vectors,
 uses a bulk bridge helper. In other words, @racket[array->vector] does
 not walk the array one element at a time through the WebRacket bridge.
 The list conversion @racket[array->list] reuses that vector path.
+The byte conversion @racket[array->bytes] uses the same bulk approach
+for byte arrays and typed arrays.
 
 String-like arguments accept either strings or symbols. Optional
 arguments use @racket[#f] to mean that the argument is omitted.
