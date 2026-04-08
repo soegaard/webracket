@@ -16,8 +16,6 @@ This page documents the low-level @racket[js-websocket-*] bindings from
 @tt{ffi/websocket.ffi}. The higher-level checked wrapper library is
 documented separately in the @racketid[websocket] library chapter.
 
-@section{Low-Level FFI Surface: WebSocket}
-
 These bindings follow the browser API directly. They are useful when you
 want to work with the JavaScript object model as-is, or when you are
 building a higher-level abstraction on top of the raw interop layer.

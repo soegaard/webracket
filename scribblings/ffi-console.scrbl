@@ -13,8 +13,6 @@ This page documents the raw @racket[js-console-*] bindings from
 @tt{ffi/console.ffi}. The checked @racket[console-*] wrappers are
 documented separately in the @racketid[console] library chapter.
 
-@section{Low-Level FFI Surface: Console}
-
 These bindings follow the browser API directly. They are useful when you
 want to work with the JavaScript object model as-is, or when you are
 building a higher-level abstraction on top of the raw interop layer.
@@ -25,7 +23,7 @@ value, typically a vector.
 Methods with an optional label or timer name also use a packed single
 value when the label is present.
 
-@subsection{Examples}
+@section{Examples}
 
 @racketblock[
 (code:comment "A single raw call that logs two values.")
