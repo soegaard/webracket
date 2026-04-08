@@ -50,6 +50,38 @@
   #:mdn    "Performance/now"
   (-> () (f64)))
 
+;; EventCounts properties
+
+(define-foreign js-performance-event-count-map-size
+  #:module "performance-event-count-map"
+  #:name   "size"
+  #:doc    "Returns the number of recorded event types."
+  #:mdn    "EventCounts/size"
+  (-> (extern/raw) (u32)))
+
+;; Performance memory info properties
+
+(define-foreign js-performance-memory-info-js-heap-size-limit
+  #:module "performance-memory-info"
+  #:name   "js-heap-size-limit"
+  #:doc    "Returns the JavaScript heap size limit."
+  #:mdn    "Performance/memory"
+  (-> (extern/raw) (u32)))
+
+(define-foreign js-performance-memory-info-total-js-heap-size
+  #:module "performance-memory-info"
+  #:name   "total-js-heap-size"
+  #:doc    "Returns the total JavaScript heap size."
+  #:mdn    "Performance/memory"
+  (-> (extern/raw) (u32)))
+
+(define-foreign js-performance-memory-info-used-js-heap-size
+  #:module "performance-memory-info"
+  #:name   "used-js-heap-size"
+  #:doc    "Returns the used JavaScript heap size."
+  #:mdn    "Performance/memory"
+  (-> (extern/raw) (u32)))
+
 ;; Methods
 (define-foreign js-performance-clear-marks
   #:module "performance"

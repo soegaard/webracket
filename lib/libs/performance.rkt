@@ -38,7 +38,7 @@
     (raise-argument-error 'performance-event-count-map-size
                           "performance-event-count-map?"
                           counts))
-  (js-ref (performance-event-count-map-raw counts) "size"))
+  (js-performance-event-count-map-size (performance-event-count-map-raw counts)))
 
 ;; performance-event-count-map-entries : performance-event-count-map? -> iterator?
 ;;   Read the iterator of event-count entries.
@@ -137,7 +137,7 @@
     (raise-argument-error 'performance-memory-info-js-heap-size-limit
                           "performance-memory-info?"
                           memory-info))
-  (js-ref (performance-memory-info-raw memory-info) "jsHeapSizeLimit"))
+  (js-performance-memory-info-js-heap-size-limit (performance-memory-info-raw memory-info)))
 
 ;; performance-memory-info-total-js-heap-size : performance-memory-info? -> exact-nonnegative-integer?
 ;;   Read the browser's total JavaScript heap size.
@@ -146,7 +146,7 @@
     (raise-argument-error 'performance-memory-info-total-js-heap-size
                           "performance-memory-info?"
                           memory-info))
-  (js-ref (performance-memory-info-raw memory-info) "totalJSHeapSize"))
+  (js-performance-memory-info-total-js-heap-size (performance-memory-info-raw memory-info)))
 
 ;; performance-memory-info-used-js-heap-size : performance-memory-info? -> exact-nonnegative-integer?
 ;;   Read the browser's used JavaScript heap size.
@@ -155,7 +155,7 @@
     (raise-argument-error 'performance-memory-info-used-js-heap-size
                           "performance-memory-info?"
                           memory-info))
-  (js-ref (performance-memory-info-raw memory-info) "usedJSHeapSize"))
+  (js-performance-memory-info-used-js-heap-size (performance-memory-info-raw memory-info)))
 
 ;; performance-memory : -> (or/c #f performance-memory-info?)
 ;;   Read the browser-specific memory information object.
