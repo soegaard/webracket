@@ -24,7 +24,7 @@ For interop conventions and helper selection, see the `JS interop conventions` s
   - Category: JS interop
   - What happened: using `js-ref` with numeric indices did not behave correctly for some JS arrays or array-likes; some code needed string property keys instead.
   - Why it matters: this is a core boundary issue between Racket values and JS property access.
-  - Future fix area: `js-ref` / property lookup semantics or clearer API docs.
+  - Future fix area: `js-ref` / property lookup semantics or clearer API docs. For recurring wrapper properties, prefer direct bindings instead of the generic property bridge.
 
 - `media-current-time` bridge mismatch
   - Category: JS interop
@@ -41,7 +41,7 @@ For interop conventions and helper selection, see the `JS interop conventions` s
     - `media-set-src-object!` needed direct property assignment to `srcObject`
     - `dom-token-list-value` exposed the need to use the indexed-access helper instead of stringifying numeric indices
   - Why it matters: these were mostly one-off fixes, but they show how easy it is to pick the wrong JS bridge shape on the first pass.
-  - Future fix area: wrapper generation and JS bridge conventions.
+  - Future fix area: wrapper generation and JS bridge conventions. The long-term direction is to use direct bindings for repeated public properties and reserve the generic bridge for rare or dynamic cases.
 
 - Canvas image-data bridge methods
   - Category: JS interop

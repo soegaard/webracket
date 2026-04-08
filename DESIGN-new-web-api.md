@@ -326,6 +326,8 @@ Rules of thumb:
 
 The general rule is: match the helper to the JS shape you actually have. If the value is a named property, use `js-ref`. If it is indexed, use `js-index`. If it is a method call, use `js-send` or one of its typed variants.
 
+When a property access shows up repeatedly in a public wrapper, prefer a dedicated FFI binding over a generic `js-ref` or `js-set!` helper. Keep the generic helpers for one-off shape checks, unusually dynamic code, or cases where the browser object really is being treated as ad hoc JS.
+
 ### 4.7 Use docs-only label modules when Scribble needs fake bindings
 
 If a library chapter shows example code in `@racketblock`, Scribble can
