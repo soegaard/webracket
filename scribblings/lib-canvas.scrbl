@@ -278,7 +278,8 @@ Reads the height of an image buffer.
 
 @defproc[(canvas-image-data-data [data canvas-image-data?]) bytes?]{
 Reads the pixel bytes of an image buffer as a Racket @racket[bytes]
-value.
+value. This accessor uses the bulk byte-array bridge helper rather than
+copying the bytes one element at a time on the WebRacket side.
 }
 
 @defproc[(canvas-text-metrics-width [metrics canvas-text-metrics?]) real?]{
