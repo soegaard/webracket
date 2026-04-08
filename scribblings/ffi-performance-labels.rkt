@@ -11,8 +11,12 @@
 ;; @racketblock examples can link to the low-level FFI entries.
 (provide
   js-performance-event-counts
+  js-performance-event-count-map-size
   js-performance-interaction-count
   js-performance-memory
+  js-performance-memory-info-js-heap-size-limit
+  js-performance-memory-info-total-js-heap-size
+  js-performance-memory-info-used-js-heap-size
   js-performance-time-origin
   js-performance-now
   js-performance-clear-marks
@@ -29,8 +33,12 @@
   (for-label (all-defined-out)))
 
 (define js-performance-event-counts any/c)
+(define js-performance-event-count-map-size any/c)
 (define js-performance-interaction-count any/c)
 (define js-performance-memory any/c)
+(define js-performance-memory-info-js-heap-size-limit any/c)
+(define js-performance-memory-info-total-js-heap-size any/c)
+(define js-performance-memory-info-used-js-heap-size any/c)
 (define js-performance-time-origin any/c)
 (define js-performance-now any/c)
 (define js-performance-clear-marks any/c)

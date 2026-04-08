@@ -1831,6 +1831,14 @@ var imports = {
         'set-resource-timing-buffer-size': ((size) => performance.setResourceTimingBufferSize(size)),
         'to-json':             (() => performance.toJSON())
     } : new Proxy({}, { get() { throw new Error('DOM not available in this environment'); } }),
+    'performance-event-count-map': hasDOM ? {
+        'size':                (list => list.length)
+    } : new Proxy({}, { get() { throw new Error('DOM not available in this environment'); } }),
+    'performance-memory-info': hasDOM ? {
+        'js-heap-size-limit':  (mem => mem.jsHeapSizeLimit),
+        'total-js-heap-size':  (mem => mem.totalJSHeapSize),
+        'used-js-heap-size':   (mem => mem.usedJSHeapSize)
+    } : new Proxy({}, { get() { throw new Error('DOM not available in this environment'); } }),
     'websocket': websocket,
     'audio': audio,
     // Document
@@ -2387,12 +2395,17 @@ var imports = {
         'shadow-root':             (elem => elem.shadowRoot),
         'dom-token-list-value':    (list => list.value),
         'dom-token-list-length':   (list => list.length),
+        'dom-token-list-item':     ((list, index)         => list.item(index)),
         'node-list-length':       (list => list.length),
+        'node-list-item':         ((list, index)         => list.item(index)),
         'html-collection-length': (list => list.length),
+        'html-collection-item':   ((list, index)         => list.item(index)),
+        'html-collection-named-item': ((list, name)      => list.namedItem(from_fasl(name))),
         'shadow-root-host':       (root => root.host),
         'shadow-root-mode':       (root => root.mode),
         'shadow-root-delegates-focus': (root => root.delegatesFocus ? 1 : 0),
         'dom-rect-list-length':   (list => list.length),
+        'dom-rect-list-item':     ((list, index)         => list.item(index)),
         'append-child!':           ((parent, child)          => parent.appendChild(child)),
         'set-attribute!':          ((elem, name, value)      => elem.setAttribute(from_fasl(name), from_fasl(value))),
         'after!':                  ((elem, node)            => elem.after(node)),
@@ -2442,6 +2455,7 @@ var imports = {
         'set-attribute-node-ns!':  ((elem, attr)           => elem.setAttributeNodeNS(attr)),
         'set-pointer-capture!':    ((elem, id)             => elem.setPointerCapture(id)),
         'toggle-attribute!':       ((elem, name, force)    => elem.toggleAttribute(from_fasl(name), !!force) ? 1 : 0),
+        'toggle-attribute':        ((elem, name)           => elem.toggleAttribute(from_fasl(name)) ? 1 : 0),
     } : {
         'class-list'() { throw new Error('DOM not available in this environment'); },
         'id'() { throw new Error('DOM not available in this environment'); },
@@ -2479,12 +2493,17 @@ var imports = {
         'shadow-root'() { throw new Error('DOM not available in this environment'); },
         'dom-token-list-value'() { throw new Error('DOM not available in this environment'); },
         'dom-token-list-length'() { throw new Error('DOM not available in this environment'); },
+        'dom-token-list-item'() { throw new Error('DOM not available in this environment'); },
         'node-list-length'() { throw new Error('DOM not available in this environment'); },
+        'node-list-item'() { throw new Error('DOM not available in this environment'); },
         'html-collection-length'() { throw new Error('DOM not available in this environment'); },
+        'html-collection-item'() { throw new Error('DOM not available in this environment'); },
+        'html-collection-named-item'() { throw new Error('DOM not available in this environment'); },
         'shadow-root-host'() { throw new Error('DOM not available in this environment'); },
         'shadow-root-mode'() { throw new Error('DOM not available in this environment'); },
         'shadow-root-delegates-focus'() { throw new Error('DOM not available in this environment'); },
         'dom-rect-list-length'() { throw new Error('DOM not available in this environment'); },
+        'dom-rect-list-item'() { throw new Error('DOM not available in this environment'); },
         'append-child!'()             { throw new Error('DOM not available in this environment'); },
         'set-attribute!'()            { throw new Error('DOM not available in this environment'); },
         'after!'()                    { throw new Error('DOM not available in this environment'); },
@@ -2534,6 +2553,7 @@ var imports = {
         'set-attribute-node-ns!'()    { throw new Error('DOM not available in this environment'); },
         'set-pointer-capture!'()      { throw new Error('DOM not available in this environment'); },
         'toggle-attribute!'()         { throw new Error('DOM not available in this environment'); },
+        'toggle-attribute'()          { throw new Error('DOM not available in this environment'); },
     },
     'xterm-terminal': hasXterm ? {
         'create': (options => {
