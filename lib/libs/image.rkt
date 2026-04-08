@@ -94,12 +94,12 @@
 ;; image-loading : external? -> string?
 ;;   Read the loading strategy.
 (define (image-loading img)
-  (js-ref img "loading"))
+  (js-image-loading img))
 
 ;; image-set-loading! : external? (or/c string? symbol?) -> void?
 ;;   Set the loading strategy.
 (define (image-set-loading! img loading)
-  (js-set! img "loading" (image-stringish->string 'image-set-loading! loading))
+  (js-set-image-loading! img (image-stringish->string 'image-set-loading! loading))
   (void))
 
 ;; image-complete? : external? -> boolean?
@@ -110,7 +110,7 @@
 ;; image-cross-origin : external? -> any/c
 ;;   Read the CORS mode.
 (define (image-cross-origin img)
-  (js-ref img "crossOrigin"))
+  (js-image-cross-origin img))
 
 ;; image-set-cross-origin! : external? (or/c string? symbol?) -> void?
 ;;   Set the CORS mode.

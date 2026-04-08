@@ -17,16 +17,30 @@
 (define (element-i32->boolean v)
   (not (zero? v)))
 
-;; element-prop-ref : element? string? -> any/c
-;;   Read a property from an element.
-(define (element-prop-ref element name)
-  (js-send/value (js-var "Reflect") "get" (vector (element-unwrap element) name)))
+;; define-element-getter : (name binding) -> syntax
+;;   Define a direct getter for an element property binding.
+(define-syntax-rule (define-element-getter name binding)
+  (define (name element)
+    (binding (element-unwrap element))))
 
-;; element-prop-set! : element? string? any/c -> void?
-;;   Write a property on an element.
-(define (element-prop-set! element name value)
-  (js-set! (element-unwrap element) name value)
-  (void))
+;; define-element-setter : (name binding convert) -> syntax
+;;   Define a direct setter for an element property binding.
+(define-syntax-rule (define-element-setter name binding convert)
+  (define (name element value)
+    (binding (element-unwrap element) (convert value))
+    (void)))
+
+;; define-element-wrap-getter : (name binding wrap) -> syntax
+;;   Define a getter that wraps a browser object result.
+(define-syntax-rule (define-element-wrap-getter name binding wrap)
+  (define (name element)
+    (wrap (binding (element-unwrap element)))))
+
+;; define-element-boolean-getter : (name binding) -> syntax
+;;   Define a getter that converts a browser flag to a boolean.
+(define-syntax-rule (define-element-boolean-getter name binding)
+  (define (name element)
+    (element-i32->boolean (binding (element-unwrap element)))))
 
 ;; element-nodeish->value : any/c -> any/c
 ;;   Normalize a node-like value for DOM insertion helpers.
@@ -41,59 +55,47 @@
 
 ;; element-id : element? -> (or/c #f string?)
 ;;   Read an element id.
-(define (element-id element)
-  (element-prop-ref element "id"))
+(define-element-getter element-id js-element-id)
 
 ;; element-set-id! : element? (or/c string? symbol?) -> void?
 ;;   Set an element id.
-(define (element-set-id! element id)
-  (js-set! (element-unwrap element)
-           "id"
-           (element-stringish->string 'element-set-id! id))
-  (void))
+(define-element-setter element-set-id! js-set-element-id! (lambda (id)
+                                                            (element-stringish->string 'element-set-id! id)))
 
 ;; element-class-name : element? -> (or/c #f string?)
 ;;   Read an element class name.
-(define (element-class-name element)
-  (element-prop-ref element "className"))
+(define-element-getter element-class-name js-element-class-name)
 
 ;; element-set-class-name! : element? (or/c string? symbol?) -> void?
 ;;   Set an element class name.
-(define (element-set-class-name! element class-name)
-  (js-set! (element-unwrap element)
-           "className"
-           (element-stringish->string 'element-set-class-name! class-name))
-  (void))
+(define-element-setter element-set-class-name! js-set-element-class-name!
+  (lambda (class-name)
+    (element-stringish->string 'element-set-class-name! class-name)))
 
 ;; element-class-list : element? -> (or/c #f dom-token-list?)
 ;;   Read an element class list.
 (define (element-class-list element)
-  (dom-token-list-wrap (js-ref/extern (element-unwrap element) "classList")))
+  (dom-token-list-wrap (js-element-class-list (element-unwrap element))))
 
 ;; element-tag-name : element? -> string?
 ;;   Read the element tag name.
-(define (element-tag-name element)
-  (element-prop-ref element "tagName"))
+(define-element-getter element-tag-name js-element-tag-name)
 
 ;; element-local-name : element? -> string?
 ;;   Read the element local name.
-(define (element-local-name element)
-  (element-prop-ref element "localName"))
+(define-element-getter element-local-name js-element-local-name)
 
 ;; element-namespace-uri : element? -> (or/c #f string?)
 ;;   Read the element namespace URI.
-(define (element-namespace-uri element)
-  (element-prop-ref element "namespaceURI"))
+(define-element-getter element-namespace-uri js-element-namespace-uri)
 
 ;; element-prefix : element? -> (or/c #f string?)
 ;;   Read the element namespace prefix.
-(define (element-prefix element)
-  (element-prop-ref element "prefix"))
+(define-element-getter element-prefix js-element-prefix)
 
 ;; element-is-connected? : element? -> boolean?
 ;;   Report whether the element is connected to a document.
-(define (element-is-connected? element)
-  (element-i32->boolean (element-prop-ref element "isConnected")))
+(define-element-boolean-getter element-is-connected? js-element-is-connected)
 
 ;; append-child! : external? external? -> void?
 ;;   Append a child node.
@@ -200,13 +202,11 @@
 
 ;; dom-token-list-value : dom-token-list? -> (or/c #f string?)
 ;;   Read the class list value.
-(define (dom-token-list-value class-list)
-  (js-ref (dom-token-list-unwrap class-list) "value"))
+(define-element-getter dom-token-list-value js-dom-token-list-value)
 
 ;; dom-token-list-length : dom-token-list? -> exact-nonnegative-integer?
 ;;   Read the number of class tokens.
-(define (dom-token-list-length class-list)
-  (js-ref (dom-token-list-unwrap class-list) "length"))
+(define-element-getter dom-token-list-length js-dom-token-list-length)
 
 ;; dom-token-list-item : dom-token-list? exact-nonnegative-integer? -> (or/c #f string?)
 ;;   Read the class token at an index.
@@ -264,8 +264,7 @@
 
 ;; node-list-length : node-list? -> exact-nonnegative-integer?
 ;;   Read the number of nodes in a NodeList.
-(define (node-list-length node-list)
-  (js-ref (node-list-unwrap node-list) "length"))
+(define-element-getter node-list-length js-node-list-length)
 
 ;; node-list-item : node-list? exact-nonnegative-integer? -> (or/c #f node?)
 ;;   Read the node at a given index.
@@ -274,8 +273,7 @@
 
 ;; html-collection-length : html-collection? -> exact-nonnegative-integer?
 ;;   Read the number of elements in an HTMLCollection.
-(define (html-collection-length collection)
-  (js-ref (html-collection-unwrap collection) "length"))
+(define-element-getter html-collection-length js-html-collection-length)
 
 ;; html-collection-item : html-collection? exact-nonnegative-integer? -> (or/c #f element?)
 ;;   Read the element at a given index.
@@ -306,17 +304,17 @@
 ;; element-parent-element : element? -> (or/c #f element?)
 ;;   Read the parent element.
 (define (element-parent-element element)
-  (element-wrap (js-ref/extern (element-unwrap element) "parentElement")))
+  (element-wrap (js-element-parent-element (element-unwrap element))))
 
 ;; element-previous-element-sibling : element? -> (or/c #f element?)
 ;;   Read the previous element sibling.
 (define (element-previous-element-sibling element)
-  (element-wrap (js-ref/extern (element-unwrap element) "previousElementSibling")))
+  (element-wrap (js-element-previous-element-sibling (element-unwrap element))))
 
 ;; element-next-element-sibling : element? -> (or/c #f element?)
 ;;   Read the next element sibling.
 (define (element-next-element-sibling element)
-  (element-wrap (js-ref/extern (element-unwrap element) "nextElementSibling")))
+  (element-wrap (js-element-next-element-sibling (element-unwrap element))))
 
 ;; element-get-elements-by-class-name : element? (or/c string? symbol?) -> html-collection?
 ;;   Read descendant elements with matching class names as a wrapped HTMLCollection.
@@ -343,102 +341,89 @@
 ;; element-children : element? -> html-collection?
 ;;   Read the child elements as a wrapped HTMLCollection.
 (define (element-children element)
-  (html-collection-wrap (element-prop-ref element "children")))
+  (html-collection-wrap (js-element-children (element-unwrap element))))
 
 ;; element-scroll-top : element? -> real?
 ;;   Read an element's vertical scroll offset.
-(define (element-scroll-top element)
-  (element-prop-ref element "scrollTop"))
+(define-element-getter element-scroll-top js-element-scroll-top)
 
 ;; element-set-scroll-top! : element? real? -> void?
 ;;   Set an element's vertical scroll offset.
-(define (element-set-scroll-top! element value)
-  (element-prop-set! element "scrollTop" value))
+(define-element-setter element-set-scroll-top! js-set-element-scroll-top! values)
 
 ;; element-scroll-left : element? -> real?
 ;;   Read an element's horizontal scroll offset.
-(define (element-scroll-left element)
-  (element-prop-ref element "scrollLeft"))
+(define-element-getter element-scroll-left js-element-scroll-left)
 
 ;; element-set-scroll-left! : element? real? -> void?
 ;;   Set an element's horizontal scroll offset.
-(define (element-set-scroll-left! element value)
-  (element-prop-set! element "scrollLeft" value))
+(define-element-setter element-set-scroll-left! js-set-element-scroll-left! values)
 
 ;; element-scroll-width : element? -> exact-nonnegative-integer?
 ;;   Read an element's scroll width.
-(define (element-scroll-width element)
-  (element-prop-ref element "scrollWidth"))
+(define-element-getter element-scroll-width js-element-scroll-width)
 
 ;; element-scroll-height : element? -> exact-nonnegative-integer?
 ;;   Read an element's scroll height.
-(define (element-scroll-height element)
-  (element-prop-ref element "scrollHeight"))
+(define-element-getter element-scroll-height js-element-scroll-height)
 
 ;; element-client-width : element? -> exact-nonnegative-integer?
 ;;   Read an element's client width.
-(define (element-client-width element)
-  (element-prop-ref element "clientWidth"))
+(define-element-getter element-client-width js-element-client-width)
 
 ;; element-client-height : element? -> exact-nonnegative-integer?
 ;;   Read an element's client height.
-(define (element-client-height element)
-  (element-prop-ref element "clientHeight"))
+(define-element-getter element-client-height js-element-client-height)
 
 ;; element-offset-width : element? -> exact-nonnegative-integer?
 ;;   Read an element's offset width.
-(define (element-offset-width element)
-  (element-prop-ref element "offsetWidth"))
+(define-element-getter element-offset-width js-element-offset-width)
 
 ;; element-offset-height : element? -> exact-nonnegative-integer?
 ;;   Read an element's offset height.
-(define (element-offset-height element)
-  (element-prop-ref element "offsetHeight"))
+(define-element-getter element-offset-height js-element-offset-height)
 
 ;; element-child-element-count : element? -> exact-nonnegative-integer?
 ;;   Read the number of child elements.
-(define (element-child-element-count element)
-  (element-prop-ref element "childElementCount"))
+(define-element-getter element-child-element-count js-element-child-element-count)
 
 ;; element-first-element-child : element? -> (or/c #f element?)
 ;;   Read the first child element, if any.
-(define (element-first-element-child element)
-  (element-wrap (element-prop-ref element "firstElementChild")))
+(define-element-wrap-getter element-first-element-child js-element-first-element-child element-wrap)
 
 ;; element-last-element-child : element? -> (or/c #f element?)
 ;;   Read the last child element, if any.
-(define (element-last-element-child element)
-  (element-wrap (element-prop-ref element "lastElementChild")))
+(define-element-wrap-getter element-last-element-child js-element-last-element-child element-wrap)
 
 ;; element-inner-html : element? -> string?
 ;;   Read an element's HTML contents.
-(define (element-inner-html element)
-  (element-prop-ref element "innerHTML"))
+(define-element-getter element-inner-html js-element-inner-html)
 
 ;; element-set-inner-html! : element? (or/c string? symbol?) -> void?
 ;;   Replace an element's HTML contents.
-(define (element-set-inner-html! element html)
-  (element-prop-set! element "innerHTML" (element-stringish->string 'element-set-inner-html! html)))
+(define-element-setter element-set-inner-html! js-set-element-inner-html!
+  (lambda (html)
+    (element-stringish->string 'element-set-inner-html! html)))
 
 ;; element-outer-html : element? -> string?
 ;;   Read an element's outer HTML.
-(define (element-outer-html element)
-  (element-prop-ref element "outerHTML"))
+(define-element-getter element-outer-html js-element-outer-html)
 
 ;; element-set-outer-html! : element? (or/c string? symbol?) -> void?
 ;;   Replace an element's outer HTML.
-(define (element-set-outer-html! element html)
-  (element-prop-set! element "outerHTML" (element-stringish->string 'element-set-outer-html! html)))
+(define-element-setter element-set-outer-html! js-set-element-outer-html!
+  (lambda (html)
+    (element-stringish->string 'element-set-outer-html! html)))
 
 ;; element-text-content : element? -> (or/c #f string?)
 ;;   Read an element's text content.
-(define (element-text-content element)
-  (element-prop-ref element "textContent"))
+(define-element-getter element-text-content js-element-text-content)
 
 ;; element-set-text-content! : element? (or/c string? symbol?) -> void?
 ;;   Replace an element's text content.
-(define (element-set-text-content! element text)
-  (element-prop-set! element "textContent" (element-stringish->string 'element-set-text-content! text)))
+(define-element-setter element-set-text-content! js-set-element-text-content!
+  (lambda (text)
+    (element-stringish->string 'element-set-text-content! text)))
 
 ;; element-computed-style-map : element? -> external/raw
 ;;   Read the computed style map for an element.
@@ -455,7 +440,7 @@
 ;; element-shadow-root : element? -> (or/c #f shadow-root?)
 ;;   Read an element's shadow root, if one is attached.
 (define (element-shadow-root element)
-  (shadow-root-wrap (js-ref/extern (element-unwrap element) "shadowRoot")))
+  (shadow-root-wrap (js-element-shadow-root (element-unwrap element))))
 
 ;; element-attach-shadow! : element? any/c -> shadow-root?
 ;;   Attach a shadow root to an element.
@@ -465,17 +450,15 @@
 ;; shadow-root-host : shadow-root? -> element?
 ;;   Read the host element for a shadow root.
 (define (shadow-root-host shadow-root)
-  (element-wrap (js-ref/extern (shadow-root-unwrap shadow-root) "host")))
+  (element-wrap (js-shadow-root-host (shadow-root-unwrap shadow-root))))
 
 ;; shadow-root-mode : shadow-root? -> string?
 ;;   Read the shadow root mode.
-(define (shadow-root-mode shadow-root)
-  (js-ref (shadow-root-unwrap shadow-root) "mode"))
+(define-element-getter shadow-root-mode js-shadow-root-mode)
 
 ;; shadow-root-delegates-focus? : shadow-root? -> boolean?
 ;;   Report whether the shadow root delegates focus.
-(define (shadow-root-delegates-focus? shadow-root)
-  (element-i32->boolean (js-ref (shadow-root-unwrap shadow-root) "delegatesFocus")))
+(define-element-boolean-getter shadow-root-delegates-focus? js-shadow-root-delegates-focus)
 
 ;; element-animate : element? any/c [any/c] -> animation?
 ;;   Start an animation on an element.
@@ -525,8 +508,7 @@
 
 ;; dom-rect-list-length : dom-rect-list? -> exact-nonnegative-integer?
 ;;   Read the number of rectangles in a DOMRectList.
-(define (dom-rect-list-length rect-list)
-  (js-ref (dom-rect-list-unwrap rect-list) "length"))
+(define-element-getter dom-rect-list-length js-dom-rect-list-length)
 
 ;; dom-rect-list-item : dom-rect-list? exact-nonnegative-integer? -> (or/c #f dom-rect?)
 ;;   Read a rectangle at a given index.

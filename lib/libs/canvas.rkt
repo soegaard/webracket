@@ -174,7 +174,7 @@
     [(vector? arr) arr]
     [(list? arr) (list->vector arr)]
     [else
-     (define len (js-ref arr "length"))
+     (define len (js-array-length arr))
        (let loop ([i 0] [acc '()])
          (if (= i len)
              (list->vector (reverse acc))
@@ -183,7 +183,7 @@
 ;; canvas-js-array->bytes : any/c -> bytes?
 ;;   Convert a browser byte array to a Racket bytes value.
 (define (canvas-js-array->bytes arr)
-  (define len (js-ref arr "length"))
+  (define len (js-array-length arr))
   (define bs (make-bytes len))
   (for ([i (in-range len)])
     (bytes-set! bs i (inexact->exact (js-index arr i))))
@@ -413,52 +413,52 @@
 ;; canvas-image-data-width : canvas-image-data? -> exact-nonnegative-integer?
 ;;   Read the width of an image buffer.
 (define (canvas-image-data-width data)
-  (js-ref (canvas-image-data-raw data) "width"))
+  (js-canvas-image-data-width (canvas-image-data-raw data)))
 
 ;; canvas-image-data-height : canvas-image-data? -> exact-nonnegative-integer?
 ;;   Read the height of an image buffer.
 (define (canvas-image-data-height data)
-  (js-ref (canvas-image-data-raw data) "height"))
+  (js-canvas-image-data-height (canvas-image-data-raw data)))
 
 ;; canvas-image-data-data : canvas-image-data? -> bytes?
 ;;   Read the pixel bytes of an image buffer.
 (define (canvas-image-data-data data)
-  (canvas-js-array->bytes (js-ref (canvas-image-data-raw data) "data")))
+  (canvas-js-array->bytes (js-canvas-image-data-data (canvas-image-data-raw data))))
 
 ;; canvas-text-metrics-width : canvas-text-metrics? -> real?
 ;;   Read the measured text width.
 (define (canvas-text-metrics-width metrics)
-  (js-ref (canvas-text-metrics-raw metrics) "width"))
+  (js-canvas-text-metrics-width (canvas-text-metrics-raw metrics)))
 
 ;; canvas-dom-matrix-a : canvas-dom-matrix? -> real?
 ;;   Read the A component of a transform matrix.
 (define (canvas-dom-matrix-a matrix)
-  (js-ref (canvas-dom-matrix-raw matrix) "a"))
+  (js-canvas-dom-matrix-a (canvas-dom-matrix-raw matrix)))
 
 ;; canvas-dom-matrix-b : canvas-dom-matrix? -> real?
 ;;   Read the B component of a transform matrix.
 (define (canvas-dom-matrix-b matrix)
-  (js-ref (canvas-dom-matrix-raw matrix) "b"))
+  (js-canvas-dom-matrix-b (canvas-dom-matrix-raw matrix)))
 
 ;; canvas-dom-matrix-c : canvas-dom-matrix? -> real?
 ;;   Read the C component of a transform matrix.
 (define (canvas-dom-matrix-c matrix)
-  (js-ref (canvas-dom-matrix-raw matrix) "c"))
+  (js-canvas-dom-matrix-c (canvas-dom-matrix-raw matrix)))
 
 ;; canvas-dom-matrix-d : canvas-dom-matrix? -> real?
 ;;   Read the D component of a transform matrix.
 (define (canvas-dom-matrix-d matrix)
-  (js-ref (canvas-dom-matrix-raw matrix) "d"))
+  (js-canvas-dom-matrix-d (canvas-dom-matrix-raw matrix)))
 
 ;; canvas-dom-matrix-e : canvas-dom-matrix? -> real?
 ;;   Read the E component of a transform matrix.
 (define (canvas-dom-matrix-e matrix)
-  (js-ref (canvas-dom-matrix-raw matrix) "e"))
+  (js-canvas-dom-matrix-e (canvas-dom-matrix-raw matrix)))
 
 ;; canvas-dom-matrix-f : canvas-dom-matrix? -> real?
 ;;   Read the F component of a transform matrix.
 (define (canvas-dom-matrix-f matrix)
-  (js-ref (canvas-dom-matrix-raw matrix) "f"))
+  (js-canvas-dom-matrix-f (canvas-dom-matrix-raw matrix)))
 
 ;; canvas-gradient-add-color-stop! : (or/c canvas-gradient? external?) real? (or/c string? symbol?) -> void?
 ;;   Add a color stop to a gradient.
@@ -1021,7 +1021,7 @@
 ;; canvas-2d-fill-style : (or/c canvas-2d-context? external?) -> any/c
 ;;   Read the fill style.
 (define (canvas-2d-fill-style ctx)
-  (canvas-paint-style-wrap (js-ref (canvas-2d-context-unwrap ctx) "fillStyle")))
+  (canvas-paint-style-wrap (js-canvas2d-fill-style (canvas-2d-context-unwrap ctx))))
 
 ;; canvas-2d-set-fill-style! : (or/c canvas-2d-context? external?) any/c -> void?
 ;;   Set the fill style.
@@ -1033,7 +1033,7 @@
 ;; canvas-2d-stroke-style : (or/c canvas-2d-context? external?) -> any/c
 ;;   Read the stroke style.
 (define (canvas-2d-stroke-style ctx)
-  (canvas-paint-style-wrap (js-ref (canvas-2d-context-unwrap ctx) "strokeStyle")))
+  (canvas-paint-style-wrap (js-canvas2d-stroke-style (canvas-2d-context-unwrap ctx))))
 
 ;; canvas-2d-set-stroke-style! : (or/c canvas-2d-context? external?) any/c -> void?
 ;;   Set the stroke style.
