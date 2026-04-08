@@ -15,6 +15,8 @@
 ;; TODO
 ;;  - Reorder functions into "chapters".
 ;;  - Add more chapter headers
+;;  - Direct predicates for the predicates?
+;;    - they currently use: (js-instanceof x (js-var "AudioContext"))
 
 ;;; -------------------------------------------------------------------
 ;;; Callback Caching 
@@ -350,6 +352,9 @@
   (unless (or (boolean? option) (external? option))
     (raise-argument-error who "(or/c boolean? external?)" option)))
 
+;;; -------------------------------------------------------------------
+;;; Callbacks
+;;; -------------------------------------------------------------------
 
 ;; audio-handler->external : symbol? any/c -> any/c
 ;;   Convert a handler to an external callback or JS null.

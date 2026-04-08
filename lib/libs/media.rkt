@@ -104,8 +104,7 @@
 
 ;; media-cross-origin : external? -> (or/c #f string?)
 ;;   Read the CORS mode for media requests.
-(define (media-cross-origin media)
-  (js-ref media "crossOrigin"))
+(define-media-getter media-cross-origin js-media-cross-origin media-value->value)
 
 ;; media-set-cross-origin! : external? (or/c string? symbol?) -> void?
 ;;   Set the CORS mode for media requests.
@@ -241,14 +240,11 @@
 
 ;; media-preserves-pitch? : external? -> boolean?
 ;;   Read whether pitch should be preserved during playback-rate changes.
-(define (media-preserves-pitch? media)
-  (media-i32->boolean (js-ref media "preservesPitch")))
+(define-media-getter media-preserves-pitch? js-media-preserves-pitch media-i32->boolean)
 
 ;; media-set-preserves-pitch! : external? boolean? -> void?
 ;;   Enable or disable pitch preservation during playback-rate changes.
-(define (media-set-preserves-pitch! media value)
-  (js-set! media "preservesPitch" (media-boolean->i32 'media-set-preserves-pitch! value))
-  (void))
+(define-media-setter media-set-preserves-pitch! js-set-media-preserves-pitch! 'media-set-preserves-pitch! media-boolean->i32)
 
 ;; media-ready-state-number : external? -> exact-nonnegative-integer?
 ;;   Read the browser readyState code.
