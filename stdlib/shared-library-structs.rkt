@@ -432,22 +432,22 @@
       (media-stream-raw value)
       value))
 
-;; media-source-info : external/raw -> media-source-info?
+;; media-source : external/raw -> media-source?
 ;;   Wrap a browser MediaSource object.
-(struct media-source-info (raw) #:transparent)
+(struct media-source (raw) #:transparent)
 
-;; media-source-info-wrap : any/c -> any/c
+;; media-source-wrap : any/c -> any/c
 ;;   Wrap a raw browser MediaSource object, leaving wrapped values alone.
-(define (media-source-info-wrap value)
-  (if (or (not value) (media-source-info? value))
+(define (media-source-wrap value)
+  (if (or (not value) (media-source? value))
       value
-      (media-source-info value)))
+      (media-source value)))
 
-;; media-source-info-unwrap : any/c -> any/c
-;;   Unwrap a media-source-info struct to its raw browser object.
-(define (media-source-info-unwrap value)
-  (if (media-source-info? value)
-      (media-source-info-raw value)
+;; media-source-unwrap : any/c -> any/c
+;;   Unwrap a media-source struct to its raw browser object.
+(define (media-source-unwrap value)
+  (if (media-source? value)
+      (media-source-raw value)
       value))
 
 ;; media-keys-info : external/raw -> media-keys-info?

@@ -114,7 +114,7 @@ Returns the wrapped browser AudioListener object.
 
 @section{Performance Raw Accessor}
 
-@defproc[(performance-event-count-map-raw [counts any/c]) external/raw]{
+@defproc[(performance-event-counts-info-raw [counts any/c]) external/raw]{
 Returns the wrapped browser EventCounts object.
 }
 

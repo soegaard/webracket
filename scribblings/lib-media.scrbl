@@ -464,11 +464,11 @@ wrapped @racketid[MediaKeys] object or a raw browser object.
 Returns the browser promise from the underlying call.
 }
 
-@defstruct[media-source-info ([raw external/raw])]{
+@defstruct[media-source ([raw external/raw])]{
 Wraps a browser @racketid[MediaSource] value.
 }
 
-@defproc[(media-src-object [media external?]) (or/c #f media-stream? media-source-info?)]{
+@defproc[(media-src-object [media external?]) (or/c #f media-stream? media-source?)]{
 @(mdn-bar "HTMLMediaElement: srcObject property"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/srcObject")
 The raw @racket[media] argument should be a browser
@@ -478,7 +478,7 @@ when the source object is empty.
 }
 
 @defproc[(media-set-src-object! [media external?]
-                                [src-object (or/c #f media-stream? media-source-info? external/raw)])
+                                [src-object (or/c #f media-stream? media-source? external/raw)])
          void?]{
 @(mdn-bar "HTMLMediaElement: srcObject property"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/srcObject")

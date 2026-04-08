@@ -91,8 +91,8 @@ This example shows how to add a canvas to the page and then paint it.
 (canvas-2d-fill-text ctx "Hello, canvas!" 20 112)
 ]
 
-The main values are @racket[canvas?] and @racket[canvas-2d-context?].
-Use @racket[canvas-raw] or @racket[canvas-2d-context-raw] only when you
+The main values are @racket[html-canvas-element?] and @racket[canvas-rendering-context-2d?].
+Use @racket[html-canvas-element-raw] or @racket[canvas-rendering-context-2d-raw] only when you
 need to drop back to the browser object.
 
 String-like arguments such as context identifiers and drawing modes
@@ -101,27 +101,27 @@ to mean that the argument is omitted.
 
 @section{Canvas Values}
 
-@defstruct[canvas ([raw external/raw])]{
+@defstruct[html-canvas-element ([raw external/raw])]{
 Wraps a browser @tt{HTMLCanvasElement} object.
 }
 
-@defproc[(canvas-raw [canvas canvas?]) external/raw]{
+@defproc[(html-canvas-element-raw [canvas html-canvas-element?]) external/raw]{
 Returns the wrapped browser @tt{HTMLCanvasElement} object.
 }
 
-@defstruct[canvas-2d-context ([raw external/raw])]{
+@defstruct[canvas-rendering-context-2d ([raw external/raw])]{
 Wraps a browser @tt{CanvasRenderingContext2D} object.
 }
 
-@defproc[(canvas-2d-context-raw [ctx canvas-2d-context?]) external/raw]{
+@defproc[(canvas-rendering-context-2d-raw [ctx canvas-rendering-context-2d?]) external/raw]{
 Returns the wrapped browser @tt{CanvasRenderingContext2D} object.
 }
 
-@defstruct[canvas-image-data ([raw external/raw])]{
+@defstruct[image-data ([raw external/raw])]{
 Wraps a browser @tt{ImageData} object.
 }
 
-@defproc[(canvas-image-data-raw [data canvas-image-data?]) external/raw]{
+@defproc[(image-data-raw [data image-data?]) external/raw]{
 Returns the wrapped browser @tt{ImageData} object.
 }
 
@@ -141,19 +141,19 @@ Wraps a browser @tt{CanvasPattern} object.
 Returns the wrapped browser @tt{CanvasPattern} object.
 }
 
-@defstruct[canvas-text-metrics ([raw external/raw])]{
+@defstruct[text-metrics ([raw external/raw])]{
 Wraps a browser @tt{TextMetrics} object.
 }
 
-@defproc[(canvas-text-metrics-raw [metrics canvas-text-metrics?]) external/raw]{
+@defproc[(text-metrics-raw [metrics text-metrics?]) external/raw]{
 Returns the wrapped browser @tt{TextMetrics} object.
 }
 
-@defstruct[canvas-dom-matrix ([raw external/raw])]{
+@defstruct[dom-matrix ([raw external/raw])]{
 Wraps a browser @tt{DOMMatrix} object.
 }
 
-@defproc[(canvas-dom-matrix-raw [matrix canvas-dom-matrix?]) external/raw]{
+@defproc[(dom-matrix-raw [matrix dom-matrix?]) external/raw]{
 Returns the wrapped browser @tt{DOMMatrix} object.
 }
 
@@ -169,10 +169,10 @@ If you are just getting started, the most useful entry points are
 @racket[canvas-get-context], @racket[canvas-width], and
 @racket[canvas-2d-fill-rect].
 
-@defproc[(canvas-get-context [canvas (or/c canvas? external?)]
+@defproc[(canvas-get-context [canvas (or/c html-canvas-element? external?)]
                              [context-id (or/c string? symbol?)]
                              [options any/c #f])
-         (or/c #f canvas-2d-context?)]{
+         (or/c #f canvas-rendering-context-2d?)]{
 @(mdn-bar "HTMLCanvasElement: getContext() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/getContext")
 The @racket[canvas] argument should be a wrapped canvas value or a
@@ -180,7 +180,7 @@ browser @racketid[HTMLCanvasElement] value. Returns the requested
 drawing context.
 }
 
-@defproc[(canvas-width [canvas (or/c canvas? external?)]) exact-nonnegative-integer?]{
+@defproc[(canvas-width [canvas (or/c html-canvas-element? external?)]) exact-nonnegative-integer?]{
 @(mdn-bar "HTMLCanvasElement: width property"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/width")
 The @racket[canvas] argument should be a wrapped canvas value or a
@@ -188,7 +188,7 @@ browser @racketid[HTMLCanvasElement] value. Returns the canvas width in
 CSS pixels.
 }
 
-@defproc[(canvas-2d-fill-rect [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-fill-rect [ctx (or/c canvas-rendering-context-2d? external?)]
                               [x real?] [y real?] [w real?] [h real?]) void?]{
 @(mdn-bar "CanvasRenderingContext2D: fillRect() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/fillRect")
@@ -197,27 +197,27 @@ browser @racketid[CanvasRenderingContext2D] value. Fills a rectangle in
 a 2D canvas context.
 }
 
-@defproc[(canvas-2d-clear-rect [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-clear-rect [ctx (or/c canvas-rendering-context-2d? external?)]
                                [x real?] [y real?] [w real?] [h real?]) void?]{
 @(mdn-bar "CanvasRenderingContext2D: clearRect() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/clearRect")
 Clears a rectangle in a 2D canvas context.
 }
 
-@defproc[(canvas-2d-stroke-rect [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-stroke-rect [ctx (or/c canvas-rendering-context-2d? external?)]
                                 [x real?] [y real?] [w real?] [h real?]) void?]{
 @(mdn-bar "CanvasRenderingContext2D: strokeRect() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/strokeRect")
 Strokes a rectangle in a 2D canvas context.
 }
 
-@defproc[(canvas-2d-begin-path [ctx (or/c canvas-2d-context? external?)]) void?]{
+@defproc[(canvas-2d-begin-path [ctx (or/c canvas-rendering-context-2d? external?)]) void?]{
 @(mdn-bar "CanvasRenderingContext2D: beginPath() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/beginPath")
 Begins a new path.
 }
 
-@defproc[(canvas-2d-move-to [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-move-to [ctx (or/c canvas-rendering-context-2d? external?)]
                             [x real?]
                             [y real?])
          void?]{
@@ -226,7 +226,7 @@ Begins a new path.
 Moves the current path point.
 }
 
-@defproc[(canvas-2d-line-to [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-line-to [ctx (or/c canvas-rendering-context-2d? external?)]
                             [x real?]
                             [y real?])
          void?]{
@@ -235,7 +235,7 @@ Moves the current path point.
 Adds a line segment to the current path.
 }
 
-@defproc[(canvas-2d-stroke [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-stroke [ctx (or/c canvas-rendering-context-2d? external?)]
                            [path any/c #f])
          void?]{
 @(mdn-bar "CanvasRenderingContext2D: stroke() method"
@@ -243,7 +243,7 @@ Adds a line segment to the current path.
 Strokes the current path, or a supplied path when one is given.
 }
 
-@defproc[(canvas-2d-fill-text [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-fill-text [ctx (or/c canvas-rendering-context-2d? external?)]
                               [text string?]
                               [x real?]
                               [y real?]
@@ -254,7 +254,7 @@ Strokes the current path, or a supplied path when one is given.
 Draws filled text at the given position.
 }
 
-@defproc[(canvas-capture-stream [canvas (or/c canvas? external?)] [frame-rate any/c #f])
+@defproc[(canvas-capture-stream [canvas (or/c html-canvas-element? external?)] [frame-rate any/c #f])
          media-stream?]{
 @(mdn-bar "HTMLCanvasElement: captureStream() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/HTMLCanvasElement/captureStream")
@@ -268,45 +268,45 @@ browser @racketid[HTMLCanvasElement] value. Returns a wrapped browser
 The canvas library now also wraps the browser values that its richer 2D
 methods produce. The most useful accessors are:
 
-@defproc[(canvas-image-data-width [data canvas-image-data?]) exact-nonnegative-integer?]{
+@defproc[(canvas-image-data-width [data image-data?]) exact-nonnegative-integer?]{
 Reads the width of an image buffer.
 }
 
-@defproc[(canvas-image-data-height [data canvas-image-data?]) exact-nonnegative-integer?]{
+@defproc[(canvas-image-data-height [data image-data?]) exact-nonnegative-integer?]{
 Reads the height of an image buffer.
 }
 
-@defproc[(canvas-image-data-data [data canvas-image-data?]) bytes?]{
+@defproc[(canvas-image-data-data [data image-data?]) bytes?]{
 Reads the pixel bytes of an image buffer as a Racket @racket[bytes]
 value. This accessor uses the bulk byte-array bridge helper rather than
 copying the bytes one element at a time on the WebRacket side.
 }
 
-@defproc[(canvas-text-metrics-width [metrics canvas-text-metrics?]) real?]{
+@defproc[(canvas-text-metrics-width [metrics text-metrics?]) real?]{
 Reads the measured text width.
 }
 
-@defproc[(canvas-dom-matrix-a [matrix canvas-dom-matrix?]) real?]{
+@defproc[(canvas-dom-matrix-a [matrix dom-matrix?]) real?]{
 Reads the @racket[a] component of a canvas transform matrix.
 }
 
-@defproc[(canvas-dom-matrix-b [matrix canvas-dom-matrix?]) real?]{
+@defproc[(canvas-dom-matrix-b [matrix dom-matrix?]) real?]{
 Reads the @racket[b] component of a canvas transform matrix.
 }
 
-@defproc[(canvas-dom-matrix-c [matrix canvas-dom-matrix?]) real?]{
+@defproc[(canvas-dom-matrix-c [matrix dom-matrix?]) real?]{
 Reads the @racket[c] component of a canvas transform matrix.
 }
 
-@defproc[(canvas-dom-matrix-d [matrix canvas-dom-matrix?]) real?]{
+@defproc[(canvas-dom-matrix-d [matrix dom-matrix?]) real?]{
 Reads the @racket[d] component of a canvas transform matrix.
 }
 
-@defproc[(canvas-dom-matrix-e [matrix canvas-dom-matrix?]) real?]{
+@defproc[(canvas-dom-matrix-e [matrix dom-matrix?]) real?]{
 Reads the @racket[e] component of a canvas transform matrix.
 }
 
-@defproc[(canvas-dom-matrix-f [matrix canvas-dom-matrix?]) real?]{
+@defproc[(canvas-dom-matrix-f [matrix dom-matrix?]) real?]{
 Reads the @racket[f] component of a canvas transform matrix.
 }
 
@@ -318,26 +318,26 @@ Adds a stop to a gradient.
 }
 
 @defproc[(canvas-pattern-set-transform! [pattern (or/c canvas-pattern? external?)]
-                                        [matrix (or/c canvas-dom-matrix? external?)])
+                                        [matrix (or/c dom-matrix? external?)])
          void?]{
 Sets the transform used when tiling a canvas pattern.
 }
 
-@defproc[(canvas-2d-filter [ctx (or/c canvas-2d-context? external?)]) string?]{
+@defproc[(canvas-2d-filter [ctx (or/c canvas-rendering-context-2d? external?)]) string?]{
 Returns the current filter string for the 2D context.
 }
 
-@defproc[(canvas-2d-set-filter! [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-set-filter! [ctx (or/c canvas-rendering-context-2d? external?)]
                                 [filter (or/c string? symbol?)])
          void?]{
 Sets the filter string for the 2D context.
 }
 
-@defproc[(canvas-2d-line-join [ctx (or/c canvas-2d-context? external?)]) string?]{
+@defproc[(canvas-2d-line-join [ctx (or/c canvas-rendering-context-2d? external?)]) string?]{
 Returns the current line-join setting for the 2D context.
 }
 
-@defproc[(canvas-2d-set-line-join! [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-set-line-join! [ctx (or/c canvas-rendering-context-2d? external?)]
                                    [value (or/c string? symbol?)])
          void?]{
 Sets the line-join setting for the 2D context.
@@ -380,13 +380,13 @@ including @racket[canvas-2d-fill-style], @racket[canvas-2d-stroke-style],
 @racket[canvas-2d-set-line-dash], @racket[canvas-2d-set-transform!],
 @racket[canvas-2d-set-transform-matrix!], and @racket[canvas-2d-transform].
 
-@defproc[(canvas-2d-filter [ctx (or/c canvas-2d-context? external?)]) string?]{
+@defproc[(canvas-2d-filter [ctx (or/c canvas-rendering-context-2d? external?)]) string?]{
 @(mdn-bar "CanvasRenderingContext2D: filter property"
           "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/filter")
 Returns the current filter string for the 2D context.
 }
 
-@defproc[(canvas-2d-set-fill-style! [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-set-fill-style! [ctx (or/c canvas-rendering-context-2d? external?)]
                                     [style any/c])
          void?]{
 @(mdn-bar "CanvasRenderingContext2D: fillStyle property"
@@ -394,13 +394,13 @@ Returns the current filter string for the 2D context.
 Sets the fill style for the 2D context.
 }
 
-@defproc[(canvas-2d-line-join [ctx (or/c canvas-2d-context? external?)]) string?]{
+@defproc[(canvas-2d-line-join [ctx (or/c canvas-rendering-context-2d? external?)]) string?]{
 @(mdn-bar "CanvasRenderingContext2D: lineJoin property"
           "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/lineJoin")
 Returns the current line-join setting for the 2D context.
 }
 
-@defproc[(canvas-2d-set-stroke-style! [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-set-stroke-style! [ctx (or/c canvas-rendering-context-2d? external?)]
                                       [style any/c])
          void?]{
 @(mdn-bar "CanvasRenderingContext2D: strokeStyle property"
@@ -408,21 +408,21 @@ Returns the current line-join setting for the 2D context.
 Sets the stroke style for the 2D context.
 }
 
-@defproc[(canvas-2d-get-transform [ctx (or/c canvas-2d-context? external?)])
-         canvas-dom-matrix?]{
+@defproc[(canvas-2d-get-transform [ctx (or/c canvas-rendering-context-2d? external?)])
+         dom-matrix?]{
 @(mdn-bar "CanvasRenderingContext2D: getTransform() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/getTransform")
-Returns the current transform matrix as a wrapped @racket[canvas-dom-matrix]
+Returns the current transform matrix as a wrapped @racket[dom-matrix]
 value.
 }
 
-@defproc[(canvas-2d-reset [ctx (or/c canvas-2d-context? external?)]) void?]{
+@defproc[(canvas-2d-reset [ctx (or/c canvas-rendering-context-2d? external?)]) void?]{
 @(mdn-bar "CanvasRenderingContext2D: reset() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/reset")
 Resets the 2D context to its default drawing state.
 }
 
-@defproc[(canvas-2d-set-font! [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-set-font! [ctx (or/c canvas-rendering-context-2d? external?)]
                               [font (or/c string? symbol?)])
          void?]{
 @(mdn-bar "CanvasRenderingContext2D: font property"
@@ -435,107 +435,107 @@ Sets the CSS font used for text rendering.
 The remaining non-deprecated 2D helpers are documented here so the
 canvas family has a single canonical home for its public API surface.
 
-@defproc[(canvas-2d-global-alpha [ctx (or/c canvas-2d-context? external?)]) real?]{
+@defproc[(canvas-2d-global-alpha [ctx (or/c canvas-rendering-context-2d? external?)]) real?]{
 Reads the alpha multiplier used for compositing.
 }
 
-@defproc[(canvas-2d-font [ctx (or/c canvas-2d-context? external?)]) string?]{
+@defproc[(canvas-2d-font [ctx (or/c canvas-rendering-context-2d? external?)]) string?]{
 Reads the current font shorthand.
 }
 
-@defproc[(canvas-2d-global-composite-operation [ctx (or/c canvas-2d-context? external?)]) string?]{
+@defproc[(canvas-2d-global-composite-operation [ctx (or/c canvas-rendering-context-2d? external?)]) string?]{
 Reads the current compositing mode.
 }
 
-@defproc[(canvas-2d-image-smoothing-enabled? [ctx (or/c canvas-2d-context? external?)]) boolean?]{
+@defproc[(canvas-2d-image-smoothing-enabled? [ctx (or/c canvas-rendering-context-2d? external?)]) boolean?]{
 Checks whether image smoothing is enabled.
 }
 
-@defproc[(canvas-2d-fill-style [ctx (or/c canvas-2d-context? external?)]) any/c]{
+@defproc[(canvas-2d-fill-style [ctx (or/c canvas-rendering-context-2d? external?)]) any/c]{
 Reads the current fill style.
 }
 
-@defproc[(canvas-2d-stroke-style [ctx (or/c canvas-2d-context? external?)]) any/c]{
+@defproc[(canvas-2d-stroke-style [ctx (or/c canvas-rendering-context-2d? external?)]) any/c]{
 Reads the current stroke style.
 }
 
-@defproc[(canvas-2d-image-smoothing-quality [ctx (or/c canvas-2d-context? external?)]) string?]{
+@defproc[(canvas-2d-image-smoothing-quality [ctx (or/c canvas-rendering-context-2d? external?)]) string?]{
 Reads the smoothing quality hint.
 }
 
-@defproc[(canvas-2d-line-cap [ctx (or/c canvas-2d-context? external?)]) string?]{
+@defproc[(canvas-2d-line-cap [ctx (or/c canvas-rendering-context-2d? external?)]) string?]{
 Reads the line cap setting.
 }
 
-@defproc[(canvas-2d-line-dash-offset [ctx (or/c canvas-2d-context? external?)]) real?]{
+@defproc[(canvas-2d-line-dash-offset [ctx (or/c canvas-rendering-context-2d? external?)]) real?]{
 Reads the current dash offset.
 }
 
-@defproc[(canvas-2d-line-width [ctx (or/c canvas-2d-context? external?)]) real?]{
+@defproc[(canvas-2d-line-width [ctx (or/c canvas-rendering-context-2d? external?)]) real?]{
 Reads the current stroke width.
 }
 
-@defproc[(canvas-2d-miter-limit [ctx (or/c canvas-2d-context? external?)]) real?]{
+@defproc[(canvas-2d-miter-limit [ctx (or/c canvas-rendering-context-2d? external?)]) real?]{
 Reads the current miter limit.
 }
 
-@defproc[(canvas-2d-shadow-blur [ctx (or/c canvas-2d-context? external?)]) real?]{
+@defproc[(canvas-2d-shadow-blur [ctx (or/c canvas-rendering-context-2d? external?)]) real?]{
 Reads the shadow blur radius.
 }
 
-@defproc[(canvas-2d-shadow-color [ctx (or/c canvas-2d-context? external?)]) string?]{
+@defproc[(canvas-2d-shadow-color [ctx (or/c canvas-rendering-context-2d? external?)]) string?]{
 Reads the shadow color.
 }
 
-@defproc[(canvas-2d-shadow-offset-x [ctx (or/c canvas-2d-context? external?)]) real?]{
+@defproc[(canvas-2d-shadow-offset-x [ctx (or/c canvas-rendering-context-2d? external?)]) real?]{
 Reads the shadow X offset.
 }
 
-@defproc[(canvas-2d-shadow-offset-y [ctx (or/c canvas-2d-context? external?)]) real?]{
+@defproc[(canvas-2d-shadow-offset-y [ctx (or/c canvas-rendering-context-2d? external?)]) real?]{
 Reads the shadow Y offset.
 }
 
-@defproc[(canvas-2d-text-align [ctx (or/c canvas-2d-context? external?)]) string?]{
+@defproc[(canvas-2d-text-align [ctx (or/c canvas-rendering-context-2d? external?)]) string?]{
 Reads the current text alignment.
 }
 
-@defproc[(canvas-2d-text-baseline [ctx (or/c canvas-2d-context? external?)]) string?]{
+@defproc[(canvas-2d-text-baseline [ctx (or/c canvas-rendering-context-2d? external?)]) string?]{
 Reads the current text baseline.
 }
 
-@defproc[(canvas-2d-text-rendering [ctx (or/c canvas-2d-context? external?)]) string?]{
+@defproc[(canvas-2d-text-rendering [ctx (or/c canvas-rendering-context-2d? external?)]) string?]{
 Reads the current text rendering hint.
 }
 
-@defproc[(canvas-2d-font-kerning [ctx (or/c canvas-2d-context? external?)]) string?]{
+@defproc[(canvas-2d-font-kerning [ctx (or/c canvas-rendering-context-2d? external?)]) string?]{
 Reads the font kerning mode.
 }
 
-@defproc[(canvas-2d-font-stretch [ctx (or/c canvas-2d-context? external?)]) string?]{
+@defproc[(canvas-2d-font-stretch [ctx (or/c canvas-rendering-context-2d? external?)]) string?]{
 Reads the font stretch setting.
 }
 
-@defproc[(canvas-2d-font-variant-caps [ctx (or/c canvas-2d-context? external?)]) string?]{
+@defproc[(canvas-2d-font-variant-caps [ctx (or/c canvas-rendering-context-2d? external?)]) string?]{
 Reads the font variant caps setting.
 }
 
-@defproc[(canvas-2d-font-variant-ligatures [ctx (or/c canvas-2d-context? external?)]) string?]{
+@defproc[(canvas-2d-font-variant-ligatures [ctx (or/c canvas-rendering-context-2d? external?)]) string?]{
 Reads the font variant ligatures setting.
 }
 
-@defproc[(canvas-2d-font-variant-numeric [ctx (or/c canvas-2d-context? external?)]) string?]{
+@defproc[(canvas-2d-font-variant-numeric [ctx (or/c canvas-rendering-context-2d? external?)]) string?]{
 Reads the font variant numeric setting.
 }
 
-@defproc[(canvas-2d-letter-spacing [ctx (or/c canvas-2d-context? external?)]) string?]{
+@defproc[(canvas-2d-letter-spacing [ctx (or/c canvas-rendering-context-2d? external?)]) string?]{
 Reads the current letter spacing.
 }
 
-@defproc[(canvas-2d-word-spacing [ctx (or/c canvas-2d-context? external?)]) string?]{
+@defproc[(canvas-2d-word-spacing [ctx (or/c canvas-rendering-context-2d? external?)]) string?]{
 Reads the current word spacing.
 }
 
-@defproc[(canvas-2d-arc-to [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-arc-to [ctx (or/c canvas-rendering-context-2d? external?)]
                            [x1 real?]
                            [y1 real?]
                            [x2 real?]
@@ -545,7 +545,7 @@ Reads the current word spacing.
 Adds an arc between two tangent lines.
 }
 
-@defproc[(canvas-2d-bezier-curve-to [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-bezier-curve-to [ctx (or/c canvas-rendering-context-2d? external?)]
                                     [cp1x real?]
                                     [cp1y real?]
                                     [cp2x real?]
@@ -556,34 +556,34 @@ Adds an arc between two tangent lines.
 Adds a cubic Bézier curve to the current path.
 }
 
-@defproc[(canvas-2d-clip [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-clip [ctx (or/c canvas-rendering-context-2d? external?)]
                          [path any/c]
                          [fill-rule any/c])
          void?]{
 Clips the canvas to the current path.
 }
 
-@defproc[(canvas-2d-create-image-data [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-create-image-data [ctx (or/c canvas-rendering-context-2d? external?)]
                                       [width exact-nonnegative-integer?]
                                       [height exact-nonnegative-integer?])
-         canvas-image-data?]{
+         image-data?]{
 Creates a fresh image-data buffer.
 }
 
-@defproc[(canvas-2d-create-image-data-from [ctx (or/c canvas-2d-context? external?)]
-                                          [data (or/c canvas-image-data? external?)])
-         canvas-image-data?]{
+@defproc[(canvas-2d-create-image-data-from [ctx (or/c canvas-rendering-context-2d? external?)]
+                                          [data (or/c image-data? external?)])
+         image-data?]{
 Creates image data from an existing buffer.
 }
 
-@defproc[(canvas-2d-create-pattern [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-create-pattern [ctx (or/c canvas-rendering-context-2d? external?)]
                                    [source any/c]
                                    [repetition (or/c string? symbol?)])
          (or/c #f canvas-pattern?)]{
 Creates a tiling pattern from an image source.
 }
 
-@defproc[(canvas-2d-create-linear-gradient [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-create-linear-gradient [ctx (or/c canvas-rendering-context-2d? external?)]
                                            [x0 real?]
                                            [y0 real?]
                                            [x1 real?]
@@ -592,7 +592,7 @@ Creates a tiling pattern from an image source.
 Creates a linear gradient.
 }
 
-@defproc[(canvas-2d-create-radial-gradient [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-create-radial-gradient [ctx (or/c canvas-rendering-context-2d? external?)]
                                            [x0 real?]
                                            [y0 real?]
                                            [r0 real?]
@@ -603,7 +603,7 @@ Creates a linear gradient.
 Creates a radial gradient.
 }
 
-@defproc[(canvas-2d-create-conic-gradient [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-create-conic-gradient [ctx (or/c canvas-rendering-context-2d? external?)]
                                           [angle real?]
                                           [x real?]
                                           [y real?])
@@ -611,20 +611,20 @@ Creates a radial gradient.
 Creates a conic gradient.
 }
 
-@defproc[(canvas-2d-draw-focus-if-needed! [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-draw-focus-if-needed! [ctx (or/c canvas-rendering-context-2d? external?)]
                                           [element any/c])
          void?]{
 Draws a focus ring when the browser decides it is needed.
 }
 
-@defproc[(canvas-2d-draw-focus-if-needed-path! [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-draw-focus-if-needed-path! [ctx (or/c canvas-rendering-context-2d? external?)]
                                                [path any/c]
                                                [element any/c])
          void?]{
 Draws a focus ring for the given path and element.
 }
 
-@defproc[(canvas-2d-draw-image [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-draw-image [ctx (or/c canvas-rendering-context-2d? external?)]
                                [source any/c]
                                [dx real?]
                                [dy real?])
@@ -632,7 +632,7 @@ Draws a focus ring for the given path and element.
 Draws an image source at a point.
 }
 
-@defproc[(canvas-2d-ellipse [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-ellipse [ctx (or/c canvas-rendering-context-2d? external?)]
                             [x real?]
                             [y real?]
                             [rx real?]
@@ -645,21 +645,21 @@ Draws an image source at a point.
 Adds an ellipse to the current path.
 }
 
-@defproc[(canvas-2d-get-image-data [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-get-image-data [ctx (or/c canvas-rendering-context-2d? external?)]
                                    [sx real?]
                                    [sy real?]
                                    [sw real?]
                                    [sh real?]
                                    [settings any/c])
-         canvas-image-data?]{
+         image-data?]{
 Reads pixels from the canvas.
 }
 
-@defproc[(canvas-2d-get-line-dash [ctx (or/c canvas-2d-context? external?)]) vector?]{
+@defproc[(canvas-2d-get-line-dash [ctx (or/c canvas-rendering-context-2d? external?)]) vector?]{
 Reads the current dash pattern.
 }
 
-@defproc[(canvas-2d-is-point-in-path [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-is-point-in-path [ctx (or/c canvas-rendering-context-2d? external?)]
                                      [path any/c]
                                      [x real?]
                                      [y real?]
@@ -668,7 +668,7 @@ Reads the current dash pattern.
 Checks whether a point lies inside the current path.
 }
 
-@defproc[(canvas-2d-is-point-in-stroke [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-is-point-in-stroke [ctx (or/c canvas-rendering-context-2d? external?)]
                                        [path any/c]
                                        [x real?]
                                        [y real?])
@@ -676,8 +676,8 @@ Checks whether a point lies inside the current path.
 Checks whether a point lies inside the current stroke.
 }
 
-@defproc[(canvas-2d-put-image-data [ctx (or/c canvas-2d-context? external?)]
-                                   [data (or/c canvas-image-data? external?)]
+@defproc[(canvas-2d-put-image-data [ctx (or/c canvas-rendering-context-2d? external?)]
+                                   [data (or/c image-data? external?)]
                                    [dx real?]
                                    [dy real?]
                                    [dirty-x any/c]
@@ -688,7 +688,7 @@ Checks whether a point lies inside the current stroke.
 Writes pixels back to the canvas.
 }
 
-@defproc[(canvas-2d-quadratic-curve-to [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-quadratic-curve-to [ctx (or/c canvas-rendering-context-2d? external?)]
                                        [cpx real?]
                                        [cpy real?]
                                        [x real?]
@@ -697,7 +697,7 @@ Writes pixels back to the canvas.
 Adds a quadratic Bézier curve to the current path.
 }
 
-@defproc[(canvas-2d-rect [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-rect [ctx (or/c canvas-rendering-context-2d? external?)]
                          [x real?]
                          [y real?]
                          [width real?]
@@ -706,7 +706,7 @@ Adds a quadratic Bézier curve to the current path.
 Adds a rectangle to the current path.
 }
 
-@defproc[(canvas-2d-round-rect [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-round-rect [ctx (or/c canvas-rendering-context-2d? external?)]
                                [x real?]
                                [y real?]
                                [width real?]
@@ -716,13 +716,13 @@ Adds a rectangle to the current path.
 Adds a rounded rectangle to the current path.
 }
 
-@defproc[(canvas-2d-set-line-dash [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-set-line-dash [ctx (or/c canvas-rendering-context-2d? external?)]
                                   [segments any/c])
          void?]{
 Sets the dash pattern.
 }
 
-@defproc[(canvas-2d-set-transform! [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-set-transform! [ctx (or/c canvas-rendering-context-2d? external?)]
                                    [a real?]
                                    [b real?]
                                    [c real?]
@@ -733,13 +733,13 @@ Sets the dash pattern.
 Sets the transform matrix from six numbers.
 }
 
-@defproc[(canvas-2d-set-transform-matrix! [ctx (or/c canvas-2d-context? external?)]
-                                          [matrix (or/c canvas-dom-matrix? external?)])
+@defproc[(canvas-2d-set-transform-matrix! [ctx (or/c canvas-rendering-context-2d? external?)]
+                                          [matrix (or/c dom-matrix? external?)])
          void?]{
 Sets the transform matrix from a DOMMatrix.
 }
 
-@defproc[(canvas-2d-transform [ctx (or/c canvas-2d-context? external?)]
+@defproc[(canvas-2d-transform [ctx (or/c canvas-rendering-context-2d? external?)]
                               [a real?]
                               [b real?]
                               [c real?]
@@ -750,7 +750,7 @@ Sets the transform matrix from a DOMMatrix.
 Applies an affine transform to the current matrix.
 }
 
-@defproc[(canvas-2d-reset-transform [ctx (or/c canvas-2d-context? external?)]) void?]{
+@defproc[(canvas-2d-reset-transform [ctx (or/c canvas-rendering-context-2d? external?)]) void?]{
 Resets the transform matrix to the identity matrix.
 }
 

@@ -261,7 +261,7 @@
     [(4) 'have-enough-data]
     [else (string->symbol (format "ready-state-~a" (media-ready-state-number media)))]))
 
-;; media-src-object : external? -> (or/c #f media-stream? media-source-info?)
+;; media-src-object : external? -> (or/c #f media-stream? media-source?)
 ;;   Read the current source object for the media element.
 (define (media-src-object media)
   (define src-object (js-media-src-object media))
@@ -269,9 +269,9 @@
     [(not src-object) #f]
     [(not (js-nullish? (js-ref/extern src-object "getTracks")))
       (media-stream-wrap src-object)]
-    [else (media-source-info-wrap src-object)]))
+    [else (media-source-wrap src-object)]))
 
-;; media-set-src-object! : external? (or/c #f media-stream? media-source-info? external/raw) -> void?
+;; media-set-src-object! : external? (or/c #f media-stream? media-source? external/raw) -> void?
 ;;   Set the source object for the media element.
 (define (media-set-src-object! media src-object)
   (js-set-media-src-object!
@@ -279,7 +279,7 @@
    (cond
      [(not src-object) #f]
      [(media-stream? src-object) (media-stream-unwrap src-object)]
-     [(media-source-info? src-object) (media-source-info-unwrap src-object)]
+     [(media-source? src-object) (media-source-unwrap src-object)]
      [else src-object]))
   (void))
 

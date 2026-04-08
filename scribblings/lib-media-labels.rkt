@@ -5,7 +5,7 @@
 (provide
   media
   (struct-out media-keys-info)
-  (struct-out media-source-info)
+  (struct-out media-source)
   (struct-out media-stream)
   (struct-out media-error-info)
   (struct-out audio-track-list)
@@ -103,7 +103,7 @@
 
 (define media any/c)
 (struct media-keys-info (raw) #:transparent)
-(struct media-source-info (raw) #:transparent)
+(struct media-source (raw) #:transparent)
 (struct media-stream (raw) #:transparent)
 (struct media-error-info (raw) #:transparent)
 (struct audio-track-list (raw) #:transparent)

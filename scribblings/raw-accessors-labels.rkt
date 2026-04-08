@@ -24,7 +24,7 @@
   dom-rect-list-raw
   dom-rect-raw
   audio-listener-raw
-  performance-event-count-map-raw
+  performance-event-counts-info-raw
   dom-computed-style-map-raw
   dom-animation-raw
   iterator-raw
@@ -51,7 +51,7 @@
 (define dom-rect-list-raw any/c)
 (define dom-rect-raw any/c)
 (define audio-listener-raw any/c)
-(define performance-event-count-map-raw any/c)
+(define performance-event-counts-info-raw any/c)
 (define dom-computed-style-map-raw any/c)
 (define dom-animation-raw any/c)
 (define iterator-raw any/c)

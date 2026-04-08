@@ -3,7 +3,7 @@
 (require racket/contract/base)
 
 (provide
-  (struct-out performance-event-count-map)
+  (struct-out performance-event-counts-info)
   (struct-out performance-memory-info)
   performance-event-count-map-size
   performance-event-count-map-entries
@@ -32,7 +32,7 @@
   performance-set-resource-timing-buffer-size
   performance-to-json)
 
-(struct performance-event-count-map (raw) #:transparent)
+(struct performance-event-counts-info (raw) #:transparent)
 (struct performance-memory-info (raw) #:transparent)
 
 (define performance-event-count-map-size any/c)

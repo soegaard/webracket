@@ -18,7 +18,7 @@
   (struct-out text-track)
   (struct-out video-track)
   (struct-out media-keys-info)
-  (struct-out media-source-info)
+  (struct-out media-source)
   (struct-out dom-element)
   element-class-list
   element-id
@@ -149,7 +149,7 @@
   (struct-out dom-selection)
   (struct-out media-stream)
   (struct-out media-error-info)
-  (struct-out performance-event-count-map)
+  (struct-out performance-event-counts-info)
   performance-event-count-map-size
   performance-event-count-map-entries
   performance-event-count-map-keys
@@ -493,7 +493,7 @@
 (define document-adopt-node any/c)
 
 (struct iterator (raw) #:transparent #:constructor-name make-iterator)
-(struct performance-event-count-map (raw) #:transparent)
+(struct performance-event-counts-info (raw) #:transparent)
 (struct performance-memory-info (raw) #:transparent)
 
 (define performance-event-count-map-size any/c)

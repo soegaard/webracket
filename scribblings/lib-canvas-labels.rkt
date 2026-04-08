@@ -3,13 +3,13 @@
 (require racket/contract/base)
 
 (provide
-  (struct-out canvas)
-  (struct-out canvas-2d-context)
-  (struct-out canvas-image-data)
+  (struct-out html-canvas-element)
+  (struct-out canvas-rendering-context-2d)
+  (struct-out image-data)
   (struct-out canvas-gradient)
   (struct-out canvas-pattern)
-  (struct-out canvas-text-metrics)
-  (struct-out canvas-dom-matrix)
+  (struct-out text-metrics)
+  (struct-out dom-matrix)
   (struct-out offscreen-canvas)
   canvas-capture-stream
   canvas-get-context
@@ -139,13 +139,13 @@
   canvas-dom-matrix-f
   (for-label (all-defined-out)))
 
-(struct canvas (raw) #:transparent)
-(struct canvas-2d-context (raw) #:transparent)
-(struct canvas-image-data (raw) #:transparent)
+(struct html-canvas-element (raw) #:transparent)
+(struct canvas-rendering-context-2d (raw) #:transparent)
+(struct image-data (raw) #:transparent)
 (struct canvas-gradient (raw) #:transparent)
 (struct canvas-pattern (raw) #:transparent)
-(struct canvas-text-metrics (raw) #:transparent)
-(struct canvas-dom-matrix (raw) #:transparent)
+(struct text-metrics (raw) #:transparent)
+(struct dom-matrix (raw) #:transparent)
 (struct offscreen-canvas (raw) #:transparent)
 (define canvas-capture-stream any/c)
 (define canvas-get-context any/c)

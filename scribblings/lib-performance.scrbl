@@ -29,7 +29,7 @@ The Performance API is mostly about:
 ]
 
 The @racket[performance-event-counts] helper returns either @racket[#f]
-or a @racket[performance-event-count-map] value that wraps the browser's
+or a @racket[performance-event-counts-info] value that wraps the browser's
 EventCounts object.
 
 The @racket[performance-memory] helper returns either @racket[#f] or a
@@ -100,7 +100,7 @@ computed sum.
 
 @section{Performance Properties}
 
-@defproc[(performance-event-counts) (or/c #f performance-event-count-map?)]{
+@defproc[(performance-event-counts) (or/c #f performance-event-counts-info?)]{
 @(mdn-bar "Performance: eventCounts property"
           "https://developer.mozilla.org/en-US/docs/Web/API/Performance/eventCounts")
 Returns the browser's event-count map for the current page.
@@ -136,7 +136,7 @@ object directly.
 The map-like helpers let you inspect the counts for a particular event
 type without dropping back to the raw browser object.
 
-The @racket[performance-event-count-map] struct keeps that browser
+The @racket[performance-event-counts-info] struct keeps that browser
 object tucked away in a single field. That gives the wrapper room to
 grow with additional helpers without exposing the raw external value as
 the main user-facing result.
@@ -147,23 +147,23 @@ The iterator-returning helpers on the map, such as
 you can pass them directly to helpers such as @racket[iterator->vector]
 or inspect the next step directly with the iterator helpers.
 
-@defstruct[performance-event-count-map ([raw external/raw])]{
+@defstruct[performance-event-counts-info ([raw external/raw])]{
 Wraps a browser EventCounts object in the checked struct used by
 @racket[performance-event-counts].
 }
 
-@defproc[(performance-event-count-map-size [counts performance-event-count-map?])
+@defproc[(performance-event-count-map-size [counts performance-event-counts-info?])
          exact-nonnegative-integer?]{
 Returns the number of recorded event types.
 }
 
-@defproc[(performance-event-count-map-entries [counts performance-event-count-map?])
+@defproc[(performance-event-count-map-entries [counts performance-event-counts-info?])
          iterator?]{
 Returns the wrapped browser iterator produced by
 @racket[EventCounts.entries()] for the current page.
 }
 
-@defproc[(performance-event-count-map-keys [counts performance-event-count-map?])
+@defproc[(performance-event-count-map-keys [counts performance-event-counts-info?])
          iterator?]{
 @(mdn-bar "EventCounts: keys() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/EventCounts/keys")
@@ -171,7 +171,7 @@ Returns the wrapped browser iterator produced by @racket[EventCounts.keys()]
 for the current page.
 }
 
-@defproc[(performance-event-count-map-values [counts performance-event-count-map?])
+@defproc[(performance-event-count-map-values [counts performance-event-counts-info?])
          iterator?]{
 @(mdn-bar "EventCounts: values() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/EventCounts/values")
@@ -179,7 +179,7 @@ Returns the wrapped browser iterator produced by
 @racket[EventCounts.values()] for the current page.
 }
 
-@defproc[(performance-event-count-map-get [counts performance-event-count-map?]
+@defproc[(performance-event-count-map-get [counts performance-event-counts-info?]
                                           [event-type (or/c string? symbol?)])
          (or/c #f exact-nonnegative-integer?)]{
 @(mdn-bar "EventCounts: get() method"
@@ -189,7 +189,7 @@ browser does not expose a value for that type. The event type accepts a
 string or symbol and is normalized to a string.
 }
 
-@defproc[(performance-event-count-map-has? [counts performance-event-count-map?]
+@defproc[(performance-event-count-map-has? [counts performance-event-counts-info?]
                                            [event-type (or/c string? symbol?)])
          boolean?]{
 @(mdn-bar "EventCounts: has() method"
@@ -199,7 +199,7 @@ event type. The event type accepts a string or symbol and is normalized
 to a string.
 }
 
-@defproc[(performance-event-count-map-for-each [counts performance-event-count-map?]
+@defproc[(performance-event-count-map-for-each [counts performance-event-counts-info?]
                                                [proc (or/c procedure? external?)])
          void?]{
 @(mdn-bar "EventCounts: forEach() method"
