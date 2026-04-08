@@ -7,23 +7,23 @@
 ;; Backend representation and primitive operations for the in-memory DOM-like node model.
 ;;
 ;; Exports:
-;;   dom-node                            DOM-like node constructor.
-;;   dom-node?                           Predicate for DOM-like nodes.
-;;   dom-node-tag                        Access node tag symbol.
-;;   dom-node-attrs                      Access node attributes alist.
-;;   dom-node-children                   Access child node list.
-;;   dom-node-text                       Access node text content.
-;;   dom-node-on-click                   Access node click callback.
-;;   dom-node-on-change                  Access node change callback.
-;;   dom-node-event-handlers             Access generic event callback alist.
-;;   set-dom-node-tag!                   Mutate node tag.
-;;   set-dom-node-attrs!                 Mutate node attributes.
-;;   set-dom-node-children!              Mutate node children.
-;;   set-dom-node-text!                  Mutate node text content.
-;;   set-dom-node-on-click!              Mutate node click callback.
-;;   set-dom-node-on-change!             Mutate node change callback.
-;;   set-dom-node-event-handlers!        Mutate generic event callback alist.
-;;   dom-node-native                     Return host-native node handle (#f in DOM-like backend).
+;;   view-node                            DOM-like node constructor.
+;;   view-node?                           Predicate for DOM-like nodes.
+;;   view-node-tag                        Access node tag symbol.
+;;   view-node-attrs                      Access node attributes alist.
+;;   view-node-children                   Access child node list.
+;;   view-node-text                       Access node text content.
+;;   view-node-on-click                   Access node click callback.
+;;   view-node-on-change                  Access node change callback.
+;;   view-node-event-handlers             Access generic event callback alist.
+;;   set-view-node-tag!                   Mutate node tag.
+;;   set-view-node-attrs!                 Mutate node attributes.
+;;   set-view-node-children!              Mutate node children.
+;;   set-view-node-text!                  Mutate node text content.
+;;   set-view-node-on-click!              Mutate node click callback.
+;;   set-view-node-on-change!             Mutate node change callback.
+;;   set-view-node-event-handlers!        Mutate generic event callback alist.
+;;   view-node-native                     Return host-native node handle (#f in DOM-like backend).
 ;;   backend-append-child!               Append child to parent node.
 ;;   backend-set-single-child!           Replace node children with a single child.
 ;;   backend-replace-children!           Replace node children with a child list.
@@ -35,23 +35,23 @@
 ;;   backend-clear-timeout!              Clear timeout callback handle (no-op here).
 
 (define-values
-  (dom-node
-   dom-node?
-   dom-node-tag
-   dom-node-attrs
-   dom-node-children
-   dom-node-text
-   dom-node-on-click
-   dom-node-on-change
-   dom-node-event-handlers
-   set-dom-node-tag!
-   set-dom-node-attrs!
-   set-dom-node-children!
-   set-dom-node-text!
-   set-dom-node-on-click!
-   set-dom-node-on-change!
-   set-dom-node-event-handlers!
-   dom-node-native
+  (view-node
+   view-node?
+   view-node-tag
+   view-node-attrs
+   view-node-children
+   view-node-text
+   view-node-on-click
+   view-node-on-change
+   view-node-event-handlers
+   set-view-node-tag!
+   set-view-node-attrs!
+   set-view-node-children!
+   set-view-node-text!
+   set-view-node-on-click!
+   set-view-node-on-change!
+   set-view-node-event-handlers!
+   view-node-native
    backend-append-child!
    backend-set-single-child!
    backend-replace-children!
@@ -62,124 +62,124 @@
    backend-set-timeout!
    backend-clear-timeout!)
   (let ()
-    (struct dom-node-record (tag attrs children text on-click on-change event-handlers)
+    (struct view-node-record (tag attrs children text on-click on-change event-handlers)
       #:mutable
       #:transparent)
 
-    ;; dom-node : symbol? list? list? any/c any/c any/c [list?] -> dom-node?
+    ;; view-node : symbol? list? list? any/c any/c any/c [list?] -> view-node?
     ;;   Construct a DOM-like node with optional generic event callback alist.
-    (define (dom-node tag attrs children text on-click on-change [event-handlers '()])
-      (dom-node-record tag attrs children text on-click on-change event-handlers))
+    (define (view-node tag attrs children text on-click on-change [event-handlers '()])
+      (view-node-record tag attrs children text on-click on-change event-handlers))
 
-    ;; dom-node? : any/c -> boolean?
+    ;; view-node? : any/c -> boolean?
     ;;   Check whether v is a DOM-like node.
-    (define (dom-node? v)
-      (dom-node-record? v))
+    (define (view-node? v)
+      (view-node-record? v))
 
-    ;; dom-node-tag : dom-node? -> any/c
+    ;; view-node-tag : view-node? -> any/c
     ;;   Access node tag.
-    (define (dom-node-tag n)
-      (dom-node-record-tag n))
+    (define (view-node-tag n)
+      (view-node-record-tag n))
 
-    ;; dom-node-attrs : dom-node? -> list?
+    ;; view-node-attrs : view-node? -> list?
     ;;   Access node attrs.
-    (define (dom-node-attrs n)
-      (dom-node-record-attrs n))
+    (define (view-node-attrs n)
+      (view-node-record-attrs n))
 
-    ;; dom-node-children : dom-node? -> list?
+    ;; view-node-children : view-node? -> list?
     ;;   Access node children.
-    (define (dom-node-children n)
-      (dom-node-record-children n))
+    (define (view-node-children n)
+      (view-node-record-children n))
 
-    ;; dom-node-text : dom-node? -> any/c
+    ;; view-node-text : view-node? -> any/c
     ;;   Access node text content.
-    (define (dom-node-text n)
-      (dom-node-record-text n))
+    (define (view-node-text n)
+      (view-node-record-text n))
 
-    ;; dom-node-on-click : dom-node? -> any/c
+    ;; view-node-on-click : view-node? -> any/c
     ;;   Access node click callback.
-    (define (dom-node-on-click n)
-      (dom-node-record-on-click n))
+    (define (view-node-on-click n)
+      (view-node-record-on-click n))
 
-    ;; dom-node-on-change : dom-node? -> any/c
+    ;; view-node-on-change : view-node? -> any/c
     ;;   Access node change callback.
-    (define (dom-node-on-change n)
-      (dom-node-record-on-change n))
+    (define (view-node-on-change n)
+      (view-node-record-on-change n))
 
-    ;; dom-node-event-handlers : dom-node? -> list?
+    ;; view-node-event-handlers : view-node? -> list?
     ;;   Access generic event callback alist.
-    (define (dom-node-event-handlers n)
-      (dom-node-record-event-handlers n))
+    (define (view-node-event-handlers n)
+      (view-node-record-event-handlers n))
 
-    ;; set-dom-node-tag! : dom-node? any/c -> void?
+    ;; set-view-node-tag! : view-node? any/c -> void?
     ;;   Mutate node tag.
-    (define (set-dom-node-tag! n tag)
-      (set-dom-node-record-tag! n tag))
+    (define (set-view-node-tag! n tag)
+      (set-view-node-record-tag! n tag))
 
-    ;; set-dom-node-attrs! : dom-node? list? -> void?
+    ;; set-view-node-attrs! : view-node? list? -> void?
     ;;   Mutate node attrs.
-    (define (set-dom-node-attrs! n attrs)
-      (set-dom-node-record-attrs! n attrs))
+    (define (set-view-node-attrs! n attrs)
+      (set-view-node-record-attrs! n attrs))
 
-    ;; set-dom-node-children! : dom-node? list? -> void?
+    ;; set-view-node-children! : view-node? list? -> void?
     ;;   Mutate node children.
-    (define (set-dom-node-children! n children)
-      (set-dom-node-record-children! n children))
+    (define (set-view-node-children! n children)
+      (set-view-node-record-children! n children))
 
-    ;; set-dom-node-text! : dom-node? any/c -> void?
+    ;; set-view-node-text! : view-node? any/c -> void?
     ;;   Mutate node text content.
-    (define (set-dom-node-text! n text)
-      (set-dom-node-record-text! n text))
+    (define (set-view-node-text! n text)
+      (set-view-node-record-text! n text))
 
-    ;; set-dom-node-on-click! : dom-node? any/c -> void?
+    ;; set-view-node-on-click! : view-node? any/c -> void?
     ;;   Mutate node click callback.
-    (define (set-dom-node-on-click! n on-click)
-      (set-dom-node-record-on-click! n on-click))
+    (define (set-view-node-on-click! n on-click)
+      (set-view-node-record-on-click! n on-click))
 
-    ;; set-dom-node-on-change! : dom-node? any/c -> void?
+    ;; set-view-node-on-change! : view-node? any/c -> void?
     ;;   Mutate node change callback.
-    (define (set-dom-node-on-change! n on-change)
-      (set-dom-node-record-on-change! n on-change))
+    (define (set-view-node-on-change! n on-change)
+      (set-view-node-record-on-change! n on-change))
 
-    ;; set-dom-node-event-handlers! : dom-node? list? -> void?
+    ;; set-view-node-event-handlers! : view-node? list? -> void?
     ;;   Mutate generic event callback alist.
-    (define (set-dom-node-event-handlers! n event-handlers)
-      (set-dom-node-record-event-handlers! n event-handlers))
+    (define (set-view-node-event-handlers! n event-handlers)
+      (set-view-node-record-event-handlers! n event-handlers))
 
-    ;; dom-node-native : dom-node? -> any/c
+    ;; view-node-native : view-node? -> any/c
     ;;   Return #f because this backend has no browser-native node.
-    (define (dom-node-native _n)
+    (define (view-node-native _n)
       #f)
 
-    ;; backend-append-child! : dom-node? dom-node? -> void?
+    ;; backend-append-child! : view-node? view-node? -> void?
     ;;   Append child to parent's child list.
     (define (backend-append-child! parent child)
-      (set-dom-node-children!
+      (set-view-node-children!
        parent
-       (append (dom-node-children parent) (list child))))
+       (append (view-node-children parent) (list child))))
 
-    ;; backend-set-single-child! : dom-node? dom-node? -> void?
+    ;; backend-set-single-child! : view-node? view-node? -> void?
     ;;   Replace node children with a single child.
     (define (backend-set-single-child! parent child)
-      (set-dom-node-children! parent (list child)))
+      (set-view-node-children! parent (list child)))
 
-    ;; backend-replace-children! : dom-node? list? -> void?
+    ;; backend-replace-children! : view-node? list? -> void?
     ;;   Replace node children with children list.
     (define (backend-replace-children! parent children)
-      (set-dom-node-children! parent children))
+      (set-view-node-children! parent children))
 
-    ;; backend-mount-root! : dom-node? [any/c] -> void?
+    ;; backend-mount-root! : view-node? [any/c] -> void?
     ;;   No-op mount hook for the in-memory DOM-like backend.
     ;;   Optional parameter _container defaults to #f.
     (define (backend-mount-root! _root [_container #f])
       (void))
 
-    ;; backend-scrollspy-observe-scroll! : dom-node? (-> void?) (-> (-> void?) void?) -> void?
+    ;; backend-scrollspy-observe-scroll! : view-node? (-> void?) (-> (-> void?) void?) -> void?
     ;;   No-op scroll observer registration for non-browser backend.
     (define (backend-scrollspy-observe-scroll! _container _callback _register-cleanup!)
       (void))
 
-    ;; backend-scrollspy-scroll-into-view! : dom-node? -> void?
+    ;; backend-scrollspy-scroll-into-view! : view-node? -> void?
     ;;   No-op section scrolling in non-browser backend.
     (define (backend-scrollspy-scroll-into-view! _section-node)
       (void))
@@ -201,23 +201,23 @@
     (define (backend-clear-timeout! _handle)
       (void))
 
-    (values dom-node
-            dom-node?
-            dom-node-tag
-            dom-node-attrs
-            dom-node-children
-            dom-node-text
-            dom-node-on-click
-            dom-node-on-change
-            dom-node-event-handlers
-            set-dom-node-tag!
-            set-dom-node-attrs!
-            set-dom-node-children!
-            set-dom-node-text!
-            set-dom-node-on-click!
-            set-dom-node-on-change!
-            set-dom-node-event-handlers!
-            dom-node-native
+    (values view-node
+            view-node?
+            view-node-tag
+            view-node-attrs
+            view-node-children
+            view-node-text
+            view-node-on-click
+            view-node-on-change
+            view-node-event-handlers
+            set-view-node-tag!
+            set-view-node-attrs!
+            set-view-node-children!
+            set-view-node-text!
+            set-view-node-on-click!
+            set-view-node-on-change!
+            set-view-node-event-handlers!
+            view-node-native
             backend-append-child!
             backend-set-single-child!
             backend-replace-children!

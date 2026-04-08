@@ -7,23 +7,23 @@
 ;; Browser DOM backend representation and primitive operations used by the renderer.
 ;;
 ;; Exports:
-;;   dom-node                 Browser-backed node constructor.
-;;   dom-node?                Predicate for browser-backed nodes.
-;;   dom-node-tag             Access node tag symbol.
-;;   dom-node-attrs           Access node attributes alist.
-;;   dom-node-children        Access child node list.
-;;   dom-node-text            Access node text content.
-;;   dom-node-on-click        Access node click callback.
-;;   dom-node-on-change       Access node change callback.
-;;   dom-node-event-handlers  Access generic event callback alist.
-;;   set-dom-node-tag!        Mutate node tag.
-;;   set-dom-node-attrs!      Mutate node attributes and sync browser node attributes.
-;;   set-dom-node-children!   Mutate node children list.
-;;   set-dom-node-text!       Mutate node text and sync browser node text.
-;;   set-dom-node-on-click!   Mutate node click callback.
-;;   set-dom-node-on-change!  Mutate node change callback.
-;;   set-dom-node-event-handlers!  Mutate generic event callback alist.
-;;   dom-node-native          Return host-native DOM node handle.
+;;   view-node                 Browser-backed node constructor.
+;;   view-node?                Predicate for browser-backed nodes.
+;;   view-node-tag             Access node tag symbol.
+;;   view-node-attrs           Access node attributes alist.
+;;   view-node-children        Access child node list.
+;;   view-node-text            Access node text content.
+;;   view-node-on-click        Access node click callback.
+;;   view-node-on-change       Access node change callback.
+;;   view-node-event-handlers  Access generic event callback alist.
+;;   set-view-node-tag!        Mutate node tag.
+;;   set-view-node-attrs!      Mutate node attributes and sync browser node attributes.
+;;   set-view-node-children!   Mutate node children list.
+;;   set-view-node-text!       Mutate node text and sync browser node text.
+;;   set-view-node-on-click!   Mutate node click callback.
+;;   set-view-node-on-change!  Mutate node change callback.
+;;   set-view-node-event-handlers!  Mutate generic event callback alist.
+;;   view-node-native          Return host-native DOM node handle.
 ;;   backend-append-child!    Append child to parent node in model and browser DOM.
 ;;   backend-set-single-child! Replace node children with a single child in model and browser DOM.
 ;;   backend-replace-children! Replace node children with a child list in model and browser DOM.
@@ -35,23 +35,23 @@
 ;;   backend-clear-timeout!   Clear timeout callback handle in browser host.
 
 (define-values
-  (dom-node
-   dom-node?
-   dom-node-tag
-   dom-node-attrs
-   dom-node-children
-   dom-node-text
-   dom-node-on-click
-   dom-node-on-change
-   dom-node-event-handlers
-   set-dom-node-tag!
-   set-dom-node-attrs!
-   set-dom-node-children!
-   set-dom-node-text!
-   set-dom-node-on-click!
-   set-dom-node-on-change!
-   set-dom-node-event-handlers!
-   dom-node-native
+  (view-node
+   view-node?
+   view-node-tag
+   view-node-attrs
+   view-node-children
+   view-node-text
+   view-node-on-click
+   view-node-on-change
+   view-node-event-handlers
+   set-view-node-tag!
+   set-view-node-attrs!
+   set-view-node-children!
+   set-view-node-text!
+   set-view-node-on-click!
+   set-view-node-on-change!
+   set-view-node-event-handlers!
+   view-node-native
    backend-append-child!
    backend-set-single-child!
    backend-replace-children!
@@ -62,7 +62,7 @@
    backend-set-timeout!
    backend-clear-timeout!)
   (let ()
-    (struct dom-node-record (tag attrs children text on-click on-change event-handlers native)
+    (struct view-node-record (tag attrs children text on-click on-change event-handlers native)
       #:mutable
       #:transparent)
 
@@ -154,7 +154,7 @@
     (define scrollspy-observers          '()) ; Association list mapping scrollspy container native nodes to observer handles.
     (define scrollspy-listeners          '()) ; Association list mapping scrollspy container native nodes to listener handles.
     (define scrollspy-cleanup-registered '()) ; Native nodes with registered scrollspy cleanup callbacks.
-    (define dom-node-listeners           '()) ; Association list mapping native DOM nodes to installed event-listener pairs.
+    (define view-node-listeners           '()) ; Association list mapping native DOM nodes to installed event-listener pairs.
     (define menu-typeahead-timeout-ms    700) ; Milliseconds before menu typeahead prefix resets.
     (define menu-typeahead-state         '()) ; Association list mapping popup native nodes to (cons timestamp-ms prefix).
 
@@ -473,9 +473,9 @@
     ;; focus-cycled-dialog-target! : any/c boolean? -> void?
     ;;   Cycle focus inside dialog-native forward/backward depending on shift?.
     (define (focus-cycled-dialog-target! dialog-native shift?)
-      ;; same-dom-node? : any/c any/c -> boolean?
+      ;; same-view-node? : any/c any/c -> boolean?
       ;;   Compare external DOM nodes by JS identity semantics.
-      (define (same-dom-node? a b)
+      (define (same-view-node? a b)
         (and (extern-present? a)
              (extern-present? b)
              (extern-bool-true?
@@ -505,7 +505,7 @@
                               -1
                               (let ([candidate (nodelist-item items i)])
                                 (if (and (extern-present? candidate)
-                                         (same-dom-node? candidate active))
+                                         (same-view-node? candidate active))
                                     i
                                     (loop (add1 i))))))]
                        [target-index
@@ -623,11 +623,11 @@
       (and p
            (string=? (value->attr-string (cdr p)) "menu-popup")))
 
-    ;; apply-attributes! : dom-node-record? list? list? -> void?
+    ;; apply-attributes! : view-node-record? list? list? -> void?
     ;;   Apply tracked attributes to native node and handle dialog open/close transitions.
     (define (apply-attributes! n old-attrs attrs)
-      (define native              (dom-node-record-native n))
-      (define tag                 (dom-node-record-tag n))
+      (define native              (view-node-record-native n))
+      (define tag                 (view-node-record-tag n))
       (define old-open?           (dialog-open-attr? old-attrs))
       (define new-open?           (dialog-open-attr? attrs))
       (define old-autofocus?      (autofocus-attr? old-attrs))
@@ -686,15 +686,15 @@
             (handle-menu-popup-open-transition! native)
             (focus-native-later! native))))
 
-    ;; handle-node-removal! : dom-node? -> void?
+    ;; handle-node-removal! : view-node? -> void?
     ;;   Run close-transition cleanup for nodes that are about to leave the DOM.
     (define (handle-node-removal! n)
-      (for-each handle-node-removal! (dom-node-record-children n))
-      (define native (dom-node-record-native n))
-      (define attrs  (dom-node-record-attrs n))
+      (for-each handle-node-removal! (view-node-record-children n))
+      (define native (view-node-record-native n))
+      (define attrs  (view-node-record-attrs n))
       (when (menu-popup-attr? attrs)
         (handle-menu-popup-close-transition! native))
-      (when (and (eq? (dom-node-record-tag n) 'dialog)
+      (when (and (eq? (view-node-record-tag n) 'dialog)
                  (dialog-open-attr? attrs))
         (handle-dialog-close-transition! native))
       (when (and (popover-panel-attr? attrs)
@@ -763,21 +763,21 @@
         ;; Allow primitive html-element tags that are not explicitly listed above.
         [else (symbol->string tag)]))
 
-    ;; install-default-node-shape! : dom-node-record? -> void?
+    ;; install-default-node-shape! : view-node-record? -> void?
     ;;   Apply default browser attributes based on node tag.
     (define (install-default-node-shape! n)
-      (define native (dom-node-record-native n))
-      (case (dom-node-record-tag n)
+      (define native (view-node-record-native n))
+      (case (view-node-record-tag n)
         [(checkbox)  (js-set-attribute! native attr/type "checkbox")]
         [(slider)    (js-set-attribute! native attr/type "range")]
         [(menu-item) (js-set-attribute! native attr/type "button")]
         [else (void)]))
 
-    ;; node-change-value : dom-node-record? -> any/c
+    ;; node-change-value : view-node-record? -> any/c
     ;;   Read change payload for the current node from browser attributes.
     (define (node-change-value n)
-      (define native (dom-node-record-native n))
-      (case (dom-node-record-tag n)
+      (define native (view-node-record-native n))
+      (case (view-node-record-tag n)
         [(checkbox)
          (let ([checked-string
                 (js-value->string
@@ -791,7 +791,7 @@
          (if parsed parsed 0)]
         [(input)
          (define type-pair
-           (assq 'type (dom-node-record-attrs n)))
+           (assq 'type (view-node-record-attrs n)))
          (if (and type-pair
                   (string? (cdr type-pair))
                   (string=? (cdr type-pair) "checkbox"))
@@ -811,36 +811,36 @@
       (js-value->string
        (js-ref/extern evt "key")))
 
-    ;; tab-key-node? : dom-node-record? -> boolean?
+    ;; tab-key-node? : view-node-record? -> boolean?
     ;;   Check whether n is a tab header button that should receive key navigation.
     (define (tab-key-node? n)
-      (and (eq? (dom-node-record-tag n) 'button)
-           (let ([p (assq 'role (dom-node-record-attrs n))])
+      (and (eq? (view-node-record-tag n) 'button)
+           (let ([p (assq 'role (view-node-record-attrs n))])
              (and p (eq? (cdr p) 'tab)))))
 
-    ;; role-button-node? : dom-node-record? -> boolean?
+    ;; role-button-node? : view-node-record? -> boolean?
     ;;   Check whether n is button-like via role=button.
     (define (role-button-node? n)
-      (let ([p (assq 'role (dom-node-record-attrs n))])
+      (let ([p (assq 'role (view-node-record-attrs n))])
         (and p (eq? (cdr p) 'button))))
 
-    ;; role-dialog-node? : dom-node-record? -> boolean?
+    ;; role-dialog-node? : view-node-record? -> boolean?
     ;;   Check whether n is dialog-like via role=dialog.
     (define (role-dialog-node? n)
-      (let ([p (assq 'role (dom-node-record-attrs n))])
+      (let ([p (assq 'role (view-node-record-attrs n))])
         (and p (eq? (cdr p) 'dialog))))
 
-    ;; input-enter-action : dom-node-record? -> any/c
+    ;; input-enter-action : view-node-record? -> any/c
     ;;   Return input Enter callback when present.
     (define (input-enter-action n)
-      (and (eq? (dom-node-record-tag n) 'input)
-           (let ([p (assq 'on-enter-action (dom-node-record-attrs n))])
+      (and (eq? (view-node-record-tag n) 'input)
+           (let ([p (assq 'on-enter-action (view-node-record-attrs n))])
              (and p (cdr p)))))
 
-    ;; menu-trigger-node? : dom-node-record? -> boolean?
+    ;; menu-trigger-node? : view-node-record? -> boolean?
     ;;   Check whether n is a menu trigger button.
     (define (menu-trigger-node? n)
-      (let ([p (assq 'menu-trigger (dom-node-record-attrs n))])
+      (let ([p (assq 'menu-trigger (view-node-record-attrs n))])
         (and p (cdr p))))
 
     ;; nav-key? : string? -> boolean?
@@ -856,36 +856,36 @@
       (or (string=? key "Enter")
           (string=? key " ")))
 
-    ;; class-value : dom-node-record? -> string?
+    ;; class-value : view-node-record? -> string?
     ;;   Read class attribute string for n, defaulting to empty.
     (define (class-value n)
-      (define p (assq 'class (dom-node-record-attrs n)))
+      (define p (assq 'class (view-node-record-attrs n)))
       (if p
           (value->attr-string (cdr p))
           ""))
 
-    ;; widget-value : dom-node-record? -> string?
+    ;; widget-value : view-node-record? -> string?
     ;;   Read data-we-widget attribute string for n, defaulting to empty.
     (define (widget-value n)
-      (define p (assq 'data-we-widget (dom-node-record-attrs n)))
+      (define p (assq 'data-we-widget (view-node-record-attrs n)))
       (if p
           (value->attr-string (cdr p))
           ""))
 
-    ;; menu-label-node? : dom-node-record? -> boolean?
+    ;; menu-label-node? : view-node-record? -> boolean?
     ;;   Check whether n is a menu label button.
     (define (menu-label-node? n)
       (string=? (widget-value n) "menu-label"))
 
-    ;; menu-item-node? : dom-node-record? -> boolean?
+    ;; menu-item-node? : view-node-record? -> boolean?
     ;;   Check whether n is a menu item button.
     (define (menu-item-node? n)
       (string=? (widget-value n) "menu-item"))
 
-    ;; dom-node-disabled? : dom-node-record? -> boolean?
+    ;; view-node-disabled? : view-node-record? -> boolean?
     ;;   Check whether n should ignore activation because it is disabled.
-    (define (dom-node-disabled? n)
-      (define attrs (dom-node-record-attrs n))
+    (define (view-node-disabled? n)
+      (define attrs (view-node-record-attrs n))
       (define disabled-pair (assq 'disabled attrs))
       (define aria-pair     (assq 'aria-disabled attrs))
       (or (and disabled-pair
@@ -894,22 +894,22 @@
           (and aria-pair
                (equal? (cdr aria-pair) "true"))))
 
-    ;; menu-popup-node? : dom-node-record? -> boolean?
+    ;; menu-popup-node? : view-node-record? -> boolean?
     ;;   Check whether n is a standalone menu popup container.
     (define (menu-popup-node? n)
       (string=? (widget-value n) "menu-popup"))
 
-    ;; scrollspy-item-node? : dom-node-record? -> boolean?
+    ;; scrollspy-item-node? : view-node-record? -> boolean?
     ;;   Check whether n is a scrollspy navigation item button.
     (define (scrollspy-item-node? n)
       (string=? (widget-value n) "scrollspy-item"))
 
-    ;; carousel-node? : dom-node-record? -> boolean?
+    ;; carousel-node? : view-node-record? -> boolean?
     ;;   Check whether n is a carousel root that handles arrow/home/end keys.
     (define (carousel-node? n)
       (string=? (widget-value n) "carousel"))
 
-    ;; hover-change-node? : dom-node-record? -> boolean?
+    ;; hover-change-node? : view-node-record? -> boolean?
     ;;   Check whether n should receive synthetic mouseenter/mouseleave change payloads.
     (define (hover-change-node? n)
       (define widget (widget-value n))
@@ -977,7 +977,7 @@
                    (vector ".we-menu-label[role='button']"))])
              (and label #t))))
 
-    ;; focusout-menu-container : dom-node-record? any/c -> any/c
+    ;; focusout-menu-container : view-node-record? any/c -> any/c
     ;;   Return enclosing menu container native node for focusout checks, or #f.
     (define (focusout-menu-container n native)
       (cond
@@ -1451,7 +1451,7 @@
     ;;   Invoke callback when present.
     (define (invoke-click-callback! n callback)
       (when (and callback
-                 (not (dom-node-disabled? n)))
+                 (not (view-node-disabled? n)))
         (callback)))
 
     ;; invoke-change-callback! : any/c any/c -> void?
@@ -1460,27 +1460,27 @@
       (when callback
         (callback payload)))
 
-    ;; invoke-generic-event-callback! : dom-node? string? any/c -> void?
+    ;; invoke-generic-event-callback! : view-node? string? any/c -> void?
     ;;   Invoke supported generic primitive event callback with raw event payload.
     (define (invoke-generic-event-callback! n event-name evt)
       (define callback
-        (event-handler-ref (dom-node-record-event-handlers n) event-name))
+        (event-handler-ref (view-node-record-event-handlers n) event-name))
       (when callback
         (callback evt)))
 
-    ;; keydown-callback-source : dom-node? -> any/c
+    ;; keydown-callback-source : view-node? -> any/c
     ;;   Return the current callback whose explicit name should drive keydown bridge naming.
     (define (keydown-callback-source n)
-      (or (alist-ref/default (dom-node-record-attrs n) 'on-enter-action #f)
-          (dom-node-record-on-click n)
-          (dom-node-record-on-change n)))
+      (or (alist-ref/default (view-node-record-attrs n) 'on-enter-action #f)
+          (view-node-record-on-click n)
+          (view-node-record-on-change n)))
 
-    ;; refresh-dom-node-listeners! : dom-node? -> void?
+    ;; refresh-view-node-listeners! : view-node? -> void?
     ;;   Reinstall native browser listeners so callback names track current node callbacks.
-    (define (refresh-dom-node-listeners! n)
-      (define native* (dom-node-record-native n))
+    (define (refresh-view-node-listeners! n)
+      (define native* (view-node-record-native n))
       (when (and native* (not (extern-nullish? native*)))
-        (define old-listeners (native-mapping-ref dom-node-listeners native*))
+        (define old-listeners (native-mapping-ref view-node-listeners native*))
         (when old-listeners
           (for-each (lambda (entry)
                       (js-send native* "removeEventListener" (vector (car entry) (cdr entry))))
@@ -1492,11 +1492,11 @@
         (for-each
          (lambda (event-name)
            (define callback
-             (event-handler-ref (dom-node-record-event-handlers n) event-name))
+             (event-handler-ref (view-node-record-event-handlers n) event-name))
            (define listener
              (contextual-procedure->external
-              (dom-node-record-tag n)
-              (dom-node-record-attrs n)
+              (view-node-record-tag n)
+              (view-node-record-attrs n)
               (string-append "on-" event-name)
               callback
               (lambda (evt)
@@ -1506,29 +1506,29 @@
         (register-listener!
          "click"
          (contextual-procedure->external
-          (dom-node-record-tag n)
-          (dom-node-record-attrs n)
+          (view-node-record-tag n)
+          (view-node-record-attrs n)
           "on-click"
-          (dom-node-record-on-click n)
+          (view-node-record-on-click n)
           (lambda (evt)
-            (define callback (dom-node-record-on-click n))
+            (define callback (view-node-record-on-click n))
             (invoke-click-callback! n callback)
             (void evt))))
         (register-listener!
          "change"
          (contextual-procedure->external
-          (dom-node-record-tag n)
-          (dom-node-record-attrs n)
+          (view-node-record-tag n)
+          (view-node-record-attrs n)
           "on-change"
-          (dom-node-record-on-change n)
+          (view-node-record-on-change n)
           (lambda (_evt)
-            (define callback (dom-node-record-on-change n))
+            (define callback (view-node-record-on-change n))
             (invoke-change-callback! callback (node-change-value n)))))
         (register-listener!
          "keydown"
          (contextual-procedure->external
-          (dom-node-record-tag n)
-          (dom-node-record-attrs n)
+          (view-node-record-tag n)
+          (view-node-record-attrs n)
           "on-keydown"
           (keydown-callback-source n)
           (lambda (evt)
@@ -1537,18 +1537,18 @@
             (when (and on-enter (string=? key "Enter"))
               (js-send evt "preventDefault" (vector))
               (on-enter))
-            (define on-click (dom-node-record-on-click n))
-            (define role-pair (assq 'role (dom-node-record-attrs n)))
+            (define on-click (view-node-record-on-click n))
+            (define role-pair (assq 'role (view-node-record-attrs n)))
             (when (and on-click
-                       (not (dom-node-disabled? n))
-                       (or (eq? (dom-node-record-tag n) 'button)
+                       (not (view-node-disabled? n))
+                       (or (eq? (view-node-record-tag n) 'button)
                            (and role-pair
                                 (or (eq? (cdr role-pair) 'button)
                                     (eq? (cdr role-pair) 'menuitem))))
                        (activation-key? key))
               (js-send evt "preventDefault" (vector))
               (on-click))
-            (define callback (dom-node-record-on-change n))
+            (define callback (view-node-record-on-change n))
             (when (and callback (tab-key-node? n))
               (when (nav-key? key)
                 (js-send evt "preventDefault" (vector)))
@@ -1663,52 +1663,52 @@
             (when (and (role-dialog-node? n) (string=? key "Tab"))
               (js-send evt "preventDefault" (vector))
               (define shift? (extern-bool-true? (js-ref/extern evt "shiftKey")))
-              (when (dialog-open-attr? (dom-node-record-attrs n))
+              (when (dialog-open-attr? (view-node-record-attrs n))
                 (focus-cycled-dialog-target! native* shift?)))
             (when (and callback (role-dialog-node? n))
               (invoke-change-callback! callback key)))))
         (register-listener!
          "mouseenter"
          (contextual-procedure->external
-          (dom-node-record-tag n)
-          (dom-node-record-attrs n)
+          (view-node-record-tag n)
+          (view-node-record-attrs n)
           "on-mouseenter"
-          (dom-node-record-on-change n)
+          (view-node-record-on-change n)
           (lambda (evt)
             (with-handlers ([(lambda (_e) #t)
                              (lambda (_e)
                                (void))])
-              (define callback (dom-node-record-on-change n))
+              (define callback (view-node-record-on-change n))
               (when (and callback (hover-change-node? n))
                 (invoke-change-callback! callback "mouseenter"))
               (void evt)))))
         (register-listener!
          "mouseleave"
          (contextual-procedure->external
-          (dom-node-record-tag n)
-          (dom-node-record-attrs n)
+          (view-node-record-tag n)
+          (view-node-record-attrs n)
           "on-mouseleave"
-          (dom-node-record-on-change n)
+          (view-node-record-on-change n)
           (lambda (evt)
             (with-handlers ([(lambda (_e) #t)
                              (lambda (_e)
                                (void))])
-              (define callback (dom-node-record-on-change n))
+              (define callback (view-node-record-on-change n))
               (when (and callback (hover-change-node? n))
                 (invoke-change-callback! callback "mouseleave"))
               (void evt)))))
         (register-listener!
          "focusout"
          (contextual-procedure->external
-          (dom-node-record-tag n)
-          (dom-node-record-attrs n)
+          (view-node-record-tag n)
+          (view-node-record-attrs n)
           "on-focusout"
-          (dom-node-record-on-change n)
+          (view-node-record-on-change n)
           (lambda (evt)
             (with-handlers ([(lambda (_e) #t)
                              (lambda (_e)
                                (void))])
-              (define callback (dom-node-record-on-change n))
+              (define callback (view-node-record-on-change n))
               (define menu-container (focusout-menu-container n native*))
               (when (and callback menu-container)
                 (define related* (js-ref/extern evt "relatedTarget"))
@@ -1731,27 +1731,27 @@
                 (unless (or still-inside?
                             related-menu-control?)
                   (invoke-change-callback! callback "focusout")))))))
-        (when (or (eq? (dom-node-record-tag n) 'input)
-                  (eq? (dom-node-record-tag n) 'textarea))
+        (when (or (eq? (view-node-record-tag n) 'input)
+                  (eq? (view-node-record-tag n) 'textarea))
           (register-listener!
            "input"
            (contextual-procedure->external
-            (dom-node-record-tag n)
-            (dom-node-record-attrs n)
+            (view-node-record-tag n)
+            (view-node-record-attrs n)
             "on-input"
-            (dom-node-record-on-change n)
+            (view-node-record-on-change n)
             (lambda (_evt)
-              (define callback (dom-node-record-on-change n))
+              (define callback (view-node-record-on-change n))
               (invoke-change-callback! callback (node-change-value n))))))
-        (set! dom-node-listeners
-              (native-mapping-set dom-node-listeners
+        (set! view-node-listeners
+              (native-mapping-set view-node-listeners
                                   native*
                                   (reverse listeners))))
       (void))
 
-    ;; dom-node : symbol? list? list? any/c any/c any/c list? -> dom-node?
+    ;; view-node : symbol? list? list? any/c any/c any/c list? -> view-node?
     ;;   Construct a browser-backed node and install event bridges.
-    (define (dom-node tag attrs children text on-click on-change [event-handlers '()])
+    (define (view-node tag attrs children text on-click on-change [event-handlers '()])
       (define native
         (if (eq? tag 'text)
             (js-create-text-node (if text
@@ -1759,114 +1759,114 @@
                                      ""))
             (js-create-element (tag->element-name tag))))
       (define n
-        (dom-node-record tag attrs children text on-click on-change event-handlers native))
+        (view-node-record tag attrs children text on-click on-change event-handlers native))
       (unless (eq? tag 'text)
         (install-default-node-shape! n)
         (apply-attributes! n '() attrs)
         (when text
           (apply-text! native text))
-        (refresh-dom-node-listeners! n))
+        (refresh-view-node-listeners! n))
       n)
 
-    ;; dom-node? : any/c -> boolean?
+    ;; view-node? : any/c -> boolean?
     ;;   Check whether v is a browser-backed node.
-    (define (dom-node? v)
-      (dom-node-record? v))
+    (define (view-node? v)
+      (view-node-record? v))
 
-    ;; dom-node-tag : dom-node? -> symbol?
+    ;; view-node-tag : view-node? -> symbol?
     ;;   Return node kind tag.
-    (define (dom-node-tag n)
-      (dom-node-record-tag n))
+    (define (view-node-tag n)
+      (view-node-record-tag n))
 
-    ;; dom-node-attrs : dom-node? -> list?
+    ;; view-node-attrs : view-node? -> list?
     ;;   Return current attribute alist.
-    (define (dom-node-attrs n)
-      (dom-node-record-attrs n))
+    (define (view-node-attrs n)
+      (view-node-record-attrs n))
 
-    ;; dom-node-children : dom-node? -> list?
+    ;; view-node-children : view-node? -> list?
     ;;   Return current child node list.
-    (define (dom-node-children n)
-      (dom-node-record-children n))
+    (define (view-node-children n)
+      (view-node-record-children n))
 
-    ;; dom-node-text : dom-node? -> any/c
+    ;; view-node-text : view-node? -> any/c
     ;;   Return current text payload.
-    (define (dom-node-text n)
-      (dom-node-record-text n))
+    (define (view-node-text n)
+      (view-node-record-text n))
 
-    ;; dom-node-on-click : dom-node? -> any/c
+    ;; view-node-on-click : view-node? -> any/c
     ;;   Return click callback value.
-    (define (dom-node-on-click n)
-      (dom-node-record-on-click n))
+    (define (view-node-on-click n)
+      (view-node-record-on-click n))
 
-    ;; dom-node-on-change : dom-node? -> any/c
+    ;; view-node-on-change : view-node? -> any/c
     ;;   Return change callback value.
-    (define (dom-node-on-change n)
-      (dom-node-record-on-change n))
+    (define (view-node-on-change n)
+      (view-node-record-on-change n))
 
-    ;; dom-node-event-handlers : dom-node? -> list?
+    ;; view-node-event-handlers : view-node? -> list?
     ;;   Return generic event callback alist.
-    (define (dom-node-event-handlers n)
-      (dom-node-record-event-handlers n))
+    (define (view-node-event-handlers n)
+      (view-node-record-event-handlers n))
 
-    ;; set-dom-node-tag! : dom-node? symbol? -> void?
+    ;; set-view-node-tag! : view-node? symbol? -> void?
     ;;   Remount node with a new native element when tag changes.
-    (define (set-dom-node-tag! n tag)
-      (define old-tag (dom-node-record-tag n))
+    (define (set-view-node-tag! n tag)
+      (define old-tag (view-node-record-tag n))
       (unless (eq? old-tag tag)
-        (define old-native (dom-node-record-native n))
+        (define old-native (view-node-record-native n))
         (define old-parent (js-ref/extern old-native "parentElement"))
         (define replacement
-          (dom-node tag
-                    (dom-node-record-attrs n)
-                    (dom-node-record-children n)
-                    (dom-node-record-text n)
-                    (dom-node-record-on-click n)
-                    (dom-node-record-on-change n)
-                    (dom-node-record-event-handlers n)))
-        (define new-native (dom-node-record-native replacement))
-        (define children (dom-node-record-children n))
+          (view-node tag
+                    (view-node-record-attrs n)
+                    (view-node-record-children n)
+                    (view-node-record-text n)
+                    (view-node-record-on-click n)
+                    (view-node-record-on-change n)
+                    (view-node-record-event-handlers n)))
+        (define new-native (view-node-record-native replacement))
+        (define children (view-node-record-children n))
         (when (pair? children)
           (define fragment (js-create-document-fragment))
           (for-each (lambda (child)
-                      (js-append-child! fragment (dom-node-record-native child)))
+                      (js-append-child! fragment (view-node-record-native child)))
                     children)
           (js-replace-children! new-native fragment))
         (when (and old-parent (not (extern-nullish? old-parent)))
           (js-send old-parent "replaceChild" (vector new-native old-native)))
-        (set-dom-node-record-tag! n tag)
-        (set-dom-node-record-attrs! n (dom-node-record-attrs replacement))
-        (set-dom-node-record-children! n children)
-        (set-dom-node-record-text! n (dom-node-record-text replacement))
-        (set-dom-node-record-on-click! n (dom-node-record-on-click replacement))
-        (set-dom-node-record-on-change! n (dom-node-record-on-change replacement))
-        (set-dom-node-record-event-handlers! n
-                                             (dom-node-record-event-handlers replacement))
-        (set-dom-node-record-native! n new-native)
-        (refresh-dom-node-listeners! n)))
+        (set-view-node-record-tag! n tag)
+        (set-view-node-record-attrs! n (view-node-record-attrs replacement))
+        (set-view-node-record-children! n children)
+        (set-view-node-record-text! n (view-node-record-text replacement))
+        (set-view-node-record-on-click! n (view-node-record-on-click replacement))
+        (set-view-node-record-on-change! n (view-node-record-on-change replacement))
+        (set-view-node-record-event-handlers! n
+                                             (view-node-record-event-handlers replacement))
+        (set-view-node-record-native! n new-native)
+        (refresh-view-node-listeners! n)))
 
-    ;; set-dom-node-attrs! : dom-node? list? -> void?
+    ;; set-view-node-attrs! : view-node? list? -> void?
     ;;   Replace tracked attributes and sync native DOM attributes.
-    (define (set-dom-node-attrs! n attrs)
-      (define native (dom-node-record-native n))
-      (define old-attrs (dom-node-record-attrs n))
+    (define (set-view-node-attrs! n attrs)
+      (define native (view-node-record-native n))
+      (define old-attrs (view-node-record-attrs n))
       (clear-attributes! native old-attrs)
-      (set-dom-node-record-attrs! n attrs)
+      (set-view-node-record-attrs! n attrs)
       (apply-attributes! n old-attrs attrs)
-      (refresh-dom-node-listeners! n)
+      (refresh-view-node-listeners! n)
       (void))
 
-    ;; set-dom-node-children! : dom-node? list? -> void?
+    ;; set-view-node-children! : view-node? list? -> void?
     ;;   Replace tracked child list.
-    (define (set-dom-node-children! n children)
-      (set-dom-node-record-children! n children))
+    (define (set-view-node-children! n children)
+      (set-view-node-record-children! n children))
 
-    ;; set-dom-node-text! : dom-node? any/c -> void?
+    ;; set-view-node-text! : view-node? any/c -> void?
     ;;   Update tracked text and sync native DOM text child.
-    (define (set-dom-node-text! n text)
-      (set-dom-node-record-text! n text)
-      (if (eq? (dom-node-record-tag n) 'text)
+    (define (set-view-node-text! n text)
+      (set-view-node-record-text! n text)
+      (if (eq? (view-node-record-tag n) 'text)
           (let ()
-            (define old-native (dom-node-record-native n))
+            (define old-native (view-node-record-native n))
             (define replacement
               (js-create-text-node (if text
                                        (value->attr-string text)
@@ -1874,75 +1874,75 @@
             (define old-parent (js-ref/extern old-native "parentNode"))
             (when (and old-parent (not (extern-nullish? old-parent)))
               (js-send old-parent "replaceChild" (vector replacement old-native)))
-            (set-dom-node-record-native! n replacement))
-          (apply-text! (dom-node-record-native n) text))
+            (set-view-node-record-native! n replacement))
+          (apply-text! (view-node-record-native n) text))
       (void))
 
-    ;; set-dom-node-on-click! : dom-node? any/c -> void?
+    ;; set-view-node-on-click! : view-node? any/c -> void?
     ;;   Update click callback.
-    (define (set-dom-node-on-click! n on-click)
-      (set-dom-node-record-on-click! n on-click)
-      (refresh-dom-node-listeners! n))
+    (define (set-view-node-on-click! n on-click)
+      (set-view-node-record-on-click! n on-click)
+      (refresh-view-node-listeners! n))
 
-    ;; set-dom-node-on-change! : dom-node? any/c -> void?
+    ;; set-view-node-on-change! : view-node? any/c -> void?
     ;;   Update change callback.
-    (define (set-dom-node-on-change! n on-change)
-      (set-dom-node-record-on-change! n on-change)
-      (refresh-dom-node-listeners! n))
+    (define (set-view-node-on-change! n on-change)
+      (set-view-node-record-on-change! n on-change)
+      (refresh-view-node-listeners! n))
 
-    ;; set-dom-node-event-handlers! : dom-node? list? -> void?
+    ;; set-view-node-event-handlers! : view-node? list? -> void?
     ;;   Update generic event callback alist.
-    (define (set-dom-node-event-handlers! n event-handlers)
-      (set-dom-node-record-event-handlers! n event-handlers)
-      (refresh-dom-node-listeners! n))
+    (define (set-view-node-event-handlers! n event-handlers)
+      (set-view-node-record-event-handlers! n event-handlers)
+      (refresh-view-node-listeners! n))
 
-    ;; dom-node-native : dom-node? -> any/c
+    ;; view-node-native : view-node? -> any/c
     ;;   Return wrapped browser DOM node handle.
-    (define (dom-node-native n)
-      (dom-node-record-native n))
+    (define (view-node-native n)
+      (view-node-record-native n))
 
-    ;; backend-append-child! : dom-node? dom-node? -> void?
+    ;; backend-append-child! : view-node? view-node? -> void?
     ;;   Append child in model and browser DOM.
     (define (backend-append-child! parent child)
-      (set-dom-node-record-children!
+      (set-view-node-record-children!
        parent
-       (append (dom-node-record-children parent) (list child)))
-      (js-append-child! (dom-node-record-native parent)
-                                  (dom-node-record-native child))
+       (append (view-node-record-children parent) (list child)))
+      (js-append-child! (view-node-record-native parent)
+                                  (view-node-record-native child))
       (void))
 
-    ;; backend-set-single-child! : dom-node? dom-node? -> void?
+    ;; backend-set-single-child! : view-node? view-node? -> void?
     ;;   Replace children with one node in model and browser DOM.
     (define (backend-set-single-child! parent child)
-      (for-each handle-node-removal! (dom-node-record-children parent))
-      (set-dom-node-record-children! parent (list child))
-      (js-replace-children! (dom-node-record-native parent)
-                                      (dom-node-record-native child))
+      (for-each handle-node-removal! (view-node-record-children parent))
+      (set-view-node-record-children! parent (list child))
+      (js-replace-children! (view-node-record-native parent)
+                                      (view-node-record-native child))
       (void))
 
-    ;; backend-replace-children! : dom-node? list? -> void?
+    ;; backend-replace-children! : view-node? list? -> void?
     ;;   Replace children list in model and browser DOM.
     (define (backend-replace-children! parent children)
-      (for-each handle-node-removal! (dom-node-record-children parent))
-      (set-dom-node-record-children! parent children)
+      (for-each handle-node-removal! (view-node-record-children parent))
+      (set-view-node-record-children! parent children)
       (define fragment (js-create-document-fragment))
       (for-each (lambda (child)
-                  (js-append-child! fragment (dom-node-record-native child)))
+                  (js-append-child! fragment (view-node-record-native child)))
                 children)
-      (js-replace-children! (dom-node-record-native parent) fragment)
+      (js-replace-children! (view-node-record-native parent) fragment)
       (void))
 
-    ;; backend-mount-root! : dom-node? [any/c] -> void?
+    ;; backend-mount-root! : view-node? [any/c] -> void?
     ;;   Mount root node into browser container.
     ;;   Optional parameter container defaults to document body.
     (define (backend-mount-root! root [container (js-document-body)])
-      (js-replace-children! container (dom-node-record-native root))
+      (js-replace-children! container (view-node-record-native root))
       (void))
 
-    ;; backend-scrollspy-observe-scroll! : dom-node? (-> void?) (-> (-> void?) void?) -> void?
+    ;; backend-scrollspy-observe-scroll! : view-node? (-> void?) (-> (-> void?) void?) -> void?
     ;;   Register IntersectionObserver (fallback scroll listener) on container in browser backend.
     (define (backend-scrollspy-observe-scroll! container callback register-cleanup!)
-      (define native (dom-node-record-native container))
+      (define native (view-node-record-native container))
       ;; invoke-scrollspy-callback! : string? -> void?
       ;;   Invoke callback.
       (define (invoke-scrollspy-callback! source)
@@ -2039,10 +2039,10 @@
                    (native-remove scrollspy-cleanup-registered native))))))
       (void))
 
-    ;; backend-scrollspy-scroll-into-view! : dom-node? -> void?
+    ;; backend-scrollspy-scroll-into-view! : view-node? -> void?
     ;;   Scroll section node into view in browser backend.
     (define (backend-scrollspy-scroll-into-view! section-node)
-      (define native (dom-node-record-native section-node))
+      (define native (view-node-record-native section-node))
       (when (and native (not (extern-nullish? native)))
         ;; Pass `#t` so browser aligns selected section to top consistently.
         (js-send native "scrollIntoView" (vector #t)))
@@ -2056,7 +2056,7 @@
           (let* ([first-binding (car section-bindings)]
                  [first-id (car first-binding)]
                  [first-node (cdr first-binding)]
-                 [first-native (dom-node-record-native first-node)]
+                 [first-native (view-node-record-native first-node)]
                  [container-native* (if first-native
                                         (js-ref/extern first-native "parentElement")
                                         #f)])
@@ -2079,7 +2079,7 @@
                         (let* ([binding (car pairs)]
                                [section-id (car binding)]
                                [section-node (cdr binding)]
-                               [section-native (dom-node-record-native section-node)])
+                               [section-native (view-node-record-native section-node)])
                           (if (or (not section-native)
                                   (extern-nullish? section-native))
                               (loop (cdr pairs) candidate)
@@ -2098,23 +2098,23 @@
                                           (loop (cdr pairs) section-id)
                                           (loop (cdr pairs) candidate))))))))))))))
 
-    (values dom-node
-            dom-node?
-            dom-node-tag
-            dom-node-attrs
-            dom-node-children
-            dom-node-text
-            dom-node-on-click
-            dom-node-on-change
-            dom-node-event-handlers
-            set-dom-node-tag!
-            set-dom-node-attrs!
-            set-dom-node-children!
-            set-dom-node-text!
-            set-dom-node-on-click!
-            set-dom-node-on-change!
-            set-dom-node-event-handlers!
-            dom-node-native
+    (values view-node
+            view-node?
+            view-node-tag
+            view-node-attrs
+            view-node-children
+            view-node-text
+            view-node-on-click
+            view-node-on-change
+            view-node-event-handlers
+            set-view-node-tag!
+            set-view-node-attrs!
+            set-view-node-children!
+            set-view-node-text!
+            set-view-node-on-click!
+            set-view-node-on-change!
+            set-view-node-event-handlers!
+            view-node-native
             backend-append-child!
             backend-set-single-child!
             backend-replace-children!

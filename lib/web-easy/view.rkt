@@ -5749,8 +5749,8 @@
                                      key)))
         (define find-node-by-widget
           (api-proc 'find-node-by-widget))
-        (define dom-node-on-click
-          (api-proc 'dom-node-on-click))
+        (define view-node-on-click
+          (api-proc 'view-node-on-click))
         (define backend-set-timeout!
           (api-proc 'backend-set-timeout!))
         (define backend-clear-timeout!
@@ -5788,7 +5788,7 @@
                      (find-node-by-widget root-node "carousel-next"))
                    (when next-node
                      (define on-click
-                       (dom-node-on-click next-node))
+                       (view-node-on-click next-node))
                      (when on-click
                        (on-click))))))))
       (define carousel-view
@@ -5835,12 +5835,12 @@
           (api-proc 'find-node-by-widget))
         (define dom-node-attr-ref
           (api-proc 'dom-node-attr-ref))
-        (define dom-node-children
-          (api-proc 'dom-node-children))
-        (define dom-node-on-click
-          (api-proc 'dom-node-on-click))
-        (define set-dom-node-on-click!
-          (api-proc 'set-dom-node-on-click!))
+        (define view-node-children
+          (api-proc 'view-node-children))
+        (define view-node-on-click
+          (api-proc 'view-node-on-click))
+        (define set-view-node-on-click!
+          (api-proc 'set-view-node-on-click!))
         (define backend-scrollspy-scroll-into-view!
           (api-proc 'backend-scrollspy-scroll-into-view!))
         (define backend-scrollspy-active-id
@@ -5858,7 +5858,7 @@
                                             'data-we-scrollspy-id
                                             #f)
                          section-node))
-                 (dom-node-children sections-node)))
+                 (view-node-children sections-node)))
           (define nav-action-bindings '())
           (for-each
            (lambda (nav-item)
@@ -5871,18 +5871,18 @@
                    (cdr section-node-pair)
                    #f))
              (define on-click0
-               (dom-node-on-click nav-item))
+               (view-node-on-click nav-item))
              (when on-click0
                (set! nav-action-bindings
                      (cons (cons section-id on-click0)
                            nav-action-bindings))
-               (set-dom-node-on-click!
+               (set-view-node-on-click!
                 nav-item
                 (lambda ()
                   (on-click0)
                   (when section-node
                     (backend-scrollspy-scroll-into-view! section-node))))))
-           (dom-node-children nav-node))
+           (view-node-children nav-node))
           (define current-id
             (if (and (list? state)
                      (pair? (cdr state)))

@@ -19,13 +19,13 @@
     (error 'check-exn label)))
 
 (define (node-child n idx)
-  (list-ref (dom-node-children n) idx))
+  (list-ref (view-node-children n) idx))
 
 (define (node-texts nodes)
-  (map dom-node-text nodes))
+  (map view-node-text nodes))
 
 (define (node-attr n key)
-  (define p (assq key (dom-node-attrs n)))
+  (define p (assq key (view-node-attrs n)))
   (if p (cdr p) #f))
 
 (define (node-class-contains? n class-name)
@@ -35,7 +35,7 @@
                          (string-append " " class-name " "))))
 
 (define (node-child-by-role n role)
-  (let loop ([children (dom-node-children n)])
+  (let loop ([children (view-node-children n)])
     (cond
       [(null? children)
        (error 'node-child-by-role "missing child role")]
@@ -46,7 +46,7 @@
            (loop (cdr children)))])))
 
 (define (node-child-by-widget n widget)
-  (let loop ([children (dom-node-children n)])
+  (let loop ([children (view-node-children n)])
     (cond
       [(null? children)
        (error 'node-child-by-widget "missing child data-we-widget")]
@@ -141,8 +141,8 @@
 (check-equal (node-attr panel 'data-we-widget) "vpanel" "vpanel data-we-widget attr")
 (check-equal (node-attr panel 'class) "we-vpanel" "vpanel base class")
 (check-equal (node-attr label-node 'data-we-widget) "text" "text data-we-widget attr")
-(check-equal (dom-node-tag root-style-node) 'style "window includes shared style node")
-(define injected-style-text (dom-node-text root-style-node))
+(check-equal (view-node-tag root-style-node) 'style "window includes shared style node")
+(define injected-style-text (view-node-text root-style-node))
 (check-equal (if (string-contains? injected-style-text "background:") #t #f)
              #f
              "shared style omits visual background rules")
@@ -155,13 +155,13 @@
 (check-equal (if (string-contains? injected-style-text "padding:") #t #f)
              #f
              "shared style omits visual padding rules")
-(check-equal (dom-node-text label-node) "0" "initial text")
+(check-equal (view-node-text label-node) "0" "initial text")
 (check-equal (node-attr plus-node 'data-we-widget) "button" "button data-we-widget attr")
 (check-equal (node-attr plus-node 'class) "we-button" "button base class")
 (dom-node-click! plus-node)
-(check-equal (dom-node-text label-node) "1" "text after one click")
+(check-equal (view-node-text label-node) "1" "text after one click")
 (dom-node-click! plus-node)
-(check-equal (dom-node-text label-node) "2" "text after two clicks")
+(check-equal (view-node-text label-node) "2" "text after two clicks")
 (define r-text-attrs
   (render
    (window
@@ -169,7 +169,7 @@
           #:lang "en"
           #:data-track "t1"))))
 (define text-attrs-node (node-child (renderer-root r-text-attrs) 0))
-(check-equal (dom-node-tag text-attrs-node) 'span "text root tag is span")
+(check-equal (view-node-tag text-attrs-node) 'span "text root tag is span")
 (check-equal (node-attr text-attrs-node 'lang) "en" "text forwards global attrs")
 (check-equal (node-attr text-attrs-node 'data-track) "t1" "text forwards data-* attrs")
 (check-exn (lambda () (text "Bad keyword" #:foo "x"))
@@ -190,11 +190,11 @@
       (text "Inner B"))
      (text "After")))))
 (define fragment-panel (node-child (renderer-root r-fragment) 0))
-(check-equal (length (dom-node-children fragment-panel)) 4 "Fragment flattens children into parent")
-(check-equal (dom-node-text (node-child fragment-panel 0)) "Before" "Fragment keeps preceding sibling order")
-(check-equal (dom-node-text (node-child fragment-panel 1)) "Inner A" "Fragment first child renders")
-(check-equal (dom-node-text (node-child fragment-panel 2)) "Inner B" "Fragment second child renders")
-(check-equal (dom-node-text (node-child fragment-panel 3)) "After" "Fragment keeps following sibling order")
+(check-equal (length (view-node-children fragment-panel)) 4 "Fragment flattens children into parent")
+(check-equal (view-node-text (node-child fragment-panel 0)) "Before" "Fragment keeps preceding sibling order")
+(check-equal (view-node-text (node-child fragment-panel 1)) "Inner A" "Fragment first child renders")
+(check-equal (view-node-text (node-child fragment-panel 2)) "Inner B" "Fragment second child renders")
+(check-equal (view-node-text (node-child fragment-panel 3)) "After" "Fragment keeps following sibling order")
 
 ;; heading/display-heading/lead render semantic tags, classes, style variants, and observable updates
 (define @heading-level   (@ 2))
@@ -218,18 +218,18 @@
 (check-equal (node-attr heading-node 'class)
              "we-heading we-heading-2 we-heading-align-left we-heading-space-normal"
              "heading class level 2 + default style variants")
-(check-equal (dom-node-tag heading-node) 'h2 "heading tag level 2")
-(check-equal (dom-node-text heading-node) "Title" "heading initial text")
+(check-equal (view-node-tag heading-node) 'h2 "heading tag level 2")
+(check-equal (view-node-text heading-node) "Title" "heading initial text")
 (check-equal (node-attr display-heading-node 'data-we-widget) "display-heading" "display-heading data-we-widget attr")
 (check-equal (node-attr display-heading-node 'class)
              "we-display-heading we-display-heading-2 we-display-heading-align-left we-display-heading-space-normal"
              "display-heading class level 2 + default style variants")
-(check-equal (dom-node-tag display-heading-node) 'h2 "display-heading tag level 2")
-(check-equal (dom-node-text display-heading-node) "Display" "display-heading initial text")
+(check-equal (view-node-tag display-heading-node) 'h2 "display-heading tag level 2")
+(check-equal (view-node-text display-heading-node) "Display" "display-heading initial text")
 (check-equal (node-attr lead-node 'data-we-widget) "lead" "lead data-we-widget attr")
 (check-equal (node-attr lead-node 'class) "we-lead" "lead class")
-(check-equal (dom-node-tag lead-node) 'p "lead tag paragraph")
-(check-equal (dom-node-text lead-node) "Lead body" "lead initial text")
+(check-equal (view-node-tag lead-node) 'p "lead tag paragraph")
+(check-equal (view-node-text lead-node) "Lead body" "lead initial text")
 (:= @heading-level 4)
 (:= @heading-text "Updated Title")
 (:= @display-text "Updated Display")
@@ -237,14 +237,14 @@
 (check-equal (node-attr heading-node 'class)
              "we-heading we-heading-4 we-heading-align-left we-heading-space-normal"
              "heading class level 4 + default style variants")
-(check-equal (dom-node-tag heading-node) 'h4 "heading tag level 4")
-(check-equal (dom-node-text heading-node) "Updated Title" "heading updated text")
+(check-equal (view-node-tag heading-node) 'h4 "heading tag level 4")
+(check-equal (view-node-text heading-node) "Updated Title" "heading updated text")
 (check-equal (node-attr display-heading-node 'class)
              "we-display-heading we-display-heading-4 we-display-heading-align-left we-display-heading-space-normal"
              "display-heading class level 4 + default style variants")
-(check-equal (dom-node-tag display-heading-node) 'h4 "display-heading tag level 4")
-(check-equal (dom-node-text display-heading-node) "Updated Display" "display-heading updated text")
-(check-equal (dom-node-text lead-node) "Updated Lead" "lead updated text")
+(check-equal (view-node-tag display-heading-node) 'h4 "display-heading tag level 4")
+(check-equal (view-node-text display-heading-node) "Updated Display" "display-heading updated text")
+(check-equal (view-node-text lead-node) "Updated Lead" "lead updated text")
 (:= @heading-align 'center)
 (:= @heading-spacing 'loose)
 (check-equal (node-attr heading-node 'class)
@@ -289,7 +289,7 @@
           #:lang "en"
           #:data-probe "lead"))))
 (define lead-attrs-node (node-child (renderer-root r-lead-attrs) 0))
-(check-equal (dom-node-tag lead-attrs-node) 'p "lead root tag is p")
+(check-equal (view-node-tag lead-attrs-node) 'p "lead root tag is p")
 (check-equal (node-attr lead-attrs-node 'id) "lead-id" "lead forwards #:id")
 (check-equal (node-attr lead-attrs-node 'lang) "en" "lead forwards global attrs")
 (check-equal (node-attr lead-attrs-node 'data-probe) "lead" "lead forwards data-* attrs")
@@ -323,24 +323,24 @@
 (check-equal (node-attr blockquote-node 'class) "we-blockquote" "blockquote class")
 (check-equal (node-attr blockquote-center-node 'class) "we-blockquote we-blockquote-align-center" "blockquote center class")
 (check-equal (node-attr blockquote-right-node 'class) "we-blockquote we-blockquote-align-right" "blockquote right class")
-(check-equal (dom-node-tag blockquote-node) 'figure "blockquote tag figure")
+(check-equal (view-node-tag blockquote-node) 'figure "blockquote tag figure")
 (check-equal (node-attr blockquote-quote-node 'data-we-widget) "blockquote-quote" "blockquote quote widget attr")
-(check-equal (dom-node-tag blockquote-quote-node) 'blockquote "blockquote quote tag")
+(check-equal (view-node-tag blockquote-quote-node) 'blockquote "blockquote quote tag")
 (check-equal (node-attr blockquote-text-node 'data-we-widget) "blockquote-text" "blockquote text widget attr")
-(check-equal (dom-node-tag blockquote-text-node) 'p "blockquote text tag")
-(check-equal (dom-node-text blockquote-text-node) "Quote body" "blockquote initial text")
+(check-equal (view-node-tag blockquote-text-node) 'p "blockquote text tag")
+(check-equal (view-node-text blockquote-text-node) "Quote body" "blockquote initial text")
 (check-equal (node-attr blockquote-attrib-node 'data-we-widget) "blockquote-attrib" "blockquote attribution widget attr")
-(check-equal (dom-node-tag blockquote-attrib-node) 'figcaption "blockquote attribution tag")
-(check-equal (dom-node-text blockquote-attrib-node) "Attribution line" "blockquote initial attribution")
-(check-equal (length (dom-node-children blockquote-no-attrib-node)) 1 "blockquote without attribution has only quote child")
+(check-equal (view-node-tag blockquote-attrib-node) 'figcaption "blockquote attribution tag")
+(check-equal (view-node-text blockquote-attrib-node) "Attribution line" "blockquote initial attribution")
+(check-equal (length (view-node-children blockquote-no-attrib-node)) 1 "blockquote without attribution has only quote child")
 (:= @quote-text "Updated quote body")
 (:= @quote-attrib #f)
-(check-equal (dom-node-text blockquote-text-node) "Updated quote body" "blockquote quote observable update")
-(check-equal (length (dom-node-children blockquote-node)) 2 "blockquote keeps attribution node for observable wiring")
+(check-equal (view-node-text blockquote-text-node) "Updated quote body" "blockquote quote observable update")
+(check-equal (length (view-node-children blockquote-node)) 2 "blockquote keeps attribution node for observable wiring")
 (check-equal (node-attr blockquote-attrib-node 'hidden) #t "blockquote hides attribution node when observable value is #f")
 (:= @quote-attrib "Attribution restored")
-(check-equal (length (dom-node-children blockquote-node)) 2 "blockquote restores attribution when non-#f")
-(check-equal (dom-node-text (node-child blockquote-node 1)) "Attribution restored" "blockquote attribution observable update")
+(check-equal (length (view-node-children blockquote-node)) 2 "blockquote restores attribution when non-#f")
+(check-equal (view-node-text (node-child blockquote-node 1)) "Attribution restored" "blockquote attribution observable update")
 
 ;; blockquote accepts global attrs on root figure and rejects unknown keywords
 (define r-blockquote-attrs
@@ -382,12 +382,12 @@
      (display-5 "d5")
      (display-6 "d6")))))
 (define heading-wrappers-panel (node-child (renderer-root r-heading-wrappers) 0))
-(check-equal (dom-node-tag (node-child heading-wrappers-panel 0)) 'h1 "h1 wrapper tag")
-(check-equal (dom-node-tag (node-child heading-wrappers-panel 1)) 'h2 "h2 wrapper tag")
-(check-equal (dom-node-tag (node-child heading-wrappers-panel 2)) 'h3 "h3 wrapper tag")
-(check-equal (dom-node-tag (node-child heading-wrappers-panel 3)) 'h4 "h4 wrapper tag")
-(check-equal (dom-node-tag (node-child heading-wrappers-panel 4)) 'h5 "h5 wrapper tag")
-(check-equal (dom-node-tag (node-child heading-wrappers-panel 5)) 'h6 "h6 wrapper tag")
+(check-equal (view-node-tag (node-child heading-wrappers-panel 0)) 'h1 "h1 wrapper tag")
+(check-equal (view-node-tag (node-child heading-wrappers-panel 1)) 'h2 "h2 wrapper tag")
+(check-equal (view-node-tag (node-child heading-wrappers-panel 2)) 'h3 "h3 wrapper tag")
+(check-equal (view-node-tag (node-child heading-wrappers-panel 3)) 'h4 "h4 wrapper tag")
+(check-equal (view-node-tag (node-child heading-wrappers-panel 4)) 'h5 "h5 wrapper tag")
+(check-equal (view-node-tag (node-child heading-wrappers-panel 5)) 'h6 "h6 wrapper tag")
 (check-equal (node-attr (node-child heading-wrappers-panel 6) 'class)
              "we-display-heading we-display-heading-1 we-display-heading-align-left we-display-heading-space-normal"
              "display-1 wrapper class")
@@ -439,20 +439,20 @@
 (check-equal (node-attr heading-subtitle-node 'class)
              "we-heading-with-subtitle we-heading-with-subtitle-3 we-heading-with-subtitle-align-left we-heading-with-subtitle-space-normal"
              "heading-with-subtitle initial class")
-(check-equal (dom-node-tag heading-subtitle-node) 'h3 "heading-with-subtitle initial tag")
-(check-equal (length (dom-node-children heading-subtitle-node)) 2 "heading-with-subtitle initial child count")
+(check-equal (view-node-tag heading-subtitle-node) 'h3 "heading-with-subtitle initial tag")
+(check-equal (length (view-node-children heading-subtitle-node)) 2 "heading-with-subtitle initial child count")
 (check-equal (node-attr heading-title-node 'data-we-widget) "heading-title" "heading title node widget")
 (check-equal (node-attr heading-subtitle-text-node 'data-we-widget) "heading-subtitle" "heading subtitle node widget")
-(check-equal (dom-node-text heading-title-node) "Release Notes" "heading-with-subtitle initial title text")
-(check-equal (dom-node-text heading-subtitle-text-node) "Updated 2026-03-06" "heading-with-subtitle initial subtitle text")
+(check-equal (view-node-text heading-title-node) "Release Notes" "heading-with-subtitle initial title text")
+(check-equal (view-node-text heading-subtitle-text-node) "Updated 2026-03-06" "heading-with-subtitle initial subtitle text")
 (check-equal (node-attr display-heading-subtitle-node 'data-we-widget) "display-heading-with-subtitle" "display-heading-with-subtitle data-we-widget attr")
 (check-equal (node-attr display-heading-subtitle-node 'class)
              "we-display-heading-with-subtitle we-display-heading-with-subtitle-3 we-display-heading-with-subtitle-align-left we-display-heading-with-subtitle-space-normal"
              "display-heading-with-subtitle initial class")
-(check-equal (dom-node-tag display-heading-subtitle-node) 'h3 "display-heading-with-subtitle initial tag")
-(check-equal (length (dom-node-children display-heading-subtitle-node)) 2 "display-heading-with-subtitle initial child count")
-(check-equal (dom-node-text display-heading-title-node) "Release Notes" "display-heading-with-subtitle initial title text")
-(check-equal (dom-node-text display-heading-subtitle-text-node) "Updated 2026-03-06" "display-heading-with-subtitle initial subtitle text")
+(check-equal (view-node-tag display-heading-subtitle-node) 'h3 "display-heading-with-subtitle initial tag")
+(check-equal (length (view-node-children display-heading-subtitle-node)) 2 "display-heading-with-subtitle initial child count")
+(check-equal (view-node-text display-heading-title-node) "Release Notes" "display-heading-with-subtitle initial title text")
+(check-equal (view-node-text display-heading-subtitle-text-node) "Updated 2026-03-06" "display-heading-with-subtitle initial subtitle text")
 (:= @subtitle-level 5)
 (:= @subtitle-title "Patch Notes")
 (:= @subtitle-text "Updated 2026-03-07")
@@ -461,17 +461,17 @@
 (check-equal (node-attr heading-subtitle-node 'class)
              "we-heading-with-subtitle we-heading-with-subtitle-5 we-heading-with-subtitle-align-center we-heading-with-subtitle-space-loose"
              "heading-with-subtitle updated class")
-(check-equal (dom-node-tag heading-subtitle-node) 'h5 "heading-with-subtitle updated tag")
-(check-equal (length (dom-node-children heading-subtitle-node)) 2 "heading-with-subtitle preserves child count after level update")
-(check-equal (dom-node-text heading-title-node) "Patch Notes" "heading-with-subtitle updated title text")
-(check-equal (dom-node-text heading-subtitle-text-node) "Updated 2026-03-07" "heading-with-subtitle updated subtitle text")
+(check-equal (view-node-tag heading-subtitle-node) 'h5 "heading-with-subtitle updated tag")
+(check-equal (length (view-node-children heading-subtitle-node)) 2 "heading-with-subtitle preserves child count after level update")
+(check-equal (view-node-text heading-title-node) "Patch Notes" "heading-with-subtitle updated title text")
+(check-equal (view-node-text heading-subtitle-text-node) "Updated 2026-03-07" "heading-with-subtitle updated subtitle text")
 (check-equal (node-attr display-heading-subtitle-node 'class)
              "we-display-heading-with-subtitle we-display-heading-with-subtitle-5 we-display-heading-with-subtitle-align-center we-display-heading-with-subtitle-space-loose"
              "display-heading-with-subtitle updated class")
-(check-equal (dom-node-tag display-heading-subtitle-node) 'h5 "display-heading-with-subtitle updated tag")
-(check-equal (length (dom-node-children display-heading-subtitle-node)) 2 "display-heading-with-subtitle preserves child count after level update")
-(check-equal (dom-node-text display-heading-title-node) "Patch Notes" "display-heading-with-subtitle updated title text")
-(check-equal (dom-node-text display-heading-subtitle-text-node) "Updated 2026-03-07" "display-heading-with-subtitle updated subtitle text")
+(check-equal (view-node-tag display-heading-subtitle-node) 'h5 "display-heading-with-subtitle updated tag")
+(check-equal (length (view-node-children display-heading-subtitle-node)) 2 "display-heading-with-subtitle preserves child count after level update")
+(check-equal (view-node-text display-heading-title-node) "Patch Notes" "display-heading-with-subtitle updated title text")
+(check-equal (view-node-text display-heading-subtitle-text-node) "Updated 2026-03-07" "display-heading-with-subtitle updated subtitle text")
 (define r-heading-subtitle-attrs
   (render
    (window
@@ -501,9 +501,9 @@
 (define panel-lambda (node-child (renderer-root r-lambda) 0))
 (define label-node-lambda (node-child panel-lambda 0))
 (define plus-node-lambda (node-child panel-lambda 1))
-(check-equal (dom-node-text label-node-lambda) "0" "lambda-action initial text")
+(check-equal (view-node-text label-node-lambda) "0" "lambda-action initial text")
 (dom-node-click! plus-node-lambda)
-(check-equal (dom-node-text label-node-lambda) "1" "lambda-action text after click")
+(check-equal (view-node-text label-node-lambda) "1" "lambda-action text after click")
 
 ;; hpanel renders with class-based row layout
 (define r-hpanel
@@ -546,7 +546,7 @@
 (check-equal (node-attr spacer-layout-node 'class) "we-spacer" "spacer class")
 (check-equal (node-attr spacer-layout-node 'style) "flex-grow:2;" "spacer grow style")
 (check-equal (node-attr grid-layout-node 'style) "--we-grid-columns:repeat(2,minmax(0,1fr));--we-grid-gap:12px;" "grid columns style")
-(check-equal (length (dom-node-children grid-layout-node)) 2 "grid child count")
+(check-equal (length (view-node-children grid-layout-node)) 2 "grid child count")
 
 ;; grid supports explicit gap via #:gap.
 (define r-grid-gap
@@ -573,7 +573,7 @@
 (check-equal (node-attr navigation-bar-node 'class) "we-navigation-bar" "navigation-bar base class")
 (check-equal (node-attr navigation-bar-node 'role) 'navigation "navigation-bar role attr")
 (check-equal
- (let loop ([children (dom-node-children navigation-bar-node)])
+ (let loop ([children (view-node-children navigation-bar-node)])
    (cond
      [(null? children) #f]
      [else
@@ -681,7 +681,7 @@
                  #:lang "en"
                  #:data-track "ph1"))))
 (define placeholder-attrs-node (node-child (renderer-root r-placeholder-attrs) 0))
-(check-equal (dom-node-tag placeholder-attrs-node) 'span "placeholder root tag is span")
+(check-equal (view-node-tag placeholder-attrs-node) 'span "placeholder root tag is span")
 (check-equal (node-attr placeholder-attrs-node 'lang) "en" "placeholder forwards global attrs")
 (check-equal (node-attr placeholder-attrs-node 'data-track) "ph1" "placeholder forwards data-* attrs")
 (check-exn (lambda () (placeholder 'text #f #:foo "x"))
@@ -912,13 +912,13 @@
 (check-equal (node-attr alert-node 'class) "we-alert we-alert-success" "alert success class")
 (check-equal (node-attr alert-node 'role) 'status "alert success role")
 (check-equal (node-attr alert-node 'aria-live) "polite" "alert success aria-live")
-(check-equal (dom-node-text alert-node) "Saved" "alert initial text")
+(check-equal (view-node-text alert-node) "Saved" "alert initial text")
 (:= @alert-text "Disk almost full")
 (:= @alert-level 'warning)
 (check-equal (node-attr alert-node 'class) "we-alert we-alert-warning" "alert warning class")
 (check-equal (node-attr alert-node 'role) 'alert "alert warning role")
 (check-equal (node-attr alert-node 'aria-live) "assertive" "alert warning aria-live")
-(check-equal (dom-node-text alert-node) "Disk almost full" "alert text after update")
+(check-equal (view-node-text alert-node) "Disk almost full" "alert text after update")
 (define r-alert-decorators
   (render
    (window
@@ -969,17 +969,17 @@
 (check-equal (node-attr alert-rich-node 'class) "we-alert we-alert-warning" "alert-rich warning class")
 (check-equal (node-attr alert-rich-node 'aria-live) "assertive" "alert-rich warning aria-live")
 (check-equal (node-attr alert-rich-title-node 'class) "we-alert-title" "alert-rich title class")
-(check-equal (dom-node-text alert-rich-title-node) "Well done!" "alert-rich title text")
+(check-equal (view-node-text alert-rich-title-node) "Well done!" "alert-rich title text")
 (check-equal (node-attr alert-rich-body-node 'class) "we-alert-body" "alert-rich body class")
-(check-equal (dom-node-text alert-rich-body-node) "Your plan is active." "alert-rich body text")
+(check-equal (view-node-text alert-rich-body-node) "Your plan is active." "alert-rich body text")
 (check-equal (node-attr alert-rich-link-node 'class) "we-alert-link" "alert-rich link class")
 (check-equal (node-attr alert-rich-link-node 'href) "/account" "alert-rich link href")
-(check-equal (dom-node-text alert-rich-link-node) "See details" "alert-rich link text")
+(check-equal (view-node-text alert-rich-link-node) "See details" "alert-rich link text")
 (:= @alert-rich-level 'info)
 (:= @alert-rich-title #f)
 (:= @alert-rich-link-text #f)
 (check-equal (node-attr alert-rich-node 'class) "we-alert we-alert-info" "alert-rich info class")
-(check-equal (length (dom-node-children alert-rich-node)) 1 "alert-rich hides optional title/link")
+(check-equal (length (view-node-children alert-rich-node)) 1 "alert-rich hides optional title/link")
 
 ;; alert-rich supports dismiss action and dismiss label via options alist
 (define @alert-rich-dismissed (@ #f))
@@ -1030,19 +1030,19 @@
 (check-equal (node-attr alert-rich-inline-segments-node 'class)
              "we-alert we-alert-info we-alert-layout-inline"
              "alert-rich inline-segments class")
-(check-equal (dom-node-text alert-rich-inline-segments-title)
+(check-equal (view-node-text alert-rich-inline-segments-title)
              "Heads up!"
              "alert-rich inline-segments title")
-(check-equal (dom-node-text alert-rich-inline-segments-body-1)
+(check-equal (view-node-text alert-rich-inline-segments-body-1)
              " This "
              "alert-rich inline-segments body text 1")
 (check-equal (node-attr alert-rich-inline-segments-link 'href)
              "/alerts"
              "alert-rich inline-segments link href")
-(check-equal (dom-node-text alert-rich-inline-segments-link)
+(check-equal (view-node-text alert-rich-inline-segments-link)
              "alert needs your attention"
              "alert-rich inline-segments link text")
-(check-equal (dom-node-text alert-rich-inline-segments-body-2)
+(check-equal (view-node-text alert-rich-inline-segments-body-2)
              ", but it's not super important."
              "alert-rich inline-segments body text 2")
 
@@ -1057,11 +1057,11 @@
 (define badge-node (node-child (node-child (renderer-root r-badge) 0) 0))
 (check-equal (node-attr badge-node 'data-we-widget) "badge" "badge data-we-widget attr")
 (check-equal (node-attr badge-node 'class) "we-badge we-badge-info" "badge info class")
-(check-equal (dom-node-text badge-node) "beta" "badge initial text")
+(check-equal (view-node-text badge-node) "beta" "badge initial text")
 (:= @badge-text "stable")
 (:= @badge-level 'success)
 (check-equal (node-attr badge-node 'class) "we-badge we-badge-success" "badge success class")
-(check-equal (dom-node-text badge-node) "stable" "badge text after update")
+(check-equal (view-node-text badge-node) "stable" "badge text after update")
 (:= @badge-level 'danger)
 (check-equal (node-attr badge-node 'class) "we-badge we-badge-danger" "badge danger class")
 (:= @badge-level 'warning)
@@ -1077,7 +1077,7 @@
            #:lang "en"
            #:data-probe "badge"))))
 (define badge-attrs-node (node-child (renderer-root r-badge-attrs) 0))
-(check-equal (dom-node-tag badge-attrs-node) 'span "badge root tag is span")
+(check-equal (view-node-tag badge-attrs-node) 'span "badge root tag is span")
 (check-equal (node-attr badge-attrs-node 'id) "badge-id" "badge forwards #:id")
 (check-equal (node-attr badge-attrs-node 'lang) "en" "badge forwards global attrs")
 (check-equal (node-attr badge-attrs-node 'data-probe) "badge" "badge forwards data-* attrs")
@@ -1100,9 +1100,9 @@
 (check-equal (node-attr spinner-node 'class) "we-spinner" "spinner base class")
 (check-equal (node-attr spinner-icon-node 'class) "we-spinner-icon" "spinner icon class")
 (check-equal (node-attr spinner-label-node 'class) "we-spinner-label" "spinner label class")
-(check-equal (dom-node-text spinner-label-node) "Loading..." "spinner initial label text")
+(check-equal (view-node-text spinner-label-node) "Loading..." "spinner initial label text")
 (:= @spinner-label "Syncing")
-(check-equal (dom-node-text spinner-label-node) "Syncing" "spinner label updates from observable")
+(check-equal (view-node-text spinner-label-node) "Syncing" "spinner label updates from observable")
 (define r-spinner-decorators
   (render
    (window
@@ -1148,7 +1148,7 @@
 (check-equal (node-attr toast-node 'data-we-widget) "toast" "toast data-we-widget attr")
 (check-equal (node-attr toast-node 'class) "we-toast we-toast-success is-open" "toast initial class")
 (check-equal (node-attr toast-node 'aria-hidden) "false" "toast initially visible")
-(check-equal (dom-node-text toast-message-node) "Build complete" "toast message text")
+(check-equal (view-node-text toast-message-node) "Build complete" "toast message text")
 (:= @toast-level 'danger)
 (check-equal (node-attr toast-node 'class) "we-toast we-toast-danger is-open" "toast danger class")
 (dom-node-click! toast-close-node)
@@ -1188,12 +1188,12 @@
 (define toast-title-node-2 (node-child toast-node-2 0))
 (define toast-message-node-2 (node-child toast-node-2 1))
 (check-equal (node-attr toast-title-node-2 'class) "we-toast-title" "toast title class")
-(check-equal (dom-node-text toast-title-node-2) "Sync" "toast title initial text")
-(check-equal (dom-node-text toast-message-node-2) "Please wait" "toast message initial text")
-(check-equal (length (dom-node-children toast-node-2)) 2 "toast non-dismissible has no close button")
+(check-equal (view-node-text toast-title-node-2) "Sync" "toast title initial text")
+(check-equal (view-node-text toast-message-node-2) "Please wait" "toast message initial text")
+(check-equal (length (view-node-children toast-node-2)) 2 "toast non-dismissible has no close button")
 (:= @toast-title "Syncing")
 (define toast-title-node-2-after (node-child toast-node-2 0))
-(check-equal (dom-node-text toast-title-node-2-after) "Syncing" "toast title observable update")
+(check-equal (view-node-text toast-title-node-2-after) "Syncing" "toast title observable update")
 
 ;; toast supports duration-ms and pause-on-hover? optional args
 (define @toast-open-3 (@ #t))
@@ -1322,10 +1322,10 @@
       [else
        (define child (car rest))
        (if (and (equal? (node-attr child 'data-we-widget) "page-button")
-                (string=? (dom-node-text child) label))
+                (string=? (view-node-text child) label))
            child
            (loop (cdr rest)))])))
-(define pagination-buttons (dom-node-children pagination-node))
+(define pagination-buttons (view-node-children pagination-node))
 (define first-button (find-page-button-by-label pagination-buttons "First"))
 (define page1-button (find-page-button-by-label pagination-buttons "1"))
 (define page2-button (find-page-button-by-label pagination-buttons "2"))
@@ -1338,7 +1338,7 @@
 (check-equal (obs-peek @page) 3 "pagination next button updates page")
 (dom-node-click! page1-button)
 (check-equal (obs-peek @page) 1 "pagination page button updates page")
-(define pagination-buttons-after (dom-node-children pagination-node))
+(define pagination-buttons-after (view-node-children pagination-node))
 (define prev-button-after (find-page-button-by-label pagination-buttons-after "Prev"))
 (check-equal (node-attr prev-button-after 'class) "we-page-btn is-disabled" "pagination prev disabled at first page")
 
@@ -1350,7 +1350,7 @@
     (vpanel
      (pagination 20 @page-large (lambda (new-page) (:= @page-large new-page)))))))
 (define pagination-large-node (node-child (node-child (renderer-root r-pagination-large) 0) 0))
-(define pagination-large-children (dom-node-children pagination-large-node))
+(define pagination-large-children (view-node-children pagination-large-node))
 (define ellipsis-nodes
   (filter (lambda (child)
             (equal? (node-attr child 'data-we-widget) "page-ellipsis"))
@@ -1370,7 +1370,7 @@
                  @crumb-current
                  (lambda (new-id) (:= @crumb-current new-id)))))))
 (define breadcrumb-node (node-child (node-child (renderer-root r-breadcrumb) 0) 0))
-(define breadcrumb-children (dom-node-children breadcrumb-node))
+(define breadcrumb-children (view-node-children breadcrumb-node))
 (define breadcrumb-home (list-ref breadcrumb-children 0))
 (define breadcrumb-docs (list-ref breadcrumb-children 2))
 (define breadcrumb-api (list-ref breadcrumb-children 4))
@@ -1379,12 +1379,12 @@
 (check-equal (node-attr breadcrumb-docs 'aria-current) "page" "breadcrumb current aria")
 (dom-node-click! breadcrumb-home)
 (check-equal (obs-peek @crumb-current) 'home "breadcrumb click updates current id")
-(define breadcrumb-children-after (dom-node-children breadcrumb-node))
+(define breadcrumb-children-after (view-node-children breadcrumb-node))
 (define breadcrumb-home-after (list-ref breadcrumb-children-after 0))
 (define breadcrumb-docs-after (list-ref breadcrumb-children-after 2))
 (check-equal (node-attr breadcrumb-home-after 'class) "we-breadcrumb-item is-current" "breadcrumb home class after click")
 (check-equal (node-attr breadcrumb-docs-after 'class) "we-breadcrumb-item" "breadcrumb docs class after click")
-(check-equal (dom-node-text breadcrumb-api) "API" "breadcrumb trailing label text")
+(check-equal (view-node-text breadcrumb-api) "API" "breadcrumb trailing label text")
 
 ;; list-group renders current item and updates selection on click
 (define @list-group-current (@ 'b))
@@ -1396,14 +1396,14 @@
                  @list-group-current
                  (lambda (new-id) (:= @list-group-current new-id)))))))
 (define list-group-node (node-child (node-child (renderer-root r-list-group) 0) 0))
-(define list-group-items (dom-node-children list-group-node))
+(define list-group-items (view-node-children list-group-node))
 (define list-group-a (list-ref list-group-items 0))
 (define list-group-b (list-ref list-group-items 1))
 (check-equal (node-attr list-group-node 'data-we-widget) "list-group" "list-group data-we-widget attr")
 (check-equal (node-attr list-group-b 'class) "we-list-group-item is-current" "list-group current class")
 (dom-node-click! list-group-a)
 (check-equal (obs-peek @list-group-current) 'a "list-group click updates current id")
-(define list-group-items-after (dom-node-children list-group-node))
+(define list-group-items-after (view-node-children list-group-node))
 (define list-group-a-after (list-ref list-group-items-after 0))
 (check-equal (node-attr list-group-a-after 'class) "we-list-group-item is-current" "list-group class after selection")
 
@@ -1420,7 +1420,7 @@
 (check-equal (node-attr collapse-node 'data-we-widget) "collapse" "collapse data-we-widget attr")
 (check-equal (node-attr collapse-node 'class) "we-collapse" "collapse initial class")
 (check-equal (node-attr collapse-node 'aria-hidden) "true" "collapse initially hidden")
-(check-equal (dom-node-text collapse-child) "secret-panel" "collapse child rendered")
+(check-equal (view-node-text collapse-child) "secret-panel" "collapse child rendered")
 (:= @collapse-open #t)
 (check-equal (node-attr collapse-node 'class) "we-collapse is-open" "collapse open class")
 (check-equal (node-attr collapse-node 'aria-hidden) "false" "collapse open aria")
@@ -1496,7 +1496,7 @@
 (define dialog-panel-node (node-child dialog-node 0))
 (define dialog-first-text (node-child dialog-panel-node 0))
 (define dialog-status-node (node-child dialog-panel-parent 2))
-(check-equal (dom-node-tag dialog-node) 'dialog "dialog tag")
+(check-equal (view-node-tag dialog-node) 'dialog "dialog tag")
 (check-equal (node-attr dialog-node 'role) 'dialog "dialog role attr")
 (check-equal (node-attr dialog-node 'data-we-widget) "dialog" "dialog data-we-widget attr")
 (check-equal (node-attr dialog-panel-node 'data-we-widget) "dialog-panel" "dialog panel data-we-widget attr")
@@ -1506,16 +1506,16 @@
              (node-attr dialog-first-text 'id)
              "dialog panel aria-describedby points at first text child id")
 (check-equal (node-attr dialog-node 'aria-hidden) "true" "dialog initially hidden")
-(check-equal (dom-node-text dialog-status-node) "dialog-status:idle" "dialog status initial")
+(check-equal (view-node-text dialog-status-node) "dialog-status:idle" "dialog status initial")
 (dom-node-click! open-dialog-button)
 (check-equal (node-attr dialog-node 'class) "we-dialog is-open" "dialog open class")
 (check-equal (node-attr dialog-node 'aria-hidden) "false" "dialog visible after open button")
-(check-equal (dom-node-text dialog-status-node) "dialog-status:open" "dialog status after open")
+(check-equal (view-node-text dialog-status-node) "dialog-status:open" "dialog status after open")
 (dom-node-keydown! dialog-node "Escape")
 (check-equal (obs-peek @dialog-open) #f "dialog open state after Escape")
 (check-equal (node-attr dialog-node 'class) "we-dialog" "dialog class after Escape close")
 (check-equal (node-attr dialog-node 'aria-hidden) "true" "dialog hidden after Escape")
-(check-equal (dom-node-text dialog-status-node) "dialog-status:esc-close" "dialog status after Escape close")
+(check-equal (view-node-text dialog-status-node) "dialog-status:esc-close" "dialog status after Escape close")
 
 (define r-dialog-sm
   (render
@@ -1598,10 +1598,10 @@
     (vpanel
      (text (~> @count2 number->string))))))
 (define label-node2 (node-child (node-child (renderer-root r2) 0) 0))
-(check-equal (dom-node-text label-node2) "0" "initial text before destroy")
+(check-equal (view-node-text label-node2) "0" "initial text before destroy")
 (renderer-destroy r2)
 (<~ @count2 add1)
-(check-equal (dom-node-text label-node2) "0" "text unchanged after destroy")
+(check-equal (view-node-text label-node2) "0" "text unchanged after destroy")
 
 ;; list-view supports insert, delete, and reorder with keyed node reuse
 (define @items (@ '((1 . "a") (2 . "b") (3 . "c"))))
@@ -1617,7 +1617,7 @@
   (node-child (node-child (renderer-root r3) 0) 0))
 (check-equal (node-attr list-container 'data-we-widget) "list-view" "list-view data-we-widget attr")
 (check-equal (node-attr list-container 'class) "we-list-view" "list-view base class")
-(define children0 (dom-node-children list-container))
+(define children0 (view-node-children list-container))
 (define n1 (list-ref children0 0))
 (define n2 (list-ref children0 1))
 (define n3 (list-ref children0 2))
@@ -1625,7 +1625,7 @@
 
 ;; Reorder should reuse keyed nodes.
 (:= @items '((3 . "c") (1 . "a") (2 . "b")))
-(define children1 (dom-node-children list-container))
+(define children1 (view-node-children list-container))
 (check-equal (node-texts children1) '("c" "a" "b") "list-view reordered texts")
 (check-equal (eq? (list-ref children1 0) n3) #t "list-view reuse key 3")
 (check-equal (eq? (list-ref children1 1) n1) #t "list-view reuse key 1")
@@ -1633,12 +1633,12 @@
 
 ;; Insert should add a new node.
 (:= @items '((3 . "c") (4 . "d") (1 . "a") (2 . "b")))
-(define children2 (dom-node-children list-container))
+(define children2 (view-node-children list-container))
 (check-equal (node-texts children2) '("c" "d" "a" "b") "list-view insert")
 
 ;; Delete should remove missing key while preserving others.
 (:= @items '((4 . "d") (2 . "b")))
-(define children3 (dom-node-children list-container))
+(define children3 (view-node-children list-container))
 (check-equal (node-texts children3) '("d" "b") "list-view delete")
 (check-equal (eq? (list-ref children3 1) n2) #t "list-view preserve surviving key")
 
@@ -1657,34 +1657,34 @@
                 car)))))
 (define parity-list-container
   (node-child (node-child (renderer-root r3b) 0) 0))
-(define parity-children0 (dom-node-children parity-list-container))
+(define parity-children0 (view-node-children parity-list-container))
 (define parity-a-node (list-ref parity-children0 0))
 (define parity-b-node (list-ref parity-children0 1))
 (check-equal (node-texts parity-children0) '("a:0" "b:0") "parity list initial state")
 
 ;; inc-a
 (:= @parity-items '((a . 1) (b . 0)))
-(define parity-children1 (dom-node-children parity-list-container))
+(define parity-children1 (view-node-children parity-list-container))
 (check-equal (node-texts parity-children1) '("a:1" "b:0") "parity list after inc-a")
 (define parity-a-node* (list-ref parity-children1 0))
 
 ;; reorder
 (:= @parity-items '((b . 0) (a . 1)))
-(define parity-children2 (dom-node-children parity-list-container))
+(define parity-children2 (view-node-children parity-list-container))
 (check-equal (node-texts parity-children2) '("b:0" "a:1") "parity list after reorder")
 (check-equal (eq? (list-ref parity-children2 0) parity-b-node) #t "parity list reuses b node after reorder")
 (check-equal (eq? (list-ref parity-children2 1) parity-a-node*) #t "parity list reuses a node after reorder")
 
 ;; add-c
 (:= @parity-items '((b . 0) (a . 1) (c . 0)))
-(define parity-children3 (dom-node-children parity-list-container))
+(define parity-children3 (view-node-children parity-list-container))
 (define parity-c-node (list-ref parity-children3 2))
 (check-equal (node-texts parity-children3) '("b:0" "a:1" "c:0") "parity list after add-c")
 (check-equal (eq? (list-ref parity-children3 1) parity-a-node*) #t "parity list keeps a node after add-c")
 
 ;; drop-b
 (:= @parity-items '((a . 1) (c . 0)))
-(define parity-children4 (dom-node-children parity-list-container))
+(define parity-children4 (view-node-children parity-list-container))
 (check-equal (node-texts parity-children4) '("a:1" "c:0") "parity list after drop-b")
 (check-equal (eq? (list-ref parity-children4 0) parity-a-node*) #t "parity list keeps a node after drop-b")
 (check-equal (eq? (list-ref parity-children4 1) parity-c-node) #t "parity list keeps c node after drop-b")
@@ -1828,14 +1828,14 @@
 (define group-node (node-child (node-child (renderer-root r9) 0) 0))
 (define group-legend-node (node-child group-node 0))
 (define group-content-node (node-child group-node 1))
-(check-equal (dom-node-tag group-node) 'fieldset "group node tag")
+(check-equal (view-node-tag group-node) 'fieldset "group node tag")
 (check-equal (node-attr group-node 'data-we-widget) "group" "group data-we-widget attr")
 (check-equal (node-attr group-node 'class) "we-group" "group base class")
-(check-equal (dom-node-tag group-legend-node) 'legend "group legend node tag")
-(check-equal (dom-node-text group-legend-node) "Settings" "group initial legend text")
-(check-equal (dom-node-text group-content-node) "inside" "group child render")
+(check-equal (view-node-tag group-legend-node) 'legend "group legend node tag")
+(check-equal (view-node-text group-legend-node) "Settings" "group initial legend text")
+(check-equal (view-node-text group-content-node) "inside" "group child render")
 (:= @group-label "Advanced")
-(check-equal (dom-node-text group-legend-node) "Advanced" "group legend reflects observable update")
+(check-equal (view-node-text group-legend-node) "Advanced" "group legend reflects observable update")
 
 ;; if-view switches branch on observable condition
 (define @show-then (@ #t))
@@ -1849,9 +1849,9 @@
 (define if-container (node-child (node-child (renderer-root r10) 0) 0))
 (check-equal (node-attr if-container 'data-we-widget) "if-view" "if-view data-we-widget attr")
 (check-equal (node-attr if-container 'class) "we-if-view" "if-view base class")
-(check-equal (dom-node-text (node-child if-container 0)) "then" "if-view initial then branch")
+(check-equal (view-node-text (node-child if-container 0)) "then" "if-view initial then branch")
 (:= @show-then #f)
-(check-equal (dom-node-text (node-child if-container 0)) "else" "if-view switched else branch")
+(check-equal (view-node-text (node-child if-container 0)) "else" "if-view switched else branch")
 
 ;; cond-view picks first truthy clause and updates when clause observables change
 (define @c1 (@ #f))
@@ -1866,12 +1866,12 @@
 (define cond-container (node-child (node-child (renderer-root r11) 0) 0))
 (check-equal (node-attr cond-container 'data-we-widget) "cond-view" "cond-view data-we-widget attr")
 (check-equal (node-attr cond-container 'class) "we-cond-view" "cond-view base class")
-(check-equal (dom-node-text (node-child cond-container 0)) "two" "cond-view initial selected clause")
+(check-equal (view-node-text (node-child cond-container 0)) "two" "cond-view initial selected clause")
 (:= @c1 #t)
-(check-equal (dom-node-text (node-child cond-container 0)) "one" "cond-view first truthy clause wins")
+(check-equal (view-node-text (node-child cond-container 0)) "one" "cond-view first truthy clause wins")
 (:= @c1 #f)
 (:= @c2 #f)
-(check-equal (dom-node-text (node-child cond-container 0)) "none" "cond-view else fallback")
+(check-equal (view-node-text (node-child cond-container 0)) "none" "cond-view else fallback")
 
 ;; case-view picks matching literal and updates on observable value changes
 (define @mode (@ 'a))
@@ -1886,11 +1886,11 @@
 (define case-container (node-child (node-child (renderer-root r12) 0) 0))
 (check-equal (node-attr case-container 'data-we-widget) "case-view" "case-view data-we-widget attr")
 (check-equal (node-attr case-container 'class) "we-case-view" "case-view base class")
-(check-equal (dom-node-text (node-child case-container 0)) "mode-a" "case-view initial clause")
+(check-equal (view-node-text (node-child case-container 0)) "mode-a" "case-view initial clause")
 (:= @mode 'c)
-(check-equal (dom-node-text (node-child case-container 0)) "mode-bc" "case-view matching multi-literal clause")
+(check-equal (view-node-text (node-child case-container 0)) "mode-bc" "case-view matching multi-literal clause")
 (:= @mode 'z)
-(check-equal (dom-node-text (node-child case-container 0)) "mode-other" "case-view else fallback")
+(check-equal (view-node-text (node-child case-container 0)) "mode-other" "case-view else fallback")
 
 ;; spacer renders as a primitive span-based spacer node
 (define r13
@@ -1899,7 +1899,7 @@
     (vpanel
      (spacer)))))
 (define spacer-node (node-child (node-child (renderer-root r13) 0) 0))
-(check-equal (dom-node-tag spacer-node) 'span "spacer node tag")
+(check-equal (view-node-tag spacer-node) 'span "spacer node tag")
 (check-equal (node-attr spacer-node 'data-we-widget) "spacer" "spacer data-we-widget attr")
 
 ;; table supports static columns and reactive row updates
@@ -1913,7 +1913,7 @@
                @rows
                #:density 'normal)))))
 (define table-node (node-child (node-child (renderer-root r14) 0) 0))
-(check-equal (dom-node-tag table-node) 'table "table node tag")
+(check-equal (view-node-tag table-node) 'table "table node tag")
 (check-equal (node-attr table-node 'data-we-widget) "table" "table data-we-widget attr")
 (check-equal (node-attr table-node 'columns) '(value) "table columns")
 (define table-header-row (node-child table-node 0))
@@ -1923,12 +1923,12 @@
 (check-equal (node-attr table-node 'class) "we-table we-density-normal" "table normal density class")
 (check-equal (node-attr table-header-cell 'class) "we-table-header-cell we-density-normal we-align-left" "table header cell normal class")
 (define (row-cell-texts row-node)
-  (map dom-node-text (dom-node-children row-node)))
-(check-equal (map row-cell-texts (dom-node-children table-node))
+  (map view-node-text (view-node-children row-node)))
+(check-equal (map row-cell-texts (view-node-children table-node))
              '(("value") ("10") ("20"))
              "table initial rows")
 (:= @rows '(30 40 50))
-(check-equal (map row-cell-texts (dom-node-children table-node))
+(check-equal (map row-cell-texts (view-node-children table-node))
              '(("value") ("30") ("40") ("50"))
              "table reactive rows update")
 (define table-data-row (node-child table-node 1))
@@ -1972,7 +1972,7 @@
 (check-equal (node-attr table-caption-node 'data-we-widget)
              "table-caption"
              "table caption data-we-widget attr")
-(check-equal (dom-node-text table-caption-node)
+(check-equal (view-node-text table-caption-node)
              "Status table"
              "table caption text")
 
@@ -2015,7 +2015,7 @@
 (check-equal (node-attr table-node-row-header 'row-header-column)
              0
              "table row-header-column attr")
-(check-equal (dom-node-tag table-row-header-cell)
+(check-equal (view-node-tag table-row-header-cell)
              'th
              "table row-header cell tag")
 (check-equal (node-attr table-row-header-cell 'scope)
@@ -2062,10 +2062,10 @@
 (define ov-child0 (node-child ov-container 0))
 (check-equal (node-attr ov-container 'data-we-widget) "observable-view" "observable-view data-we-widget attr")
 (check-equal (node-attr ov-container 'class) "we-observable-view" "observable-view base class")
-(check-equal (dom-node-text ov-child0) "one" "observable-view initial child")
+(check-equal (view-node-text ov-child0) "one" "observable-view initial child")
 (:= @ov "two")
 (define ov-child1 (node-child ov-container 0))
-(check-equal (dom-node-text ov-child1) "two" "observable-view updated child")
+(check-equal (view-node-text ov-child1) "two" "observable-view updated child")
 (check-equal (eq? ov-child0 ov-child1) #f "observable-view rerenders when value changes")
 
 ;; observable-view equal-proc can suppress redundant rerenders
@@ -2093,7 +2093,7 @@
              @radio
              (lambda (new-value) (:= @radio new-value)))))))
 (define radios-node (node-child (node-child (renderer-root r17) 0) 0))
-(check-equal (dom-node-tag radios-node) 'div "radios node tag")
+(check-equal (view-node-tag radios-node) 'div "radios node tag")
 (check-equal (node-attr radios-node 'selected) 'left "radios initial selected")
 (check-equal (node-attr radios-node 'data-we-widget) "radios" "radios data-we-widget attr")
 (check-equal (node-attr radios-node 'class) "we-radios" "radios base class")
@@ -2110,7 +2110,7 @@
     (vpanel
      (image "a.png")))))
 (define image-node1 (node-child (node-child (renderer-root r18) 0) 0))
-(check-equal (dom-node-tag image-node1) 'img "image node tag")
+(check-equal (view-node-tag image-node1) 'img "image node tag")
 (check-equal (node-attr image-node1 'src) "a.png" "image static src")
 (check-equal (node-attr image-node1 'data-we-widget) "image" "image data-we-widget attr")
 (check-equal (node-attr image-node1 'class) "we-image" "image base class")
@@ -2162,9 +2162,9 @@
 (dom-node-click! dropdown-save-item)
 (check-equal (obs-peek @dropdown-selected) 'save "dropdown item click updates selected id")
 (check-equal (node-attr dropdown-popup-node 'class) "we-menu-popup" "dropdown popup closes after item click")
-(check-equal (dom-node-text dropdown-open-item) "Open" "dropdown first item label")
+(check-equal (view-node-text dropdown-open-item) "Open" "dropdown first item label")
 (:= @dropdown-label "More")
-(check-equal (dom-node-text dropdown-label-node) "More" "dropdown label observable update")
+(check-equal (view-node-text dropdown-label-node) "More" "dropdown label observable update")
 
 (define r19c-up
   (render
@@ -2202,12 +2202,12 @@
 (check-equal (node-attr tooltip-header-node 'data-we-widget) "tooltip-header" "tooltip header region widget")
 (check-equal (node-attr tooltip-body-node 'data-we-widget) "tooltip-body" "tooltip body region widget")
 (check-equal (node-attr tooltip-footer-node 'data-we-widget) "tooltip-footer" "tooltip footer region widget")
-(check-equal (dom-node-text tooltip-body-node) "Click to run" "tooltip initial message")
+(check-equal (view-node-text tooltip-body-node) "Click to run" "tooltip initial message")
 (check-equal (node-attr tooltip-child-node 'aria-describedby)
              (node-attr tooltip-bubble-node 'id)
              "tooltip child aria-describedby references bubble id")
 (:= @tooltip-message "Click to run selected plan")
-(check-equal (dom-node-text tooltip-body-node) "Click to run selected plan" "tooltip observable message update")
+(check-equal (view-node-text tooltip-body-node) "Click to run selected plan" "tooltip observable message update")
 
 ;; popover toggles panel class/aria state and updates observable label
 (define @popover-label (@ "Actions"))
@@ -2244,7 +2244,7 @@
 (check-equal (node-attr popover-panel-node 'class) "we-popover-panel" "popover panel class after Escape close")
 (check-equal (node-attr popover-panel-node 'aria-hidden) "true" "popover panel hidden after Escape")
 (:= @popover-label "More")
-(check-equal (dom-node-text popover-trigger-node) "More" "popover trigger observable label update")
+(check-equal (view-node-text popover-trigger-node) "More" "popover trigger observable label update")
 
 ;; tooltip/popover placement classes
 (define r19tooltip-left
@@ -2287,15 +2287,15 @@
 (check-equal (node-attr card-header-node 'class) "we-card-header" "card header class")
 (check-equal (node-attr card-body-node 'class) "we-card-body" "card body class")
 (check-equal (node-attr card-footer-node 'class) "we-card-footer" "card footer class")
-(check-equal (dom-node-text card-header-node) "Profile" "card initial header text")
-(check-equal (dom-node-text card-body-child) "body-line" "card body child text")
-(check-equal (dom-node-text card-footer-node) "updated now" "card initial footer text")
+(check-equal (view-node-text card-header-node) "Profile" "card initial header text")
+(check-equal (view-node-text card-body-child) "body-line" "card body child text")
+(check-equal (view-node-text card-footer-node) "updated now" "card initial footer text")
 (:= @card-title "Account")
 (:= @card-footer "saved")
 (define card-header-node-after (node-child card-node 0))
 (define card-footer-node-after (node-child card-node 2))
-(check-equal (dom-node-text card-header-node-after) "Account" "card header observable update")
-(check-equal (dom-node-text card-footer-node-after) "saved" "card footer observable update")
+(check-equal (view-node-text card-header-node-after) "Account" "card header observable update")
+(check-equal (view-node-text card-footer-node-after) "saved" "card footer observable update")
 
 ;; card supports options for subtitle/media/actions structure
 (define r19d-options
@@ -2335,11 +2335,11 @@
 (define menu-label-node (node-child menu-node 0))
 (define menu-popup-node (node-child menu-node 1))
 (define menu-item-node (node-child menu-popup-node 0))
-(check-equal (dom-node-tag menu-bar-node) 'menu-bar "menu-bar tag")
-(check-equal (dom-node-tag menu-node) 'menu "menu tag")
-(check-equal (dom-node-tag menu-label-node) 'button "menu label node tag")
-(check-equal (dom-node-tag menu-popup-node) 'vpanel "menu popup node tag")
-(check-equal (dom-node-tag menu-item-node) 'menu-item "menu-item tag")
+(check-equal (view-node-tag menu-bar-node) 'menu-bar "menu-bar tag")
+(check-equal (view-node-tag menu-node) 'menu "menu tag")
+(check-equal (view-node-tag menu-label-node) 'button "menu label node tag")
+(check-equal (view-node-tag menu-popup-node) 'vpanel "menu popup node tag")
+(check-equal (view-node-tag menu-item-node) 'menu-item "menu-item tag")
 (check-equal (node-attr menu-bar-node 'data-we-widget) "menu-bar" "menu-bar data-we-widget attr")
 (check-equal (node-attr menu-node 'data-we-widget) "menu" "menu data-we-widget attr")
 (check-equal (node-attr menu-item-node 'data-we-widget) "menu-item" "menu-item data-we-widget attr")
@@ -2354,8 +2354,8 @@
 (check-equal (node-attr menu-label-node 'aria-expanded) "false" "menu initial collapsed attr")
 (check-equal (node-attr menu-item-node 'role) 'menuitem "menu-item role attr")
 (check-equal (node-attr menu-item-node 'tabindex) 0 "menu-item tabindex attr")
-(check-equal (dom-node-text menu-label-node) "File" "menu initial label")
-(check-equal (dom-node-text menu-item-node) "Open" "menu-item initial label")
+(check-equal (view-node-text menu-label-node) "File" "menu initial label")
+(check-equal (view-node-text menu-item-node) "Open" "menu-item initial label")
 (dom-node-click! menu-label-node)
 (check-equal (node-attr menu-label-node 'aria-expanded) "true" "menu label expands on click")
 (check-equal (node-attr menu-popup-node 'class) "we-menu-popup is-open" "menu popup open class")
@@ -2365,8 +2365,8 @@
 (check-equal (node-attr menu-popup-node 'class) "we-menu-popup" "menu popup class after close")
 (:= @menu-label "Edit")
 (:= @item-label "Copy")
-(check-equal (dom-node-text menu-label-node) "Edit" "menu label observable update")
-(check-equal (dom-node-text menu-item-node) "Copy" "menu-item label observable update")
+(check-equal (view-node-text menu-label-node) "Edit" "menu label observable update")
+(check-equal (view-node-text menu-item-node) "Copy" "menu-item label observable update")
 (dom-node-keydown! menu-label-node "ArrowDown")
 (check-equal (node-attr menu-label-node 'aria-expanded) "true" "menu opens on ArrowDown")
 (check-equal (node-attr menu-popup-node 'class) "we-menu-popup is-open" "menu popup open class on ArrowDown")
@@ -2374,8 +2374,8 @@
 (check-equal (obs-peek @menu-clicks) 2 "menu-item action still works after label updates")
 (:= @menu-label "View")
 (:= @item-label "Paste")
-(check-equal (dom-node-text menu-label-node) "View" "menu label second observable update")
-(check-equal (dom-node-text menu-item-node) "Paste" "menu-item label second observable update")
+(check-equal (view-node-text menu-label-node) "View" "menu label second observable update")
+(check-equal (view-node-text menu-item-node) "Paste" "menu-item label second observable update")
 (dom-node-keydown! menu-label-node "Escape")
 (check-equal (node-attr menu-label-node 'aria-expanded) "false" "menu closes on Escape")
 (check-equal (node-attr menu-popup-node 'class) "we-menu-popup" "menu popup class on Escape close")
@@ -2410,12 +2410,12 @@
                  (lambda () (<~ @standalone-popup-clicks add1))))))))
 (define standalone-popup-node (node-child (node-child (renderer-root r20-popup) 0) 0))
 (define standalone-popup-item-node (node-child standalone-popup-node 0))
-(check-equal (dom-node-tag standalone-popup-node) 'vpanel "standalone menu-popup node tag")
+(check-equal (view-node-tag standalone-popup-node) 'vpanel "standalone menu-popup node tag")
 (check-equal (node-attr standalone-popup-node 'role) 'menu "standalone menu-popup role attr")
 (check-equal (node-attr standalone-popup-node 'data-we-widget) "menu-popup" "standalone menu-popup data-we-widget attr")
 (check-equal (node-attr standalone-popup-node 'class) "we-menu-popup is-open" "standalone menu-popup open class")
 (check-equal (node-attr standalone-popup-node 'tabindex) 0 "standalone menu-popup tabindex attr")
-(check-equal (dom-node-tag standalone-popup-item-node) 'menu-item "standalone menu-popup item tag")
+(check-equal (view-node-tag standalone-popup-item-node) 'menu-item "standalone menu-popup item tag")
 (dom-node-click! standalone-popup-item-node)
 (check-equal (obs-peek @standalone-popup-clicks) 1 "standalone menu-popup item action invoked")
 
@@ -2553,11 +2553,11 @@
 
 ;; case-view handles repeated transitions among matching and fallback clauses
 (:= @mode 'b)
-(check-equal (dom-node-text (node-child case-container 0)) "mode-bc" "case-view transition to b")
+(check-equal (view-node-text (node-child case-container 0)) "mode-bc" "case-view transition to b")
 (:= @mode 'a)
-(check-equal (dom-node-text (node-child case-container 0)) "mode-a" "case-view transition back to a")
+(check-equal (view-node-text (node-child case-container 0)) "mode-a" "case-view transition back to a")
 (:= @mode 'unknown)
-(check-equal (dom-node-text (node-child case-container 0)) "mode-other" "case-view transition back to fallback")
+(check-equal (view-node-text (node-child case-container 0)) "mode-other" "case-view transition back to fallback")
 
 ;; tab-panel switches tab content based on selected observable
 (define @tab (@ 'info))
@@ -2575,27 +2575,27 @@
 (define tab-button-0 (node-child tab-buttons-node 0))
 (define tab-button-1 (node-child tab-buttons-node 1))
 (define tab-button-2 (node-child tab-buttons-node 2))
-(check-equal (dom-node-tag tab-panel-node) 'tab-panel "tab-panel node tag")
+(check-equal (view-node-tag tab-panel-node) 'tab-panel "tab-panel node tag")
 (check-equal (node-attr tab-panel-node 'selected) 'info "tab-panel initial selected tab")
 (check-equal (node-attr tab-panel-node 'data-we-widget) "tab-panel" "tab-panel data-we-widget attr")
 (check-equal (node-attr tab-panel-node 'class) "we-tab-panel we-tab-style-default" "tab-panel default variant class")
-(check-equal (dom-node-tag tab-buttons-node) 'div "tab-panel header node tag")
-(check-equal (length (dom-node-children tab-panel-node)) 2 "tab-panel has only tablist and tabpanel children")
+(check-equal (view-node-tag tab-buttons-node) 'div "tab-panel header node tag")
+(check-equal (length (view-node-children tab-panel-node)) 2 "tab-panel has only tablist and tabpanel children")
 (check-equal (node-attr tab-buttons-node 'data-we-widget) "tab-list" "tab-list data-we-widget attr")
 (check-equal (node-attr tab-content-node 'data-we-widget) "tab-content" "tab-content data-we-widget attr")
-(check-equal (length (dom-node-children tab-buttons-node)) 3 "tab-panel header button count")
-(check-equal (dom-node-text (node-child tab-content-node 0)) "Info tab" "tab-panel initial child")
+(check-equal (length (view-node-children tab-buttons-node)) 3 "tab-panel header button count")
+(check-equal (view-node-text (node-child tab-content-node 0)) "Info tab" "tab-panel initial child")
 (check-equal (node-attr tab-button-0 'aria-selected) #t "tab-panel initial selected header attr")
 (check-equal (node-attr tab-button-0 'data-we-widget) "tab-button" "tab-button data-we-widget attr")
 (check-equal (node-attr tab-button-1 'aria-selected) #f "tab-panel initial unselected header attr")
 (check-equal (node-attr tab-button-0 'class) "we-tab-btn is-selected" "tab-panel initial selected class")
 (:= @tab 'about)
 (check-equal (node-attr tab-panel-node 'selected) 'about "tab-panel selected updates")
-(check-equal (dom-node-text (node-child tab-content-node 0)) "About tab" "tab-panel selected child")
+(check-equal (view-node-text (node-child tab-content-node 0)) "About tab" "tab-panel selected child")
 ;; Click tab header button to switch selected tab via observable binding.
 (dom-node-click! tab-button-1)
 (check-equal (node-attr tab-panel-node 'selected) 'settings "tab-panel selected updates from header click")
-(check-equal (dom-node-text (node-child tab-content-node 0)) "Settings tab" "tab-panel selected child from header click")
+(check-equal (view-node-text (node-child tab-content-node 0)) "Settings tab" "tab-panel selected child from header click")
 ;; Keyboard arrows/home/end switch tabs.
 (dom-node-keydown! tab-button-1 "ArrowRight")
 (check-equal (node-attr tab-panel-node 'selected) 'about "tab-panel selected updates from ArrowRight")
@@ -2607,7 +2607,7 @@
 (check-equal (node-attr tab-panel-node 'selected) 'info "tab-panel selected updates from Home")
 (:= @tab 'missing)
 (check-equal (node-attr tab-panel-node 'selected) 'missing "tab-panel selected tracks unmatched value")
-(check-equal (dom-node-text (node-child tab-content-node 0)) "Info tab" "tab-panel unmatched fallback to first tab")
+(check-equal (view-node-text (node-child tab-content-node 0)) "Info tab" "tab-panel unmatched fallback to first tab")
 (check-equal (node-attr tab-button-0 'aria-selected) #f "tab-panel unmatched value clears selected header attr")
 (check-equal (node-attr tab-button-0 'class) "we-tab-btn" "tab-panel unmatched value clears selected class")
 
@@ -2643,7 +2643,7 @@
 (define tab-disabled-button-right (node-child tab-disabled-buttons-node 2))
 (check-equal (node-attr tab-disabled-button-middle 'aria-disabled) #t "tab-panel disabled tab attr")
 (check-equal (node-attr tab-disabled-button-middle 'class) "we-tab-btn is-disabled" "tab-panel disabled tab class")
-(check-equal (dom-node-text (node-child tab-disabled-content-node 0)) "Left tab" "tab-panel disabled initial content")
+(check-equal (view-node-text (node-child tab-disabled-content-node 0)) "Left tab" "tab-panel disabled initial content")
 (dom-node-click! tab-disabled-button-middle)
 (check-equal (node-attr tab-panel-disabled-node 'selected) 'left "tab-panel disabled click ignored")
 (dom-node-keydown! tab-disabled-button-left "ArrowRight")
@@ -2690,14 +2690,14 @@
               (text "hidden"))))))
 (define nested-if-container (node-child (node-child (renderer-root r22) 0) 0))
 (define nested-list-node (node-child nested-if-container 0))
-(check-equal (node-texts (dom-node-children nested-list-node))
+(check-equal (node-texts (view-node-children nested-list-node))
              '("x" "y")
              "nested if-view/list-view initial content")
 (renderer-destroy r22)
 (:= @nested-items '((3 . "z")))
 (:= @show-nested #f)
-(check-equal (dom-node-tag (node-child nested-if-container 0)) 'div "nested if-view/list-view tag unchanged after destroy")
-(check-equal (node-texts (dom-node-children nested-list-node))
+(check-equal (view-node-tag (node-child nested-if-container 0)) 'div "nested if-view/list-view tag unchanged after destroy")
+(check-equal (node-texts (view-node-children nested-list-node))
              '("x" "y")
              "nested if-view/list-view content unchanged after destroy")
 
@@ -2713,7 +2713,7 @@
 (check-equal (node-attr link-node 'href) "/tmp/demo.css" "link href attr")
 (check-equal (node-attr link-node 'download) "download" "link download attr")
 (check-equal (node-attr link-node 'target) "_blank" "link target attr")
-(check-equal (dom-node-text link-node) "download" "link label text")
+(check-equal (view-node-text link-node) "download" "link label text")
 (define r23-link-attrs
   (render
    (window
@@ -2721,7 +2721,7 @@
           #:lang "en"
           #:data-track "lnk1"))))
 (define link-attrs-node (node-child (renderer-root r23-link-attrs) 0))
-(check-equal (dom-node-tag link-attrs-node) 'a "link root tag is a")
+(check-equal (view-node-tag link-attrs-node) 'a "link root tag is a")
 (check-equal (node-attr link-attrs-node 'lang) "en" "link forwards global attrs")
 (check-equal (node-attr link-attrs-node 'data-track) "lnk1" "link forwards data-* attrs")
 (check-exn (lambda () (link "Bad" "/x" #:foo "x"))
@@ -2744,7 +2744,7 @@
 (check-equal (node-attr toolbar-node 'data-we-widget) "toolbar" "toolbar data-we-widget attr")
 (check-equal (node-attr toolbar-node 'class) "we-toolbar" "toolbar class")
 (check-equal (node-attr toolbar-group-left 'data-we-widget) "toolbar-group" "toolbar-group data-we-widget attr")
-(check-equal (dom-node-tag divider-node) 'hr "divider primitive tag")
+(check-equal (view-node-tag divider-node) 'hr "divider primitive tag")
 (check-equal (node-attr divider-node 'data-we-widget) "divider" "divider data-we-widget attr")
 (check-equal (node-attr divider-node 'aria-orientation) "vertical" "divider vertical orientation")
 
@@ -2757,7 +2757,7 @@
      (divider #:orientation 'horizontal #:id "d1" #:lang "en")))))
 (define spacer-attrs-node (node-child (node-child (renderer-root r24b-layout-primitives) 0) 0))
 (define divider-attrs-node (node-child (node-child (renderer-root r24b-layout-primitives) 0) 1))
-(check-equal (dom-node-tag spacer-attrs-node) 'span "spacer primitive tag")
+(check-equal (view-node-tag spacer-attrs-node) 'span "spacer primitive tag")
 (check-equal (node-attr spacer-attrs-node 'id) "s1" "spacer forwards id")
 (check-equal (node-attr spacer-attrs-node 'lang) "en" "spacer forwards global attr")
 (check-equal (node-attr spacer-attrs-node 'style) "flex-grow:2;" "spacer grow style via component")
@@ -2795,7 +2795,7 @@
 (define top-bar-attrs-node (node-child (node-child (renderer-root r24c-rest-root-attrs) 0) 0))
 (define toolbar-attrs-node2 (node-child (node-child (renderer-root r24c-rest-root-attrs) 0) 1))
 (define button-group-attrs-node2 (node-child (node-child (renderer-root r24c-rest-root-attrs) 0) 2))
-(check-equal (dom-node-tag top-bar-attrs-node) 'header "top-bar primitive header tag")
+(check-equal (view-node-tag top-bar-attrs-node) 'header "top-bar primitive header tag")
 (check-equal (node-attr top-bar-attrs-node 'id) "tb1" "top-bar forwards id")
 (check-equal (node-attr top-bar-attrs-node 'lang) "en" "top-bar forwards global attr")
 (check-equal (node-attr top-bar-attrs-node 'class) "we-top-bar outer-top" "top-bar merges base and forwarded class")
@@ -2905,9 +2905,9 @@
 (define icon-button-node (node-child (node-child (renderer-root r27-icons) 0) 0))
 (define icon-menu-item-node (node-child-by-widget (node-child-by-widget (node-child (node-child (renderer-root r27-icons) 0) 1) "menu") "menu-popup"))
 (define icon-menu-item-child (node-child icon-menu-item-node 0))
-(check-equal (length (dom-node-children icon-button-node)) 3 "button icon slots add leading + label + trailing nodes")
+(check-equal (length (view-node-children icon-button-node)) 3 "button icon slots add leading + label + trailing nodes")
 (check-equal (node-attr (node-child icon-button-node 0) 'data-we-widget) "button-icon" "button leading icon widget")
-(check-equal (length (dom-node-children icon-menu-item-child)) 3 "menu-item icon slots add leading + label + trailing nodes")
+(check-equal (length (view-node-children icon-menu-item-child)) 3 "menu-item icon slots add leading + label + trailing nodes")
 
 ;; button accepts child-view labels and icon views while preserving root semantics.
 (define @button-view-clicks (@ 0))
@@ -2923,10 +2923,10 @@
 (define button-view-label-node (node-child (node-child (renderer-root r27b-button-view-label) 0) 0))
 (check-equal (node-attr button-view-label-node 'data-we-widget) "button" "button with view label keeps widget attr")
 (check-equal (node-attr button-view-label-node 'class) "we-button" "button with view label keeps base class")
-(check-equal (length (dom-node-children button-view-label-node)) 3 "button with view label keeps icon + label + icon structure")
-(check-equal (dom-node-tag (node-child button-view-label-node 0)) 'span "button leading icon view is wrapped in span")
-(check-equal (dom-node-tag (node-child button-view-label-node 1)) 'span "button label view is wrapped in span")
-(check-equal (dom-node-tag (node-child button-view-label-node 2)) 'span "button trailing icon view is wrapped in span")
+(check-equal (length (view-node-children button-view-label-node)) 3 "button with view label keeps icon + label + icon structure")
+(check-equal (view-node-tag (node-child button-view-label-node 0)) 'span "button leading icon view is wrapped in span")
+(check-equal (view-node-tag (node-child button-view-label-node 1)) 'span "button label view is wrapped in span")
+(check-equal (view-node-tag (node-child button-view-label-node 2)) 'span "button trailing icon view is wrapped in span")
 (dom-node-click! button-view-label-node)
 (check-equal (obs-peek @button-view-clicks) 1 "button with view label preserves click action")
 
@@ -2938,7 +2938,7 @@
      (card "T" "F" (text "body") #:variants '(compact flat headerless))))))
 (define card-node-variants (node-child (node-child (renderer-root r28-card) 0) 0))
 (check-equal (node-attr card-node-variants 'class) "we-card we-card-compact we-card-flat" "card variants class")
-(check-equal (length (dom-node-children card-node-variants)) 2 "headerless card renders body + footer only")
+(check-equal (length (view-node-children card-node-variants)) 2 "headerless card renders body + footer only")
 
 ;; theme-token runtime API stores and returns token values.
 (theme-token-set! 'we-bg "#111111")

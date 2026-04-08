@@ -23,20 +23,20 @@
 ;;   dom-node-keydown!                      Invoke node keydown callback when present.
 ;;
 ;; Backend contract used by this renderer:
-;;   dom-node
-;;   dom-node?
-;;   dom-node-tag
-;;   dom-node-attrs
-;;   dom-node-children
-;;   dom-node-text
-;;   dom-node-on-click
-;;   dom-node-on-change
-;;   set-dom-node-tag!
-;;   set-dom-node-attrs!
-;;   set-dom-node-children!
-;;   set-dom-node-text!
-;;   set-dom-node-on-click!
-;;   set-dom-node-on-change!
+;;   view-node
+;;   view-node?
+;;   view-node-tag
+;;   view-node-attrs
+;;   view-node-children
+;;   view-node-text
+;;   view-node-on-click
+;;   view-node-on-change
+;;   set-view-node-tag!
+;;   set-view-node-attrs!
+;;   set-view-node-children!
+;;   set-view-node-text!
+;;   set-view-node-on-click!
+;;   set-view-node-on-change!
 ;;   backend-append-child!
 ;;   backend-set-single-child!
 ;;   backend-replace-children!
@@ -450,14 +450,14 @@
        .we-offcanvas-panel.is-start{left:0;}")
     (define shared-style-text ; Shared stylesheet injected once per window root.
       structural-base-style-text)
-    (define backend-set-dom-node-attrs! set-dom-node-attrs!) ; Backend attr setter (unwrapped).
+    (define backend-set-view-node-attrs! set-view-node-attrs!) ; Backend attr setter (unwrapped).
 
     ;; renderer? : any/c -> boolean?
     ;;   Check whether v is a renderer state value.
     (define (renderer? v)
       (renderer-state? v))
 
-    ;; renderer-root : renderer? -> dom-node?
+    ;; renderer-root : renderer? -> view-node?
     ;;   Return the root node managed by renderer r.
     (define (renderer-root r)
       (renderer-state-root r))
@@ -472,7 +472,7 @@
         (set-renderer-state-destroyed?! r #t))
       (void))
 
-    ;; dom-node-click! : dom-node? -> void?
+    ;; dom-node-click! : view-node? -> void?
     ;;   Invoke the node click callback when present.
     (define (attr-bool-true?/internal attrs key)
       (define p (assq key attrs))
@@ -512,97 +512,97 @@
             (attr-set/internal attrs2 'tabindex -1))
           attrs))
 
-    ;; dom-node-disabled? : dom-node? -> boolean?
+    ;; dom-node-disabled? : view-node? -> boolean?
     ;;   Check whether node should ignore activation because it is disabled.
     (define (dom-node-disabled? n)
-      (define attrs (dom-node-attrs n))
+      (define attrs (view-node-attrs n))
       (or (attr-bool-true?/internal attrs 'disabled)
           (equal? (attr-ref/default/internal attrs 'aria-disabled #f) "true")))
 
     (define (dom-node-click! n)
-      (define on-click (dom-node-on-click n))
+      (define on-click (view-node-on-click n))
       (when (and on-click
                  (not (dom-node-disabled? n)))
         (on-click)))
 
-    ;; dom-node-change! : dom-node? any/c -> void?
+    ;; dom-node-change! : view-node? any/c -> void?
     ;;   Update node text and invoke the change callback when present.
     (define (dom-node-change! n value)
       (define text-value (value->text value))
-      (set-dom-node-text! n text-value)
-      (define on-change (dom-node-on-change n))
+      (set-view-node-text! n text-value)
+      (define on-change (view-node-on-change n))
       (when on-change
         (on-change value)))
 
-    ;; dom-node-toggle! : dom-node? boolean? -> void?
+    ;; dom-node-toggle! : view-node? boolean? -> void?
     ;;   Update checkbox checked attribute and invoke the change callback.
     (define (dom-node-toggle! n checked?)
-      (set-dom-node-attrs!
+      (set-view-node-attrs!
        n
        (list (cons 'checked (not (not checked?)))))
-      (define on-change (dom-node-on-change n))
+      (define on-change (view-node-on-change n))
       (when on-change
         (on-change (not (not checked?)))))
 
-    ;; dom-node-select! : dom-node? any/c -> void?
+    ;; dom-node-select! : view-node? any/c -> void?
     ;;   Update selected attribute and invoke the change callback.
     (define (dom-node-select! n selected)
-      (define attrs (dom-node-attrs n))
+      (define attrs (view-node-attrs n))
       (define option-pairs-pair (assq 'option-pairs attrs))
       (define option-pairs-value (if option-pairs-pair (cdr option-pairs-pair) '()))
-      (set-dom-node-attrs!
+      (set-view-node-attrs!
        n
        (list (cons 'choices (cdr (assq 'choices attrs)))
              (cons 'option-pairs option-pairs-value)
              (cons 'selected selected)))
-      (define on-change (dom-node-on-change n))
+      (define on-change (view-node-on-change n))
       (when on-change
         (on-change selected)))
 
-    ;; dom-node-slide! : dom-node? number? -> void?
+    ;; dom-node-slide! : view-node? number? -> void?
     ;;   Update slider value attribute and invoke the change callback.
     (define (dom-node-slide! n value)
-      (define attrs     (dom-node-attrs n))
+      (define attrs     (view-node-attrs n))
       (define min-pair  (assq 'min attrs))
       (define max-pair  (assq 'max attrs))
       (define min-value (if min-pair (cdr min-pair) 0))
       (define max-value (if max-pair (cdr max-pair) 100))
-      (set-dom-node-attrs!
+      (set-view-node-attrs!
        n
        (list (cons 'min min-value)
              (cons 'max max-value)
              (cons 'value value)))
-      (define on-change (dom-node-on-change n))
+      (define on-change (view-node-on-change n))
       (when on-change
         (on-change value)))
 
-    ;; dom-node-radio-select! : dom-node? any/c -> void?
+    ;; dom-node-radio-select! : view-node? any/c -> void?
     ;;   Update radio selected attribute and invoke the change callback.
     (define (dom-node-radio-select! n selected)
-      (define attrs         (dom-node-attrs n))
+      (define attrs         (view-node-attrs n))
       (define choices-pair  (assq 'choices attrs))
       (define choices-value (if choices-pair (cdr choices-pair) '()))
       (define widget-pair   (assq 'data-we-widget attrs))
       (define class-pair    (assq 'class attrs))
-      (set-dom-node-attrs!
+      (set-view-node-attrs!
        n
        (append (if widget-pair (list widget-pair) '())
                (if class-pair (list class-pair) '())
                (list (cons 'choices choices-value)
                      (cons 'selected selected))))
-      (define on-change (dom-node-on-change n))
+      (define on-change (view-node-on-change n))
       (when on-change
         (on-change selected)))
 
-    ;; dom-node-keydown! : dom-node? string? -> void?
+    ;; dom-node-keydown! : view-node? string? -> void?
     ;;   Dispatch keydown payload for tabs, input Enter actions, and menu-item key activation.
     (define (dom-node-keydown! n key)
-      (define on-click      (dom-node-on-click n))
-      (define on-change     (dom-node-on-change n))
-      (define on-enter-pair (assq 'on-enter-action (dom-node-attrs n)))
-      (define role-pair     (assq 'role (dom-node-attrs n)))
-      (define widget-pair   (assq 'data-we-widget (dom-node-attrs n)))
-      (define tag           (dom-node-tag n))
+      (define on-click      (view-node-on-click n))
+      (define on-change     (view-node-on-change n))
+      (define on-enter-pair (assq 'on-enter-action (view-node-attrs n)))
+      (define role-pair     (assq 'role (view-node-attrs n)))
+      (define widget-pair   (assq 'data-we-widget (view-node-attrs n)))
+      (define tag           (view-node-tag n))
       (when (and on-enter-pair
                  (procedure? (cdr on-enter-pair))
                  (string=? key "Enter"))
@@ -1015,10 +1015,10 @@
     (define (maybe-observable-value v)
       (if (obs? v) (obs-peek v) v))
 
-    ;; node-ref-mounted-value : dom-node? -> any/c
+    ;; node-ref-mounted-value : view-node? -> any/c
     ;;   Return browser-native node when available, otherwise the backend node itself.
     (define (node-ref-mounted-value n)
-      (define native (dom-node-native n))
+      (define native (view-node-native n))
       (if native
           native
           n))
@@ -1246,10 +1246,10 @@
         [else
          1]))
 
-    ;; icon-node : string? string? -> dom-node?
+    ;; icon-node : string? string? -> view-node?
     ;;   Construct icon span node with data-we-widget/class and text content.
     (define (icon-node widget class-name icon-text)
-      (dom-node 'span
+      (view-node 'span
                 (list (cons 'data-we-widget widget)
                       (cons 'class class-name)
                       (cons 'aria-hidden "true"))
@@ -1258,12 +1258,12 @@
                 #f
                 #f))
 
-    ;; build-node : view? (-> (-> void?) void?) -> dom-node?
-    ;;   Build a dom-node tree from v and register lifecycle cleanups.
+    ;; build-node : view? (-> (-> void?) void?) -> view-node?
+    ;;   Build a view-node tree from v and register lifecycle cleanups.
     (define (build-node v register-cleanup!)
       (define kind      (view-kind v))
       (define root-node #f)
-      ;; append-view-child! : dom-node? view? -> void?
+      ;; append-view-child! : view-node? view? -> void?
       ;;   Append child view to parent, flattening Fragment children without wrapper nodes.
       (define (append-view-child! parent child)
         (if (and (view? child)
@@ -1272,10 +1272,10 @@
                         (append-view-child! parent grand-child))
                       (view-children child))
             (backend-append-child! parent (build-node child register-cleanup!))))
-      ;; set-dom-node-attrs! : dom-node? list? -> void?
+      ;; set-view-node-attrs! : view-node? list? -> void?
       ;;   Set attrs, applying view-level style hooks only on this view's root node.
-      (define (set-dom-node-attrs! n attrs)
-        (backend-set-dom-node-attrs!
+      (define (set-view-node-attrs! n attrs)
+        (backend-set-view-node-attrs!
          n (normalize-menu-item-attrs/internal
             (if (and root-node (eq? n root-node))
                 (merge-root-extra-attrs v attrs)
@@ -1283,9 +1283,9 @@
       (define node
         (case kind
           [(window)
-           (define node       (dom-node 'div (list (cons attr/role 'window)
+           (define node       (view-node 'div (list (cons attr/role 'window)
                                                    (cons 'data-we-widget "window")) '() #f #f #f))
-           (define style-node (dom-node 'style '() '() shared-style-text #f #f))
+           (define style-node (view-node 'style '() '() shared-style-text #f #f))
            (validate-window-base-order! v)
            (for-each (lambda (child)
                        (append-view-child! node child))
@@ -1293,14 +1293,14 @@
            (backend-append-child! node style-node)
            node]
           [(vpanel)
-           (define node (dom-node 'div (list (cons 'data-we-widget "vpanel")
+           (define node (view-node 'div (list (cons 'data-we-widget "vpanel")
                                              (cons 'class          "we-vpanel")) '() #f #f #f))
            (for-each (lambda (child)
                        (append-view-child! node child))
                      (view-children v))
            node]
           [(hpanel)
-           (define node (dom-node 'div (list (cons 'data-we-widget "hpanel")
+           (define node (view-node 'div (list (cons 'data-we-widget "hpanel")
                                              (cons 'class          "we-hpanel")) '() #f #f #f))
            (for-each (lambda (child)
                        (append-view-child! node child))
@@ -1310,9 +1310,9 @@
            (error 'Fragment "cannot be rendered directly; use as child content")]
           [(raw-text)
            (define raw-value (alist-ref (view-props v) 'value 'render))
-           (define node (dom-node 'text '() '() "" #f #f))
+           (define node (view-node 'text '() '() "" #f #f))
            (define (set-text! value0)
-             (set-dom-node-text! node (value->text value0)))
+             (set-view-node-text! node (value->text value0)))
            (cond
              [(obs? raw-value)
               (set-text! (obs-peek raw-value))
@@ -1330,7 +1330,7 @@
            (define initial-tag
              (let ([v0 (maybe-observable-value raw-tag)])
                (if (symbol? v0) v0 'div)))
-           (define node (dom-node initial-tag '() '() "" #f #f))
+           (define node (view-node initial-tag '() '() "" #f #f))
            (define extra-attrs/raw (props-extra-attrs (view-props v)))
            (define ref-obs (ref-observable-from-extra-attrs extra-attrs/raw))
            (define (refresh-ref!)
@@ -1352,18 +1352,18 @@
                    #f)
                  #t))
            (define (refresh-root-attrs!)
-             (set-dom-node-attrs! node (attr-remove-key (dom-node-attrs node) 'class)))
+             (set-view-node-attrs! node (attr-remove-key (view-node-attrs node) 'class)))
           (define (set-tag! tag-value)
-             (set-dom-node-tag! node
+             (set-view-node-tag! node
                                 (if (symbol? tag-value)
                                     tag-value
                                     'div))
              (refresh-ref!))
           (define (set-text! value0)
-             (set-dom-node-text! node (value->text value0))
+             (set-view-node-text! node (value->text value0))
              (refresh-ref!))
           (define (set-string-only-text! value0)
-            (set-dom-node-text! node
+            (set-view-node-text! node
                                 (html-string-only-text-value->string value0))
             (refresh-ref!))
           (define (emit-string-only-text-update-ignored! tag value0)
@@ -1373,7 +1373,7 @@
             (emit-web-easy-warning! msg)
             (js-log msg))
           (define (current-text-tag)
-            (dom-node-tag node))
+            (view-node-tag node))
           (cond
             [(obs? raw-tag)
              (set-tag! (obs-peek raw-tag))
@@ -1406,11 +1406,11 @@
              [else
               (set-text! raw-value)])
            (define (refresh-root-event-handlers!)
-             (set-dom-node-event-handlers! node
+             (set-view-node-event-handlers! node
                                            (event-handlers-from-extra-attrs extra-attrs/raw)))
            (define (refresh-root-callbacks!)
-             (set-dom-node-on-click! node (callback-from-action-attr 'on-click-action))
-             (set-dom-node-on-change! node (callback-from-action-attr 'on-change-action))
+             (set-view-node-on-click! node (callback-from-action-attr 'on-click-action))
+             (set-view-node-on-change! node (callback-from-action-attr 'on-change-action))
              (refresh-root-event-handlers!))
            (refresh-root-callbacks!)
            (refresh-ref!)
@@ -1439,7 +1439,7 @@
            (define initial-tag
              (let ([v0 (maybe-observable-value raw-tag)])
                (if (symbol? v0) v0 'div)))
-           (define node (dom-node initial-tag '() '() #f #f #f))
+           (define node (view-node initial-tag '() '() #f #f #f))
            (define extra-attrs/raw (props-extra-attrs (view-props v)))
            (define ref-obs (ref-observable-from-extra-attrs extra-attrs/raw))
            (define (refresh-ref!)
@@ -1452,8 +1452,8 @@
                    (if (procedure? v0) v0 #f))
                  #f))
            (define (refresh-root-callbacks!)
-             (set-dom-node-on-click! node (callback-from-action-attr 'on-click-action))
-             (set-dom-node-on-change! node (callback-from-action-attr 'on-change-action))
+             (set-view-node-on-click! node (callback-from-action-attr 'on-click-action))
+             (set-view-node-on-change! node (callback-from-action-attr 'on-change-action))
              (refresh-root-event-handlers!))
            (define (valid-observable-attr-update? attr-key updated-value)
              (if (and (procedure? updated-value)
@@ -1465,9 +1465,9 @@
                    #f)
                  #t))
            (define (refresh-root-attrs!)
-             (set-dom-node-attrs! node (attr-remove-key (dom-node-attrs node) 'class)))
+             (set-view-node-attrs! node (attr-remove-key (view-node-attrs node) 'class)))
           (define (set-tag! tag-value)
-             (set-dom-node-tag! node
+             (set-view-node-tag! node
                                 (if (symbol? tag-value)
                                     tag-value
                                     'div))
@@ -1485,7 +1485,7 @@
                        (append-view-child! node child))
                      (view-children v))
            (define (refresh-root-event-handlers!)
-             (set-dom-node-event-handlers! node
+             (set-view-node-event-handlers! node
                                            (event-handlers-from-extra-attrs extra-attrs/raw)))
            (refresh-root-callbacks!)
            (refresh-ref!)
@@ -1518,7 +1518,7 @@
            (define initial-tag
              (let ([v0 (maybe-observable-value raw-tag)])
                (if (symbol? v0) v0 'div)))
-           (define node (dom-node initial-tag '() '() #f #f #f))
+           (define node (view-node initial-tag '() '() #f #f #f))
            (define extra-attrs/raw (props-extra-attrs (view-props v)))
            (define ref-obs (ref-observable-from-extra-attrs extra-attrs/raw))
            (define (refresh-ref!)
@@ -1531,7 +1531,7 @@
                    (if (procedure? v0) v0 #f))
                  #f))
            (define (dom-node-attr-ref n key [default #f])
-             (define p (assq key (dom-node-attrs n)))
+             (define p (assq key (view-node-attrs n)))
              (if p
                  (cdr p)
                  default))
@@ -1539,7 +1539,7 @@
              (if (equal? (dom-node-attr-ref root 'data-we-widget #f)
                          widget-name)
                  root
-                 (let loop ([rest (dom-node-children root)])
+                 (let loop ([rest (view-node-children root)])
                    (cond
                      [(null? rest)
                       #f]
@@ -1555,9 +1555,9 @@
            (define after-render-api
              (list (cons 'dom-node-attr-ref dom-node-attr-ref)
                    (cons 'find-node-by-widget find-node-by-widget)
-                   (cons 'dom-node-children dom-node-children)
-                   (cons 'dom-node-on-click dom-node-on-click)
-                   (cons 'set-dom-node-on-click! set-dom-node-on-click!)
+                   (cons 'view-node-children view-node-children)
+                   (cons 'view-node-on-click view-node-on-click)
+                   (cons 'set-view-node-on-click! set-view-node-on-click!)
                    (cons 'backend-replace-children! backend-replace-children!)
                    (cons 'build-node
                          (lambda (child)
@@ -1577,19 +1577,19 @@
                    #f)
                  #t))
            (define (refresh-root-attrs!)
-             (set-dom-node-attrs! node (attr-remove-key (dom-node-attrs node) 'class)))
+             (set-view-node-attrs! node (attr-remove-key (view-node-attrs node) 'class)))
            (define (set-tag! tag-value)
-             (set-dom-node-tag! node
+             (set-view-node-tag! node
                                 (if (symbol? tag-value)
                                     tag-value
                                     'div))
              (refresh-ref!))
            (define (refresh-root-event-handlers!)
-             (set-dom-node-event-handlers! node
+             (set-view-node-event-handlers! node
                                            (event-handlers-from-extra-attrs extra-attrs/raw)))
            (define (refresh-root-callbacks!)
-             (set-dom-node-on-click! node (callback-from-action-attr 'on-click-action))
-             (set-dom-node-on-change! node (callback-from-action-attr 'on-change-action))
+             (set-view-node-on-click! node (callback-from-action-attr 'on-click-action))
+             (set-view-node-on-change! node (callback-from-action-attr 'on-change-action))
              (refresh-root-event-handlers!))
            (refresh-root-callbacks!)
            (refresh-ref!)
@@ -1652,7 +1652,7 @@
                                   "kind"
                                   kind)]))
       (set! root-node node)
-      (set-dom-node-attrs! node (dom-node-attrs node))
+      (set-view-node-attrs! node (view-node-attrs node))
       node)
 
     ;; render : view? [renderer?] -> renderer?
