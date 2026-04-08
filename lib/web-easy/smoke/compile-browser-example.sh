@@ -65,7 +65,7 @@ if [ "${SMOKE_FORCE_COMPILE:-0}" != "1" ]; then
   fi
 fi
 
-racket ../../../webracket.rkt --browser --ffi dom --ffi standard --ffi js "$EXAMPLE_RKT"
+racket ../../../webracket.rkt --browser --ffi dom "$EXAMPLE_RKT"
 
 for ext in html js wasm wasm.map.sexp wat; do
   SRC="$BASENAME.$ext"
