@@ -13,6 +13,7 @@
 (include-ffi "document.ffi")
 (include-ffi "event.ffi")
 (include-ffi "domrect.ffi")
+(include-ffi "array.ffi")
 (include-ffi "element.ffi")
 (include-ffi "canvas.ffi")
 (include-ffi "media.ffi")

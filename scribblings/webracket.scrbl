@@ -31,6 +31,7 @@ Currently available libraries include:
   @item{@racket[(require-lib define)]}
   @item{@racket[(require-lib threading)]}
   @item{@racket[(include-lib dom)]}
+  @item{@racket[(include-lib array)]}
   @item{@racket[(include-lib window)]}
   @item{@racket[(include-lib performance)]}
   @item{@racket[(include-lib document)]}
@@ -61,6 +62,10 @@ See their respective documentation pages.
 @;-------------------------------------------------------------------
 
 @include-section["lib-dom.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-array.scrbl"]
 
 @;-------------------------------------------------------------------
 

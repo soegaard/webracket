@@ -5,6 +5,7 @@
 ;;;
 
 (include-lib media)
+(include-lib array)
 
 (struct canvas (raw) #:transparent)
 (struct canvas-2d-context (raw) #:transparent)
@@ -167,43 +168,14 @@
       (canvas-dom-matrix-raw value)
       value))
 
-;; canvas-js-array->vector : any/c -> vector?
-;;   Convert a browser array-like value to a Racket vector.
-(define (canvas-js-array->vector arr)
-  (cond
-    [(vector? arr) arr]
-    [(list? arr) (list->vector arr)]
-    [else
-     (define len (js-array-length arr))
-       (let loop ([i 0] [acc '()])
-         (if (= i len)
-             (list->vector (reverse acc))
-             (loop (add1 i) (cons (js-index arr i) acc))))]))
-
 ;; canvas-js-array->bytes : any/c -> bytes?
 ;;   Convert a browser byte array to a Racket bytes value.
 (define (canvas-js-array->bytes arr)
-  (define len (js-array-length arr))
+  (define len (array-length arr))
   (define bs (make-bytes len))
   (for ([i (in-range len)])
-    (bytes-set! bs i (inexact->exact (js-index arr i))))
+    (bytes-set! bs i (inexact->exact (array-ref arr i))))
   bs)
-
-;; canvas-sequence->js-array : (or/c list? vector?) -> any/c
-;;   Convert a Racket sequence to a browser array value.
-(define (canvas-sequence->js-array segments)
-  (cond
-    [(vector? segments) (js-array/extern segments)]
-    [(list? segments) (js-array/extern (list->vector segments))]
-    [else (raise-argument-error 'canvas-sequence->js-array "(or/c list? vector?)" segments)]))
-
-;; canvas-radii->js : any/c -> any/c
-;;   Convert optional round-rect radii to a browser value.
-(define (canvas-radii->js radii)
-  (cond
-    [(vector? radii) (js-array/extern radii)]
-    [(list? radii) (js-array/extern (list->vector radii))]
-    [else radii]))
 
 ;; offscreen-canvas-wrap : any/c -> offscreen-canvas?
 ;;   Wrap a browser OffscreenCanvas value.
@@ -882,7 +854,7 @@
 ;; canvas-2d-get-line-dash : (or/c canvas-2d-context? external?) -> vector?
 ;;   Read the current dash pattern.
 (define (canvas-2d-get-line-dash ctx)
-  (canvas-js-array->vector (js-canvas2d-get-line-dash (canvas-2d-context-unwrap ctx))))
+  (array->vector (js-canvas2d-get-line-dash (canvas-2d-context-unwrap ctx))))
 
 ;; canvas-2d-get-transform : (or/c canvas-2d-context? external?) -> canvas-dom-matrix?
 ;;   Read the current transform matrix.
@@ -977,14 +949,16 @@
                           y
                           width
                           height
-                          (canvas-radii->js (canvas-resolve-optional radii)))
+                          (if (or (list? radii) (vector? radii))
+                              (sequence->array radii)
+                              radii))
   (void))
 
 ;; canvas-2d-set-line-dash : (or/c canvas-2d-context? external?) any/c -> void?
 ;;   Set the dash pattern.
 (define (canvas-2d-set-line-dash ctx segments)
   (js-canvas2d-set-line-dash (canvas-2d-context-unwrap ctx)
-                             (canvas-sequence->js-array segments))
+                             (sequence->array segments))
   (void))
 
 ;; canvas-2d-set-transform! : (or/c canvas-2d-context? external?) real? real? real? real? real? real? -> void?

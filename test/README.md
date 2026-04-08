@@ -28,6 +28,11 @@ The DOM split now has a small raw smoke test and a few family-focused wrapper te
 - `test-dom-image.rkt` for `image`
 - `test-dom-event.rkt` for `event`
 
+Array wrapper tests
+-------------------
+
+- `test-array.rkt` for the standalone `array` wrapper
+
 To run one of the DOM wrapper tests from `test/`, use the same harness as the
 other browser-facing tests. For example:
 

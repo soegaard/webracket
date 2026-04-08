@@ -1,0 +1,10 @@
+;;;
+;;; Array
+;;;
+
+;; This file declares bindings for the JavaScript Array surface.
+;; It is intentionally small and focused on the public Array methods
+;; used by the checked wrapper libraries.
+
+(include-ffi "standard.ffi")
+(include-ffi "js.ffi")
