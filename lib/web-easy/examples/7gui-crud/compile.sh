@@ -9,7 +9,7 @@ mkdir -p generated
 
 BASENAME="7gui-crud"
 
-racket "$ROOT_DIR/webracket.rkt" --browser --ffi dom --ffi standard --ffi js "$BASENAME.rkt"
+racket "$ROOT_DIR/webracket.rkt" --browser --ffi dom "$BASENAME.rkt"
 
 for ext in html js wasm wasm.map.sexp wat; do
   src="$BASENAME.$ext"

@@ -9,7 +9,7 @@ mkdir -p generated
 
 BASENAME="websocket"
 
-racket "$ROOT_DIR/webracket.rkt" --browser --ffi dom --ffi standard --ffi js --ffi websocket "$BASENAME.rkt"
+racket "$ROOT_DIR/webracket.rkt" --browser --ffi dom --ffi websocket "$BASENAME.rkt"
 
 for ext in html js wasm wasm.map.sexp wat; do
   src="$BASENAME.$ext"
