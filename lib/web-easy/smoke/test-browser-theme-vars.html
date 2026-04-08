@@ -105,13 +105,15 @@
     (async function run() {
       try {
         const frame = document.getElementById("app-frame");
-        await new Promise((resolve, reject) => {
-          const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
-          frame.addEventListener("load", () => {
-            clearTimeout(timer);
-            resolve();
-          }, { once: true });
-        });
+        if (!themeHelper.frameDocFrom(frame)) {
+          await new Promise((resolve, reject) => {
+            const timer = setTimeout(() => reject(new Error("Timed out loading iframe")), 20000);
+            frame.addEventListener("load", () => {
+              clearTimeout(timer);
+              resolve();
+            }, { once: true });
+          });
+        }
 
         const ui = await waitForUI(frame, 20000);
         const bgBefore = themeHelper.normalizedCssColor(getComputedStyle(ui.selected).backgroundColor);

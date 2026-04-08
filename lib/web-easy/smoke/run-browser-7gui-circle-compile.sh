@@ -8,8 +8,8 @@ TARGET_DIR="$SCRIPT_DIR/generated"
 
 mkdir -p "$TARGET_DIR"
 if [ ! -f "$EXAMPLE_DIR/generated/7gui-circle.html" ]; then
-  echo "Missing generated 7gui-circle artifacts in $EXAMPLE_DIR/generated"
-  exit 2
+  echo "Compiling 7gui-circle example artifacts"
+  "$EXAMPLE_DIR/compile.sh"
 fi
 
 cp -f "$EXAMPLE_DIR/generated/7gui-circle.html" "$TARGET_DIR/7gui-circle.html"
