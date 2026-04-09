@@ -51,7 +51,7 @@
   (define single-file-path   (build-path collection-dir
                                          "lib" "libs"
                                          (string-append (symbol->string lib-sym) ".rkt")))
-  (define browser? browser-mode?)
+  (define browser? (browser-mode?))
   (cond
     [(directory-exists? lib-dir)
      (cond
