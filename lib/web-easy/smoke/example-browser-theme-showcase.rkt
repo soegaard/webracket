@@ -5,8 +5,8 @@
 ;; User-facing web-easy showcase page (no iframe, no test harness) with a
 ;; top-level theme chooser wired to external CSS files.
 
-(include/reader "../main-browser.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-format.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 
 ;; Constants for static table rows.
 (define row/release-1 (list "Release 1.4" "In Progress" "2d")) ; First roadmap row.

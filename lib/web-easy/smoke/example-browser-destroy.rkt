@@ -4,8 +4,8 @@
 
 ;; Minimal browser app for renderer-destroy lifecycle smoke tests.
 
-(include/reader "../main-browser.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-format.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 
 (define @count (@ 0))
 

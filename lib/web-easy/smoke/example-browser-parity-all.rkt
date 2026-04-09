@@ -4,8 +4,8 @@
 
 ;; Single compiled parity driver for isolated parity capsules selected by `?test=...`.
 
-(include/reader "../main-browser.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-format.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 (include/reader "smoke-capsule-parity-hello.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-counter.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-capsule-parity-dynamic-list.rkt" read-syntax/skip-first-line)

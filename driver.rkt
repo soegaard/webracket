@@ -27,7 +27,8 @@
 ;;;
 
 (require (only-in syntax/modread    with-module-reading-parameterization)
-         (only-in racket/path       file-name-from-path path-only path-get-extension)
+         (only-in racket/path       file-name-from-path path-only path-get-extension
+                                    )
          (only-in racket/file       make-directory* make-temporary-file)
          (only-in racket/port       open-output-nowhere with-output-to-string)
          (only-in racket/pretty     pretty-write)
@@ -36,9 +37,11 @@
          #;(only-in "lang/reader.rkt" read-syntax)
          (only-in "assembler.rkt"   run wat->wasm runtime)
          (only-in racket/list       append* append-map remove-duplicates)
+         setup/dirs
          (only-in "parameters.rkt"  current-ffi-foreigns
                                     current-ffi-imports-wat
-                                    current-ffi-funcs-wat)
+                                    current-ffi-funcs-wat
+                                    current-browser?)
          (only-in "timings.rkt"     now-ms format-timing-table)
          "wat-identifiers.rkt"
          racket/runtime-path
@@ -121,6 +124,11 @@
   (define (top-level-include-lib-names datum)
     (cond
       [(and (pair? datum)
+            (eq? (car datum) 'module)
+            (pair? (cdr datum))
+            (pair? (cddr datum)))
+       (append-map top-level-include-lib-names (cdddr datum))]
+      [(and (pair? datum)
             (memq (car datum) '(begin begin0)))
        (append-map top-level-include-lib-names (cdr datum))]
       [(and (pair? datum)
@@ -139,17 +147,19 @@
       (include-lib->ffi-filename lib-name)))
   (remove-duplicates inferred))
 
-;; default-ffi-files : (listof path-string?) -> (listof path-string?)
-;;   Return the default FFI file that is always loaded unless the caller
-;;   already supplied the bundled Array or Standard FFI file.
-(define (default-ffi-files ffi-files)
+;; default-ffi-files : (listof path-string?) boolean? -> (listof path-string?)
+;;   Return the default FFI files that are always loaded unless the caller
+;;   already supplied matching bundled FFI files.
+(define (default-ffi-files ffi-files browser?)
   (define suppress-default?
     (for/or ([ffi-filename ffi-files])
       (member (ffi-filename-stem ffi-filename)
               '("array" "canvas" "dom" "standard"))))
   (if suppress-default?
       '()
-      (list "standard.ffi")))
+      (if browser?
+          (list "dom.ffi")
+          (list "standard.ffi"))))
 
 ;; list-available-primitives : [#:ffi-files (listof path-string?)] -> (listof symbol?)
 ;;   Return a sorted list of known primitives, optionally extended with FFI primitives.
@@ -221,6 +231,7 @@
                                         (~a "read failed: " (exn-message e))))])
       (read-top-level-from-file filename)))
   (define t-read-source-end (now-ms))
+  (define stx-for-compile stx)
 
   ; 2. Handle ffi-files.
   (define t-ffi-setup-start  (now-ms))
@@ -230,7 +241,7 @@
   (define resolved-ffi-files
     (remove-duplicates
      (resolve-ffi-files! 'drive-compilation
-                         (append (default-ffi-files user-ffi-files)
+                         (append (default-ffi-files user-ffi-files browser?)
                                  user-ffi-files))))
 
   (define ffi-foreigns  '()) ; list of `foreign` structures
@@ -263,13 +274,13 @@
          (displayln "Including `stdlib/stdlib-for-browser.rkt`" (current-error-port)))
        #`(begin
            (include/reader "stdlib/stdlib-for-browser.rkt" read-syntax/skip-first-line)
-           #,stx)]
+           #,stx-for-compile)]
       [stdlib?
        #`(begin
            (include/reader "stdlib/stdlib.rkt" read-syntax/skip-first-line)
-           #,stx)] ; stx is a begin form      
+           #,stx-for-compile)] ; stx is a begin form      
       [else
-       stx]))
+       stx-for-compile]))
   (define t-add-stdlib-end (now-ms))
 
   (define t-preflight-start (now-ms))
@@ -322,7 +333,8 @@
     (with-handlers (#;[exn:fail? (λ (e)
                                  (error 'drive-compilation
                                         (~a "compile failed: " (exn-message e))))])
-      (comp stx-with-stdlib)))
+      (parameterize ([current-browser? browser?])
+        (comp stx-with-stdlib))))
   (define t-compile-end (now-ms))
 
   ; 6. Save the resulting WAT module.

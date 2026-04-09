@@ -4,8 +4,8 @@
 
 ;; Minimal browser smoke app that renders a counter and mounts it to the document body.
 
-(include/reader "../main-browser.rkt" read-syntax/skip-first-line)
 (include/reader "smoke-format.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 
 (define @count (@ 0))
 
