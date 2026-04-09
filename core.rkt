@@ -192,9 +192,7 @@
        (define lib-key lib-sym)
        (when (hash-has-key? include-lib-seen lib-key)
          (syntax/loc stx (void)))
-       (define browser-like?
-         (regexp-match? #rx"browser"
-                        (syntax-source->string lib-id-stx)))
+       (define browser-like? (current-browser?))
        (define-values (lib-path multi-file?)
          (library-entrypoint-path lib-sym browser-like?))
        (unless lib-path
