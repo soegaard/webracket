@@ -32,7 +32,9 @@
                      racket/path
                      setup/dirs
                      syntax/location
-                     "parameters.rkt"))
+                     "browser-options.rkt"))
+
+(provide (for-syntax browser-mode?))
 
 (begin-for-syntax
   (define include-lib-seen (make-hash)))
@@ -41,7 +43,7 @@
   (define collection-main (collection-file-path "main.rkt" "webracket"))
   (or (path-only collection-main) (current-directory)))
 
-(define-for-syntax (library-entrypoint-path lib-sym browser?)
+(define-for-syntax (library-entrypoint-path lib-sym)
   (define collection-dir     (webracket-collection-dir))
   (define lib-dir            (build-path collection-dir "lib" (symbol->string lib-sym)))
   (define multi-main-path    (build-path lib-dir "main.rkt"))
@@ -49,6 +51,7 @@
   (define single-file-path   (build-path collection-dir
                                          "lib" "libs"
                                          (string-append (symbol->string lib-sym) ".rkt")))
+  (define browser? browser-mode?)
   (cond
     [(directory-exists? lib-dir)
      (cond
@@ -192,9 +195,8 @@
        (define lib-key lib-sym)
        (when (hash-has-key? include-lib-seen lib-key)
          (syntax/loc stx (void)))
-       (define browser-like? (current-browser?))
        (define-values (lib-path multi-file?)
-         (library-entrypoint-path lib-sym browser-like?))
+         (library-entrypoint-path lib-sym))
        (unless lib-path
          (raise-syntax-error who
                              (string-append "unknown library `"

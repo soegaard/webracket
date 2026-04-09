@@ -28,7 +28,7 @@
 
 (require (only-in syntax/modread    with-module-reading-parameterization)
          (only-in racket/path       file-name-from-path path-only path-get-extension
-                                    )
+                                    find-relative-path)
          (only-in racket/file       make-directory* make-temporary-file)
          (only-in racket/port       open-output-nowhere with-output-to-string)
          (only-in racket/pretty     pretty-write)
@@ -229,7 +229,7 @@
     (with-handlers ([exn:fail? (λ (e)
                                  (error 'drive-compilation
                                         (~a "read failed: " (exn-message e))))])
-      (read-top-level-from-file filename)))
+      (read-top-level-from-file filename browser?)))
   (define t-read-source-end (now-ms))
   (define stx-for-compile stx)
 
@@ -445,7 +445,7 @@
 ;;; READ TOP-LEVEL FORMS FROM FILE 
 ;;;
 
-(define (read-top-level-from-file filename)
+(define (read-top-level-from-file filename browser?)
   (define (read-forms port)
     (let loop ([forms '()])
       (define stx (read-syntax filename port))      
@@ -458,8 +458,12 @@
       (with-module-reading-parameterization
         (λ ()
           (define forms (read-forms port))
-          (datum->syntax #f `(begin ,@forms)))))))
-
+          (datum->syntax
+           #f
+           `(begin
+              (begin-for-syntax
+                (browser-mode? ,browser?))
+              ,@forms)))))))
 
 ;;;
 ;;; WRITE WAT TO FILE
