@@ -59,7 +59,8 @@
          require for-syntax)
 
 (provide (for-syntax define-syntax syntax-case ... #%app #%datum #%top
-                     require for-syntax))
+                     require for-syntax
+                     begin-for-syntax define))
 
 (require (for-syntax
           (only-in racket/base
