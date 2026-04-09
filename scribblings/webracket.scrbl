@@ -46,6 +46,7 @@ Currently available libraries include:
   @item{@racket[(include-lib audio)]}
   @item{@racket[(include-lib console)]}
   @item{@racket[(include-lib websocket)]}
+  @item{@racket[(include-lib query)]}
 ]
 
 See their respective documentation pages.
@@ -118,6 +119,10 @@ See their respective documentation pages.
 @;-------------------------------------------------------------------
 
 @include-section["lib-websocket.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-query.scrbl"]
 
 @;-------------------------------------------------------------------
 
