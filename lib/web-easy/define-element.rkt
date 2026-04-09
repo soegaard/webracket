@@ -215,6 +215,7 @@
   (define attrs '())
   (define positional-rev '())
   (define extra-attrs-rev '())
+  (define extra-attrs-seen '())
   (let loop ([rest all-args])
     (cond
       [(null? rest)
@@ -224,11 +225,13 @@
          (error who "missing value after keyword argument: ~a" (car rest)))
        (define kw (car rest))
        (define v  (cadr rest))
-       (cond
+        (cond
          [(eq? kw '#:attrs)
           (set! attrs v)]
          [else
           (define attr-key (keyword->attr-key kw))
+          (when (member attr-key extra-attrs-seen)
+            (error who "duplicate keyword argument: ~a" kw))
           (when (not (attr-key-allowed? attr-key allowed-attrs))
             (error who "unknown keyword argument: ~a" kw))
           (when (and (eq? attr-key 'ref)
@@ -237,8 +240,9 @@
           (when (and (primitive-event-attr-key? attr-key)
                      (not (event-handler-value-accepted? v)))
             (error who
-                   "expected event handler as procedure?, observable?, or #f: ~a"
+                     "expected event handler as procedure?, observable?, or #f: ~a"
                    kw))
+          (set! extra-attrs-seen (cons attr-key extra-attrs-seen))
           (set! extra-attrs-rev
                 (cons (cons attr-key v)
                       extra-attrs-rev))])
@@ -368,6 +372,7 @@
 (define (normalize-component-call who all-args component-defaults)
   (define positional-rev '())
   (define forwarded-rev '())
+  (define forwarded-seen '())
   (define component-values component-defaults)
   (define component-counts '())
   (define (keyword-count+ counts kw)
@@ -394,9 +399,13 @@
                    (keyword-count+ component-counts kw))
              (set! component-values
                    (alist-set component-values kw v)))
-           (set! forwarded-rev
-                 (cons v
-                       (cons kw forwarded-rev))))
+           (begin
+             (when (member kw forwarded-seen)
+               (error who "duplicate keyword argument: ~a" kw))
+             (set! forwarded-seen (cons kw forwarded-seen))
+             (set! forwarded-rev
+                   (cons v
+                         (cons kw forwarded-rev)))))
        (loop (cddr rest))]
       [else
        (set! positional-rev (cons (car rest) positional-rev))
