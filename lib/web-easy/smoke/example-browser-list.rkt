@@ -4,7 +4,7 @@
 
 ;; Minimal browser app for list-view reorder and reactive update smoke tests.
 
-(include/reader "../main-browser.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 
 ;; The representation in @items is chosen by the web-easy user.
 ;; list-view only requires a key function and an entry renderer.

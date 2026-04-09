@@ -1,4 +1,4 @@
 #lang webracket
-(include/reader "../main.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 
 (with-class "x" (text "hello"))

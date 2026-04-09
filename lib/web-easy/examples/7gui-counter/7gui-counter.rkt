@@ -4,7 +4,7 @@
 
 ;; https://eugenkiss.github.io/7guis/tasks#counter
 
-(include/reader "../../main-browser.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 
 (define @count (@ 0))
 

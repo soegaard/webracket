@@ -2,7 +2,7 @@
 ;;; Add Two Numbers (Light Theme)
 ;;;
 
-(include/reader "../../main-browser.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 
 ;; Minimal web-easy browser example:
 ;;   enter two numbers and show their sum using the Light theme.

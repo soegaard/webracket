@@ -2,7 +2,7 @@
 ;;; Hello World (Light Theme)
 ;;;
 
-(include/reader "../../main-browser.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 
 ; Full screen
 (define hello-world-app-1

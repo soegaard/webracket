@@ -2,7 +2,7 @@
 ;;; Quickstart: Dynamic Counters (Light Theme)
 ;;;
 
-(include/reader "../../main-browser.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 
 (define @counters (@ '((0 . 0))))
  

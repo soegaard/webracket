@@ -4,7 +4,7 @@
 
 ;; Smoke example that exposes fill-vs-fit width defaults for core widgets.
 
-(include/reader "../main-browser.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 
 (define @name (@ "Alice"))
 (define @enabled (@ #t))

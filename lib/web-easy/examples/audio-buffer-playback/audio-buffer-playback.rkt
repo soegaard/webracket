@@ -2,7 +2,7 @@
 ;;; Audio Buffer Playback Demo
 ;;;
 
-(include/reader "../../main-browser.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 (include-lib audio)
 
 (define @status         (@ "stopped"))

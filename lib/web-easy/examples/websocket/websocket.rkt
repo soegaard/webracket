@@ -2,7 +2,7 @@
 ;;; WebSocket Echo Demo
 ;;;
 
-(include/reader "../../main-browser.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 (include-lib websocket)
 
 (define websocket-demo-url     "wss://echo-websocket.fly.dev/")

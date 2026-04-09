@@ -4,7 +4,7 @@
 
 ;; Smoke example focused on group/fieldset legend rendering.
 
-(include/reader "../main-browser.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 
 (define @title (@ "Visual Check"))
 (define @body  (@ "inside"))

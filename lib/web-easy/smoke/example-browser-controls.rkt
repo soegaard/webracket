@@ -4,7 +4,7 @@
 
 ;; Minimal browser app for choice/slider/progress smoke tests.
 
-(include/reader "../main-browser.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 
 (define @color (@ 'red))
 (define @level (@ 10))

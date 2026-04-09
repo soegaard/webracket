@@ -632,7 +632,15 @@
             (andmap (lambda (n)
                       (and (integer? n) (>= n 0)))
                     datum))
-       (sort (remove-duplicates datum) <)]
+       (let loop ([rest datum]
+                  [acc '()])
+         (cond
+           [(null? rest)
+            (sort acc <)]
+           [else
+            (define x (car rest))
+            (loop (cdr rest)
+                  (if (member x acc) acc (cons x acc)))]))]
       [else
        #f]))
   ;; range-list/component : natural? natural? -> list?
@@ -797,10 +805,18 @@
       (case tag-sym
         [(menu-item) '(disabled)]
         [else '()]))
-    (remove-duplicates (append globals
-                               specific
-                               extra
-                               '(data-* aria-*))))
+    (let loop ([rest (append globals
+                             specific
+                             extra
+                             '(data-* aria-*))]
+               [acc '()])
+      (cond
+        [(null? rest)
+         (reverse acc)]
+        [else
+         (define x (car rest))
+         (loop (cdr rest)
+               (if (member x acc) acc (cons x acc)))])))
   (syntax-case stx (quote)
     [(_ name
         #:root-tag (quote root-tag-sym)
@@ -1596,78 +1612,86 @@
     (define table (load-html-attr-table use-stx))
     (define globals (hash-ref table "*" '()))
     (define specific (hash-ref table (symbol->string tag-sym) '()))
-    (remove-duplicates (append globals
-                               specific
-                               '(data-* aria-*)
-                               '(on-click
-                                 ref
-                                 on-doubleclick
-                                 on-contextmenu
-                                 on-copy
-                                 on-cut
-                                 on-paste
-                                 on-compositionstart
-                                 on-compositionupdate
-                                 on-compositionend
-                                 on-keydown
-                                 on-keyup
-                                 on-focus
-                                 on-blur
-                                 on-focusin
-                                 on-focusout
-                                 on-input
-                                 on-change
-                                 on-beforeinput
-                                 on-submit
-                                 on-reset
-                                 on-invalid
-                                 on-wheel
-                                 on-scroll
-                                 on-drag
-                                 on-dragstart
-                                 on-dragend
-                                 on-dragenter
-                                 on-dragleave
-                                 on-dragover
-                                 on-drop
-                                 on-touchstart
-                                 on-touchmove
-                                 on-touchend
-                                 on-touchcancel
-                                 on-load
-                                 on-error
-                                 on-abort
-                                 on-animationstart
-                                 on-animationend
-                                 on-animationiteration
-                                 on-transitionend
-                                 on-mousedown
-                                 on-mousemove
-                                 on-mouseup
-                                 on-mouseenter
-                                 on-mouseleave
-                                 on-mouseover
-                                 on-mouseout
-                                 on-pointerdown
-                                 on-pointermove
-                                 on-pointerup
-                                 on-pointerenter
-                                 on-pointerleave
-                                 on-pointerover
-                                 on-pointerout
-                                 on-pointercancel
-                                 on-gotpointercapture
-                                 on-lostpointercapture
-                                 on-loadeddata
-                                 on-loadedmetadata
-                                 on-canplay
-                                 on-canplaythrough
-                                 on-play
-                                 on-playing
-                                 on-pause
-                                 on-ended
-                                 on-timeupdate
-                                 on-volumechange))))
+    (let loop ([rest (append globals
+                             specific
+                             '(data-* aria-*)
+                             '(on-click
+                               ref
+                               on-doubleclick
+                               on-contextmenu
+                               on-copy
+                               on-cut
+                               on-paste
+                               on-compositionstart
+                               on-compositionupdate
+                               on-compositionend
+                               on-keydown
+                               on-keyup
+                               on-focus
+                               on-blur
+                               on-focusin
+                               on-focusout
+                               on-input
+                               on-change
+                               on-beforeinput
+                               on-submit
+                               on-reset
+                               on-invalid
+                               on-wheel
+                               on-scroll
+                               on-drag
+                               on-dragstart
+                               on-dragend
+                               on-dragenter
+                               on-dragleave
+                               on-dragover
+                               on-drop
+                               on-touchstart
+                               on-touchmove
+                               on-touchend
+                               on-touchcancel
+                               on-load
+                               on-error
+                               on-abort
+                               on-animationstart
+                               on-animationend
+                               on-animationiteration
+                               on-transitionend
+                               on-mousedown
+                               on-mousemove
+                               on-mouseup
+                               on-mouseenter
+                               on-mouseleave
+                               on-mouseover
+                               on-mouseout
+                               on-pointerdown
+                               on-pointermove
+                               on-pointerup
+                               on-pointerenter
+                               on-pointerleave
+                               on-pointerover
+                               on-pointerout
+                               on-pointercancel
+                               on-gotpointercapture
+                               on-lostpointercapture
+                               on-loadeddata
+                               on-loadedmetadata
+                               on-canplay
+                               on-canplaythrough
+                               on-play
+                               on-playing
+                               on-pause
+                               on-ended
+                               on-timeupdate
+                               on-volumechange))]
+               [acc '()])
+      (cond
+        [(null? rest)
+         (reverse acc)]
+        [else
+         (define x (car rest))
+         (loop (cdr rest)
+               (if (member x acc) acc (cons x acc)))])))
   ;; `#:content-mode text-or-children` is for primitive HTML elements such as
   ;; `Button` that preserve the old single text-like content form while also
   ;; accepting ordered mixed content sequences like a real container element.

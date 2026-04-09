@@ -4,7 +4,7 @@
 
 ;; Minimal browser app for checkbox change and boolean propagation smoke tests.
 
-(include/reader "../main-browser.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 
 (define @enabled (@ #f))
 

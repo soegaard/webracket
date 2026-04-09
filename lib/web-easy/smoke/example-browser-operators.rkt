@@ -4,7 +4,7 @@
 
 ;; Minimal browser app for ~#> and λ<~ smoke tests.
 
-(include/reader "../main-browser.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 
 (define @count (@ 0))
 (define inc!   (λ<~ @count add1))

@@ -2,7 +2,7 @@
 ;;; Quickstart: A Single Counter (Light Theme)
 ;;;
 
-(include/reader "../../main-browser.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 
 (define @count (@ 0))
 

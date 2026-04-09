@@ -4,7 +4,7 @@
 
 ;; No-#lang entrypoint for `webracket.rkt -r`.
 
-(include/reader "../main.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 
 ;; failf : string? -> none/c
 ;;   Raise a deterministic failure without relying on `error`.

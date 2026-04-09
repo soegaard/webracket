@@ -1,3 +1,5 @@
+#lang webracket
+
 ;;;
 ;;; web-easy Browser Main
 ;;;

@@ -4,7 +4,7 @@
 
 ;; Smoke example focused on keyboard focus/activation for menu-item widgets.
 
-(include/reader "../main-browser.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 
 (define @count (@ 0))
 

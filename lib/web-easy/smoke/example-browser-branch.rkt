@@ -4,7 +4,7 @@
 
 ;; Minimal browser app for structural branch switching smoke tests.
 
-(include/reader "../main-browser.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 
 (define @show-on (@ #t))
 

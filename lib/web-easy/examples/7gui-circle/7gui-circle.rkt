@@ -4,7 +4,7 @@
 
 ;; https://eugenkiss.github.io/7guis/tasks#circle
 
-(include/reader "../../main-browser.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 
 ;; ----------------------------------------
 ;; Utilities                          

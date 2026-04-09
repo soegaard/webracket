@@ -4,6 +4,9 @@
 ;;; Smoke Capsule: Parity todo
 ;;;
 
+;; Bring in the web-easy entrypoint the same way the other smoke examples do.
+(include-lib web-easy)
+
 ;; Isolated parity capsule for parity-todo.
 ;;
 ;; Exports:

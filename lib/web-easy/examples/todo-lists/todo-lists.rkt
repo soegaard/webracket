@@ -1,4 +1,4 @@
-(include/reader "../../main-browser.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 
 (define (~a . xs)
   (string-append* (map (λ (x) (format "~a" x))

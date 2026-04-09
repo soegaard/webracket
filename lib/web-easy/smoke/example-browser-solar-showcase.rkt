@@ -5,7 +5,7 @@
 ;; Minimal, user-facing Solar-inspired showcase page.
 ;; Scope: Bootswatch-style section showcase using supported web-easy widgets.
 
-(include/reader "../main-browser.rkt" read-syntax/skip-first-line)
+(include-lib web-easy)
 (include/reader    "smoke-format.rkt" read-syntax/skip-first-line)
 
 ;; Constants for page state.
