@@ -46,6 +46,7 @@
          "wat-identifiers.rkt"
          racket/runtime-path
          racket/syntax
+         "browser-options.rkt"
          "compiler.rkt"
          "define-foreign.rkt")
 
@@ -220,6 +221,9 @@
   (define compile-timings #f)
   (define t-driver-start (now-ms))
 
+  (current-browser? browser?)
+  (set-browser-mode! browser?)
+
   ; 0. Check that `filename` exists and is a source file.
   (ensure-source-file! 'drive-compilation filename)
 
@@ -229,7 +233,7 @@
     (with-handlers ([exn:fail? (λ (e)
                                  (error 'drive-compilation
                                         (~a "read failed: " (exn-message e))))])
-      (read-top-level-from-file filename browser?)))
+      (read-top-level-from-file filename)))
   (define t-read-source-end (now-ms))
   (define stx-for-compile stx)
 
@@ -445,7 +449,7 @@
 ;;; READ TOP-LEVEL FORMS FROM FILE 
 ;;;
 
-(define (read-top-level-from-file filename browser?)
+(define (read-top-level-from-file filename)
   (define (read-forms port)
     (let loop ([forms '()])
       (define stx (read-syntax filename port))      
@@ -461,8 +465,6 @@
           (datum->syntax
            #f
            `(begin
-              (begin-for-syntax
-                (browser-mode? ,browser?))
               ,@forms)))))))
 
 ;;;
@@ -653,7 +655,6 @@
 ;;;
 
 (define-runtime-path here ".")
-
 (define system-ffi-directory
   (let ([candidate (build-path here "ffi")])
     (and (directory-exists? candidate) candidate)))

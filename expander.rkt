@@ -1,11 +1,14 @@
 #lang racket/base
-(provide topexpand)
+(provide topexpand
+         make-webracket-namespace)
 
 (require syntax/toplevel
          racket/pretty)
 
+
 (define (make-webracket-namespace)
   (define ns (make-base-empty-namespace))
+
   (parameterize ([current-namespace ns])
     (namespace-require 'webracket))
   ns)
@@ -45,5 +48,3 @@
 ;
 ; With `expand-top-level-with-compile-time-evals` the call expands into a
 ; a call to (renamed) a pos bound to the proper constructor.
-
-

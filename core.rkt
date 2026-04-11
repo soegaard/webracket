@@ -34,8 +34,6 @@
                      syntax/location
                      "browser-options.rkt"))
 
-(provide (for-syntax browser-mode?))
-
 (begin-for-syntax
   (define include-lib-seen (make-hash)))
 
@@ -51,11 +49,10 @@
   (define single-file-path   (build-path collection-dir
                                          "lib" "libs"
                                          (string-append (symbol->string lib-sym) ".rkt")))
-  (define browser? (browser-mode?))
   (cond
     [(directory-exists? lib-dir)
      (cond
-       [browser?
+       [(browser-mode?)
         (unless (file-exists? multi-browser-path)
           (error 'include-lib
                  (string-append "browser entrypoint not found for library `"
