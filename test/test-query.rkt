@@ -56,6 +56,10 @@
 (define card-sel ($ ".card"))
 (define leaf-sel ($ ".leaf"))
 (define text-sel ($ "#text-host"))
+(define click-count 0)
+
+(define (handle-click _evt)
+  (set! click-count (add1 click-count)))
 
 (element-set-text-content! ($first sel) "Hello World!")
 (element-set-text-content! ($first text-sel) "Text node child")
@@ -110,6 +114,17 @@
                                           (equal? (element-id node) "card-2"))))
                       1
                       "chainable filter count")
+         (check-equal ($on "click" handle-click sel) sel "selection on returns selection")
+         (check-equal (.on sel "click" handle-click) sel "chainable on returns selection")
+         (check-equal click-count 0 "click count before dispatch")
+         (check-true (js-eval "document.getElementById('hw').dispatchEvent(new Event('click', { bubbles: true }))")
+                     "dispatch click event")
+         (check-equal click-count 1 "click count after dispatch")
+         (check-equal (.off sel "click" handle-click) sel "chainable off returns selection")
+         (check-equal ($off "click" handle-click sel) sel "selection off returns selection")
+         (check-true (js-eval "document.getElementById('hw').dispatchEvent(new Event('click', { bubbles: true }))")
+                     "dispatch click event after remove")
+         (check-equal click-count 1 "click count after remove")
          (check-equal ($length ($where (lambda (node)
                                          (equal? (element-id node) "card-2"))
                                        card-sel))

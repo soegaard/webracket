@@ -53,6 +53,74 @@
     [(dom-attr? value) (dom-attr-raw value)]
     [else value]))
 
+;; element-event-listener-cache : hash?
+;;   Reuse stable external callbacks for event listeners.
+(define element-event-listener-cache (make-hasheq))
+
+;; element-event-name->string : symbol? any/c -> string?
+;;   Normalize a DOM event name to a browser string.
+(define (element-event-name->string who event-name)
+  (cond
+    [(string? event-name) event-name]
+    [(symbol? event-name) (symbol->string event-name)]
+    [else (raise-argument-error who "(or/c string? symbol?)" event-name)]))
+
+;; element-event-listener->external : symbol? any/c -> external?
+;;   Convert a listener to a stable external callback.
+(define (element-event-listener->external who listener)
+  (cond
+    [(external? listener) listener]
+    [(procedure? listener)
+     (define cached (hash-ref element-event-listener-cache listener #f))
+     (cond
+       [cached cached]
+       [else
+        (define external (procedure->external listener))
+        (hash-set! element-event-listener-cache listener external)
+        external])]
+    [else
+     (raise-argument-error who "(or/c procedure? external?)" listener)]))
+
+;; element-event-listener-option? : any/c -> boolean?
+;;   Check whether a listener option is acceptable for add/removeEventListener.
+(define (element-event-listener-option? option)
+  (or (boolean? option)
+      (external? option)))
+
+;; element-add-event-listener! : element? (or/c string? symbol?) (or/c procedure? external?) (or/c boolean? external?) ... -> external?
+;;   Add an event listener to an element and return the installed listener.
+(define (element-add-event-listener! element event-name listener . options)
+  (define event-name* (element-event-name->string 'element-add-event-listener! event-name))
+  (define listener* (element-event-listener->external 'element-add-event-listener! listener))
+  (for-each
+   (lambda (option)
+     (unless (element-event-listener-option? option)
+       (raise-argument-error 'element-add-event-listener! "(or/c boolean? external?)" option)))
+   options)
+  (define args
+    (if (null? options)
+        (vector event-name* listener*)
+        (list->vector (list* event-name* listener* options))))
+  (js-send/extern/nullish (element-unwrap element) "addEventListener" args)
+  listener*)
+
+;; element-remove-event-listener! : element? (or/c string? symbol?) (or/c procedure? external?) (or/c boolean? external?) ... -> void?
+;;   Remove an event listener from an element.
+(define (element-remove-event-listener! element event-name listener . options)
+  (define event-name* (element-event-name->string 'element-remove-event-listener! event-name))
+  (define listener* (element-event-listener->external 'element-remove-event-listener! listener))
+  (for-each
+   (lambda (option)
+     (unless (element-event-listener-option? option)
+       (raise-argument-error 'element-remove-event-listener! "(or/c boolean? external?)" option)))
+   options)
+  (define args
+    (if (null? options)
+        (vector event-name* listener*)
+        (list->vector (list* event-name* listener* options))))
+  (js-send/extern/nullish (element-unwrap element) "removeEventListener" args)
+  (void))
+
 ;; element-id : element? -> (or/c #f string?)
 ;;   Read an element id.
 (define-element-getter element-id js-element-id)

@@ -30,6 +30,8 @@
   element-namespace-uri
   element-prefix
   element-is-connected?
+  element-add-event-listener!
+  element-remove-event-listener!
   element-append!
   element-prepend!
   element-before!
@@ -140,6 +142,8 @@
 (define element-namespace-uri any/c)
 (define element-prefix any/c)
 (define element-is-connected? any/c)
+(define element-add-event-listener! any/c)
+(define element-remove-event-listener! any/c)
 (define element-append! any/c)
 (define element-prepend! any/c)
 (define element-before! any/c)

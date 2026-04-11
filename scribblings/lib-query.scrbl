@@ -5,6 +5,7 @@
           (for-label (lib "scribblings/lib-query-labels.rkt" "webracket"))
           (for-label (lib "scribblings/lib-document-labels.rkt" "webracket"))
           (for-label (lib "scribblings/lib-element-labels.rkt" "webracket"))
+          (for-label (lib "scribblings/lib-event-labels.rkt" "webracket"))
           )
 
 @title{Library: @racketid[query]}
@@ -235,6 +236,28 @@ elements.
 (code:comment "=> a selection containing the first card id")
 ]
 
+@subsection{Event Handlers}
+
+Use @racket[.on] to attach DOM event listeners to each selected element.
+
+@racketblock[
+(include-lib event)
+(define clicks 0)
+
+($chain ($ "#hw")
+        .on
+        "click"
+        (lambda (evt)
+          (set! clicks (add1 clicks))))
+
+clicks
+(code:comment "=> 0")
+]
+
+Event handlers receive the raw browser event value, so helpers such as
+@racket[event-type] and @racket[prevent-default!] are available after
+@racket[(include-lib event)].
+
 @subsection{Text Content}
 
 @racketblock[
@@ -428,9 +451,33 @@ Chainable alias for @racket[$where].
 Keeps the selected elements for which @racket[f] returns false.
 }
 
+@defproc[($on [event-name (or/c string? symbol?)]
+              [listener (or/c procedure? external?)]
+              [sel $selection?]) $selection?]{
+Attaches a DOM event listener to each element in @racket[sel].
+}
+
+@defproc[($off [event-name (or/c string? symbol?)]
+               [listener (or/c procedure? external?)]
+               [sel $selection?]) $selection?]{
+Removes a DOM event listener from each element in @racket[sel].
+}
+
 @defproc[(.not [sel $selection?]
                [f (any/c -> any/c)]) $selection?]{
 Chainable alias for @racket[$not].
+}
+
+@defproc[(.on [sel $selection?]
+              [event-name (or/c string? symbol?)]
+              [listener (or/c procedure? external?)]) $selection?]{
+Chainable alias for @racket[$on].
+}
+
+@defproc[(.off [sel $selection?]
+               [event-name (or/c string? symbol?)]
+               [listener (or/c procedure? external?)]) $selection?]{
+Chainable alias for @racket[$off].
 }
 
 @defproc[(.first [sel $selection?]) (or/c #f any/c)]{

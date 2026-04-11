@@ -202,6 +202,32 @@
 (define (.not sel f)
   ($not f sel))
 
+;; $on : (or/c string? symbol?) (or/c procedure? external?) $selection? (or/c boolean? external?) ... -> $selection?
+;;   Attach a DOM event listener to each selected element and return the selection.
+(define ($on event-name listener sel . options)
+  (check-$selection '$on sel)
+  (for ([x (in-vector ($selection->vector sel))])
+    (apply element-add-event-listener! x event-name listener options))
+  sel)
+
+;; .on : $selection? (or/c string? symbol?) (or/c procedure? external?) (or/c boolean? external?) ... -> $selection?
+;;   Chainable alias for $on.
+(define (.on sel event-name listener . options)
+  (apply $on event-name listener sel options))
+
+;; $off : (or/c string? symbol?) (or/c procedure? external?) $selection? (or/c boolean? external?) ... -> $selection?
+;;   Remove a DOM event listener from each selected element and return the selection.
+(define ($off event-name listener sel . options)
+  (check-$selection '$off sel)
+  (for ([x (in-vector ($selection->vector sel))])
+    (apply element-remove-event-listener! x event-name listener options))
+  sel)
+
+;; .off : $selection? (or/c string? symbol?) (or/c procedure? external?) (or/c boolean? external?) ... -> $selection?
+;;   Chainable alias for $off.
+(define (.off sel event-name listener . options)
+  (apply $off event-name listener sel options))
+
 ;; $select : string? -> $selection?
 ;;   Query the document for matching elements.
 (define ($select s)

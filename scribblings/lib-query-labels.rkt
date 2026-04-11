@@ -35,6 +35,8 @@
   $filter
   $where
   $not
+  $on
+  $off
   $last
   $empty?
   .map
@@ -42,6 +44,8 @@
   .filter
   .where
   .not
+  .on
+  .off
   .first
   .attr
   .has-attr?
@@ -92,6 +96,8 @@
 (define $filter any/c)
 (define $where any/c)
 (define $not any/c)
+(define $on any/c)
+(define $off any/c)
 (define $last any/c)
 (define $empty? any/c)
 (define .map any/c)
@@ -99,6 +105,8 @@
 (define .filter any/c)
 (define .where any/c)
 (define .not any/c)
+(define .on any/c)
+(define .off any/c)
 (define .first any/c)
 (define .attr any/c)
 (define .has-attr? any/c)

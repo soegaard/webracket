@@ -5,6 +5,7 @@
           "webracket-scribble-utils.rkt"
           (for-label (lib "scribblings/lib-document-labels.rkt" "webracket"))
           (for-label (lib "scribblings/lib-domrect-labels.rkt" "webracket"))
+          (for-label (lib "scribblings/lib-event-labels.rkt" "webracket"))
           )
 
 @title{Library: @racketid[element]}
@@ -251,6 +252,29 @@ if there is no match.
 @(mdn-bar "Element: getBoundingClientRect() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Element/getBoundingClientRect")
 Returns the element's bounding rectangle as a wrapped DOMRect.
+}
+
+@section{Element Events}
+
+These helpers attach DOM listeners directly to an element. They are
+useful when you want a checked wrapper around browser
+@racket[addEventListener] and @racket[removeEventListener].
+
+@defproc[(element-add-event-listener! [element element?]
+                                      [event-name (or/c string? symbol?)]
+                                      [listener (or/c procedure? external?)]) external?]{
+@(mdn-bar "EventTarget: addEventListener() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener")
+Attaches an event listener to @racket[element] and returns the installed
+listener token.
+}
+
+@defproc[(element-remove-event-listener! [element element?]
+                                         [event-name (or/c string? symbol?)]
+                                         [listener (or/c procedure? external?)]) void?]{
+@(mdn-bar "EventTarget: removeEventListener() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/removeEventListener")
+Removes a previously attached event listener.
 }
 
 @section{Element Traversal}
