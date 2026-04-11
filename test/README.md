@@ -38,6 +38,13 @@ Query wrapper tests
 
 - `test-query.rkt` for the browser-side `query` wrapper
 
+The query wrapper exposes:
+
+- `$` for string selectors
+- `$chain` for method chaining over selections
+- `.text`, `.first`, `.last`, `.empty?`, `.vector`, and `.list`
+- selection helpers such as `$first`, `$last`, `$empty?`, `$vector`, and `$list`
+
 To run one of the DOM wrapper tests from `test/`, use the same harness as the
 other browser-facing tests. For example:
 

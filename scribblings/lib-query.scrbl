@@ -24,7 +24,7 @@ Use @racket[query] when you want to:
   @item{select elements with CSS selectors}
   @item{inspect the size or contents of a selection}
   @item{map or iterate over selected elements}
-  @item{chain a selection through dot-prefixed helper calls}
+  @item{chain a selection through @racket[$chain] and dot-prefixed helper calls}
 ]
 
 Currently, selectors accept strings only.
@@ -62,12 +62,12 @@ World!</h1></div>}.
 (code:comment "=> \"Hello World!\"")
 ]
 
-The @racket[chain] macro gives you a convenient left-to-right style for
+The @racket[$chain] macro gives you a convenient left-to-right style for
 selection workflows:
 
 @racketblock[
-(chain ($ "#hw")
-       .text)
+($chain ($ "#hw")
+        .text)
 (code:comment "=> \"Hello World!\"")
 ]
 
@@ -103,20 +103,136 @@ When the selection is empty, @racket[$first] returns @racket[#f].
 (define nodes ($selection->vector ($ ".card")))
 ]
 
+@subsection{Attributes}
+
+Use the attribute helpers to read state from the first selected element.
+
+@racketblock[
+(define hw ($ "#hw"))
+($attr hw "id")
+(code:comment "=> \"hw\"")
+(.attr hw 'id)
+(code:comment "=> \"hw\"")
+($has-attr? hw "id")
+(code:comment "=> #t")
+]
+
+@subsection{Classes}
+
+Use the class helpers to inspect and update the first selected element.
+
+@racketblock[
+(define card ($ ".card"))
+($has-class? card "card")
+(code:comment "=> #t")
+($add-class! card "is-highlighted")
+($remove-class! card "card")
+]
+
+@subsection{Finding Descendants}
+
+Use @racket[$find] to search within each selected element.
+
+@racketblock[
+(define cards ($ ".card"))
+($length ($find cards ".name"))
+(code:comment "=> 2")
+($chain cards
+        .find
+        ".tag"
+        .map
+        element-text-content)
+(code:comment "=> a selection of tag labels")
+]
+
+@subsection{Children and Parents}
+
+Use the child and parent helpers to move around the DOM tree.
+
+@racketblock[
+(define cards ($ ".card"))
+($length ($children cards))
+(code:comment "=> 4")
+($length ($parent ($find cards ".name")))
+(code:comment "=> 2")
+]
+
+@subsection{Closest Ancestors}
+
+Use @racket[$closest] to walk upward to the nearest matching ancestor.
+
+@racketblock[
+(define leaves ($ ".leaf"))
+($length ($closest leaves "section"))
+(code:comment "=> 3")
+($chain leaves
+        .closest
+        "section"
+        .map
+        element-id)
+(code:comment "=> a selection of section ids")
+]
+
+@subsection{Sibling Navigation}
+
+Use @racket[$next] and @racket[$prev] to walk sideways through sibling
+elements.
+
+@racketblock[
+(define leaves ($ ".leaf"))
+($length ($next leaves))
+(code:comment "=> 1")
+($length ($prev ($next leaves)))
+(code:comment "=> 1")
+(define first-leaf ($first leaves))
+($length ($siblings (list->$selection (list first-leaf))))
+(code:comment "=> 1")
+]
+
 @subsection{Iterating and Mapping}
 
 @racketblock[
-(chain ($ ".card")
-       .for-each
-       (lambda (node)
-         (element-set-attribute! node 'data-seen 'yes)))
+($chain ($ ".card")
+        .for-each
+        (lambda (node)
+          (element-set-attribute! node 'data-seen 'yes)))
 ]
 
 @racketblock[
-(chain ($ ".card")
-       .map
-       (lambda (node)
-         (element-text-content node)))
+($chain ($ ".card")
+        .map
+        (lambda (node)
+          (element-text-content node)))
+]
+
+@racketblock[
+($chain ($ ".card")
+        .filter
+        (lambda (node)
+          (equal? (element-id node) "card-2"))
+        .map
+        element-text-content)
+(code:comment "=> a selection containing the second card text")
+]
+
+@racketblock[
+($chain ($ ".card")
+        .where
+        (lambda (node)
+          (equal? (element-id node) "card-2"))
+        .map
+        element-text-content)
+(code:comment "=> a selection containing the second card text")
+]
+
+@racketblock[
+($chain ($ ".card")
+        .not
+        (lambda (node)
+          (equal? (element-id node) "card-2"))
+        .map
+        element-id)
+(code:comment "=> a selection containing the first card id")
 ]
 
 @subsection{Text Content}
@@ -133,11 +249,11 @@ element and returns @racket[""] when the selection is empty.
 @subsection{Chaining}
 
 @racketblock[
-(chain ($ "#hw") .text)
+($chain ($ "#hw") .text)
 (code:comment "=> \"Hello World!\"")
 ]
 
-The last step in a @racket[chain] form may return a non-selection
+The last step in a @racket[$chain] form may return a non-selection
 value. That makes it convenient to end a pipeline with a query result,
 a string, or any other final answer.
 
@@ -170,8 +286,99 @@ Returns the first element in @racket[sel], or @racket[#f] when the
 selection is empty.
 }
 
+@defproc[($attr [sel $selection?]
+                [name (or/c string? symbol?)]) (or/c #f string?)]{
+Returns the named attribute on the first selected element, or
+@racket[#f] when the selection is empty or the attribute is absent.
+}
+
+@defproc[($has-attr? [sel $selection?]
+                     [name (or/c string? symbol?)]) boolean?]{
+Returns @racket[#t] when the first selected element has the named
+attribute.
+}
+
+@defproc[($class-list [sel $selection?]) (or/c #f dom-token-list?)]{
+Returns the class list for the first selected element, or @racket[#f]
+when the selection is empty.
+}
+
+@defproc[($has-class? [sel $selection?]
+                      [class-name (or/c string? symbol?)]) boolean?]{
+Returns @racket[#t] when the first selected element has the named
+class.
+}
+
+@defproc[($add-class! [sel $selection?]
+                      [class-name (or/c string? symbol?)])
+         $selection?]{
+Adds one or more classes to the first selected element and returns
+@racket[sel].
+}
+
+@defproc[($remove-class! [sel $selection?]
+                         [class-name (or/c string? symbol?)])
+         $selection?]{
+Removes one or more classes from the first selected element and returns
+@racket[sel].
+}
+
+@defproc[($find [sel $selection?]
+                [selector string?]) $selection?]{
+Finds descendant matches within each selected element and returns a
+new selection.
+}
+
+@defproc[($children [sel $selection?]) $selection?]{
+Returns a selection containing the child elements of each selected
+element.
+}
+
+@defproc[($parent [sel $selection?]) $selection?]{
+Returns a selection containing the parent elements of each selected
+element.
+}
+
+@defproc[($closest [sel $selection?]
+                   [selector string?]) $selection?]{
+Returns a selection containing the nearest matching ancestor for each
+selected element.
+}
+
+@defproc[($next [sel $selection?]) $selection?]{
+Returns a selection containing the next element sibling of each
+selected element.
+}
+
+@defproc[($prev [sel $selection?]) $selection?]{
+Returns a selection containing the previous element sibling of each
+selected element.
+}
+
+@defproc[($siblings [sel $selection?]) $selection?]{
+Returns a selection containing the sibling elements surrounding each
+selected element.
+}
+
+@defproc[($last [sel $selection?]) (or/c #f any/c)]{
+Returns the last element in @racket[sel], or @racket[#f] when the
+selection is empty.
+}
+
+@defproc[($empty? [sel $selection?]) boolean?]{
+Returns @racket[#t] when @racket[sel] contains no elements.
+}
+
 @defproc[($selection->vector [sel $selection?]) vector?]{
 Converts the selection into a Racket vector of wrapped elements.
+}
+
+@defproc[($vector [sel $selection?]) vector?]{
+Alias for @racket[$selection->vector].
+}
+
+@defproc[($list [sel $selection?]) list?]{
+Converts the selection into a Racket list of wrapped elements.
 }
 
 @defproc[($map [f (any/c -> any/c)]
@@ -186,6 +393,11 @@ Applies @racket[f] to each selected element and returns the original
 selection.
 }
 
+@defproc[($filter [f (any/c -> any/c)]
+                  [sel $selection?]) $selection?]{
+Keeps only the selected elements for which @racket[f] returns true.
+}
+
 @defproc[(.map [sel $selection?]
                [f (any/c -> any/c)]) $selection?]{
 Chainable alias for @racket[$map].
@@ -196,11 +408,117 @@ Chainable alias for @racket[$map].
 Chainable alias for @racket[$for-each].
 }
 
+@defproc[(.filter [sel $selection?]
+                  [f (any/c -> any/c)]) $selection?]{
+Chainable alias for @racket[$filter].
+}
+
+@defproc[($where [f (any/c -> any/c)]
+                 [sel $selection?]) $selection?]{
+Alias for @racket[$filter] with a selector-style name.
+}
+
+@defproc[(.where [sel $selection?]
+                 [f (any/c -> any/c)]) $selection?]{
+Chainable alias for @racket[$where].
+}
+
+@defproc[($not [f (any/c -> any/c)]
+               [sel $selection?]) $selection?]{
+Keeps the selected elements for which @racket[f] returns false.
+}
+
+@defproc[(.not [sel $selection?]
+               [f (any/c -> any/c)]) $selection?]{
+Chainable alias for @racket[$not].
+}
+
+@defproc[(.first [sel $selection?]) (or/c #f any/c)]{
+Chainable alias for @racket[$first].
+}
+
+@defproc[(.attr [sel $selection?]
+                [name (or/c string? symbol?)]) (or/c #f string?)]{
+Chainable alias for @racket[$attr].
+}
+
+@defproc[(.has-attr? [sel $selection?]
+                     [name (or/c string? symbol?)]) boolean?]{
+Chainable alias for @racket[$has-attr?].
+}
+
+@defproc[(.class-list [sel $selection?]) (or/c #f dom-token-list?)]{
+Chainable alias for @racket[$class-list].
+}
+
+@defproc[(.has-class? [sel $selection?]
+                      [class-name (or/c string? symbol?)]) boolean?]{
+Chainable alias for @racket[$has-class?].
+}
+
+@defproc[(.add-class! [sel $selection?]
+                      [class-name (or/c string? symbol?)])
+         $selection?]{
+Chainable alias for @racket[$add-class!].
+}
+
+@defproc[(.remove-class! [sel $selection?]
+                         [class-name (or/c string? symbol?)])
+         $selection?]{
+Chainable alias for @racket[$remove-class!].
+}
+
+@defproc[(.find [sel $selection?]
+                [selector string?]) $selection?]{
+Chainable alias for @racket[$find].
+}
+
+@defproc[(.children [sel $selection?]) $selection?]{
+Chainable alias for @racket[$children].
+}
+
+@defproc[(.parent [sel $selection?]) $selection?]{
+Chainable alias for @racket[$parent].
+}
+
+@defproc[(.closest [sel $selection?]
+                   [selector string?]) $selection?]{
+Chainable alias for @racket[$closest].
+}
+
+@defproc[(.next [sel $selection?]) $selection?]{
+Chainable alias for @racket[$next].
+}
+
+@defproc[(.prev [sel $selection?]) $selection?]{
+Chainable alias for @racket[$prev].
+}
+
+@defproc[(.siblings [sel $selection?]) $selection?]{
+Chainable alias for @racket[$siblings].
+}
+
+@defproc[(.last [sel $selection?]) (or/c #f any/c)]{
+Chainable alias for @racket[$last].
+}
+
+@defproc[(.empty? [sel $selection?]) boolean?]{
+Chainable alias for @racket[$empty?].
+}
+
+@defproc[(.vector [sel $selection?]) vector?]{
+Chainable alias for @racket[$vector].
+}
+
+@defproc[(.list [sel $selection?]) list?]{
+Chainable alias for @racket[$list].
+}
+
 @defproc[(.text [sel $selection?]) string?]{
 Returns the text content of the first selected element.
 }
 
-@defform[(chain seed .method arg ...)]{
+@defform[($chain seed .method arg ...)]{
 Threads @racket[seed] through one or more dot-prefixed helper calls.
 Each step receives the current selection as its first argument.
 The final step may return any value, including a non-selection result.

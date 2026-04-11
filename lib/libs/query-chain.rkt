@@ -2,7 +2,7 @@
 
 (require (for-syntax racket/base racket/list))
 
-(provide chain)
+(provide (rename-out [chain $chain]))
 
 (begin-for-syntax
   (define (chain-dotted-identifier? stx)
@@ -56,4 +56,4 @@
      (let* ([rest-list (syntax->list #'(rest ...))]
             [clauses (chain-split-clauses rest-list 'chain stx)])
        (chain-build #'seed clauses stx))]
-    [_ (raise-syntax-error 'chain "expected `(chain seed .method arg ... ...)`" stx)]))
+    [_ (raise-syntax-error '$chain "expected `($chain seed .method arg ... ...)`" stx)]))
