@@ -56,6 +56,10 @@ EOF
     add-two-numbers
     todo-lists
   )
+  query_examples=(
+    query-counter
+    query-toggle
+  )
   seven_gui_examples=(
     7gui-counter
     7gui-temperature-converter
@@ -92,6 +96,17 @@ EOF
   }
 
   emit_example_items "${left_examples[@]}"
+  cat <<'EOF'
+          </ul>
+        </div>
+      </section>
+      <section class="section">
+        <h2>Query Examples</h2>
+        <p>Examples that show the <code>query</code> helpers, including <code>.on</code> and <code>.off</code> for selector-based event wiring.</p>
+        <div class="section-grid">
+          <ul>
+EOF
+  emit_example_items "${query_examples[@]}"
   cat <<'EOF'
           </ul>
         </div>
