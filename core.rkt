@@ -76,17 +76,20 @@
   (define src (syntax-source stx))
   (cond
     [(path-string? src)
-     (define src-path (path->complete-path src))
-     (or (path-only src-path) (current-directory))]
+     (define src-path (simplify-path (path->complete-path src)))
+     (or (path-only src-path)
+         (simplify-path (current-directory)))]
     [else
-     (current-directory)]))
+     (simplify-path (current-directory))]))
 
 ;; relative-path-string : path? path? -> string?
 ;;   Compute a relative pathname string from base-dir to target-path.
 (define-for-syntax (relative-path-string base-dir target-path)
+  (define simple-base-dir   (simplify-path (path->complete-path base-dir)))
+  (define simple-target-path (simplify-path (path->complete-path target-path)))
   (path->string
-   (find-relative-path (path->complete-path base-dir)
-                       (path->complete-path target-path))))
+   (find-relative-path simple-base-dir
+                       simple-target-path)))
 
 ;; syntax-source->string : syntax? -> string?
 ;;   Convert the syntax source to a printable string, or "".
