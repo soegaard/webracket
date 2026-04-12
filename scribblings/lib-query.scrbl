@@ -130,6 +130,25 @@ Use the class helpers to inspect and update the first selected element.
 ($remove-class! card "card")
 ]
 
+@subsection{Text, Values, and Data}
+
+Use the text, value, and data helpers to update common UI state.
+
+@racketblock[
+(define note ($ "#text-host"))
+($text! note "Updated text")
+
+(define field ($ "#value-host"))
+($val field)
+(code:comment "=> \"initial\"")
+($val! field "updated")
+
+(define meta ($ "#data-host"))
+($data meta "state")
+(code:comment "=> \"cold\"")
+($data! meta "state" "warm")
+]
+
 @subsection{Finding Descendants}
 
 Use @racket[$find] to search within each selected element.
@@ -404,6 +423,45 @@ Removes one or more classes from the first selected element and returns
 @racket[sel].
 }
 
+@defproc[($toggle-class! [sel $selection?]
+                         [class-name (or/c string? symbol?)])
+         $selection?]{
+Toggles a class token on each selected element and returns @racket[sel].
+}
+
+@defproc[($text! [sel $selection?]
+                 [text (or/c string? symbol?)])
+         $selection?]{
+Replaces the text content of each selected element and returns
+@racket[sel].
+}
+
+@defproc[($val [sel $selection?]) (or/c #f string?)]{
+Returns the value of the first selected element, or @racket[#f] when
+the selection is empty.
+}
+
+@defproc[($val! [sel $selection?]
+                [value (or/c string? symbol?)])
+         $selection?]{
+Sets the value of each selected element and returns @racket[sel].
+}
+
+@defproc[($data [sel $selection?]
+                [name (or/c string? symbol?)]) (or/c #f string?)]{
+Returns the named @tt{data-*} attribute on the first selected
+element, or @racket[#f] when the selection is empty or the attribute is
+absent.
+}
+
+@defproc[($data! [sel $selection?]
+                 [name (or/c string? symbol?)]
+                 [value (or/c string? symbol?)])
+         $selection?]{
+Sets the named @tt{data-*} attribute on each selected element and
+returns @racket[sel].
+}
+
 @defproc[($find [sel $selection?]
                 [selector string?]) $selection?]{
 Finds descendant matches within each selected element and returns a
@@ -623,6 +681,40 @@ Chainable alias for @racket[$add-class!].
                          [class-name (or/c string? symbol?)])
          $selection?]{
 Chainable alias for @racket[$remove-class!].
+}
+
+@defproc[(.toggle-class! [sel $selection?]
+                         [class-name (or/c string? symbol?)])
+         $selection?]{
+Chainable alias for @racket[$toggle-class!].
+}
+
+@defproc[(.text! [sel $selection?]
+                 [text (or/c string? symbol?)])
+         $selection?]{
+Chainable alias for @racket[$text!].
+}
+
+@defproc[(.val [sel $selection?]) (or/c #f string?)]{
+Chainable alias for @racket[$val].
+}
+
+@defproc[(.val! [sel $selection?]
+                [value (or/c string? symbol?)])
+         $selection?]{
+Chainable alias for @racket[$val!].
+}
+
+@defproc[(.data [sel $selection?]
+                [name (or/c string? symbol?)]) (or/c #f string?)]{
+Chainable alias for @racket[$data].
+}
+
+@defproc[(.data! [sel $selection?]
+                 [name (or/c string? symbol?)]
+                 [value (or/c string? symbol?)])
+         $selection?]{
+Chainable alias for @racket[$data!].
 }
 
 @defproc[(.find [sel $selection?]

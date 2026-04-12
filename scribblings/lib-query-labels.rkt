@@ -20,6 +20,12 @@
   $has-class?
   $add-class!
   $remove-class!
+  $toggle-class!
+  $text!
+  $val
+  $val!
+  $data
+  $data!
   $find
   $children
   $parent
@@ -61,6 +67,12 @@
   .has-class?
   .add-class!
   .remove-class!
+  .toggle-class!
+  .text!
+  .val
+  .val!
+  .data
+  .data!
   .find
   .children
   .parent
@@ -89,6 +101,12 @@
 (define $has-class? any/c)
 (define $add-class! any/c)
 (define $remove-class! any/c)
+(define $toggle-class! any/c)
+(define $text! any/c)
+(define $val any/c)
+(define $val! any/c)
+(define $data any/c)
+(define $data! any/c)
 (define $find any/c)
 (define $children any/c)
 (define $parent any/c)
@@ -130,6 +148,12 @@
 (define .has-class? any/c)
 (define .add-class! any/c)
 (define .remove-class! any/c)
+(define .toggle-class! any/c)
+(define .text! any/c)
+(define .val any/c)
+(define .val! any/c)
+(define .data any/c)
+(define .data! any/c)
 (define .find any/c)
 (define .children any/c)
 (define .parent any/c)

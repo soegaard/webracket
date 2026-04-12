@@ -496,6 +496,19 @@
   (lambda (text)
     (element-stringish->string 'element-set-text-content! text)))
 
+;; element-value : element? -> (or/c #f string?)
+;;   Read an element's value property.
+(define (element-value element)
+  (js-ref (element-unwrap element) "value"))
+
+;; element-set-value! : element? (or/c string? symbol?) -> void?
+;;   Set an element's value property.
+(define (element-set-value! element value)
+  (js-set! (element-unwrap element)
+           "value"
+           (element-stringish->string 'element-set-value! value))
+  (void))
+
 ;; element-computed-style-map : element? -> external/raw
 ;;   Read the computed style map for an element.
 (define (element-computed-style-map element)

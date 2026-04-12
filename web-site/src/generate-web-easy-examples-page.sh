@@ -57,6 +57,7 @@ EOF
     todo-lists
   )
   query_examples=(
+    query-helpers
     query-counter
     query-toggle
     query-delegate-list
@@ -105,7 +106,7 @@ EOF
       </section>
       <section class="section">
         <h2>Query Examples</h2>
-        <p>Examples that show the <code>query</code> helpers, including <code>.on</code>, <code>.off</code>, <code>.once</code>, <code>.trigger</code>, and <code>.on-delegate</code> for selector-based event wiring.</p>
+        <p>Examples that show the <code>query</code> helpers, from <code>.text!</code>, <code>.val!</code>, and <code>.data!</code> to <code>.on</code>, <code>.off</code>, <code>.once</code>, <code>.trigger</code>, and <code>.on-delegate</code> for selector-based event wiring.</p>
         <div class="section-grid">
           <ul>
 EOF

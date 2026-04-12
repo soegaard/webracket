@@ -236,6 +236,94 @@
 (define (.not sel f)
   ($not f sel))
 
+;; $toggle-class! : $selection? (or/c string? symbol?) -> $selection?
+;;   Toggle a class on each selected element and return the selection.
+(define ($toggle-class! sel class-name)
+  (check-$selection '$toggle-class! sel)
+  (for ([x (in-vector ($selection->vector sel))])
+    (define class-list (element-class-list x))
+    (when class-list
+      (dom-token-list-toggle! class-list class-name)))
+  sel)
+
+;; .toggle-class! : $selection? (or/c string? symbol?) -> $selection?
+;;   Chainable alias for $toggle-class!.
+(define (.toggle-class! sel class-name)
+  ($toggle-class! sel class-name))
+
+;; $text! : $selection? (or/c string? symbol?) -> $selection?
+;;   Replace the text content of each selected element and return the selection.
+(define ($text! sel text)
+  (check-$selection '$text! sel)
+  (for ([x (in-vector ($selection->vector sel))])
+    (element-set-text-content! x text))
+  sel)
+
+;; .text! : $selection? (or/c string? symbol?) -> $selection?
+;;   Chainable alias for $text!.
+(define (.text! sel text)
+  ($text! sel text))
+
+;; $val : $selection? -> (or/c #f string?)
+;;   Read the value property from the first selected element.
+(define ($val sel)
+  (check-$selection '$val sel)
+  (define x ($first sel))
+  (and x (element-value x)))
+
+;; .val : $selection? -> (or/c #f string?)
+;;   Chainable alias for $val.
+(define (.val sel)
+  ($val sel))
+
+;; $val! : $selection? (or/c string? symbol?) -> $selection?
+;;   Set the value property of each selected element and return the selection.
+(define ($val! sel value)
+  (check-$selection '$val! sel)
+  (for ([x (in-vector ($selection->vector sel))])
+    (element-set-value! x value))
+  sel)
+
+;; .val! : $selection? (or/c string? symbol?) -> $selection?
+;;   Chainable alias for $val!.
+(define (.val! sel value)
+  ($val! sel value))
+
+;; query-data-attr-name : symbol? any/c -> string?
+;;   Normalize a data helper name to a data-* attribute name.
+(define (query-data-attr-name who name)
+  (define name* (element-stringish->string who name))
+  (if (and (<= 5 (string-length name*))
+           (string=? (substring name* 0 5) "data-"))
+      name*
+      (string-append "data-" name*)))
+
+;; $data : $selection? (or/c string? symbol?) -> (or/c #f string?)
+;;   Read a data-* attribute from the first selected element.
+(define ($data sel name)
+  (check-$selection '$data sel)
+  (define x ($first sel))
+  (and x (element-get-attribute x (query-data-attr-name '$data name))))
+
+;; .data : $selection? (or/c string? symbol?) -> (or/c #f string?)
+;;   Chainable alias for $data.
+(define (.data sel name)
+  ($data sel name))
+
+;; $data! : $selection? (or/c string? symbol?) (or/c string? symbol?) -> $selection?
+;;   Set a data-* attribute on each selected element and return the selection.
+(define ($data! sel name value)
+  (check-$selection '$data! sel)
+  (define name* (query-data-attr-name '$data! name))
+  (for ([x (in-vector ($selection->vector sel))])
+    (element-set-attribute! x name* value))
+  sel)
+
+;; .data! : $selection? (or/c string? symbol?) (or/c string? symbol?) -> $selection?
+;;   Chainable alias for $data!.
+(define (.data! sel name value)
+  ($data! sel name value))
+
 ;; $on : (or/c string? symbol?) (or/c procedure? external?) $selection? (or/c boolean? external?) ... -> $selection?
 ;;   Attach a DOM event listener to each selected element and return the selection.
 (define ($on event-name listener sel . options)
