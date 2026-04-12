@@ -18,6 +18,21 @@
   (unless raised?
     (error 'check-exn label)))
 
+(define (check-exn-message-contains thunk needle label)
+  (define raised? #f)
+  (define message #f)
+  (with-handlers ([exn:fail? (lambda (e)
+                               (set! raised? #t)
+                               (set! message (exn-message e))
+                               #t)])
+    (thunk)
+    #f)
+  (unless raised?
+    (error 'check-exn-message-contains label))
+  (unless (and (string? message)
+               (string-contains? message needle))
+    (error 'check-exn-message-contains label)))
+
 (define (node-child n idx)
   (list-ref (view-node-children n) idx))
 
@@ -55,6 +70,73 @@
        (if (equal? (node-attr child 'data-we-widget) widget)
            child
            (loop (cdr children)))])))
+
+;; obs validates optional constructor arguments
+(check-exn (lambda () (obs 0 "bad-name"))
+           "obs rejects non-symbol name")
+(check-exn (lambda () (obs 0 'ok 'bad-derived?))
+           "obs rejects non-boolean derived? flag")
+
+;; observable accessors and mutators validate observable inputs
+(check-exn (lambda () (obs-name 0))
+           "obs-name rejects non-observable")
+(check-exn (lambda () (obs-peek 0))
+           "obs-peek rejects non-observable")
+(check-exn (lambda () (obs-observe! 0 (lambda (_v) (void))))
+           "obs-observe! rejects non-observable")
+(check-exn (lambda () (obs-observe! (obs 0) 1))
+           "obs-observe! rejects non-procedure callback")
+(check-exn (lambda () (obs-unobserve! 0 (lambda (_v) (void))))
+           "obs-unobserve! rejects non-observable")
+(check-exn (lambda () (obs-unobserve! (obs 0) 1))
+           "obs-unobserve! rejects non-procedure callback")
+(check-exn (lambda () (obs-update! 0 add1))
+           "obs-update! rejects non-observable")
+(check-exn (lambda () (obs-update! (obs 0) 1))
+           "obs-update! rejects non-procedure update function")
+(check-exn (lambda () (obs-set! 0 1))
+           "obs-set! rejects non-observable")
+(check-exn (lambda () (obs-map 0 add1))
+           "obs-map rejects non-observable")
+(check-exn (lambda () (obs-map (obs 0) 1))
+           "obs-map rejects non-procedure mapper")
+(check-exn (lambda () (obs-filter 0 even?))
+           "obs-filter rejects non-observable")
+(check-exn (lambda () (obs-filter (obs 0) 1))
+           "obs-filter rejects non-procedure predicate")
+(check-exn (lambda () (obs-combine 0 (obs 1)))
+           "obs-combine rejects non-procedure combiner")
+(check-exn (lambda () (obs-combine + 0))
+           "obs-combine rejects non-observable input")
+
+;; observable operators validate their inputs directly
+(check-exn-message-contains (lambda () (:= 0 1))
+                            ":="
+                            ":= rejects non-observable")
+(check-exn-message-contains (lambda () (<~ 0 add1))
+                            "<~"
+                            "<~ rejects non-observable")
+(check-exn-message-contains (lambda () (λ<~ 0 add1))
+                            "λ<~"
+                            "λ<~ rejects non-observable")
+(check-exn-message-contains (lambda () (~> 0 add1))
+                            "~>"
+                            "~> rejects non-observable")
+(check-exn-message-contains (lambda () (~#> 0 even?))
+                            "~#>"
+                            "~#> rejects non-observable")
+(check-exn-message-contains (lambda () (<~ (obs 0) 1))
+                            "<~"
+                            "<~ rejects non-procedure")
+(check-exn-message-contains (lambda () (λ<~ (obs 0) 1))
+                            "λ<~"
+                            "λ<~ rejects non-procedure")
+(check-exn-message-contains (lambda () (~> (obs 0) 1))
+                            "~>"
+                            "~> rejects non-procedure")
+(check-exn-message-contains (lambda () (~#> (obs 0) 1))
+                            "~#>"
+                            "~#> rejects non-procedure")
 
 ;; obs-update notifies observers
 (define o (obs 0))

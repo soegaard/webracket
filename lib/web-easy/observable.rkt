@@ -45,35 +45,52 @@
           (set! n (add1 n))
           n)))
 
-    ;; obs? : any/c -> boolean?
-    ;;   Check whether v is an observable value.
-    (define (obs? v)
-      (observable? v))
+    ;; check-observable : symbol? any/c -> void?
+    ;;   Raise an argument error unless v is an observable.
+    (define (check-observable who v)
+      (unless (observable? v)
+        (raise-argument-error who "obs?" v)))
+
+    ;; check-procedure : symbol? any/c -> void?
+    ;;   Raise an argument error unless v is a procedure.
+    (define (check-procedure who v)
+      (unless (procedure? v)
+        (raise-argument-error who "procedure?" v)))
 
     ;; obs : any/c [symbol?] [boolean?] -> observable?
     ;;   Construct an observable with optional name and derived? flag.
     (define (obs v [name default-observable-name] [derived? #f])
+      (unless (symbol? name)
+        (raise-argument-error 'obs "symbol?" name))
+      (unless (boolean? derived?)
+        (raise-argument-error 'obs "boolean?" derived?))
       (observable (next-observable-id) name v '() (not derived?)))
 
     ;; obs-name : observable? -> symbol?
     ;;   Return the debug/display name attached to o.
     (define (obs-name o)
+      (check-observable 'obs-name o)
       (observable-name o))
 
     ;; obs-peek : observable? -> any/c
     ;;   Return the current value held by o.
     (define (obs-peek o)
+      (check-observable 'obs-peek o)
       (observable-value o))
 
     ;; obs-observe! : observable? (-> any/c any/c) -> void?
     ;;   Register f to be called on each update of o.
     (define (obs-observe! o f)
+      (check-observable 'obs-observe! o)
+      (check-procedure 'obs-observe! f)
       (set-observable-observers! o (cons f (observable-observers o)))
       (void))
 
     ;; obs-unobserve! : observable? (-> any/c any/c) -> void?
     ;;   Remove f from o's observer set.
     (define (obs-unobserve! o f)
+      (check-observable 'obs-unobserve! o)
+      (check-procedure 'obs-unobserve! f)
       (set-observable-observers!
        o
        (filter (lambda (g) (not (eq? g f)))
@@ -89,6 +106,8 @@
     ;; obs-update! : observable? (-> any/c any/c) -> any/c
     ;;   Update o by applying f to the current value and store the result.
     (define (obs-update! o f)
+      (check-observable 'obs-update! o)
+      (check-procedure 'obs-update! f)
       (unless (observable-updatable? o)
         (raise-arguments-error 'obs-update!
                                "cannot update derived observable"
@@ -102,11 +121,14 @@
     ;; obs-set! : observable? any/c -> void?
     ;;   Replace o's current value with v.
     (define (obs-set! o v)
+      (check-observable 'obs-set! o)
       (void (obs-update! o (lambda (_) v))))
 
     ;; obs-map : observable? (-> any/c any/c) -> observable?
     ;;   Create a derived observable that maps values of o through f.
     (define (obs-map o f)
+      (check-observable 'obs-map o)
+      (check-procedure 'obs-map f)
       (define d (obs (f (obs-peek o)) default-observable-name #t))
       (define (update-derived v)
         (define mapped (f v))
@@ -118,17 +140,14 @@
     ;; obs-combine : (-> any/c ... any/c) observable? ... -> observable?
     ;;   Create a derived observable by applying f to values from one or more observables.
     (define (obs-combine f . os)
+      (check-procedure 'obs-combine f)
       (when (null? os)
         (raise-arguments-error 'obs-combine
                                "expected at least one observable"
                                "observables"
                                os))
       (for-each (lambda (o)
-                  (unless (obs? o)
-                    (raise-arguments-error 'obs-combine
-                                           "expected observable argument"
-                                           "value"
-                                           o)))
+                  (check-observable 'obs-combine o))
                 os)
       (define (combined-value)
         (apply f (map obs-peek os)))
@@ -145,6 +164,8 @@
     ;; obs-filter : observable? (-> any/c any/c) [any/c] -> observable?
     ;;   Create a derived observable that updates only when predicate f is truthy.
     (define (obs-filter o f [default #f])
+      (check-observable 'obs-filter o)
+      (check-procedure 'obs-filter f)
       (define initial (obs-peek o))
       (define d (obs (if (f initial) initial default)
                      default-observable-name
@@ -156,7 +177,7 @@
       (obs-observe! o update-derived)
       d)
 
-    (values obs?
+    (values (lambda (v) (observable? v))
             obs
             obs-name
             obs-observe!
