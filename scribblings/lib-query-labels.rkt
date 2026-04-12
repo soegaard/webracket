@@ -37,6 +37,8 @@
   $not
   $on
   $off
+  $once
+  $trigger
   $on-delegate
   $off-delegate
   $last
@@ -48,6 +50,8 @@
   .not
   .on
   .off
+  .once
+  .trigger
   .on-delegate
   .off-delegate
   .first
@@ -102,6 +106,8 @@
 (define $not any/c)
 (define $on any/c)
 (define $off any/c)
+(define $once any/c)
+(define $trigger any/c)
 (define $on-delegate any/c)
 (define $off-delegate any/c)
 (define $last any/c)
@@ -113,6 +119,8 @@
 (define .not any/c)
 (define .on any/c)
 (define .off any/c)
+(define .once any/c)
+(define .trigger any/c)
 (define .on-delegate any/c)
 (define .off-delegate any/c)
 (define .first any/c)

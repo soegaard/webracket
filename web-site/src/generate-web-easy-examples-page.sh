@@ -60,6 +60,8 @@ EOF
     query-counter
     query-toggle
     query-delegate-list
+    query-once
+    query-trigger
   )
   seven_gui_examples=(
     7gui-counter
@@ -103,7 +105,7 @@ EOF
       </section>
       <section class="section">
         <h2>Query Examples</h2>
-        <p>Examples that show the <code>query</code> helpers, including <code>.on</code>, <code>.off</code>, and <code>.on-delegate</code> for selector-based event wiring.</p>
+        <p>Examples that show the <code>query</code> helpers, including <code>.on</code>, <code>.off</code>, <code>.once</code>, <code>.trigger</code>, and <code>.on-delegate</code> for selector-based event wiring.</p>
         <div class="section-grid">
           <ul>
 EOF

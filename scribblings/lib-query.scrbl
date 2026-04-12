@@ -258,6 +258,42 @@ Event handlers receive the raw browser event value, so helpers such as
 @racket[event-type] and @racket[prevent-default!] are available after
 @racket[(include-lib event)].
 
+Use @racket[.once] when you want a listener to fire only one time.
+
+@racketblock[
+(define once-count 0)
+
+($chain ($ "#hw")
+        .once
+        "click"
+        (lambda (_evt)
+          (set! once-count (add1 once-count))))
+
+once-count
+(code:comment "=> 0")
+]
+
+After the first event, the listener removes itself automatically.
+
+Use @racket[.trigger] when you want to dispatch an event from code.
+
+@racketblock[
+(define trigger-count 0)
+
+($chain ($ "#hw")
+        .on
+        "click"
+        (lambda (_evt)
+          (set! trigger-count (add1 trigger-count))))
+
+($chain ($ "#hw")
+        .trigger
+        "click")
+
+trigger-count
+(code:comment "=> 1")
+]
+
 Use @racket[.on-delegate] when you want one listener on a parent
 element to react to matching descendants. The delegated listener
 receives the matched descendant element and the event.
@@ -485,6 +521,18 @@ Attaches a DOM event listener to each element in @racket[sel].
 Removes a DOM event listener from each element in @racket[sel].
 }
 
+@defproc[($once [event-name (or/c string? symbol?)]
+                [listener procedure?]
+                [sel $selection?]) $selection?]{
+Attaches a DOM event listener to each element in @racket[sel] that
+removes itself after the first event.
+}
+
+@defproc[($trigger [event-name (or/c string? symbol?)]
+                   [sel $selection?]) $selection?]{
+Dispatches a bubbling DOM event on each selected element.
+}
+
 @defproc[($on-delegate [event-name (or/c string? symbol?)]
                        [selector string?]
                        [listener procedure?]
@@ -515,6 +563,17 @@ Chainable alias for @racket[$on].
                [event-name (or/c string? symbol?)]
                [listener (or/c procedure? external?)]) $selection?]{
 Chainable alias for @racket[$off].
+}
+
+@defproc[(.once [sel $selection?]
+                [event-name (or/c string? symbol?)]
+                [listener procedure?]) $selection?]{
+Chainable alias for @racket[$once].
+}
+
+@defproc[(.trigger [sel $selection?]
+                   [event-name (or/c string? symbol?)]) $selection?]{
+Chainable alias for @racket[$trigger].
 }
 
 @defproc[(.on-delegate [sel $selection?]

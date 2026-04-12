@@ -262,6 +262,53 @@
 (define (.off sel event-name listener . options)
   (apply $off event-name listener sel options))
 
+;; query-event-name->string : symbol? any/c -> string?
+;;   Normalize a query event name to a browser string.
+(define (query-event-name->string who event-name)
+  (cond
+    [(string? event-name) event-name]
+    [(symbol? event-name) (symbol->string event-name)]
+    [else (raise-argument-error who "(or/c string? symbol?)" event-name)]))
+
+;; $once : (or/c string? symbol?) procedure? $selection? (or/c boolean? external?) ... -> $selection?
+;;   Attach a DOM event listener that removes itself after the first fire.
+(define ($once event-name listener sel . options)
+  (check-$selection '$once sel)
+  (unless (procedure? listener)
+    (raise-argument-error '$once "procedure?" listener))
+  (for ([x (in-vector ($selection->vector sel))])
+    (letrec ([listener*
+              (procedure->external
+               (lambda (evt)
+                 (apply element-remove-event-listener! x event-name listener* options)
+                 (listener evt)))])
+      (apply element-add-event-listener! x event-name listener* options)))
+  sel)
+
+;; .once : $selection? (or/c string? symbol?) procedure? (or/c boolean? external?) ... -> $selection?
+;;   Chainable alias for $once.
+(define (.once sel event-name listener . options)
+  (apply $once event-name listener sel options))
+
+;; $trigger : (or/c string? symbol?) $selection? -> $selection?
+;;   Dispatch a bubbling DOM event on each selected element and return the selection.
+(define ($trigger event-name sel)
+  (check-$selection '$trigger sel)
+  (define event-name* (query-event-name->string '$trigger event-name))
+  (for ([x (in-vector ($selection->vector sel))])
+    (define evt
+      (js-new (js-var "Event")
+              (vector event-name*
+                      (js-object (vector (vector "bubbles" #t)
+                                         (vector "cancelable" #t))))))
+    (js-send/boolean (element-unwrap x) "dispatchEvent" (vector evt)))
+  sel)
+
+;; .trigger : $selection? (or/c string? symbol?) -> $selection?
+;;   Chainable alias for $trigger.
+(define (.trigger sel event-name)
+  ($trigger event-name sel))
+
 ;; $on-delegate : (or/c string? symbol?) (or/c string? symbol?) procedure? $selection? (or/c boolean? external?) ... -> $selection?
 ;;   Attach a delegated DOM event listener to each selected element and return the selection.
 ;;   The callback receives the matched element and the event object.
