@@ -37,6 +37,8 @@
   $not
   $on
   $off
+  $on-delegate
+  $off-delegate
   $last
   $empty?
   .map
@@ -46,6 +48,8 @@
   .not
   .on
   .off
+  .on-delegate
+  .off-delegate
   .first
   .attr
   .has-attr?
@@ -98,6 +102,8 @@
 (define $not any/c)
 (define $on any/c)
 (define $off any/c)
+(define $on-delegate any/c)
+(define $off-delegate any/c)
 (define $last any/c)
 (define $empty? any/c)
 (define .map any/c)
@@ -107,6 +113,8 @@
 (define .not any/c)
 (define .on any/c)
 (define .off any/c)
+(define .on-delegate any/c)
+(define .off-delegate any/c)
 (define .first any/c)
 (define .attr any/c)
 (define .has-attr? any/c)

@@ -45,7 +45,10 @@
                             (p (@ (class "leaf")) "Leaf A")
                             (p (@ (class "leaf")) "Leaf B"))
                    (section (@ (id "branch-b"))
-                            (p (@ (class "leaf")) "Leaf C")))))))
+                            (p (@ (class "leaf")) "Leaf C")))
+              (div (@ (id "delegation-host"))
+                   (button (@ (id "delegated-button"))
+                           (span (@ (id "delegated-inner")) "Delegated")))))))
 
 (element-append! body page)
 
@@ -56,10 +59,17 @@
 (define card-sel ($ ".card"))
 (define leaf-sel ($ ".leaf"))
 (define text-sel ($ "#text-host"))
+(define delegate-sel ($ "#delegation-host"))
 (define click-count 0)
+(define delegate-count 0)
+(define delegate-match #f)
 
 (define (handle-click _evt)
   (set! click-count (add1 click-count)))
+
+(define (handle-delegate matched _evt)
+  (set! delegate-count (add1 delegate-count))
+  (set! delegate-match (element-id matched)))
 
 (element-set-text-content! ($first sel) "Hello World!")
 (element-set-text-content! ($first text-sel) "Text node child")
@@ -99,6 +109,26 @@
          (check-equal (element-text-content ($last ($find card-sel ".name"))) "Beta" "find last descendant")
          (check-true ($selection? (.find card-sel ".tag")) "chainable find returns selection")
          (check-equal ($length (.find card-sel ".tag")) 2 "chainable find descendant count")
+         (check-equal ($on-delegate "click" "button" handle-delegate delegate-sel)
+                      delegate-sel
+                      "selection on-delegate returns selection")
+         (check-equal (.on-delegate delegate-sel "click" "button" handle-delegate)
+                      delegate-sel
+                      "chainable on-delegate returns selection")
+         (check-equal delegate-count 0 "delegate count before dispatch")
+         (check-true (js-eval "document.getElementById('delegated-inner').dispatchEvent(new Event('click', { bubbles: true }))")
+                     "dispatch delegated click event")
+         (check-equal delegate-count 1 "delegate count after dispatch")
+         (check-equal delegate-match "delegated-button" "delegate matched element id")
+         (check-equal ($off-delegate "click" "button" handle-delegate delegate-sel)
+                      delegate-sel
+                      "selection off-delegate returns selection")
+         (check-equal (.off-delegate delegate-sel "click" "button" handle-delegate)
+                      delegate-sel
+                      "chainable off-delegate returns selection")
+         (check-true (js-eval "document.getElementById('delegated-inner').dispatchEvent(new Event('click', { bubbles: true }))")
+                     "dispatch delegated click event after remove")
+         (check-equal delegate-count 1 "delegate count after remove")
          (check-equal ($length ($filter (lambda (node)
                                           (equal? (element-id node) "card-2"))
                                         card-sel))

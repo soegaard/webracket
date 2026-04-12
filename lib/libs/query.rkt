@@ -6,6 +6,7 @@
 
 (include-lib document)
 (include-lib element)
+(include-lib event)
 (require-lib query-chain)
 
 ;; safe-list-ref : (listof any/c) exact-nonnegative-integer? -> (or/c #f any/c)
@@ -45,6 +46,39 @@
 ;;   Copy a vector into a selection wrapper.
 (define (vector->$selection xs)
   ($selection (vector-copy xs)))
+
+;; delegate-listener-cache : hash?
+;;   Reuse delegated listener wrappers per root element.
+(define delegate-listener-cache (make-hasheq))
+
+;; delegate-cache-for-root : external? -> hash?
+;;   Find or create the cache for one root element.
+(define (delegate-cache-for-root root)
+  (hash-ref! delegate-listener-cache root (lambda () (make-hash))))
+
+;; delegate-listener->external : symbol? element? (or/c string? symbol?) procedure? -> external?
+;;   Build a stable wrapper that only fires for matching descendants.
+;;   The callback receives the matched element and the event object.
+(define (delegate-listener->external who root selector listener)
+  (unless (procedure? listener)
+    (raise-argument-error who "procedure?" listener))
+  (define root* (element-unwrap root))
+  (define selector* (element-stringish->string who selector))
+  (define cache (delegate-cache-for-root root*))
+  (define key (list selector* listener))
+  (hash-ref!
+   cache
+   key
+   (lambda ()
+     (procedure->external
+      (lambda (evt)
+        (define target (event-target evt))
+        (when (external? target)
+          (define matched (element-closest (element-wrap target) selector*))
+          (when (and matched
+                     (js-send/boolean root* "contains"
+                                      (vector (element-unwrap matched))))
+            (listener matched evt))))))))
 
 ;; make-$selection : (or/c list? vector? dom-node-list?) -> $selection?
 ;;   Normalize supported selection sources into a wrapper.
@@ -227,6 +261,37 @@
 ;;   Chainable alias for $off.
 (define (.off sel event-name listener . options)
   (apply $off event-name listener sel options))
+
+;; $on-delegate : (or/c string? symbol?) (or/c string? symbol?) procedure? $selection? (or/c boolean? external?) ... -> $selection?
+;;   Attach a delegated DOM event listener to each selected element and return the selection.
+;;   The callback receives the matched element and the event object.
+(define ($on-delegate event-name selector listener sel . options)
+  (check-$selection '$on-delegate sel)
+  (for ([x (in-vector ($selection->vector sel))])
+    (define listener*
+      (delegate-listener->external '$on-delegate x selector listener))
+    (apply element-add-event-listener! x event-name listener* options))
+  sel)
+
+;; .on-delegate : $selection? (or/c string? symbol?) (or/c string? symbol?) procedure? (or/c boolean? external?) ... -> $selection?
+;;   Chainable alias for $on-delegate.
+(define (.on-delegate sel event-name selector listener . options)
+  (apply $on-delegate event-name selector listener sel options))
+
+;; $off-delegate : (or/c string? symbol?) (or/c string? symbol?) procedure? $selection? (or/c boolean? external?) ... -> $selection?
+;;   Remove a delegated DOM event listener from each selected element and return the selection.
+(define ($off-delegate event-name selector listener sel . options)
+  (check-$selection '$off-delegate sel)
+  (for ([x (in-vector ($selection->vector sel))])
+    (define listener*
+      (delegate-listener->external '$off-delegate x selector listener))
+    (apply element-remove-event-listener! x event-name listener* options))
+  sel)
+
+;; .off-delegate : $selection? (or/c string? symbol?) (or/c string? symbol?) procedure? (or/c boolean? external?) ... -> $selection?
+;;   Chainable alias for $off-delegate.
+(define (.off-delegate sel event-name selector listener . options)
+  (apply $off-delegate event-name selector listener sel options))
 
 ;; $select : string? -> $selection?
 ;;   Query the document for matching elements.
