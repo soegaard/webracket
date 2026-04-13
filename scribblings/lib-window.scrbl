@@ -38,6 +38,10 @@ The current Window object, document, and location are wrapped in small
 checked structs so the API stays Rackety instead of exposing raw browser
 objects at the top level.
 
+For direct checked wrappers around @racketid[fetch], @racketid[localStorage],
+@racketid[sessionStorage], and IndexedDB, use the dedicated
+@racket[fetch], @racket[storage], and @racket[indexed-db] libraries.
+
 @section{Window Quick Start}
 
 Start by including the library, getting the current document, and

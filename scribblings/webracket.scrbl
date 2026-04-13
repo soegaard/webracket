@@ -45,6 +45,9 @@ Currently available libraries include:
   @item{@racket[(include-lib web-easy)]}
   @item{@racket[(include-lib audio)]}
   @item{@racket[(include-lib console)]}
+  @item{@racket[(include-lib fetch)]}
+  @item{@racket[(include-lib storage)]}
+  @item{@racket[(include-lib indexed-db)]}
   @item{@racket[(include-lib websocket)]}
   @item{@racket[(include-lib query)]}
 ]
@@ -115,6 +118,18 @@ See their respective documentation pages.
 @;-------------------------------------------------------------------
 
 @include-section["lib-console.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-fetch.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-storage.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-indexed-db.scrbl"]
 
 @;-------------------------------------------------------------------
 

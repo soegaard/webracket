@@ -8,7 +8,7 @@
 
 The @tt{dom} library brings together the browser-facing libraries for
 windows, documents, elements, events, geometry values, canvas, media,
-and images.
+images, fetch, storage, and IndexedDB.
 
 Use @tt{dom} when you want a single import point for browser DOM work.
 
