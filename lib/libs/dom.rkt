@@ -15,3 +15,6 @@
 (include-lib canvas)
 (include-lib image)
 (include-lib event)
+(include-lib fetch)
+(include-lib storage)
+(include-lib indexed-db)
