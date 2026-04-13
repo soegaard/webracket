@@ -942,9 +942,10 @@
       (for/list ([ns (reverse runtime-symbol-constants)])
         (define name         (first ns))
         (define symbol       (second ns))
+        (define string       (symbol->string symbol))
         (define $symbol-data:name   (string->symbol (~a "$" "symbol-data:"   name)))
         (define $symbol:name        (string->symbol (~a "$" "symbol:"        name)))
-        (define n                   (string-length (~a symbol)))
+        (define n                   (bytes-length (string->bytes/utf-8 string)))
         `(global.set ,$symbol:name
                      (call $string->symbol
                            (call $i8array->string
