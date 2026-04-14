@@ -233,9 +233,9 @@
 
 ;; Point
 
-(define (point? x)  (jsx-point? x))
-(define (point-x p) (jsx-point-x p))
-(define (point-y p) (jsx-point-x p))
+(define (point? x)  (js-jsx-point? x))
+(define (point-x p) (js-jsx-point-x p))
+(define (point-y p) (js-jsx-point-x p))
 
 (define (coordinates p)
   (values (point-x p) (point-y p)))

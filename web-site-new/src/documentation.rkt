@@ -452,7 +452,7 @@
 ;;;
 
 ;; doc-extended-example-jsxgraph-board-points-page : -> List
-;;   Documentation subpage: extended example using jsx-board + jsx-point.
+;;   Documentation subpage: extended example using js-jsx-board + js-jsx-point.
 (define (doc-extended-example-jsxgraph-board-points-page)
   `(div (@ (class "page page--docs page--glance"))
         ,(navbar)
@@ -508,7 +508,7 @@
                             "           (vector \"keepaspectratio\" #t))))\n"
                             "\n"
                             "(define board\n"
-                            "  (jsx-init-board \"box\" board-attrs))"))
+                            "  (js-jsx-init-board \"box\" board-attrs))"))
 
                  (h2 "Step 3: Create core geometry elements")
                  (p "Phase 2 adds constructor wrappers for common board elements.")
@@ -516,34 +516,34 @@
                             "(define q-attrs (js-object (vector (vector \"name\" \"Q\") (vector \"size\" 4))))\n"
                             "(define text-attrs (js-object (vector)))\n"
                             "\n"
-                            "(define p (jsx-board-create-point board #[-3 1] p-attrs))\n"
-                            "(define q (jsx-board-create-point board #[2 2] q-attrs))\n"
-                            "(define l (jsx-board-create-line board #[p q] (js-object (vector))))\n"
-                            "(define s (jsx-board-create-segment board #[p q] (js-object (vector))))\n"
-                            "(define c (jsx-board-create-circle board #[p q] (js-object (vector))))\n"
-                            "(define t (jsx-board-create-text board #[-5 5 \"PQ\"] text-attrs))"))
+                            "(define p (js-jsx-board-create-point board #[-3 1] p-attrs))\n"
+                            "(define q (js-jsx-board-create-point board #[2 2] q-attrs))\n"
+                            "(define l (js-jsx-board-create-line board #[p q] (js-object (vector))))\n"
+                            "(define s (js-jsx-board-create-segment board #[p q] (js-object (vector))))\n"
+                            "(define c (js-jsx-board-create-circle board #[p q] (js-object (vector))))\n"
+                            "(define t (js-jsx-board-create-text board #[-5 5 \"PQ\"] text-attrs))"))
 
                  (h2 "Step 4: Read and adjust point properties")
                  (p "Point bindings can validate and update appearance/behavior.")
-                 (pre (code "(when (jsx-point? p)\n"
-                            "  (jsx-set-point-face! p \"circle\")\n"
-                            "  (jsx-set-point-size! p 5.0)\n"
-                            "  (jsx-set-point-snap-to-grid! p 1))\n"
+                 (pre (code "(when (js-jsx-point? p)\n"
+                            "  (js-jsx-set-point-face! p \"circle\")\n"
+                            "  (js-jsx-set-point-size! p 5.0)\n"
+                            "  (js-jsx-set-point-snap-to-grid! p 1))\n"
                             "\n"
-                            "(list (jsx-point-x p)\n"
-                            "      (jsx-point-y p)\n"
-                            "      (jsx-point-size p))"))
+                            "(list (js-jsx-point-x p)\n"
+                            "      (js-jsx-point-y p)\n"
+                            "      (js-jsx-point-size p))"))
 
                  (h2 "Step 5: Batch updates for performance")
                  (p "Suspend redraws during multiple changes, then resume and refresh.")
-                 (pre (code "(jsx-board-suspend-update! board)\n"
-                            "(jsx-set-point-size! q 6.0)\n"
-                            "(jsx-board-unsuspend-update! board)\n"
-                            "(jsx-board-update! board)"))
+                 (pre (code "(js-jsx-board-suspend-update! board)\n"
+                            "(js-jsx-set-point-size! q 6.0)\n"
+                            "(js-jsx-board-unsuspend-update! board)\n"
+                            "(js-jsx-board-update! board)"))
 
                  (h2 "Step 6: Remove an object")
-                 (pre (code "(jsx-board-remove-object! board s)\n"
-                            "(jsx-board-full-update! board)"))))
+                 (pre (code "(js-jsx-board-remove-object! board s)\n"
+                            "(js-jsx-board-full-update! board)"))))
           #f
           #f)
         ,(footer-section)))
@@ -585,25 +585,25 @@
                          "Loading JSXGraph..."))
 
                  (h2 "Step 1: Create geometry constructors")
-                 (pre (code "(define p (jsx-board-create-point board '(-4 1)\n"
+                 (pre (code "(define p (js-jsx-board-create-point board '(-4 1)\n"
                             "             (js-object (vector (vector \"name\" \"P\") (vector \"size\" 4)))))\n"
-                            "(define q (jsx-board-create-point board '(2 3)\n"
+                            "(define q (js-jsx-board-create-point board '(2 3)\n"
                             "             (js-object (vector (vector \"name\" \"Q\") (vector \"size\" 4)))))\n"
-                            "(define l (jsx-board-create-line board '((-4 1) (2 3)) (js-object (vector))))\n"
-                            "(define s (jsx-board-create-segment board '((-4 1) (2 3)) (js-object (vector))))\n"
-                            "(define c (jsx-board-create-circle board '((-4 1) (2 3)) (js-object (vector))))\n"
-                            "(define i (jsx-board-create-point board '(0 0)\n"
+                            "(define l (js-jsx-board-create-line board '((-4 1) (2 3)) (js-object (vector))))\n"
+                            "(define s (js-jsx-board-create-segment board '((-4 1) (2 3)) (js-object (vector))))\n"
+                            "(define c (js-jsx-board-create-circle board '((-4 1) (2 3)) (js-object (vector))))\n"
+                            "(define i (js-jsx-board-create-point board '(0 0)\n"
                             "             (js-object (vector (vector \"name\" \"I\") (vector \"size\" 3)))))\n"
-                            "(jsx-point-make-intersection! i l c 0 0)\n"
-                            "(define t (jsx-board-create-text board '(-6 6 \"P-Q constructors\")\n"
+                            "(js-jsx-point-make-intersection! i l c 0 0)\n"
+                            "(define t (js-jsx-board-create-text board '(-6 6 \"P-Q constructors\")\n"
                             "             (js-object (vector))))"))
 
                  (h2 "Step 2: Lifecycle")
-                 (pre (code "(jsx-board-suspend-update! board)\n"
-                            "(jsx-set-point-size! p 5.0)\n"
-                            "(jsx-set-point-size! q 5.0)\n"
-                            "(jsx-board-unsuspend-update! board)\n"
-                            "(jsx-board-full-update! board)"))))
+                 (pre (code "(js-jsx-board-suspend-update! board)\n"
+                            "(js-jsx-set-point-size! p 5.0)\n"
+                            "(js-jsx-set-point-size! q 5.0)\n"
+                            "(js-jsx-board-unsuspend-update! board)\n"
+                            "(js-jsx-board-full-update! board)"))))
           #f
           #f)
         ,(footer-section)))

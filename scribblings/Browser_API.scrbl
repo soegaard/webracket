@@ -113,4 +113,5 @@ In this manual, entries present those tags with user-facing wording:
 @include-section["ffi-image.scrbl"]
 @include-section["ffi-audio.scrbl"]
 @include-section["ffi-console.scrbl"]
+@include-section["ffi-jsxgraph.scrbl"]
 @include-section["ffi-websocket.scrbl"]
