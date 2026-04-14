@@ -15,7 +15,7 @@
 
 @section{Libraries}
 
-WebRacket libraries come in two forms:
+WebRacket libraries are grouped into three categories:
 
 @itemlist[
   @item{@racket[(include-lib lib-id)] for libraries whose code is inserted
@@ -23,39 +23,20 @@ WebRacket libraries come in two forms:
         top level, and including the same library more than once has no extra
         effect.}
   @item{@racket[(require-lib lib-id)] for libraries that export syntactic forms.}
+  @item{The library docs below are grouped as Racket libraries, other
+        libraries, and Web APIs.}
 ]
 
-Currently available libraries include:
+@;-------------------------------------------------------------------
+
+@section{Racket Libraries}
+
+These are the libraries that extend Racket itself.
 
 @itemlist[
   @item{@racket[(require-lib define)]}
   @item{@racket[(require-lib threading)]}
-  @item{@racket[(include-lib dom)]}
-  @item{@racket[(include-lib array)]}
-  @item{@racket[(include-lib window)]}
-  @item{@racket[(include-lib performance)]}
-  @item{@racket[(include-lib document)]}
-  @item{@racket[(include-lib event)]}
-  @item{@racket[(include-lib domrect)]}
-  @item{@racket[(include-lib element)]}
-  @item{@racket[(include-lib canvas)]}
-  @item{@racket[(include-lib media)]}
-  @item{@racket[(include-lib image)]}
-  @item{@racket[(include-lib iterator)]}
-  @item{@racket[(include-lib web-easy)]}
-  @item{@racket[(include-lib audio)]}
-  @item{@racket[(include-lib console)]}
-  @item{@racket[(include-lib fetch)]}
-  @item{@racket[(include-lib storage)]}
-  @item{@racket[(include-lib indexed-db)]}
-  @item{@racket[(include-lib websocket)]}
-  @item{@racket[(include-lib query)]}
 ]
-
-See their respective documentation pages.
-
-
-@;-------------------------------------------------------------------
 
 @include-section["define.scrbl"]
 
@@ -65,19 +46,67 @@ See their respective documentation pages.
 
 @;-------------------------------------------------------------------
 
-@include-section["lib-dom.scrbl"]
+@section{Other Libraries}
 
-@;-------------------------------------------------------------------
+These libraries are not Web APIs, but they are still useful building blocks.
+
+@itemlist[
+  @item{@racket[(include-lib array)]}
+  @item{@racket[(include-lib iterator)]}
+  @item{@racket[(include-lib query)]}
+  @item{@racket[(include-lib web-easy)]}
+]
 
 @include-section["lib-array.scrbl"]
 
 @;-------------------------------------------------------------------
 
-@include-section["lib-window.scrbl"]
+@include-section["lib-iterator.scrbl"]
 
 @;-------------------------------------------------------------------
 
-@include-section["lib-performance.scrbl"]
+@include-section["lib-query.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["web-easy.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@section{Web APIs}
+
+These are the MDN-style browser APIs that WebRacket wraps.
+
+@itemlist[
+  @item{@racket[(include-lib audio)]}
+  @item{@racket[(include-lib canvas)]}
+  @item{@racket[(include-lib console)]}
+  @item{@racket[(include-lib document)]}
+  @item{@racket[(include-lib dom)]}
+  @item{@racket[(include-lib domrect)]}
+  @item{@racket[(include-lib element)]}
+  @item{@racket[(include-lib event)]}
+  @item{@racket[(include-lib fetch)]}
+  @item{@racket[(include-lib image)]}
+  @item{@racket[(include-lib indexed-db)]}
+  @item{@racket[(include-lib media)]}
+  @item{@racket[(include-lib performance)]}
+  @item{@racket[(include-lib storage)]}
+  @item{@racket[(include-lib websocket)]}
+  @item{@racket[(include-lib window)]}
+]
+
+See their respective documentation pages.
+
+@include-section["lib-audio.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-canvas.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-console.scrbl"]
 
 @;-------------------------------------------------------------------
 
@@ -85,7 +114,7 @@ See their respective documentation pages.
 
 @;-------------------------------------------------------------------
 
-@include-section["lib-event.scrbl"]
+@include-section["lib-dom.scrbl"]
 
 @;-------------------------------------------------------------------
 
@@ -97,27 +126,7 @@ See their respective documentation pages.
 
 @;-------------------------------------------------------------------
 
-@include-section["lib-canvas.scrbl"]
-
-@;-------------------------------------------------------------------
-
-@include-section["lib-media.scrbl"]
-
-@;-------------------------------------------------------------------
-
-@include-section["lib-image.scrbl"]
-
-@;-------------------------------------------------------------------
-
-@include-section["lib-iterator.scrbl"]
-
-@;-------------------------------------------------------------------
-
-@include-section["lib-audio.scrbl"]
-
-@;-------------------------------------------------------------------
-
-@include-section["lib-console.scrbl"]
+@include-section["lib-event.scrbl"]
 
 @;-------------------------------------------------------------------
 
@@ -125,7 +134,7 @@ See their respective documentation pages.
 
 @;-------------------------------------------------------------------
 
-@include-section["lib-storage.scrbl"]
+@include-section["lib-image.scrbl"]
 
 @;-------------------------------------------------------------------
 
@@ -133,11 +142,23 @@ See their respective documentation pages.
 
 @;-------------------------------------------------------------------
 
+@include-section["lib-media.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-performance.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-storage.scrbl"]
+
+@;-------------------------------------------------------------------
+
 @include-section["lib-websocket.scrbl"]
 
 @;-------------------------------------------------------------------
 
-@include-section["lib-query.scrbl"]
+@include-section["lib-window.scrbl"]
 
 @;-------------------------------------------------------------------
 
@@ -146,10 +167,6 @@ See their respective documentation pages.
 @;-------------------------------------------------------------------
 
 @include-section["dom-family-labels.scrbl"]
-
-@;-------------------------------------------------------------------
-
-@include-section["web-easy.scrbl"]
 
 @;-------------------------------------------------------------------
 @include-section["special-forms.scrbl"]
