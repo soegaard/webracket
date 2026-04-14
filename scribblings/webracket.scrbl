@@ -161,3 +161,7 @@ See their respective documentation pages.
 @;-------------------------------------------------------------------
 
 @include-section["Browser_API.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["appendix-smoke-tests.scrbl"]
