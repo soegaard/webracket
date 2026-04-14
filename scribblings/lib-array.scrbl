@@ -12,10 +12,10 @@
 @(how-to-require include-lib array (lib "libs/array.rkt"))
 @(compile-option-bar "Compile option: " "--ffi array")
 
-The @racket[array] library provides a small checked surface for
-JavaScript @tt{Array} values. It keeps the public API focused on
-construction, indexing, and the conversion helpers that are useful when
-moving between JavaScript arrays and Racket vectors or lists.
+The @racket[array] library is the recommended way to work with
+JavaScript arrays. It provides functions for constructing and indexing
+JavaScript arrays from Racket, along with helpers for moving between
+JavaScript arrays and Racket vectors or lists.
 
 Use @racket[array] when you want to:
 
@@ -27,24 +27,29 @@ Use @racket[array] when you want to:
   @item{apply the common non-callback Array methods used by WebRacket}
 ]
 
-The library returns checked wrapper structs. Use @racket[array-raw]
-only when you need to hand the underlying browser value to a low-level
-bridge helper or an API that has not been wrapped yet.
+Arrays returned by this library are "checked wrapper structures". That
+is, an @racket[array] value is a Racket structure that holds a raw
+JavaScript array and validates operations before crossing the bridge.
+Use @racket[array-raw] only when you need to pass the underlying
+browser value to a low-level bridge helper or to an API that has not
+yet been wrapped.
 
 When an @racket[array] value is displayed, the wrapped JavaScript
-elements are shown in a vector-like form. That display is just a
-readable representation of the underlying browser array; it is not a
-Racket vector.
+elements are shown in a vector-like form. This display is only a
+readable representation of the underlying browser array;
+it is not a Racket vector.
 
-The expensive direction, from JavaScript arrays into Racket vectors,
-uses a bulk bridge helper. In other words, @racket[array->vector] does
-not walk the array one element at a time through the WebRacket bridge.
-The list conversion @racket[array->list] reuses that vector path.
-The byte conversion @racket[array->bytes] uses the same bulk approach
-for byte arrays and typed arrays.
+The expensive direction is converting JavaScript arrays into Racket
+values. To keep this efficient, @racket[array->vector] uses a bulk
+bridge helper instead of walking the array one element at a time
+through the WebRacket bridge. The list conversion
+@racket[array->list] reuses this vector path, and
+@racket[array->bytes] uses the same bulk approach for byte arrays and
+typed arrays.
 
 String-like arguments accept either strings or symbols. Optional
-arguments use @racket[#f] to mean that the argument is omitted.
+arguments use @racket[#f] to indicate that the argument is omitted.
+
 
 @section{Array Quick Start}
 
@@ -327,6 +332,10 @@ conversion.
 @defproc[(array->list [arr array?]) list?]{
 Converts a JavaScript array into a Racket list by reusing
 @racket[array->vector].
+}
+
+@defproc[(array->bytes [arr array?]) bytes?]{
+Converts a JavaScript byte array or typed array into Racket bytes.
 }
 
 @defproc[(vector->array [vec vector?]) array?]{
