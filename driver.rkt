@@ -75,6 +75,7 @@
     (fetch      . "dom.ffi")
     (image      . "image.ffi")
     (iterator   . "iterator.ffi")
+    (jsx-graph  . "jsxgraph.ffi")
     (media      . "media.ffi")
     (query      . "dom.ffi")
     (performance . "performance.ffi")
