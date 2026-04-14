@@ -54,6 +54,7 @@ These libraries are not Web APIs, but they are still useful building blocks.
   @item{@racket[(include-lib array)]}
   @item{@racket[(include-lib iterator)]}
   @item{@racket[(include-lib query)]}
+  @item{@racket[(include-lib simple-pretty)]}
   @item{@racket[(include-lib sxml)]}
   @item{@racket[(include-lib web-easy)]}
 ]
@@ -67,6 +68,10 @@ These libraries are not Web APIs, but they are still useful building blocks.
 @;-------------------------------------------------------------------
 
 @include-section["lib-query.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-simple-pretty.scrbl"]
 
 @;-------------------------------------------------------------------
 
