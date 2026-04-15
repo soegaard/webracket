@@ -5,6 +5,10 @@
 
 
 @include-section["Introduction.scrbl"]
+
+@include-section["getting-started.scrbl"]
+
+
 @include-section["WebRacket_at_a_Glance.scrbl"]
 
 @include-section["Installation.scrbl"]
