@@ -87,6 +87,28 @@
   jsx-board-count-children
   jsx-board-num-objects
   jsx-board-objects-list
+  jsx-board-id
+  jsx-board-container
+  jsx-board-renderer
+  jsx-board-canvas-width
+  jsx-board-canvas-height
+  jsx-board-bounding-box
+  jsx-board-set-attribute!
+  jsx-board-set-bounding-box!
+  jsx-board-set-zoom!
+  jsx-board-resize-container!
+  jsx-board-zoom100!
+  jsx-board-zoom-all-points!
+  jsx-board-zoom-in!
+  jsx-board-zoom-out!
+  jsx-board-start-selection-mode!
+  jsx-board-stop-selection-mode!
+  jsx-board-stop-all-animation!
+  jsx-board-to-fullscreen!
+  jsx-board-start-resize-observer!
+  jsx-board-stop-resize-observer!
+  jsx-board-start-intersection-observer!
+  jsx-board-stop-intersection-observer!
   jsx-coordinates
   jsx-on
   (for-label (all-defined-out)))
@@ -174,5 +196,27 @@
 (define jsx-board-count-children any/c)
 (define jsx-board-num-objects any/c)
 (define jsx-board-objects-list any/c)
+(define jsx-board-id any/c)
+(define jsx-board-container any/c)
+(define jsx-board-renderer any/c)
+(define jsx-board-canvas-width any/c)
+(define jsx-board-canvas-height any/c)
+(define jsx-board-bounding-box any/c)
+(define jsx-board-set-attribute! any/c)
+(define jsx-board-set-bounding-box! any/c)
+(define jsx-board-set-zoom! any/c)
+(define jsx-board-resize-container! any/c)
+(define jsx-board-zoom100! any/c)
+(define jsx-board-zoom-all-points! any/c)
+(define jsx-board-zoom-in! any/c)
+(define jsx-board-zoom-out! any/c)
+(define jsx-board-start-selection-mode! any/c)
+(define jsx-board-stop-selection-mode! any/c)
+(define jsx-board-stop-all-animation! any/c)
+(define jsx-board-to-fullscreen! any/c)
+(define jsx-board-start-resize-observer! any/c)
+(define jsx-board-stop-resize-observer! any/c)
+(define jsx-board-start-intersection-observer! any/c)
+(define jsx-board-stop-intersection-observer! any/c)
 (define jsx-coordinates any/c)
 (define jsx-on any/c)

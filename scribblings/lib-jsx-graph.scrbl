@@ -210,6 +210,126 @@ Counts how many objects have been created on @racket[board] in total.
 Returns the geometric objects on @racket[board] in construction order.
 }
 
+@defproc[(jsx-board-id [board jsx-board?])
+         any/c]{
+Reads the JSXGraph board id.
+}
+
+@defproc[(jsx-board-container [board jsx-board?])
+         any/c]{
+Reads the board container element.
+}
+
+@defproc[(jsx-board-renderer [board jsx-board?])
+         any/c]{
+Reads the renderer used by the board.
+}
+
+@defproc[(jsx-board-canvas-width [board jsx-board?])
+         any/c]{
+Reads the board canvas width.
+}
+
+@defproc[(jsx-board-canvas-height [board jsx-board?])
+         any/c]{
+Reads the board canvas height.
+}
+
+@defproc[(jsx-board-bounding-box [board jsx-board?])
+         vector?]{
+Reads the board bounding box.
+}
+
+@defproc[(jsx-board-set-attribute! [board jsx-board?]
+                                   [attributes any/c])
+         void?]{
+Sets arbitrary board attributes.
+}
+
+@defproc[(jsx-board-set-bounding-box! [board jsx-board?]
+                                      [bbox any/c]
+                                      [keepaspectratio any/c]
+                                      [setZoom any/c])
+         void?]{
+Sets the board bounding box.
+}
+
+@defproc[(jsx-board-set-zoom! [board jsx-board?]
+                              [fX any/c]
+                              [fY any/c])
+         void?]{
+Sets the board zoom.
+}
+
+@defproc[(jsx-board-resize-container! [board jsx-board?]
+                                      [canvasWidth any/c]
+                                      [canvasHeight any/c]
+                                      [dontset any/c]
+                                      [dontSetBoundingBox any/c])
+         void?]{
+Resizes the board container.
+}
+
+@defproc[(jsx-board-zoom100! [board jsx-board?])
+         void?]{
+Resets the board zoom to 100%.
+}
+
+@defproc[(jsx-board-zoom-all-points! [board jsx-board?])
+         void?]{
+Zooms the board so every visible point fits in the viewport.
+}
+
+@defproc[(jsx-board-zoom-in! [board jsx-board?] [x any/c] [y any/c])
+         void?]{
+Zooms in around a point.
+}
+
+@defproc[(jsx-board-zoom-out! [board jsx-board?] [x any/c] [y any/c])
+         void?]{
+Zooms out around a point.
+}
+
+@defproc[(jsx-board-start-selection-mode! [board jsx-board?])
+         void?]{
+Enables board selection mode.
+}
+
+@defproc[(jsx-board-stop-selection-mode! [board jsx-board?])
+         void?]{
+Disables board selection mode.
+}
+
+@defproc[(jsx-board-stop-all-animation! [board jsx-board?])
+         void?]{
+Stops all running board animations.
+}
+
+@defproc[(jsx-board-to-fullscreen! [board jsx-board?] [id any/c])
+         void?]{
+Expands the board to fullscreen.
+}
+
+@defproc[(jsx-board-start-resize-observer! [board jsx-board?])
+         void?]{
+Starts watching the container size.
+}
+
+@defproc[(jsx-board-stop-resize-observer! [board jsx-board?])
+         void?]{
+Stops watching the container size.
+}
+
+@defproc[(jsx-board-start-intersection-observer! [board jsx-board?])
+         void?]{
+Starts watching whether the board is visible.
+}
+
+@defproc[(jsx-board-stop-intersection-observer! [board jsx-board?])
+         void?]{
+Stops watching board visibility.
+}
+
 @defproc[(jsx-parents [v any/c] ...)
          vector?]{
 Packs parent values into a vector for JSXGraph.

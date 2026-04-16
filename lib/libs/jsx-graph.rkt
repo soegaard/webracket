@@ -435,6 +435,36 @@
 (define (jsx-board-full-update! board)
   (jsx-board-full-update!/raw (jsx-board-raw board)))
 
+;; jsx-board-id : jsx-board? -> any/c
+;;   Read the board id.
+(define (jsx-board-id board)
+  (js-ref (jsx-board-raw board) "id"))
+
+;; jsx-board-container : jsx-board? -> any/c
+;;   Read the board container element.
+(define (jsx-board-container board)
+  (js-ref (jsx-board-raw board) "container"))
+
+;; jsx-board-renderer : jsx-board? -> any/c
+;;   Read the renderer used by the board.
+(define (jsx-board-renderer board)
+  (js-ref (jsx-board-raw board) "renderer"))
+
+;; jsx-board-canvas-width : jsx-board? -> exact-nonnegative-integer?
+;;   Read the board canvas width.
+(define (jsx-board-canvas-width board)
+  (js-ref (jsx-board-raw board) "canvasWidth"))
+
+;; jsx-board-canvas-height : jsx-board? -> exact-nonnegative-integer?
+;;   Read the board canvas height.
+(define (jsx-board-canvas-height board)
+  (js-ref (jsx-board-raw board) "canvasHeight"))
+
+;; jsx-board-bounding-box : jsx-board? -> vector?
+;;   Read the board bounding box.
+(define (jsx-board-bounding-box board)
+  (js-array->vector (js-ref (jsx-board-raw board) "boundingBox")))
+
 ;; jsx-wrap-board-object : external/raw -> (or/c jsx-point? jsx-element?)
 ;;   Wrap a board object using the most specific checked wrapper.
 (define (jsx-wrap-board-object raw)
@@ -459,6 +489,104 @@
   (define keys (js-array->vector (js-send/extern (js-Object) "keys" (vector objects))))
   (for/vector #:length (vector-length keys) ([key (in-vector keys)])
     (jsx-wrap-board-object (js-ref objects key))))
+
+;; jsx-board-set-attribute! : jsx-board? any/c -> void?
+;;   Set board attributes.
+(define (jsx-board-set-attribute! board attributes)
+  (js-send/extern/nullish (jsx-board-raw board) "setAttribute" (vector attributes))
+  (void))
+
+;; jsx-board-set-bounding-box! : jsx-board? any/c any/c any/c -> void?
+;;   Set the board bounding box.
+(define (jsx-board-set-bounding-box! board bbox keepaspectratio setZoom)
+  (js-send/extern/nullish (jsx-board-raw board) "setBoundingBox"
+                          (vector bbox keepaspectratio setZoom))
+  (void))
+
+;; jsx-board-set-zoom! : jsx-board? any/c any/c -> void?
+;;   Set the board zoom.
+(define (jsx-board-set-zoom! board fX fY)
+  (js-send/extern/nullish (jsx-board-raw board) "setZoom" (vector fX fY))
+  (void))
+
+;; jsx-board-resize-container! : jsx-board? any/c any/c any/c any/c -> void?
+;;   Resize the board container.
+(define (jsx-board-resize-container! board canvasWidth canvasHeight dontset dontSetBoundingBox)
+  (js-send/extern/nullish (jsx-board-raw board) "resizeContainer"
+                          (vector canvasWidth canvasHeight dontset dontSetBoundingBox))
+  (void))
+
+;; jsx-board-zoom100! : jsx-board? -> void?
+;;   Reset the board zoom to 100%.
+(define (jsx-board-zoom100! board)
+  (js-send/extern/nullish (jsx-board-raw board) "zoom100" (vector))
+  (void))
+
+;; jsx-board-zoom-all-points! : jsx-board? -> void?
+;;   Zoom so every visible point fits in the viewport.
+(define (jsx-board-zoom-all-points! board)
+  (js-send/extern/nullish (jsx-board-raw board) "zoomAllPoints" (vector))
+  (void))
+
+;; jsx-board-zoom-in! : jsx-board? any/c any/c -> void?
+;;   Zoom in around a point.
+(define (jsx-board-zoom-in! board x y)
+  (js-send/extern/nullish (jsx-board-raw board) "zoomIn" (vector x y))
+  (void))
+
+;; jsx-board-zoom-out! : jsx-board? any/c any/c -> void?
+;;   Zoom out around a point.
+(define (jsx-board-zoom-out! board x y)
+  (js-send/extern/nullish (jsx-board-raw board) "zoomOut" (vector x y))
+  (void))
+
+;; jsx-board-start-selection-mode! : jsx-board? -> void?
+;;   Enable board selection mode.
+(define (jsx-board-start-selection-mode! board)
+  (js-send/extern/nullish (jsx-board-raw board) "startSelectionMode" (vector))
+  (void))
+
+;; jsx-board-stop-selection-mode! : jsx-board? -> void?
+;;   Disable board selection mode.
+(define (jsx-board-stop-selection-mode! board)
+  (js-send/extern/nullish (jsx-board-raw board) "stopSelectionMode" (vector))
+  (void))
+
+;; jsx-board-stop-all-animation! : jsx-board? -> void?
+;;   Stop all running animations on a board.
+(define (jsx-board-stop-all-animation! board)
+  (js-send/extern/nullish (jsx-board-raw board) "stopAllAnimation" (vector))
+  (void))
+
+;; jsx-board-to-fullscreen! : jsx-board? any/c -> void?
+;;   Expand the board to fullscreen.
+(define (jsx-board-to-fullscreen! board id)
+  (js-send/extern/nullish (jsx-board-raw board) "toFullscreen" (vector id))
+  (void))
+
+;; jsx-board-start-resize-observer! : jsx-board? -> void?
+;;   Start watching the container size.
+(define (jsx-board-start-resize-observer! board)
+  (js-send/extern/nullish (jsx-board-raw board) "startResizeObserver" (vector))
+  (void))
+
+;; jsx-board-stop-resize-observer! : jsx-board? -> void?
+;;   Stop watching the container size.
+(define (jsx-board-stop-resize-observer! board)
+  (js-send/extern/nullish (jsx-board-raw board) "stopResizeObserver" (vector))
+  (void))
+
+;; jsx-board-start-intersection-observer! : jsx-board? -> void?
+;;   Start watching whether the board is visible.
+(define (jsx-board-start-intersection-observer! board)
+  (js-send/extern/nullish (jsx-board-raw board) "startIntersectionObserver" (vector))
+  (void))
+
+;; jsx-board-stop-intersection-observer! : jsx-board? -> void?
+;;   Stop watching board visibility.
+(define (jsx-board-stop-intersection-observer! board)
+  (js-send/extern/nullish (jsx-board-raw board) "stopIntersectionObserver" (vector))
+  (void))
 
 ;; jsx-board-remove-object! : jsx-board? any/c -> void?
 ;;   Remove an object from a board.
