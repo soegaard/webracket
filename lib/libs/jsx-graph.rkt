@@ -456,7 +456,7 @@
 ;;   Read the board objects in construction order.
 (define (jsx-board-objects-list board)
   (define objects (js-ref (jsx-board-raw board) "objects"))
-  (define keys (js-array->vector (js-send/value (js-Object) "keys" (vector objects))))
+  (define keys (js-array->vector (js-send/extern (js-Object) "keys" (vector objects))))
   (for/vector ([key (in-vector keys)])
     (jsx-wrap-board-object (js-ref objects key))))
 
