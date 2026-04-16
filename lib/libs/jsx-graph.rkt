@@ -455,10 +455,10 @@
 ;; jsx-board-objects-list : jsx-board? -> vector?
 ;;   Read the board objects in construction order.
 (define (jsx-board-objects-list board)
-  (define objects (js-ref (jsx-board-raw board) "objectsList"))
-  (define len (js-array-length objects))
-  (for/vector ([i (in-range len)])
-    (jsx-wrap-board-object (js-index objects i))))
+  (define objects (js-ref (jsx-board-raw board) "objects"))
+  (define keys (js-array->vector (js-send/value (js-Object) "keys" (vector objects))))
+  (for/vector ([key (in-vector keys)])
+    (jsx-wrap-board-object (js-ref objects key))))
 
 ;; jsx-board-remove-object! : jsx-board? any/c -> void?
 ;;   Remove an object from a board.
