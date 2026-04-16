@@ -87,6 +87,7 @@ Fast local headless gate (contract + theme + guard, skips full dashboard run):
 | Theme token API contract page (single) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-theme-token-api-contract.html` |
 | Primitive tags contract page (single, core) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-primitive-tags-contract.html` |
 | Primitive tags contract page (single, parity) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-parity-all-compile.sh test-browser-parity-primitive-tags-contract.html` |
+| JSXGraph minimal headless check | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-jsx-graph-minimal-compile.sh test-browser-jsx-graph-minimal.html` |
 | Layout primitives smoke page (single) | `SMOKE_SKIP_COMPILE=1 ./check-single-headless.sh run-browser-smoke-all-compile.sh test-browser-layout-primitives.html` |
 | Theme-only dashboard headless | `./headless.sh theme` |
 | Theme visual-diff lane (separate from contracts) | `./headless.sh theme-visual` |
