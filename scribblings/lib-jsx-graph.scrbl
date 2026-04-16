@@ -745,10 +745,12 @@ Returns the @racket[x] and @racket[y] coordinates of @racket[p].
 }
 
 @defproc[(jsx-on [element external/raw]
-                 [event string?]
+                 [event (or/c string? symbol?)]
                  [handler procedure?])
          void?]{
-Installs a JSXGraph event handler on @racket[element].
+@(jsx-bar "on"
+          (jsx-doc-url "JXG.Board"))
+Installs a JSXGraph event handler on a board or geometry element.
 }
 
 @defproc[(jsx-point? [v any/c]) boolean?]{

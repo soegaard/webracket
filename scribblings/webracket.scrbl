@@ -8,12 +8,14 @@
 
 @include-section["getting-started.scrbl"]
 
-
-@include-section["WebRacket_at_a_Glance.scrbl"]
-
 @include-section["Installation.scrbl"]
 
 @include-section["Command-Line_Tool.scrbl"]
+
+@include-section["webracket-for-racket-programmers.scrbl"]
+
+@include-section["WebRacket_at_a_Glance.scrbl"]
+
 
 @;-------------------------------------------------------------------
 
@@ -26,7 +28,9 @@ WebRacket libraries are grouped into three categories:
         textually into your program. This form can be used only at the module
         top level, and including the same library more than once has no extra
         effect.}
+
   @item{@racket[(require-lib lib-id)] for libraries that export syntactic forms.}
+
   @item{The library docs below are grouped as Racket libraries, other
         libraries, and Web APIs.}
 ]

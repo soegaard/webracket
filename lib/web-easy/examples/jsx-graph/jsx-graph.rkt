@@ -3,6 +3,8 @@
 ;;;
 
 (include-lib web-easy)
+(include-lib event)
+(include-lib document)
 (include-lib jsx-graph)
 
 (define board-id "jsx-graph-board")
@@ -32,9 +34,9 @@
 ;; ensure-jsxgraph-assets! : -> void?
 ;;   Load the JSXGraph CSS and core script with a local fallback.
 (define (ensure-jsxgraph-assets!)
-  (define head (js-document-head))
-  (define body (js-document-body))
-  (define target (if (extern-present? head) head body))
+  (define target
+    (or (document-head)
+        (document-body)))
 
   ;; CDN first, local fallback so the example still works when served offline.
   (define cdn-css "https://cdn.jsdelivr.net/npm/jsxgraph/distrib/jsxgraph.css")
@@ -42,28 +44,28 @@
   (define local-css "../../web-site-new/local/assets/vendor/jsxgraph/jsxgraph.css")
   (define local-js  "../../web-site-new/local/assets/vendor/jsxgraph/jsxgraphcore.js")
 
-  (unless (extern-present? (js-query-selector "link[data-jsxgraph-css='1']"))
-    (define link (js-create-element "link"))
-    (js-set-attribute! link "rel" "stylesheet")
-    (js-set-attribute! link "href" cdn-css)
-    (js-set-attribute! link "data-jsxgraph-css" "1")
-    (define on-css-error
-      (procedure->external
-       (lambda (_evt)
-         (js-set-attribute! link "href" local-css))))
-    (js-add-event-listener! link "error" on-css-error)
-    (js-append-child! target link))
+  (unless (document-query-selector "link[data-jsxgraph-css='1']")
+    (define link (document-create-element "link"))
+    (element-set-attribute! link "rel" "stylesheet")
+    (element-set-attribute! link "href" cdn-css)
+    (element-set-attribute! link "data-jsxgraph-css" "1")
+    (element-add-event-listener!
+     link
+     "error"
+     (lambda (_evt)
+       (element-set-attribute! link "href" local-css)))
+    (element-append! target link))
 
-  (unless (extern-present? (js-query-selector "script[data-jsxgraph-core='1']"))
-    (define script (js-create-element "script"))
-    (js-set-attribute! script "src" cdn-js)
-    (js-set-attribute! script "data-jsxgraph-core" "1")
-    (define on-js-error
-      (procedure->external
-       (lambda (_evt)
-         (js-set-attribute! script "src" local-js))))
-    (js-add-event-listener! script "error" on-js-error)
-    (js-append-child! target script)))
+  (unless (document-query-selector "script[data-jsxgraph-core='1']")
+    (define script (document-create-element "script"))
+    (element-set-attribute! script "src" cdn-js)
+    (element-set-attribute! script "data-jsxgraph-core" "1")
+    (element-add-event-listener!
+     script
+     "error"
+     (lambda (_evt)
+       (element-set-attribute! script "src" local-js)))
+    (element-append! target script)))
 
 ;; init-board! : -> void?
 ;;   Build the JSXGraph board once the browser assets have loaded.
@@ -101,6 +103,13 @@
               (void (jsx-set-point-size! current-p 5.0))
               (void (jsx-set-point-size! current-q 5.0))
               (void (jsx-board-unsuspend-update! current-board))
+              (void
+               (jsx-on current-board
+                       "up"
+                       (lambda (evt)
+                         (when (mouse-event? evt)
+                           (prevent-default! evt))
+                         (set-summary! "The board received a JSXGraph up event."))))
               (void (jsx-board-full-update! current-board))
               (let ()
                 (define line

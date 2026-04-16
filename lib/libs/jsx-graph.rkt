@@ -1,5 +1,7 @@
 #lang webracket
 
+(include-lib element)
+
 ;;;
 ;;; JSXGraph helpers
 ;;;
@@ -373,6 +375,14 @@
       [(null? ps) val]
       [else       (loop (js-ref val (car ps))
                         (cdr ps))])))
+
+;; jsx-on : any/c (or/c string? symbol?) procedure? -> void?
+;;   Install a JSXGraph object event handler.
+(define (jsx-on target event handler)
+  (define event* (jsx-key->string event))
+  (define handler* (procedure->external handler))
+  (js-send/extern/nullish (jsx-unwrap target) "on" (vector event* handler*))
+  (void))
 
 ;; jsx-create-board : string? [any/c #f] -> jsx-board?
 ;;   Create a board with the standard JSXGraph defaults.
