@@ -28,6 +28,7 @@ print_urls() {
   local base_url="http://localhost:${port}"
   printf '  %-10s %-13s %s\n' "index" "(manual):" "$base_url/index.html"
   printf '  %-10s %-13s %s\n' "visual" "(manual):" "$base_url/test-browser-visual-check.html"
+  printf '  %-10s %-13s %s\n' "jsx" "(manual):" "$base_url/test-browser-jsx-graph-minimal.html"
   printf '  %-10s %-13s %s\n' "dashboard" "(automatic):" "$base_url/test-browser-dashboard.html"
   printf '  %-10s %-13s %s\n' "parity" "(automatic):" "$base_url/test-browser-parity-dashboard.html"
   printf '  %-10s %-13s %s\n' "contract" "(automatic):" "$base_url/test-browser-contract-dashboard.html"
