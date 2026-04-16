@@ -52,6 +52,19 @@
     [(jsx-point-wrapper? value)   (jsx-point-raw value)]
     [else                 value]))
 
+;; jsx-unpack-array : any/c -> any/c
+;;   Recursively unwrap checked JSXGraph values inside array-like data.
+(define (jsx-unpack-array value)
+  (cond
+    [(vector? value)
+     (for/vector #:length (vector-length value)
+         ([item (in-vector value)])
+       (jsx-unpack-array item))]
+    [(list? value)
+     (list->vector (map jsx-unpack-array value))]
+    [else
+     (jsx-unwrap value)]))
+
 ;;; -------------------------------------------------------------------
 ;;; Low-level aliases
 ;;; -------------------------------------------------------------------
@@ -465,6 +478,12 @@
 (define (jsx-board-bounding-box board)
   (js-array->vector (js-ref (jsx-board-raw board) "boundingBox")))
 
+;; jsx-board-add-grid! : jsx-board? -> void?
+;;   Add the default grid to the board.
+(define (jsx-board-add-grid! board)
+  (js-send/extern/nullish (jsx-board-raw board) "addGrid" (vector))
+  (void))
+
 ;; jsx-wrap-board-object : external/raw -> (or/c jsx-point? jsx-element?)
 ;;   Wrap a board object using the most specific checked wrapper.
 (define (jsx-wrap-board-object raw)
@@ -482,6 +501,11 @@
 (define (jsx-board-num-objects board)
   (js-ref (jsx-board-raw board) "numObjects"))
 
+;; jsx-board-has-point? : jsx-board? flonum? flonum? -> boolean?
+;;   Check whether a point lies inside the board bounding box.
+(define (jsx-board-has-point? board x y)
+  (js-send/extern (jsx-board-raw board) "hasPoint" (vector x y)))
+
 ;; jsx-board-objects-list : jsx-board? -> vector?
 ;;   Read the board objects in construction order.
 (define (jsx-board-objects-list board)
@@ -489,6 +513,12 @@
   (define keys (js-array->vector (js-send/extern (js-Object) "keys" (vector objects))))
   (for/vector #:length (vector-length keys) ([key (in-vector keys)])
     (jsx-wrap-board-object (js-ref objects key))))
+
+;; jsx-board-move-origin! : jsx-board? any/c any/c any/c -> void?
+;;   Move the board origin.
+(define (jsx-board-move-origin! board x y diff)
+  (js-send/extern/nullish (jsx-board-raw board) "moveOrigin" (vector x y diff))
+  (void))
 
 ;; jsx-board-set-attribute! : jsx-board? any/c -> void?
 ;;   Set board attributes.
@@ -515,6 +545,18 @@
   (js-send/extern/nullish (jsx-board-raw board) "resizeContainer"
                           (vector canvasWidth canvasHeight dontset dontSetBoundingBox))
   (void))
+
+;; jsx-board-remove-grids! : jsx-board? -> void?
+;;   Remove all grids from the board.
+(define (jsx-board-remove-grids! board)
+  (js-send/extern/nullish (jsx-board-raw board) "removeGrids" (vector))
+  (void))
+
+;; jsx-board-select : jsx-board? any/c [boolean?] -> (or/c jsx-point? jsx-element?)
+;;   Select one or more objects on the board.
+(define (jsx-board-select board str [only-by-id-or-name #f])
+  (jsx-wrap-board-object
+   (js-send/extern (jsx-board-raw board) "select" (vector str only-by-id-or-name))))
 
 ;; jsx-board-zoom100! : jsx-board? -> void?
 ;;   Reset the board zoom to 100%.
@@ -558,6 +600,18 @@
   (js-send/extern/nullish (jsx-board-raw board) "stopAllAnimation" (vector))
   (void))
 
+;; jsx-board-show-dependencies! : jsx-board? -> void?
+;;   Show the dependency graph for the board.
+(define (jsx-board-show-dependencies! board)
+  (js-send/extern/nullish (jsx-board-raw board) "showDependencies" (vector))
+  (void))
+
+;; jsx-board-show-xml! : jsx-board? -> void?
+;;   Show the board XML in a separate window.
+(define (jsx-board-show-xml! board)
+  (js-send/extern/nullish (jsx-board-raw board) "showXML" (vector))
+  (void))
+
 ;; jsx-board-to-fullscreen! : jsx-board? any/c -> void?
 ;;   Expand the board to fullscreen.
 (define (jsx-board-to-fullscreen! board id)
@@ -586,6 +640,30 @@
 ;;   Stop watching board visibility.
 (define (jsx-board-stop-intersection-observer! board)
   (js-send/extern/nullish (jsx-board-raw board) "stopIntersectionObserver" (vector))
+  (void))
+
+;; jsx-board-set-id : jsx-board? any/c any/c -> string?
+;;   Compose a unique id for an element on the board.
+(define (jsx-board-set-id board obj type)
+  (js-send/extern (jsx-board-raw board) "setId" (vector (jsx-unwrap obj) type)))
+
+;; jsx-board-update-renderer! : jsx-board? -> void?
+;;   Refresh the board renderer.
+(define (jsx-board-update-renderer! board)
+  (js-send/extern/nullish (jsx-board-raw board) "updateRenderer" (vector))
+  (void))
+
+;; jsx-board-update-renderer-canvas! : jsx-board? -> void?
+;;   Refresh the board renderer in Canvas mode.
+(define (jsx-board-update-renderer-canvas! board)
+  (js-send/extern/nullish (jsx-board-raw board) "updateRendererCanvas" (vector))
+  (void))
+
+;; jsx-board-zoom-elements! : jsx-board? any/c -> void?
+;;   Zoom the board so a set of elements fits in the viewport.
+(define (jsx-board-zoom-elements! board elements)
+  (js-send/extern/nullish (jsx-board-raw board) "zoomElements"
+                          (vector (jsx-unpack-array elements)))
   (void))
 
 ;; jsx-board-remove-object! : jsx-board? any/c -> void?

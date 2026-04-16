@@ -93,10 +93,13 @@
   jsx-board-canvas-width
   jsx-board-canvas-height
   jsx-board-bounding-box
+  jsx-board-add-grid!
   jsx-board-set-attribute!
   jsx-board-set-bounding-box!
   jsx-board-set-zoom!
   jsx-board-resize-container!
+  jsx-board-remove-grids!
+  jsx-board-select
   jsx-board-zoom100!
   jsx-board-zoom-all-points!
   jsx-board-zoom-in!
@@ -104,11 +107,19 @@
   jsx-board-start-selection-mode!
   jsx-board-stop-selection-mode!
   jsx-board-stop-all-animation!
+  jsx-board-show-dependencies!
+  jsx-board-show-xml!
   jsx-board-to-fullscreen!
   jsx-board-start-resize-observer!
   jsx-board-stop-resize-observer!
   jsx-board-start-intersection-observer!
   jsx-board-stop-intersection-observer!
+  jsx-board-has-point?
+  jsx-board-move-origin!
+  jsx-board-set-id
+  jsx-board-update-renderer!
+  jsx-board-update-renderer-canvas!
+  jsx-board-zoom-elements!
   jsx-coordinates
   jsx-on
   (for-label (all-defined-out)))
@@ -202,10 +213,13 @@
 (define jsx-board-canvas-width any/c)
 (define jsx-board-canvas-height any/c)
 (define jsx-board-bounding-box any/c)
+(define jsx-board-add-grid! any/c)
 (define jsx-board-set-attribute! any/c)
 (define jsx-board-set-bounding-box! any/c)
 (define jsx-board-set-zoom! any/c)
 (define jsx-board-resize-container! any/c)
+(define jsx-board-remove-grids! any/c)
+(define jsx-board-select any/c)
 (define jsx-board-zoom100! any/c)
 (define jsx-board-zoom-all-points! any/c)
 (define jsx-board-zoom-in! any/c)
@@ -213,10 +227,18 @@
 (define jsx-board-start-selection-mode! any/c)
 (define jsx-board-stop-selection-mode! any/c)
 (define jsx-board-stop-all-animation! any/c)
+(define jsx-board-show-dependencies! any/c)
+(define jsx-board-show-xml! any/c)
 (define jsx-board-to-fullscreen! any/c)
 (define jsx-board-start-resize-observer! any/c)
 (define jsx-board-stop-resize-observer! any/c)
 (define jsx-board-start-intersection-observer! any/c)
 (define jsx-board-stop-intersection-observer! any/c)
+(define jsx-board-has-point? any/c)
+(define jsx-board-move-origin! any/c)
+(define jsx-board-set-id any/c)
+(define jsx-board-update-renderer! any/c)
+(define jsx-board-update-renderer-canvas! any/c)
+(define jsx-board-zoom-elements! any/c)
 (define jsx-coordinates any/c)
 (define jsx-on any/c)

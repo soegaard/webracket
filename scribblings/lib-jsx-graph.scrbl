@@ -240,6 +240,14 @@ Reads the board canvas height.
 Reads the board bounding box.
 }
 
+@defproc[(jsx-board-add-grid! [board jsx-board?])
+         void?]{
+@(jsx-bar "addGrid"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#addGrid"))
+Adds the default grid to the board.
+}
+
 @defproc[(jsx-board-set-attribute! [board jsx-board?]
                                    [attributes any/c])
          void?]{
@@ -268,6 +276,24 @@ Sets the board zoom.
                                       [dontSetBoundingBox any/c])
          void?]{
 Resizes the board container.
+}
+
+@defproc[(jsx-board-remove-grids! [board jsx-board?])
+         void?]{
+@(jsx-bar "removeGrids"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#removeGrids"))
+Removes all grids from the board.
+}
+
+@defproc[(jsx-board-select [board jsx-board?]
+                           [str any/c]
+                           [only-by-id-or-name (or/c #f boolean?) #f])
+         (or/c jsx-point? jsx-element?)]{
+@(jsx-bar "select"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#select"))
+Selects one or more objects on the board.
 }
 
 @defproc[(jsx-board-zoom100! [board jsx-board?])
@@ -305,6 +331,22 @@ Disables board selection mode.
 Stops all running board animations.
 }
 
+@defproc[(jsx-board-show-dependencies! [board jsx-board?])
+         void?]{
+@(jsx-bar "showDependencies"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#showDependencies"))
+Shows the dependency graph for the board.
+}
+
+@defproc[(jsx-board-show-xml! [board jsx-board?])
+         void?]{
+@(jsx-bar "showXML"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#showXML"))
+Shows the board XML in a separate window.
+}
+
 @defproc[(jsx-board-to-fullscreen! [board jsx-board?] [id any/c])
          void?]{
 Expands the board to fullscreen.
@@ -328,6 +370,62 @@ Starts watching whether the board is visible.
 @defproc[(jsx-board-stop-intersection-observer! [board jsx-board?])
          void?]{
 Stops watching board visibility.
+}
+
+@defproc[(jsx-board-has-point? [board jsx-board?]
+                               [x any/c]
+                               [y any/c])
+         boolean?]{
+@(jsx-bar "hasPoint"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#hasPoint"))
+Checks whether the point @racket[x], @racket[y] lies inside the board viewport.
+}
+
+@defproc[(jsx-board-move-origin! [board jsx-board?]
+                                 [x any/c]
+                                 [y any/c]
+                                 [diff any/c])
+         void?]{
+@(jsx-bar "moveOrigin"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#moveOrigin"))
+Moves the origin of the board.
+}
+
+@defproc[(jsx-board-set-id [board jsx-board?]
+                           [obj any/c]
+                           [type any/c])
+         string?]{
+@(jsx-bar "setId"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#setId"))
+Composes an id for an element on the board.
+}
+
+@defproc[(jsx-board-update-renderer! [board jsx-board?])
+         void?]{
+@(jsx-bar "updateRenderer"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#updateRenderer"))
+Refreshes the board renderer.
+}
+
+@defproc[(jsx-board-update-renderer-canvas! [board jsx-board?])
+         void?]{
+@(jsx-bar "updateRendererCanvas"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#updateRendererCanvas"))
+Refreshes the board renderer in Canvas mode.
+}
+
+@defproc[(jsx-board-zoom-elements! [board jsx-board?]
+                                   [elements any/c])
+         void?]{
+@(jsx-bar "zoomElements"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#zoomElements"))
+Zooms the board so the given elements fit in the viewport.
 }
 
 @defproc[(jsx-parents [v any/c] ...)
