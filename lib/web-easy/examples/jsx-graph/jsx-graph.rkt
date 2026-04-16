@@ -77,17 +77,6 @@
         (if (not (extern-present? jsxgraph))
             #f
             (let ()
-              (define line
-                (jsx-create-line current-board (jsx-parents current-p current-q)))
-              (define segment
-                (jsx-create current-board 'segment (jsx-parents current-p current-q)))
-              (define circle
-                (jsx-create-circle current-board (jsx-parents current-p current-q)))
-              (define label
-                (jsx-create current-board
-                            'text
-                            (jsx-parents -6 6 "P-Q constructors")
-                            (js-object (vector))))
               (void
                (set! current-board
                      (jsx-create-board
@@ -114,6 +103,17 @@
               (void (jsx-board-unsuspend-update! current-board))
               (void (jsx-board-full-update! current-board))
               (let ()
+                (define line
+                  (jsx-create-line current-board (jsx-parents current-p current-q)))
+                (define segment
+                  (jsx-create current-board 'segment (jsx-parents current-p current-q)))
+                (define circle
+                  (jsx-create-circle current-board (jsx-parents current-p current-q)))
+                (define label
+                  (jsx-create current-board
+                              'text
+                              (jsx-parents -6 6 "P-Q constructors")
+                              (js-object (vector))))
                 (define child-count (jsx-board-count-children current-board))
                 (define board-objects (jsx-board-objects-list current-board))
                 (define object-count (vector-length board-objects))
