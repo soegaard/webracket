@@ -84,6 +84,7 @@
   jsx-create-perpendicular
   jsx-create-intersection
   jsx-create-text
+  jsx-board-count-children
   jsx-coordinates
   jsx-on
   (for-label (all-defined-out)))
@@ -168,5 +169,6 @@
 (define jsx-create-perpendicular any/c)
 (define jsx-create-intersection any/c)
 (define jsx-create-text any/c)
+(define jsx-board-count-children any/c)
 (define jsx-coordinates any/c)
 (define jsx-on any/c)

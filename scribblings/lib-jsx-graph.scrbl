@@ -171,6 +171,14 @@ Creates an intersection point on @racket[board].
 Creates a text element on @racket[board].
 }
 
+@defproc[(jsx-board-count-children [board jsx-board?])
+         number?]{
+@(jsx-bar "countChildren"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#countChildren"))
+Counts the direct children on @racket[board].
+}
+
 @defproc[(jsx-parents [v any/c] ...)
          vector?]{
 Packs parent values into a vector for JSXGraph.

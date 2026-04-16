@@ -435,6 +435,11 @@
 (define (jsx-board-full-update! board)
   (jsx-board-full-update!/raw (jsx-board-raw board)))
 
+;; jsx-board-count-children : jsx-board? -> number?
+;;   Count the direct children on a board.
+(define (jsx-board-count-children board)
+  (js-send/value (jsx-board-raw board) "countChildren" (vector)))
+
 ;; jsx-board-remove-object! : jsx-board? any/c -> void?
 ;;   Remove an object from a board.
 (define (jsx-board-remove-object! board object)
