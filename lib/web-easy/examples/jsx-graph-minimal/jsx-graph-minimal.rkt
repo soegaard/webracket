@@ -95,7 +95,7 @@
              (void
               (jsx-create-line current-board (jsx-parents current-p current-q)))
              (void (jsx-board-full-update! current-board))
-             (void (set-status! "Board ready."))
+             (void (set-status! "Board ready. points=P,Q."))
              (void))))]))
 
 ;; refresh-board! : -> void?
@@ -103,7 +103,7 @@
 (define (refresh-board!)
   (when current-board
     (jsx-board-full-update! current-board)
-    (set-status! "Board refreshed."))
+    (set-status! "Board refreshed. points=P,Q."))
   (void))
 
 (define jsx-graph-app

@@ -47,17 +47,30 @@
 
     async function waitForReady(frame, timeoutMs) {
       const start = Date.now();
+      let lastBody = "";
+      let lastStatus = "";
       while (Date.now() - start < timeoutMs) {
         const frameDoc = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+        const frameWin = frame.contentWindow;
         if (frameDoc) {
-          const text = (frameDoc.body && frameDoc.body.textContent) ? frameDoc.body.textContent : "";
-          if (text.includes("Board ready.")) {
+          lastBody = (frameDoc.body && frameDoc.body.textContent) ? frameDoc.body.textContent : "";
+        }
+        if (frameWin) {
+          lastStatus = String(frameWin.status || "");
+          if (lastStatus.includes("Board ready.")) {
+            return frameWin;
+          }
+          if (lastBody.includes("Board ready.")) {
             return frameDoc;
           }
         }
         await sleep(25);
       }
-      throw new Error("Timed out waiting for JSXGraph minimal board to initialize");
+      throw new Error(
+        "Timed out waiting for JSXGraph minimal board to initialize\n" +
+        "body=" + JSON.stringify(lastBody) + "\n" +
+        "status=" + JSON.stringify(lastStatus)
+      );
     }
 
     (async function run() {
@@ -77,7 +90,15 @@
         }
 
         await waitForReady(frame, 20000);
-        setStatus("PASS\nstatus=Board ready.", "pass");
+        const readyFrameDoc = frame.contentDocument || (frame.contentWindow && frame.contentWindow.document);
+        if (!readyFrameDoc) {
+          throw new Error("No iframe document after board readiness");
+        }
+        const text = (readyFrameDoc.body && readyFrameDoc.body.textContent) ? readyFrameDoc.body.textContent : "";
+        if (!text.includes("PQRefresh boardBoard ready.")) {
+          throw new Error("Board did not report the expected point labels: " + text);
+        }
+        setStatus("PASS\nstatus=Board ready. points=P,Q.", "pass");
       } catch (err) {
         console.error(err);
         setStatus("FAIL\n" + (err && err.message ? err.message : String(err)), "fail");
