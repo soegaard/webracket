@@ -71,7 +71,7 @@
      (let ([jsxgraph (js-ref jxg "JSXGraph")])
        (if (not (extern-present? jsxgraph))
            #f
-           (begin
+           (let ()
              (void
               (set! current-board
                     (jsx-create-board

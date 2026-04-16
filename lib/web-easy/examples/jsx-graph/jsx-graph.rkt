@@ -72,10 +72,22 @@
   (define jxg (js-ref win "JXG"))
   (if (not (extern-present? jxg))
       #f
-      (let* ([jsxgraph (js-ref jxg "JSXGraph")])
+      (let ()
+        (define jsxgraph (js-ref jxg "JSXGraph"))
         (if (not (extern-present? jsxgraph))
             #f
-            (begin
+            (let ()
+              (define line
+                (jsx-create-line current-board (jsx-parents current-p current-q)))
+              (define segment
+                (jsx-create current-board 'segment (jsx-parents current-p current-q)))
+              (define circle
+                (jsx-create-circle current-board (jsx-parents current-p current-q)))
+              (define label
+                (jsx-create current-board
+                            'text
+                            (jsx-parents -6 6 "P-Q constructors")
+                            (js-object (vector))))
               (void
                (set! current-board
                      (jsx-create-board
@@ -96,32 +108,20 @@
                                        (jsx-parents 2 3)
                                        (js-object (vector (vector "name" "Q")
                                                           (vector "size" 4))))))
-              (let* ([line
-                      (jsx-create-line current-board (jsx-parents current-p current-q))]
-                     [segment
-                      (jsx-create current-board 'segment (jsx-parents current-p current-q))]
-                     [circle
-                      (jsx-create-circle current-board (jsx-parents current-p current-q))]
-                     [label
-                      (jsx-create current-board
-                                  'text
-                                  (jsx-parents -6 6 "P-Q constructors")
-                                  (js-object (vector)))])
-                (void (jsx-board-suspend-update! current-board))
-                (void (jsx-set-point-size! current-p 5.0))
-                (void (jsx-set-point-size! current-q 5.0))
-                (void (jsx-board-unsuspend-update! current-board))
-                (void (jsx-board-full-update! current-board))
-                (void (set-status! "Board ready."))
-                (void
-                 (set-summary!
-                  (format "Created a line, a segment, a circle, and a text label. P = (~a, ~a), Q = (~a, ~a)."
-                          (jsx-point-x current-p)
-                          (jsx-point-y current-p)
-                          (jsx-point-x current-q)
-                          (jsx-point-y current-q))))
-                (void line segment circle label)
-                (void)))))))
+              (void (jsx-board-suspend-update! current-board))
+              (void (jsx-set-point-size! current-p 5.0))
+              (void (jsx-set-point-size! current-q 5.0))
+              (void (jsx-board-unsuspend-update! current-board))
+              (void (jsx-board-full-update! current-board))
+              (void (set-status! "Board ready."))
+              (void
+               (set-summary!
+                (format "Created a line, a segment, a circle, and a text label. P = (~a, ~a), Q = (~a, ~a)."
+                        (jsx-point-x current-p)
+                        (jsx-point-y current-p)
+                        (jsx-point-x current-q)
+                        (jsx-point-y current-q))))
+              (void line segment circle label))))))
 
 ;; refresh-board! : -> void?
 ;;   Force a full redraw of the live board.
