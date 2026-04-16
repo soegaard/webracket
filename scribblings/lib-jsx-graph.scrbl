@@ -11,15 +11,15 @@
 @(compile-option-bar "Compile option: " "--ffi jsxgraph")
 
 The @racket[jsx-graph] library provides a small Rackety wrapper around
-the JSXGraph browser library. JSXGraph is an interactive geometry
-system for drawing points, lines, circles, and other constructions on a
-browser board.
+the @racketid[JXG.JSXGraph] board-creation entry point from JSXGraph.
+JSXGraph is an interactive geometry system for drawing points, lines,
+circles, and other constructions on a browser board.
 
 Use @racket[jsx-graph] when you want to:
 
 @itemlist[
-  @item{create a JSXGraph board in the current page}
-  @item{build geometry objects such as points, lines, circles, and texts}
+  @item{create a @racket[JXG.JSXGraph] board in the current page}
+  @item{build geometry objects such as @racket[JXG.Point], @racket[JXG.Line], @racket[JXG.Circle], and @racket[JXG.Text]}
   @item{inspect or adjust point properties from Racket code}
   @item{attach browser event handlers to JSXGraph elements}
 ]
@@ -28,6 +28,11 @@ The library keeps the low-level browser FFI bindings tucked away behind
 checked helper functions. For the underlying @racketid[js-jsx-*] FFI
 bindings, see @racket[ffi/jsxgraph.ffi] and the corresponding browser
 API reference page.
+
+The main constructors return checked wrapper structs:
+@racket[jsx-board] for @racket[JXG.JSXGraph] boards, @racket[jsx-point]
+for @racket[JXG.Point] values, and @racket[jsx-element] for other
+geometry objects.
 
 @section{Quick Start}
 
@@ -68,58 +73,86 @@ functions keep the code fairly Rackety.
 
 @section{API Reference}
 
+@defstruct[jsx-board ([raw external/raw])]{
+Wraps a JSXGraph board object.
+}
+
+@defstruct[jsx-element ([raw external/raw])]{
+Wraps a generic JSXGraph geometry object.
+}
+
+@defstruct[jsx-point ([raw external/raw])]{
+Wraps a JSXGraph point object.
+}
+
 @defproc[(jsx-create-board [container-id string?]
                            [maybe-attributes (or/c #f any/c) #f])
-         external/raw]{
+         jsx-board?]{
+@(jsx-bar "JXG.JSXGraph"
+          (jsx-doc-url "JXG.JSXGraph"))
 Creates a JSXGraph board for the container with the given id.
 }
 
 @defproc[(jsx-create-point [board external/raw]
                            [parents any/c]
                            [attributes (or/c #f any/c) #f])
-         external/raw]{
+         jsx-point?]{
+@(jsx-bar "Point"
+          (jsx-doc-url "Point"))
 Creates a point on @racket[board].
 }
 
 @defproc[(jsx-create-line [board external/raw]
                           [parents any/c]
                           [attributes (or/c #f any/c) #f])
-         external/raw]{
+         jsx-element?]{
+@(jsx-bar "Line"
+          (jsx-doc-url "Line"))
 Creates a line on @racket[board].
 }
 
 @defproc[(jsx-create-segment [board external/raw]
                              [parents any/c]
                              [attributes (or/c #f any/c) #f])
-         external/raw]{
+         jsx-element?]{
+@(jsx-bar "Segment"
+          (jsx-doc-url "Segment"))
 Creates a segment on @racket[board].
 }
 
 @defproc[(jsx-create-circle [board external/raw]
                             [parents any/c]
                             [attributes (or/c #f any/c) #f])
-         external/raw]{
+         jsx-element?]{
+@(jsx-bar "Circle"
+          (jsx-doc-url "Circle"))
 Creates a circle on @racket[board].
 }
 
 @defproc[(jsx-create-perpendicular [board external/raw]
                                    [parents any/c]
                                    [attributes (or/c #f any/c) #f])
-         external/raw]{
+         jsx-element?]{
+@(jsx-bar "PerpendicularPoint"
+          (jsx-doc-url "PerpendicularPoint"))
 Creates a perpendicular line on @racket[board].
 }
 
 @defproc[(jsx-create-intersection [board external/raw]
                                   [parents any/c]
                                   [attributes (or/c #f any/c) #f])
-         external/raw]{
+         jsx-element?]{
+@(jsx-bar "Intersection"
+          (jsx-doc-url "Intersection"))
 Creates an intersection point on @racket[board].
 }
 
 @defproc[(jsx-create-text [board external/raw]
                           [parents any/c]
                           [attributes (or/c #f any/c) #f])
-         external/raw]{
+         jsx-element?]{
+@(jsx-bar "Text"
+          (jsx-doc-url "Text"))
 Creates a text element on @racket[board].
 }
 
@@ -144,18 +177,18 @@ Installs a JSXGraph event handler on @racket[element].
 Returns @racket[#t] when @racket[v] is a wrapped JSXGraph point.
 }
 
-@defproc[(jsx-point-x [p external/raw]) flonum?]{
+@defproc[(jsx-point-x [p jsx-point?]) flonum?]{
 Returns the x coordinate of a JSXGraph point.
 }
 
-@defproc[(jsx-point-y [p external/raw]) flonum?]{
+@defproc[(jsx-point-y [p jsx-point?]) flonum?]{
 Returns the y coordinate of a JSXGraph point.
 }
 
-@defproc[(jsx-point-size [p external/raw]) flonum?]{
+@defproc[(jsx-point-size [p jsx-point?]) flonum?]{
 Returns the point size.
 }
 
-@defproc[(jsx-set-point-size! [p external/raw] [size flonum?]) void?]{
+@defproc[(jsx-set-point-size! [p jsx-point?] [size flonum?]) void?]{
 Sets the point size.
 }

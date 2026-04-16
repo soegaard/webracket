@@ -8,7 +8,9 @@
           em
           how-to-require
           compile-option-bar
-          mdn-bar)
+          mdn-bar
+          jsx-doc-url
+          jsx-bar)
 
 (define (wiki title page)
    (hyperlink
@@ -53,5 +55,21 @@
                (list (background-color-property "#f7fbff")))
    (list (list (para (list (hspace 1)
                            (tt "MDN")
+                           (hspace 2)
+                           (hyperlink url (tt label))))))))
+
+;; jsx-doc-url : string? -> string?
+;;   Build a JSXGraph documentation URL for a symbols page.
+(define (jsx-doc-url page)
+  (string-append "https://jsxgraph.org/docs/symbols/" page ".html"))
+
+;; jsx-bar : string? string? -> block?
+;;   Render a JSXGraph banner linking to the corresponding JSX docs page.
+(define (jsx-bar label url)
+  (make-table
+   (make-style "defmodule"
+               (list (background-color-property "#f7fff4")))
+   (list (list (para (list (hspace 1)
+                           (tt "JSXGraph")
                            (hspace 2)
                            (hyperlink url (tt label))))))))
