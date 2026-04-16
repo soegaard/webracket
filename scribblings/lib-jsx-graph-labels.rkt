@@ -3,6 +3,15 @@
 (require racket/contract/base)
 
 (provide
+  jsx-board
+  jsx-board-raw
+  jsx-board?
+  jsx-element
+  jsx-element-raw
+  jsx-element?
+  jsx-point
+  jsx-point-raw
+  jsx-point?
   jsx-init-board
   jsx-board-create
   jsx-board-create-point
@@ -67,6 +76,7 @@
   jsx-set-attribute!
   jsx-dot
   jsx-create-board
+  jsx-create
   jsx-create-point
   jsx-create-line
   jsx-create-segment
@@ -78,6 +88,15 @@
   jsx-on
   (for-label (all-defined-out)))
 
+(define jsx-board any/c)
+(define jsx-board-raw any/c)
+(define jsx-board? any/c)
+(define jsx-element any/c)
+(define jsx-element-raw any/c)
+(define jsx-element? any/c)
+(define jsx-point any/c)
+(define jsx-point-raw any/c)
+(define jsx-point? any/c)
 (define jsx-init-board any/c)
 (define jsx-board-create any/c)
 (define jsx-board-create-point any/c)
@@ -91,7 +110,6 @@
 (define jsx-board-remove-object! any/c)
 (define jsx-board-suspend-update! any/c)
 (define jsx-board-unsuspend-update! any/c)
-(define jsx-point? any/c)
 (define jsx-point-attractor-distance any/c)
 (define jsx-set-point-attractor-distance! any/c)
 (define jsx-point-attractors any/c)
@@ -142,6 +160,7 @@
 (define jsx-set-attribute! any/c)
 (define jsx-dot any/c)
 (define jsx-create-board any/c)
+(define jsx-create any/c)
 (define jsx-create-point any/c)
 (define jsx-create-line any/c)
 (define jsx-create-segment any/c)

@@ -19,6 +19,7 @@ Use @racket[jsx-graph] when you want to:
 
 @itemlist[
   @item{create a @racket[JXG.JSXGraph] board in the current page}
+  @item{create arbitrary JSXGraph elements with @racket[jsx-create] or the specialized constructors}
   @item{build geometry objects such as @racket[JXG.Point], @racket[JXG.Line], @racket[JXG.Circle], and @racket[JXG.Text]}
   @item{inspect or adjust point properties from Racket code}
   @item{attach browser event handlers to JSXGraph elements}
@@ -67,8 +68,12 @@ functions keep the code fairly Rackety.
 (define q (jsx-create-point board (jsx-parents 1 0)))
 (define l (jsx-create-line board (jsx-parents p q)))
 
-(define-values (px py) (jsx-coordinates p))
-(void board p q l px py)
+(define label
+  (jsx-create board 'text (jsx-parents -6 6 "A line through two points")))
+
+(define px (jsx-point-x p))
+(define py (jsx-point-y p))
+(void board p q l label px py)
 ]
 
 @section{API Reference}
@@ -93,7 +98,17 @@ Wraps a JSXGraph point object.
 Creates a JSXGraph board for the container with the given id.
 }
 
-@defproc[(jsx-create-point [board external/raw]
+@defproc[(jsx-create [board jsx-board?]
+                     [element-type (or/c string? symbol?)]
+                     [parents any/c]
+                     [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "JXG.Board"
+          (jsx-doc-url "JXG.Board"))
+Creates a JSXGraph element of the requested type on @racket[board].
+}
+
+@defproc[(jsx-create-point [board jsx-board?]
                            [parents any/c]
                            [attributes (or/c #f any/c) #f])
          jsx-point?]{
@@ -102,7 +117,7 @@ Creates a JSXGraph board for the container with the given id.
 Creates a point on @racket[board].
 }
 
-@defproc[(jsx-create-line [board external/raw]
+@defproc[(jsx-create-line [board jsx-board?]
                           [parents any/c]
                           [attributes (or/c #f any/c) #f])
          jsx-element?]{
@@ -111,7 +126,7 @@ Creates a point on @racket[board].
 Creates a line on @racket[board].
 }
 
-@defproc[(jsx-create-segment [board external/raw]
+@defproc[(jsx-create-segment [board jsx-board?]
                              [parents any/c]
                              [attributes (or/c #f any/c) #f])
          jsx-element?]{
@@ -120,7 +135,7 @@ Creates a line on @racket[board].
 Creates a segment on @racket[board].
 }
 
-@defproc[(jsx-create-circle [board external/raw]
+@defproc[(jsx-create-circle [board jsx-board?]
                             [parents any/c]
                             [attributes (or/c #f any/c) #f])
          jsx-element?]{
@@ -129,7 +144,7 @@ Creates a segment on @racket[board].
 Creates a circle on @racket[board].
 }
 
-@defproc[(jsx-create-perpendicular [board external/raw]
+@defproc[(jsx-create-perpendicular [board jsx-board?]
                                    [parents any/c]
                                    [attributes (or/c #f any/c) #f])
          jsx-element?]{
@@ -138,7 +153,7 @@ Creates a circle on @racket[board].
 Creates a perpendicular line on @racket[board].
 }
 
-@defproc[(jsx-create-intersection [board external/raw]
+@defproc[(jsx-create-intersection [board jsx-board?]
                                   [parents any/c]
                                   [attributes (or/c #f any/c) #f])
          jsx-element?]{
@@ -147,7 +162,7 @@ Creates a perpendicular line on @racket[board].
 Creates an intersection point on @racket[board].
 }
 
-@defproc[(jsx-create-text [board external/raw]
+@defproc[(jsx-create-text [board jsx-board?]
                           [parents any/c]
                           [attributes (or/c #f any/c) #f])
          jsx-element?]{
