@@ -94,11 +94,31 @@
   jsx-board-canvas-height
   jsx-board-bounding-box
   jsx-board-add-grid!
+  jsx-board-add-hook!
+  jsx-board-add-keyboard-event-handlers!
+  jsx-board-add-mouse-event-handlers!
+  jsx-board-add-pointer-event-handlers!
+  jsx-board-add-resize-event-handlers!
+  jsx-board-add-touch-event-handlers!
+  jsx-board-add-wheel-event-handlers!
+  jsx-board-add-fullscreen-event-handlers!
+  jsx-board-add-log-entry!
+  jsx-board-get-mouse-position
+  jsx-board-get-usr-coords-of-mouse
+  jsx-board-get-coords-top-left-corner
+  jsx-board-get-all-objects-under-mouse
+  jsx-board-get-all-under-mouse
   jsx-board-set-attribute!
   jsx-board-set-bounding-box!
   jsx-board-set-zoom!
   jsx-board-resize-container!
   jsx-board-remove-grids!
+  jsx-board-remove-hook!
+  jsx-board-remove-keyboard-event-handlers!
+  jsx-board-remove-mouse-event-handlers!
+  jsx-board-remove-pointer-event-handlers!
+  jsx-board-remove-resize-event-handlers!
+  jsx-board-remove-touch-event-handlers!
   jsx-board-select
   jsx-board-zoom100!
   jsx-board-zoom-all-points!
@@ -107,6 +127,19 @@
   jsx-board-start-selection-mode!
   jsx-board-stop-selection-mode!
   jsx-board-stop-all-animation!
+  jsx-board-clear-traces!
+  jsx-board-dehighlight-all!
+  jsx-board-update-coords!
+  jsx-board-update-csstransforms!
+  jsx-board-update-elements!
+  jsx-board-update-hooks!
+  jsx-board-suppress-default!
+  jsx-board-init-infobox!
+  jsx-board-init-move-object!
+  jsx-board-init-move-origin!
+  jsx-board-highlight-custom-infobox!
+  jsx-board-highlight-infobox!
+  jsx-board-move-object!
   jsx-board-show-dependencies!
   jsx-board-show-xml!
   jsx-board-to-fullscreen!
@@ -119,6 +152,7 @@
   jsx-board-set-id
   jsx-board-update-renderer!
   jsx-board-update-renderer-canvas!
+  jsx-board-update-infobox!
   jsx-board-zoom-elements!
   jsx-coordinates
   jsx-on
@@ -214,11 +248,31 @@
 (define jsx-board-canvas-height any/c)
 (define jsx-board-bounding-box any/c)
 (define jsx-board-add-grid! any/c)
+(define jsx-board-add-hook! any/c)
+(define jsx-board-add-keyboard-event-handlers! any/c)
+(define jsx-board-add-mouse-event-handlers! any/c)
+(define jsx-board-add-pointer-event-handlers! any/c)
+(define jsx-board-add-resize-event-handlers! any/c)
+(define jsx-board-add-touch-event-handlers! any/c)
+(define jsx-board-add-wheel-event-handlers! any/c)
+(define jsx-board-add-fullscreen-event-handlers! any/c)
+(define jsx-board-add-log-entry! any/c)
+(define jsx-board-get-mouse-position any/c)
+(define jsx-board-get-usr-coords-of-mouse any/c)
+(define jsx-board-get-coords-top-left-corner any/c)
+(define jsx-board-get-all-objects-under-mouse any/c)
+(define jsx-board-get-all-under-mouse any/c)
 (define jsx-board-set-attribute! any/c)
 (define jsx-board-set-bounding-box! any/c)
 (define jsx-board-set-zoom! any/c)
 (define jsx-board-resize-container! any/c)
 (define jsx-board-remove-grids! any/c)
+(define jsx-board-remove-hook! any/c)
+(define jsx-board-remove-keyboard-event-handlers! any/c)
+(define jsx-board-remove-mouse-event-handlers! any/c)
+(define jsx-board-remove-pointer-event-handlers! any/c)
+(define jsx-board-remove-resize-event-handlers! any/c)
+(define jsx-board-remove-touch-event-handlers! any/c)
 (define jsx-board-select any/c)
 (define jsx-board-zoom100! any/c)
 (define jsx-board-zoom-all-points! any/c)
@@ -227,6 +281,19 @@
 (define jsx-board-start-selection-mode! any/c)
 (define jsx-board-stop-selection-mode! any/c)
 (define jsx-board-stop-all-animation! any/c)
+(define jsx-board-clear-traces! any/c)
+(define jsx-board-dehighlight-all! any/c)
+(define jsx-board-update-coords! any/c)
+(define jsx-board-update-csstransforms! any/c)
+(define jsx-board-update-elements! any/c)
+(define jsx-board-update-hooks! any/c)
+(define jsx-board-suppress-default! any/c)
+(define jsx-board-init-infobox! any/c)
+(define jsx-board-init-move-object! any/c)
+(define jsx-board-init-move-origin! any/c)
+(define jsx-board-highlight-custom-infobox! any/c)
+(define jsx-board-highlight-infobox! any/c)
+(define jsx-board-move-object! any/c)
 (define jsx-board-show-dependencies! any/c)
 (define jsx-board-show-xml! any/c)
 (define jsx-board-to-fullscreen! any/c)
@@ -239,6 +306,7 @@
 (define jsx-board-set-id any/c)
 (define jsx-board-update-renderer! any/c)
 (define jsx-board-update-renderer-canvas! any/c)
+(define jsx-board-update-infobox! any/c)
 (define jsx-board-zoom-elements! any/c)
 (define jsx-coordinates any/c)
 (define jsx-on any/c)

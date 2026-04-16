@@ -484,6 +484,61 @@
   (js-send/extern/nullish (jsx-board-raw board) "addGrid" (vector))
   (void))
 
+;; jsx-board-add-hook! : jsx-board? procedure? [string?] [any/c] -> exact-integer?
+;;   Register a board hook and return its identifier.
+(define (jsx-board-add-hook! board hook [m "update"] [context board])
+  (js-send/extern (jsx-board-raw board) "addHook"
+                  (vector hook m (jsx-unwrap context))))
+
+;; jsx-board-add-keyboard-event-handlers! : jsx-board? -> void?
+;;   Register keyboard event handlers.
+(define (jsx-board-add-keyboard-event-handlers! board)
+  (js-send/extern/nullish (jsx-board-raw board) "addKeyboardEventHandlers" (vector))
+  (void))
+
+;; jsx-board-add-mouse-event-handlers! : jsx-board? -> void?
+;;   Register mouse event handlers.
+(define (jsx-board-add-mouse-event-handlers! board)
+  (js-send/extern/nullish (jsx-board-raw board) "addMouseEventHandlers" (vector))
+  (void))
+
+;; jsx-board-add-pointer-event-handlers! : jsx-board? -> void?
+;;   Register pointer event handlers.
+(define (jsx-board-add-pointer-event-handlers! board)
+  (js-send/extern/nullish (jsx-board-raw board) "addPointerEventHandlers" (vector))
+  (void))
+
+;; jsx-board-add-resize-event-handlers! : jsx-board? -> void?
+;;   Register resize event handlers.
+(define (jsx-board-add-resize-event-handlers! board)
+  (js-send/extern/nullish (jsx-board-raw board) "addResizeEventHandlers" (vector))
+  (void))
+
+;; jsx-board-add-touch-event-handlers! : jsx-board? any/c -> void?
+;;   Register touch event handlers.
+(define (jsx-board-add-touch-event-handlers! board apple-gestures)
+  (js-send/extern/nullish (jsx-board-raw board) "addTouchEventHandlers" (vector apple-gestures))
+  (void))
+
+;; jsx-board-add-wheel-event-handlers! : jsx-board? -> void?
+;;   Register wheel event handlers.
+(define (jsx-board-add-wheel-event-handlers! board)
+  (js-send/extern/nullish (jsx-board-raw board) "addWheelEventHandlers" (vector))
+  (void))
+
+;; jsx-board-add-fullscreen-event-handlers! : jsx-board? -> void?
+;;   Register fullscreen event handlers.
+(define (jsx-board-add-fullscreen-event-handlers! board)
+  (js-send/extern/nullish (jsx-board-raw board) "addFullscreenEventHandlers" (vector))
+  (void))
+
+;; jsx-board-add-log-entry! : jsx-board? any/c any/c any/c -> void?
+;;   Add a log entry to the board user log.
+(define (jsx-board-add-log-entry! board type obj pos)
+  (js-send/extern/nullish (jsx-board-raw board) "addLogEntry"
+                          (vector type (jsx-unwrap obj) pos))
+  (void))
+
 ;; jsx-wrap-board-object : external/raw -> (or/c jsx-point? jsx-element?)
 ;;   Wrap a board object using the most specific checked wrapper.
 (define (jsx-wrap-board-object raw)
@@ -501,6 +556,39 @@
 (define (jsx-board-num-objects board)
   (js-ref (jsx-board-raw board) "numObjects"))
 
+;; jsx-board-get-mouse-position : jsx-board? any/c [exact-integer?] -> vector?
+;;   Read the mouse position in screen coordinates.
+(define (jsx-board-get-mouse-position board evt [i #f])
+  (define args (if i
+                   (vector evt i)
+                   (vector evt)))
+  (js-array->vector
+   (js-send/extern (jsx-board-raw board) "getMousePosition" args)))
+
+;; jsx-board-get-usr-coords-of-mouse : jsx-board? any/c -> vector?
+;;   Read the mouse position in user coordinates.
+(define (jsx-board-get-usr-coords-of-mouse board evt)
+  (js-array->vector
+   (js-send/extern (jsx-board-raw board) "getUsrCoordsOfMouse" (vector evt))))
+
+;; jsx-board-get-coords-top-left-corner : jsx-board? -> vector?
+;;   Read the board coordinates of the top-left corner.
+(define (jsx-board-get-coords-top-left-corner board)
+  (js-array->vector
+   (js-send/extern (jsx-board-raw board) "getCoordsTopLeftCorner" (vector))))
+
+;; jsx-board-get-all-objects-under-mouse : jsx-board? any/c -> vector?
+;;   Collect the objects under a pointer event.
+(define (jsx-board-get-all-objects-under-mouse board evt)
+  (js-array->vector
+   (js-send/extern (jsx-board-raw board) "getAllObjectsUnderMouse" (vector evt))))
+
+;; jsx-board-get-all-under-mouse : jsx-board? any/c -> vector?
+;;   Collect the objects and user coordinates under a pointer event.
+(define (jsx-board-get-all-under-mouse board evt)
+  (js-array->vector
+   (js-send/extern (jsx-board-raw board) "getAllUnderMouse" (vector evt))))
+
 ;; jsx-board-has-point? : jsx-board? flonum? flonum? -> boolean?
 ;;   Check whether a point lies inside the board bounding box.
 (define (jsx-board-has-point? board x y)
@@ -513,6 +601,27 @@
   (define keys (js-array->vector (js-send/extern (js-Object) "keys" (vector objects))))
   (for/vector #:length (vector-length keys) ([key (in-vector keys)])
     (jsx-wrap-board-object (js-ref objects key))))
+
+;; jsx-board-highlight-custom-infobox! : jsx-board? string? [any/c] -> void?
+;;   Change the board infobox text.
+(define (jsx-board-highlight-custom-infobox! board text [el #f])
+  (js-send/extern/nullish (jsx-board-raw board) "highlightCustomInfobox"
+                          (vector text el))
+  (void))
+
+;; jsx-board-highlight-infobox! : jsx-board? any/c any/c [any/c] -> void?
+;;   Show the given coordinates in the board infobox.
+(define (jsx-board-highlight-infobox! board x y [el #f])
+  (js-send/extern/nullish (jsx-board-raw board) "highlightInfobox"
+                          (vector x y el))
+  (void))
+
+;; jsx-board-move-object! : jsx-board? any/c any/c any/c any/c any/c -> void?
+;;   Move a board object.
+(define (jsx-board-move-object! board x y o evt type)
+  (js-send/extern/nullish (jsx-board-raw board) "moveObject"
+                          (vector x y (jsx-unwrap o) evt type))
+  (void))
 
 ;; jsx-board-move-origin! : jsx-board? any/c any/c any/c -> void?
 ;;   Move the board origin.
@@ -550,6 +659,42 @@
 ;;   Remove all grids from the board.
 (define (jsx-board-remove-grids! board)
   (js-send/extern/nullish (jsx-board-raw board) "removeGrids" (vector))
+  (void))
+
+;; jsx-board-remove-hook! : jsx-board? exact-integer? -> void?
+;;   Remove a board hook.
+(define (jsx-board-remove-hook! board id)
+  (js-send/extern/nullish (jsx-board-raw board) "removeHook" (vector id))
+  (void))
+
+;; jsx-board-remove-keyboard-event-handlers! : jsx-board? -> void?
+;;   Remove keyboard event handlers.
+(define (jsx-board-remove-keyboard-event-handlers! board)
+  (js-send/extern/nullish (jsx-board-raw board) "removeKeyboardEventHandlers" (vector))
+  (void))
+
+;; jsx-board-remove-mouse-event-handlers! : jsx-board? -> void?
+;;   Remove mouse event handlers.
+(define (jsx-board-remove-mouse-event-handlers! board)
+  (js-send/extern/nullish (jsx-board-raw board) "removeMouseEventHandlers" (vector))
+  (void))
+
+;; jsx-board-remove-pointer-event-handlers! : jsx-board? -> void?
+;;   Remove pointer event handlers.
+(define (jsx-board-remove-pointer-event-handlers! board)
+  (js-send/extern/nullish (jsx-board-raw board) "removePointerEventHandlers" (vector))
+  (void))
+
+;; jsx-board-remove-resize-event-handlers! : jsx-board? -> void?
+;;   Remove resize event handlers.
+(define (jsx-board-remove-resize-event-handlers! board)
+  (js-send/extern/nullish (jsx-board-raw board) "removeResizeEventHandlers" (vector))
+  (void))
+
+;; jsx-board-remove-touch-event-handlers! : jsx-board? -> void?
+;;   Remove touch event handlers.
+(define (jsx-board-remove-touch-event-handlers! board)
+  (js-send/extern/nullish (jsx-board-raw board) "removeTouchEventHandlers" (vector))
   (void))
 
 ;; jsx-board-select : jsx-board? any/c [boolean?] -> (or/c jsx-point? jsx-element?)
@@ -600,6 +745,66 @@
   (js-send/extern/nullish (jsx-board-raw board) "stopAllAnimation" (vector))
   (void))
 
+;; jsx-board-clear-traces! : jsx-board? -> void?
+;;   Clear all traces from the board.
+(define (jsx-board-clear-traces! board)
+  (js-send/extern/nullish (jsx-board-raw board) "clearTraces" (vector))
+  (void))
+
+;; jsx-board-dehighlight-all! : jsx-board? -> void?
+;;   Remove highlighting from all elements.
+(define (jsx-board-dehighlight-all! board)
+  (js-send/extern/nullish (jsx-board-raw board) "dehighlightAll" (vector))
+  (void))
+
+;; jsx-board-update-coords! : jsx-board? -> void?
+;;   Update the coordinates of all elements that need them.
+(define (jsx-board-update-coords! board)
+  (js-send/extern/nullish (jsx-board-raw board) "updateCoords" (vector))
+  (void))
+
+;; jsx-board-update-csstransforms! : jsx-board? -> void?
+;;   Refresh CSS transforms.
+(define (jsx-board-update-csstransforms! board)
+  (js-send/extern/nullish (jsx-board-raw board) "updateCSSTransforms" (vector))
+  (void))
+
+;; jsx-board-update-elements! : jsx-board? any/c -> void?
+;;   Update the board elements.
+(define (jsx-board-update-elements! board drag)
+  (js-send/extern/nullish (jsx-board-raw board) "updateElements" (vector drag))
+  (void))
+
+;; jsx-board-update-hooks! : jsx-board? any/c -> void?
+;;   Run hooked board callbacks.
+(define (jsx-board-update-hooks! board m)
+  (js-send/extern/nullish (jsx-board-raw board) "updateHooks" (vector m))
+  (void))
+
+;; jsx-board-suppress-default! : jsx-board? any/c -> void?
+;;   Suppress the default event action.
+(define (jsx-board-suppress-default! board e)
+  (js-send/extern/nullish (jsx-board-raw board) "suppressDefault" (vector e))
+  (void))
+
+;; jsx-board-init-infobox! : jsx-board? any/c -> void?
+;;   Initialize the board infobox.
+(define (jsx-board-init-infobox! board attributes)
+  (js-send/extern/nullish (jsx-board-raw board) "initInfobox" (vector attributes))
+  (void))
+
+;; jsx-board-init-move-object! : jsx-board? any/c any/c any/c any/c -> void?
+;;   Prepare a board object move.
+(define (jsx-board-init-move-object! board x y evt type)
+  (js-send/extern/nullish (jsx-board-raw board) "initMoveObject" (vector x y evt type))
+  (void))
+
+;; jsx-board-init-move-origin! : jsx-board? any/c any/c -> void?
+;;   Prepare moving the board origin.
+(define (jsx-board-init-move-origin! board x y)
+  (js-send/extern/nullish (jsx-board-raw board) "initMoveOrigin" (vector x y))
+  (void))
+
 ;; jsx-board-show-dependencies! : jsx-board? -> void?
 ;;   Show the dependency graph for the board.
 (define (jsx-board-show-dependencies! board)
@@ -640,6 +845,12 @@
 ;;   Stop watching board visibility.
 (define (jsx-board-stop-intersection-observer! board)
   (js-send/extern/nullish (jsx-board-raw board) "stopIntersectionObserver" (vector))
+  (void))
+
+;; jsx-board-update-infobox! : jsx-board? any/c -> void?
+;;   Update the board infobox for a geometry element.
+(define (jsx-board-update-infobox! board el)
+  (js-send/extern/nullish (jsx-board-raw board) "updateInfobox" (vector (jsx-unwrap el)))
   (void))
 
 ;; jsx-board-set-id : jsx-board? any/c any/c -> string?
