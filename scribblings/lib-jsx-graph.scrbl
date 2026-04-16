@@ -76,6 +76,21 @@ functions keep the code fairly Rackety.
 (void board p q l label px py)
 ]
 
+The board-introspection helpers are useful when you want to check the
+result of a construction from Racket. For example, after creating the
+board and its objects you can ask how many objects were created and get
+the board objects back in construction order:
+
+@racketblock[
+(define total (jsx-board-num-objects board))
+(define objects (jsx-board-objects-list board))
+(void total objects)
+]
+
+In the richer demo, these helpers are used to confirm that the board
+contains the expected objects before the page reports that the board is
+ready.
+
 @section{API Reference}
 
 @defstruct[jsx-board ([raw external/raw])]{
