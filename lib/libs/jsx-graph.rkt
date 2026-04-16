@@ -435,10 +435,28 @@
 (define (jsx-board-full-update! board)
   (jsx-board-full-update!/raw (jsx-board-raw board)))
 
+;; jsx-wrap-board-object : external/raw -> (or/c jsx-point? jsx-element?)
+;;   Wrap a board object using the most specific checked wrapper.
+(define (jsx-wrap-board-object raw)
+  (cond
+    [(jsx-point?/raw raw) (jsx-wrap-point raw)]
+    [else                 (jsx-wrap-element raw)]))
+
 ;; jsx-board-count-children : jsx-board? -> number?
 ;;   Count the direct children on a board.
 (define (jsx-board-count-children board)
   (js-send/value (jsx-board-raw board) "countChildren" (vector)))
+
+;; jsx-board-num-objects : jsx-board? -> exact-nonnegative-integer?
+;;   Read the total number of objects ever created on a board.
+(define (jsx-board-num-objects board)
+  (js-ref (jsx-board-raw board) "numObjects"))
+
+;; jsx-board-objects-list : jsx-board? -> vector?
+;;   Read the board objects in construction order.
+(define (jsx-board-objects-list board)
+  (define objects (js-array->vector (js-ref (jsx-board-raw board) "objectsList")))
+  (list->vector (map jsx-wrap-board-object (vector->list objects))))
 
 ;; jsx-board-remove-object! : jsx-board? any/c -> void?
 ;;   Remove an object from a board.

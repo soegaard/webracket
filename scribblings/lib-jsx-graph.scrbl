@@ -179,6 +179,22 @@ Creates a text element on @racket[board].
 Counts the direct children on @racket[board].
 }
 
+@defproc[(jsx-board-num-objects [board jsx-board?])
+         exact-nonnegative-integer?]{
+@(jsx-bar "numObjects"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#numObjects"))
+Counts how many objects have been created on @racket[board] in total.
+}
+
+@defproc[(jsx-board-objects-list [board jsx-board?])
+         vector?]{
+@(jsx-bar "objectsList"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#objectsList"))
+Returns the geometric objects on @racket[board] in construction order.
+}
+
 @defproc[(jsx-parents [v any/c] ...)
          vector?]{
 Packs parent values into a vector for JSXGraph.

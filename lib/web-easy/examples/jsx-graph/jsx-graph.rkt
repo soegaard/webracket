@@ -112,18 +112,22 @@
               (void (jsx-set-point-size! current-p 5.0))
               (void (jsx-set-point-size! current-q 5.0))
               (void (jsx-board-unsuspend-update! current-board))
-              (define child-count (jsx-board-count-children current-board))
               (void (jsx-board-full-update! current-board))
-              (void (set-status! "Board ready."))
-              (void
-               (set-summary!
-                (format "Created a line, a segment, a circle, and a text label. children=~a. P = (~a, ~a), Q = (~a, ~a)."
-                        child-count
-                        (jsx-point-x current-p)
-                        (jsx-point-y current-p)
-                        (jsx-point-x current-q)
-                        (jsx-point-y current-q))))
-              (void line segment circle label))))))
+              (let ()
+                (define child-count (jsx-board-count-children current-board))
+                (define board-objects (jsx-board-objects-list current-board))
+                (define object-count (vector-length board-objects))
+                (void (set-status! "Board ready."))
+                (void
+                 (set-summary!
+                  (format "Created a line, a segment, a circle, and a text label. children=~a, objects=~a. P = (~a, ~a), Q = (~a, ~a)."
+                          child-count
+                          object-count
+                          (jsx-point-x current-p)
+                          (jsx-point-y current-p)
+                          (jsx-point-x current-q)
+                          (jsx-point-y current-q))))
+                (void line segment circle label)))))))
 
 ;; refresh-board! : -> void?
 ;;   Force a full redraw of the live board.

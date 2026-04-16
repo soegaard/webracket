@@ -85,6 +85,8 @@
   jsx-create-intersection
   jsx-create-text
   jsx-board-count-children
+  jsx-board-num-objects
+  jsx-board-objects-list
   jsx-coordinates
   jsx-on
   (for-label (all-defined-out)))
@@ -170,5 +172,7 @@
 (define jsx-create-intersection any/c)
 (define jsx-create-text any/c)
 (define jsx-board-count-children any/c)
+(define jsx-board-num-objects any/c)
+(define jsx-board-objects-list any/c)
 (define jsx-coordinates any/c)
 (define jsx-on any/c)
