@@ -16,14 +16,17 @@
 ;; jsx-board : external/raw -> jsx-board?
 ;;   Wrap a JSXGraph board object.
 (struct jsx-board (raw) #:transparent)
+(define jsx-board-wrapper? jsx-board?)
 
 ;; jsx-element : external/raw -> jsx-element?
 ;;   Wrap a generic JSXGraph element.
 (struct jsx-element (raw) #:transparent)
+(define jsx-element-wrapper? jsx-element?)
 
 ;; jsx-point : external/raw -> jsx-point?
 ;;   Wrap a JSXGraph point.
 (struct jsx-point (raw) #:transparent)
+(define jsx-point-wrapper? jsx-point?)
 
 ;; jsx-wrap-board : external/raw -> jsx-board?
 ;;   Wrap a raw board value.
@@ -44,9 +47,9 @@
 ;;   Extract the raw browser value from a checked wrapper.
 (define (jsx-unwrap value)
   (cond
-    [(jsx-board? value)   (jsx-board-raw value)]
-    [(jsx-element? value) (jsx-element-raw value)]
-    [(jsx-point? value)   (jsx-point-raw value)]
+    [(jsx-board-wrapper? value)   (jsx-board-raw value)]
+    [(jsx-element-wrapper? value) (jsx-element-raw value)]
+    [(jsx-point-wrapper? value)   (jsx-point-raw value)]
     [else                 value]))
 
 ;;; -------------------------------------------------------------------
@@ -341,7 +344,7 @@
 ;; jsx-parents : any/c ... -> vector?
 ;;   Pack parent values into the vector shape JSXGraph expects.
 (define (jsx-parents . xs)
-  (list->vector xs))
+  (list->vector (map jsx-unwrap xs)))
 
 ;; jsx-set-attribute! : external/raw any/c any/c -> void?
 ;;   Set a DOM attribute using JSXGraph-friendly key handling.
