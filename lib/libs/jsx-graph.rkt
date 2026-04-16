@@ -445,7 +445,7 @@
 ;; jsx-board-count-children : jsx-board? -> number?
 ;;   Count the direct children on a board.
 (define (jsx-board-count-children board)
-  (js-send/value (jsx-board-raw board) "countChildren" (vector)))
+  (vector-length (jsx-board-objects-list board)))
 
 ;; jsx-board-num-objects : jsx-board? -> exact-nonnegative-integer?
 ;;   Read the total number of objects ever created on a board.
