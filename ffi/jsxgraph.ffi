@@ -18,6 +18,55 @@
   #:name   "create"
   (-> (extern string value value) (extern/raw)))
 
+;; Board properties
+; (js-jsx-board-id board:Extern) -> String
+(define-foreign js-jsx-board-id
+  #:module "jsx-board"
+  #:name   "id"
+  (-> (extern) (string)))
+
+; (js-jsx-board-container board:Extern) -> Extern
+(define-foreign js-jsx-board-container
+  #:module "jsx-board"
+  #:name   "container"
+  (-> (extern) (extern/raw)))
+
+; (js-jsx-board-renderer board:Extern) -> Extern
+(define-foreign js-jsx-board-renderer
+  #:module "jsx-board"
+  #:name   "renderer"
+  (-> (extern) (extern/raw)))
+
+; (js-jsx-board-canvas-width board:Extern) -> Integer
+(define-foreign js-jsx-board-canvas-width
+  #:module "jsx-board"
+  #:name   "canvas-width"
+  (-> (extern) (i32)))
+
+; (js-jsx-board-canvas-height board:Extern) -> Integer
+(define-foreign js-jsx-board-canvas-height
+  #:module "jsx-board"
+  #:name   "canvas-height"
+  (-> (extern) (i32)))
+
+; (js-jsx-board-bounding-box board:Extern) -> Extern
+(define-foreign js-jsx-board-bounding-box
+  #:module "jsx-board"
+  #:name   "bounding-box"
+  (-> (extern) (extern/raw)))
+
+; (js-jsx-board-num-objects board:Extern) -> Integer
+(define-foreign js-jsx-board-num-objects
+  #:module "jsx-board"
+  #:name   "num-objects"
+  (-> (extern) (i32)))
+
+; (js-jsx-board-objects-list board:Extern) -> Extern
+(define-foreign js-jsx-board-objects-list
+  #:module "jsx-board"
+  #:name   "objects-list"
+  (-> (extern) (extern/raw)))
+
 ;; Convenience constructors for common geometry elements
 ; (js-jsx-board-create-point board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign js-jsx-board-create-point
@@ -89,6 +138,554 @@
   #:module "jsx-board"
   #:name   "unsuspend-update!"
   (-> (extern) (extern/raw)))
+
+;; Add the default grid to the board.
+(define-foreign js-jsx-board-add-grid!
+  #:module "jsx-board"
+  #:name   "add-grid!"
+  (-> (extern) ()))
+
+;; Register a board hook and return its identifier.
+;; hook : value
+;; m : value
+;; context : extern
+(define-foreign js-jsx-board-add-hook!
+  #:module "jsx-board"
+  #:name   "add-hook!"
+  (-> (extern value value extern) (value)))
+
+;; Register keyboard event handlers.
+(define-foreign js-jsx-board-add-keyboard-event-handlers!
+  #:module "jsx-board"
+  #:name   "add-keyboard-event-handlers!"
+  (-> (extern) ()))
+
+;; Register mouse event handlers.
+(define-foreign js-jsx-board-add-mouse-event-handlers!
+  #:module "jsx-board"
+  #:name   "add-mouse-event-handlers!"
+  (-> (extern) ()))
+
+;; Register pointer event handlers.
+(define-foreign js-jsx-board-add-pointer-event-handlers!
+  #:module "jsx-board"
+  #:name   "add-pointer-event-handlers!"
+  (-> (extern) ()))
+
+;; Register resize event handlers.
+(define-foreign js-jsx-board-add-resize-event-handlers!
+  #:module "jsx-board"
+  #:name   "add-resize-event-handlers!"
+  (-> (extern) ()))
+
+;; Register touch event handlers.
+;; apple-gestures : value
+(define-foreign js-jsx-board-add-touch-event-handlers!
+  #:module "jsx-board"
+  #:name   "add-touch-event-handlers!"
+  (-> (extern value) ()))
+
+;; Register wheel event handlers.
+(define-foreign js-jsx-board-add-wheel-event-handlers!
+  #:module "jsx-board"
+  #:name   "add-wheel-event-handlers!"
+  (-> (extern) ()))
+
+;; Register fullscreen event handlers.
+(define-foreign js-jsx-board-add-fullscreen-event-handlers!
+  #:module "jsx-board"
+  #:name   "add-fullscreen-event-handlers!"
+  (-> (extern) ()))
+
+;; Register all board event handlers.
+(define-foreign js-jsx-board-add-event-handlers!
+  #:module "jsx-board"
+  #:name   "add-event-handlers!"
+  (-> (extern) ()))
+
+;; Register a JSXGraph board event handler.
+;; event : value
+;; handler : value
+(define-foreign js-jsx-board-on
+  #:module "jsx-board"
+  #:name   "on"
+  (-> (extern value value) ()))
+
+;; Register a dependent board.
+(define-foreign js-jsx-board-add-child!
+  #:module "jsx-board"
+  #:name   "add-child!"
+  (-> (extern extern) ()))
+
+;; Read the mouse position in screen coordinates.
+;; evt : value
+(define-foreign js-jsx-board-get-mouse-position
+  #:module "jsx-board"
+  #:name   "get-mouse-position"
+  (-> (extern value) (extern/raw)))
+
+;; Read the mouse position in screen coordinates with the auxiliary index.
+;; evt : value
+;; i : value
+(define-foreign js-jsx-board-get-mouse-position/index
+  #:module "jsx-board"
+  #:name   "get-mouse-position/index"
+  (-> (extern value value) (extern/raw)))
+
+;; Read the mouse position in user coordinates.
+;; evt : value
+(define-foreign js-jsx-board-get-usr-coords-of-mouse
+  #:module "jsx-board"
+  #:name   "get-usr-coords-of-mouse"
+  (-> (extern value) (extern/raw)))
+
+;; Read the board coordinates of the top-left corner.
+(define-foreign js-jsx-board-get-coords-top-left-corner
+  #:module "jsx-board"
+  #:name   "get-coords-top-left-corner"
+  (-> (extern) (extern/raw)))
+
+;; Read the board bounding box using the board method.
+(define-foreign js-jsx-board-get-bounding-box
+  #:module "jsx-board"
+  #:name   "get-bounding-box"
+  (-> (extern) (extern/raw)))
+
+;; Read screen coordinates using the board method.
+;; x : value
+;; y : value
+(define-foreign js-jsx-board-get-scr-coords-of-mouse
+  #:module "jsx-board"
+  #:name   "get-scr-coords-of-mouse"
+  (-> (extern value value) (extern/raw)))
+
+;; Collect the objects under a pointer event.
+;; evt : value
+(define-foreign js-jsx-board-get-all-objects-under-mouse
+  #:module "jsx-board"
+  #:name   "get-all-objects-under-mouse"
+  (-> (extern value) (extern/raw)))
+
+;; Collect the objects and user coordinates under a pointer event.
+;; evt : value
+(define-foreign js-jsx-board-get-all-under-mouse
+  #:module "jsx-board"
+  #:name   "get-all-under-mouse"
+  (-> (extern value) (extern/raw)))
+
+;; Check whether a point lies inside the board bounding box.
+;; x : value
+;; y : value
+(define-foreign js-jsx-board-has-point!
+  #:module "jsx-board"
+  #:name   "has-point!"
+  (-> (extern value value) (boolean)))
+
+;; Register an animated element with the board.
+;; element : value
+(define-foreign js-jsx-board-add-animation!
+  #:module "jsx-board"
+  #:name   "add-animation!"
+  (-> (extern value) ()))
+
+;; Add conditional updates to the board.
+;; str : value
+(define-foreign js-jsx-board-add-conditions!
+  #:module "jsx-board"
+  #:name   "add-conditions!"
+  (-> (extern value) ()))
+
+;; Apply the current zoom factors to all objects.
+(define-foreign js-jsx-board-apply-zoom!
+  #:module "jsx-board"
+  #:name   "apply-zoom!"
+  (-> (extern) ()))
+
+;; Recompute the point snap sizes on the board.
+(define-foreign js-jsx-board-calculate-snap-sizes!
+  #:module "jsx-board"
+  #:name   "calculate-snap-sizes!"
+  (-> (extern) ()))
+
+;; Create a roulette animation on the board.
+(define-foreign js-jsx-board-create-roulette!
+  #:module "jsx-board"
+  #:name   "create-roulette!"
+  (-> (extern value value value value value value value) (extern/raw)))
+
+;; Change the board infobox text.
+;; text : value
+(define-foreign js-jsx-board-highlight-custom-infobox!
+  #:module "jsx-board"
+  #:name   "highlight-custom-infobox!"
+  (-> (extern value) ()))
+
+;; Change the board infobox text for a target element.
+;; text : value
+;; el : value
+(define-foreign js-jsx-board-highlight-custom-infobox/element!
+  #:module "jsx-board"
+  #:name   "highlight-custom-infobox/element!"
+  (-> (extern value value) ()))
+
+;; Show the given coordinates in the board infobox.
+;; x : value
+;; y : value
+(define-foreign js-jsx-board-highlight-infobox!
+  #:module "jsx-board"
+  #:name   "highlight-infobox!"
+  (-> (extern value value) ()))
+
+;; Show the given coordinates in the board infobox for a target element.
+;; x : value
+;; y : value
+;; el : value
+(define-foreign js-jsx-board-highlight-infobox/element!
+  #:module "jsx-board"
+  #:name   "highlight-infobox/element!"
+  (-> (extern value value value) ()))
+
+;; Move a board object.
+;; x : value
+;; y : value
+;; o : value
+;; evt : value
+;; type : value
+(define-foreign js-jsx-board-move-object!
+  #:module "jsx-board"
+  #:name   "move-object!"
+  (-> (extern value value value value value) ()))
+
+;; Move the board origin.
+;; x : value
+;; y : value
+;; diff : value
+(define-foreign js-jsx-board-move-origin!
+  #:module "jsx-board"
+  #:name   "move-origin!"
+  (-> (extern value value value) ()))
+
+;; Finalize a newly added board object.
+(define-foreign js-jsx-board-finalize-adding!
+  #:module "jsx-board"
+  #:name   "finalize-adding!"
+  (-> (extern extern) ()))
+
+;; Set board attributes.
+(define-foreign js-jsx-board-set-attribute!
+  #:module "jsx-board"
+  #:name   "set-attribute!"
+  (-> (extern value) ()))
+
+;; Set the board bounding box.
+(define-foreign js-jsx-board-set-bounding-box!
+  #:module "jsx-board"
+  #:name   "set-bounding-box!"
+  (-> (extern value value value) ()))
+
+;; Set the board zoom.
+(define-foreign js-jsx-board-set-zoom!
+  #:module "jsx-board"
+  #:name   "set-zoom!"
+  (-> (extern value value) ()))
+
+;; Resize the board container.
+(define-foreign js-jsx-board-resize-container!
+  #:module "jsx-board"
+  #:name   "resize-container!"
+  (-> (extern value value value value) ()))
+
+;; Remove all grids from the board.
+(define-foreign js-jsx-board-remove-grids!
+  #:module "jsx-board"
+  #:name   "remove-grids!"
+  (-> (extern) ()))
+
+;; Remove a board hook.
+(define-foreign js-jsx-board-remove-hook!
+  #:module "jsx-board"
+  #:name   "remove-hook!"
+  (-> (extern value) ()))
+
+;; Remove a JSXGraph board event handler.
+(define-foreign js-jsx-board-off
+  #:module "jsx-board"
+  #:name   "off"
+  (-> (extern value value) ()))
+
+;; Remove keyboard event handlers.
+(define-foreign js-jsx-board-remove-keyboard-event-handlers!
+  #:module "jsx-board"
+  #:name   "remove-keyboard-event-handlers!"
+  (-> (extern) ()))
+
+;; Remove mouse event handlers.
+(define-foreign js-jsx-board-remove-mouse-event-handlers!
+  #:module "jsx-board"
+  #:name   "remove-mouse-event-handlers!"
+  (-> (extern) ()))
+
+;; Remove pointer event handlers.
+(define-foreign js-jsx-board-remove-pointer-event-handlers!
+  #:module "jsx-board"
+  #:name   "remove-pointer-event-handlers!"
+  (-> (extern) ()))
+
+;; Remove resize event handlers.
+(define-foreign js-jsx-board-remove-resize-event-handlers!
+  #:module "jsx-board"
+  #:name   "remove-resize-event-handlers!"
+  (-> (extern) ()))
+
+;; Remove all board event handlers.
+(define-foreign js-jsx-board-remove-event-handlers!
+  #:module "jsx-board"
+  #:name   "remove-event-handlers!"
+  (-> (extern) ()))
+
+;; Remove touch event handlers.
+(define-foreign js-jsx-board-remove-touch-event-handlers!
+  #:module "jsx-board"
+  #:name   "remove-touch-event-handlers!"
+  (-> (extern) ()))
+
+;; Select one or more objects on the board.
+(define-foreign js-jsx-board-select
+  #:module "jsx-board"
+  #:name   "select"
+  (-> (extern value value) (extern/raw)))
+
+;; Reset the board zoom to 100%.
+(define-foreign js-jsx-board-zoom100!
+  #:module "jsx-board"
+  #:name   "zoom100!"
+  (-> (extern) ()))
+
+;; Zoom so every visible point fits in the viewport.
+(define-foreign js-jsx-board-zoom-all-points!
+  #:module "jsx-board"
+  #:name   "zoom-all-points!"
+  (-> (extern) ()))
+
+;; Zoom in around a point.
+(define-foreign js-jsx-board-zoom-in!
+  #:module "jsx-board"
+  #:name   "zoom-in!"
+  (-> (extern value value) ()))
+
+;; Zoom out around a point.
+(define-foreign js-jsx-board-zoom-out!
+  #:module "jsx-board"
+  #:name   "zoom-out!"
+  (-> (extern value value) ()))
+
+;; Enable board selection mode.
+(define-foreign js-jsx-board-start-selection-mode!
+  #:module "jsx-board"
+  #:name   "start-selection-mode!"
+  (-> (extern) ()))
+
+;; Disable board selection mode.
+(define-foreign js-jsx-board-stop-selection-mode!
+  #:module "jsx-board"
+  #:name   "stop-selection-mode!"
+  (-> (extern) ()))
+
+;; Stop all running animations on a board.
+(define-foreign js-jsx-board-stop-all-animation!
+  #:module "jsx-board"
+  #:name   "stop-all-animation!"
+  (-> (extern) ()))
+
+;; Clear all traces from the board.
+(define-foreign js-jsx-board-clear-traces!
+  #:module "jsx-board"
+  #:name   "clear-traces!"
+  (-> (extern) ()))
+
+;; Remove highlighting from all elements.
+(define-foreign js-jsx-board-dehighlight-all!
+  #:module "jsx-board"
+  #:name   "dehighlight-all!"
+  (-> (extern) ()))
+
+;; Update the coordinates of all elements that need them.
+(define-foreign js-jsx-board-update-coords!
+  #:module "jsx-board"
+  #:name   "update-coords!"
+  (-> (extern) ()))
+
+;; Update the board container dimensions.
+(define-foreign js-jsx-board-update-container-dims!
+  #:module "jsx-board"
+  #:name   "update-container-dims!"
+  (-> (extern) ()))
+
+;; Update the board container dimensions with an explicit size.
+;; width : value
+;; height : value
+(define-foreign js-jsx-board-update-container-dims/size!
+  #:module "jsx-board"
+  #:name   "update-container-dims/size!"
+  (-> (extern value value) ()))
+
+;; Refresh CSS transforms.
+(define-foreign js-jsx-board-update-csstransforms!
+  #:module "jsx-board"
+  #:name   "update-csstransforms!"
+  (-> (extern) ()))
+
+;; Update the board elements.
+(define-foreign js-jsx-board-update-elements!
+  #:module "jsx-board"
+  #:name   "update-elements!"
+  (-> (extern value) ()))
+
+;; Run hooked board callbacks.
+(define-foreign js-jsx-board-update-hooks!
+  #:module "jsx-board"
+  #:name   "update-hooks!"
+  (-> (extern value) ()))
+
+;; Update all conditional board elements.
+(define-foreign js-jsx-board-update-conditions!
+  #:module "jsx-board"
+  #:name   "update-conditions!"
+  (-> (extern) ()))
+
+;; Suppress the default event action.
+(define-foreign js-jsx-board-suppress-default!
+  #:module "jsx-board"
+  #:name   "suppress-default!"
+  (-> (extern value) ()))
+
+;; Initialize the board infobox.
+(define-foreign js-jsx-board-init-infobox!
+  #:module "jsx-board"
+  #:name   "init-infobox!"
+  (-> (extern value) ()))
+
+;; Prepare a board object move.
+(define-foreign js-jsx-board-init-move-object!
+  #:module "jsx-board"
+  #:name   "init-move-object!"
+  (-> (extern value value value value) ()))
+
+;; Prepare moving the board origin.
+(define-foreign js-jsx-board-init-move-origin!
+  #:module "jsx-board"
+  #:name   "init-move-origin!"
+  (-> (extern value value) ()))
+
+;; Show the dependency graph for the board.
+(define-foreign js-jsx-board-show-dependencies!
+  #:module "jsx-board"
+  #:name   "show-dependencies!"
+  (-> (extern) ()))
+
+;; Generate a fresh board id.
+(define-foreign js-jsx-board-generate-id
+  #:module "jsx-board"
+  #:name   "generate-id"
+  (-> (extern) (string)))
+
+;; Generate a fresh board object name.
+(define-foreign js-jsx-board-generate-name
+  #:module "jsx-board"
+  #:name   "generate-name"
+  (-> (extern value) (string)))
+
+;; Initialize the default GEONExT board objects.
+(define-foreign js-jsx-board-init-geonext-board!
+  #:module "jsx-board"
+  #:name   "init-geonext-board!"
+  (-> (extern) ()))
+
+;; Show the board XML in a separate window.
+(define-foreign js-jsx-board-show-xml!
+  #:module "jsx-board"
+  #:name   "show-xml!"
+  (-> (extern) ()))
+
+;; Expand the board to fullscreen.
+(define-foreign js-jsx-board-to-fullscreen!
+  #:module "jsx-board"
+  #:name   "to-fullscreen!"
+  (-> (extern value) ()))
+
+;; Start watching the container size.
+(define-foreign js-jsx-board-start-resize-observer!
+  #:module "jsx-board"
+  #:name   "start-resize-observer!"
+  (-> (extern) ()))
+
+;; Stop watching the container size.
+(define-foreign js-jsx-board-stop-resize-observer!
+  #:module "jsx-board"
+  #:name   "stop-resize-observer!"
+  (-> (extern) ()))
+
+;; Start watching whether the board is visible.
+(define-foreign js-jsx-board-start-intersection-observer!
+  #:module "jsx-board"
+  #:name   "start-intersection-observer!"
+  (-> (extern) ()))
+
+;; Stop watching board visibility.
+(define-foreign js-jsx-board-stop-intersection-observer!
+  #:module "jsx-board"
+  #:name   "stop-intersection-observer!"
+  (-> (extern) ()))
+
+;; Update the board infobox for a geometry element.
+(define-foreign js-jsx-board-update-infobox!
+  #:module "jsx-board"
+  #:name   "update-infobox!"
+  (-> (extern extern) ()))
+
+;; Compose a unique id for an element on the board.
+(define-foreign js-jsx-board-set-id
+  #:module "jsx-board"
+  #:name   "set-id!"
+  (-> (extern extern value) (string)))
+
+;; Refresh the board renderer.
+(define-foreign js-jsx-board-update-renderer!
+  #:module "jsx-board"
+  #:name   "update-renderer!"
+  (-> (extern) ()))
+
+;; Refresh the board renderer in Canvas mode.
+(define-foreign js-jsx-board-update-renderer-canvas!
+  #:module "jsx-board"
+  #:name   "update-renderer-canvas!"
+  (-> (extern) ()))
+
+;; Zoom the board so a set of elements fits in the viewport.
+(define-foreign js-jsx-board-zoom-elements!
+  #:module "jsx-board"
+  #:name   "zoom-elements!"
+  (-> (extern value) ()))
+
+;;; GeometryElement
+
+;; Call a GeometryElement method and return the raw JavaScript result.
+;; element : extern
+;; method : string/symbol
+;; args : value
+(define-foreign js-jsx-element-call
+  #:module "jsx-element"
+  #:name   "call"
+  (-> (extern string/symbol value) (extern/raw)))
+
+;; Call a GeometryElement method and treat nullish results as absence.
+;; element : extern
+;; method : string/symbol
+;; args : value
+(define-foreign js-jsx-element-call/nullish
+  #:module "jsx-element"
+  #:name   "call/nullish"
+  (-> (extern string/symbol value) (extern)))
 
 ;;; Point
 

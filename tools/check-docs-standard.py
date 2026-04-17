@@ -111,6 +111,7 @@ CONFIGS: tuple[DocCheckConfig, ...] = (
         legacy_section_heading_pattern=None,
         require_table_example_use_when=True,
         require_index_coverage=False,
+        strict_ffi_coverage=False,
         allowed_url_prefixes=("https://jsxgraph.org/docs/",),
     ),
     DocCheckConfig(
