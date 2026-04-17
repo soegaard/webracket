@@ -84,6 +84,59 @@
   (hash 'vector-member '(2 3)))
 
 
+;; These WebRacket primitives are not primitives in full Racket,
+;; so introspection can not be used to find the arities.
+(define js-log-description
+  (primitive-description 'js-log
+                         1
+                         1
+                         '()
+                         '()
+                         #f
+                         #f
+                         #f))
+
+(define make-void-description
+  (primitive-description 'make-void
+                         0
+                         1
+                         '()
+                         '()
+                         #f
+                         #f
+                         #f))
+
+(define procedure->external-description
+  (primitive-description 'procedure->external
+                         1
+                         1
+                         '()
+                         '()
+                         #f
+                         #f
+                         #f))
+
+(define external-number->flonum-description
+  (primitive-description 'external-number->flonum
+                         1
+                         1
+                         '()
+                         '()
+                         #f
+                         #f
+                         #f))
+
+(define external-string->string-description
+  (primitive-description 'external-string->string
+                         1
+                         1
+                         '()
+                         '()
+                         #f
+                         #f
+                         #f))
+
+
 (require "parameters.rkt"
          "define-foreign.rkt")
 
@@ -132,6 +185,11 @@
 
 (define (primitive->description sym-or-primitive)
   (cond
+    [(eq? sym-or-primitive 'js-log)                  js-log-description]
+    [(eq? sym-or-primitive 'make-void)               make-void-description]
+    [(eq? sym-or-primitive 'procedure->external)     procedure->external-description]
+    [(eq? sym-or-primitive 'external-number->flonum) external-number->flonum-description]
+    [(eq? sym-or-primitive 'external-string->string) external-string->string-description]
     [(exception-constructor? sym-or-primitive)
      (define pr (exception-constructor->primitive sym-or-primitive))
      (define x pr)
