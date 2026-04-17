@@ -345,6 +345,16 @@
 (define-jsx-alias (jsx-board-create-chart/raw board parents attrs)
   js-jsx-board-create-chart)
 
+;; jsx-board-create-legend/raw : external/raw any/c any/c -> external/raw
+;;   Create a legend on a board.
+(define-jsx-alias (jsx-board-create-legend/raw board parents attrs)
+  js-jsx-board-create-legend)
+
+;; jsx-board-create-smartlabel/raw : external/raw any/c any/c -> external/raw
+;;   Create a smartlabel on a board.
+(define-jsx-alias (jsx-board-create-smartlabel/raw board parents attrs)
+  js-jsx-board-create-smartlabel)
+
 ;; jsx-board-create-text/raw : external/raw any/c any/c -> external/raw
 ;;   Create a text element on a board.
 (define-jsx-alias (jsx-board-create-text/raw board parents attrs)
@@ -1243,6 +1253,20 @@
   (jsx-wrap-element
    (jsx-board-create-chart/raw (jsx-board-raw board) parents
                                (or attributes '#[]))))
+
+;; jsx-create-legend : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a legend on a board.
+(define (jsx-create-legend board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-legend/raw (jsx-board-raw board) parents
+                                (or attributes '#[]))))
+
+;; jsx-create-smartlabel : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a smartlabel on a board.
+(define (jsx-create-smartlabel board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-smartlabel/raw (jsx-board-raw board) parents
+                                    (or attributes '#[]))))
 
 ;; jsx-input-set! : jsx-element? any/c -> jsx-element?
 ;;   Set the current input value.

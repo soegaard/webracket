@@ -218,6 +218,18 @@
   #:name   "create-chart"
   (-> (extern value value) (extern/raw)))
 
+; (js-jsx-board-create-legend board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-legend
+  #:module "jsx-board"
+  #:name   "create-legend"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-smartlabel board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-smartlabel
+  #:module "jsx-board"
+  #:name   "create-smartlabel"
+  (-> (extern value value) (extern/raw)))
+
 ; (js-jsx-checkbox-Value checkbox:Extern) -> Boolean
 (define-foreign js-jsx-checkbox-Value
   #:module "jsx-checkbox"

@@ -163,6 +163,8 @@
   jsx-create-input
   jsx-create-slider
   jsx-create-chart
+  jsx-create-legend
+  jsx-create-smartlabel
   jsx-create-text
   jsx-create-image
   jsx-checkbox-value
@@ -521,6 +523,8 @@
 (define jsx-create-input any/c)
 (define jsx-create-slider any/c)
 (define jsx-create-chart any/c)
+(define jsx-create-legend any/c)
+(define jsx-create-smartlabel any/c)
 (define jsx-create-text any/c)
 (define jsx-create-image any/c)
 (define jsx-checkbox-value any/c)

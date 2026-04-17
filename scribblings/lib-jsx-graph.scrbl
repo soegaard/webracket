@@ -22,6 +22,7 @@ Use @racket[jsx-graph] when you want to:
   @item{create arbitrary JSXGraph elements with @racket[jsx-create] or the specialized constructors}
   @item{build geometry objects such as @racket[JXG.Point], @racket[JXG.Line], @racket[JXG.Arc], @racket[JXG.Angle], @racket[JXG.Sector], @racket[JXG.Circle], @racket[JXG.Conic], @racket[JXG.Ellipse], @racket[JXG.Functiongraph], @racket[JXG.Polygon], and @racket[JXG.Text]}
   @item{create chart objects with @racket[JXG.Chart]}
+  @item{create legends and smart labels}
   @item{create widget-like elements such as buttons, checkboxes, sliders, and inputs}
   @item{inspect or adjust point properties from Racket code}
   @item{attach browser event handlers to JSXGraph elements}
@@ -1120,6 +1121,24 @@ Updates the chart data array.
           (string-append (jsx-doc-url "Chart")
                          "#updateRenderer"))
 Updates the chart renderer.
+}
+
+@defproc[(jsx-create-legend [board jsx-board?]
+                            [parents any/c]
+                            [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Legend"
+          (jsx-doc-url "Legend"))
+Creates a legend on @racket[board].
+}
+
+@defproc[(jsx-create-smartlabel [board jsx-board?]
+                                [parents any/c]
+                                [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Smartlabel"
+          (jsx-doc-url "Smartlabel"))
+Creates a smart label on @racket[board].
 }
 
 @defproc[(jsx-create-text [board jsx-board?]

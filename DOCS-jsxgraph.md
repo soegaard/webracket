@@ -15,7 +15,7 @@ Current scope:
 - Point methods for hit-testing, style updates, and renderer updates
 - Line, arc, angle, sector, glider, circle, conic, ellipse, curve, functiongraph,
   polygon, midpoint, parallel, perpendicular, reflection, bisector, normal,
-  slider, button, checkbox, and input
+  slider, chart, legend, smartlabel, button, checkbox, and input
   bridge helpers
 - Chart bridge helpers
 
@@ -201,6 +201,8 @@ Reference roots:
 | [`js-jsx-board-create-input`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-input board #[0 1 "f(x)"] attrs)` | create an input widget on the board. |
 | [`js-jsx-board-create-slider`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-slider board #[-4 0 4] attrs)` | create a slider widget on the board. |
 | [`js-jsx-board-create-chart`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-chart board #[f] attrs)` | create a chart object on the board. |
+| [`js-jsx-board-create-legend`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-legend board #[8 45] attrs)` | create a legend on the board. |
+| [`js-jsx-board-create-smartlabel`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-smartlabel board #[p] attrs)` | create a smartlabel on the board. |
 | [`js-jsx-board-create-text`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-text board #[-5 5 "A"] attrs)` | create a text label or annotation on the board. |
 | [`js-jsx-board-create-image`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-image board #[-5 5 "url"] attrs)` | create an image object on the board. |
 
@@ -460,9 +462,9 @@ control the slider range and value.
 
 ## Chapter 24 — Coverage Checklist
 
-- This document covers **167** functions from `ffi/jsxgraph.ffi`.
-- Total documented functions: **167**
-- `board api`: 32 functions
+- This document covers **169** functions from `ffi/jsxgraph.ffi`.
+- Total documented functions: **169**
+- `board api`: 34 functions
 - `board properties`: 8 functions
 - `geometryelement bridge`: 3 functions
 - `line bridge`: 2 functions
