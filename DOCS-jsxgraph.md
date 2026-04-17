@@ -44,12 +44,13 @@ All function names are linked to JSXGraph API documentation.
 - [Chapter 14 — Angle Bridge](#chapter-14--angle-bridge)
 - [Chapter 15 — Sector Bridge](#chapter-15--sector-bridge)
 - [Chapter 16 — Glider Bridge](#chapter-16--glider-bridge)
-- [Chapter 17 — Mini Workflows](#chapter-17--mini-workflows)
+- [Chapter 17 — Text Bridge](#chapter-17--text-bridge)
+- [Chapter 18 — Mini Workflows](#chapter-18--mini-workflows)
 - [Configure Point Snapping](#configure-point-snapping)
 - [Hit-Testing and Projection](#hit-testing-and-projection)
 - [Style and Renderer Refresh](#style-and-renderer-refresh)
 - [Minimal Geometry Constructors](#minimal-geometry-constructors)
-- [Chapter 18 — Coverage Checklist](#chapter-18--coverage-checklist)
+- [Chapter 19 — Coverage Checklist](#chapter-19--coverage-checklist)
 
 ## Chapter 2 — Conventions
 
@@ -299,7 +300,45 @@ Reference root: [JXG.Glider](https://jsxgraph.org/docs/symbols/JXG.Glider.html)
 | [`js-jsx-glider-start-animation!`](https://jsxgraph.org/docs/symbols/JXG.Glider.html#startAnimation) | `(extern value value value)` | `()` | `(js-jsx-glider-start-animation! glider 1 60 10)` | start a glider animation. |
 | [`js-jsx-glider-stop-animation!`](https://jsxgraph.org/docs/symbols/JXG.Glider.html#stopAnimation) | `(extern)` | `()` | `(js-jsx-glider-stop-animation! glider)` | stop a glider animation. |
 
-## Chapter 17 — Mini Workflows
+## Chapter 17 — Text Bridge
+
+The `Text` bridge covers the methods that JSXGraph documents on
+`JXG.Text` itself. Inherited `GeometryElement` and `CoordsElement`
+helpers are exposed elsewhere in this reference.
+
+| Function | Input types | Output type | Example | Use when |
+|---|---|---|---|---|
+| [`js-jsx-text-_createFctUpdateText`](https://jsxgraph.org/docs/symbols/JXG.Text.html#_createFctUpdateText) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-_createFctUpdateText text args)` | build the internal update function for a text element. |
+| [`js-jsx-text-_setText`](https://jsxgraph.org/docs/symbols/JXG.Text.html#_setText) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-_setText text args)` | set the internal text content directly. |
+| [`js-jsx-text-bounds`](https://jsxgraph.org/docs/symbols/JXG.Text.html#bounds) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-bounds text args)` | read the text bounds. |
+| [`js-jsx-text-checkForSizeUpdate`](https://jsxgraph.org/docs/symbols/JXG.Text.html#checkForSizeUpdate) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-checkForSizeUpdate text args)` | check whether the text size needs recomputing. |
+| [`js-jsx-text-convertGeonext2CSS`](https://jsxgraph.org/docs/symbols/JXG.Text.html#convertGeonext2CSS) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-convertGeonext2CSS text args)` | convert GEONExT markup to CSS. |
+| [`js-jsx-text-convertGeonextAndSketchometry2CSS`](https://jsxgraph.org/docs/symbols/JXG.Text.html#convertGeonextAndSketchometry2CSS) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-convertGeonextAndSketchometry2CSS text args)` | convert GEONExT and Sketchometry markup to CSS. |
+| [`js-jsx-text-convertSketchometry2CSS`](https://jsxgraph.org/docs/symbols/JXG.Text.html#convertSketchometry2CSS) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-convertSketchometry2CSS text args)` | convert Sketchometry markup to CSS. |
+| [`js-jsx-text-crudeSizeEstimate`](https://jsxgraph.org/docs/symbols/JXG.Text.html#crudeSizeEstimate) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-crudeSizeEstimate text args)` | estimate the rendered size crudely. |
+| [`js-jsx-text-escapeTicks`](https://jsxgraph.org/docs/symbols/JXG.Text.html#escapeTicks) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-escapeTicks text args)` | escape tick marks in text. |
+| [`js-jsx-text-expandShortMath`](https://jsxgraph.org/docs/symbols/JXG.Text.html#expandShortMath) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-expandShortMath text args)` | expand short math notation. |
+| [`js-jsx-text-generateTerm`](https://jsxgraph.org/docs/symbols/JXG.Text.html#generateTerm) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-generateTerm text args)` | generate the text term. |
+| [`js-jsx-text-getAnchorX`](https://jsxgraph.org/docs/symbols/JXG.Text.html#getAnchorX) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-getAnchorX text args)` | read the X anchor position. |
+| [`js-jsx-text-getAnchorY`](https://jsxgraph.org/docs/symbols/JXG.Text.html#getAnchorY) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-getAnchorY text args)` | read the Y anchor position. |
+| [`js-jsx-text-getNumberOfConflicts`](https://jsxgraph.org/docs/symbols/JXG.Text.html#getNumberOfConflicts) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-getNumberOfConflicts text args)` | read the number of placement conflicts. |
+| [`js-jsx-text-getSize`](https://jsxgraph.org/docs/symbols/JXG.Text.html#getSize) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-getSize text args)` | read the current text size. |
+| [`js-jsx-text-hasPoint`](https://jsxgraph.org/docs/symbols/JXG.Text.html#hasPoint) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-hasPoint text args)` | test whether screen coordinates hit the text. |
+| [`js-jsx-text-notifyParents`](https://jsxgraph.org/docs/symbols/JXG.Text.html#notifyParents) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-notifyParents text args)` | notify parent elements that the text changed. |
+| [`js-jsx-text-poorMansTeX`](https://jsxgraph.org/docs/symbols/JXG.Text.html#poorMansTeX) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-poorMansTeX text args)` | render poor-man's TeX markup. |
+| [`js-jsx-text-replaceSub`](https://jsxgraph.org/docs/symbols/JXG.Text.html#replaceSub) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-replaceSub text args)` | replace a subscript fragment. |
+| [`js-jsx-text-replaceSup`](https://jsxgraph.org/docs/symbols/JXG.Text.html#replaceSup) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-replaceSup text args)` | replace a superscript fragment. |
+| [`js-jsx-text-setAutoPosition`](https://jsxgraph.org/docs/symbols/JXG.Text.html#setAutoPosition) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-setAutoPosition text args)` | toggle automatic positioning. |
+| [`js-jsx-text-setCoords`](https://jsxgraph.org/docs/symbols/JXG.Text.html#setCoords) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-setCoords text args)` | set the text coordinates. |
+| [`js-jsx-text-setText`](https://jsxgraph.org/docs/symbols/JXG.Text.html#setText) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-setText text args)` | set the displayed text. |
+| [`js-jsx-text-setTextJessieCode`](https://jsxgraph.org/docs/symbols/JXG.Text.html#setTextJessieCode) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-setTextJessieCode text args)` | set the text from JessieCode. |
+| [`js-jsx-text-unescapeTicks`](https://jsxgraph.org/docs/symbols/JXG.Text.html#unescapeTicks) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-unescapeTicks text args)` | unescape tick marks in text. |
+| [`js-jsx-text-updateSize`](https://jsxgraph.org/docs/symbols/JXG.Text.html#updateSize) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-updateSize text args)` | update the text size. |
+| [`js-jsx-text-updateText`](https://jsxgraph.org/docs/symbols/JXG.Text.html#updateText) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-updateText text args)` | refresh the rendered text. |
+| [`js-jsx-text-utf8_decode`](https://jsxgraph.org/docs/symbols/JXG.Text.html#utf8_decode) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-utf8_decode text args)` | decode UTF-8 text data. |
+| [`js-jsx-text-valueTagToJessieCode`](https://jsxgraph.org/docs/symbols/JXG.Text.html#valueTagToJessieCode) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-valueTagToJessieCode text args)` | convert a value tag to JessieCode. |
+
+## Chapter 18 — Mini Workflows
 
 ### Configure Point Snapping
 
@@ -338,10 +377,10 @@ Reference root: [JXG.Glider](https://jsxgraph.org/docs/symbols/JXG.Glider.html)
 (define t (js-jsx-board-create-text board #[-5 5 "PQ"] (js-object (vector))))
 ```
 
-## Chapter 18 — Coverage Checklist
+## Chapter 19 — Coverage Checklist
 
-- This document covers **105** functions from `ffi/jsxgraph.ffi`.
-- Total documented functions: **105**
+- This document covers **134** functions from `ffi/jsxgraph.ffi`.
+- Total documented functions: **134**
 - `board api`: 24 functions
 - `board properties`: 8 functions
 - `geometryelement bridge`: 3 functions

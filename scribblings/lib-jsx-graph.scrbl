@@ -904,6 +904,274 @@ Creates an intersection point on @racket[board].
 Creates a text element on @racket[board].
 }
 
+@section{Text Helpers}
+
+The @racket[jsx-text] wrappers expose the documented
+@racketid[JXG.Text] methods that are specific to text elements.
+Inherited geometry and coordinate helpers are provided through the
+generic @racket[jsx-element] wrappers.
+
+@defproc[(jsx-text-_createFctUpdateText [text jsx-element?]
+                                        [args any/c] ...)
+         any/c]{
+@(jsx-bar "_createFctUpdateText"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#_createFctUpdateText"))
+Creates the internal update function used for text rendering.
+}
+
+@defproc[(jsx-text-_setText [text jsx-element?]
+                            [args any/c] ...)
+         any/c]{
+@(jsx-bar "_setText"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#_setText"))
+Sets the internal text representation directly.
+}
+
+@defproc[(jsx-text-bounds [text jsx-element?]
+                          [args any/c] ...)
+         any/c]{
+@(jsx-bar "bounds"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#bounds"))
+Returns the text bounds.
+}
+
+@defproc[(jsx-text-checkForSizeUpdate [text jsx-element?]
+                                      [args any/c] ...)
+         any/c]{
+@(jsx-bar "checkForSizeUpdate"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#checkForSizeUpdate"))
+Checks whether the text size needs recomputation.
+}
+
+@defproc[(jsx-text-convertGeonext2CSS [text jsx-element?]
+                                      [args any/c] ...)
+         any/c]{
+@(jsx-bar "convertGeonext2CSS"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#convertGeonext2CSS"))
+Converts GEONExT markup to CSS.
+}
+
+@defproc[(jsx-text-convertGeonextAndSketchometry2CSS [text jsx-element?]
+                                                     [args any/c] ...)
+         any/c]{
+@(jsx-bar "convertGeonextAndSketchometry2CSS"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#convertGeonextAndSketchometry2CSS"))
+Converts GEONExT and Sketchometry markup to CSS.
+}
+
+@defproc[(jsx-text-convertSketchometry2CSS [text jsx-element?]
+                                           [args any/c] ...)
+         any/c]{
+@(jsx-bar "convertSketchometry2CSS"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#convertSketchometry2CSS"))
+Converts Sketchometry markup to CSS.
+}
+
+@defproc[(jsx-text-crudeSizeEstimate [text jsx-element?]
+                                     [args any/c] ...)
+         any/c]{
+@(jsx-bar "crudeSizeEstimate"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#crudeSizeEstimate"))
+Returns a crude size estimate for the text.
+}
+
+@defproc[(jsx-text-escapeTicks [text jsx-element?]
+                               [args any/c] ...)
+         any/c]{
+@(jsx-bar "escapeTicks"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#escapeTicks"))
+Escapes tick marks in the text.
+}
+
+@defproc[(jsx-text-expandShortMath [text jsx-element?]
+                                   [args any/c] ...)
+         any/c]{
+@(jsx-bar "expandShortMath"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#expandShortMath"))
+Expands short math notation in the text.
+}
+
+@defproc[(jsx-text-generateTerm [text jsx-element?]
+                                [args any/c] ...)
+         any/c]{
+@(jsx-bar "generateTerm"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#generateTerm"))
+Generates the text term.
+}
+
+@defproc[(jsx-text-getAnchorX [text jsx-element?]
+                              [args any/c] ...)
+         any/c]{
+@(jsx-bar "getAnchorX"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#getAnchorX"))
+Returns the X anchor position for the text.
+}
+
+@defproc[(jsx-text-getAnchorY [text jsx-element?]
+                              [args any/c] ...)
+         any/c]{
+@(jsx-bar "getAnchorY"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#getAnchorY"))
+Returns the Y anchor position for the text.
+}
+
+@defproc[(jsx-text-getNumberOfConflicts [text jsx-element?]
+                                        [args any/c] ...)
+         any/c]{
+@(jsx-bar "getNumberOfConflicts"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#getNumberOfConflicts"))
+Returns the number of text placement conflicts.
+}
+
+@defproc[(jsx-text-getSize [text jsx-element?]
+                           [args any/c] ...)
+         any/c]{
+@(jsx-bar "getSize"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#getSize"))
+Returns the size of the text.
+}
+
+@defproc[(jsx-text-hasPoint [text jsx-element?]
+                            [args any/c] ...)
+         any/c]{
+@(jsx-bar "hasPoint"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#hasPoint"))
+Checks whether screen coordinates hit the text.
+}
+
+@defproc[(jsx-text-notifyParents [text jsx-element?]
+                                 [args any/c] ...)
+         any/c]{
+@(jsx-bar "notifyParents"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#notifyParents"))
+Notifies parent elements that the text changed.
+}
+
+@defproc[(jsx-text-poorMansTeX [text jsx-element?]
+                               [args any/c] ...)
+         any/c]{
+@(jsx-bar "poorMansTeX"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#poorMansTeX"))
+Renders poor-man's TeX markup.
+}
+
+@defproc[(jsx-text-replaceSub [text jsx-element?]
+                              [args any/c] ...)
+         any/c]{
+@(jsx-bar "replaceSub"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#replaceSub"))
+Replaces a subscript fragment.
+}
+
+@defproc[(jsx-text-replaceSup [text jsx-element?]
+                              [args any/c] ...)
+         any/c]{
+@(jsx-bar "replaceSup"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#replaceSup"))
+Replaces a superscript fragment.
+}
+
+@defproc[(jsx-text-setAutoPosition [text jsx-element?]
+                                   [args any/c] ...)
+         any/c]{
+@(jsx-bar "setAutoPosition"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#setAutoPosition"))
+Turns automatic positioning on or off.
+}
+
+@defproc[(jsx-text-setCoords [text jsx-element?]
+                             [args any/c] ...)
+         any/c]{
+@(jsx-bar "setCoords"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#setCoords"))
+Sets the text coordinates.
+}
+
+@defproc[(jsx-text-setText [text jsx-element?]
+                           [args any/c] ...)
+         any/c]{
+@(jsx-bar "setText"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#setText"))
+Sets the displayed text.
+}
+
+@defproc[(jsx-text-setTextJessieCode [text jsx-element?]
+                                     [args any/c] ...)
+         any/c]{
+@(jsx-bar "setTextJessieCode"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#setTextJessieCode"))
+Sets the text from JessieCode.
+}
+
+@defproc[(jsx-text-unescapeTicks [text jsx-element?]
+                                 [args any/c] ...)
+         any/c]{
+@(jsx-bar "unescapeTicks"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#unescapeTicks"))
+Unescapes tick marks in the text.
+}
+
+@defproc[(jsx-text-updateSize [text jsx-element?]
+                              [args any/c] ...)
+         any/c]{
+@(jsx-bar "updateSize"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#updateSize"))
+Updates the text size.
+}
+
+@defproc[(jsx-text-updateText [text jsx-element?]
+                              [args any/c] ...)
+         any/c]{
+@(jsx-bar "updateText"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#updateText"))
+Refreshes the rendered text.
+}
+
+@defproc[(jsx-text-utf8_decode [text jsx-element?]
+                               [args any/c] ...)
+         any/c]{
+@(jsx-bar "utf8_decode"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#utf8_decode"))
+Decodes UTF-8 text data.
+}
+
+@defproc[(jsx-text-valueTagToJessieCode [text jsx-element?]
+                                        [args any/c] ...)
+         any/c]{
+@(jsx-bar "valueTagToJessieCode"
+          (string-append (jsx-doc-url "JXG.Text")
+                         "#valueTagToJessieCode"))
+Converts a value tag to JessieCode.
+}
+
 @section{Geometry Elements}
 
 The @racket[jsx-element] wrapper covers JSXGraph geometry elements and

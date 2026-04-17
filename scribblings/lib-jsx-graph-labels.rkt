@@ -156,6 +156,35 @@
   jsx-create-normal
   jsx-create-intersection
   jsx-create-text
+  jsx-text-_createFctUpdateText
+  jsx-text-_setText
+  jsx-text-bounds
+  jsx-text-checkForSizeUpdate
+  jsx-text-convertGeonext2CSS
+  jsx-text-convertGeonextAndSketchometry2CSS
+  jsx-text-convertSketchometry2CSS
+  jsx-text-crudeSizeEstimate
+  jsx-text-escapeTicks
+  jsx-text-expandShortMath
+  jsx-text-generateTerm
+  jsx-text-getAnchorX
+  jsx-text-getAnchorY
+  jsx-text-getNumberOfConflicts
+  jsx-text-getSize
+  jsx-text-hasPoint
+  jsx-text-notifyParents
+  jsx-text-poorMansTeX
+  jsx-text-replaceSub
+  jsx-text-replaceSup
+  jsx-text-setAutoPosition
+  jsx-text-setCoords
+  jsx-text-setText
+  jsx-text-setTextJessieCode
+  jsx-text-unescapeTicks
+  jsx-text-updateSize
+  jsx-text-updateText
+  jsx-text-utf8_decode
+  jsx-text-valueTagToJessieCode
   jsx-board-count-children
   jsx-board-num-objects
   jsx-board-objects-list
@@ -452,6 +481,35 @@
 (define jsx-create-normal any/c)
 (define jsx-create-intersection any/c)
 (define jsx-create-text any/c)
+(define jsx-text-_createFctUpdateText any/c)
+(define jsx-text-_setText any/c)
+(define jsx-text-bounds any/c)
+(define jsx-text-checkForSizeUpdate any/c)
+(define jsx-text-convertGeonext2CSS any/c)
+(define jsx-text-convertGeonextAndSketchometry2CSS any/c)
+(define jsx-text-convertSketchometry2CSS any/c)
+(define jsx-text-crudeSizeEstimate any/c)
+(define jsx-text-escapeTicks any/c)
+(define jsx-text-expandShortMath any/c)
+(define jsx-text-generateTerm any/c)
+(define jsx-text-getAnchorX any/c)
+(define jsx-text-getAnchorY any/c)
+(define jsx-text-getNumberOfConflicts any/c)
+(define jsx-text-getSize any/c)
+(define jsx-text-hasPoint any/c)
+(define jsx-text-notifyParents any/c)
+(define jsx-text-poorMansTeX any/c)
+(define jsx-text-replaceSub any/c)
+(define jsx-text-replaceSup any/c)
+(define jsx-text-setAutoPosition any/c)
+(define jsx-text-setCoords any/c)
+(define jsx-text-setText any/c)
+(define jsx-text-setTextJessieCode any/c)
+(define jsx-text-unescapeTicks any/c)
+(define jsx-text-updateSize any/c)
+(define jsx-text-updateText any/c)
+(define jsx-text-utf8_decode any/c)
+(define jsx-text-valueTagToJessieCode any/c)
 (define jsx-board-count-children any/c)
 (define jsx-board-num-objects any/c)
 (define jsx-board-objects-list any/c)

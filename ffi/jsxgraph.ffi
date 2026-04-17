@@ -176,6 +176,311 @@
   #:name   "create-text"
   (-> (extern value value) (extern/raw)))
 
+; Text-specific methods
+; (js-jsx-text-_createFctUpdateText text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-_createFctUpdateText
+  #:module "jsx-text"
+  #:name   "_createFctUpdateText"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-_setText text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-_setText
+  #:module "jsx-text"
+  #:name   "_setText"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-bounds text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-bounds
+  #:module "jsx-text"
+  #:name   "bounds"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-check-for-size-update text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-check-for-size-update
+  #:module "jsx-text"
+  #:name   "checkForSizeUpdate"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-checkForSizeUpdate
+  #:module "jsx-text"
+  #:name   "checkForSizeUpdate"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-convert-geonext2-css text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-convert-geonext2-css
+  #:module "jsx-text"
+  #:name   "convertGeonext2CSS"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-convertGeonext2CSS
+  #:module "jsx-text"
+  #:name   "convertGeonext2CSS"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-convert-geonext-and-sketchometry2-css text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-convert-geonext-and-sketchometry2-css
+  #:module "jsx-text"
+  #:name   "convertGeonextAndSketchometry2CSS"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-convertGeonextAndSketchometry2CSS
+  #:module "jsx-text"
+  #:name   "convertGeonextAndSketchometry2CSS"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-convert-sketchometry2-css text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-convert-sketchometry2-css
+  #:module "jsx-text"
+  #:name   "convertSketchometry2CSS"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-convertSketchometry2CSS
+  #:module "jsx-text"
+  #:name   "convertSketchometry2CSS"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-crude-size-estimate text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-crude-size-estimate
+  #:module "jsx-text"
+  #:name   "crudeSizeEstimate"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-crudeSizeEstimate
+  #:module "jsx-text"
+  #:name   "crudeSizeEstimate"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-escape-ticks text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-escape-ticks
+  #:module "jsx-text"
+  #:name   "escapeTicks"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-escapeTicks
+  #:module "jsx-text"
+  #:name   "escapeTicks"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-expand-short-math text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-expand-short-math
+  #:module "jsx-text"
+  #:name   "expandShortMath"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-expandShortMath
+  #:module "jsx-text"
+  #:name   "expandShortMath"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-generate-term text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-generate-term
+  #:module "jsx-text"
+  #:name   "generateTerm"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-generateTerm
+  #:module "jsx-text"
+  #:name   "generateTerm"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-get-anchor-x text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-get-anchor-x
+  #:module "jsx-text"
+  #:name   "getAnchorX"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-getAnchorX
+  #:module "jsx-text"
+  #:name   "getAnchorX"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-get-anchor-y text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-get-anchor-y
+  #:module "jsx-text"
+  #:name   "getAnchorY"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-getAnchorY
+  #:module "jsx-text"
+  #:name   "getAnchorY"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-get-number-of-conflicts text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-get-number-of-conflicts
+  #:module "jsx-text"
+  #:name   "getNumberOfConflicts"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-getNumberOfConflicts
+  #:module "jsx-text"
+  #:name   "getNumberOfConflicts"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-get-size text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-get-size
+  #:module "jsx-text"
+  #:name   "getSize"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-getSize
+  #:module "jsx-text"
+  #:name   "getSize"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-has-point text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-has-point
+  #:module "jsx-text"
+  #:name   "hasPoint"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-hasPoint
+  #:module "jsx-text"
+  #:name   "hasPoint"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-notify-parents text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-notify-parents
+  #:module "jsx-text"
+  #:name   "notifyParents"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-notifyParents
+  #:module "jsx-text"
+  #:name   "notifyParents"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-poor-mans-tex text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-poor-mans-tex
+  #:module "jsx-text"
+  #:name   "poorMansTeX"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-poorMansTeX
+  #:module "jsx-text"
+  #:name   "poorMansTeX"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-replace-sub text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-replace-sub
+  #:module "jsx-text"
+  #:name   "replaceSub"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-replaceSub
+  #:module "jsx-text"
+  #:name   "replaceSub"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-replace-sup text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-replace-sup
+  #:module "jsx-text"
+  #:name   "replaceSup"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-replaceSup
+  #:module "jsx-text"
+  #:name   "replaceSup"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-set-auto-position text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-set-auto-position
+  #:module "jsx-text"
+  #:name   "setAutoPosition"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-setAutoPosition
+  #:module "jsx-text"
+  #:name   "setAutoPosition"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-set-coords text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-set-coords
+  #:module "jsx-text"
+  #:name   "setCoords"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-setCoords
+  #:module "jsx-text"
+  #:name   "setCoords"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-set-text text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-set-text
+  #:module "jsx-text"
+  #:name   "setText"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-setText
+  #:module "jsx-text"
+  #:name   "setText"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-set-text-jessie-code text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-set-text-jessie-code
+  #:module "jsx-text"
+  #:name   "setTextJessieCode"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-setTextJessieCode
+  #:module "jsx-text"
+  #:name   "setTextJessieCode"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-unescape-ticks text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-unescape-ticks
+  #:module "jsx-text"
+  #:name   "unescapeTicks"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-unescapeTicks
+  #:module "jsx-text"
+  #:name   "unescapeTicks"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-update-size text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-update-size
+  #:module "jsx-text"
+  #:name   "updateSize"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-updateSize
+  #:module "jsx-text"
+  #:name   "updateSize"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-update-text text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-update-text
+  #:module "jsx-text"
+  #:name   "updateText"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-updateText
+  #:module "jsx-text"
+  #:name   "updateText"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-utf8-decode text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-utf8-decode
+  #:module "jsx-text"
+  #:name   "utf8_decode"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-utf8_decode
+  #:module "jsx-text"
+  #:name   "utf8_decode"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-text-value-tag-to-jessie-code text:Extern args:Value) -> Extern
+(define-foreign js-jsx-text-value-tag-to-jessie-code
+  #:module "jsx-text"
+  #:name   "valueTagToJessieCode"
+  (-> (extern value) (extern/raw)))
+
+(define-foreign js-jsx-text-valueTagToJessieCode
+  #:module "jsx-text"
+  #:name   "valueTagToJessieCode"
+  (-> (extern value) (extern/raw)))
+
 ;; Update board state and redraw as needed
 ; (js-jsx-board-update! board:Extern) -> Extern
 (define-foreign js-jsx-board-update!

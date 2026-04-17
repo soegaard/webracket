@@ -310,6 +310,151 @@
 (define-jsx-alias (jsx-board-create-text/raw board parents attrs)
   js-jsx-board-create-text)
 
+;; jsx-text-_createFctUpdateText/raw : external/raw any/c -> external/raw
+;;   Create the update function for text rendering.
+(define-jsx-alias (jsx-text-_createFctUpdateText/raw text args)
+  js-jsx-text-_createFctUpdateText)
+
+;; jsx-text-_setText/raw : external/raw any/c -> external/raw
+;;   Set text internals directly.
+(define-jsx-alias (jsx-text-_setText/raw text args)
+  js-jsx-text-_setText)
+
+;; jsx-text-bounds/raw : external/raw any/c -> external/raw
+;;   Read the text bounding box.
+(define-jsx-alias (jsx-text-bounds/raw text args)
+  js-jsx-text-bounds)
+
+;; jsx-text-checkForSizeUpdate/raw : external/raw any/c -> external/raw
+;;   Check whether the text size needs an update.
+(define-jsx-alias (jsx-text-checkForSizeUpdate/raw text args)
+  js-jsx-text-check-for-size-update)
+
+;; jsx-text-convertGeonext2CSS/raw : external/raw any/c -> external/raw
+;;   Convert GEONExT markup to CSS.
+(define-jsx-alias (jsx-text-convertGeonext2CSS/raw text args)
+  js-jsx-text-convert-geonext2-css)
+
+;; jsx-text-convertGeonextAndSketchometry2CSS/raw : external/raw any/c -> external/raw
+;;   Convert GEONExT and Sketchometry markup to CSS.
+(define-jsx-alias (jsx-text-convertGeonextAndSketchometry2CSS/raw text args)
+  js-jsx-text-convert-geonext-and-sketchometry2-css)
+
+;; jsx-text-convertSketchometry2CSS/raw : external/raw any/c -> external/raw
+;;   Convert Sketchometry markup to CSS.
+(define-jsx-alias (jsx-text-convertSketchometry2CSS/raw text args)
+  js-jsx-text-convert-sketchometry2-css)
+
+;; jsx-text-crudeSizeEstimate/raw : external/raw any/c -> external/raw
+;;   Estimate the text size crudely.
+(define-jsx-alias (jsx-text-crudeSizeEstimate/raw text args)
+  js-jsx-text-crude-size-estimate)
+
+;; jsx-text-escapeTicks/raw : external/raw any/c -> external/raw
+;;   Escape tick marks in text.
+(define-jsx-alias (jsx-text-escapeTicks/raw text args)
+  js-jsx-text-escape-ticks)
+
+;; jsx-text-expandShortMath/raw : external/raw any/c -> external/raw
+;;   Expand short math notation in text.
+(define-jsx-alias (jsx-text-expandShortMath/raw text args)
+  js-jsx-text-expand-short-math)
+
+;; jsx-text-generateTerm/raw : external/raw any/c -> external/raw
+;;   Generate the text term.
+(define-jsx-alias (jsx-text-generateTerm/raw text args)
+  js-jsx-text-generate-term)
+
+;; jsx-text-getAnchorX/raw : external/raw any/c -> external/raw
+;;   Read the X anchor position for text.
+(define-jsx-alias (jsx-text-getAnchorX/raw text args)
+  js-jsx-text-get-anchor-x)
+
+;; jsx-text-getAnchorY/raw : external/raw any/c -> external/raw
+;;   Read the Y anchor position for text.
+(define-jsx-alias (jsx-text-getAnchorY/raw text args)
+  js-jsx-text-get-anchor-y)
+
+;; jsx-text-getNumberOfConflicts/raw : external/raw any/c -> external/raw
+;;   Read the number of text placement conflicts.
+(define-jsx-alias (jsx-text-getNumberOfConflicts/raw text args)
+  js-jsx-text-get-number-of-conflicts)
+
+;; jsx-text-getSize/raw : external/raw any/c -> external/raw
+;;   Read the text size.
+(define-jsx-alias (jsx-text-getSize/raw text args)
+  js-jsx-text-get-size)
+
+;; jsx-text-hasPoint/raw : external/raw any/c -> external/raw
+;;   Test whether a screen position hits the text.
+(define-jsx-alias (jsx-text-hasPoint/raw text args)
+  js-jsx-text-has-point)
+
+;; jsx-text-notifyParents/raw : external/raw any/c -> external/raw
+;;   Notify parent elements that the text changed.
+(define-jsx-alias (jsx-text-notifyParents/raw text args)
+  js-jsx-text-notify-parents)
+
+;; jsx-text-poorMansTeX/raw : external/raw any/c -> external/raw
+;;   Render poor-man's TeX markup.
+(define-jsx-alias (jsx-text-poorMansTeX/raw text args)
+  js-jsx-text-poor-mans-tex)
+
+;; jsx-text-replaceSub/raw : external/raw any/c -> external/raw
+;;   Replace a subscript fragment.
+(define-jsx-alias (jsx-text-replaceSub/raw text args)
+  js-jsx-text-replace-sub)
+
+;; jsx-text-replaceSup/raw : external/raw any/c -> external/raw
+;;   Replace a superscript fragment.
+(define-jsx-alias (jsx-text-replaceSup/raw text args)
+  js-jsx-text-replace-sup)
+
+;; jsx-text-setAutoPosition/raw : external/raw any/c -> external/raw
+;;   Toggle automatic positioning.
+(define-jsx-alias (jsx-text-setAutoPosition/raw text args)
+  js-jsx-text-set-auto-position)
+
+;; jsx-text-setCoords/raw : external/raw any/c -> external/raw
+;;   Set the text coordinates.
+(define-jsx-alias (jsx-text-setCoords/raw text args)
+  js-jsx-text-set-coords)
+
+;; jsx-text-setText/raw : external/raw any/c -> external/raw
+;;   Set the displayed text.
+(define-jsx-alias (jsx-text-setText/raw text args)
+  js-jsx-text-set-text)
+
+;; jsx-text-setTextJessieCode/raw : external/raw any/c -> external/raw
+;;   Set the text from JessieCode.
+(define-jsx-alias (jsx-text-setTextJessieCode/raw text args)
+  js-jsx-text-set-text-jessie-code)
+
+;; jsx-text-unescapeTicks/raw : external/raw any/c -> external/raw
+;;   Unescape tick marks in text.
+(define-jsx-alias (jsx-text-unescapeTicks/raw text args)
+  js-jsx-text-unescape-ticks)
+
+;; jsx-text-updateSize/raw : external/raw any/c -> external/raw
+;;   Update the text size.
+(define-jsx-alias (jsx-text-updateSize/raw text args)
+  js-jsx-text-update-size)
+
+;; jsx-text-updateText/raw : external/raw any/c -> external/raw
+;;   Refresh the rendered text.
+(define-jsx-alias (jsx-text-updateText/raw text args)
+  js-jsx-text-update-text)
+
+;; jsx-text-utf8_decode/raw : external/raw any/c -> external/raw
+;;   Decode UTF-8 text data.
+(define-jsx-alias (jsx-text-utf8_decode/raw text args)
+  js-jsx-text-utf8-decode)
+
+;; jsx-text-valueTagToJessieCode/raw : external/raw any/c -> external/raw
+;;   Convert a value tag to JessieCode.
+(define-jsx-alias (jsx-text-valueTagToJessieCode/raw text args)
+  js-jsx-text-value-tag-to-jessie-code)
+
 ;; jsx-board-update!/raw : external/raw -> external/raw
 ;;   Update a board and redraw as needed.
 (define-jsx-alias (jsx-board-update!/raw board) js-jsx-board-update!)
@@ -1001,6 +1146,151 @@
 (define (jsx-create-text board parents [attributes #f])
   (jsx-wrap-element
    (jsx-board-create-text/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-text-_createFctUpdateText : jsx-element? any/c ... -> any/c
+;;   Create the update function for text rendering.
+(define (jsx-text-_createFctUpdateText text . args)
+  (jsx-text-_createFctUpdateText/raw text (list->vector args)))
+
+;; jsx-text-_setText : jsx-element? any/c ... -> any/c
+;;   Set text internals directly.
+(define (jsx-text-_setText text . args)
+  (jsx-text-_setText/raw text (list->vector args)))
+
+;; jsx-text-bounds : jsx-element? any/c ... -> any/c
+;;   Read the text bounding box.
+(define (jsx-text-bounds text . args)
+  (jsx-text-bounds/raw text (list->vector args)))
+
+;; jsx-text-checkForSizeUpdate : jsx-element? any/c ... -> any/c
+;;   Check whether the text size needs an update.
+(define (jsx-text-checkForSizeUpdate text . args)
+  (jsx-text-checkForSizeUpdate/raw text (list->vector args)))
+
+;; jsx-text-convertGeonext2CSS : jsx-element? any/c ... -> any/c
+;;   Convert GEONExT markup to CSS.
+(define (jsx-text-convertGeonext2CSS text . args)
+  (jsx-text-convertGeonext2CSS/raw text (list->vector args)))
+
+;; jsx-text-convertGeonextAndSketchometry2CSS : jsx-element? any/c ... -> any/c
+;;   Convert GEONExT and Sketchometry markup to CSS.
+(define (jsx-text-convertGeonextAndSketchometry2CSS text . args)
+  (jsx-text-convertGeonextAndSketchometry2CSS/raw text (list->vector args)))
+
+;; jsx-text-convertSketchometry2CSS : jsx-element? any/c ... -> any/c
+;;   Convert Sketchometry markup to CSS.
+(define (jsx-text-convertSketchometry2CSS text . args)
+  (jsx-text-convertSketchometry2CSS/raw text (list->vector args)))
+
+;; jsx-text-crudeSizeEstimate : jsx-element? any/c ... -> any/c
+;;   Estimate the text size crudely.
+(define (jsx-text-crudeSizeEstimate text . args)
+  (jsx-text-crudeSizeEstimate/raw text (list->vector args)))
+
+;; jsx-text-escapeTicks : jsx-element? any/c ... -> any/c
+;;   Escape tick marks in text.
+(define (jsx-text-escapeTicks text . args)
+  (jsx-text-escapeTicks/raw text (list->vector args)))
+
+;; jsx-text-expandShortMath : jsx-element? any/c ... -> any/c
+;;   Expand short math notation in text.
+(define (jsx-text-expandShortMath text . args)
+  (jsx-text-expandShortMath/raw text (list->vector args)))
+
+;; jsx-text-generateTerm : jsx-element? any/c ... -> any/c
+;;   Generate the text term.
+(define (jsx-text-generateTerm text . args)
+  (jsx-text-generateTerm/raw text (list->vector args)))
+
+;; jsx-text-getAnchorX : jsx-element? any/c ... -> any/c
+;;   Read the X anchor position for text.
+(define (jsx-text-getAnchorX text . args)
+  (jsx-text-getAnchorX/raw text (list->vector args)))
+
+;; jsx-text-getAnchorY : jsx-element? any/c ... -> any/c
+;;   Read the Y anchor position for text.
+(define (jsx-text-getAnchorY text . args)
+  (jsx-text-getAnchorY/raw text (list->vector args)))
+
+;; jsx-text-getNumberOfConflicts : jsx-element? any/c ... -> any/c
+;;   Read the number of text placement conflicts.
+(define (jsx-text-getNumberOfConflicts text . args)
+  (jsx-text-getNumberOfConflicts/raw text (list->vector args)))
+
+;; jsx-text-getSize : jsx-element? any/c ... -> any/c
+;;   Read the text size.
+(define (jsx-text-getSize text . args)
+  (jsx-text-getSize/raw text (list->vector args)))
+
+;; jsx-text-hasPoint : jsx-element? any/c ... -> any/c
+;;   Test whether a screen position hits the text.
+(define (jsx-text-hasPoint text . args)
+  (jsx-text-hasPoint/raw text (list->vector args)))
+
+;; jsx-text-notifyParents : jsx-element? any/c ... -> any/c
+;;   Notify parent elements that the text changed.
+(define (jsx-text-notifyParents text . args)
+  (jsx-text-notifyParents/raw text (list->vector args)))
+
+;; jsx-text-poorMansTeX : jsx-element? any/c ... -> any/c
+;;   Render poor-man's TeX markup.
+(define (jsx-text-poorMansTeX text . args)
+  (jsx-text-poorMansTeX/raw text (list->vector args)))
+
+;; jsx-text-replaceSub : jsx-element? any/c ... -> any/c
+;;   Replace a subscript fragment.
+(define (jsx-text-replaceSub text . args)
+  (jsx-text-replaceSub/raw text (list->vector args)))
+
+;; jsx-text-replaceSup : jsx-element? any/c ... -> any/c
+;;   Replace a superscript fragment.
+(define (jsx-text-replaceSup text . args)
+  (jsx-text-replaceSup/raw text (list->vector args)))
+
+;; jsx-text-setAutoPosition : jsx-element? any/c ... -> any/c
+;;   Toggle automatic positioning.
+(define (jsx-text-setAutoPosition text . args)
+  (jsx-text-setAutoPosition/raw text (list->vector args)))
+
+;; jsx-text-setCoords : jsx-element? any/c ... -> any/c
+;;   Set the text coordinates.
+(define (jsx-text-setCoords text . args)
+  (jsx-text-setCoords/raw text (list->vector args)))
+
+;; jsx-text-setText : jsx-element? any/c ... -> any/c
+;;   Set the displayed text.
+(define (jsx-text-setText text . args)
+  (jsx-text-setText/raw text (list->vector args)))
+
+;; jsx-text-setTextJessieCode : jsx-element? any/c ... -> any/c
+;;   Set the text from JessieCode.
+(define (jsx-text-setTextJessieCode text . args)
+  (jsx-text-setTextJessieCode/raw text (list->vector args)))
+
+;; jsx-text-unescapeTicks : jsx-element? any/c ... -> any/c
+;;   Unescape tick marks in text.
+(define (jsx-text-unescapeTicks text . args)
+  (jsx-text-unescapeTicks/raw text (list->vector args)))
+
+;; jsx-text-updateSize : jsx-element? any/c ... -> any/c
+;;   Update the text size.
+(define (jsx-text-updateSize text . args)
+  (jsx-text-updateSize/raw text (list->vector args)))
+
+;; jsx-text-updateText : jsx-element? any/c ... -> any/c
+;;   Refresh the rendered text.
+(define (jsx-text-updateText text . args)
+  (jsx-text-updateText/raw text (list->vector args)))
+
+;; jsx-text-utf8_decode : jsx-element? any/c ... -> any/c
+;;   Decode UTF-8 text data.
+(define (jsx-text-utf8_decode text . args)
+  (jsx-text-utf8_decode/raw text (list->vector args)))
+
+;; jsx-text-valueTagToJessieCode : jsx-element? any/c ... -> any/c
+;;   Convert a value tag to JessieCode.
+(define (jsx-text-valueTagToJessieCode text . args)
+  (jsx-text-valueTagToJessieCode/raw text (list->vector args)))
 
 ;;; -------------------------------------------------------------------
 ;;; Geometry element helpers
