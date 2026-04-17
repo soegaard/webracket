@@ -20,7 +20,7 @@ Use @racket[jsx-graph] when you want to:
 @itemlist[
   @item{create a @racket[JXG.JSXGraph] board in the current page}
   @item{create arbitrary JSXGraph elements with @racket[jsx-create] or the specialized constructors}
-  @item{build geometry objects such as @racket[JXG.Point], @racket[JXG.Line], @racket[JXG.Arc], @racket[JXG.Angle], @racket[JXG.Sector], @racket[JXG.Circle], @racket[JXG.Polygon], and @racket[JXG.Text]}
+  @item{build geometry objects such as @racket[JXG.Point], @racket[JXG.Line], @racket[JXG.Arc], @racket[JXG.Angle], @racket[JXG.Sector], @racket[JXG.Circle], @racket[JXG.Conic], @racket[JXG.Ellipse], @racket[JXG.Functiongraph], @racket[JXG.Polygon], and @racket[JXG.Text]}
   @item{inspect or adjust point properties from Racket code}
   @item{attach browser event handlers to JSXGraph elements}
 ]
@@ -297,6 +297,24 @@ Creates a glider on @racket[board].
 Creates a circle on @racket[board].
 }
 
+@defproc[(jsx-create-conic [board jsx-board?]
+                           [parents any/c]
+                           [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Conic"
+          (jsx-doc-url "Conic"))
+Creates a conic section on @racket[board].
+}
+
+@defproc[(jsx-create-ellipse [board jsx-board?]
+                             [parents any/c]
+                             [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Ellipse"
+          (jsx-doc-url "Ellipse"))
+Creates an ellipse on @racket[board].
+}
+
 @defproc[(jsx-create-curve [board jsx-board?]
                            [parents any/c]
                            [attributes (or/c #f any/c) #f])
@@ -304,6 +322,15 @@ Creates a circle on @racket[board].
 @(jsx-bar "Curve"
           (jsx-doc-url "Curve"))
 Creates a curve on @racket[board].
+}
+
+@defproc[(jsx-create-functiongraph [board jsx-board?]
+                                   [parents any/c]
+                                   [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Functiongraph"
+          (jsx-doc-url "Functiongraph"))
+Creates a function graph on @racket[board].
 }
 
 @section{Arc Helpers}

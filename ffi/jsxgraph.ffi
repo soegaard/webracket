@@ -116,10 +116,28 @@
   #:name   "create-circle"
   (-> (extern value value) (extern/raw)))
 
+; (js-jsx-board-create-conic board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-conic
+  #:module "jsx-board"
+  #:name   "create-conic"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-ellipse board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-ellipse
+  #:module "jsx-board"
+  #:name   "create-ellipse"
+  (-> (extern value value) (extern/raw)))
+
 ; (js-jsx-board-create-curve board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign js-jsx-board-create-curve
   #:module "jsx-board"
   #:name   "create-curve"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-functiongraph board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-functiongraph
+  #:module "jsx-board"
+  #:name   "create-functiongraph"
   (-> (extern value value) (extern/raw)))
 
 ; (js-jsx-board-create-polygon board:Extern parents:Value attributes:Value) -> Extern

@@ -146,7 +146,10 @@
   jsx-create-sector
   jsx-create-glider
   jsx-create-circle
+  jsx-create-conic
+  jsx-create-ellipse
   jsx-create-curve
+  jsx-create-functiongraph
   jsx-create-polygon
   jsx-create-midpoint
   jsx-create-parallel
@@ -480,7 +483,10 @@
 (define jsx-create-sector any/c)
 (define jsx-create-glider any/c)
 (define jsx-create-circle any/c)
+(define jsx-create-conic any/c)
+(define jsx-create-ellipse any/c)
 (define jsx-create-curve any/c)
+(define jsx-create-functiongraph any/c)
 (define jsx-create-polygon any/c)
 (define jsx-create-midpoint any/c)
 (define jsx-create-parallel any/c)

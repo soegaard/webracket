@@ -260,10 +260,25 @@
 (define-jsx-alias (jsx-board-create-circle/raw board parents attrs)
   js-jsx-board-create-circle)
 
+;; jsx-board-create-conic/raw : external/raw any/c any/c -> external/raw
+;;   Create a conic on a board.
+(define-jsx-alias (jsx-board-create-conic/raw board parents attrs)
+  js-jsx-board-create-conic)
+
+;; jsx-board-create-ellipse/raw : external/raw any/c any/c -> external/raw
+;;   Create an ellipse on a board.
+(define-jsx-alias (jsx-board-create-ellipse/raw board parents attrs)
+  js-jsx-board-create-ellipse)
+
 ;; jsx-board-create-curve/raw : external/raw any/c any/c -> external/raw
 ;;   Create a curve on a board.
 (define-jsx-alias (jsx-board-create-curve/raw board parents attrs)
   js-jsx-board-create-curve)
+
+;; jsx-board-create-functiongraph/raw : external/raw any/c any/c -> external/raw
+;;   Create a functiongraph on a board.
+(define-jsx-alias (jsx-board-create-functiongraph/raw board parents attrs)
+  js-jsx-board-create-functiongraph)
 
 ;; jsx-board-create-polygon/raw : external/raw any/c any/c -> external/raw
 ;;   Create a polygon on a board.
@@ -870,11 +885,29 @@
   (jsx-wrap-element
    (jsx-board-create-circle/raw (jsx-board-raw board) parents (or attributes '#[]))))
 
+;; jsx-create-conic : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a conic on a board.
+(define (jsx-create-conic board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-conic/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-ellipse : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create an ellipse on a board.
+(define (jsx-create-ellipse board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-ellipse/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
 ;; jsx-create-curve : jsx-board? any/c [any/c #f] -> jsx-element?
 ;;   Create a curve on a board.
 (define (jsx-create-curve board parents [attributes #f])
   (jsx-wrap-element
    (jsx-board-create-curve/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-functiongraph : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a functiongraph on a board.
+(define (jsx-create-functiongraph board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-functiongraph/raw (jsx-board-raw board) parents (or attributes '#[]))))
 
 ;; jsx-create-polygon : jsx-board? any/c [any/c #f] -> jsx-element?
 ;;   Create a polygon on a board.

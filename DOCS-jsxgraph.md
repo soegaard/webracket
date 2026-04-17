@@ -13,8 +13,9 @@ Current scope:
 - Point predicates
 - Point attributes (getters/setters)
 - Point methods for hit-testing, style updates, and renderer updates
-- Line, arc, angle, sector, glider, circle, curve, polygon, midpoint, parallel,
-  perpendicular, reflection, bisector, and normal bridge helpers
+- Line, arc, angle, sector, glider, circle, conic, ellipse, curve, functiongraph,
+  polygon, midpoint, parallel, perpendicular, reflection, bisector, and normal
+  bridge helpers
 
 Assumption in examples: the program is compiled with `--ffi jsxgraph`.
 
@@ -177,7 +178,10 @@ Reference roots:
 | [`js-jsx-board-create-sector`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-sector board #[p q r] attrs)` | create a sector from parent points or coordinates. |
 | [`js-jsx-board-create-glider`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-glider board #[p q] attrs)` | create a glider constrained to a parent. |
 | [`js-jsx-board-create-circle`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-circle board #[p q] attrs)` | create a circle from parent geometry. |
+| [`js-jsx-board-create-conic`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-conic board #[A B C D E] attrs)` | create a conic from parent points or coefficients. |
+| [`js-jsx-board-create-ellipse`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-ellipse board #[f1 f2 p] attrs)` | create an ellipse from parent points or axis data. |
 | [`js-jsx-board-create-curve`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-curve board #[f g] attrs)` | create a curve from parent data or functions. |
+| [`js-jsx-board-create-functiongraph`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-functiongraph board #[f -10 10] attrs)` | create a function graph from a function and interval. |
 | [`js-jsx-board-create-polygon`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-polygon board #[p q r] attrs)` | create a polygon from parent points or coordinate arrays. |
 | [`js-jsx-board-create-midpoint`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-midpoint board #[p q] attrs)` | create a midpoint from parent points or a segment. |
 | [`js-jsx-board-create-parallel`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-parallel board #[l p] attrs)` | create a parallel line from a reference line and point. |
@@ -398,9 +402,9 @@ are already documented elsewhere in this reference.
 
 ## Chapter 20 — Coverage Checklist
 
-- This document covers **143** functions from `ffi/jsxgraph.ffi`.
-- Total documented functions: **143**
-- `board api`: 24 functions
+- This document covers **146** functions from `ffi/jsxgraph.ffi`.
+- Total documented functions: **146**
+- `board api`: 27 functions
 - `board properties`: 8 functions
 - `geometryelement bridge`: 3 functions
 - `line bridge`: 2 functions
