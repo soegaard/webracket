@@ -111,6 +111,17 @@
   (js-jsx-curve-call/nullish (jsx-unwrap curve) method args)
   (void))
 
+;; jsx-polygon-call : any/c string? vector? -> any/c
+;;   Call a Polygon method on a wrapped polygon element.
+(define (jsx-polygon-call polygon method args)
+  (js-jsx-polygon-call (jsx-unwrap polygon) method args))
+
+;; jsx-polygon-call/nullish : any/c string? vector? -> void?
+;;   Call a Polygon mutator on a wrapped polygon element.
+(define (jsx-polygon-call/nullish polygon method args)
+  (js-jsx-polygon-call/nullish (jsx-unwrap polygon) method args)
+  (void))
+
 ;;; -------------------------------------------------------------------
 ;;; Low-level aliases
 ;;; -------------------------------------------------------------------
@@ -153,6 +164,11 @@
 ;;   Create a curve on a board.
 (define-jsx-alias (jsx-board-create-curve/raw board parents attrs)
   js-jsx-board-create-curve)
+
+;; jsx-board-create-polygon/raw : external/raw any/c any/c -> external/raw
+;;   Create a polygon on a board.
+(define-jsx-alias (jsx-board-create-polygon/raw board parents attrs)
+  js-jsx-board-create-polygon)
 
 ;; jsx-board-create-intersection/raw : external/raw any/c any/c -> external/raw
 ;;   Create an intersection point on a board.
@@ -410,6 +426,11 @@
 (define (jsx-parents . xs)
   (list->vector (map jsx-unwrap xs)))
 
+;; jsx-polygon-args : any/c ... -> vector?
+;;   Pack polygon arguments into the vector shape JSXGraph expects.
+(define (jsx-polygon-args . xs)
+  (list->vector (map jsx-unpack-array xs)))
+
 ;; jsx-set-attribute! : external/raw any/c any/c -> void?
 ;;   Set a DOM attribute using JSXGraph-friendly key handling.
 (define (jsx-set-attribute! elem key value)
@@ -551,6 +572,12 @@
   (jsx-wrap-element
    (jsx-board-create-curve/raw (jsx-board-raw board) parents (or attributes '#[]))))
 
+;; jsx-create-polygon : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a polygon on a board.
+(define (jsx-create-polygon board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-polygon/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
 ;; jsx-circle-area : jsx-element? -> any/c
 ;;   Read the area of a circle.
 (define (jsx-circle-area circle)
@@ -685,6 +712,91 @@
 ;;   Update a curve transformation.
 (define (jsx-curve-update-transform! curve)
   (jsx-curve-call curve "updateTransform" (vector)))
+
+;; jsx-polygon-add-points! : jsx-element? any/c ... -> jsx-element?
+;;   Add vertices to a polygon.
+(define (jsx-polygon-add-points! polygon . points)
+  (jsx-wrap-element
+   (jsx-polygon-call polygon "addPoints" (apply jsx-polygon-args points))))
+
+;; jsx-polygon-area : jsx-element? -> any/c
+;;   Read the polygon area.
+(define (jsx-polygon-area polygon)
+  (jsx-polygon-call polygon "Area" (vector)))
+
+;; jsx-polygon-bounding-box : jsx-element? -> any/c
+;;   Read the polygon bounding box.
+(define (jsx-polygon-bounding-box polygon)
+  (jsx-polygon-call polygon "boundingBox" (vector)))
+
+;; jsx-polygon-find-point : jsx-element? any/c -> any/c
+;;   Find the index of a polygon vertex.
+(define (jsx-polygon-find-point polygon point)
+  (jsx-polygon-call polygon "findPoint" (vector (jsx-unwrap point))))
+
+;; jsx-polygon-has-point? : jsx-element? any/c any/c -> boolean?
+;;   Check whether screen coordinates hit a polygon.
+(define (jsx-polygon-has-point? polygon x y)
+  (jsx-polygon-call polygon "hasPoint" (vector x y)))
+
+;; jsx-polygon-hide-element! : jsx-element? [any/c #f] -> void?
+;;   Hide a polygon and optionally keep the borders visible.
+(define (jsx-polygon-hide-element! polygon [borderless #f])
+  (jsx-polygon-call/nullish polygon "hideElement" (vector borderless)))
+
+;; jsx-polygon-insert-points! : jsx-element? any/c ... -> jsx-element?
+;;   Insert vertices into a polygon.
+(define (jsx-polygon-insert-points! polygon . points)
+  (jsx-wrap-element
+   (jsx-polygon-call polygon "insertPoints" (apply jsx-polygon-args points))))
+
+;; jsx-polygon-intersect : jsx-element? any/c -> any/c
+;;   Intersect a polygon with another polygon.
+(define (jsx-polygon-intersect polygon other)
+  (jsx-polygon-call polygon "intersect" (vector (jsx-unwrap other))))
+
+;; jsx-polygon-l : jsx-element? -> any/c
+;;   Read the polygon perimeter alias.
+(define (jsx-polygon-l polygon)
+  (jsx-polygon-call polygon "L" (vector)))
+
+;; jsx-polygon-perimeter : jsx-element? -> any/c
+;;   Read the polygon perimeter.
+(define (jsx-polygon-perimeter polygon)
+  (jsx-polygon-call polygon "Perimeter" (vector)))
+
+;; jsx-polygon-pnpoly : jsx-element? any/c any/c [any/c #f] -> boolean?
+;;   Test whether coordinates are inside a polygon.
+(define (jsx-polygon-pnpoly polygon x y [coord-type #f])
+  (jsx-polygon-call polygon "pnpoly"
+                    (if coord-type
+                        (vector x y coord-type)
+                        (vector x y (void)))))
+
+;; jsx-polygon-remove-points! : jsx-element? any/c ... -> jsx-element?
+;;   Remove vertices from a polygon.
+(define (jsx-polygon-remove-points! polygon . points)
+  (jsx-wrap-element
+   (jsx-polygon-call polygon "removePoints" (apply jsx-polygon-args points))))
+
+;; jsx-polygon-set-position-directly! : jsx-element? any/c any/c any/c -> jsx-element?
+;;   Move a polygon directly by coordinate delta.
+(define (jsx-polygon-set-position-directly! polygon method coords oldcoords)
+  (jsx-wrap-element
+   (jsx-polygon-call polygon "setPositionDirectly"
+                     (vector method
+                             (jsx-unpack-array coords)
+                             (jsx-unpack-array oldcoords)))))
+
+;; jsx-polygon-show-element! : jsx-element? [any/c #f] -> void?
+;;   Show a polygon and optionally keep the borders visible.
+(define (jsx-polygon-show-element! polygon [borderless #f])
+  (jsx-polygon-call/nullish polygon "showElement" (vector borderless)))
+
+;; jsx-polygon-update-renderer! : jsx-element? -> void?
+;;   Refresh the polygon renderer.
+(define (jsx-polygon-update-renderer! polygon)
+  (jsx-polygon-call/nullish polygon "updateRenderer" (vector)))
 
 ;; jsx-create-perpendicular : jsx-board? any/c [any/c #f] -> jsx-element?
 ;;   Create a perpendicular line on a board.

@@ -143,6 +143,7 @@
   jsx-create-segment
   jsx-create-circle
   jsx-create-curve
+  jsx-create-polygon
   jsx-create-perpendicular
   jsx-create-intersection
   jsx-create-text
@@ -254,6 +255,21 @@
   jsx-curve-update-data-array!
   jsx-curve-update-renderer!
   jsx-curve-update-transform!
+  jsx-polygon-add-points!
+  jsx-polygon-area
+  jsx-polygon-bounding-box
+  jsx-polygon-find-point
+  jsx-polygon-has-point?
+  jsx-polygon-hide-element!
+  jsx-polygon-insert-points!
+  jsx-polygon-intersect
+  jsx-polygon-l
+  jsx-polygon-perimeter
+  jsx-polygon-pnpoly
+  jsx-polygon-remove-points!
+  jsx-polygon-set-position-directly!
+  jsx-polygon-show-element!
+  jsx-polygon-update-renderer!
   jsx-coordinates
   jsx-on
   jsx-element-add-event!
@@ -398,6 +414,7 @@
 (define jsx-create-segment any/c)
 (define jsx-create-circle any/c)
 (define jsx-create-curve any/c)
+(define jsx-create-polygon any/c)
 (define jsx-create-perpendicular any/c)
 (define jsx-create-intersection any/c)
 (define jsx-create-text any/c)
@@ -520,6 +537,21 @@
 (define jsx-curve-update-data-array! any/c)
 (define jsx-curve-update-renderer! any/c)
 (define jsx-curve-update-transform! any/c)
+(define jsx-polygon-add-points! any/c)
+(define jsx-polygon-area any/c)
+(define jsx-polygon-bounding-box any/c)
+(define jsx-polygon-find-point any/c)
+(define jsx-polygon-has-point? any/c)
+(define jsx-polygon-hide-element! any/c)
+(define jsx-polygon-insert-points! any/c)
+(define jsx-polygon-intersect any/c)
+(define jsx-polygon-l any/c)
+(define jsx-polygon-perimeter any/c)
+(define jsx-polygon-pnpoly any/c)
+(define jsx-polygon-remove-points! any/c)
+(define jsx-polygon-set-position-directly! any/c)
+(define jsx-polygon-show-element! any/c)
+(define jsx-polygon-update-renderer! any/c)
 (define jsx-coordinates any/c)
 (define jsx-on any/c)
 (define jsx-element-add-event! any/c)

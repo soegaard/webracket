@@ -98,6 +98,12 @@
   #:name   "create-curve"
   (-> (extern value value) (extern/raw)))
 
+; (js-jsx-board-create-polygon board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-polygon
+  #:module "jsx-board"
+  #:name   "create-polygon"
+  (-> (extern value value) (extern/raw)))
+
 ; (js-jsx-board-create-intersection board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign js-jsx-board-create-intersection
   #:module "jsx-board"
@@ -753,6 +759,24 @@
 ;; args : value
 (define-foreign js-jsx-curve-call/nullish
   #:module "jsx-curve"
+  #:name   "call/nullish"
+  (-> (extern string/symbol value) (extern)))
+
+;; Call a Polygon method and return the raw JavaScript result.
+;; polygon : extern
+;; method : string/symbol
+;; args : value
+(define-foreign js-jsx-polygon-call
+  #:module "jsx-polygon"
+  #:name   "call"
+  (-> (extern string/symbol value) (extern/raw)))
+
+;; Call a Polygon method and treat nullish results as absence.
+;; polygon : extern
+;; method : string/symbol
+;; args : value
+(define-foreign js-jsx-polygon-call/nullish
+  #:module "jsx-polygon"
   #:name   "call/nullish"
   (-> (extern string/symbol value) (extern)))
 

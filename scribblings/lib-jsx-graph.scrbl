@@ -20,7 +20,7 @@ Use @racket[jsx-graph] when you want to:
 @itemlist[
   @item{create a @racket[JXG.JSXGraph] board in the current page}
   @item{create arbitrary JSXGraph elements with @racket[jsx-create] or the specialized constructors}
-  @item{build geometry objects such as @racket[JXG.Point], @racket[JXG.Line], @racket[JXG.Circle], and @racket[JXG.Text]}
+  @item{build geometry objects such as @racket[JXG.Point], @racket[JXG.Line], @racket[JXG.Circle], @racket[JXG.Polygon], and @racket[JXG.Text]}
   @item{inspect or adjust point properties from Racket code}
   @item{attach browser event handlers to JSXGraph elements}
 ]
@@ -497,6 +497,152 @@ Refreshes the curve renderer.
           (string-append (jsx-doc-url "Curve")
                          "#updateTransform"))
 Updates a curve transformation.
+}
+
+@defproc[(jsx-create-polygon [board jsx-board?]
+                             [parents any/c]
+                             [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Polygon"
+          (jsx-doc-url "JXG.Polygon"))
+Creates a polygon on @racket[board].
+}
+
+@section{Polygon Helpers}
+
+@defproc[(jsx-polygon-add-points! [polygon jsx-element?]
+                                  [point any/c] ...)
+         jsx-element?]{
+@(jsx-bar "addPoints"
+          (string-append (jsx-doc-url "JXG.Polygon")
+                         "#addPoints"))
+Adds vertices to @racket[polygon].
+}
+
+@defproc[(jsx-polygon-area [polygon jsx-element?])
+         any/c]{
+@(jsx-bar "Area"
+          (string-append (jsx-doc-url "JXG.Polygon")
+                         "#Area"))
+Returns the area of @racket[polygon].
+}
+
+@defproc[(jsx-polygon-bounding-box [polygon jsx-element?])
+         any/c]{
+@(jsx-bar "boundingBox"
+          (string-append (jsx-doc-url "JXG.Polygon")
+                         "#boundingBox"))
+Returns the bounding box of @racket[polygon].
+}
+
+@defproc[(jsx-polygon-find-point [polygon jsx-element?]
+                                 [point any/c])
+         any/c]{
+@(jsx-bar "findPoint"
+          (string-append (jsx-doc-url "JXG.Polygon")
+                         "#findPoint"))
+Returns the index for @racket[point] in @racket[polygon].
+}
+
+@defproc[(jsx-polygon-has-point? [polygon jsx-element?]
+                                 [x any/c]
+                                 [y any/c])
+         boolean?]{
+@(jsx-bar "hasPoint"
+          (string-append (jsx-doc-url "JXG.Polygon")
+                         "#hasPoint"))
+Returns @racket[#t] when screen coordinates hit @racket[polygon].
+}
+
+@defproc[(jsx-polygon-hide-element! [polygon jsx-element?]
+                                    [borderless (or/c #f any/c) #f])
+         void?]{
+@(jsx-bar "hideElement"
+          (string-append (jsx-doc-url "JXG.Polygon")
+                         "#hideElement"))
+Hides @racket[polygon], optionally leaving the borders visible.
+}
+
+@defproc[(jsx-polygon-insert-points! [polygon jsx-element?]
+                                     [point any/c] ...)
+         jsx-element?]{
+@(jsx-bar "insertPoints"
+          (string-append (jsx-doc-url "JXG.Polygon")
+                         "#insertPoints"))
+Inserts vertices into @racket[polygon].
+}
+
+@defproc[(jsx-polygon-intersect [polygon jsx-element?]
+                                [other any/c])
+         any/c]{
+@(jsx-bar "intersect"
+          (string-append (jsx-doc-url "JXG.Polygon")
+                         "#intersect"))
+Intersects @racket[polygon] with @racket[other].
+}
+
+@defproc[(jsx-polygon-l [polygon jsx-element?])
+         any/c]{
+@(jsx-bar "L"
+          (string-append (jsx-doc-url "JXG.Polygon")
+                         "#L"))
+Returns the perimeter alias for @racket[polygon].
+}
+
+@defproc[(jsx-polygon-perimeter [polygon jsx-element?])
+         any/c]{
+@(jsx-bar "Perimeter"
+          (string-append (jsx-doc-url "JXG.Polygon")
+                         "#Perimeter"))
+Returns the perimeter of @racket[polygon].
+}
+
+@defproc[(jsx-polygon-pnpoly [polygon jsx-element?]
+                             [x any/c]
+                             [y any/c]
+                             [coord-type (or/c #f any/c) #f])
+         boolean?]{
+@(jsx-bar "pnpoly"
+          (string-append (jsx-doc-url "JXG.Polygon")
+                         "#pnpoly"))
+Checks whether @racket[x] and @racket[y] fall inside @racket[polygon].
+}
+
+@defproc[(jsx-polygon-remove-points! [polygon jsx-element?]
+                                     [point any/c] ...)
+         jsx-element?]{
+@(jsx-bar "removePoints"
+          (string-append (jsx-doc-url "JXG.Polygon")
+                         "#removePoints"))
+Removes vertices from @racket[polygon].
+}
+
+@defproc[(jsx-polygon-set-position-directly! [polygon jsx-element?]
+                                             [method any/c]
+                                             [coords any/c]
+                                             [oldcoords any/c])
+         jsx-element?]{
+@(jsx-bar "setPositionDirectly"
+          (string-append (jsx-doc-url "JXG.Polygon")
+                         "#setPositionDirectly"))
+Moves @racket[polygon] directly by coordinate differences.
+}
+
+@defproc[(jsx-polygon-show-element! [polygon jsx-element?]
+                                    [borderless (or/c #f any/c) #f])
+         void?]{
+@(jsx-bar "showElement"
+          (string-append (jsx-doc-url "JXG.Polygon")
+                         "#showElement"))
+Shows @racket[polygon], optionally leaving the borders visible.
+}
+
+@defproc[(jsx-polygon-update-renderer! [polygon jsx-element?])
+         void?]{
+@(jsx-bar "updateRenderer"
+          (string-append (jsx-doc-url "JXG.Polygon")
+                         "#updateRenderer"))
+Refreshes the polygon renderer.
 }
 
 @defproc[(jsx-create-perpendicular [board jsx-board?]
