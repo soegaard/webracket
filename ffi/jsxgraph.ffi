@@ -86,6 +86,12 @@
   #:name   "create-segment"
   (-> (extern value value) (extern/raw)))
 
+; (js-jsx-board-create-arc board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-arc
+  #:module "jsx-board"
+  #:name   "create-arc"
+  (-> (extern value value) (extern/raw)))
+
 ; (js-jsx-board-create-circle board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign js-jsx-board-create-circle
   #:module "jsx-board"
@@ -725,6 +731,40 @@
   #:module "jsx-line"
   #:name   "call/nullish"
   (-> (extern string/symbol value) (extern)))
+
+;; Arc
+
+;; Read the deprecated arc radius getter.
+;; arc : extern
+(define-foreign js-jsx-arc-get-radius
+  #:module "jsx-arc"
+  #:name   "get-radius"
+  (-> (extern) (f64)))
+
+;; Test whether a point lies inside the arc sector.
+;; arc : extern
+;; x : value
+;; y : value
+(define-foreign js-jsx-arc-has-point-sector
+  #:module "jsx-arc"
+  #:name   "has-point-sector"
+  (-> (extern f64 f64) (boolean)))
+
+;; Read the current arc radius.
+;; arc : extern
+(define-foreign js-jsx-arc-radius
+  #:module "jsx-arc"
+  #:name   "radius"
+  (-> (extern) (f64)))
+
+;; Read the arc length or angle value.
+;; arc : extern
+;; unit : value
+;; rad : value
+(define-foreign js-jsx-arc-value
+  #:module "jsx-arc"
+  #:name   "value"
+  (-> (extern value value) (f64)))
 
 ;; Call a circle method and return the raw JavaScript result.
 ;; circle : extern

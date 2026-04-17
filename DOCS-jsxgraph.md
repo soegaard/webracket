@@ -13,7 +13,7 @@ Current scope:
 - Point predicates
 - Point attributes (getters/setters)
 - Point methods for hit-testing, style updates, and renderer updates
-- Line, circle, curve, and polygon bridge helpers
+- Line, arc, circle, curve, and polygon bridge helpers
 
 Assumption in examples: the program is compiled with `--ffi jsxgraph`.
 
@@ -39,12 +39,13 @@ All function names are linked to JSXGraph API documentation.
 - [Chapter 10 — Circle Bridge](#chapter-10--circle-bridge)
 - [Chapter 11 — Curve Bridge](#chapter-11--curve-bridge)
 - [Chapter 12 — Polygon Bridge](#chapter-12--polygon-bridge)
-- [Chapter 13 — Mini Workflows](#chapter-13--mini-workflows)
+- [Chapter 13 — Arc Bridge](#chapter-13--arc-bridge)
+- [Chapter 14 — Mini Workflows](#chapter-14--mini-workflows)
 - [Configure Point Snapping](#configure-point-snapping)
 - [Hit-Testing and Projection](#hit-testing-and-projection)
 - [Style and Renderer Refresh](#style-and-renderer-refresh)
 - [Minimal Geometry Constructors](#minimal-geometry-constructors)
-- [Chapter 14 — Coverage Checklist](#chapter-14--coverage-checklist)
+- [Chapter 15 — Coverage Checklist](#chapter-15--coverage-checklist)
 
 ## Chapter 2 — Conventions
 
@@ -165,6 +166,7 @@ Reference roots:
 | [`js-jsx-board-create-point`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-point board #[-3 1] attrs)` | create a point using the board helper. |
 | [`js-jsx-board-create-line`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-line board #[p q] attrs)` | create a line from parent points or coordinates. |
 | [`js-jsx-board-create-segment`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-segment board #[p q] attrs)` | create a finite segment from parent points or coordinates. |
+| [`js-jsx-board-create-arc`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-arc board #[p q r] attrs)` | create an arc from parent points or coordinates. |
 | [`js-jsx-board-create-circle`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-circle board #[p q] attrs)` | create a circle from parent geometry. |
 | [`js-jsx-board-create-curve`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-curve board #[f g] attrs)` | create a curve from parent data or functions. |
 | [`js-jsx-board-create-polygon`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-polygon board #[p q r] attrs)` | create a polygon from parent points or coordinate arrays. |
@@ -240,7 +242,18 @@ Reference root: [JXG.Polygon](https://jsxgraph.org/docs/symbols/JXG.Polygon.html
 | [`js-jsx-polygon-call`](https://jsxgraph.org/docs/symbols/JXG.Polygon.html) | `(extern string/symbol value)` | `(extern/raw)` | `(js-jsx-polygon-call polygon "Perimeter" args)` | call a polygon method and keep the raw JavaScript result. |
 | [`js-jsx-polygon-call/nullish`](https://jsxgraph.org/docs/symbols/JXG.Polygon.html) | `(extern string/symbol value)` | `(extern)` | `(js-jsx-polygon-call/nullish polygon "updateRenderer" args)` | call a polygon mutator and treat nullish results as absence. |
 
-## Chapter 13 — Mini Workflows
+## Chapter 13 — Arc Bridge
+
+Reference root: [JXG.Arc](https://jsxgraph.org/docs/symbols/JXG.Arc.html)
+
+| Function | Input types | Output type | Example | Use when |
+|---|---|---|---|---|
+| [`js-jsx-arc-get-radius`](https://jsxgraph.org/docs/symbols/JXG.Arc.html#getRadius) | `(extern)` | `(f64)` | `(js-jsx-arc-get-radius arc)` | read the deprecated radius getter. |
+| [`js-jsx-arc-has-point-sector`](https://jsxgraph.org/docs/symbols/JXG.Arc.html#hasPointSector) | `(extern f64 f64)` | `(boolean)` | `(js-jsx-arc-has-point-sector arc 1.0 2.0)` | test whether a point lies in the arc sector. |
+| [`js-jsx-arc-radius`](https://jsxgraph.org/docs/symbols/JXG.Arc.html#Radius) | `(extern)` | `(f64)` | `(js-jsx-arc-radius arc)` | read the current radius of the arc. |
+| [`js-jsx-arc-value`](https://jsxgraph.org/docs/symbols/JXG.Arc.html#Value) | `(extern value value)` | `(f64)` | `(js-jsx-arc-value arc "length" #f)` | read the arc length or angle value. |
+
+## Chapter 14 — Mini Workflows
 
 ### Configure Point Snapping
 
@@ -279,14 +292,15 @@ Reference root: [JXG.Polygon](https://jsxgraph.org/docs/symbols/JXG.Polygon.html
 (define t (js-jsx-board-create-text board #[-5 5 "PQ"] (js-object (vector))))
 ```
 
-## Chapter 14 — Coverage Checklist
+## Chapter 15 — Coverage Checklist
 
-- This document covers **79** functions from `ffi/jsxgraph.ffi`.
-- Total documented functions: **79**
-- `board api`: 14 functions
+- This document covers **84** functions from `ffi/jsxgraph.ffi`.
+- Total documented functions: **84**
+- `board api`: 15 functions
 - `board properties`: 8 functions
 - `geometryelement bridge`: 3 functions
 - `line bridge`: 2 functions
+- `arc bridge`: 4 functions
 - `circle bridge`: 2 functions
 - `curve bridge`: 3 functions
 - `polygon bridge`: 2 functions

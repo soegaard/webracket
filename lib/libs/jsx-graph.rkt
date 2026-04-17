@@ -100,6 +100,26 @@
   (js-jsx-circle-call/nullish (jsx-unwrap circle) method args)
   (void))
 
+;; jsx-arc-get-radius : any/c -> f64
+;;   Read the deprecated arc radius getter.
+(define (jsx-arc-get-radius arc)
+  (js-jsx-arc-get-radius (jsx-unwrap arc)))
+
+;; jsx-arc-has-point-sector? : any/c f64 f64 -> boolean?
+;;   Check whether a point lies inside the arc sector.
+(define (jsx-arc-has-point-sector? arc x y)
+  (js-jsx-arc-has-point-sector (jsx-unwrap arc) x y))
+
+;; jsx-arc-radius : any/c -> f64
+;;   Read the current arc radius.
+(define (jsx-arc-radius arc)
+  (js-jsx-arc-radius (jsx-unwrap arc)))
+
+;; jsx-arc-value : any/c any/c any/c -> f64
+;;   Read the arc length or angle value.
+(define (jsx-arc-value arc unit rad)
+  (js-jsx-arc-value (jsx-unwrap arc) unit rad))
+
 ;; jsx-curve-call : any/c string? vector? -> any/c
 ;;   Call a Curve method on a wrapped curve element.
 (define (jsx-curve-call curve method args)
@@ -154,6 +174,11 @@
 ;;   Create a segment on a board.
 (define-jsx-alias (jsx-board-create-segment/raw board parents attrs)
   js-jsx-board-create-segment)
+
+;; jsx-board-create-arc/raw : external/raw any/c any/c -> external/raw
+;;   Create an arc on a board.
+(define-jsx-alias (jsx-board-create-arc/raw board parents attrs)
+  js-jsx-board-create-arc)
 
 ;; jsx-board-create-circle/raw : external/raw any/c any/c -> external/raw
 ;;   Create a circle on a board.
@@ -559,6 +584,12 @@
 (define (jsx-create-segment board parents [attributes #f])
   (jsx-wrap-element
    (jsx-board-create-segment/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-arc : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create an arc on a board.
+(define (jsx-create-arc board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-arc/raw (jsx-board-raw board) parents (or attributes '#[]))))
 
 ;; jsx-create-circle : jsx-board? any/c [any/c #f] -> jsx-element?
 ;;   Create a circle on a board.

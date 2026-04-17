@@ -20,7 +20,7 @@ Use @racket[jsx-graph] when you want to:
 @itemlist[
   @item{create a @racket[JXG.JSXGraph] board in the current page}
   @item{create arbitrary JSXGraph elements with @racket[jsx-create] or the specialized constructors}
-  @item{build geometry objects such as @racket[JXG.Point], @racket[JXG.Line], @racket[JXG.Circle], @racket[JXG.Polygon], and @racket[JXG.Text]}
+  @item{build geometry objects such as @racket[JXG.Point], @racket[JXG.Line], @racket[JXG.Arc], @racket[JXG.Circle], @racket[JXG.Polygon], and @racket[JXG.Text]}
   @item{inspect or adjust point properties from Racket code}
   @item{attach browser event handlers to JSXGraph elements}
 ]
@@ -252,6 +252,15 @@ Evaluates the @racket[Z] function on @racket[line].
 Creates a segment on @racket[board].
 }
 
+@defproc[(jsx-create-arc [board jsx-board?]
+                         [parents any/c]
+                         [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Arc"
+          (jsx-doc-url "Arc"))
+Creates an arc on @racket[board].
+}
+
 @defproc[(jsx-create-circle [board jsx-board?]
                             [parents any/c]
                             [attributes (or/c #f any/c) #f])
@@ -268,6 +277,44 @@ Creates a circle on @racket[board].
 @(jsx-bar "Curve"
           (jsx-doc-url "Curve"))
 Creates a curve on @racket[board].
+}
+
+@section{Arc Helpers}
+
+@defproc[(jsx-arc-get-radius [arc jsx-element?])
+         any/c]{
+@(jsx-bar "getRadius"
+          (string-append (jsx-doc-url "Arc")
+                         "#getRadius"))
+Returns the deprecated radius getter for @racket[arc].
+}
+
+@defproc[(jsx-arc-has-point-sector? [arc jsx-element?]
+                                    [x any/c]
+                                    [y any/c])
+         boolean?]{
+@(jsx-bar "hasPointSector"
+          (string-append (jsx-doc-url "Arc")
+                         "#hasPointSector"))
+Returns @racket[#t] when the point @racket[(x, y)] lies inside the arc sector.
+}
+
+@defproc[(jsx-arc-radius [arc jsx-element?])
+         any/c]{
+@(jsx-bar "Radius"
+          (string-append (jsx-doc-url "Arc")
+                         "#Radius"))
+Returns the current radius of @racket[arc].
+}
+
+@defproc[(jsx-arc-value [arc jsx-element?]
+                        [unit any/c]
+                        [rad any/c])
+         any/c]{
+@(jsx-bar "Value"
+          (string-append (jsx-doc-url "Arc")
+                         "#Value"))
+Returns the arc length or angle value for @racket[arc].
 }
 
 @section{Circle Helpers}

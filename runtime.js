@@ -2645,6 +2645,7 @@ var imports = {
         'create-point':              ((board, parents, attrs) => board.create('point', from_fasl(parents), from_fasl(attrs))),
         'create-line':               ((board, parents, attrs) => board.create('line', from_fasl(parents), from_fasl(attrs))),
         'create-segment':            ((board, parents, attrs) => board.create('segment', from_fasl(parents), from_fasl(attrs))),
+        'create-arc':                ((board, parents, attrs) => board.create('arc', from_fasl(parents), from_fasl(attrs))),
         'create-circle':             ((board, parents, attrs) => board.create('circle', from_fasl(parents), from_fasl(attrs))),
         'create-curve':              ((board, parents, attrs) => board.create('curve', from_fasl(parents), from_fasl(attrs))),
         'create-polygon':            ((board, parents, attrs) => board.create('polygon', from_fasl(parents), from_fasl(attrs))),
@@ -2669,6 +2670,7 @@ var imports = {
         'create-point'()              { throw new Error('DOM not available in this environment'); },
         'create-line'()               { throw new Error('DOM not available in this environment'); },
         'create-segment'()            { throw new Error('DOM not available in this environment'); },
+        'create-arc'()                { throw new Error('DOM not available in this environment'); },
         'create-circle'()             { throw new Error('DOM not available in this environment'); },
         'create-curve'()              { throw new Error('DOM not available in this environment'); },
         'create-polygon'()            { throw new Error('DOM not available in this environment'); },
@@ -2705,6 +2707,18 @@ var imports = {
     } : {
         'call'()                      { throw new Error('DOM not available in this environment'); },
         'call/nullish'()              { throw new Error('DOM not available in this environment'); }
+    },
+    // JSXGraph Arc
+    'jsx-arc': hasDOM ? {
+        'get-radius':                 (arc => arc.getRadius()),
+        'has-point-sector':           ((arc, x, y) => arc.hasPointSector(x, y)),
+        'radius':                     (arc => arc.Radius()),
+        'value':                      ((arc, unit, rad) => arc.Value(from_fasl(unit), from_fasl(rad)))
+    } : {
+        'get-radius'()                { throw new Error('DOM not available in this environment'); },
+        'has-point-sector'()          { throw new Error('DOM not available in this environment'); },
+        'radius'()                    { throw new Error('DOM not available in this environment'); },
+        'value'()                     { throw new Error('DOM not available in this environment'); }
     },
     // JSXGraph Circle
     'jsx-circle': hasDOM ? {
