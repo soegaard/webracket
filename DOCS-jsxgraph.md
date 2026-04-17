@@ -34,12 +34,13 @@ All function names are linked to JSXGraph API documentation.
 - [7.2 Lifecycle and Updates](#72-lifecycle-and-updates)
 - [7.3 Board Properties](#73-board-properties)
 - [Chapter 8 — GeometryElement Bridge](#chapter-8--geometryelement-bridge)
-- [Chapter 9 — Mini Workflows](#chapter-9--mini-workflows)
+- [Chapter 9 — Line Bridge](#chapter-9--line-bridge)
+- [Chapter 10 — Mini Workflows](#chapter-10--mini-workflows)
 - [Configure Point Snapping](#configure-point-snapping)
 - [Hit-Testing and Projection](#hit-testing-and-projection)
 - [Style and Renderer Refresh](#style-and-renderer-refresh)
 - [Minimal Geometry Constructors](#minimal-geometry-constructors)
-- [Chapter 10 — Coverage Checklist](#chapter-10--coverage-checklist)
+- [Chapter 11 — Coverage Checklist](#chapter-11--coverage-checklist)
 
 ## Chapter 2 — Conventions
 
@@ -197,7 +198,16 @@ Reference root: [JXG.GeometryElement](https://jsxgraph.org/docs/symbols/JXG.Geom
 | [`js-jsx-element-call/nullish`](https://jsxgraph.org/docs/symbols/JXG.GeometryElement.html) | `(extern string/symbol value)` | `(extern)` | `(js-jsx-element-call/nullish element "remove" args)` | call a GeometryElement method and treat nullish results as absence. |
 | [`js-jsx-element-add-event`](https://jsxgraph.org/docs/symbols/JXG.GeometryElement.html) | `(extern string/symbol value)` | `(void)` | `(js-jsx-element-add-event element "up" handler)` | register a GeometryElement event handler via the JSXGraph `addEvent` alias. |
 
-## Chapter 9 — Mini Workflows
+## Chapter 9 — Line Bridge
+
+Reference root: [JXG.Line](https://jsxgraph.org/docs/symbols/JXG.Line.html)
+
+| Function | Input types | Output type | Example | Use when |
+|---|---|---|---|---|
+| [`js-jsx-line-call`](https://jsxgraph.org/docs/symbols/JXG.Line.html) | `(extern string/symbol value)` | `(extern/raw)` | `(js-jsx-line-call line "getSlope" args)` | call a line method and keep the raw JavaScript result. |
+| [`js-jsx-line-call/nullish`](https://jsxgraph.org/docs/symbols/JXG.Line.html) | `(extern string/symbol value)` | `(extern)` | `(js-jsx-line-call/nullish line "setFixedLength" args)` | call a line mutator and treat nullish results as absence. |
+
+## Chapter 10 — Mini Workflows
 
 ### Configure Point Snapping
 
@@ -236,13 +246,14 @@ Reference root: [JXG.GeometryElement](https://jsxgraph.org/docs/symbols/JXG.Geom
 (define t (js-jsx-board-create-text board #[-5 5 "PQ"] (js-object (vector))))
 ```
 
-## Chapter 10 — Coverage Checklist
+## Chapter 11 — Coverage Checklist
 
-- This document covers **69** functions from `ffi/jsxgraph.ffi`.
-- Total documented functions: **69**
+- This document covers **71** functions from `ffi/jsxgraph.ffi`.
+- Total documented functions: **71**
 - `board api`: 13 functions
 - `board properties`: 8 functions
 - `geometryelement bridge`: 3 functions
+- `line bridge`: 2 functions
 - `predicates`: 1 function
 - `point getters`: 19 functions
 - `point setters`: 17 functions

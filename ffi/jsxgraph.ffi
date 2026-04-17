@@ -696,6 +696,24 @@
   #:name   "add-event"
   (-> (extern string/symbol value) ()))
 
+;; Call a line method and return the raw JavaScript result.
+;; line : extern
+;; method : string/symbol
+;; args : value
+(define-foreign js-jsx-line-call
+  #:module "jsx-line"
+  #:name   "call"
+  (-> (extern string/symbol value) (extern/raw)))
+
+;; Call a line method and treat nullish results as absence.
+;; line : extern
+;; method : string/symbol
+;; args : value
+(define-foreign js-jsx-line-call/nullish
+  #:module "jsx-line"
+  #:name   "call/nullish"
+  (-> (extern string/symbol value) (extern)))
+
 ;;; Point
 
 ;; Predicates

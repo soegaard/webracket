@@ -141,6 +141,108 @@ Creates a point on @racket[board].
 Creates a line on @racket[board].
 }
 
+@section{Line Helpers}
+
+@defproc[(jsx-line-direction [line jsx-element?])
+         any/c]{
+@(jsx-bar "Direction"
+          (string-append (jsx-doc-url "Line")
+                         "#Direction"))
+Returns the direction vector of @racket[line].
+}
+
+@defproc[(jsx-line-get-angle [line jsx-element?])
+         any/c]{
+@(jsx-bar "getAngle"
+          (string-append (jsx-doc-url "Line")
+                         "#getAngle"))
+Returns the angle of @racket[line].
+}
+
+@defproc[(jsx-line-get-rise [line jsx-element?])
+         any/c]{
+@(jsx-bar "getRise"
+          (string-append (jsx-doc-url "Line")
+                         "#getRise"))
+Returns the rise of @racket[line].
+}
+
+@defproc[(jsx-line-get-slope [line jsx-element?])
+         any/c]{
+@(jsx-bar "getSlope"
+          (string-append (jsx-doc-url "Line")
+                         "#getSlope"))
+Returns the slope of @racket[line].
+}
+
+@defproc[(jsx-line-horizontal? [line jsx-element?])
+         boolean?]{
+@(jsx-bar "isHorizontal"
+          (string-append (jsx-doc-url "Line")
+                         "#isHorizontal"))
+Returns @racket[#t] when @racket[line] is horizontal.
+}
+
+@defproc[(jsx-line-vertical? [line jsx-element?])
+         boolean?]{
+@(jsx-bar "isVertical"
+          (string-append (jsx-doc-url "Line")
+                         "#isVertical"))
+Returns @racket[#t] when @racket[line] is vertical.
+}
+
+@defproc[(jsx-line-l [line jsx-element?])
+         any/c]{
+@(jsx-bar "L"
+          (string-append (jsx-doc-url "Line")
+                         "#L"))
+Returns the @racket[L] helper for @racket[line].
+}
+
+@defproc[(jsx-line-slope [line jsx-element?])
+         any/c]{
+@(jsx-bar "Slope"
+          (string-append (jsx-doc-url "Line")
+                         "#Slope"))
+Returns the slope alias for @racket[line].
+}
+
+@defproc[(jsx-line-set-fixed-length! [line jsx-element?]
+                                     [length any/c])
+         void?]{
+@(jsx-bar "setFixedLength"
+          (string-append (jsx-doc-url "Line")
+                         "#setFixedLength"))
+Sets a fixed length on @racket[line].
+}
+
+@defproc[(jsx-line-x [line jsx-element?]
+                     [t any/c])
+         any/c]{
+@(jsx-bar "X"
+          (string-append (jsx-doc-url "Line")
+                         "#X"))
+Evaluates the @racket[X] function on @racket[line].
+}
+
+@defproc[(jsx-line-y [line jsx-element?]
+                     [t any/c])
+         any/c]{
+@(jsx-bar "Y"
+          (string-append (jsx-doc-url "Line")
+                         "#Y"))
+Evaluates the @racket[Y] function on @racket[line].
+}
+
+@defproc[(jsx-line-z [line jsx-element?]
+                     [t any/c])
+         any/c]{
+@(jsx-bar "Z"
+          (string-append (jsx-doc-url "Line")
+                         "#Z"))
+Evaluates the @racket[Z] function on @racket[line].
+}
+
 @defproc[(jsx-create-segment [board jsx-board?]
                              [parents any/c]
                              [attributes (or/c #f any/c) #f])

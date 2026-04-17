@@ -214,6 +214,18 @@
   jsx-board-update-renderer-canvas!
   jsx-board-update-infobox!
   jsx-board-zoom-elements!
+  jsx-line-direction
+  jsx-line-get-angle
+  jsx-line-get-rise
+  jsx-line-get-slope
+  jsx-line-horizontal?
+  jsx-line-vertical?
+  jsx-line-l
+  jsx-line-slope
+  jsx-line-set-fixed-length!
+  jsx-line-x
+  jsx-line-y
+  jsx-line-z
   jsx-coordinates
   jsx-on
   jsx-element-add-event!
@@ -440,6 +452,18 @@
 (define jsx-board-update-renderer-canvas! any/c)
 (define jsx-board-update-infobox! any/c)
 (define jsx-board-zoom-elements! any/c)
+(define jsx-line-direction any/c)
+(define jsx-line-get-angle any/c)
+(define jsx-line-get-rise any/c)
+(define jsx-line-get-slope any/c)
+(define jsx-line-horizontal? any/c)
+(define jsx-line-vertical? any/c)
+(define jsx-line-l any/c)
+(define jsx-line-slope any/c)
+(define jsx-line-set-fixed-length! any/c)
+(define jsx-line-x any/c)
+(define jsx-line-y any/c)
+(define jsx-line-z any/c)
 (define jsx-coordinates any/c)
 (define jsx-on any/c)
 (define jsx-element-add-event! any/c)

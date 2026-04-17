@@ -2745,6 +2745,14 @@ var imports = {
         'call/nullish'()              { throw new Error('DOM not available in this environment'); },
         'add-event'()                 { throw new Error('DOM not available in this environment'); }
     },
+    // JSXGraph Line
+    'jsx-line': hasDOM ? {
+        'call': ((line, method, args) => line[from_fasl(method)](...from_fasl(args))),
+        'call/nullish': ((line, method, args) => { line[from_fasl(method)](...from_fasl(args)); })
+    } : {
+        'call'()                      { throw new Error('DOM not available in this environment'); },
+        'call/nullish'()              { throw new Error('DOM not available in this environment'); }
+    },
     // JSXGraph Point
     'jsx-point': hasDOM ? {
         'is-point':                    (v => boolean_to_i32(JXG.isPoint(v))),

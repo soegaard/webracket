@@ -78,6 +78,17 @@
   (js-jsx-element-call/nullish (jsx-unwrap element) method args)
   (void))
 
+;; jsx-line-call : any/c string? vector? -> any/c
+;;   Call a Line method on a wrapped line element.
+(define (jsx-line-call line method args)
+  (js-jsx-line-call (jsx-unwrap line) method args))
+
+;; jsx-line-call/nullish : any/c string? vector? -> void?
+;;   Call a Line mutator on a wrapped line element.
+(define (jsx-line-call/nullish line method args)
+  (js-jsx-line-call/nullish (jsx-unwrap line) method args)
+  (void))
+
 ;;; -------------------------------------------------------------------
 ;;; Low-level aliases
 ;;; -------------------------------------------------------------------
@@ -434,6 +445,66 @@
 (define (jsx-create-line board parents [attributes #f])
   (jsx-wrap-element
    (jsx-board-create-line/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-line-direction : jsx-element? -> any/c
+;;   Read the direction vector of a line.
+(define (jsx-line-direction line)
+  (jsx-line-call line "Direction" (vector)))
+
+;; jsx-line-get-angle : jsx-element? -> any/c
+;;   Read the line angle.
+(define (jsx-line-get-angle line)
+  (jsx-line-call line "getAngle" (vector)))
+
+;; jsx-line-get-rise : jsx-element? -> any/c
+;;   Read the line rise.
+(define (jsx-line-get-rise line)
+  (jsx-line-call line "getRise" (vector)))
+
+;; jsx-line-get-slope : jsx-element? -> any/c
+;;   Read the line slope.
+(define (jsx-line-get-slope line)
+  (jsx-line-call line "getSlope" (vector)))
+
+;; jsx-line-horizontal? : jsx-element? -> boolean?
+;;   Test whether the line is horizontal.
+(define (jsx-line-horizontal? line)
+  (jsx-line-call line "isHorizontal" (vector)))
+
+;; jsx-line-vertical? : jsx-element? -> boolean?
+;;   Test whether the line is vertical.
+(define (jsx-line-vertical? line)
+  (jsx-line-call line "isVertical" (vector)))
+
+;; jsx-line-l : jsx-element? -> any/c
+;;   Read the line L helper.
+(define (jsx-line-l line)
+  (jsx-line-call line "L" (vector)))
+
+;; jsx-line-slope : jsx-element? -> any/c
+;;   Read the line slope alias.
+(define (jsx-line-slope line)
+  (jsx-line-call line "Slope" (vector)))
+
+;; jsx-line-set-fixed-length! : jsx-element? any/c -> void?
+;;   Set the fixed length on a line.
+(define (jsx-line-set-fixed-length! line length)
+  (jsx-line-call/nullish line "setFixedLength" (vector length)))
+
+;; jsx-line-x : jsx-element? any/c -> any/c
+;;   Evaluate the X coordinate function on the line.
+(define (jsx-line-x line t)
+  (jsx-line-call line "X" (vector t)))
+
+;; jsx-line-y : jsx-element? any/c -> any/c
+;;   Evaluate the Y coordinate function on the line.
+(define (jsx-line-y line t)
+  (jsx-line-call line "Y" (vector t)))
+
+;; jsx-line-z : jsx-element? any/c -> any/c
+;;   Evaluate the Z coordinate function on the line.
+(define (jsx-line-z line t)
+  (jsx-line-call line "Z" (vector t)))
 
 ;; jsx-create-segment : jsx-board? any/c [any/c #f] -> jsx-element?
 ;;   Create a segment on a board.
