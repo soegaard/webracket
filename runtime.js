@@ -2635,6 +2635,10 @@ var imports = {
         'create-bisector':           ((board, parents, attrs) => board.create('bisector', from_fasl(parents), from_fasl(attrs))),
         'create-normal':             ((board, parents, attrs) => board.create('normal', from_fasl(parents), from_fasl(attrs))),
         'create-intersection':       ((board, parents, attrs) => board.create('intersection', from_fasl(parents), from_fasl(attrs))),
+        'create-button':             ((board, parents, attrs) => board.create('button', from_fasl(parents), from_fasl(attrs))),
+        'create-checkbox':           ((board, parents, attrs) => board.create('checkbox', from_fasl(parents), from_fasl(attrs))),
+        'create-input':              ((board, parents, attrs) => board.create('input', from_fasl(parents), from_fasl(attrs))),
+        'create-slider':             ((board, parents, attrs) => board.create('slider', from_fasl(parents), from_fasl(attrs))),
         'create-text':               ((board, parents, attrs) => board.create('text', from_fasl(parents), from_fasl(attrs))),
         'create-image':              ((board, parents, attrs) => board.create('image', from_fasl(parents), from_fasl(attrs))),
         'id':                        (board => board.id),
@@ -2673,6 +2677,10 @@ var imports = {
         'create-bisector'()           { throw new Error('DOM not available in this environment'); },
         'create-normal'()             { throw new Error('DOM not available in this environment'); },
         'create-intersection'()       { throw new Error('DOM not available in this environment'); },
+        'create-button'()             { throw new Error('DOM not available in this environment'); },
+        'create-checkbox'()           { throw new Error('DOM not available in this environment'); },
+        'create-input'()              { throw new Error('DOM not available in this environment'); },
+        'create-slider'()             { throw new Error('DOM not available in this environment'); },
         'create-text'()               { throw new Error('DOM not available in this environment'); },
         'update!'()                   { throw new Error('DOM not available in this environment'); },
         'full-update!'()              { throw new Error('DOM not available in this environment'); },
@@ -2759,6 +2767,32 @@ var imports = {
         'updateText'()               { throw new Error('DOM not available in this environment'); },
         'utf8_decode'()              { throw new Error('DOM not available in this environment'); },
         'valueTagToJessieCode'()     { throw new Error('DOM not available in this environment'); }
+    },
+    // JSXGraph Checkbox
+    'jsx-checkbox': hasDOM ? {
+        'Value':           ((checkbox, args) => checkbox.Value(...from_fasl(args)))
+    } : {
+        'Value'()          { throw new Error('DOM not available in this environment'); }
+    },
+    // JSXGraph Input
+    'jsx-input': hasDOM ? {
+        'set':   ((input, args) => input.set(...from_fasl(args))),
+        'Value': ((input, args) => input.Value(...from_fasl(args)))
+    } : {
+        'set'()   { throw new Error('DOM not available in this environment'); },
+        'Value'() { throw new Error('DOM not available in this environment'); }
+    },
+    // JSXGraph Slider
+    'jsx-slider': hasDOM ? {
+        'setMax':   ((slider, args) => slider.setMax(...from_fasl(args))),
+        'setMin':   ((slider, args) => slider.setMin(...from_fasl(args))),
+        'setValue': ((slider, args) => slider.setValue(...from_fasl(args))),
+        'Value':    ((slider, args) => slider.Value(...from_fasl(args)))
+    } : {
+        'setMax'()   { throw new Error('DOM not available in this environment'); },
+        'setMin'()   { throw new Error('DOM not available in this environment'); },
+        'setValue'() { throw new Error('DOM not available in this environment'); },
+        'Value'()    { throw new Error('DOM not available in this environment'); }
     },
     // JSXGraph Image
     'jsx-image': hasDOM ? {

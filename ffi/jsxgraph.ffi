@@ -188,6 +188,72 @@
   #:name   "create-intersection"
   (-> (extern value value) (extern/raw)))
 
+; (js-jsx-board-create-button board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-button
+  #:module "jsx-board"
+  #:name   "create-button"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-checkbox board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-checkbox
+  #:module "jsx-board"
+  #:name   "create-checkbox"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-input board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-input
+  #:module "jsx-board"
+  #:name   "create-input"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-slider board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-slider
+  #:module "jsx-board"
+  #:name   "create-slider"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-checkbox-Value checkbox:Extern) -> Boolean
+(define-foreign js-jsx-checkbox-Value
+  #:module "jsx-checkbox"
+  #:name   "Value"
+  (-> (extern) (boolean)))
+
+; (js-jsx-input-set input:Extern args:Value) -> Extern
+(define-foreign js-jsx-input-set
+  #:module "jsx-input"
+  #:name   "set"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-input-Value input:Extern) -> String
+(define-foreign js-jsx-input-Value
+  #:module "jsx-input"
+  #:name   "Value"
+  (-> (extern) (string)))
+
+; (js-jsx-slider-setMax slider:Extern args:Value) -> Extern
+(define-foreign js-jsx-slider-setMax
+  #:module "jsx-slider"
+  #:name   "setMax"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-slider-setMin slider:Extern args:Value) -> Extern
+(define-foreign js-jsx-slider-setMin
+  #:module "jsx-slider"
+  #:name   "setMin"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-slider-setValue slider:Extern args:Value) -> Extern
+(define-foreign js-jsx-slider-setValue
+  #:module "jsx-slider"
+  #:name   "setValue"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-slider-Value slider:Extern) -> Float
+(define-foreign js-jsx-slider-Value
+  #:module "jsx-slider"
+  #:name   "Value"
+  (-> (extern) (f64)))
+
 ; (js-jsx-board-create-text board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign js-jsx-board-create-text
   #:module "jsx-board"

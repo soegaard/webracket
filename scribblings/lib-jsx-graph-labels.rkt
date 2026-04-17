@@ -158,8 +158,19 @@
   jsx-create-bisector
   jsx-create-normal
   jsx-create-intersection
+  jsx-create-button
+  jsx-create-checkbox
+  jsx-create-input
+  jsx-create-slider
   jsx-create-text
   jsx-create-image
+  jsx-checkbox-value
+  jsx-input-set!
+  jsx-input-value
+  jsx-slider-set-max!
+  jsx-slider-set-min!
+  jsx-slider-set-value!
+  jsx-slider-value
   jsx-text-_createFctUpdateText
   jsx-text-_setText
   jsx-text-bounds
@@ -495,8 +506,19 @@
 (define jsx-create-bisector any/c)
 (define jsx-create-normal any/c)
 (define jsx-create-intersection any/c)
+(define jsx-create-button any/c)
+(define jsx-create-checkbox any/c)
+(define jsx-create-input any/c)
+(define jsx-create-slider any/c)
 (define jsx-create-text any/c)
 (define jsx-create-image any/c)
+(define jsx-checkbox-value any/c)
+(define jsx-input-set! any/c)
+(define jsx-input-value any/c)
+(define jsx-slider-set-max! any/c)
+(define jsx-slider-set-min! any/c)
+(define jsx-slider-set-value! any/c)
+(define jsx-slider-value any/c)
 (define jsx-text-_createFctUpdateText any/c)
 (define jsx-text-_setText any/c)
 (define jsx-text-bounds any/c)

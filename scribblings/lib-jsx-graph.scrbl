@@ -21,6 +21,7 @@ Use @racket[jsx-graph] when you want to:
   @item{create a @racket[JXG.JSXGraph] board in the current page}
   @item{create arbitrary JSXGraph elements with @racket[jsx-create] or the specialized constructors}
   @item{build geometry objects such as @racket[JXG.Point], @racket[JXG.Line], @racket[JXG.Arc], @racket[JXG.Angle], @racket[JXG.Sector], @racket[JXG.Circle], @racket[JXG.Conic], @racket[JXG.Ellipse], @racket[JXG.Functiongraph], @racket[JXG.Polygon], and @racket[JXG.Text]}
+  @item{create widget-like elements such as buttons, checkboxes, sliders, and inputs}
   @item{inspect or adjust point properties from Racket code}
   @item{attach browser event handlers to JSXGraph elements}
 ]
@@ -920,6 +921,108 @@ Refreshes the polygon renderer.
 @(jsx-bar "Intersection"
           (jsx-doc-url "Intersection"))
 Creates an intersection point on @racket[board].
+}
+
+@defproc[(jsx-create-button [board jsx-board?]
+                            [parents any/c]
+                            [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Button"
+          (jsx-doc-url "Button"))
+Creates a button on @racket[board].
+}
+
+@defproc[(jsx-create-checkbox [board jsx-board?]
+                              [parents any/c]
+                              [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Checkbox"
+          (jsx-doc-url "Checkbox"))
+Creates a checkbox on @racket[board].
+}
+
+@section{Checkbox Helpers}
+
+@defproc[(jsx-checkbox-value [checkbox jsx-element?])
+         boolean?]{
+@(jsx-bar "Value"
+          (string-append (jsx-doc-url "Checkbox")
+                         "#Value"))
+Returns the current checkbox value.
+}
+
+@defproc[(jsx-create-input [board jsx-board?]
+                           [parents any/c]
+                           [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Input"
+          (jsx-doc-url "Input"))
+Creates an input field on @racket[board].
+}
+
+@section{Input Helpers}
+
+@defproc[(jsx-input-set! [input jsx-element?]
+                         [value any/c])
+         jsx-element?]{
+@(jsx-bar "set"
+          (string-append (jsx-doc-url "Input")
+                         "#set"))
+Sets the current value of @racket[input].
+}
+
+@defproc[(jsx-input-value [input jsx-element?])
+         string?]{
+@(jsx-bar "Value"
+          (string-append (jsx-doc-url "Input")
+                         "#Value"))
+Returns the current input value.
+}
+
+@defproc[(jsx-create-slider [board jsx-board?]
+                            [parents any/c]
+                            [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Slider"
+          (jsx-doc-url "Slider"))
+Creates a slider on @racket[board].
+}
+
+@section{Slider Helpers}
+
+@defproc[(jsx-slider-set-max! [slider jsx-element?]
+                              [value any/c])
+         jsx-element?]{
+@(jsx-bar "setMax"
+          (string-append (jsx-doc-url "Slider")
+                         "#setMax"))
+Sets the maximum slider value.
+}
+
+@defproc[(jsx-slider-set-min! [slider jsx-element?]
+                              [value any/c])
+         jsx-element?]{
+@(jsx-bar "setMin"
+          (string-append (jsx-doc-url "Slider")
+                         "#setMin"))
+Sets the minimum slider value.
+}
+
+@defproc[(jsx-slider-set-value! [slider jsx-element?]
+                                [value any/c])
+         jsx-element?]{
+@(jsx-bar "setValue"
+          (string-append (jsx-doc-url "Slider")
+                         "#setValue"))
+Sets the current slider value.
+}
+
+@defproc[(jsx-slider-value [slider jsx-element?])
+         number?]{
+@(jsx-bar "Value"
+          (string-append (jsx-doc-url "Slider")
+                         "#Value"))
+Returns the current slider value.
 }
 
 @defproc[(jsx-create-text [board jsx-board?]

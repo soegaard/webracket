@@ -320,6 +320,26 @@
 (define-jsx-alias (jsx-board-create-intersection/raw board parents attrs)
   js-jsx-board-create-intersection)
 
+;; jsx-board-create-button/raw : external/raw any/c any/c -> external/raw
+;;   Create a button on a board.
+(define-jsx-alias (jsx-board-create-button/raw board parents attrs)
+  js-jsx-board-create-button)
+
+;; jsx-board-create-checkbox/raw : external/raw any/c any/c -> external/raw
+;;   Create a checkbox on a board.
+(define-jsx-alias (jsx-board-create-checkbox/raw board parents attrs)
+  js-jsx-board-create-checkbox)
+
+;; jsx-board-create-input/raw : external/raw any/c any/c -> external/raw
+;;   Create an input on a board.
+(define-jsx-alias (jsx-board-create-input/raw board parents attrs)
+  js-jsx-board-create-input)
+
+;; jsx-board-create-slider/raw : external/raw any/c any/c -> external/raw
+;;   Create a slider on a board.
+(define-jsx-alias (jsx-board-create-slider/raw board parents attrs)
+  js-jsx-board-create-slider)
+
 ;; jsx-board-create-text/raw : external/raw any/c any/c -> external/raw
 ;;   Create a text element on a board.
 (define-jsx-alias (jsx-board-create-text/raw board parents attrs)
@@ -1178,6 +1198,73 @@
   (jsx-wrap-element
    (jsx-board-create-intersection/raw (jsx-board-raw board) parents
                                       (or attributes '#[]))))
+
+;; jsx-create-button : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a button on a board.
+(define (jsx-create-button board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-button/raw (jsx-board-raw board) parents
+                                (or attributes '#[]))))
+
+;; jsx-create-checkbox : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a checkbox on a board.
+(define (jsx-create-checkbox board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-checkbox/raw (jsx-board-raw board) parents
+                                  (or attributes '#[]))))
+
+;; jsx-checkbox-value : jsx-element? -> boolean?
+;;   Read the current checkbox value.
+(define (jsx-checkbox-value checkbox)
+  (js-jsx-checkbox-Value (jsx-unwrap checkbox)))
+
+;; jsx-create-input : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create an input field on a board.
+(define (jsx-create-input board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-input/raw (jsx-board-raw board) parents
+                               (or attributes '#[]))))
+
+;; jsx-create-slider : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a slider on a board.
+(define (jsx-create-slider board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-slider/raw (jsx-board-raw board) parents
+                                (or attributes '#[]))))
+
+;; jsx-input-set! : jsx-element? any/c -> jsx-element?
+;;   Set the current input value.
+(define (jsx-input-set! input value)
+  (jsx-wrap-element
+   (js-jsx-input-set (jsx-unwrap input) value)))
+
+;; jsx-input-value : jsx-element? -> string?
+;;   Read the current input value.
+(define (jsx-input-value input)
+  (js-jsx-input-Value (jsx-unwrap input)))
+
+;; jsx-slider-set-max! : jsx-element? any/c -> jsx-element?
+;;   Set the maximum slider value.
+(define (jsx-slider-set-max! slider value)
+  (jsx-wrap-element
+   (js-jsx-slider-setMax (jsx-unwrap slider) value)))
+
+;; jsx-slider-set-min! : jsx-element? any/c -> jsx-element?
+;;   Set the minimum slider value.
+(define (jsx-slider-set-min! slider value)
+  (jsx-wrap-element
+   (js-jsx-slider-setMin (jsx-unwrap slider) value)))
+
+;; jsx-slider-set-value! : jsx-element? any/c -> jsx-element?
+;;   Set the current slider value.
+(define (jsx-slider-set-value! slider value)
+  (jsx-wrap-element
+   (js-jsx-slider-setValue (jsx-unwrap slider) value)))
+
+;; jsx-slider-value : jsx-element? -> f64?
+;;   Read the current slider value.
+(define (jsx-slider-value slider)
+  (js-jsx-slider-Value (jsx-unwrap slider)))
 
 ;; jsx-create-text : jsx-board? any/c [any/c #f] -> jsx-element?
 ;;   Create a text object on a board.

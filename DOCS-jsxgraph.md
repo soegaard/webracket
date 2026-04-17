@@ -14,7 +14,8 @@ Current scope:
 - Point attributes (getters/setters)
 - Point methods for hit-testing, style updates, and renderer updates
 - Line, arc, angle, sector, glider, circle, conic, ellipse, curve, functiongraph,
-  polygon, midpoint, parallel, perpendicular, reflection, bisector, and normal
+  polygon, midpoint, parallel, perpendicular, reflection, bisector, normal,
+  slider, button, checkbox, and input
   bridge helpers
 
 Assumption in examples: the program is compiled with `--ffi jsxgraph`.
@@ -47,12 +48,15 @@ All function names are linked to JSXGraph API documentation.
 - [Chapter 16 — Glider Bridge](#chapter-16--glider-bridge)
 - [Chapter 17 — Text Bridge](#chapter-17--text-bridge)
 - [Chapter 18 — Image Bridge](#chapter-18--image-bridge)
-- [Chapter 19 — Mini Workflows](#chapter-19--mini-workflows)
+- [Chapter 19 — Checkbox Bridge](#chapter-19--checkbox-bridge)
+- [Chapter 20 — Input Bridge](#chapter-20--input-bridge)
+- [Chapter 21 — Slider Bridge](#chapter-21--slider-bridge)
+- [Chapter 22 — Mini Workflows](#chapter-22--mini-workflows)
 - [Configure Point Snapping](#configure-point-snapping)
 - [Hit-Testing and Projection](#hit-testing-and-projection)
 - [Style and Renderer Refresh](#style-and-renderer-refresh)
 - [Minimal Geometry Constructors](#minimal-geometry-constructors)
-- [Chapter 20 — Coverage Checklist](#chapter-20--coverage-checklist)
+- [Chapter 23 — Coverage Checklist](#chapter-23--coverage-checklist)
 
 ## Chapter 2 — Conventions
 
@@ -190,6 +194,10 @@ Reference roots:
 | [`js-jsx-board-create-bisector`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-bisector board #[p q r] attrs)` | create an angle bisector from three parent points. |
 | [`js-jsx-board-create-normal`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-normal board #[c p] attrs)` | create a normal line to a curve or circle. |
 | [`js-jsx-board-create-intersection`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-intersection board #[l1 l2 0] attrs)` | create an intersection point from parent elements. |
+| [`js-jsx-board-create-button`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-button board #[-4 1 "Go"] attrs)` | create a button widget on the board. |
+| [`js-jsx-board-create-checkbox`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-checkbox board #[0 3 "Check"] attrs)` | create a checkbox widget on the board. |
+| [`js-jsx-board-create-input`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-input board #[0 1 "f(x)"] attrs)` | create an input widget on the board. |
+| [`js-jsx-board-create-slider`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-slider board #[-4 0 4] attrs)` | create a slider widget on the board. |
 | [`js-jsx-board-create-text`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-text board #[-5 5 "A"] attrs)` | create a text label or annotation on the board. |
 | [`js-jsx-board-create-image`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-image board #[-5 5 "url"] attrs)` | create an image object on the board. |
 
@@ -361,7 +369,38 @@ are already documented elsewhere in this reference.
 | [`js-jsx-image-update-size`](https://jsxgraph.org/docs/symbols/JXG.Image.html#updateSize) | `(extern value)` | `(extern/raw)` | `(js-jsx-image-update-size image args)` | update the image size. |
 | [`js-jsx-image-update-span`](https://jsxgraph.org/docs/symbols/JXG.Image.html#updateSpan) | `(extern value)` | `(extern/raw)` | `(js-jsx-image-update-span image args)` | update the image span. |
 
-## Chapter 19 — Mini Workflows
+## Chapter 19 — Checkbox Bridge
+
+The `Checkbox` bridge covers the documented `JXG.Checkbox` value
+accessor.
+
+| Function | Input types | Output type | Example | Use when |
+|---|---|---|---|---|
+| [`js-jsx-checkbox-Value`](https://jsxgraph.org/docs/symbols/Checkbox.html#Value) | `(extern)` | `(boolean)` | `(js-jsx-checkbox-Value checkbox)` | read the checkbox value. |
+
+## Chapter 20 — Input Bridge
+
+The `Input` bridge covers the documented `JXG.Input` value and setter
+methods.
+
+| Function | Input types | Output type | Example | Use when |
+|---|---|---|---|---|
+| [`js-jsx-input-set`](https://jsxgraph.org/docs/symbols/Input.html#set) | `(extern value)` | `(extern/raw)` | `(js-jsx-input-set input "g(x)")` | set the current input value. |
+| [`js-jsx-input-Value`](https://jsxgraph.org/docs/symbols/Input.html#Value) | `(extern)` | `(string)` | `(js-jsx-input-Value input)` | read the input content. |
+
+## Chapter 21 — Slider Bridge
+
+The `Slider` bridge covers the documented `JXG.Slider` methods that
+control the slider range and value.
+
+| Function | Input types | Output type | Example | Use when |
+|---|---|---|---|---|
+| [`js-jsx-slider-setMax`](https://jsxgraph.org/docs/symbols/Slider.html#setMax) | `(extern value)` | `(extern/raw)` | `(js-jsx-slider-setMax slider 10)` | set the slider maximum. |
+| [`js-jsx-slider-setMin`](https://jsxgraph.org/docs/symbols/Slider.html#setMin) | `(extern value)` | `(extern/raw)` | `(js-jsx-slider-setMin slider 0)` | set the slider minimum. |
+| [`js-jsx-slider-setValue`](https://jsxgraph.org/docs/symbols/Slider.html#setValue) | `(extern value)` | `(extern/raw)` | `(js-jsx-slider-setValue slider 5)` | set the current slider value. |
+| [`js-jsx-slider-Value`](https://jsxgraph.org/docs/symbols/Slider.html#Value) | `(extern)` | `(f64)` | `(js-jsx-slider-Value slider)` | read the current slider value. |
+
+## Chapter 22 — Mini Workflows
 
 ### Configure Point Snapping
 
@@ -400,11 +439,11 @@ are already documented elsewhere in this reference.
 (define t (js-jsx-board-create-text board #[-5 5 "PQ"] (js-object (vector))))
 ```
 
-## Chapter 20 — Coverage Checklist
+## Chapter 23 — Coverage Checklist
 
-- This document covers **146** functions from `ffi/jsxgraph.ffi`.
-- Total documented functions: **146**
-- `board api`: 27 functions
+- This document covers **157** functions from `ffi/jsxgraph.ffi`.
+- Total documented functions: **157**
+- `board api`: 31 functions
 - `board properties`: 8 functions
 - `geometryelement bridge`: 3 functions
 - `line bridge`: 2 functions
@@ -415,6 +454,9 @@ are already documented elsewhere in this reference.
 - `circle bridge`: 2 functions
 - `curve bridge`: 3 functions
 - `polygon bridge`: 2 functions
+- `checkbox bridge`: 1 function
+- `input bridge`: 2 functions
+- `slider bridge`: 5 functions
 - `predicates`: 1 function
 - `point getters`: 19 functions
 - `point setters`: 17 functions
