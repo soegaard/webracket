@@ -195,6 +195,7 @@ Reference root: [JXG.GeometryElement](https://jsxgraph.org/docs/symbols/JXG.Geom
 |---|---|---|---|---|
 | [`js-jsx-element-call`](https://jsxgraph.org/docs/symbols/JXG.GeometryElement.html) | `(extern string/symbol value)` | `(extern/raw)` | `(js-jsx-element-call element "setAttribute" args)` | call a GeometryElement method and keep the raw JavaScript result. |
 | [`js-jsx-element-call/nullish`](https://jsxgraph.org/docs/symbols/JXG.GeometryElement.html) | `(extern string/symbol value)` | `(extern)` | `(js-jsx-element-call/nullish element "remove" args)` | call a GeometryElement method and treat nullish results as absence. |
+| [`js-jsx-element-add-event`](https://jsxgraph.org/docs/symbols/JXG.GeometryElement.html) | `(extern string/symbol value)` | `(void)` | `(js-jsx-element-add-event element "up" handler)` | register a GeometryElement event handler via the JSXGraph `addEvent` alias. |
 
 ## Chapter 9 — Mini Workflows
 
@@ -237,11 +238,11 @@ Reference root: [JXG.GeometryElement](https://jsxgraph.org/docs/symbols/JXG.Geom
 
 ## Chapter 10 — Coverage Checklist
 
-- This document covers **68** functions from `ffi/jsxgraph.ffi`.
-- Total documented functions: **68**
+- This document covers **69** functions from `ffi/jsxgraph.ffi`.
+- Total documented functions: **69**
 - `board api`: 13 functions
 - `board properties`: 8 functions
-- `geometryelement bridge`: 2 functions
+- `geometryelement bridge`: 3 functions
 - `predicates`: 1 function
 - `point getters`: 19 functions
 - `point setters`: 17 functions

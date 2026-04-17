@@ -186,6 +186,541 @@ Creates an intersection point on @racket[board].
 Creates a text element on @racket[board].
 }
 
+@section{Geometry Elements}
+
+The @racket[jsx-element] wrapper covers JSXGraph geometry elements and
+compositions. The methods below mirror the documented
+@racketid[JXG.GeometryElement] API where it is useful from Racket.
+
+@defproc[(jsx-element-get-attribute [element any/c]
+                                    [key any/c])
+         any/c]{
+@(jsx-bar "getAttribute"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#getAttribute"))
+Reads a geometry element attribute.
+}
+
+@defproc[(jsx-element-get-attributes [element any/c])
+         any/c]{
+@(jsx-bar "getAttributes"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#getAttributes"))
+Reads all geometry element attributes.
+}
+
+@defproc[(jsx-element-get-label-anchor [element any/c])
+         any/c]{
+@(jsx-bar "getLabelAnchor"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#getLabelAnchor"))
+Reads the label anchor for a geometry element.
+}
+
+@defproc[(jsx-element-get-name [element any/c])
+         any/c]{
+@(jsx-bar "getName"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#getName"))
+Reads the element name.
+}
+
+@defproc[(jsx-element-get-parents [element any/c])
+         any/c]{
+@(jsx-bar "getParents"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#getParents"))
+Reads the element parents.
+}
+
+@defproc[(jsx-element-get-property [element any/c]
+                                   [key any/c])
+         any/c]{
+@(jsx-bar "getProperty"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#getProperty"))
+Reads the deprecated geometry element property alias.
+}
+
+@defproc[(jsx-element-get-snap-sizes [element any/c])
+         any/c]{
+@(jsx-bar "getSnapSizes"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#getSnapSizes"))
+Reads the element snap sizes.
+}
+
+@defproc[(jsx-element-get-text-anchor [element any/c])
+         any/c]{
+@(jsx-bar "getTextAnchor"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#getTextAnchor"))
+Reads the text anchor for a geometry element.
+}
+
+@defproc[(jsx-element-get-type [element any/c])
+         any/c]{
+@(jsx-bar "getType"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#getType"))
+Reads the element type.
+}
+
+@defproc[(jsx-element-has-point? [element any/c]
+                                 [x any/c]
+                                 [y any/c])
+         boolean?]{
+@(jsx-bar "hasPoint"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#hasPoint"))
+Checks whether screen coordinates hit the element.
+}
+
+@defproc[(jsx-element-hide! [element any/c])
+         void?]{
+@(jsx-bar "hide"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#hide"))
+Hides a geometry element.
+}
+
+@defproc[(jsx-element-hide-element! [element any/c])
+         void?]{
+@(jsx-bar "hideElement"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#hideElement"))
+Hides a geometry element using the documented alias.
+}
+
+@defproc[(jsx-element-no-highlight! [element any/c])
+         void?]{
+@(jsx-bar "noHighlight"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#noHighlight"))
+Removes highlighting from a geometry element.
+}
+
+@defproc[(jsx-element-prepare-update! [element any/c])
+         void?]{
+@(jsx-bar "prepareUpdate"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#prepareUpdate"))
+Prepares a geometry element for update.
+}
+
+@defproc[(jsx-element-remove! [element any/c])
+         void?]{
+@(jsx-bar "remove"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#remove"))
+Removes a geometry element.
+}
+
+@defproc[(jsx-element-remove-all-ticks! [element any/c])
+         void?]{
+@(jsx-bar "removeAllTicks"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#removeAllTicks"))
+Removes all ticks from a geometry element.
+}
+
+@defproc[(jsx-element-remove-child! [element any/c]
+                                    [child any/c])
+         void?]{
+@(jsx-bar "removeChild"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#removeChild"))
+Removes a dependent child from a geometry element.
+}
+
+@defproc[(jsx-element-remove-descendants! [element any/c]
+                                          [obj any/c])
+         void?]{
+@(jsx-bar "removeDescendants"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#removeDescendants"))
+Removes a descendant from a geometry element.
+}
+
+@defproc[(jsx-element-remove-event! [element any/c]
+                                    [handler procedure?])
+         void?]{
+@(jsx-bar "removeEvent"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#removeEvent"))
+Removes a geometry element event handler.
+}
+
+@defproc[(jsx-element-remove-ticks! [element any/c]
+                                    [tick any/c])
+         void?]{
+@(jsx-bar "removeTicks"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#removeTicks"))
+Removes ticks from a geometry element.
+}
+
+@defproc[(jsx-element-set-attribute! [element any/c]
+                                     [attributes any/c])
+         void?]{
+@(jsx-bar "setAttribute"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#setAttribute"))
+Sets geometry element attributes.
+}
+
+@defproc[(jsx-element-set-label! [element any/c]
+                                 [str any/c])
+         void?]{
+@(jsx-bar "setLabel"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#setLabel"))
+Sets the geometry element label.
+}
+
+@defproc[(jsx-element-set-label-text! [element any/c]
+                                      [str any/c])
+         void?]{
+@(jsx-bar "setLabelText"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#setLabelText"))
+Sets the label text.
+}
+
+@defproc[(jsx-element-set-name! [element any/c]
+                                [str any/c])
+         void?]{
+@(jsx-bar "setName"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#setName"))
+Sets the geometry element name.
+}
+
+@defproc[(jsx-element-set-parents! [element any/c]
+                                   [parents any/c])
+         void?]{
+@(jsx-bar "setParents"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#setParents"))
+Sets the geometry element parents.
+}
+
+@defproc[(jsx-element-set-position! [element any/c]
+                                    [method any/c]
+                                    [coords any/c])
+         void?]{
+@(jsx-bar "setPosition"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#setPosition"))
+Sets the geometry element position.
+}
+
+@defproc[(jsx-element-set-position-directly! [element any/c]
+                                             [method any/c]
+                                             [coords any/c]
+                                             [oldcoords any/c])
+         void?]{
+@(jsx-bar "setPositionDirectly"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#setPositionDirectly"))
+Sets the geometry element position directly.
+}
+
+@defproc[(jsx-element-set-property! [element any/c]
+                                    [attributes any/c])
+         void?]{
+@(jsx-bar "setProperty"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#setProperty"))
+Sets the deprecated geometry element property alias.
+}
+
+@defproc[(jsx-element-show! [element any/c])
+         void?]{
+@(jsx-bar "show"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#show"))
+Shows a geometry element.
+}
+
+@defproc[(jsx-element-show-element! [element any/c])
+         void?]{
+@(jsx-bar "showElement"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#showElement"))
+Shows a geometry element using the documented alias.
+}
+
+@defproc[(jsx-element-update! [element any/c])
+         void?]{
+@(jsx-bar "update"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#update"))
+Updates a geometry element.
+}
+
+@defproc[(jsx-element-update-renderer! [element any/c])
+         void?]{
+@(jsx-bar "updateRenderer"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#updateRenderer"))
+Updates the element renderer.
+}
+
+@defproc[(jsx-element-update-visibility! [element any/c]
+                                         [parent-val any/c])
+         void?]{
+@(jsx-bar "updateVisibility"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#updateVisibility"))
+Updates the visibility state of a geometry element.
+}
+
+@defproc[(jsx-element-use-locale! [element any/c])
+         void?]{
+@(jsx-bar "useLocale"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#useLocale"))
+Enables locale-aware number formatting on a geometry element.
+}
+
+@defproc[(jsx-element-add-child! [element any/c]
+                                 [obj any/c])
+         void?]{
+@(jsx-bar "addChild"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#addChild"))
+Adds a dependent child to a geometry element.
+}
+
+@defproc[(jsx-element-add-descendants! [element any/c]
+                                       [obj any/c])
+         void?]{
+@(jsx-bar "addDescendants"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#addDescendants"))
+Adds descendants to a geometry element.
+}
+
+@defproc[(jsx-element-add-parents! [element any/c]
+                                   [parents any/c])
+         void?]{
+@(jsx-bar "addParents"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#addParents"))
+Adds parents to a geometry element.
+}
+
+@defproc[(jsx-element-add-parents-from-jc-functions! [element any/c]
+                                                     [function-array any/c])
+         void?]{
+@(jsx-bar "addParentsFromJCFunctions"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#addParentsFromJCFunctions"))
+Adds parents derived from JC functions.
+}
+
+@defproc[(jsx-element-add-rotation! [element any/c]
+                                    [angle any/c])
+         void?]{
+@(jsx-bar "addRotation"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#addRotation"))
+Adds a rotation to a geometry element.
+}
+
+@defproc[(jsx-element-add-ticks! [element any/c]
+                                 [ticks any/c])
+         void?]{
+@(jsx-bar "addTicks"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#addTicks"))
+Adds ticks to a geometry element.
+}
+
+@defproc[(jsx-element-add-transform! [element any/c]
+                                     [transform any/c])
+         void?]{
+@(jsx-bar "addTransform"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#addTransform"))
+Adds a transform to a geometry element.
+}
+
+@defproc[(jsx-element-animate! [element any/c]
+                               [hash any/c]
+                               [time any/c]
+                               [options any/c])
+         any/c]{
+@(jsx-bar "animate"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#animate"))
+Animates a geometry element.
+}
+
+@defproc[(jsx-element-bounds [element any/c])
+         any/c]{
+@(jsx-bar "bounds"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#bounds"))
+Reads the bounds of a geometry element.
+}
+
+@defproc[(jsx-element-clear-trace! [element any/c])
+         void?]{
+@(jsx-bar "clearTrace"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#clearTrace"))
+Clears the trace of a geometry element.
+}
+
+@defproc[(jsx-element-clone-to-background! [element any/c])
+         any/c]{
+@(jsx-bar "cloneToBackground"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#cloneToBackground"))
+Clones a geometry element to the background.
+}
+
+@defproc[(jsx-element-count-children [element any/c])
+         exact-nonnegative-integer?]{
+@(jsx-bar "countChildren"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#countChildren"))
+Counts the direct children of a geometry element.
+}
+
+@defproc[(jsx-element-create-gradient! [element any/c])
+         void?]{
+@(jsx-bar "createGradient"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#createGradient"))
+Creates a gradient for a geometry element.
+}
+
+@defproc[(jsx-element-create-label! [element any/c])
+         void?]{
+@(jsx-bar "createLabel"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#createLabel"))
+Creates a label for a geometry element.
+}
+
+@defproc[(jsx-element-draggable? [element any/c])
+         boolean?]{
+@(jsx-bar "draggable"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#draggable"))
+Checks whether a geometry element is draggable.
+}
+
+@defproc[(jsx-element-eval [element any/c]
+                           [val any/c])
+         any/c]{
+@(jsx-bar "eval"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#eval"))
+Evaluates a geometry-element-specific value.
+}
+
+@defproc[(jsx-element-eval-vis-prop [element any/c]
+                                    [key any/c])
+         any/c]{
+@(jsx-bar "evalVisProp"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#evalVisProp"))
+Evaluates a visual property for a geometry element.
+}
+
+@defproc[(jsx-element-format-number-locale [element any/c]
+                                           [value any/c]
+                                           [digits any/c])
+         any/c]{
+@(jsx-bar "formatNumberLocale"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#formatNumberLocale"))
+Formats a number using the element locale settings.
+}
+
+@defproc[(jsx-element-full-update! [element any/c])
+         any/c]{
+@(jsx-bar "fullUpdate"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#fullUpdate"))
+Runs the full update chain for a geometry element.
+}
+
+@defproc[(jsx-element-generate-polynomial [element any/c])
+         any/c]{
+@(jsx-bar "generatePolynomial"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#generatePolynomial"))
+Generates the polynomial for a geometry element.
+}
+
+@defproc[(jsx-element-handle-snap-to-grid! [element any/c]
+                                           [force any/c]
+                                           [from-parent any/c])
+         any/c]{
+@(jsx-bar "handleSnapToGrid"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#handleSnapToGrid"))
+Handles snapping a geometry element to the grid.
+}
+
+@defproc[(jsx-element-normalize! [element any/c])
+         any/c]{
+@(jsx-bar "normalize"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#normalize"))
+Normalizes a geometry element.
+}
+
+@defproc[(jsx-element-resolve-shortcuts! [element any/c]
+                                         [attributes any/c])
+         any/c]{
+@(jsx-bar "resolveShortcuts"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#resolveShortcuts"))
+Resolves geometry-element attribute shortcuts.
+}
+
+@defproc[(jsx-element-set-arrow! [element any/c]
+                                 [first-arrow any/c]
+                                 [last-arrow any/c])
+         void?]{
+@(jsx-bar "setArrow"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#setArrow"))
+Sets arrow flags on a geometry element.
+}
+
+@defproc[(jsx-element-set-dash! [element any/c]
+                                [dash any/c])
+         void?]{
+@(jsx-bar "setDash"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#setDash"))
+Sets the dash style on a geometry element.
+}
+
+@defproc[(jsx-element-set-display-rend-node! [element any/c]
+                                             [val any/c])
+         void?]{
+@(jsx-bar "setDisplayRendNode"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#setDisplayRendNode"))
+Sets the display renderer node on a geometry element.
+}
+
+@defproc[(jsx-element-snap-to-points! [element any/c])
+         any/c]{
+@(jsx-bar "snapToPoints"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#snapToPoints"))
+Snaps a geometry element to nearby points.
+}
+
 @defproc[(jsx-board-count-children [board jsx-board?])
          number?]{
 @(jsx-bar "countChildren"
@@ -316,15 +851,65 @@ Registers wheel event handlers for @racket[board].
 Registers fullscreen event handlers for @racket[board].
 }
 
-@defproc[(jsx-board-add-log-entry! [board jsx-board?]
-                                   [type any/c]
-                                   [obj any/c]
-                                   [pos any/c])
+@defproc[(jsx-board-add-event-handlers! [board jsx-board?])
          void?]{
-@(jsx-bar "addLogEntry"
+@(jsx-bar "addEventHandlers"
           (string-append (jsx-doc-url "JXG.Board")
-                         "#addLogEntry"))
-Adds a user activity entry to the board log.
+                         "#addEventHandlers"))
+Registers all board event handlers for @racket[board].
+}
+
+@defproc[(jsx-board-add-child! [board jsx-board?]
+                               [child jsx-board?])
+         void?]{
+@(jsx-bar "addChild"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#addChild"))
+Registers a dependent board.
+}
+
+@defproc[(jsx-board-add-animation! [board jsx-board?]
+                                   [element any/c])
+         void?]{
+@(jsx-bar "addAnimation"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#addAnimation"))
+Registers an animated board element.
+}
+
+@defproc[(jsx-board-add-conditions! [board jsx-board?]
+                                    [str string?])
+         void?]{
+@(jsx-bar "addConditions"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#addConditions"))
+Adds conditional updates to the board.
+}
+
+@defproc[(jsx-board-apply-zoom! [board jsx-board?])
+         void?]{
+@(jsx-bar "applyZoom"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#applyZoom"))
+Applies the current zoom factors to all objects.
+}
+
+@defproc[(jsx-board-calculate-snap-sizes! [board jsx-board?])
+         void?]{
+@(jsx-bar "calculateSnapSizes"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#calculateSnapSizes"))
+Recomputes the board snap sizes.
+}
+
+@defproc[(jsx-board-add-event! [board jsx-board?]
+                               [event (or/c string? symbol?)]
+                               [handler procedure?])
+         void?]{
+@(jsx-bar "on"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#addEvent"))
+Registers a JSXGraph board event handler.
 }
 
 @defproc[(jsx-board-get-mouse-position [board jsx-board?]
@@ -352,6 +937,24 @@ Returns the mouse position in user coordinates.
           (string-append (jsx-doc-url "JXG.Board")
                          "#getCoordsTopLeftCorner"))
 Returns the board coordinates of the top-left corner.
+}
+
+@defproc[(jsx-board-get-bounding-box [board jsx-board?])
+         vector?]{
+@(jsx-bar "getBoundingBox"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#getBoundingBox"))
+Returns the board bounding box via the JSXGraph method.
+}
+
+@defproc[(jsx-board-get-scr-coords-of-mouse [board jsx-board?]
+                                            [x any/c]
+                                            [y any/c])
+         vector?]{
+@(jsx-bar "getScrCoordsOfMouse"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#getScrCoordsOfMouse"))
+Returns the screen coordinates that JSXGraph uses for mouse tracking.
 }
 
 @defproc[(jsx-board-get-all-objects-under-mouse [board jsx-board?]
@@ -451,6 +1054,14 @@ Removes pointer event handlers from @racket[board].
 Removes resize event handlers from @racket[board].
 }
 
+@defproc[(jsx-board-remove-event-handlers! [board jsx-board?])
+         void?]{
+@(jsx-bar "removeEventHandlers"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#removeEventHandlers"))
+Removes all board event handlers from @racket[board].
+}
+
 @defproc[(jsx-board-remove-touch-event-handlers! [board jsx-board?])
          void?]{
 @(jsx-bar "removeTouchEventHandlers"
@@ -528,6 +1139,16 @@ Removes highlighting from all elements on @racket[board].
 Updates the coordinates of elements that need it.
 }
 
+@defproc[(jsx-board-update-container-dims! [board jsx-board?]
+                                           [width (or/c #f any/c) #f]
+                                           [height (or/c #f any/c) #f])
+         void?]{
+@(jsx-bar "updateContainerDims"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#updateContainerDims"))
+Updates the board container dimensions.
+}
+
 @defproc[(jsx-board-update-csstransforms! [board jsx-board?])
          void?]{
 @(jsx-bar "updateCSSTransforms"
@@ -552,6 +1173,14 @@ Updates the board elements.
           (string-append (jsx-doc-url "JXG.Board")
                          "#updateHooks"))
 Runs hooked board callbacks.
+}
+
+@defproc[(jsx-board-update-conditions! [board jsx-board?])
+         void?]{
+@(jsx-bar "updateConditions"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#updateConditions"))
+Updates the conditional board elements.
 }
 
 @defproc[(jsx-board-suppress-default! [board jsx-board?]
@@ -634,6 +1263,56 @@ Moves a board object.
           (string-append (jsx-doc-url "JXG.Board")
                          "#showDependencies"))
 Shows the dependency graph for the board.
+}
+
+@defproc[(jsx-board-create-roulette! [board jsx-board?]
+                                     [c1 any/c]
+                                     [c2 any/c]
+                                     [start-c1 any/c]
+                                     [stepsize any/c]
+                                     [direction any/c]
+                                     [time any/c]
+                                     [pointlist any/c])
+         any/c]{
+@(jsx-bar "createRoulette"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#createRoulette"))
+Creates a roulette animation on the board.
+}
+
+@defproc[(jsx-board-generate-id [board jsx-board?])
+         string?]{
+@(jsx-bar "generateId"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#generateId"))
+Generates a fresh board id.
+}
+
+@defproc[(jsx-board-generate-name [board jsx-board?]
+                                  [object any/c])
+         string?]{
+@(jsx-bar "generateName"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#generateName"))
+Generates a fresh object name for a board object.
+}
+
+@defproc[(jsx-board-init-geonext-board! [board jsx-board?])
+         void?]{
+@(jsx-bar "initGeonextBoard"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#initGeonextBoard"))
+Initializes the default GEONExT board objects.
+}
+
+@defproc[(jsx-board-remove-event! [board jsx-board?]
+                                  [event (or/c string? symbol?)]
+                                  [handler procedure?])
+         void?]{
+@(jsx-bar "off"
+          (string-append (jsx-doc-url "JXG.Board")
+                         "#removeEvent"))
+Removes a JSXGraph board event handler.
 }
 
 @defproc[(jsx-board-show-xml! [board jsx-board?])
@@ -751,6 +1430,17 @@ Returns the @racket[x] and @racket[y] coordinates of @racket[p].
 @(jsx-bar "on"
           (jsx-doc-url "JXG.Board"))
 Installs a JSXGraph event handler on a board or geometry element.
+}
+
+@defproc[(jsx-element-add-event! [element external/raw]
+                                 [event (or/c string? symbol?)]
+                                 [handler procedure?])
+         void?]{
+@(jsx-bar "addEvent"
+          (string-append (jsx-doc-url "JXG.GeometryElement")
+                         "#addEvent"))
+Registers a GeometryElement event handler through the JSXGraph alias
+for @racket[JXG.EventEmitter.on].
 }
 
 @defproc[(jsx-point? [v any/c]) boolean?]{

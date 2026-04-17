@@ -2738,10 +2738,12 @@ var imports = {
     // JSXGraph GeometryElement
     'jsx-element': hasDOM ? {
         'call': ((element, method, args) => element[from_fasl(method)](...from_fasl(args))),
-        'call/nullish': ((element, method, args) => { element[from_fasl(method)](...from_fasl(args)); })
+        'call/nullish': ((element, method, args) => { element[from_fasl(method)](...from_fasl(args)); }),
+        'add-event': ((element, type, listener) => element.addEvent(from_fasl(type), listener))
     } : {
         'call'()                      { throw new Error('DOM not available in this environment'); },
-        'call/nullish'()              { throw new Error('DOM not available in this environment'); }
+        'call/nullish'()              { throw new Error('DOM not available in this environment'); },
+        'add-event'()                 { throw new Error('DOM not available in this environment'); }
     },
     // JSXGraph Point
     'jsx-point': hasDOM ? {

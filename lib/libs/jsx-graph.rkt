@@ -395,6 +395,14 @@
   (js-jsx-element-call/nullish (jsx-unwrap target) "on" (vector event* handler*))
   (void))
 
+;; jsx-element-add-event! : any/c (or/c string? symbol?) procedure? -> void?
+;;   Register a GeometryElement event handler.
+(define (jsx-element-add-event! element event handler)
+  (define event* (jsx-key->string event))
+  (define handler* (procedure->external handler))
+  (js-jsx-element-add-event (jsx-unwrap element) event* handler*)
+  (void))
+
 ;; jsx-create-board : string? [any/c #f] -> jsx-board?
 ;;   Create a board with the standard JSXGraph defaults.
 (define (jsx-create-board container-id [maybe-attributes #f])

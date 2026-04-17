@@ -20,6 +20,67 @@
   jsx-board-create-circle
   jsx-board-create-intersection
   jsx-board-create-text
+  jsx-element-get-attribute
+  jsx-element-get-attributes
+  jsx-element-get-label-anchor
+  jsx-element-get-name
+  jsx-element-get-parents
+  jsx-element-get-property
+  jsx-element-get-snap-sizes
+  jsx-element-get-text-anchor
+  jsx-element-get-type
+  jsx-element-has-point?
+  jsx-element-hide!
+  jsx-element-hide-element!
+  jsx-element-no-highlight!
+  jsx-element-prepare-update!
+  jsx-element-remove!
+  jsx-element-remove-all-ticks!
+  jsx-element-remove-child!
+  jsx-element-remove-descendants!
+  jsx-element-remove-event!
+  jsx-element-remove-ticks!
+  jsx-element-set-attribute!
+  jsx-element-set-label!
+  jsx-element-set-label-text!
+  jsx-element-set-name!
+  jsx-element-set-parents!
+  jsx-element-set-position!
+  jsx-element-set-position-directly!
+  jsx-element-set-property!
+  jsx-element-show!
+  jsx-element-show-element!
+  jsx-element-update!
+  jsx-element-update-renderer!
+  jsx-element-update-visibility!
+  jsx-element-use-locale!
+  jsx-element-add-child!
+  jsx-element-add-descendants!
+  jsx-element-add-parents!
+  jsx-element-add-parents-from-jc-functions!
+  jsx-element-add-rotation!
+  jsx-element-add-ticks!
+  jsx-element-add-transform!
+  jsx-element-animate!
+  jsx-element-bounds
+  jsx-element-clear-trace!
+  jsx-element-clone-to-background!
+  jsx-element-count-children
+  jsx-element-create-gradient!
+  jsx-element-create-label!
+  jsx-element-draggable?
+  jsx-element-eval
+  jsx-element-eval-vis-prop
+  jsx-element-format-number-locale
+  jsx-element-full-update!
+  jsx-element-generate-polynomial
+  jsx-element-handle-snap-to-grid!
+  jsx-element-normalize!
+  jsx-element-resolve-shortcuts!
+  jsx-element-set-arrow!
+  jsx-element-set-dash!
+  jsx-element-set-display-rend-node!
+  jsx-element-snap-to-points!
   jsx-board-update!
   jsx-board-full-update!
   jsx-board-remove-object!
@@ -102,7 +163,6 @@
   jsx-board-add-touch-event-handlers!
   jsx-board-add-wheel-event-handlers!
   jsx-board-add-fullscreen-event-handlers!
-  jsx-board-add-log-entry!
   jsx-board-get-mouse-position
   jsx-board-get-usr-coords-of-mouse
   jsx-board-get-coords-top-left-corner
@@ -156,6 +216,7 @@
   jsx-board-zoom-elements!
   jsx-coordinates
   jsx-on
+  jsx-element-add-event!
   (for-label (all-defined-out)))
 
 (define jsx-board any/c)
@@ -175,6 +236,67 @@
 (define jsx-board-create-circle any/c)
 (define jsx-board-create-intersection any/c)
 (define jsx-board-create-text any/c)
+(define jsx-element-get-attribute any/c)
+(define jsx-element-get-attributes any/c)
+(define jsx-element-get-label-anchor any/c)
+(define jsx-element-get-name any/c)
+(define jsx-element-get-parents any/c)
+(define jsx-element-get-property any/c)
+(define jsx-element-get-snap-sizes any/c)
+(define jsx-element-get-text-anchor any/c)
+(define jsx-element-get-type any/c)
+(define jsx-element-has-point? any/c)
+(define jsx-element-hide! any/c)
+(define jsx-element-hide-element! any/c)
+(define jsx-element-no-highlight! any/c)
+(define jsx-element-prepare-update! any/c)
+(define jsx-element-remove! any/c)
+(define jsx-element-remove-all-ticks! any/c)
+(define jsx-element-remove-child! any/c)
+(define jsx-element-remove-descendants! any/c)
+(define jsx-element-remove-event! any/c)
+(define jsx-element-remove-ticks! any/c)
+(define jsx-element-set-attribute! any/c)
+(define jsx-element-set-label! any/c)
+(define jsx-element-set-label-text! any/c)
+(define jsx-element-set-name! any/c)
+(define jsx-element-set-parents! any/c)
+(define jsx-element-set-position! any/c)
+(define jsx-element-set-position-directly! any/c)
+(define jsx-element-set-property! any/c)
+(define jsx-element-show! any/c)
+(define jsx-element-show-element! any/c)
+(define jsx-element-update! any/c)
+(define jsx-element-update-renderer! any/c)
+(define jsx-element-update-visibility! any/c)
+(define jsx-element-use-locale! any/c)
+(define jsx-element-add-child! any/c)
+(define jsx-element-add-descendants! any/c)
+(define jsx-element-add-parents! any/c)
+(define jsx-element-add-parents-from-jc-functions! any/c)
+(define jsx-element-add-rotation! any/c)
+(define jsx-element-add-ticks! any/c)
+(define jsx-element-add-transform! any/c)
+(define jsx-element-animate! any/c)
+(define jsx-element-bounds any/c)
+(define jsx-element-clear-trace! any/c)
+(define jsx-element-clone-to-background! any/c)
+(define jsx-element-count-children any/c)
+(define jsx-element-create-gradient! any/c)
+(define jsx-element-create-label! any/c)
+(define jsx-element-draggable? any/c)
+(define jsx-element-eval any/c)
+(define jsx-element-eval-vis-prop any/c)
+(define jsx-element-format-number-locale any/c)
+(define jsx-element-full-update! any/c)
+(define jsx-element-generate-polynomial any/c)
+(define jsx-element-handle-snap-to-grid! any/c)
+(define jsx-element-normalize! any/c)
+(define jsx-element-resolve-shortcuts! any/c)
+(define jsx-element-set-arrow! any/c)
+(define jsx-element-set-dash! any/c)
+(define jsx-element-set-display-rend-node! any/c)
+(define jsx-element-snap-to-points! any/c)
 (define jsx-board-update! any/c)
 (define jsx-board-full-update! any/c)
 (define jsx-board-remove-object! any/c)
@@ -255,11 +377,16 @@
 (define jsx-board-add-resize-event-handlers! any/c)
 (define jsx-board-add-touch-event-handlers! any/c)
 (define jsx-board-add-wheel-event-handlers! any/c)
+(define jsx-board-add-event-handlers! any/c)
 (define jsx-board-add-fullscreen-event-handlers! any/c)
-(define jsx-board-add-log-entry! any/c)
+(define jsx-board-add-child! any/c)
+(define jsx-board-calculate-snap-sizes! any/c)
+(define jsx-board-add-event! any/c)
 (define jsx-board-get-mouse-position any/c)
 (define jsx-board-get-usr-coords-of-mouse any/c)
 (define jsx-board-get-coords-top-left-corner any/c)
+(define jsx-board-get-bounding-box any/c)
+(define jsx-board-get-scr-coords-of-mouse any/c)
 (define jsx-board-get-all-objects-under-mouse any/c)
 (define jsx-board-get-all-under-mouse any/c)
 (define jsx-board-set-attribute! any/c)
@@ -268,11 +395,13 @@
 (define jsx-board-resize-container! any/c)
 (define jsx-board-remove-grids! any/c)
 (define jsx-board-remove-hook! any/c)
+(define jsx-board-remove-event! any/c)
 (define jsx-board-remove-keyboard-event-handlers! any/c)
 (define jsx-board-remove-mouse-event-handlers! any/c)
 (define jsx-board-remove-pointer-event-handlers! any/c)
 (define jsx-board-remove-resize-event-handlers! any/c)
 (define jsx-board-remove-touch-event-handlers! any/c)
+(define jsx-board-remove-event-handlers! any/c)
 (define jsx-board-select any/c)
 (define jsx-board-zoom100! any/c)
 (define jsx-board-zoom-all-points! any/c)
@@ -284,9 +413,11 @@
 (define jsx-board-clear-traces! any/c)
 (define jsx-board-dehighlight-all! any/c)
 (define jsx-board-update-coords! any/c)
+(define jsx-board-update-container-dims! any/c)
 (define jsx-board-update-csstransforms! any/c)
 (define jsx-board-update-elements! any/c)
 (define jsx-board-update-hooks! any/c)
+(define jsx-board-update-conditions! any/c)
 (define jsx-board-suppress-default! any/c)
 (define jsx-board-init-infobox! any/c)
 (define jsx-board-init-move-object! any/c)
@@ -295,6 +426,7 @@
 (define jsx-board-highlight-infobox! any/c)
 (define jsx-board-move-object! any/c)
 (define jsx-board-show-dependencies! any/c)
+(define jsx-board-create-roulette! any/c)
 (define jsx-board-show-xml! any/c)
 (define jsx-board-to-fullscreen! any/c)
 (define jsx-board-start-resize-observer! any/c)
@@ -310,3 +442,4 @@
 (define jsx-board-zoom-elements! any/c)
 (define jsx-coordinates any/c)
 (define jsx-on any/c)
+(define jsx-element-add-event! any/c)

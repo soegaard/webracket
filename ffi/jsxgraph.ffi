@@ -687,6 +687,15 @@
   #:name   "call/nullish"
   (-> (extern string/symbol value) (extern)))
 
+;; Alias of JXG.EventEmitter.on on geometry elements.
+;; element : extern
+;; method : string/symbol
+;; args : value
+(define-foreign js-jsx-element-add-event
+  #:module "jsx-element"
+  #:name   "add-event"
+  (-> (extern string/symbol value) ()))
+
 ;;; Point
 
 ;; Predicates
