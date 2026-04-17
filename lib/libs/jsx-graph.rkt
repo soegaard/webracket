@@ -320,6 +320,11 @@
 (define-jsx-alias (jsx-board-create-intersection/raw board parents attrs)
   js-jsx-board-create-intersection)
 
+;; jsx-board-create-arrow/raw : external/raw any/c any/c -> external/raw
+;;   Create an arrow on a board.
+(define-jsx-alias (jsx-board-create-arrow/raw board parents attrs)
+  js-jsx-board-create-arrow)
+
 ;; jsx-board-create-button/raw : external/raw any/c any/c -> external/raw
 ;;   Create a button on a board.
 (define-jsx-alias (jsx-board-create-button/raw board parents attrs)
@@ -1213,6 +1218,13 @@
   (jsx-wrap-element
    (jsx-board-create-intersection/raw (jsx-board-raw board) parents
                                       (or attributes '#[]))))
+
+;; jsx-create-arrow : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create an arrow on a board.
+(define (jsx-create-arrow board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-arrow/raw (jsx-board-raw board) parents
+                               (or attributes '#[]))))
 
 ;; jsx-create-button : jsx-board? any/c [any/c #f] -> jsx-element?
 ;;   Create a button on a board.

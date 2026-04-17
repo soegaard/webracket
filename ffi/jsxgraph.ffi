@@ -188,6 +188,12 @@
   #:name   "create-intersection"
   (-> (extern value value) (extern/raw)))
 
+; (js-jsx-board-create-arrow board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-arrow
+  #:module "jsx-board"
+  #:name   "create-arrow"
+  (-> (extern value value) (extern/raw)))
+
 ; (js-jsx-board-create-button board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign js-jsx-board-create-button
   #:module "jsx-board"

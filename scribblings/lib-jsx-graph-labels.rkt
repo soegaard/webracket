@@ -158,6 +158,7 @@
   jsx-create-bisector
   jsx-create-normal
   jsx-create-intersection
+  jsx-create-arrow
   jsx-create-button
   jsx-create-checkbox
   jsx-create-input
@@ -518,6 +519,7 @@
 (define jsx-create-bisector any/c)
 (define jsx-create-normal any/c)
 (define jsx-create-intersection any/c)
+(define jsx-create-arrow any/c)
 (define jsx-create-button any/c)
 (define jsx-create-checkbox any/c)
 (define jsx-create-input any/c)

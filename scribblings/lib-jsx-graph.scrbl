@@ -925,6 +925,15 @@ Refreshes the polygon renderer.
 Creates an intersection point on @racket[board].
 }
 
+@defproc[(jsx-create-arrow [board jsx-board?]
+                           [parents any/c]
+                           [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Arrow"
+          (jsx-doc-url "Arrow"))
+Creates an arrow on @racket[board].
+}
+
 @defproc[(jsx-create-button [board jsx-board?]
                             [parents any/c]
                             [attributes (or/c #f any/c) #f])

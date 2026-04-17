@@ -15,7 +15,7 @@ Current scope:
 - Point methods for hit-testing, style updates, and renderer updates
 - Line, arc, angle, sector, glider, circle, conic, ellipse, curve, functiongraph,
   polygon, midpoint, parallel, perpendicular, reflection, bisector, normal,
-  slider, chart, legend, smartlabel, button, checkbox, and input
+  slider, chart, legend, smartlabel, arrow, button, checkbox, and input
   bridge helpers
 - Chart bridge helpers
 
@@ -196,6 +196,7 @@ Reference roots:
 | [`js-jsx-board-create-bisector`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-bisector board #[p q r] attrs)` | create an angle bisector from three parent points. |
 | [`js-jsx-board-create-normal`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-normal board #[c p] attrs)` | create a normal line to a curve or circle. |
 | [`js-jsx-board-create-intersection`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-intersection board #[l1 l2 0] attrs)` | create an intersection point from parent elements. |
+| [`js-jsx-board-create-arrow`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-arrow board #[p q] attrs)` | create an arrow on the board. |
 | [`js-jsx-board-create-button`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-button board #[-4 1 "Go"] attrs)` | create a button widget on the board. |
 | [`js-jsx-board-create-checkbox`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-checkbox board #[0 3 "Check"] attrs)` | create a checkbox widget on the board. |
 | [`js-jsx-board-create-input`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-input board #[0 1 "f(x)"] attrs)` | create an input widget on the board. |
@@ -462,9 +463,9 @@ control the slider range and value.
 
 ## Chapter 24 — Coverage Checklist
 
-- This document covers **169** functions from `ffi/jsxgraph.ffi`.
-- Total documented functions: **169**
-- `board api`: 34 functions
+- This document covers **170** functions from `ffi/jsxgraph.ffi`.
+- Total documented functions: **170**
+- `board api`: 35 functions
 - `board properties`: 8 functions
 - `geometryelement bridge`: 3 functions
 - `line bridge`: 2 functions
