@@ -128,6 +128,42 @@
   #:name   "create-polygon"
   (-> (extern value value) (extern/raw)))
 
+; (js-jsx-board-create-midpoint board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-midpoint
+  #:module "jsx-board"
+  #:name   "create-midpoint"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-parallel board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-parallel
+  #:module "jsx-board"
+  #:name   "create-parallel"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-perpendicular board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-perpendicular
+  #:module "jsx-board"
+  #:name   "create-perpendicular"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-reflection board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-reflection
+  #:module "jsx-board"
+  #:name   "create-reflection"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-bisector board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-bisector
+  #:module "jsx-board"
+  #:name   "create-bisector"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-normal board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-normal
+  #:module "jsx-board"
+  #:name   "create-normal"
+  (-> (extern value value) (extern/raw)))
+
 ; (js-jsx-board-create-intersection board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign js-jsx-board-create-intersection
   #:module "jsx-board"

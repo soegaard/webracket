@@ -13,7 +13,8 @@ Current scope:
 - Point predicates
 - Point attributes (getters/setters)
 - Point methods for hit-testing, style updates, and renderer updates
-- Line, arc, angle, sector, glider, circle, curve, and polygon bridge helpers
+- Line, arc, angle, sector, glider, circle, curve, polygon, midpoint, parallel,
+  perpendicular, reflection, bisector, and normal bridge helpers
 
 Assumption in examples: the program is compiled with `--ffi jsxgraph`.
 
@@ -176,6 +177,12 @@ Reference roots:
 | [`js-jsx-board-create-circle`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-circle board #[p q] attrs)` | create a circle from parent geometry. |
 | [`js-jsx-board-create-curve`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-curve board #[f g] attrs)` | create a curve from parent data or functions. |
 | [`js-jsx-board-create-polygon`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-polygon board #[p q r] attrs)` | create a polygon from parent points or coordinate arrays. |
+| [`js-jsx-board-create-midpoint`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-midpoint board #[p q] attrs)` | create a midpoint from parent points or a segment. |
+| [`js-jsx-board-create-parallel`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-parallel board #[l p] attrs)` | create a parallel line from a reference line and point. |
+| [`js-jsx-board-create-perpendicular`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-perpendicular board #[l p] attrs)` | create a perpendicular line from a reference line and point. |
+| [`js-jsx-board-create-reflection`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-reflection board #[obj axis] attrs)` | create a reflection of an object across a line or axis. |
+| [`js-jsx-board-create-bisector`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-bisector board #[p q r] attrs)` | create an angle bisector from three parent points. |
+| [`js-jsx-board-create-normal`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-normal board #[c p] attrs)` | create a normal line to a curve or circle. |
 | [`js-jsx-board-create-intersection`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-intersection board #[l1 l2 0] attrs)` | create an intersection point from parent elements. |
 | [`js-jsx-board-create-text`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-text board #[-5 5 "A"] attrs)` | create a text label or annotation on the board. |
 
@@ -333,9 +340,9 @@ Reference root: [JXG.Glider](https://jsxgraph.org/docs/symbols/JXG.Glider.html)
 
 ## Chapter 18 — Coverage Checklist
 
-- This document covers **99** functions from `ffi/jsxgraph.ffi`.
-- Total documented functions: **99**
-- `board api`: 18 functions
+- This document covers **105** functions from `ffi/jsxgraph.ffi`.
+- Total documented functions: **105**
+- `board api`: 24 functions
 - `board properties`: 8 functions
 - `geometryelement bridge`: 3 functions
 - `line bridge`: 2 functions

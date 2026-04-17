@@ -695,6 +695,60 @@ Updates a curve transformation.
 Creates a polygon on @racket[board].
 }
 
+@defproc[(jsx-create-midpoint [board jsx-board?]
+                              [parents any/c]
+                              [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Midpoint"
+          (jsx-doc-url "Midpoint"))
+Creates a midpoint on @racket[board].
+}
+
+@defproc[(jsx-create-parallel [board jsx-board?]
+                              [parents any/c]
+                              [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Parallel"
+          (jsx-doc-url "Parallel"))
+Creates a parallel line on @racket[board].
+}
+
+@defproc[(jsx-create-perpendicular [board jsx-board?]
+                                   [parents any/c]
+                                   [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Perpendicular"
+          (jsx-doc-url "Perpendicular"))
+Creates a perpendicular line on @racket[board].
+}
+
+@defproc[(jsx-create-reflection [board jsx-board?]
+                                [parents any/c]
+                                [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Reflection"
+          (jsx-doc-url "Reflection"))
+Creates a reflection on @racket[board].
+}
+
+@defproc[(jsx-create-bisector [board jsx-board?]
+                              [parents any/c]
+                              [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Bisector"
+          (jsx-doc-url "Bisector"))
+Creates a bisector on @racket[board].
+}
+
+@defproc[(jsx-create-normal [board jsx-board?]
+                            [parents any/c]
+                            [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Normal"
+          (jsx-doc-url "Normal"))
+Creates a normal line on @racket[board].
+}
+
 @section{Polygon Helpers}
 
 @defproc[(jsx-polygon-add-points! [polygon jsx-element?]
@@ -830,15 +884,6 @@ Shows @racket[polygon], optionally leaving the borders visible.
           (string-append (jsx-doc-url "JXG.Polygon")
                          "#updateRenderer"))
 Refreshes the polygon renderer.
-}
-
-@defproc[(jsx-create-perpendicular [board jsx-board?]
-                                   [parents any/c]
-                                   [attributes (or/c #f any/c) #f])
-         jsx-element?]{
-@(jsx-bar "PerpendicularPoint"
-          (jsx-doc-url "PerpendicularPoint"))
-Creates a perpendicular line on @racket[board].
 }
 
 @defproc[(jsx-create-intersection [board jsx-board?]

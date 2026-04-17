@@ -270,6 +270,36 @@
 (define-jsx-alias (jsx-board-create-polygon/raw board parents attrs)
   js-jsx-board-create-polygon)
 
+;; jsx-board-create-midpoint/raw : external/raw any/c any/c -> external/raw
+;;   Create a midpoint on a board.
+(define-jsx-alias (jsx-board-create-midpoint/raw board parents attrs)
+  js-jsx-board-create-midpoint)
+
+;; jsx-board-create-parallel/raw : external/raw any/c any/c -> external/raw
+;;   Create a parallel line on a board.
+(define-jsx-alias (jsx-board-create-parallel/raw board parents attrs)
+  js-jsx-board-create-parallel)
+
+;; jsx-board-create-perpendicular/raw : external/raw any/c any/c -> external/raw
+;;   Create a perpendicular line on a board.
+(define-jsx-alias (jsx-board-create-perpendicular/raw board parents attrs)
+  js-jsx-board-create-perpendicular)
+
+;; jsx-board-create-reflection/raw : external/raw any/c any/c -> external/raw
+;;   Create a reflection on a board.
+(define-jsx-alias (jsx-board-create-reflection/raw board parents attrs)
+  js-jsx-board-create-reflection)
+
+;; jsx-board-create-bisector/raw : external/raw any/c any/c -> external/raw
+;;   Create a bisector on a board.
+(define-jsx-alias (jsx-board-create-bisector/raw board parents attrs)
+  js-jsx-board-create-bisector)
+
+;; jsx-board-create-normal/raw : external/raw any/c any/c -> external/raw
+;;   Create a normal line on a board.
+(define-jsx-alias (jsx-board-create-normal/raw board parents attrs)
+  js-jsx-board-create-normal)
+
 ;; jsx-board-create-intersection/raw : external/raw any/c any/c -> external/raw
 ;;   Create an intersection point on a board.
 (define-jsx-alias (jsx-board-create-intersection/raw board parents attrs)
@@ -702,6 +732,18 @@
   (jsx-wrap-element
    (jsx-board-create-polygon/raw (jsx-board-raw board) parents (or attributes '#[]))))
 
+;; jsx-create-midpoint : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a midpoint on a board.
+(define (jsx-create-midpoint board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-midpoint/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-parallel : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a parallel line on a board.
+(define (jsx-create-parallel board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-parallel/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
 ;; jsx-circle-area : jsx-element? -> any/c
 ;;   Read the area of a circle.
 (define (jsx-circle-area circle)
@@ -926,8 +968,26 @@
 ;;   Create a perpendicular line on a board.
 (define (jsx-create-perpendicular board parents [attributes #f])
   (jsx-wrap-element
-   (jsx-board-create/raw (jsx-board-raw board) "perpendicular" parents
-                         (or attributes '#[]))))
+   (jsx-board-create-perpendicular/raw (jsx-board-raw board) parents
+                                       (or attributes '#[]))))
+
+;; jsx-create-reflection : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a reflection on a board.
+(define (jsx-create-reflection board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-reflection/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-bisector : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a bisector on a board.
+(define (jsx-create-bisector board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-bisector/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-normal : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a normal line on a board.
+(define (jsx-create-normal board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-normal/raw (jsx-board-raw board) parents (or attributes '#[]))))
 
 ;; jsx-create-intersection : jsx-board? any/c [any/c #f] -> jsx-element?
 ;;   Create an intersection point on a board.

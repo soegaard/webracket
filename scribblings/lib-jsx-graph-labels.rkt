@@ -148,7 +148,12 @@
   jsx-create-circle
   jsx-create-curve
   jsx-create-polygon
+  jsx-create-midpoint
+  jsx-create-parallel
   jsx-create-perpendicular
+  jsx-create-reflection
+  jsx-create-bisector
+  jsx-create-normal
   jsx-create-intersection
   jsx-create-text
   jsx-board-count-children
@@ -439,7 +444,12 @@
 (define jsx-create-circle any/c)
 (define jsx-create-curve any/c)
 (define jsx-create-polygon any/c)
+(define jsx-create-midpoint any/c)
+(define jsx-create-parallel any/c)
 (define jsx-create-perpendicular any/c)
+(define jsx-create-reflection any/c)
+(define jsx-create-bisector any/c)
+(define jsx-create-normal any/c)
 (define jsx-create-intersection any/c)
 (define jsx-create-text any/c)
 (define jsx-board-count-children any/c)
