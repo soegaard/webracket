@@ -104,6 +104,12 @@
   #:name   "create-sector"
   (-> (extern value value) (extern/raw)))
 
+; (js-jsx-board-create-glider board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-glider
+  #:module "jsx-board"
+  #:name   "create-glider"
+  (-> (extern value value) (extern/raw)))
+
 ; (js-jsx-board-create-circle board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign js-jsx-board-create-circle
   #:module "jsx-board"
@@ -859,6 +865,25 @@
   #:module "jsx-sector"
   #:name   "set-radius!"
   (-> (extern value) (extern/raw)))
+
+;; Glider
+
+;; Start glider animation.
+;; glider : extern
+;; direction : value
+;; stepCount : value
+;; delay : value
+(define-foreign js-jsx-glider-start-animation!
+  #:module "jsx-glider"
+  #:name   "start-animation!"
+  (-> (extern value value value) ()))
+
+;; Stop glider animation.
+;; glider : extern
+(define-foreign js-jsx-glider-stop-animation!
+  #:module "jsx-glider"
+  #:name   "stop-animation!"
+  (-> (extern) ()))
 
 ;; Call a circle method and return the raw JavaScript result.
 ;; circle : extern

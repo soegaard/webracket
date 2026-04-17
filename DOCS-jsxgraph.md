@@ -13,7 +13,7 @@ Current scope:
 - Point predicates
 - Point attributes (getters/setters)
 - Point methods for hit-testing, style updates, and renderer updates
-- Line, arc, angle, sector, circle, curve, and polygon bridge helpers
+- Line, arc, angle, sector, glider, circle, curve, and polygon bridge helpers
 
 Assumption in examples: the program is compiled with `--ffi jsxgraph`.
 
@@ -42,12 +42,13 @@ All function names are linked to JSXGraph API documentation.
 - [Chapter 13 — Arc Bridge](#chapter-13--arc-bridge)
 - [Chapter 14 — Angle Bridge](#chapter-14--angle-bridge)
 - [Chapter 15 — Sector Bridge](#chapter-15--sector-bridge)
-- [Chapter 16 — Mini Workflows](#chapter-16--mini-workflows)
+- [Chapter 16 — Glider Bridge](#chapter-16--glider-bridge)
+- [Chapter 17 — Mini Workflows](#chapter-17--mini-workflows)
 - [Configure Point Snapping](#configure-point-snapping)
 - [Hit-Testing and Projection](#hit-testing-and-projection)
 - [Style and Renderer Refresh](#style-and-renderer-refresh)
 - [Minimal Geometry Constructors](#minimal-geometry-constructors)
-- [Chapter 17 — Coverage Checklist](#chapter-17--coverage-checklist)
+- [Chapter 18 — Coverage Checklist](#chapter-18--coverage-checklist)
 
 ## Chapter 2 — Conventions
 
@@ -171,6 +172,7 @@ Reference roots:
 | [`js-jsx-board-create-arc`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-arc board #[p q r] attrs)` | create an arc from parent points or coordinates. |
 | [`js-jsx-board-create-angle`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-angle board #[p q r] attrs)` | create an angle from parent points or coordinates. |
 | [`js-jsx-board-create-sector`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-sector board #[p q r] attrs)` | create a sector from parent points or coordinates. |
+| [`js-jsx-board-create-glider`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-glider board #[p q] attrs)` | create a glider constrained to a parent. |
 | [`js-jsx-board-create-circle`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-circle board #[p q] attrs)` | create a circle from parent geometry. |
 | [`js-jsx-board-create-curve`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-curve board #[f g] attrs)` | create a curve from parent data or functions. |
 | [`js-jsx-board-create-polygon`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-polygon board #[p q r] attrs)` | create a polygon from parent points or coordinate arrays. |
@@ -281,7 +283,16 @@ Reference root: [JXG.Sector](https://jsxgraph.org/docs/symbols/JXG.Sector.html)
 | [`js-jsx-sector-set-position-directly!`](https://jsxgraph.org/docs/symbols/JXG.Sector.html#setPositionDirectly) | `(extern value value value)` | `(extern/raw)` | `(js-jsx-sector-set-position-directly! sector method coords oldcoords)` | move the sector by direct coordinates. |
 | [`js-jsx-sector-set-radius!`](https://jsxgraph.org/docs/symbols/JXG.Sector.html#setRadius) | `(extern value)` | `(extern/raw)` | `(js-jsx-sector-set-radius! sector value)` | set the sector radius. |
 
-## Chapter 16 — Mini Workflows
+## Chapter 16 — Glider Bridge
+
+Reference root: [JXG.Glider](https://jsxgraph.org/docs/symbols/JXG.Glider.html)
+
+| Function | Input types | Output type | Example | Use when |
+|---|---|---|---|---|
+| [`js-jsx-glider-start-animation!`](https://jsxgraph.org/docs/symbols/JXG.Glider.html#startAnimation) | `(extern value value value)` | `()` | `(js-jsx-glider-start-animation! glider 1 60 10)` | start a glider animation. |
+| [`js-jsx-glider-stop-animation!`](https://jsxgraph.org/docs/symbols/JXG.Glider.html#stopAnimation) | `(extern)` | `()` | `(js-jsx-glider-stop-animation! glider)` | stop a glider animation. |
+
+## Chapter 17 — Mini Workflows
 
 ### Configure Point Snapping
 
@@ -320,17 +331,18 @@ Reference root: [JXG.Sector](https://jsxgraph.org/docs/symbols/JXG.Sector.html)
 (define t (js-jsx-board-create-text board #[-5 5 "PQ"] (js-object (vector))))
 ```
 
-## Chapter 17 — Coverage Checklist
+## Chapter 18 — Coverage Checklist
 
-- This document covers **96** functions from `ffi/jsxgraph.ffi`.
-- Total documented functions: **96**
-- `board api`: 17 functions
+- This document covers **99** functions from `ffi/jsxgraph.ffi`.
+- Total documented functions: **99**
+- `board api`: 18 functions
 - `board properties`: 8 functions
 - `geometryelement bridge`: 3 functions
 - `line bridge`: 2 functions
 - `arc bridge`: 4 functions
 - `angle bridge`: 3 functions
 - `sector bridge`: 7 functions
+- `glider bridge`: 2 functions
 - `circle bridge`: 2 functions
 - `curve bridge`: 3 functions
 - `polygon bridge`: 2 functions

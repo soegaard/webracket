@@ -2699,6 +2699,7 @@ var imports = {
         'create-arc':                ((board, parents, attrs) => board.create('arc', from_fasl(parents), from_fasl(attrs))),
         'create-angle':              ((board, parents, attrs) => board.create('angle', from_fasl(parents), from_fasl(attrs))),
         'create-sector':             ((board, parents, attrs) => board.create('sector', from_fasl(parents), from_fasl(attrs))),
+        'create-glider':             ((board, parents, attrs) => board.create('glider', from_fasl(parents), from_fasl(attrs))),
         'create-circle':             ((board, parents, attrs) => board.create('circle', from_fasl(parents), from_fasl(attrs))),
         'create-curve':              ((board, parents, attrs) => board.create('curve', from_fasl(parents), from_fasl(attrs))),
         'create-polygon':            ((board, parents, attrs) => board.create('polygon', from_fasl(parents), from_fasl(attrs))),
@@ -2726,6 +2727,7 @@ var imports = {
         'create-arc'()                { throw new Error('DOM not available in this environment'); },
         'create-angle'()              { throw new Error('DOM not available in this environment'); },
         'create-sector'()             { throw new Error('DOM not available in this environment'); },
+        'create-glider'()             { throw new Error('DOM not available in this environment'); },
         'create-circle'()             { throw new Error('DOM not available in this environment'); },
         'create-curve'()              { throw new Error('DOM not available in this environment'); },
         'create-polygon'()            { throw new Error('DOM not available in this environment'); },
@@ -2802,6 +2804,14 @@ var imports = {
         'radius'()                    { throw new Error('DOM not available in this environment'); },
         'set-position-directly!'()    { throw new Error('DOM not available in this environment'); },
         'set-radius!'()               { throw new Error('DOM not available in this environment'); }
+    },
+    // JSXGraph Glider
+    'jsx-glider': hasDOM ? {
+        'start-animation!':          ((glider, direction, stepCount, delay) => glider.startAnimation(from_fasl(direction), from_fasl(stepCount), from_fasl(delay))),
+        'stop-animation!':           ((glider) => glider.stopAnimation())
+    } : {
+        'start-animation!'()         { throw new Error('DOM not available in this environment'); },
+        'stop-animation!'()          { throw new Error('DOM not available in this environment'); }
     },
     // JSXGraph Circle
     'jsx-circle': hasDOM ? {

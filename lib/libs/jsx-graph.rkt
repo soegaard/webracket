@@ -170,6 +170,16 @@
 (define (jsx-sector-set-radius! sector value)
   (js-jsx-sector-set-radius! (jsx-unwrap sector) value))
 
+;; jsx-glider-start-animation! : any/c any/c any/c any/c -> void?
+;;   Start glider animation.
+(define (jsx-glider-start-animation! glider direction step-count delay)
+  (js-jsx-glider-start-animation! (jsx-unwrap glider) direction step-count delay))
+
+;; jsx-glider-stop-animation! : any/c -> void?
+;;   Stop glider animation.
+(define (jsx-glider-stop-animation! glider)
+  (js-jsx-glider-stop-animation! (jsx-unwrap glider)))
+
 ;; jsx-curve-call : any/c string? vector? -> any/c
 ;;   Call a Curve method on a wrapped curve element.
 (define (jsx-curve-call curve method args)
@@ -239,6 +249,11 @@
 ;;   Create a sector on a board.
 (define-jsx-alias (jsx-board-create-sector/raw board parents attrs)
   js-jsx-board-create-sector)
+
+;; jsx-board-create-glider/raw : external/raw any/c any/c -> external/raw
+;;   Create a glider on a board.
+(define-jsx-alias (jsx-board-create-glider/raw board parents attrs)
+  js-jsx-board-create-glider)
 
 ;; jsx-board-create-circle/raw : external/raw any/c any/c -> external/raw
 ;;   Create a circle on a board.
@@ -662,6 +677,12 @@
 (define (jsx-create-sector board parents [attributes #f])
   (jsx-wrap-element
    (jsx-board-create-sector/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-glider : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a glider on a board.
+(define (jsx-create-glider board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-glider/raw (jsx-board-raw board) parents (or attributes '#[]))))
 
 ;; jsx-create-circle : jsx-board? any/c [any/c #f] -> jsx-element?
 ;;   Create a circle on a board.

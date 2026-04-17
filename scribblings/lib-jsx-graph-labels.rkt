@@ -144,6 +144,7 @@
   jsx-create-arc
   jsx-create-angle
   jsx-create-sector
+  jsx-create-glider
   jsx-create-circle
   jsx-create-curve
   jsx-create-polygon
@@ -245,6 +246,8 @@
   jsx-sector-radius
   jsx-sector-set-position-directly!
   jsx-sector-set-radius!
+  jsx-glider-start-animation!
+  jsx-glider-stop-animation!
   jsx-circle-area
   jsx-circle-bounds
   jsx-circle-diameter
@@ -432,6 +435,7 @@
 (define jsx-create-arc any/c)
 (define jsx-create-angle any/c)
 (define jsx-create-sector any/c)
+(define jsx-create-glider any/c)
 (define jsx-create-circle any/c)
 (define jsx-create-curve any/c)
 (define jsx-create-polygon any/c)
@@ -544,6 +548,8 @@
 (define jsx-sector-radius any/c)
 (define jsx-sector-set-position-directly! any/c)
 (define jsx-sector-set-radius! any/c)
+(define jsx-glider-start-animation! any/c)
+(define jsx-glider-stop-animation! any/c)
 (define jsx-circle-area any/c)
 (define jsx-circle-bounds any/c)
 (define jsx-circle-diameter any/c)

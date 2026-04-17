@@ -279,6 +279,15 @@ Creates an angle on @racket[board].
 Creates a sector on @racket[board].
 }
 
+@defproc[(jsx-create-glider [board jsx-board?]
+                            [parents any/c]
+                            [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Glider"
+          (jsx-doc-url "Glider"))
+Creates a glider on @racket[board].
+}
+
 @defproc[(jsx-create-circle [board jsx-board?]
                             [parents any/c]
                             [attributes (or/c #f any/c) #f])
@@ -425,6 +434,27 @@ Moves @racket[sector] by direct coordinates.
           (string-append (jsx-doc-url "Sector")
                          "#setRadius"))
 Sets the radius of @racket[sector].
+}
+
+@section{Glider Helpers}
+
+@defproc[(jsx-glider-start-animation! [glider jsx-element?]
+                                      [direction any/c]
+                                      [step-count any/c]
+                                      [delay any/c])
+         void?]{
+@(jsx-bar "startAnimation"
+          (string-append (jsx-doc-url "Glider")
+                         "#startAnimation"))
+Starts the glider animation loop.
+}
+
+@defproc[(jsx-glider-stop-animation! [glider jsx-element?])
+         void?]{
+@(jsx-bar "stopAnimation"
+          (string-append (jsx-doc-url "Glider")
+                         "#stopAnimation"))
+Stops the glider animation loop.
 }
 
 @section{Circle Helpers}
