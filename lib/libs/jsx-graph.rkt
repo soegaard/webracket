@@ -89,6 +89,17 @@
   (js-jsx-line-call/nullish (jsx-unwrap line) method args)
   (void))
 
+;; jsx-circle-call : any/c string? vector? -> any/c
+;;   Call a Circle method on a wrapped circle element.
+(define (jsx-circle-call circle method args)
+  (js-jsx-circle-call (jsx-unwrap circle) method args))
+
+;; jsx-circle-call/nullish : any/c string? vector? -> void?
+;;   Call a Circle mutator on a wrapped circle element.
+(define (jsx-circle-call/nullish circle method args)
+  (js-jsx-circle-call/nullish (jsx-unwrap circle) method args)
+  (void))
+
 ;;; -------------------------------------------------------------------
 ;;; Low-level aliases
 ;;; -------------------------------------------------------------------
@@ -517,6 +528,71 @@
 (define (jsx-create-circle board parents [attributes #f])
   (jsx-wrap-element
    (jsx-board-create-circle/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-circle-area : jsx-element? -> any/c
+;;   Read the area of a circle.
+(define (jsx-circle-area circle)
+  (jsx-circle-call circle "Area" (vector)))
+
+;; jsx-circle-bounds : jsx-element? -> any/c
+;;   Read the circle bounding box.
+(define (jsx-circle-bounds circle)
+  (jsx-circle-call circle "bounds" (vector)))
+
+;; jsx-circle-diameter : jsx-element? -> any/c
+;;   Read the diameter of a circle.
+(define (jsx-circle-diameter circle)
+  (jsx-circle-call circle "Diameter" (vector)))
+
+;; jsx-circle-get-radius : jsx-element? -> any/c
+;;   Read the radius of a circle.
+(define (jsx-circle-get-radius circle)
+  (jsx-circle-call circle "getRadius" (vector)))
+
+;; jsx-circle-perimeter : jsx-element? -> any/c
+;;   Read the perimeter of a circle.
+(define (jsx-circle-perimeter circle)
+  (jsx-circle-call circle "Perimeter" (vector)))
+
+;; jsx-circle-radius : jsx-element? any/c -> any/c
+;;   Set or read the circle radius helper.
+(define (jsx-circle-radius circle value)
+  (jsx-circle-call circle "Radius" (vector value)))
+
+;; jsx-circle-set-radius! : jsx-element? any/c -> void?
+;;   Set the circle radius.
+(define (jsx-circle-set-radius! circle radius)
+  (jsx-circle-call/nullish circle "setRadius" (vector radius)))
+
+;; jsx-circle-update-quadraticform! : jsx-element? -> void?
+;;   Update the circle quadratic form.
+(define (jsx-circle-update-quadraticform! circle)
+  (jsx-circle-call/nullish circle "updateQuadraticform" (vector)))
+
+;; jsx-circle-update-renderer! : jsx-element? -> void?
+;;   Refresh the circle renderer.
+(define (jsx-circle-update-renderer! circle)
+  (jsx-circle-call/nullish circle "updateRenderer" (vector)))
+
+;; jsx-circle-update-stdform! : jsx-element? -> void?
+;;   Update the circle standard form.
+(define (jsx-circle-update-stdform! circle)
+  (jsx-circle-call/nullish circle "updateStdform" (vector)))
+
+;; jsx-circle-x : jsx-element? any/c -> any/c
+;;   Evaluate the X coordinate function on the circle.
+(define (jsx-circle-x circle t)
+  (jsx-circle-call circle "X" (vector t)))
+
+;; jsx-circle-y : jsx-element? any/c -> any/c
+;;   Evaluate the Y coordinate function on the circle.
+(define (jsx-circle-y circle t)
+  (jsx-circle-call circle "Y" (vector t)))
+
+;; jsx-circle-z : jsx-element? any/c -> any/c
+;;   Evaluate the Z coordinate function on the circle.
+(define (jsx-circle-z circle t)
+  (jsx-circle-call circle "Z" (vector t)))
 
 ;; jsx-create-perpendicular : jsx-board? any/c [any/c #f] -> jsx-element?
 ;;   Create a perpendicular line on a board.

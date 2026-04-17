@@ -35,12 +35,13 @@ All function names are linked to JSXGraph API documentation.
 - [7.3 Board Properties](#73-board-properties)
 - [Chapter 8 — GeometryElement Bridge](#chapter-8--geometryelement-bridge)
 - [Chapter 9 — Line Bridge](#chapter-9--line-bridge)
-- [Chapter 10 — Mini Workflows](#chapter-10--mini-workflows)
+- [Chapter 10 — Circle Bridge](#chapter-10--circle-bridge)
+- [Chapter 11 — Mini Workflows](#chapter-11--mini-workflows)
 - [Configure Point Snapping](#configure-point-snapping)
 - [Hit-Testing and Projection](#hit-testing-and-projection)
 - [Style and Renderer Refresh](#style-and-renderer-refresh)
 - [Minimal Geometry Constructors](#minimal-geometry-constructors)
-- [Chapter 11 — Coverage Checklist](#chapter-11--coverage-checklist)
+- [Chapter 12 — Coverage Checklist](#chapter-12--coverage-checklist)
 
 ## Chapter 2 — Conventions
 
@@ -207,7 +208,16 @@ Reference root: [JXG.Line](https://jsxgraph.org/docs/symbols/JXG.Line.html)
 | [`js-jsx-line-call`](https://jsxgraph.org/docs/symbols/JXG.Line.html) | `(extern string/symbol value)` | `(extern/raw)` | `(js-jsx-line-call line "getSlope" args)` | call a line method and keep the raw JavaScript result. |
 | [`js-jsx-line-call/nullish`](https://jsxgraph.org/docs/symbols/JXG.Line.html) | `(extern string/symbol value)` | `(extern)` | `(js-jsx-line-call/nullish line "setFixedLength" args)` | call a line mutator and treat nullish results as absence. |
 
-## Chapter 10 — Mini Workflows
+## Chapter 10 — Circle Bridge
+
+Reference root: [JXG.Circle](https://jsxgraph.org/docs/symbols/JXG.Circle.html)
+
+| Function | Input types | Output type | Example | Use when |
+|---|---|---|---|---|
+| [`js-jsx-circle-call`](https://jsxgraph.org/docs/symbols/JXG.Circle.html) | `(extern string/symbol value)` | `(extern/raw)` | `(js-jsx-circle-call circle "getRadius" args)` | call a circle method and keep the raw JavaScript result. |
+| [`js-jsx-circle-call/nullish`](https://jsxgraph.org/docs/symbols/JXG.Circle.html) | `(extern string/symbol value)` | `(extern)` | `(js-jsx-circle-call/nullish circle "setRadius" args)` | call a circle mutator and treat nullish results as absence. |
+
+## Chapter 11 — Mini Workflows
 
 ### Configure Point Snapping
 
@@ -246,14 +256,15 @@ Reference root: [JXG.Line](https://jsxgraph.org/docs/symbols/JXG.Line.html)
 (define t (js-jsx-board-create-text board #[-5 5 "PQ"] (js-object (vector))))
 ```
 
-## Chapter 11 — Coverage Checklist
+## Chapter 12 — Coverage Checklist
 
-- This document covers **71** functions from `ffi/jsxgraph.ffi`.
-- Total documented functions: **71**
+- This document covers **73** functions from `ffi/jsxgraph.ffi`.
+- Total documented functions: **73**
 - `board api`: 13 functions
 - `board properties`: 8 functions
 - `geometryelement bridge`: 3 functions
 - `line bridge`: 2 functions
+- `circle bridge`: 2 functions
 - `predicates`: 1 function
 - `point getters`: 19 functions
 - `point setters`: 17 functions

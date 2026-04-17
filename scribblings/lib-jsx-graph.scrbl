@@ -261,6 +261,117 @@ Creates a segment on @racket[board].
 Creates a circle on @racket[board].
 }
 
+@section{Circle Helpers}
+
+@defproc[(jsx-circle-area [circle jsx-element?])
+         any/c]{
+@(jsx-bar "Area"
+          (string-append (jsx-doc-url "Circle")
+                         "#Area"))
+Returns the area of @racket[circle].
+}
+
+@defproc[(jsx-circle-bounds [circle jsx-element?])
+         any/c]{
+@(jsx-bar "bounds"
+          (string-append (jsx-doc-url "Circle")
+                         "#bounds"))
+Returns the bounding box of @racket[circle].
+}
+
+@defproc[(jsx-circle-diameter [circle jsx-element?])
+         any/c]{
+@(jsx-bar "Diameter"
+          (string-append (jsx-doc-url "Circle")
+                         "#Diameter"))
+Returns the diameter of @racket[circle].
+}
+
+@defproc[(jsx-circle-get-radius [circle jsx-element?])
+         any/c]{
+@(jsx-bar "getRadius"
+          (string-append (jsx-doc-url "Circle")
+                         "#getRadius"))
+Returns the radius helper value of @racket[circle].
+}
+
+@defproc[(jsx-circle-perimeter [circle jsx-element?])
+         any/c]{
+@(jsx-bar "Perimeter"
+          (string-append (jsx-doc-url "Circle")
+                         "#Perimeter"))
+Returns the perimeter of @racket[circle].
+}
+
+@defproc[(jsx-circle-radius! [circle jsx-element?]
+                             [radius any/c])
+         void?]{
+@(jsx-bar "Radius"
+          (string-append (jsx-doc-url "Circle")
+                         "#Radius"))
+Sets the radius of @racket[circle].
+}
+
+@defproc[(jsx-circle-set-radius! [circle jsx-element?]
+                                 [radius any/c])
+         void?]{
+@(jsx-bar "setRadius"
+          (string-append (jsx-doc-url "Circle")
+                         "#setRadius"))
+Sets the radius of @racket[circle].
+}
+
+@defproc[(jsx-circle-update-quadraticform! [circle jsx-element?])
+         void?]{
+@(jsx-bar "updateQuadraticform"
+          (string-append (jsx-doc-url "Circle")
+                         "#updateQuadraticform"))
+Updates the circle quadratic form.
+}
+
+@defproc[(jsx-circle-update-renderer! [circle jsx-element?])
+         void?]{
+@(jsx-bar "updateRenderer"
+          (string-append (jsx-doc-url "Circle")
+                         "#updateRenderer"))
+Refreshes the circle renderer.
+}
+
+@defproc[(jsx-circle-update-stdform! [circle jsx-element?])
+         void?]{
+@(jsx-bar "updateStdform"
+          (string-append (jsx-doc-url "Circle")
+                         "#updateStdform"))
+Updates the circle standard form.
+}
+
+@defproc[(jsx-circle-x [circle jsx-element?]
+                       [t any/c])
+         any/c]{
+@(jsx-bar "X"
+          (string-append (jsx-doc-url "Circle")
+                         "#X"))
+Evaluates the @racket[X] function on @racket[circle].
+}
+
+@defproc[(jsx-circle-y [circle jsx-element?]
+                       [t any/c])
+         any/c]{
+@(jsx-bar "Y"
+          (string-append (jsx-doc-url "Circle")
+                         "#Y"))
+Evaluates the @racket[Y] function on @racket[circle].
+}
+
+@defproc[(jsx-circle-z [circle jsx-element?]
+                       [t any/c])
+         any/c]{
+@(jsx-bar "Z"
+          (string-append (jsx-doc-url "Circle")
+                         "#Z"))
+Evaluates the @racket[Z] function on @racket[circle].
+}
+
 @defproc[(jsx-create-perpendicular [board jsx-board?]
                                    [parents any/c]
                                    [attributes (or/c #f any/c) #f])

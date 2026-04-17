@@ -714,6 +714,24 @@
   #:name   "call/nullish"
   (-> (extern string/symbol value) (extern)))
 
+;; Call a circle method and return the raw JavaScript result.
+;; circle : extern
+;; method : string/symbol
+;; args : value
+(define-foreign js-jsx-circle-call
+  #:module "jsx-circle"
+  #:name   "call"
+  (-> (extern string/symbol value) (extern/raw)))
+
+;; Call a circle method and treat nullish results as absence.
+;; circle : extern
+;; method : string/symbol
+;; args : value
+(define-foreign js-jsx-circle-call/nullish
+  #:module "jsx-circle"
+  #:name   "call/nullish"
+  (-> (extern string/symbol value) (extern)))
+
 ;;; Point
 
 ;; Predicates

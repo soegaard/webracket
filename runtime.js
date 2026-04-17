@@ -2702,6 +2702,14 @@ var imports = {
         'call'()                      { throw new Error('DOM not available in this environment'); },
         'call/nullish'()              { throw new Error('DOM not available in this environment'); }
     },
+    // JSXGraph Circle
+    'jsx-circle': hasDOM ? {
+        'call': ((circle, method, args) => circle[from_fasl(method)](...from_fasl(args))),
+        'call/nullish': ((circle, method, args) => { circle[from_fasl(method)](...from_fasl(args)); })
+    } : {
+        'call'()                      { throw new Error('DOM not available in this environment'); },
+        'call/nullish'()              { throw new Error('DOM not available in this environment'); }
+    },
     // JSXGraph Point
     'jsx-point': hasDOM ? {
         'is-point':                    (v => boolean_to_i32(JXG.isPoint(v))),

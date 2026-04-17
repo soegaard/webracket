@@ -226,6 +226,19 @@
   jsx-line-x
   jsx-line-y
   jsx-line-z
+  jsx-circle-area
+  jsx-circle-bounds
+  jsx-circle-diameter
+  jsx-circle-get-radius
+  jsx-circle-perimeter
+  jsx-circle-radius!
+  jsx-circle-set-radius!
+  jsx-circle-update-quadraticform!
+  jsx-circle-update-renderer!
+  jsx-circle-update-stdform!
+  jsx-circle-x
+  jsx-circle-y
+  jsx-circle-z
   jsx-coordinates
   jsx-on
   jsx-element-add-event!
@@ -464,6 +477,19 @@
 (define jsx-line-x any/c)
 (define jsx-line-y any/c)
 (define jsx-line-z any/c)
+(define jsx-circle-area any/c)
+(define jsx-circle-bounds any/c)
+(define jsx-circle-diameter any/c)
+(define jsx-circle-get-radius any/c)
+(define jsx-circle-perimeter any/c)
+(define jsx-circle-radius! any/c)
+(define jsx-circle-set-radius! any/c)
+(define jsx-circle-update-quadraticform! any/c)
+(define jsx-circle-update-renderer! any/c)
+(define jsx-circle-update-stdform! any/c)
+(define jsx-circle-x any/c)
+(define jsx-circle-y any/c)
+(define jsx-circle-z any/c)
 (define jsx-coordinates any/c)
 (define jsx-on any/c)
 (define jsx-element-add-event! any/c)
