@@ -2639,6 +2639,7 @@ var imports = {
         'create-checkbox':           ((board, parents, attrs) => board.create('checkbox', from_fasl(parents), from_fasl(attrs))),
         'create-input':              ((board, parents, attrs) => board.create('input', from_fasl(parents), from_fasl(attrs))),
         'create-slider':             ((board, parents, attrs) => board.create('slider', from_fasl(parents), from_fasl(attrs))),
+        'create-chart':              ((board, parents, attrs) => board.create('chart', from_fasl(parents), from_fasl(attrs))),
         'create-text':               ((board, parents, attrs) => board.create('text', from_fasl(parents), from_fasl(attrs))),
         'create-image':              ((board, parents, attrs) => board.create('image', from_fasl(parents), from_fasl(attrs))),
         'id':                        (board => board.id),
@@ -2681,6 +2682,7 @@ var imports = {
         'create-checkbox'()           { throw new Error('DOM not available in this environment'); },
         'create-input'()              { throw new Error('DOM not available in this environment'); },
         'create-slider'()             { throw new Error('DOM not available in this environment'); },
+        'create-chart'()              { throw new Error('DOM not available in this environment'); },
         'create-text'()               { throw new Error('DOM not available in this environment'); },
         'update!'()                   { throw new Error('DOM not available in this environment'); },
         'full-update!'()              { throw new Error('DOM not available in this environment'); },
@@ -2793,6 +2795,28 @@ var imports = {
         'setMin'()   { throw new Error('DOM not available in this environment'); },
         'setValue'() { throw new Error('DOM not available in this environment'); },
         'Value'()    { throw new Error('DOM not available in this environment'); }
+    },
+    // JSXGraph Chart
+    'jsx-chart': hasDOM ? {
+        'drawBar':       ((chart, args) => chart.drawBar(...from_fasl(args))),
+        'drawFit':       ((chart, args) => chart.drawFit(...from_fasl(args))),
+        'drawLine':      ((chart, args) => chart.drawLine(...from_fasl(args))),
+        'drawPie':       ((chart, args) => chart.drawPie(...from_fasl(args))),
+        'drawPoints':    ((chart, args) => chart.drawPoints(...from_fasl(args))),
+        'drawRadar':     ((chart, args) => chart.drawRadar(...from_fasl(args))),
+        'drawSpline':    ((chart, args) => chart.drawSpline(...from_fasl(args))),
+        'updateDataArray': ((chart, args) => chart.updateDataArray(...from_fasl(args))),
+        'updateRenderer':  ((chart, args) => chart.updateRenderer(...from_fasl(args)))
+    } : {
+        'drawBar'()        { throw new Error('DOM not available in this environment'); },
+        'drawFit'()        { throw new Error('DOM not available in this environment'); },
+        'drawLine'()       { throw new Error('DOM not available in this environment'); },
+        'drawPie'()        { throw new Error('DOM not available in this environment'); },
+        'drawPoints'()     { throw new Error('DOM not available in this environment'); },
+        'drawRadar'()      { throw new Error('DOM not available in this environment'); },
+        'drawSpline'()     { throw new Error('DOM not available in this environment'); },
+        'updateDataArray'(){ throw new Error('DOM not available in this environment'); },
+        'updateRenderer'() { throw new Error('DOM not available in this environment'); }
     },
     // JSXGraph Image
     'jsx-image': hasDOM ? {

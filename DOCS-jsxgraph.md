@@ -17,6 +17,7 @@ Current scope:
   polygon, midpoint, parallel, perpendicular, reflection, bisector, normal,
   slider, button, checkbox, and input
   bridge helpers
+- Chart bridge helpers
 
 Assumption in examples: the program is compiled with `--ffi jsxgraph`.
 
@@ -48,15 +49,16 @@ All function names are linked to JSXGraph API documentation.
 - [Chapter 16 — Glider Bridge](#chapter-16--glider-bridge)
 - [Chapter 17 — Text Bridge](#chapter-17--text-bridge)
 - [Chapter 18 — Image Bridge](#chapter-18--image-bridge)
-- [Chapter 19 — Checkbox Bridge](#chapter-19--checkbox-bridge)
-- [Chapter 20 — Input Bridge](#chapter-20--input-bridge)
-- [Chapter 21 — Slider Bridge](#chapter-21--slider-bridge)
-- [Chapter 22 — Mini Workflows](#chapter-22--mini-workflows)
+- [Chapter 19 — Chart Bridge](#chapter-19--chart-bridge)
+- [Chapter 20 — Checkbox Bridge](#chapter-20--checkbox-bridge)
+- [Chapter 21 — Input Bridge](#chapter-21--input-bridge)
+- [Chapter 22 — Slider Bridge](#chapter-22--slider-bridge)
+- [Chapter 23 — Mini Workflows](#chapter-23--mini-workflows)
 - [Configure Point Snapping](#configure-point-snapping)
 - [Hit-Testing and Projection](#hit-testing-and-projection)
 - [Style and Renderer Refresh](#style-and-renderer-refresh)
 - [Minimal Geometry Constructors](#minimal-geometry-constructors)
-- [Chapter 23 — Coverage Checklist](#chapter-23--coverage-checklist)
+- [Chapter 24 — Coverage Checklist](#chapter-24--coverage-checklist)
 
 ## Chapter 2 — Conventions
 
@@ -198,6 +200,7 @@ Reference roots:
 | [`js-jsx-board-create-checkbox`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-checkbox board #[0 3 "Check"] attrs)` | create a checkbox widget on the board. |
 | [`js-jsx-board-create-input`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-input board #[0 1 "f(x)"] attrs)` | create an input widget on the board. |
 | [`js-jsx-board-create-slider`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-slider board #[-4 0 4] attrs)` | create a slider widget on the board. |
+| [`js-jsx-board-create-chart`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-chart board #[f] attrs)` | create a chart object on the board. |
 | [`js-jsx-board-create-text`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-text board #[-5 5 "A"] attrs)` | create a text label or annotation on the board. |
 | [`js-jsx-board-create-image`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-image board #[-5 5 "url"] attrs)` | create an image object on the board. |
 
@@ -369,7 +372,23 @@ are already documented elsewhere in this reference.
 | [`js-jsx-image-update-size`](https://jsxgraph.org/docs/symbols/JXG.Image.html#updateSize) | `(extern value)` | `(extern/raw)` | `(js-jsx-image-update-size image args)` | update the image size. |
 | [`js-jsx-image-update-span`](https://jsxgraph.org/docs/symbols/JXG.Image.html#updateSpan) | `(extern value)` | `(extern/raw)` | `(js-jsx-image-update-span image args)` | update the image span. |
 
-## Chapter 19 — Checkbox Bridge
+## Chapter 19 — Chart Bridge
+
+The `Chart` bridge covers the documented chart draw and update methods.
+
+| Function | Input types | Output type | Example | Use when |
+|---|---|---|---|---|
+| [`js-jsx-chart-drawBar`](https://jsxgraph.org/docs/symbols/Chart.html#drawBar) | `(extern value)` | `(extern/raw)` | `(js-jsx-chart-drawBar chart '#[])` | draw a bar chart rendering. |
+| [`js-jsx-chart-drawFit`](https://jsxgraph.org/docs/symbols/Chart.html#drawFit) | `(extern value)` | `(extern/raw)` | `(js-jsx-chart-drawFit chart '#[])` | draw a fit chart rendering. |
+| [`js-jsx-chart-drawLine`](https://jsxgraph.org/docs/symbols/Chart.html#drawLine) | `(extern value)` | `(extern/raw)` | `(js-jsx-chart-drawLine chart '#[])` | draw a line chart rendering. |
+| [`js-jsx-chart-drawPie`](https://jsxgraph.org/docs/symbols/Chart.html#drawPie) | `(extern value)` | `(extern/raw)` | `(js-jsx-chart-drawPie chart '#[])` | draw a pie chart rendering. |
+| [`js-jsx-chart-drawPoints`](https://jsxgraph.org/docs/symbols/Chart.html#drawPoints) | `(extern value)` | `(extern/raw)` | `(js-jsx-chart-drawPoints chart '#[])` | draw a point chart rendering. |
+| [`js-jsx-chart-drawRadar`](https://jsxgraph.org/docs/symbols/Chart.html#drawRadar) | `(extern value)` | `(extern/raw)` | `(js-jsx-chart-drawRadar chart '#[])` | draw a radar chart rendering. |
+| [`js-jsx-chart-drawSpline`](https://jsxgraph.org/docs/symbols/Chart.html#drawSpline) | `(extern value)` | `(extern/raw)` | `(js-jsx-chart-drawSpline chart '#[])` | draw a spline chart rendering. |
+| [`js-jsx-chart-updateDataArray`](https://jsxgraph.org/docs/symbols/Chart.html#updateDataArray) | `(extern value)` | `(extern/raw)` | `(js-jsx-chart-updateDataArray chart '#[])` | refresh the chart data array. |
+| [`js-jsx-chart-updateRenderer`](https://jsxgraph.org/docs/symbols/Chart.html#updateRenderer) | `(extern value)` | `(extern/raw)` | `(js-jsx-chart-updateRenderer chart '#[])` | refresh the chart renderer. |
+
+## Chapter 20 — Checkbox Bridge
 
 The `Checkbox` bridge covers the documented `JXG.Checkbox` value
 accessor.
@@ -378,7 +397,7 @@ accessor.
 |---|---|---|---|---|
 | [`js-jsx-checkbox-Value`](https://jsxgraph.org/docs/symbols/Checkbox.html#Value) | `(extern)` | `(boolean)` | `(js-jsx-checkbox-Value checkbox)` | read the checkbox value. |
 
-## Chapter 20 — Input Bridge
+## Chapter 21 — Input Bridge
 
 The `Input` bridge covers the documented `JXG.Input` value and setter
 methods.
@@ -388,7 +407,7 @@ methods.
 | [`js-jsx-input-set`](https://jsxgraph.org/docs/symbols/Input.html#set) | `(extern value)` | `(extern/raw)` | `(js-jsx-input-set input "g(x)")` | set the current input value. |
 | [`js-jsx-input-Value`](https://jsxgraph.org/docs/symbols/Input.html#Value) | `(extern)` | `(string)` | `(js-jsx-input-Value input)` | read the input content. |
 
-## Chapter 21 — Slider Bridge
+## Chapter 22 — Slider Bridge
 
 The `Slider` bridge covers the documented `JXG.Slider` methods that
 control the slider range and value.
@@ -400,7 +419,7 @@ control the slider range and value.
 | [`js-jsx-slider-setValue`](https://jsxgraph.org/docs/symbols/Slider.html#setValue) | `(extern value)` | `(extern/raw)` | `(js-jsx-slider-setValue slider 5)` | set the current slider value. |
 | [`js-jsx-slider-Value`](https://jsxgraph.org/docs/symbols/Slider.html#Value) | `(extern)` | `(f64)` | `(js-jsx-slider-Value slider)` | read the current slider value. |
 
-## Chapter 22 — Mini Workflows
+## Chapter 23 — Mini Workflows
 
 ### Configure Point Snapping
 
@@ -439,11 +458,11 @@ control the slider range and value.
 (define t (js-jsx-board-create-text board #[-5 5 "PQ"] (js-object (vector))))
 ```
 
-## Chapter 23 — Coverage Checklist
+## Chapter 24 — Coverage Checklist
 
-- This document covers **157** functions from `ffi/jsxgraph.ffi`.
-- Total documented functions: **157**
-- `board api`: 31 functions
+- This document covers **167** functions from `ffi/jsxgraph.ffi`.
+- Total documented functions: **167**
+- `board api`: 32 functions
 - `board properties`: 8 functions
 - `geometryelement bridge`: 3 functions
 - `line bridge`: 2 functions
@@ -454,6 +473,7 @@ control the slider range and value.
 - `circle bridge`: 2 functions
 - `curve bridge`: 3 functions
 - `polygon bridge`: 2 functions
+- `chart bridge`: 9 functions
 - `checkbox bridge`: 1 function
 - `input bridge`: 2 functions
 - `slider bridge`: 5 functions

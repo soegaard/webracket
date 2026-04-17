@@ -212,6 +212,12 @@
   #:name   "create-slider"
   (-> (extern value value) (extern/raw)))
 
+; (js-jsx-board-create-chart board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-chart
+  #:module "jsx-board"
+  #:name   "create-chart"
+  (-> (extern value value) (extern/raw)))
+
 ; (js-jsx-checkbox-Value checkbox:Extern) -> Boolean
 (define-foreign js-jsx-checkbox-Value
   #:module "jsx-checkbox"
@@ -253,6 +259,60 @@
   #:module "jsx-slider"
   #:name   "Value"
   (-> (extern) (f64)))
+
+; (js-jsx-chart-drawBar chart:Extern args:Value) -> Extern
+(define-foreign js-jsx-chart-drawBar
+  #:module "jsx-chart"
+  #:name   "drawBar"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-chart-drawFit chart:Extern args:Value) -> Extern
+(define-foreign js-jsx-chart-drawFit
+  #:module "jsx-chart"
+  #:name   "drawFit"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-chart-drawLine chart:Extern args:Value) -> Extern
+(define-foreign js-jsx-chart-drawLine
+  #:module "jsx-chart"
+  #:name   "drawLine"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-chart-drawPie chart:Extern args:Value) -> Extern
+(define-foreign js-jsx-chart-drawPie
+  #:module "jsx-chart"
+  #:name   "drawPie"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-chart-drawPoints chart:Extern args:Value) -> Extern
+(define-foreign js-jsx-chart-drawPoints
+  #:module "jsx-chart"
+  #:name   "drawPoints"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-chart-drawRadar chart:Extern args:Value) -> Extern
+(define-foreign js-jsx-chart-drawRadar
+  #:module "jsx-chart"
+  #:name   "drawRadar"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-chart-drawSpline chart:Extern args:Value) -> Extern
+(define-foreign js-jsx-chart-drawSpline
+  #:module "jsx-chart"
+  #:name   "drawSpline"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-chart-updateDataArray chart:Extern args:Value) -> Extern
+(define-foreign js-jsx-chart-updateDataArray
+  #:module "jsx-chart"
+  #:name   "updateDataArray"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-chart-updateRenderer chart:Extern args:Value) -> Extern
+(define-foreign js-jsx-chart-updateRenderer
+  #:module "jsx-chart"
+  #:name   "updateRenderer"
+  (-> (extern value) (extern/raw)))
 
 ; (js-jsx-board-create-text board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign js-jsx-board-create-text

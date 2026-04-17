@@ -21,6 +21,7 @@ Use @racket[jsx-graph] when you want to:
   @item{create a @racket[JXG.JSXGraph] board in the current page}
   @item{create arbitrary JSXGraph elements with @racket[jsx-create] or the specialized constructors}
   @item{build geometry objects such as @racket[JXG.Point], @racket[JXG.Line], @racket[JXG.Arc], @racket[JXG.Angle], @racket[JXG.Sector], @racket[JXG.Circle], @racket[JXG.Conic], @racket[JXG.Ellipse], @racket[JXG.Functiongraph], @racket[JXG.Polygon], and @racket[JXG.Text]}
+  @item{create chart objects with @racket[JXG.Chart]}
   @item{create widget-like elements such as buttons, checkboxes, sliders, and inputs}
   @item{inspect or adjust point properties from Racket code}
   @item{attach browser event handlers to JSXGraph elements}
@@ -1023,6 +1024,102 @@ Sets the current slider value.
           (string-append (jsx-doc-url "Slider")
                          "#Value"))
 Returns the current slider value.
+}
+
+@defproc[(jsx-create-chart [board jsx-board?]
+                           [parents any/c]
+                           [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Chart"
+          (jsx-doc-url "Chart"))
+Creates a chart on @racket[board].
+}
+
+@section{Chart Helpers}
+
+The @racket[jsx-chart] wrappers expose the documented
+@racketid[JXG.Chart] draw and update methods. These methods mirror the
+JSXGraph API closely and return the raw browser result.
+
+@defproc[(jsx-chart-draw-bar [chart jsx-element?]
+                             [args any/c] ...)
+         any/c]{
+@(jsx-bar "drawBar"
+          (string-append (jsx-doc-url "Chart")
+                         "#drawBar"))
+Draws a bar chart rendering.
+}
+
+@defproc[(jsx-chart-draw-fit [chart jsx-element?]
+                             [args any/c] ...)
+         any/c]{
+@(jsx-bar "drawFit"
+          (string-append (jsx-doc-url "Chart")
+                         "#drawFit"))
+Draws a fit chart rendering.
+}
+
+@defproc[(jsx-chart-draw-line [chart jsx-element?]
+                              [args any/c] ...)
+         any/c]{
+@(jsx-bar "drawLine"
+          (string-append (jsx-doc-url "Chart")
+                         "#drawLine"))
+Draws a line chart rendering.
+}
+
+@defproc[(jsx-chart-draw-pie [chart jsx-element?]
+                             [args any/c] ...)
+         any/c]{
+@(jsx-bar "drawPie"
+          (string-append (jsx-doc-url "Chart")
+                         "#drawPie"))
+Draws a pie chart rendering.
+}
+
+@defproc[(jsx-chart-draw-points [chart jsx-element?]
+                                [args any/c] ...)
+         any/c]{
+@(jsx-bar "drawPoints"
+          (string-append (jsx-doc-url "Chart")
+                         "#drawPoints"))
+Draws a point chart rendering.
+}
+
+@defproc[(jsx-chart-draw-radar [chart jsx-element?]
+                               [args any/c] ...)
+         any/c]{
+@(jsx-bar "drawRadar"
+          (string-append (jsx-doc-url "Chart")
+                         "#drawRadar"))
+Draws a radar chart rendering.
+}
+
+@defproc[(jsx-chart-draw-spline [chart jsx-element?]
+                                [args any/c] ...)
+         any/c]{
+@(jsx-bar "drawSpline"
+          (string-append (jsx-doc-url "Chart")
+                         "#drawSpline"))
+Draws a spline chart rendering.
+}
+
+@defproc[(jsx-chart-update-data-array! [chart jsx-element?]
+                                       [args any/c] ...)
+         any/c]{
+@(jsx-bar "updateDataArray"
+          (string-append (jsx-doc-url "Chart")
+                         "#updateDataArray"))
+Updates the chart data array.
+}
+
+@defproc[(jsx-chart-update-renderer! [chart jsx-element?]
+                                     [args any/c] ...)
+         any/c]{
+@(jsx-bar "updateRenderer"
+          (string-append (jsx-doc-url "Chart")
+                         "#updateRenderer"))
+Updates the chart renderer.
 }
 
 @defproc[(jsx-create-text [board jsx-board?]

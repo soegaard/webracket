@@ -340,6 +340,11 @@
 (define-jsx-alias (jsx-board-create-slider/raw board parents attrs)
   js-jsx-board-create-slider)
 
+;; jsx-board-create-chart/raw : external/raw any/c any/c -> external/raw
+;;   Create a chart on a board.
+(define-jsx-alias (jsx-board-create-chart/raw board parents attrs)
+  js-jsx-board-create-chart)
+
 ;; jsx-board-create-text/raw : external/raw any/c any/c -> external/raw
 ;;   Create a text element on a board.
 (define-jsx-alias (jsx-board-create-text/raw board parents attrs)
@@ -1232,6 +1237,13 @@
    (jsx-board-create-slider/raw (jsx-board-raw board) parents
                                 (or attributes '#[]))))
 
+;; jsx-create-chart : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a chart on a board.
+(define (jsx-create-chart board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-chart/raw (jsx-board-raw board) parents
+                               (or attributes '#[]))))
+
 ;; jsx-input-set! : jsx-element? any/c -> jsx-element?
 ;;   Set the current input value.
 (define (jsx-input-set! input value)
@@ -1265,6 +1277,51 @@
 ;;   Read the current slider value.
 (define (jsx-slider-value slider)
   (js-jsx-slider-Value (jsx-unwrap slider)))
+
+;; jsx-chart-draw-bar : jsx-element? any/c ... -> any/c
+;;   Draw a bar chart rendering.
+(define (jsx-chart-draw-bar chart . args)
+  (js-jsx-chart-drawBar (jsx-unwrap chart) (list->vector args)))
+
+;; jsx-chart-draw-fit : jsx-element? any/c ... -> any/c
+;;   Draw a fit chart rendering.
+(define (jsx-chart-draw-fit chart . args)
+  (js-jsx-chart-drawFit (jsx-unwrap chart) (list->vector args)))
+
+;; jsx-chart-draw-line : jsx-element? any/c ... -> any/c
+;;   Draw a line chart rendering.
+(define (jsx-chart-draw-line chart . args)
+  (js-jsx-chart-drawLine (jsx-unwrap chart) (list->vector args)))
+
+;; jsx-chart-draw-pie : jsx-element? any/c ... -> any/c
+;;   Draw a pie chart rendering.
+(define (jsx-chart-draw-pie chart . args)
+  (js-jsx-chart-drawPie (jsx-unwrap chart) (list->vector args)))
+
+;; jsx-chart-draw-points : jsx-element? any/c ... -> any/c
+;;   Draw a point chart rendering.
+(define (jsx-chart-draw-points chart . args)
+  (js-jsx-chart-drawPoints (jsx-unwrap chart) (list->vector args)))
+
+;; jsx-chart-draw-radar : jsx-element? any/c ... -> any/c
+;;   Draw a radar chart rendering.
+(define (jsx-chart-draw-radar chart . args)
+  (js-jsx-chart-drawRadar (jsx-unwrap chart) (list->vector args)))
+
+;; jsx-chart-draw-spline : jsx-element? any/c ... -> any/c
+;;   Draw a spline chart rendering.
+(define (jsx-chart-draw-spline chart . args)
+  (js-jsx-chart-drawSpline (jsx-unwrap chart) (list->vector args)))
+
+;; jsx-chart-update-data-array! : jsx-element? any/c ... -> any/c
+;;   Update the chart data array.
+(define (jsx-chart-update-data-array! chart . args)
+  (js-jsx-chart-updateDataArray (jsx-unwrap chart) (list->vector args)))
+
+;; jsx-chart-update-renderer! : jsx-element? any/c ... -> any/c
+;;   Update the chart renderer.
+(define (jsx-chart-update-renderer! chart . args)
+  (js-jsx-chart-updateRenderer (jsx-unwrap chart) (list->vector args)))
 
 ;; jsx-create-text : jsx-board? any/c [any/c #f] -> jsx-element?
 ;;   Create a text object on a board.

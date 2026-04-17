@@ -162,6 +162,7 @@
   jsx-create-checkbox
   jsx-create-input
   jsx-create-slider
+  jsx-create-chart
   jsx-create-text
   jsx-create-image
   jsx-checkbox-value
@@ -171,6 +172,15 @@
   jsx-slider-set-min!
   jsx-slider-set-value!
   jsx-slider-value
+  jsx-chart-draw-bar
+  jsx-chart-draw-fit
+  jsx-chart-draw-line
+  jsx-chart-draw-pie
+  jsx-chart-draw-points
+  jsx-chart-draw-radar
+  jsx-chart-draw-spline
+  jsx-chart-update-data-array!
+  jsx-chart-update-renderer!
   jsx-text-_createFctUpdateText
   jsx-text-_setText
   jsx-text-bounds
@@ -510,6 +520,7 @@
 (define jsx-create-checkbox any/c)
 (define jsx-create-input any/c)
 (define jsx-create-slider any/c)
+(define jsx-create-chart any/c)
 (define jsx-create-text any/c)
 (define jsx-create-image any/c)
 (define jsx-checkbox-value any/c)
@@ -519,6 +530,15 @@
 (define jsx-slider-set-min! any/c)
 (define jsx-slider-set-value! any/c)
 (define jsx-slider-value any/c)
+(define jsx-chart-draw-bar any/c)
+(define jsx-chart-draw-fit any/c)
+(define jsx-chart-draw-line any/c)
+(define jsx-chart-draw-pie any/c)
+(define jsx-chart-draw-points any/c)
+(define jsx-chart-draw-radar any/c)
+(define jsx-chart-draw-spline any/c)
+(define jsx-chart-update-data-array! any/c)
+(define jsx-chart-update-renderer! any/c)
 (define jsx-text-_createFctUpdateText any/c)
 (define jsx-text-_setText any/c)
 (define jsx-text-bounds any/c)
