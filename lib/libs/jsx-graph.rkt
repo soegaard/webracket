@@ -67,6 +67,28 @@
     [else
      (jsx-unwrap value)]))
 
+;; jsx-functiongraph-parents : any/c -> any/c
+;;   Convert functiongraph parents into raw browser values.
+(define (jsx-functiongraph-parents value)
+  (cond
+    [(procedure? value)
+     (procedure->external
+      (lambda args
+        (cond
+          [(null? args)
+           (error 'jsx-create-functiongraph
+                  "functiongraph callback expects at least one argument")]
+          [else
+           (value (car args))])))]
+    [(vector? value)
+     (for/vector #:length (vector-length value)
+         ([item (in-vector value)])
+       (jsx-functiongraph-parents item))]
+    [(list? value)
+     (list->vector (map jsx-functiongraph-parents value))]
+    [else
+     (jsx-unwrap value)]))
+
 ;; jsx-element-call : any/c string? vector? -> any/c
 ;;   Call a GeometryElement method on a wrapped element.
 (define (jsx-element-call element method args)
@@ -295,6 +317,11 @@
 (define-jsx-alias (jsx-board-create-parallel/raw board parents attrs)
   js-jsx-board-create-parallel)
 
+;; jsx-board-create-arrowparallel/raw : external/raw any/c any/c -> external/raw
+;;   Create an arrowparallel on a board.
+(define-jsx-alias (jsx-board-create-arrowparallel/raw board parents attrs)
+  js-jsx-board-create-arrowparallel)
+
 ;; jsx-board-create-perpendicular/raw : external/raw any/c any/c -> external/raw
 ;;   Create a perpendicular line on a board.
 (define-jsx-alias (jsx-board-create-perpendicular/raw board parents attrs)
@@ -369,6 +396,11 @@
 ;;   Create an image element on a board.
 (define-jsx-alias (jsx-board-create-image/raw board parents attrs)
   js-jsx-board-create-image)
+
+;; jsx-board-create-group/raw : external/raw any/c any/c -> external/raw
+;;   Create a group on a board.
+(define-jsx-alias (jsx-board-create-group/raw board parents attrs)
+  js-jsx-board-create-group)
 
 ;; jsx-text-_createFctUpdateText/raw : external/raw any/c -> external/raw
 ;;   Create the update function for text rendering.
@@ -947,7 +979,9 @@
 ;;   Create a functiongraph on a board.
 (define (jsx-create-functiongraph board parents [attributes #f])
   (jsx-wrap-element
-   (jsx-board-create-functiongraph/raw (jsx-board-raw board) parents (or attributes '#[]))))
+   (jsx-board-create-functiongraph/raw (jsx-board-raw board)
+                                        (jsx-functiongraph-parents parents)
+                                        (or attributes '#[]))))
 
 ;; jsx-create-polygon : jsx-board? any/c [any/c #f] -> jsx-element?
 ;;   Create a polygon on a board.
@@ -966,6 +1000,12 @@
 (define (jsx-create-parallel board parents [attributes #f])
   (jsx-wrap-element
    (jsx-board-create-parallel/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-arrowparallel : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create an arrowparallel on a board.
+(define (jsx-create-arrowparallel board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-arrowparallel/raw (jsx-board-raw board) parents (or attributes '#[]))))
 
 ;; jsx-circle-area : jsx-element? -> any/c
 ;;   Read the area of a circle.
@@ -1370,6 +1410,221 @@
 (define (jsx-create-image board parents [attributes #f])
   (jsx-wrap-element
    (jsx-board-create-image/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-group : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a group object on a board.
+(define (jsx-create-group board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-group/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-group-add-parents!/raw : external/raw any/c -> external/raw
+;;   Add parents to a group.
+(define (jsx-group-add-parents!/raw group args)
+  (js-jsx-group-addParents (jsx-unwrap group) (jsx-unpack-array args)))
+
+;; jsx-group-add-point!/raw : external/raw any/c -> external/raw
+;;   Add one point to a group.
+(define (jsx-group-add-point!/raw group args)
+  (js-jsx-group-addPoint (jsx-unwrap group) (jsx-unpack-array args)))
+
+;; jsx-group-add-points!/raw : external/raw any/c -> external/raw
+;;   Add multiple points to a group.
+(define (jsx-group-add-points!/raw group args)
+  (js-jsx-group-addPoints (jsx-unwrap group) (jsx-unpack-array args)))
+
+;; jsx-group-add-rotation-point!/raw : external/raw any/c -> external/raw
+;;   Add a rotation point to a group.
+(define (jsx-group-add-rotation-point!/raw group args)
+  (js-jsx-group-addRotationPoint (jsx-unwrap group) (jsx-unpack-array args)))
+
+;; jsx-group-add-scale-point!/raw : external/raw any/c -> external/raw
+;;   Add a scale point to a group.
+(define (jsx-group-add-scale-point!/raw group args)
+  (js-jsx-group-addScalePoint (jsx-unwrap group) (jsx-unpack-array args)))
+
+;; jsx-group-add-translation-point!/raw : external/raw any/c -> external/raw
+;;   Add a translation point to a group.
+(define (jsx-group-add-translation-point!/raw group args)
+  (js-jsx-group-addTranslationPoint (jsx-unwrap group) (jsx-unpack-array args)))
+
+;; jsx-group-add-group!/raw : external/raw any/c -> external/raw
+;;   Add a nested group.
+(define (jsx-group-add-group!/raw group args)
+  (js-jsx-group-addGroup (jsx-unwrap group) (jsx-unpack-array args)))
+
+;; jsx-group-remove-point!/raw : external/raw any/c -> external/raw
+;;   Remove a point from a group.
+(define (jsx-group-remove-point!/raw group args)
+  (js-jsx-group-removePoint (jsx-unwrap group) (jsx-unpack-array args)))
+
+;; jsx-group-remove-rotation-point!/raw : external/raw any/c -> external/raw
+;;   Remove a rotation point from a group.
+(define (jsx-group-remove-rotation-point!/raw group args)
+  (js-jsx-group-removeRotationPoint (jsx-unwrap group) (jsx-unpack-array args)))
+
+;; jsx-group-remove-scale-point!/raw : external/raw any/c -> external/raw
+;;   Remove a scale point from a group.
+(define (jsx-group-remove-scale-point!/raw group args)
+  (js-jsx-group-removeScalePoint (jsx-unwrap group) (jsx-unpack-array args)))
+
+;; jsx-group-remove-translation-point!/raw : external/raw any/c -> external/raw
+;;   Remove a translation point from a group.
+(define (jsx-group-remove-translation-point!/raw group args)
+  (js-jsx-group-removeTranslationPoint (jsx-unwrap group) (jsx-unpack-array args)))
+
+;; jsx-group-set-parents!/raw : external/raw any/c -> external/raw
+;;   Replace the group's parents.
+(define (jsx-group-set-parents!/raw group args)
+  (js-jsx-group-setParents (jsx-unwrap group) (jsx-unpack-array args)))
+
+;; jsx-group-set-rotation-center!/raw : external/raw any/c -> external/raw
+;;   Set the rotation center for a group.
+(define (jsx-group-set-rotation-center!/raw group args)
+  (js-jsx-group-setRotationCenter (jsx-unwrap group) (jsx-unpack-array args)))
+
+;; jsx-group-set-rotation-points!/raw : external/raw any/c -> external/raw
+;;   Set the rotation points for a group.
+(define (jsx-group-set-rotation-points!/raw group args)
+  (js-jsx-group-setRotationPoints (jsx-unwrap group) (jsx-unpack-array args)))
+
+;; jsx-group-set-scale-center!/raw : external/raw any/c -> external/raw
+;;   Set the scale center for a group.
+(define (jsx-group-set-scale-center!/raw group args)
+  (js-jsx-group-setScaleCenter (jsx-unwrap group) (jsx-unpack-array args)))
+
+;; jsx-group-set-scale-points!/raw : external/raw any/c -> external/raw
+;;   Set the scale points for a group.
+(define (jsx-group-set-scale-points!/raw group args)
+  (js-jsx-group-setScalePoints (jsx-unwrap group) (jsx-unpack-array args)))
+
+;; jsx-group-set-translation-points!/raw : external/raw any/c -> external/raw
+;;   Set the translation points for a group.
+(define (jsx-group-set-translation-points!/raw group args)
+  (js-jsx-group-setTranslationPoints (jsx-unwrap group) (jsx-unpack-array args)))
+
+;; jsx-group-ungroup!/raw : external/raw -> external/raw
+;;   Ungroup all members.
+(define (jsx-group-ungroup!/raw group args)
+  (js-jsx-group-ungroup (jsx-unwrap group)))
+
+;; jsx-group-update!/raw : external/raw -> external/raw
+;;   Update a group.
+(define (jsx-group-update!/raw group args)
+  (js-jsx-group-update (jsx-unwrap group)))
+
+;; jsx-group-add-parents! : jsx-element? any/c ... -> void?
+;;   Add parents to a group.
+(define (jsx-group-add-parents! group . args)
+  (jsx-group-add-parents!/raw group (list->vector args))
+  (void))
+
+;; jsx-group-add-point! : jsx-element? any/c ... -> void?
+;;   Add a point to a group.
+(define (jsx-group-add-point! group . args)
+  (jsx-group-add-point!/raw group (list->vector args))
+  (void))
+
+;; jsx-group-add-points! : jsx-element? any/c ... -> void?
+;;   Add points to a group.
+(define (jsx-group-add-points! group . args)
+  (jsx-group-add-points!/raw group (list->vector args))
+  (void))
+
+;; jsx-group-add-rotation-point! : jsx-element? any/c ... -> void?
+;;   Add a rotation point to a group.
+(define (jsx-group-add-rotation-point! group . args)
+  (jsx-group-add-rotation-point!/raw group (list->vector args))
+  (void))
+
+;; jsx-group-add-scale-point! : jsx-element? any/c ... -> void?
+;;   Add a scale point to a group.
+(define (jsx-group-add-scale-point! group . args)
+  (jsx-group-add-scale-point!/raw group (list->vector args))
+  (void))
+
+;; jsx-group-add-translation-point! : jsx-element? any/c ... -> void?
+;;   Add a translation point to a group.
+(define (jsx-group-add-translation-point! group . args)
+  (jsx-group-add-translation-point!/raw group (list->vector args))
+  (void))
+
+;; jsx-group-add-group! : jsx-element? any/c ... -> void?
+;;   Add a nested group.
+(define (jsx-group-add-group! group . args)
+  (jsx-group-add-group!/raw group (list->vector args))
+  (void))
+
+;; jsx-group-remove-point! : jsx-element? any/c ... -> void?
+;;   Remove a point from a group.
+(define (jsx-group-remove-point! group . args)
+  (jsx-group-remove-point!/raw group (list->vector args))
+  (void))
+
+;; jsx-group-remove-rotation-point! : jsx-element? any/c ... -> void?
+;;   Remove a rotation point from a group.
+(define (jsx-group-remove-rotation-point! group . args)
+  (jsx-group-remove-rotation-point!/raw group (list->vector args))
+  (void))
+
+;; jsx-group-remove-scale-point! : jsx-element? any/c ... -> void?
+;;   Remove a scale point from a group.
+(define (jsx-group-remove-scale-point! group . args)
+  (jsx-group-remove-scale-point!/raw group (list->vector args))
+  (void))
+
+;; jsx-group-remove-translation-point! : jsx-element? any/c ... -> void?
+;;   Remove a translation point from a group.
+(define (jsx-group-remove-translation-point! group . args)
+  (jsx-group-remove-translation-point!/raw group (list->vector args))
+  (void))
+
+;; jsx-group-set-parents! : jsx-element? any/c ... -> void?
+;;   Replace a group's parents.
+(define (jsx-group-set-parents! group . args)
+  (jsx-group-set-parents!/raw group (list->vector args))
+  (void))
+
+;; jsx-group-set-rotation-center! : jsx-element? any/c ... -> void?
+;;   Set the group rotation center.
+(define (jsx-group-set-rotation-center! group . args)
+  (jsx-group-set-rotation-center!/raw group (list->vector args))
+  (void))
+
+;; jsx-group-set-rotation-points! : jsx-element? any/c ... -> void?
+;;   Set the group rotation points.
+(define (jsx-group-set-rotation-points! group . args)
+  (jsx-group-set-rotation-points!/raw group (list->vector args))
+  (void))
+
+;; jsx-group-set-scale-center! : jsx-element? any/c ... -> void?
+;;   Set the group scale center.
+(define (jsx-group-set-scale-center! group . args)
+  (jsx-group-set-scale-center!/raw group (list->vector args))
+  (void))
+
+;; jsx-group-set-scale-points! : jsx-element? any/c ... -> void?
+;;   Set the group scale points.
+(define (jsx-group-set-scale-points! group . args)
+  (jsx-group-set-scale-points!/raw group (list->vector args))
+  (void))
+
+;; jsx-group-set-translation-points! : jsx-element? any/c ... -> void?
+;;   Set the group translation points.
+(define (jsx-group-set-translation-points! group . args)
+  (jsx-group-set-translation-points!/raw group (list->vector args))
+  (void))
+
+;; jsx-group-ungroup! : jsx-element? -> void?
+;;   Ungroup all members.
+(define (jsx-group-ungroup! group)
+  (jsx-group-ungroup!/raw group (vector))
+  (void))
+
+;; jsx-group-update! : jsx-element? -> void?
+;;   Update a group.
+(define (jsx-group-update! group)
+  (jsx-group-update!/raw group (vector))
+  (void))
 
 ;; jsx-text-_createFctUpdateText : jsx-element? any/c ... -> any/c
 ;;   Create the update function for text rendering.

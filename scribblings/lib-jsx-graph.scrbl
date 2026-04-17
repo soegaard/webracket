@@ -743,6 +743,15 @@ Creates a midpoint on @racket[board].
 Creates a parallel line on @racket[board].
 }
 
+@defproc[(jsx-create-arrowparallel [board jsx-board?]
+                                   [parents any/c]
+                                   [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Arrowparallel"
+          (jsx-doc-url "Arrowparallel"))
+Creates an arrowparallel on @racket[board].
+}
+
 @defproc[(jsx-create-perpendicular [board jsx-board?]
                                    [parents any/c]
                                    [attributes (or/c #f any/c) #f])
@@ -1168,6 +1177,15 @@ Creates a text element on @racket[board].
 Creates an image element on @racket[board].
 }
 
+@defproc[(jsx-create-group [board jsx-board?]
+                           [parents any/c]
+                           [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Group"
+          (jsx-doc-url "JXG.Group"))
+Creates a group on @racket[board].
+}
+
 @section{Text Helpers}
 
 The @racket[jsx-text] wrappers expose the documented
@@ -1513,6 +1531,109 @@ Updates the image size.
           (string-append (jsx-doc-url "JXG.Image")
                          "#updateSpan"))
 Updates the image span.
+}
+
+@section{Group Helpers}
+
+The @racket[jsx-group] wrappers expose the documented
+@racketid[JXG.Group] methods that are useful for the gallery example.
+
+@defproc[(jsx-group-add-parents! [group jsx-element?]
+                                 [parents any/c])
+         void?]{
+@(jsx-bar "addParents"
+          (string-append (jsx-doc-url "JXG.Group")
+                         "#addParents"))
+Adds parents to a group.
+}
+
+@defproc[(jsx-group-add-point! [group jsx-element?]
+                               [object any/c])
+         void?]{
+@(jsx-bar "addPoint"
+          (string-append (jsx-doc-url "JXG.Group")
+                         "#addPoint"))
+Adds a point to a group.
+}
+
+@defproc[(jsx-group-add-points! [group jsx-element?]
+                                [objects any/c])
+         void?]{
+@(jsx-bar "addPoints"
+          (string-append (jsx-doc-url "JXG.Group")
+                         "#addPoints"))
+Adds multiple points to a group.
+}
+
+@defproc[(jsx-group-add-rotation-point! [group jsx-element?]
+                                        [object any/c])
+         void?]{
+@(jsx-bar "addRotationPoint"
+          (string-append (jsx-doc-url "JXG.Group")
+                         "#addRotationPoint"))
+Adds a rotation point to a group.
+}
+
+@defproc[(jsx-group-add-scale-point! [group jsx-element?]
+                                     [object any/c])
+         void?]{
+@(jsx-bar "addScalePoint"
+          (string-append (jsx-doc-url "JXG.Group")
+                         "#addScalePoint"))
+Adds a scale point to a group.
+}
+
+@defproc[(jsx-group-add-translation-point! [group jsx-element?]
+                                            [object any/c])
+         void?]{
+@(jsx-bar "addTranslationPoint"
+          (string-append (jsx-doc-url "JXG.Group")
+                         "#addTranslationPoint"))
+Adds a translation point to a group.
+}
+
+@defproc[(jsx-group-set-scale-center! [group jsx-element?]
+                                      [object any/c])
+         void?]{
+@(jsx-bar "setScaleCenter"
+          (string-append (jsx-doc-url "JXG.Group")
+                         "#setScaleCenter"))
+Sets the scale center for a group.
+}
+
+@defproc[(jsx-group-set-rotation-center! [group jsx-element?]
+                                         [object any/c])
+         void?]{
+@(jsx-bar "setRotationCenter"
+          (string-append (jsx-doc-url "JXG.Group")
+                         "#setRotationCenter"))
+Sets the rotation center for a group.
+}
+
+@defproc[(jsx-group-set-rotation-points! [group jsx-element?]
+                                         [objects any/c])
+         void?]{
+@(jsx-bar "setRotationPoints"
+          (string-append (jsx-doc-url "JXG.Group")
+                         "#setRotationPoints"))
+Sets the rotation points for a group.
+}
+
+@defproc[(jsx-group-set-translation-points! [group jsx-element?]
+                                            [objects any/c])
+         void?]{
+@(jsx-bar "setTranslationPoints"
+          (string-append (jsx-doc-url "JXG.Group")
+                         "#setTranslationPoints"))
+Sets the translation points for a group.
+}
+
+@defproc[(jsx-group-update! [group jsx-element?])
+         void?]{
+@(jsx-bar "update"
+          (string-append (jsx-doc-url "JXG.Group")
+                         "#update"))
+Updates the group members.
 }
 
 @section{Geometry Elements}

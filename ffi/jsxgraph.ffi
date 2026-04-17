@@ -158,6 +158,12 @@
   #:name   "create-parallel"
   (-> (extern value value) (extern/raw)))
 
+; (js-jsx-board-create-arrowparallel board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-arrowparallel
+  #:module "jsx-board"
+  #:name   "create-arrowparallel"
+  (-> (extern value value) (extern/raw)))
+
 ; (js-jsx-board-create-perpendicular board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign js-jsx-board-create-perpendicular
   #:module "jsx-board"
@@ -343,6 +349,127 @@
   #:module "jsx-board"
   #:name   "create-image"
   (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-group board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-group
+  #:module "jsx-board"
+  #:name   "create-group"
+  (-> (extern value value) (extern/raw)))
+
+; Group-specific methods
+; (js-jsx-group-addParents group:Extern args:Value) -> Extern
+(define-foreign js-jsx-group-addParents
+  #:module "jsx-group"
+  #:name   "addParents"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-group-addPoint group:Extern args:Value) -> Extern
+(define-foreign js-jsx-group-addPoint
+  #:module "jsx-group"
+  #:name   "addPoint"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-group-addPoints group:Extern args:Value) -> Extern
+(define-foreign js-jsx-group-addPoints
+  #:module "jsx-group"
+  #:name   "addPoints"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-group-addRotationPoint group:Extern args:Value) -> Extern
+(define-foreign js-jsx-group-addRotationPoint
+  #:module "jsx-group"
+  #:name   "addRotationPoint"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-group-addScalePoint group:Extern args:Value) -> Extern
+(define-foreign js-jsx-group-addScalePoint
+  #:module "jsx-group"
+  #:name   "addScalePoint"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-group-addTranslationPoint group:Extern args:Value) -> Extern
+(define-foreign js-jsx-group-addTranslationPoint
+  #:module "jsx-group"
+  #:name   "addTranslationPoint"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-group-addGroup group:Extern args:Value) -> Extern
+(define-foreign js-jsx-group-addGroup
+  #:module "jsx-group"
+  #:name   "addGroup"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-group-removePoint group:Extern args:Value) -> Extern
+(define-foreign js-jsx-group-removePoint
+  #:module "jsx-group"
+  #:name   "removePoint"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-group-removeRotationPoint group:Extern args:Value) -> Extern
+(define-foreign js-jsx-group-removeRotationPoint
+  #:module "jsx-group"
+  #:name   "removeRotationPoint"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-group-removeScalePoint group:Extern args:Value) -> Extern
+(define-foreign js-jsx-group-removeScalePoint
+  #:module "jsx-group"
+  #:name   "removeScalePoint"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-group-removeTranslationPoint group:Extern args:Value) -> Extern
+(define-foreign js-jsx-group-removeTranslationPoint
+  #:module "jsx-group"
+  #:name   "removeTranslationPoint"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-group-setParents group:Extern args:Value) -> Extern
+(define-foreign js-jsx-group-setParents
+  #:module "jsx-group"
+  #:name   "setParents"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-group-setRotationCenter group:Extern args:Value) -> Extern
+(define-foreign js-jsx-group-setRotationCenter
+  #:module "jsx-group"
+  #:name   "setRotationCenter"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-group-setRotationPoints group:Extern args:Value) -> Extern
+(define-foreign js-jsx-group-setRotationPoints
+  #:module "jsx-group"
+  #:name   "setRotationPoints"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-group-setScaleCenter group:Extern args:Value) -> Extern
+(define-foreign js-jsx-group-setScaleCenter
+  #:module "jsx-group"
+  #:name   "setScaleCenter"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-group-setScalePoints group:Extern args:Value) -> Extern
+(define-foreign js-jsx-group-setScalePoints
+  #:module "jsx-group"
+  #:name   "setScalePoints"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-group-setTranslationPoints group:Extern args:Value) -> Extern
+(define-foreign js-jsx-group-setTranslationPoints
+  #:module "jsx-group"
+  #:name   "setTranslationPoints"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-group-ungroup group:Extern) -> Extern
+(define-foreign js-jsx-group-ungroup
+  #:module "jsx-group"
+  #:name   "ungroup"
+  (-> (extern) (extern/raw)))
+
+; (js-jsx-group-update group:Extern) -> Extern
+(define-foreign js-jsx-group-update
+  #:module "jsx-group"
+  #:name   "update"
+  (-> (extern) (extern/raw)))
 
 ; Text-specific methods
 ; (js-jsx-text-_createFctUpdateText text:Extern args:Value) -> Extern

@@ -12,6 +12,7 @@
 (define group-board-id "jsx-graph-gallery-group")
 (define chart-board-id "jsx-graph-gallery-chart")
 (define primitives-board-id "jsx-graph-gallery-primitives")
+(define arrowparallel-board-id "jsx-graph-gallery-arrowparallel")
 (define constructions-board-id "jsx-graph-gallery-constructions")
 (define widgets-board-id "jsx-graph-gallery-widgets")
 (define annotation-board-id "jsx-graph-gallery-annotation")
@@ -39,11 +40,18 @@
 (define group-board-ready? #f)
 (define chart-board-ready? #f)
 (define primitives-board-ready? #f)
+(define arrowparallel-board-ready? #f)
 (define constructions-board-ready? #f)
 (define widgets-board-ready? #f)
 (define annotation-board-ready? #f)
 
 (define primitives-board #f)
+(define arrowparallel-board #f)
+(define arrowparallel-p1 #f)
+(define arrowparallel-p2 #f)
+(define arrowparallel-p3 #f)
+(define arrowparallel-segment #f)
+(define arrowparallel-object #f)
 (define constructions-board #f)
 (define widgets-board #f)
 (define annotation-board #f)
@@ -346,6 +354,51 @@
         (void (jsx-board-full-update! primitives-board))
         #t)))
 
+;; init-arrowparallel-board! : -> boolean?
+;;   Build the JSXGraph arrowparallel board once the browser assets have loaded.
+(define (init-arrowparallel-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless arrowparallel-board-ready?
+          (set! arrowparallel-board
+                (jsx-create-board
+                 arrowparallel-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-1 9 9 -1])
+                          (vector "axis" #t)
+                          (vector "keepaspectratio" #t)))))
+          (set! arrowparallel-p1
+                (jsx-create-point arrowparallel-board
+                                  (jsx-parents 0 2)
+                                  (js-object (vector (vector "name" "P1")
+                                                     (vector "size" 4)))))
+          (set! arrowparallel-p2
+                (jsx-create-point arrowparallel-board
+                                  (jsx-parents 2 1)
+                                  (js-object (vector (vector "name" "P2")
+                                                     (vector "size" 4)))))
+          (set! arrowparallel-segment
+                (jsx-create-segment arrowparallel-board
+                                    (jsx-parents arrowparallel-p1 arrowparallel-p2)))
+          (set! arrowparallel-p3
+                (jsx-create-point arrowparallel-board
+                                  (jsx-parents 3 3)
+                                  (js-object (vector (vector "name" "P3")
+                                                     (vector "size" 4)))))
+          (set! arrowparallel-object
+                (jsx-create-arrowparallel arrowparallel-board
+                                          (jsx-parents arrowparallel-p1
+                                                       arrowparallel-p2
+                                                       arrowparallel-p3)))
+          (set! arrowparallel-board-ready? #t))
+        (void (jsx-board-full-update! arrowparallel-board))
+        #t)))
+
 ;; init-constructions-board! : -> boolean?
 ;;   Build the JSXGraph construction board once the browser assets have loaded.
 (define (init-constructions-board!)
@@ -609,27 +662,29 @@
   (define group-ready? (init-group-board!))
   (define chart-ready? (init-chart-board!))
   (define primitives-ready? (init-primitives-board!))
+  (define arrowparallel-ready? (init-arrowparallel-board!))
   (define constructions-ready? (init-constructions-board!))
   (define widgets-ready? (init-widgets-board!))
   (define annotation-ready? (init-annotation-board!))
   (when (and geometry-ready? group-ready? chart-ready?
-             primitives-ready? constructions-ready? widgets-ready? annotation-ready?
+             primitives-ready? arrowparallel-ready? constructions-ready? widgets-ready? annotation-ready?
              geometry-board-ready? group-board-ready? chart-board-ready?
-             primitives-board-ready? constructions-board-ready? widgets-board-ready? annotation-board-ready?)
+             primitives-board-ready? arrowparallel-board-ready? constructions-board-ready? widgets-board-ready? annotation-board-ready?)
     (set-status! "Boards ready.")
     (set-summary!
-     (format "Created geometry, group, chart, primitive, construction, widget, and annotation boards. Geometry objects: ~a. Group objects: ~a. Chart objects: ~a. Primitive objects: ~a. Construction objects: ~a. Widget objects: ~a. Annotation objects: ~a."
+     (format "Created geometry, group, chart, primitive, arrowparallel, construction, widget, and annotation boards. Geometry objects: ~a. Group objects: ~a. Chart objects: ~a. Primitive objects: ~a. Arrowparallel objects: ~a. Construction objects: ~a. Widget objects: ~a. Annotation objects: ~a."
              (jsx-board-num-objects geometry-board)
              (jsx-board-num-objects group-board)
              (jsx-board-num-objects chart-board)
              (jsx-board-num-objects primitives-board)
+             (jsx-board-num-objects arrowparallel-board)
              (jsx-board-num-objects constructions-board)
              (jsx-board-num-objects widgets-board)
              (jsx-board-num-objects annotation-board))))
   (and geometry-ready? group-ready? chart-ready?
-       primitives-ready? constructions-ready? widgets-ready? annotation-ready?
+       primitives-ready? arrowparallel-ready? constructions-ready? widgets-ready? annotation-ready?
        geometry-board-ready? group-board-ready? chart-board-ready?
-       primitives-board-ready? constructions-board-ready? widgets-board-ready? annotation-board-ready?))
+       primitives-board-ready? arrowparallel-board-ready? constructions-board-ready? widgets-board-ready? annotation-board-ready?))
 
 ;; refresh-gallery! : -> void?
 ;;   Force a redraw of the live gallery boards.
@@ -642,6 +697,8 @@
     (jsx-board-full-update! chart-board))
   (when primitives-board
     (jsx-board-full-update! primitives-board))
+  (when arrowparallel-board
+    (jsx-board-full-update! arrowparallel-board))
   (when constructions-board
     (jsx-board-full-update! constructions-board))
   (when widgets-board
@@ -672,6 +729,10 @@
                 #:attrs '((style "width: 720px; height: 420px;")))
      (text "Primitive board: line, segment, arc, angle, sector, circle, and glider each show a separate primitive.")
      (container #:id primitives-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "Arrowparallel board: the three points and segment define a single arrowparallel example.")
+     (container #:id arrowparallel-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
      (text "Construction board: conic, ellipse, function graph, polygon, midpoint, parallel, perpendicular, reflection, bisector, normal, and intersection demonstrate the higher-level constructors.")

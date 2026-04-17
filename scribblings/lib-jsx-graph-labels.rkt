@@ -153,6 +153,7 @@
   jsx-create-polygon
   jsx-create-midpoint
   jsx-create-parallel
+  jsx-create-arrowparallel
   jsx-create-perpendicular
   jsx-create-reflection
   jsx-create-bisector
@@ -168,6 +169,7 @@
   jsx-create-smartlabel
   jsx-create-text
   jsx-create-image
+  jsx-create-group
   jsx-checkbox-value
   jsx-input-set!
   jsx-input-value
@@ -221,6 +223,14 @@
   jsx-image-update-renderer!
   jsx-image-update-size!
   jsx-image-update-span!
+  jsx-group-add-parents!
+  jsx-group-add-point!
+  jsx-group-add-points!
+  jsx-group-add-rotation-point!
+  jsx-group-add-scale-point!
+  jsx-group-add-translation-point!
+  jsx-group-set-scale-center!
+  jsx-group-update!
   jsx-board-count-children
   jsx-board-num-objects
   jsx-board-objects-list
@@ -514,6 +524,7 @@
 (define jsx-create-polygon any/c)
 (define jsx-create-midpoint any/c)
 (define jsx-create-parallel any/c)
+(define jsx-create-arrowparallel any/c)
 (define jsx-create-perpendicular any/c)
 (define jsx-create-reflection any/c)
 (define jsx-create-bisector any/c)
@@ -529,6 +540,7 @@
 (define jsx-create-smartlabel any/c)
 (define jsx-create-text any/c)
 (define jsx-create-image any/c)
+(define jsx-create-group any/c)
 (define jsx-checkbox-value any/c)
 (define jsx-input-set! any/c)
 (define jsx-input-value any/c)
@@ -582,6 +594,17 @@
 (define jsx-image-update-renderer! any/c)
 (define jsx-image-update-size! any/c)
 (define jsx-image-update-span! any/c)
+(define jsx-group-add-parents! any/c)
+(define jsx-group-add-point! any/c)
+(define jsx-group-add-points! any/c)
+(define jsx-group-add-rotation-point! any/c)
+(define jsx-group-add-scale-point! any/c)
+(define jsx-group-add-translation-point! any/c)
+(define jsx-group-set-scale-center! any/c)
+(define jsx-group-update! any/c)
+(define jsx-group-set-rotation-center! any/c)
+(define jsx-group-set-rotation-points! any/c)
+(define jsx-group-set-translation-points! any/c)
 (define jsx-board-count-children any/c)
 (define jsx-board-num-objects any/c)
 (define jsx-board-objects-list any/c)
