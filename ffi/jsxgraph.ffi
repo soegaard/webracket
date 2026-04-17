@@ -92,6 +92,18 @@
   #:name   "create-arc"
   (-> (extern value value) (extern/raw)))
 
+; (js-jsx-board-create-angle board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-angle
+  #:module "jsx-board"
+  #:name   "create-angle"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-sector board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-sector
+  #:module "jsx-board"
+  #:name   "create-sector"
+  (-> (extern value value) (extern/raw)))
+
 ; (js-jsx-board-create-circle board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign js-jsx-board-create-circle
   #:module "jsx-board"
@@ -765,6 +777,88 @@
   #:module "jsx-arc"
   #:name   "value"
   (-> (extern value value) (f64)))
+
+;; Angle
+
+;; Read whether the angle is free.
+;; angle : extern
+(define-foreign js-jsx-angle-free
+  #:module "jsx-angle"
+  #:name   "free"
+  (-> (extern) (boolean)))
+
+;; Set the angle value.
+;; angle : extern
+;; val : value
+(define-foreign js-jsx-angle-set-angle!
+  #:module "jsx-angle"
+  #:name   "set-angle!"
+  (-> (extern value) ()))
+
+;; Read the angle value in the requested unit.
+;; angle : extern
+;; unit : value
+(define-foreign js-jsx-angle-value
+  #:module "jsx-angle"
+  #:name   "value"
+  (-> (extern value) (f64)))
+
+;; Sector
+
+;; Read the sector area.
+;; sector : extern
+(define-foreign js-jsx-sector-area
+  #:module "jsx-sector"
+  #:name   "area"
+  (-> (extern) (f64)))
+
+;; Test whether a point lies inside the sector.
+;; sector : extern
+;; x : value
+;; y : value
+(define-foreign js-jsx-sector-has-point-sector
+  #:module "jsx-sector"
+  #:name   "has-point-sector"
+  (-> (extern f64 f64) (boolean)))
+
+;; Read the sector arc length.
+;; sector : extern
+(define-foreign js-jsx-sector-l
+  #:module "jsx-sector"
+  #:name   "l"
+  (-> (extern) (f64)))
+
+;; Read the sector perimeter.
+;; sector : extern
+(define-foreign js-jsx-sector-perimeter
+  #:module "jsx-sector"
+  #:name   "perimeter"
+  (-> (extern) (f64)))
+
+;; Read the sector radius.
+;; sector : extern
+(define-foreign js-jsx-sector-radius
+  #:module "jsx-sector"
+  #:name   "radius"
+  (-> (extern) (f64)))
+
+;; Move the sector by direct coordinates.
+;; sector : extern
+;; method : value
+;; coords : value
+;; oldcoords : value
+(define-foreign js-jsx-sector-set-position-directly!
+  #:module "jsx-sector"
+  #:name   "set-position-directly!"
+  (-> (extern value value value) (extern/raw)))
+
+;; Set the sector radius.
+;; sector : extern
+;; value : value
+(define-foreign js-jsx-sector-set-radius!
+  #:module "jsx-sector"
+  #:name   "set-radius!"
+  (-> (extern value) (extern/raw)))
 
 ;; Call a circle method and return the raw JavaScript result.
 ;; circle : extern

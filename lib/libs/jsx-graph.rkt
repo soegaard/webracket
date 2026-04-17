@@ -120,6 +120,56 @@
 (define (jsx-arc-value arc unit rad)
   (js-jsx-arc-value (jsx-unwrap arc) unit rad))
 
+;; jsx-angle-free? : any/c -> boolean?
+;;   Check whether the angle is free.
+(define (jsx-angle-free? angle)
+  (js-jsx-angle-free (jsx-unwrap angle)))
+
+;; jsx-angle-set-angle! : any/c any/c -> void?
+;;   Set the angle value.
+(define (jsx-angle-set-angle! angle val)
+  (js-jsx-angle-set-angle! (jsx-unwrap angle) val))
+
+;; jsx-angle-value : any/c any/c -> f64
+;;   Read the angle value in the requested unit.
+(define (jsx-angle-value angle unit)
+  (js-jsx-angle-value (jsx-unwrap angle) unit))
+
+;; jsx-sector-area : any/c -> f64
+;;   Read the sector area.
+(define (jsx-sector-area sector)
+  (js-jsx-sector-area (jsx-unwrap sector)))
+
+;; jsx-sector-has-point-sector? : any/c f64 f64 -> boolean?
+;;   Check whether a point lies inside the sector.
+(define (jsx-sector-has-point-sector? sector x y)
+  (js-jsx-sector-has-point-sector (jsx-unwrap sector) x y))
+
+;; jsx-sector-l : any/c -> f64
+;;   Read the sector arc length.
+(define (jsx-sector-l sector)
+  (js-jsx-sector-l (jsx-unwrap sector)))
+
+;; jsx-sector-perimeter : any/c -> f64
+;;   Read the sector perimeter.
+(define (jsx-sector-perimeter sector)
+  (js-jsx-sector-perimeter (jsx-unwrap sector)))
+
+;; jsx-sector-radius : any/c -> f64
+;;   Read the sector radius.
+(define (jsx-sector-radius sector)
+  (js-jsx-sector-radius (jsx-unwrap sector)))
+
+;; jsx-sector-set-position-directly! : any/c any/c any/c any/c -> any/c
+;;   Move the sector by direct coordinates.
+(define (jsx-sector-set-position-directly! sector method coords oldcoords)
+  (js-jsx-sector-set-position-directly! (jsx-unwrap sector) method coords oldcoords))
+
+;; jsx-sector-set-radius! : any/c any/c -> any/c
+;;   Set the sector radius.
+(define (jsx-sector-set-radius! sector value)
+  (js-jsx-sector-set-radius! (jsx-unwrap sector) value))
+
 ;; jsx-curve-call : any/c string? vector? -> any/c
 ;;   Call a Curve method on a wrapped curve element.
 (define (jsx-curve-call curve method args)
@@ -179,6 +229,16 @@
 ;;   Create an arc on a board.
 (define-jsx-alias (jsx-board-create-arc/raw board parents attrs)
   js-jsx-board-create-arc)
+
+;; jsx-board-create-angle/raw : external/raw any/c any/c -> external/raw
+;;   Create an angle on a board.
+(define-jsx-alias (jsx-board-create-angle/raw board parents attrs)
+  js-jsx-board-create-angle)
+
+;; jsx-board-create-sector/raw : external/raw any/c any/c -> external/raw
+;;   Create a sector on a board.
+(define-jsx-alias (jsx-board-create-sector/raw board parents attrs)
+  js-jsx-board-create-sector)
 
 ;; jsx-board-create-circle/raw : external/raw any/c any/c -> external/raw
 ;;   Create a circle on a board.
@@ -590,6 +650,18 @@
 (define (jsx-create-arc board parents [attributes #f])
   (jsx-wrap-element
    (jsx-board-create-arc/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-angle : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create an angle on a board.
+(define (jsx-create-angle board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-angle/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-sector : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a sector on a board.
+(define (jsx-create-sector board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-sector/raw (jsx-board-raw board) parents (or attributes '#[]))))
 
 ;; jsx-create-circle : jsx-board? any/c [any/c #f] -> jsx-element?
 ;;   Create a circle on a board.

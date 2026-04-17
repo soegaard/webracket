@@ -13,7 +13,7 @@ Current scope:
 - Point predicates
 - Point attributes (getters/setters)
 - Point methods for hit-testing, style updates, and renderer updates
-- Line, arc, circle, curve, and polygon bridge helpers
+- Line, arc, angle, sector, circle, curve, and polygon bridge helpers
 
 Assumption in examples: the program is compiled with `--ffi jsxgraph`.
 
@@ -40,12 +40,14 @@ All function names are linked to JSXGraph API documentation.
 - [Chapter 11 — Curve Bridge](#chapter-11--curve-bridge)
 - [Chapter 12 — Polygon Bridge](#chapter-12--polygon-bridge)
 - [Chapter 13 — Arc Bridge](#chapter-13--arc-bridge)
-- [Chapter 14 — Mini Workflows](#chapter-14--mini-workflows)
+- [Chapter 14 — Angle Bridge](#chapter-14--angle-bridge)
+- [Chapter 15 — Sector Bridge](#chapter-15--sector-bridge)
+- [Chapter 16 — Mini Workflows](#chapter-16--mini-workflows)
 - [Configure Point Snapping](#configure-point-snapping)
 - [Hit-Testing and Projection](#hit-testing-and-projection)
 - [Style and Renderer Refresh](#style-and-renderer-refresh)
 - [Minimal Geometry Constructors](#minimal-geometry-constructors)
-- [Chapter 15 — Coverage Checklist](#chapter-15--coverage-checklist)
+- [Chapter 17 — Coverage Checklist](#chapter-17--coverage-checklist)
 
 ## Chapter 2 — Conventions
 
@@ -167,6 +169,8 @@ Reference roots:
 | [`js-jsx-board-create-line`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-line board #[p q] attrs)` | create a line from parent points or coordinates. |
 | [`js-jsx-board-create-segment`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-segment board #[p q] attrs)` | create a finite segment from parent points or coordinates. |
 | [`js-jsx-board-create-arc`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-arc board #[p q r] attrs)` | create an arc from parent points or coordinates. |
+| [`js-jsx-board-create-angle`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-angle board #[p q r] attrs)` | create an angle from parent points or coordinates. |
+| [`js-jsx-board-create-sector`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-sector board #[p q r] attrs)` | create a sector from parent points or coordinates. |
 | [`js-jsx-board-create-circle`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-circle board #[p q] attrs)` | create a circle from parent geometry. |
 | [`js-jsx-board-create-curve`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-curve board #[f g] attrs)` | create a curve from parent data or functions. |
 | [`js-jsx-board-create-polygon`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-polygon board #[p q r] attrs)` | create a polygon from parent points or coordinate arrays. |
@@ -253,7 +257,31 @@ Reference root: [JXG.Arc](https://jsxgraph.org/docs/symbols/JXG.Arc.html)
 | [`js-jsx-arc-radius`](https://jsxgraph.org/docs/symbols/JXG.Arc.html#Radius) | `(extern)` | `(f64)` | `(js-jsx-arc-radius arc)` | read the current radius of the arc. |
 | [`js-jsx-arc-value`](https://jsxgraph.org/docs/symbols/JXG.Arc.html#Value) | `(extern value value)` | `(f64)` | `(js-jsx-arc-value arc "length" #f)` | read the arc length or angle value. |
 
-## Chapter 14 — Mini Workflows
+## Chapter 14 — Angle Bridge
+
+Reference root: [JXG.Angle](https://jsxgraph.org/docs/symbols/JXG.Angle.html)
+
+| Function | Input types | Output type | Example | Use when |
+|---|---|---|---|---|
+| [`js-jsx-angle-free`](https://jsxgraph.org/docs/symbols/JXG.Angle.html#free) | `(extern)` | `(boolean)` | `(js-jsx-angle-free angle)` | check whether the angle is free. |
+| [`js-jsx-angle-set-angle!`](https://jsxgraph.org/docs/symbols/JXG.Angle.html#setAngle) | `(extern value)` | `()` | `(js-jsx-angle-set-angle! angle 1.57)` | set the angle value. |
+| [`js-jsx-angle-value`](https://jsxgraph.org/docs/symbols/JXG.Angle.html#Value) | `(extern value)` | `(f64)` | `(js-jsx-angle-value angle "rad")` | read the current angle value. |
+
+## Chapter 15 — Sector Bridge
+
+Reference root: [JXG.Sector](https://jsxgraph.org/docs/symbols/JXG.Sector.html)
+
+| Function | Input types | Output type | Example | Use when |
+|---|---|---|---|---|
+| [`js-jsx-sector-area`](https://jsxgraph.org/docs/symbols/JXG.Sector.html#Area) | `(extern)` | `(f64)` | `(js-jsx-sector-area sector)` | read the area of a sector. |
+| [`js-jsx-sector-has-point-sector`](https://jsxgraph.org/docs/symbols/JXG.Sector.html#hasPointSector) | `(extern f64 f64)` | `(boolean)` | `(js-jsx-sector-has-point-sector sector 1.0 2.0)` | test whether a point lies inside the sector. |
+| [`js-jsx-sector-l`](https://jsxgraph.org/docs/symbols/JXG.Sector.html#L) | `(extern)` | `(f64)` | `(js-jsx-sector-l sector)` | read the arc length of the sector. |
+| [`js-jsx-sector-perimeter`](https://jsxgraph.org/docs/symbols/JXG.Sector.html#Perimeter) | `(extern)` | `(f64)` | `(js-jsx-sector-perimeter sector)` | read the perimeter of the sector. |
+| [`js-jsx-sector-radius`](https://jsxgraph.org/docs/symbols/JXG.Sector.html#Radius) | `(extern)` | `(f64)` | `(js-jsx-sector-radius sector)` | read the sector radius. |
+| [`js-jsx-sector-set-position-directly!`](https://jsxgraph.org/docs/symbols/JXG.Sector.html#setPositionDirectly) | `(extern value value value)` | `(extern/raw)` | `(js-jsx-sector-set-position-directly! sector method coords oldcoords)` | move the sector by direct coordinates. |
+| [`js-jsx-sector-set-radius!`](https://jsxgraph.org/docs/symbols/JXG.Sector.html#setRadius) | `(extern value)` | `(extern/raw)` | `(js-jsx-sector-set-radius! sector value)` | set the sector radius. |
+
+## Chapter 16 — Mini Workflows
 
 ### Configure Point Snapping
 
@@ -292,15 +320,17 @@ Reference root: [JXG.Arc](https://jsxgraph.org/docs/symbols/JXG.Arc.html)
 (define t (js-jsx-board-create-text board #[-5 5 "PQ"] (js-object (vector))))
 ```
 
-## Chapter 15 — Coverage Checklist
+## Chapter 17 — Coverage Checklist
 
-- This document covers **84** functions from `ffi/jsxgraph.ffi`.
-- Total documented functions: **84**
-- `board api`: 15 functions
+- This document covers **96** functions from `ffi/jsxgraph.ffi`.
+- Total documented functions: **96**
+- `board api`: 17 functions
 - `board properties`: 8 functions
 - `geometryelement bridge`: 3 functions
 - `line bridge`: 2 functions
 - `arc bridge`: 4 functions
+- `angle bridge`: 3 functions
+- `sector bridge`: 7 functions
 - `circle bridge`: 2 functions
 - `curve bridge`: 3 functions
 - `polygon bridge`: 2 functions

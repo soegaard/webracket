@@ -142,6 +142,8 @@
   jsx-create-line
   jsx-create-segment
   jsx-create-arc
+  jsx-create-angle
+  jsx-create-sector
   jsx-create-circle
   jsx-create-curve
   jsx-create-polygon
@@ -233,6 +235,16 @@
   jsx-arc-has-point-sector?
   jsx-arc-radius
   jsx-arc-value
+  jsx-angle-free?
+  jsx-angle-set-angle!
+  jsx-angle-value
+  jsx-sector-area
+  jsx-sector-has-point-sector?
+  jsx-sector-l
+  jsx-sector-perimeter
+  jsx-sector-radius
+  jsx-sector-set-position-directly!
+  jsx-sector-set-radius!
   jsx-circle-area
   jsx-circle-bounds
   jsx-circle-diameter
@@ -418,6 +430,8 @@
 (define jsx-create-line any/c)
 (define jsx-create-segment any/c)
 (define jsx-create-arc any/c)
+(define jsx-create-angle any/c)
+(define jsx-create-sector any/c)
 (define jsx-create-circle any/c)
 (define jsx-create-curve any/c)
 (define jsx-create-polygon any/c)
@@ -520,6 +534,16 @@
 (define jsx-arc-has-point-sector? any/c)
 (define jsx-arc-radius any/c)
 (define jsx-arc-value any/c)
+(define jsx-angle-free? any/c)
+(define jsx-angle-set-angle! any/c)
+(define jsx-angle-value any/c)
+(define jsx-sector-area any/c)
+(define jsx-sector-has-point-sector? any/c)
+(define jsx-sector-l any/c)
+(define jsx-sector-perimeter any/c)
+(define jsx-sector-radius any/c)
+(define jsx-sector-set-position-directly! any/c)
+(define jsx-sector-set-radius! any/c)
 (define jsx-circle-area any/c)
 (define jsx-circle-bounds any/c)
 (define jsx-circle-diameter any/c)

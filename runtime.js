@@ -2646,6 +2646,8 @@ var imports = {
         'create-line':               ((board, parents, attrs) => board.create('line', from_fasl(parents), from_fasl(attrs))),
         'create-segment':            ((board, parents, attrs) => board.create('segment', from_fasl(parents), from_fasl(attrs))),
         'create-arc':                ((board, parents, attrs) => board.create('arc', from_fasl(parents), from_fasl(attrs))),
+        'create-angle':              ((board, parents, attrs) => board.create('angle', from_fasl(parents), from_fasl(attrs))),
+        'create-sector':             ((board, parents, attrs) => board.create('sector', from_fasl(parents), from_fasl(attrs))),
         'create-circle':             ((board, parents, attrs) => board.create('circle', from_fasl(parents), from_fasl(attrs))),
         'create-curve':              ((board, parents, attrs) => board.create('curve', from_fasl(parents), from_fasl(attrs))),
         'create-polygon':            ((board, parents, attrs) => board.create('polygon', from_fasl(parents), from_fasl(attrs))),
@@ -2671,6 +2673,8 @@ var imports = {
         'create-line'()               { throw new Error('DOM not available in this environment'); },
         'create-segment'()            { throw new Error('DOM not available in this environment'); },
         'create-arc'()                { throw new Error('DOM not available in this environment'); },
+        'create-angle'()              { throw new Error('DOM not available in this environment'); },
+        'create-sector'()             { throw new Error('DOM not available in this environment'); },
         'create-circle'()             { throw new Error('DOM not available in this environment'); },
         'create-curve'()              { throw new Error('DOM not available in this environment'); },
         'create-polygon'()            { throw new Error('DOM not available in this environment'); },
@@ -2719,6 +2723,34 @@ var imports = {
         'has-point-sector'()          { throw new Error('DOM not available in this environment'); },
         'radius'()                    { throw new Error('DOM not available in this environment'); },
         'value'()                     { throw new Error('DOM not available in this environment'); }
+    },
+    // JSXGraph Angle
+    'jsx-angle': hasDOM ? {
+        'free':                       (angle => angle.free()),
+        'set-angle!':                 ((angle, val) => { angle.setAngle(from_fasl(val)); }),
+        'value':                      ((angle, unit) => angle.Value(from_fasl(unit)))
+    } : {
+        'free'()                      { throw new Error('DOM not available in this environment'); },
+        'set-angle!'()                { throw new Error('DOM not available in this environment'); },
+        'value'()                     { throw new Error('DOM not available in this environment'); }
+    },
+    // JSXGraph Sector
+    'jsx-sector': hasDOM ? {
+        'area':                       (sector => sector.Area()),
+        'has-point-sector':           ((sector, x, y) => sector.hasPointSector(x, y)),
+        'l':                          (sector => sector.L()),
+        'perimeter':                  (sector => sector.Perimeter()),
+        'radius':                     (sector => sector.Radius()),
+        'set-position-directly!':     ((sector, method, coords, oldcoords) => sector.setPositionDirectly(from_fasl(method), from_fasl(coords), from_fasl(oldcoords))),
+        'set-radius!':                ((sector, value) => sector.setRadius(from_fasl(value)))
+    } : {
+        'area'()                      { throw new Error('DOM not available in this environment'); },
+        'has-point-sector'()          { throw new Error('DOM not available in this environment'); },
+        'l'()                         { throw new Error('DOM not available in this environment'); },
+        'perimeter'()                 { throw new Error('DOM not available in this environment'); },
+        'radius'()                    { throw new Error('DOM not available in this environment'); },
+        'set-position-directly!'()    { throw new Error('DOM not available in this environment'); },
+        'set-radius!'()               { throw new Error('DOM not available in this environment'); }
     },
     // JSXGraph Circle
     'jsx-circle': hasDOM ? {

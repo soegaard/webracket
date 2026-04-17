@@ -20,7 +20,7 @@ Use @racket[jsx-graph] when you want to:
 @itemlist[
   @item{create a @racket[JXG.JSXGraph] board in the current page}
   @item{create arbitrary JSXGraph elements with @racket[jsx-create] or the specialized constructors}
-  @item{build geometry objects such as @racket[JXG.Point], @racket[JXG.Line], @racket[JXG.Arc], @racket[JXG.Circle], @racket[JXG.Polygon], and @racket[JXG.Text]}
+  @item{build geometry objects such as @racket[JXG.Point], @racket[JXG.Line], @racket[JXG.Arc], @racket[JXG.Angle], @racket[JXG.Sector], @racket[JXG.Circle], @racket[JXG.Polygon], and @racket[JXG.Text]}
   @item{inspect or adjust point properties from Racket code}
   @item{attach browser event handlers to JSXGraph elements}
 ]
@@ -261,6 +261,24 @@ Creates a segment on @racket[board].
 Creates an arc on @racket[board].
 }
 
+@defproc[(jsx-create-angle [board jsx-board?]
+                           [parents any/c]
+                           [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Angle"
+          (jsx-doc-url "Angle"))
+Creates an angle on @racket[board].
+}
+
+@defproc[(jsx-create-sector [board jsx-board?]
+                            [parents any/c]
+                            [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Sector"
+          (jsx-doc-url "Sector"))
+Creates a sector on @racket[board].
+}
+
 @defproc[(jsx-create-circle [board jsx-board?]
                             [parents any/c]
                             [attributes (or/c #f any/c) #f])
@@ -315,6 +333,98 @@ Returns the current radius of @racket[arc].
           (string-append (jsx-doc-url "Arc")
                          "#Value"))
 Returns the arc length or angle value for @racket[arc].
+}
+
+@section{Angle Helpers}
+
+@defproc[(jsx-angle-free? [angle jsx-element?])
+         boolean?]{
+@(jsx-bar "free"
+          (string-append (jsx-doc-url "Angle")
+                         "#free"))
+Returns @racket[#t] when the angle is free.
+}
+
+@defproc[(jsx-angle-set-angle! [angle jsx-element?]
+                               [val any/c])
+         void?]{
+@(jsx-bar "setAngle"
+          (string-append (jsx-doc-url "Angle")
+                         "#setAngle"))
+Sets the angle value on @racket[angle].
+}
+
+@defproc[(jsx-angle-value [angle jsx-element?]
+                          [unit any/c])
+         any/c]{
+@(jsx-bar "Value"
+          (string-append (jsx-doc-url "Angle")
+                         "#Value"))
+Returns the current angle value for @racket[angle].
+}
+
+@section{Sector Helpers}
+
+@defproc[(jsx-sector-area [sector jsx-element?])
+         any/c]{
+@(jsx-bar "Area"
+          (string-append (jsx-doc-url "Sector")
+                         "#Area"))
+Returns the area of @racket[sector].
+}
+
+@defproc[(jsx-sector-has-point-sector? [sector jsx-element?]
+                                       [x any/c]
+                                       [y any/c])
+         boolean?]{
+@(jsx-bar "hasPointSector"
+          (string-append (jsx-doc-url "Sector")
+                         "#hasPointSector"))
+Returns @racket[#t] when the point lies inside @racket[sector].
+}
+
+@defproc[(jsx-sector-l [sector jsx-element?])
+         any/c]{
+@(jsx-bar "L"
+          (string-append (jsx-doc-url "Sector")
+                         "#L"))
+Returns the arc length of @racket[sector].
+}
+
+@defproc[(jsx-sector-perimeter [sector jsx-element?])
+         any/c]{
+@(jsx-bar "Perimeter"
+          (string-append (jsx-doc-url "Sector")
+                         "#Perimeter"))
+Returns the perimeter of @racket[sector].
+}
+
+@defproc[(jsx-sector-radius [sector jsx-element?])
+         any/c]{
+@(jsx-bar "Radius"
+          (string-append (jsx-doc-url "Sector")
+                         "#Radius"))
+Returns the radius of @racket[sector].
+}
+
+@defproc[(jsx-sector-set-position-directly! [sector jsx-element?]
+                                            [method any/c]
+                                            [coords any/c]
+                                            [oldcoords any/c])
+         any/c]{
+@(jsx-bar "setPositionDirectly"
+          (string-append (jsx-doc-url "Sector")
+                         "#setPositionDirectly"))
+Moves @racket[sector] by direct coordinates.
+}
+
+@defproc[(jsx-sector-set-radius! [sector jsx-element?]
+                                 [value any/c])
+         any/c]{
+@(jsx-bar "setRadius"
+          (string-append (jsx-doc-url "Sector")
+                         "#setRadius"))
+Sets the radius of @racket[sector].
 }
 
 @section{Circle Helpers}
