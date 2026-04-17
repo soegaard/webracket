@@ -2699,11 +2699,19 @@ var imports = {
         'create-circle':             ((board, parents, attrs) => board.create('circle', from_fasl(parents), from_fasl(attrs))),
         'create-intersection':       ((board, parents, attrs) => board.create('intersection', from_fasl(parents), from_fasl(attrs))),
         'create-text':               ((board, parents, attrs) => board.create('text', from_fasl(parents), from_fasl(attrs))),
+        'id':                        (board => board.id),
+        'container':                 (board => board.container),
+        'renderer':                  (board => board.renderer),
+        'canvas-width':              (board => board.canvasWidth),
+        'canvas-height':             (board => board.canvasHeight),
+        'bounding-box':              (board => board.boundingBox),
         'update!':                   (board => board.update()),
         'full-update!':              (board => board.fullUpdate()),
         'remove-object!':            ((board, obj) => { board.removeObject(obj); }),
         'suspend-update!':           (board => board.suspendUpdate()),
-        'unsuspend-update!':         (board => board.unsuspendUpdate())
+        'unsuspend-update!':         (board => board.unsuspendUpdate()),
+        'num-objects':               (board => board.numObjects),
+        'objects-list':              (board => Object.values(board.objects))
     } : {
         'init-board'()                { throw new Error('DOM not available in this environment'); },
         'create'()                    { throw new Error('DOM not available in this environment'); },
@@ -2717,7 +2725,23 @@ var imports = {
         'full-update!'()              { throw new Error('DOM not available in this environment'); },
         'remove-object!'()            { throw new Error('DOM not available in this environment'); },
         'suspend-update!'()           { throw new Error('DOM not available in this environment'); },
-        'unsuspend-update!'()         { throw new Error('DOM not available in this environment'); }
+        'unsuspend-update!'()         { throw new Error('DOM not available in this environment'); },
+        'id'()                        { throw new Error('DOM not available in this environment'); },
+        'container'()                 { throw new Error('DOM not available in this environment'); },
+        'renderer'()                  { throw new Error('DOM not available in this environment'); },
+        'canvas-width'()              { throw new Error('DOM not available in this environment'); },
+        'canvas-height'()             { throw new Error('DOM not available in this environment'); },
+        'bounding-box'()              { throw new Error('DOM not available in this environment'); },
+        'num-objects'()               { throw new Error('DOM not available in this environment'); },
+        'objects-list'()              { throw new Error('DOM not available in this environment'); }
+    },
+    // JSXGraph GeometryElement
+    'jsx-element': hasDOM ? {
+        'call': ((element, method, args) => element[from_fasl(method)](...from_fasl(args))),
+        'call/nullish': ((element, method, args) => { element[from_fasl(method)](...from_fasl(args)); })
+    } : {
+        'call'()                      { throw new Error('DOM not available in this environment'); },
+        'call/nullish'()              { throw new Error('DOM not available in this environment'); }
     },
     // JSXGraph Point
     'jsx-point': hasDOM ? {
