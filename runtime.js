@@ -2633,6 +2633,7 @@ var imports = {
         'create-normal':             ((board, parents, attrs) => board.create('normal', from_fasl(parents), from_fasl(attrs))),
         'create-intersection':       ((board, parents, attrs) => board.create('intersection', from_fasl(parents), from_fasl(attrs))),
         'create-text':               ((board, parents, attrs) => board.create('text', from_fasl(parents), from_fasl(attrs))),
+        'create-image':              ((board, parents, attrs) => board.create('image', from_fasl(parents), from_fasl(attrs))),
         'id':                        (board => board.id),
         'container':                 (board => board.container),
         'renderer':                  (board => board.renderer),
@@ -2752,6 +2753,26 @@ var imports = {
         'updateText'()               { throw new Error('DOM not available in this environment'); },
         'utf8_decode'()              { throw new Error('DOM not available in this environment'); },
         'valueTagToJessieCode'()     { throw new Error('DOM not available in this environment'); }
+    },
+    // JSXGraph Image
+    'jsx-image': hasDOM ? {
+        'H':              ((image, args) => image.H(...from_fasl(args))),
+        'W':              ((image, args) => image.W(...from_fasl(args))),
+        'hasPoint':       ((image, args) => image.hasPoint(...from_fasl(args))),
+        'setSize':        ((image, args) => image.setSize(...from_fasl(args))),
+        'update':         ((image, args) => image.update(...from_fasl(args))),
+        'updateRenderer': ((image, args) => image.updateRenderer(...from_fasl(args))),
+        'updateSize':     ((image, args) => image.updateSize(...from_fasl(args))),
+        'updateSpan':     ((image, args) => image.updateSpan(...from_fasl(args)))
+    } : {
+        'H'()             { throw new Error('DOM not available in this environment'); },
+        'W'()             { throw new Error('DOM not available in this environment'); },
+        'hasPoint'()      { throw new Error('DOM not available in this environment'); },
+        'setSize'()       { throw new Error('DOM not available in this environment'); },
+        'update'()        { throw new Error('DOM not available in this environment'); },
+        'updateRenderer'(){ throw new Error('DOM not available in this environment'); },
+        'updateSize'()    { throw new Error('DOM not available in this environment'); },
+        'updateSpan'()    { throw new Error('DOM not available in this environment'); }
     },
     // JSXGraph Line
     'jsx-line': hasDOM ? {

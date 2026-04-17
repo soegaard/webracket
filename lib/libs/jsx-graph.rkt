@@ -310,6 +310,11 @@
 (define-jsx-alias (jsx-board-create-text/raw board parents attrs)
   js-jsx-board-create-text)
 
+;; jsx-board-create-image/raw : external/raw any/c any/c -> external/raw
+;;   Create an image element on a board.
+(define-jsx-alias (jsx-board-create-image/raw board parents attrs)
+  js-jsx-board-create-image)
+
 ;; jsx-text-_createFctUpdateText/raw : external/raw any/c -> external/raw
 ;;   Create the update function for text rendering.
 (define-jsx-alias (jsx-text-_createFctUpdateText/raw text args)
@@ -1147,6 +1152,12 @@
   (jsx-wrap-element
    (jsx-board-create-text/raw (jsx-board-raw board) parents (or attributes '#[]))))
 
+;; jsx-create-image : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create an image object on a board.
+(define (jsx-create-image board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-image/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
 ;; jsx-text-_createFctUpdateText : jsx-element? any/c ... -> any/c
 ;;   Create the update function for text rendering.
 (define (jsx-text-_createFctUpdateText text . args)
@@ -1291,6 +1302,84 @@
 ;;   Convert a value tag to JessieCode.
 (define (jsx-text-valueTagToJessieCode text . args)
   (jsx-text-valueTagToJessieCode/raw text (list->vector args)))
+
+;; jsx-image-H/raw : external/raw any/c -> external/raw
+;;   Read the image H helper.
+(define-jsx-alias (jsx-image-H/raw image args) js-jsx-image-H)
+
+;; jsx-image-W/raw : external/raw any/c -> external/raw
+;;   Read the image W helper.
+(define-jsx-alias (jsx-image-W/raw image args) js-jsx-image-W)
+
+;; jsx-image-has-point?/raw : external/raw any/c -> boolean?
+;;   Check whether a point hits the image.
+(define-jsx-alias (jsx-image-has-point?/raw image args) js-jsx-image-has-point)
+
+;; jsx-image-set-size!/raw : external/raw any/c -> external/raw
+;;   Set the image size directly.
+(define-jsx-alias (jsx-image-set-size!/raw image args) js-jsx-image-set-size)
+
+;; jsx-image-update!/raw : external/raw any/c -> external/raw
+;;   Update an image.
+(define-jsx-alias (jsx-image-update!/raw image args) js-jsx-image-update)
+
+;; jsx-image-update-renderer!/raw : external/raw any/c -> external/raw
+;;   Refresh the image renderer.
+(define-jsx-alias (jsx-image-update-renderer!/raw image args)
+  js-jsx-image-update-renderer)
+
+;; jsx-image-update-size!/raw : external/raw any/c -> external/raw
+;;   Update the image size.
+(define-jsx-alias (jsx-image-update-size!/raw image args) js-jsx-image-update-size)
+
+;; jsx-image-update-span!/raw : external/raw any/c -> external/raw
+;;   Update the image span.
+(define-jsx-alias (jsx-image-update-span!/raw image args) js-jsx-image-update-span)
+
+;; jsx-image-H : jsx-element? any/c ... -> any/c
+;;   Read the image H helper.
+(define (jsx-image-H image . args)
+  (jsx-image-H/raw image (list->vector args)))
+
+;; jsx-image-W : jsx-element? any/c ... -> any/c
+;;   Read the image W helper.
+(define (jsx-image-W image . args)
+  (jsx-image-W/raw image (list->vector args)))
+
+;; jsx-image-has-point? : jsx-element? any/c ... -> boolean?
+;;   Check whether a point hits the image.
+(define (jsx-image-has-point? image . args)
+  (jsx-image-has-point?/raw image (list->vector args)))
+
+;; jsx-image-set-size! : jsx-element? any/c ... -> void?
+;;   Set the image size directly.
+(define (jsx-image-set-size! image . args)
+  (jsx-image-set-size!/raw image (list->vector args))
+  (void))
+
+;; jsx-image-update! : jsx-element? any/c ... -> void?
+;;   Update an image.
+(define (jsx-image-update! image . args)
+  (jsx-image-update!/raw image (list->vector args))
+  (void))
+
+;; jsx-image-update-renderer! : jsx-element? any/c ... -> void?
+;;   Refresh the image renderer.
+(define (jsx-image-update-renderer! image . args)
+  (jsx-image-update-renderer!/raw image (list->vector args))
+  (void))
+
+;; jsx-image-update-size! : jsx-element? any/c ... -> void?
+;;   Update the image size.
+(define (jsx-image-update-size! image . args)
+  (jsx-image-update-size!/raw image (list->vector args))
+  (void))
+
+;; jsx-image-update-span! : jsx-element? any/c ... -> void?
+;;   Update the image span.
+(define (jsx-image-update-span! image . args)
+  (jsx-image-update-span!/raw image (list->vector args))
+  (void))
 
 ;;; -------------------------------------------------------------------
 ;;; Geometry element helpers

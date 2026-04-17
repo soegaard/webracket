@@ -176,6 +176,12 @@
   #:name   "create-text"
   (-> (extern value value) (extern/raw)))
 
+; (js-jsx-board-create-image board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-image
+  #:module "jsx-board"
+  #:name   "create-image"
+  (-> (extern value value) (extern/raw)))
+
 ; Text-specific methods
 ; (js-jsx-text-_createFctUpdateText text:Extern args:Value) -> Extern
 (define-foreign js-jsx-text-_createFctUpdateText
@@ -479,6 +485,54 @@
 (define-foreign js-jsx-text-valueTagToJessieCode
   #:module "jsx-text"
   #:name   "valueTagToJessieCode"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-image-H image:Extern args:Value) -> Extern
+(define-foreign js-jsx-image-H
+  #:module "jsx-image"
+  #:name   "H"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-image-W image:Extern args:Value) -> Extern
+(define-foreign js-jsx-image-W
+  #:module "jsx-image"
+  #:name   "W"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-image-has-point image:Extern args:Value) -> Boolean
+(define-foreign js-jsx-image-has-point
+  #:module "jsx-image"
+  #:name   "hasPoint"
+  (-> (extern value) (boolean)))
+
+; (js-jsx-image-set-size image:Extern args:Value) -> Extern
+(define-foreign js-jsx-image-set-size
+  #:module "jsx-image"
+  #:name   "setSize"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-image-update image:Extern args:Value) -> Extern
+(define-foreign js-jsx-image-update
+  #:module "jsx-image"
+  #:name   "update"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-image-update-renderer image:Extern args:Value) -> Extern
+(define-foreign js-jsx-image-update-renderer
+  #:module "jsx-image"
+  #:name   "updateRenderer"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-image-update-size image:Extern args:Value) -> Extern
+(define-foreign js-jsx-image-update-size
+  #:module "jsx-image"
+  #:name   "updateSize"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-image-update-span image:Extern args:Value) -> Extern
+(define-foreign js-jsx-image-update-span
+  #:module "jsx-image"
+  #:name   "updateSpan"
   (-> (extern value) (extern/raw)))
 
 ;; Update board state and redraw as needed

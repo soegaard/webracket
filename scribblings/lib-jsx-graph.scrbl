@@ -904,6 +904,15 @@ Creates an intersection point on @racket[board].
 Creates a text element on @racket[board].
 }
 
+@defproc[(jsx-create-image [board jsx-board?]
+                           [parents any/c]
+                           [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Image"
+          (jsx-doc-url "Image"))
+Creates an image element on @racket[board].
+}
+
 @section{Text Helpers}
 
 The @racket[jsx-text] wrappers expose the documented
@@ -1170,6 +1179,85 @@ Decodes UTF-8 text data.
           (string-append (jsx-doc-url "JXG.Text")
                          "#valueTagToJessieCode"))
 Converts a value tag to JessieCode.
+}
+
+@section{Image Helpers}
+
+The @racket[jsx-image] wrappers expose the documented
+@racketid[JXG.Image] methods that are specific to image elements.
+Inherited geometry and coordinate helpers are provided through the
+generic @racket[jsx-element] wrappers.
+
+@defproc[(jsx-image-H [image any/c]
+                      [args any/c] ...)
+         any/c]{
+@(jsx-bar "H"
+          (string-append (jsx-doc-url "JXG.Image")
+                         "#H"))
+Reads the image H helper.
+}
+
+@defproc[(jsx-image-W [image any/c]
+                      [args any/c] ...)
+         any/c]{
+@(jsx-bar "W"
+          (string-append (jsx-doc-url "JXG.Image")
+                         "#W"))
+Reads the image W helper.
+}
+
+@defproc[(jsx-image-has-point? [image any/c]
+                               [args any/c] ...)
+         boolean?]{
+@(jsx-bar "hasPoint"
+          (string-append (jsx-doc-url "JXG.Image")
+                         "#hasPoint"))
+Tests whether a screen position hits the image.
+}
+
+@defproc[(jsx-image-set-size! [image any/c]
+                              [args any/c] ...)
+         void?]{
+@(jsx-bar "setSize"
+          (string-append (jsx-doc-url "JXG.Image")
+                         "#setSize"))
+Sets the image size.
+}
+
+@defproc[(jsx-image-update! [image any/c]
+                            [args any/c] ...)
+         void?]{
+@(jsx-bar "update"
+          (string-append (jsx-doc-url "JXG.Image")
+                         "#update"))
+Updates the image.
+}
+
+@defproc[(jsx-image-update-renderer! [image any/c]
+                                     [args any/c] ...)
+         void?]{
+@(jsx-bar "updateRenderer"
+          (string-append (jsx-doc-url "JXG.Image")
+                         "#updateRenderer"))
+Refreshes the image renderer.
+}
+
+@defproc[(jsx-image-update-size! [image any/c]
+                                 [args any/c] ...)
+         void?]{
+@(jsx-bar "updateSize"
+          (string-append (jsx-doc-url "JXG.Image")
+                         "#updateSize"))
+Updates the image size.
+}
+
+@defproc[(jsx-image-update-span! [image any/c]
+                                 [args any/c] ...)
+         void?]{
+@(jsx-bar "updateSpan"
+          (string-append (jsx-doc-url "JXG.Image")
+                         "#updateSpan"))
+Updates the image span.
 }
 
 @section{Geometry Elements}

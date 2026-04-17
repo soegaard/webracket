@@ -156,6 +156,7 @@
   jsx-create-normal
   jsx-create-intersection
   jsx-create-text
+  jsx-create-image
   jsx-text-_createFctUpdateText
   jsx-text-_setText
   jsx-text-bounds
@@ -185,6 +186,14 @@
   jsx-text-updateText
   jsx-text-utf8_decode
   jsx-text-valueTagToJessieCode
+  jsx-image-H
+  jsx-image-W
+  jsx-image-has-point?
+  jsx-image-set-size!
+  jsx-image-update!
+  jsx-image-update-renderer!
+  jsx-image-update-size!
+  jsx-image-update-span!
   jsx-board-count-children
   jsx-board-num-objects
   jsx-board-objects-list
@@ -481,6 +490,7 @@
 (define jsx-create-normal any/c)
 (define jsx-create-intersection any/c)
 (define jsx-create-text any/c)
+(define jsx-create-image any/c)
 (define jsx-text-_createFctUpdateText any/c)
 (define jsx-text-_setText any/c)
 (define jsx-text-bounds any/c)
@@ -510,6 +520,14 @@
 (define jsx-text-updateText any/c)
 (define jsx-text-utf8_decode any/c)
 (define jsx-text-valueTagToJessieCode any/c)
+(define jsx-image-H any/c)
+(define jsx-image-W any/c)
+(define jsx-image-has-point? any/c)
+(define jsx-image-set-size! any/c)
+(define jsx-image-update! any/c)
+(define jsx-image-update-renderer! any/c)
+(define jsx-image-update-size! any/c)
+(define jsx-image-update-span! any/c)
 (define jsx-board-count-children any/c)
 (define jsx-board-num-objects any/c)
 (define jsx-board-objects-list any/c)

@@ -45,12 +45,13 @@ All function names are linked to JSXGraph API documentation.
 - [Chapter 15 — Sector Bridge](#chapter-15--sector-bridge)
 - [Chapter 16 — Glider Bridge](#chapter-16--glider-bridge)
 - [Chapter 17 — Text Bridge](#chapter-17--text-bridge)
-- [Chapter 18 — Mini Workflows](#chapter-18--mini-workflows)
+- [Chapter 18 — Image Bridge](#chapter-18--image-bridge)
+- [Chapter 19 — Mini Workflows](#chapter-19--mini-workflows)
 - [Configure Point Snapping](#configure-point-snapping)
 - [Hit-Testing and Projection](#hit-testing-and-projection)
 - [Style and Renderer Refresh](#style-and-renderer-refresh)
 - [Minimal Geometry Constructors](#minimal-geometry-constructors)
-- [Chapter 19 — Coverage Checklist](#chapter-19--coverage-checklist)
+- [Chapter 20 — Coverage Checklist](#chapter-20--coverage-checklist)
 
 ## Chapter 2 — Conventions
 
@@ -186,6 +187,7 @@ Reference roots:
 | [`js-jsx-board-create-normal`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-normal board #[c p] attrs)` | create a normal line to a curve or circle. |
 | [`js-jsx-board-create-intersection`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-intersection board #[l1 l2 0] attrs)` | create an intersection point from parent elements. |
 | [`js-jsx-board-create-text`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-text board #[-5 5 "A"] attrs)` | create a text label or annotation on the board. |
+| [`js-jsx-board-create-image`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-image board #[-5 5 "url"] attrs)` | create an image object on the board. |
 
 ### 7.2 Lifecycle and Updates
 
@@ -338,7 +340,24 @@ helpers are exposed elsewhere in this reference.
 | [`js-jsx-text-utf8_decode`](https://jsxgraph.org/docs/symbols/JXG.Text.html#utf8_decode) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-utf8_decode text args)` | decode UTF-8 text data. |
 | [`js-jsx-text-valueTagToJessieCode`](https://jsxgraph.org/docs/symbols/JXG.Text.html#valueTagToJessieCode) | `(extern value)` | `(extern/raw)` | `(js-jsx-text-valueTagToJessieCode text args)` | convert a value tag to JessieCode. |
 
-## Chapter 18 — Mini Workflows
+## Chapter 18 — Image Bridge
+
+The `Image` bridge covers the documented `JXG.Image` methods that are
+specific to image elements. The shared geometry and coordinate helpers
+are already documented elsewhere in this reference.
+
+| Function | Input types | Output type | Example | Use when |
+|---|---|---|---|---|
+| [`js-jsx-image-H`](https://jsxgraph.org/docs/symbols/JXG.Image.html#H) | `(extern value)` | `(extern/raw)` | `(js-jsx-image-H image args)` | read the image H helper. |
+| [`js-jsx-image-W`](https://jsxgraph.org/docs/symbols/JXG.Image.html#W) | `(extern value)` | `(extern/raw)` | `(js-jsx-image-W image args)` | read the image W helper. |
+| [`js-jsx-image-has-point`](https://jsxgraph.org/docs/symbols/JXG.Image.html#hasPoint) | `(extern value)` | `(boolean)` | `(js-jsx-image-has-point image args)` | test whether a point hits the image. |
+| [`js-jsx-image-set-size`](https://jsxgraph.org/docs/symbols/JXG.Image.html#setSize) | `(extern value)` | `(extern/raw)` | `(js-jsx-image-set-size image args)` | set the image size. |
+| [`js-jsx-image-update`](https://jsxgraph.org/docs/symbols/JXG.Image.html#update) | `(extern value)` | `(extern/raw)` | `(js-jsx-image-update image args)` | update the image. |
+| [`js-jsx-image-update-renderer`](https://jsxgraph.org/docs/symbols/JXG.Image.html#updateRenderer) | `(extern value)` | `(extern/raw)` | `(js-jsx-image-update-renderer image args)` | refresh the image renderer. |
+| [`js-jsx-image-update-size`](https://jsxgraph.org/docs/symbols/JXG.Image.html#updateSize) | `(extern value)` | `(extern/raw)` | `(js-jsx-image-update-size image args)` | update the image size. |
+| [`js-jsx-image-update-span`](https://jsxgraph.org/docs/symbols/JXG.Image.html#updateSpan) | `(extern value)` | `(extern/raw)` | `(js-jsx-image-update-span image args)` | update the image span. |
+
+## Chapter 19 — Mini Workflows
 
 ### Configure Point Snapping
 
@@ -377,10 +396,10 @@ helpers are exposed elsewhere in this reference.
 (define t (js-jsx-board-create-text board #[-5 5 "PQ"] (js-object (vector))))
 ```
 
-## Chapter 19 — Coverage Checklist
+## Chapter 20 — Coverage Checklist
 
-- This document covers **134** functions from `ffi/jsxgraph.ffi`.
-- Total documented functions: **134**
+- This document covers **143** functions from `ffi/jsxgraph.ffi`.
+- Total documented functions: **143**
 - `board api`: 24 functions
 - `board properties`: 8 functions
 - `geometryelement bridge`: 3 functions
