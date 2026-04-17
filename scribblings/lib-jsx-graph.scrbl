@@ -261,6 +261,15 @@ Creates a segment on @racket[board].
 Creates a circle on @racket[board].
 }
 
+@defproc[(jsx-create-curve [board jsx-board?]
+                           [parents any/c]
+                           [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Curve"
+          (jsx-doc-url "Curve"))
+Creates a curve on @racket[board].
+}
+
 @section{Circle Helpers}
 
 @defproc[(jsx-circle-area [circle jsx-element?])
@@ -370,6 +379,124 @@ Evaluates the @racket[Y] function on @racket[circle].
           (string-append (jsx-doc-url "Circle")
                          "#Z"))
 Evaluates the @racket[Z] function on @racket[circle].
+}
+
+@section{Curve Helpers}
+
+@defproc[(jsx-curve-allocate-points! [curve jsx-element?])
+         any/c]{
+@(jsx-bar "allocatePoints"
+          (string-append (jsx-doc-url "Curve")
+                         "#allocatePoints"))
+Allocates the point cache for @racket[curve].
+}
+
+@defproc[(jsx-curve-generate-term [curve jsx-element?])
+         any/c]{
+@(jsx-bar "generateTerm"
+          (string-append (jsx-doc-url "Curve")
+                         "#generateTerm"))
+Generates the curve term helper.
+}
+
+@defproc[(jsx-curve-get-label-position [curve jsx-element?])
+         any/c]{
+@(jsx-bar "getLabelPosition"
+          (string-append (jsx-doc-url "Curve")
+                         "#getLabelPosition"))
+Returns the label position helper for @racket[curve].
+}
+
+@defproc[(jsx-curve-get-transformation-source [curve jsx-element?])
+         any/c]{
+@(jsx-bar "getTransformationSource"
+          (string-append (jsx-doc-url "Curve")
+                         "#getTransformationSource"))
+Returns the transformation source of @racket[curve].
+}
+
+@defproc[(jsx-curve-has-point? [curve jsx-element?]
+                               [x any/c]
+                               [y any/c])
+         boolean?]{
+@(jsx-bar "hasPoint"
+          (string-append (jsx-doc-url "Curve")
+                         "#hasPoint"))
+Returns @racket[#t] when screen coordinates hit @racket[curve].
+}
+
+@defproc[(jsx-curve-interpolation-function-from-array [curve jsx-element?]
+                                                      [data any/c])
+         any/c]{
+@(jsx-bar "interpolationFunctionFromArray"
+          (string-append (jsx-doc-url "Curve")
+                         "#interpolationFunctionFromArray"))
+Builds an interpolation function from sample data.
+}
+
+@defproc[(jsx-curve-max-x [curve jsx-element?])
+         any/c]{
+@(jsx-bar "maxX"
+          (string-append (jsx-doc-url "Curve")
+                         "#maxX"))
+Returns the maximum x-value of @racket[curve].
+}
+
+@defproc[(jsx-curve-min-x [curve jsx-element?])
+         any/c]{
+@(jsx-bar "minX"
+          (string-append (jsx-doc-url "Curve")
+                         "#minX"))
+Returns the minimum x-value of @racket[curve].
+}
+
+@defproc[(jsx-curve-move-to! [curve jsx-element?]
+                             [where any/c])
+         any/c]{
+@(jsx-bar "moveTo"
+          (string-append (jsx-doc-url "Curve")
+                         "#moveTo"))
+Moves @racket[curve] to a new location.
+}
+
+@defproc[(jsx-curve-notify-parents! [curve jsx-element?])
+         any/c]{
+@(jsx-bar "notifyParents"
+          (string-append (jsx-doc-url "Curve")
+                         "#notifyParents"))
+Notifies parents of a curve change.
+}
+
+@defproc[(jsx-curve-update-curve! [curve jsx-element?])
+         any/c]{
+@(jsx-bar "updateCurve"
+          (string-append (jsx-doc-url "Curve")
+                         "#updateCurve"))
+Updates the curve data.
+}
+
+@defproc[(jsx-curve-update-data-array! [curve jsx-element?])
+         any/c]{
+@(jsx-bar "updateDataArray"
+          (string-append (jsx-doc-url "Curve")
+                         "#updateDataArray"))
+Updates the curve data array.
+}
+
+@defproc[(jsx-curve-update-renderer! [curve jsx-element?])
+         any/c]{
+@(jsx-bar "updateRenderer"
+          (string-append (jsx-doc-url "Curve")
+                         "#updateRenderer"))
+Refreshes the curve renderer.
+}
+
+@defproc[(jsx-curve-update-transform! [curve jsx-element?])
+         any/c]{
+@(jsx-bar "updateTransform"
+          (string-append (jsx-doc-url "Curve")
+                         "#updateTransform"))
+Updates a curve transformation.
 }
 
 @defproc[(jsx-create-perpendicular [board jsx-board?]

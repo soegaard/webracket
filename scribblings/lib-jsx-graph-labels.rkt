@@ -142,6 +142,7 @@
   jsx-create-line
   jsx-create-segment
   jsx-create-circle
+  jsx-create-curve
   jsx-create-perpendicular
   jsx-create-intersection
   jsx-create-text
@@ -239,6 +240,20 @@
   jsx-circle-x
   jsx-circle-y
   jsx-circle-z
+  jsx-curve-allocate-points!
+  jsx-curve-generate-term
+  jsx-curve-get-label-position
+  jsx-curve-get-transformation-source
+  jsx-curve-has-point?
+  jsx-curve-interpolation-function-from-array
+  jsx-curve-max-x
+  jsx-curve-min-x
+  jsx-curve-move-to!
+  jsx-curve-notify-parents!
+  jsx-curve-update-curve!
+  jsx-curve-update-data-array!
+  jsx-curve-update-renderer!
+  jsx-curve-update-transform!
   jsx-coordinates
   jsx-on
   jsx-element-add-event!
@@ -382,6 +397,7 @@
 (define jsx-create-line any/c)
 (define jsx-create-segment any/c)
 (define jsx-create-circle any/c)
+(define jsx-create-curve any/c)
 (define jsx-create-perpendicular any/c)
 (define jsx-create-intersection any/c)
 (define jsx-create-text any/c)
@@ -490,6 +506,20 @@
 (define jsx-circle-x any/c)
 (define jsx-circle-y any/c)
 (define jsx-circle-z any/c)
+(define jsx-curve-allocate-points! any/c)
+(define jsx-curve-generate-term any/c)
+(define jsx-curve-get-label-position any/c)
+(define jsx-curve-get-transformation-source any/c)
+(define jsx-curve-has-point? any/c)
+(define jsx-curve-interpolation-function-from-array any/c)
+(define jsx-curve-max-x any/c)
+(define jsx-curve-min-x any/c)
+(define jsx-curve-move-to! any/c)
+(define jsx-curve-notify-parents! any/c)
+(define jsx-curve-update-curve! any/c)
+(define jsx-curve-update-data-array! any/c)
+(define jsx-curve-update-renderer! any/c)
+(define jsx-curve-update-transform! any/c)
 (define jsx-coordinates any/c)
 (define jsx-on any/c)
 (define jsx-element-add-event! any/c)

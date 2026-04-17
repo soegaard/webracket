@@ -2646,6 +2646,7 @@ var imports = {
         'create-line':               ((board, parents, attrs) => board.create('line', from_fasl(parents), from_fasl(attrs))),
         'create-segment':            ((board, parents, attrs) => board.create('segment', from_fasl(parents), from_fasl(attrs))),
         'create-circle':             ((board, parents, attrs) => board.create('circle', from_fasl(parents), from_fasl(attrs))),
+        'create-curve':              ((board, parents, attrs) => board.create('curve', from_fasl(parents), from_fasl(attrs))),
         'create-intersection':       ((board, parents, attrs) => board.create('intersection', from_fasl(parents), from_fasl(attrs))),
         'create-text':               ((board, parents, attrs) => board.create('text', from_fasl(parents), from_fasl(attrs))),
         'id':                        (board => board.id),
@@ -2668,6 +2669,7 @@ var imports = {
         'create-line'()               { throw new Error('DOM not available in this environment'); },
         'create-segment'()            { throw new Error('DOM not available in this environment'); },
         'create-circle'()             { throw new Error('DOM not available in this environment'); },
+        'create-curve'()              { throw new Error('DOM not available in this environment'); },
         'create-intersection'()       { throw new Error('DOM not available in this environment'); },
         'create-text'()               { throw new Error('DOM not available in this environment'); },
         'update!'()                   { throw new Error('DOM not available in this environment'); },
@@ -2706,6 +2708,14 @@ var imports = {
     'jsx-circle': hasDOM ? {
         'call': ((circle, method, args) => circle[from_fasl(method)](...from_fasl(args))),
         'call/nullish': ((circle, method, args) => { circle[from_fasl(method)](...from_fasl(args)); })
+    } : {
+        'call'()                      { throw new Error('DOM not available in this environment'); },
+        'call/nullish'()              { throw new Error('DOM not available in this environment'); }
+    },
+    // JSXGraph Curve
+    'jsx-curve': hasDOM ? {
+        'call': ((curve, method, args) => curve[from_fasl(method)](...from_fasl(args))),
+        'call/nullish': ((curve, method, args) => { curve[from_fasl(method)](...from_fasl(args)); })
     } : {
         'call'()                      { throw new Error('DOM not available in this environment'); },
         'call/nullish'()              { throw new Error('DOM not available in this environment'); }

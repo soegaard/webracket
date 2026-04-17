@@ -92,6 +92,12 @@
   #:name   "create-circle"
   (-> (extern value value) (extern/raw)))
 
+; (js-jsx-board-create-curve board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-curve
+  #:module "jsx-board"
+  #:name   "create-curve"
+  (-> (extern value value) (extern/raw)))
+
 ; (js-jsx-board-create-intersection board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign js-jsx-board-create-intersection
   #:module "jsx-board"
@@ -729,6 +735,24 @@
 ;; args : value
 (define-foreign js-jsx-circle-call/nullish
   #:module "jsx-circle"
+  #:name   "call/nullish"
+  (-> (extern string/symbol value) (extern)))
+
+;; Call a curve method and return the raw JavaScript result.
+;; curve : extern
+;; method : string/symbol
+;; args : value
+(define-foreign js-jsx-curve-call
+  #:module "jsx-curve"
+  #:name   "call"
+  (-> (extern string/symbol value) (extern/raw)))
+
+;; Call a curve method and treat nullish results as absence.
+;; curve : extern
+;; method : string/symbol
+;; args : value
+(define-foreign js-jsx-curve-call/nullish
+  #:module "jsx-curve"
   #:name   "call/nullish"
   (-> (extern string/symbol value) (extern)))
 

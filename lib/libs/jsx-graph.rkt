@@ -100,6 +100,17 @@
   (js-jsx-circle-call/nullish (jsx-unwrap circle) method args)
   (void))
 
+;; jsx-curve-call : any/c string? vector? -> any/c
+;;   Call a Curve method on a wrapped curve element.
+(define (jsx-curve-call curve method args)
+  (js-jsx-curve-call (jsx-unwrap curve) method args))
+
+;; jsx-curve-call/nullish : any/c string? vector? -> void?
+;;   Call a Curve mutator on a wrapped curve element.
+(define (jsx-curve-call/nullish curve method args)
+  (js-jsx-curve-call/nullish (jsx-unwrap curve) method args)
+  (void))
+
 ;;; -------------------------------------------------------------------
 ;;; Low-level aliases
 ;;; -------------------------------------------------------------------
@@ -137,6 +148,11 @@
 ;;   Create a circle on a board.
 (define-jsx-alias (jsx-board-create-circle/raw board parents attrs)
   js-jsx-board-create-circle)
+
+;; jsx-board-create-curve/raw : external/raw any/c any/c -> external/raw
+;;   Create a curve on a board.
+(define-jsx-alias (jsx-board-create-curve/raw board parents attrs)
+  js-jsx-board-create-curve)
 
 ;; jsx-board-create-intersection/raw : external/raw any/c any/c -> external/raw
 ;;   Create an intersection point on a board.
@@ -529,6 +545,12 @@
   (jsx-wrap-element
    (jsx-board-create-circle/raw (jsx-board-raw board) parents (or attributes '#[]))))
 
+;; jsx-create-curve : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a curve on a board.
+(define (jsx-create-curve board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-curve/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
 ;; jsx-circle-area : jsx-element? -> any/c
 ;;   Read the area of a circle.
 (define (jsx-circle-area circle)
@@ -593,6 +615,76 @@
 ;;   Evaluate the Z coordinate function on the circle.
 (define (jsx-circle-z circle t)
   (jsx-circle-call circle "Z" (vector t)))
+
+;; jsx-curve-allocate-points! : jsx-element? -> any/c
+;;   Allocate the point cache for a curve.
+(define (jsx-curve-allocate-points! curve)
+  (jsx-curve-call curve "allocatePoints" (vector)))
+
+;; jsx-curve-generate-term : jsx-element? -> any/c
+;;   Generate the curve term function.
+(define (jsx-curve-generate-term curve)
+  (jsx-curve-call curve "generateTerm" (vector)))
+
+;; jsx-curve-get-label-position : jsx-element? -> any/c
+;;   Read the label position helper for a curve.
+(define (jsx-curve-get-label-position curve)
+  (jsx-curve-call curve "getLabelPosition" (vector)))
+
+;; jsx-curve-get-transformation-source : jsx-element? -> any/c
+;;   Read the transformation source of a curve.
+(define (jsx-curve-get-transformation-source curve)
+  (jsx-curve-call curve "getTransformationSource" (vector)))
+
+;; jsx-curve-has-point? : jsx-element? any/c any/c -> boolean?
+;;   Check whether screen coordinates hit a curve.
+(define (jsx-curve-has-point? curve x y)
+  (jsx-curve-call curve "hasPoint" (vector x y)))
+
+;; jsx-curve-interpolation-function-from-array : jsx-element? any/c -> any/c
+;;   Build an interpolation function from sample data.
+(define (jsx-curve-interpolation-function-from-array curve data)
+  (jsx-curve-call curve "interpolationFunctionFromArray" (vector data)))
+
+;; jsx-curve-max-x : jsx-element? -> any/c
+;;   Read the maximum x-value of a curve.
+(define (jsx-curve-max-x curve)
+  (jsx-curve-call curve "maxX" (vector)))
+
+;; jsx-curve-min-x : jsx-element? -> any/c
+;;   Read the minimum x-value of a curve.
+(define (jsx-curve-min-x curve)
+  (jsx-curve-call curve "minX" (vector)))
+
+;; jsx-curve-move-to! : jsx-element? any/c -> any/c
+;;   Move a curve to a new location.
+(define (jsx-curve-move-to! curve where)
+  (jsx-curve-call curve "moveTo" (vector where)))
+
+;; jsx-curve-notify-parents! : jsx-element? -> any/c
+;;   Notify parent elements of a curve change.
+(define (jsx-curve-notify-parents! curve)
+  (jsx-curve-call curve "notifyParents" (vector)))
+
+;; jsx-curve-update-curve! : jsx-element? -> any/c
+;;   Update the curve data.
+(define (jsx-curve-update-curve! curve)
+  (jsx-curve-call curve "updateCurve" (vector)))
+
+;; jsx-curve-update-data-array! : jsx-element? -> any/c
+;;   Update the curve data array.
+(define (jsx-curve-update-data-array! curve)
+  (jsx-curve-call curve "updateDataArray" (vector)))
+
+;; jsx-curve-update-renderer! : jsx-element? -> any/c
+;;   Refresh the curve renderer.
+(define (jsx-curve-update-renderer! curve)
+  (jsx-curve-call curve "updateRenderer" (vector)))
+
+;; jsx-curve-update-transform! : jsx-element? -> any/c
+;;   Update a curve transformation.
+(define (jsx-curve-update-transform! curve)
+  (jsx-curve-call curve "updateTransform" (vector)))
 
 ;; jsx-create-perpendicular : jsx-board? any/c [any/c #f] -> jsx-element?
 ;;   Create a perpendicular line on a board.

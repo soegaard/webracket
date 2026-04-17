@@ -36,12 +36,13 @@ All function names are linked to JSXGraph API documentation.
 - [Chapter 8 — GeometryElement Bridge](#chapter-8--geometryelement-bridge)
 - [Chapter 9 — Line Bridge](#chapter-9--line-bridge)
 - [Chapter 10 — Circle Bridge](#chapter-10--circle-bridge)
-- [Chapter 11 — Mini Workflows](#chapter-11--mini-workflows)
+- [Chapter 11 — Curve Bridge](#chapter-11--curve-bridge)
+- [Chapter 12 — Mini Workflows](#chapter-12--mini-workflows)
 - [Configure Point Snapping](#configure-point-snapping)
 - [Hit-Testing and Projection](#hit-testing-and-projection)
 - [Style and Renderer Refresh](#style-and-renderer-refresh)
 - [Minimal Geometry Constructors](#minimal-geometry-constructors)
-- [Chapter 12 — Coverage Checklist](#chapter-12--coverage-checklist)
+- [Chapter 13 — Coverage Checklist](#chapter-13--coverage-checklist)
 
 ## Chapter 2 — Conventions
 
@@ -163,6 +164,7 @@ Reference roots:
 | [`js-jsx-board-create-line`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-line board #[p q] attrs)` | create a line from parent points or coordinates. |
 | [`js-jsx-board-create-segment`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-segment board #[p q] attrs)` | create a finite segment from parent points or coordinates. |
 | [`js-jsx-board-create-circle`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-circle board #[p q] attrs)` | create a circle from parent geometry. |
+| [`js-jsx-board-create-curve`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-curve board #[f g] attrs)` | create a curve from parent data or functions. |
 | [`js-jsx-board-create-intersection`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-intersection board #[l1 l2 0] attrs)` | create an intersection point from parent elements. |
 | [`js-jsx-board-create-text`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-text board #[-5 5 "A"] attrs)` | create a text label or annotation on the board. |
 
@@ -217,7 +219,16 @@ Reference root: [JXG.Circle](https://jsxgraph.org/docs/symbols/JXG.Circle.html)
 | [`js-jsx-circle-call`](https://jsxgraph.org/docs/symbols/JXG.Circle.html) | `(extern string/symbol value)` | `(extern/raw)` | `(js-jsx-circle-call circle "getRadius" args)` | call a circle method and keep the raw JavaScript result. |
 | [`js-jsx-circle-call/nullish`](https://jsxgraph.org/docs/symbols/JXG.Circle.html) | `(extern string/symbol value)` | `(extern)` | `(js-jsx-circle-call/nullish circle "setRadius" args)` | call a circle mutator and treat nullish results as absence. |
 
-## Chapter 11 — Mini Workflows
+## Chapter 11 — Curve Bridge
+
+Reference root: [JXG.Curve](https://jsxgraph.org/docs/symbols/JXG.Curve.html)
+
+| Function | Input types | Output type | Example | Use when |
+|---|---|---|---|---|
+| [`js-jsx-curve-call`](https://jsxgraph.org/docs/symbols/JXG.Curve.html) | `(extern string/symbol value)` | `(extern/raw)` | `(js-jsx-curve-call curve "updateCurve" args)` | call a curve method and keep the raw JavaScript result. |
+| [`js-jsx-curve-call/nullish`](https://jsxgraph.org/docs/symbols/JXG.Curve.html) | `(extern string/symbol value)` | `(extern)` | `(js-jsx-curve-call/nullish curve "updateTransform" args)` | call a curve mutator and treat nullish results as absence. |
+
+## Chapter 12 — Mini Workflows
 
 ### Configure Point Snapping
 
@@ -256,15 +267,16 @@ Reference root: [JXG.Circle](https://jsxgraph.org/docs/symbols/JXG.Circle.html)
 (define t (js-jsx-board-create-text board #[-5 5 "PQ"] (js-object (vector))))
 ```
 
-## Chapter 12 — Coverage Checklist
+## Chapter 13 — Coverage Checklist
 
-- This document covers **73** functions from `ffi/jsxgraph.ffi`.
-- Total documented functions: **73**
+- This document covers **76** functions from `ffi/jsxgraph.ffi`.
+- Total documented functions: **76**
 - `board api`: 13 functions
 - `board properties`: 8 functions
 - `geometryelement bridge`: 3 functions
 - `line bridge`: 2 functions
 - `circle bridge`: 2 functions
+- `curve bridge`: 3 functions
 - `predicates`: 1 function
 - `point getters`: 19 functions
 - `point setters`: 17 functions
