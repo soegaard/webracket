@@ -5873,10 +5873,11 @@
                           (vector "fillOpacity" 0.2)
                           (vector "strokeColor" "#2d3748")
                           (vector "strokeWidth" 1)))))
+          (define face3d-def (js-ref (jsx-element-raw face3d-polyhedron) "def"))
           (set! face3d-object
                 (jsx-view3d-create-face3d
                  face3d-view
-                 (jsx-parents face3d-polyhedron 1)
+                 (jsx-parents face3d-def 0)
                  (js-object
                   (vector (vector "strokeColor" "#805ad5")
                           (vector "fillColor" "#b794f4")
@@ -6090,6 +6091,7 @@
   (define curve3d-ready? (init-curve3d-board!))
   (define parametricsurface3d-ready? (init-parametricsurface3d-board!))
   (define surface3d-ready? (init-surface3d-board!))
+  (define face3d-ready? (init-face3d-board!))
   (define transformation3d-ready? (init-transformation3d-board!))
   (define polyhedron3d-ready? (init-polyhedron3d-board!))
   (define text3d-ready? (init-text3d-board!))
@@ -6108,7 +6110,7 @@
              hyperbola-ready? parabola-ready? stepfunction-ready? inequality-ready? turtle-ready?
              view3d-ready? point3d-ready? line3d-ready? circle3d-ready? plane3d-ready?
              axes3d-ready? axis3d-ready? functiongraph3d-ready? intersectioncircle3d-ready? intersectionline3d-ready?
-             curve3d-ready? parametricsurface3d-ready? surface3d-ready? transformation3d-ready?
+             curve3d-ready? parametricsurface3d-ready? surface3d-ready? face3d-ready? transformation3d-ready?
              polyhedron3d-ready? text3d-ready? sphere3d-ready?
              ticks3d-ready? vectorfield3d-ready?
              geometry-board-ready? group-board-ready? chart-board-ready?
@@ -6123,7 +6125,7 @@
              hyperbola-ready? parabola-ready? stepfunction-ready? inequality-ready? turtle-ready?
        geometry-board-ready? group-board-ready? chart-board-ready?
        arrowparallel-board-ready? axis-board-ready? segment-board-ready? intersection-board-ready? orthogonal-board-ready? grid-board-ready? boxplot-board-ready? tangent-board-ready? tangentto-board-ready? polarline-board-ready? polepoint-board-ready? radicalaxis-board-ready? circumcircle-board-ready? circumcirclearc-board-ready? circumcirclesector-board-ready? semicircle-board-ready? majorarc-board-ready? majorsector-board-ready? curveintersection-board-ready? curvedifference-board-ready? curveunion-board-ready? derivative-board-ready? integral-board-ready? riemannsum-board-ready? slopefield-board-ready? vectorfield-board-ready? implicitcurve-board-ready? spline-board-ready? incircle-board-ready? mirrorpoint-board-ready? otherintersection-board-ready? orthogonalprojection-board-ready? parallelpoint-board-ready? perpendicularpoint-board-ready? bisectorlines-ready? perpendicularsegment-ready? widgets-board-ready? annotation-board-ready?
-       curve3d-ready? parametricsurface3d-ready? surface3d-ready? transformation3d-ready?
+       curve3d-ready? parametricsurface3d-ready? surface3d-ready? face3d-ready? transformation3d-ready?
        polyhedron3d-ready? text3d-ready? sphere3d-ready?
        ticks3d-ready? vectorfield3d-ready?))
 
@@ -6324,6 +6326,8 @@
     (jsx-board-full-update! parametricsurface3d-board))
   (when surface3d-board
     (jsx-board-full-update! surface3d-board))
+  (when face3d-board
+    (jsx-board-full-update! face3d-board))
   (when transformation3d-board
     (jsx-board-full-update! transformation3d-board))
   (when polyhedron3d-board
@@ -6765,6 +6769,10 @@
      (gallery-headline "3D Surfaces and Transformations")
      (text "Surface3D board: the surface should appear using the runtime's parametric surface element.")
      (container #:id surface3d-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "Face3D board: the highlighted face should follow the polyhedron in the clean 3D view.")
+     (container #:id face3d-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
      (text "Transformation3D board: point B should follow the 3D translate transform from A.")
