@@ -15,7 +15,7 @@ The compiler only uses widely supported features of WebAssembly.
 Expect the generated code to work in Chrome, Firefox and Safari.
 
 A JavaScript FFI makes it possible to use standard JavaScript functions as well as browser-specific APIs.
-Included are bindings for the DOM, Canvas, MathJax, XTermJS and JSXGraph.
+Included are bindings for the DOM, Canvas, Console, Fetch, Storage, IndexedDB, MathJax, XTermJS and JSXGraph.
 For DOM work, the recommended Rackety entry point is `include-lib dom`, which reexports the family wrappers.
 
 The hope is that this project allows the Racket community to experiment with WebAssembly.
@@ -116,7 +116,7 @@ The hope is that the community will help write bindings for commonly used librar
 To some degree the generation of foreign function interfaces can be automated
 with the help of an LLM.
 
-Included bindings currently cover the Math, DOM, Canvas, MathJax, XTermJS, and JSXGraph.
+Included bindings currently cover the Math, DOM, Canvas, Console, Fetch, Storage, IndexedDB, MathJax, XTermJS, and JSXGraph.
 For the DOM surface, prefer `include-lib dom` as the top-level wrapper facade.
 
 For a worked example of how to add a browser-backed API, see
