@@ -34835,6 +34835,7 @@
                (local $accessor-name (ref eq))
                (local $clos-name     (ref eq))
                (local $clos-realm    (ref eq))
+               (local $expected-name (ref eq))
 
                (local.set $free (struct.get $Closure $free (local.get $proc)))
                (local.set $len  (array.len (local.get $free)))
@@ -34878,10 +34879,23 @@
                (if (i32.eqz (ref.eq (local.get $accessor-name) (global.get $false)))
                    (then (if (i32.eqz (ref.test (ref $String) (local.get $accessor-name)))
                              (then (return (global.get $false))))))
-               (if (i32.eqz (ref.eq (local.get $clos-name) (local.get $accessor-name)))
-                   (then (return (global.get $false))))
                (if (i32.eqz (ref.eq (struct.get $StructTypeProperty $accessor-name-info (local.get $desc))
                                     (local.get $accessor-name)))
+                   (then (return (global.get $false))))
+               (local.set $expected-name
+                          (if (result (ref eq))
+                              (ref.eq (local.get $accessor-name) (global.get $false))
+                              (then
+                               (ref.cast (ref eq)
+                                         (call $string->symbol/checked
+                                               (call $string-append/2
+                                                     (ref.cast (ref $String) (local.get $name-string))
+                                                     (global.get $string:accessor-suffix)))))
+                              (else
+                               (ref.cast (ref eq)
+                                         (call $string->symbol/checked
+                                               (ref.cast (ref $String) (local.get $accessor-name)))))))
+               (if (i32.eqz (ref.eq (local.get $clos-name) (local.get $expected-name)))
                    (then (return (global.get $false))))
 
                (local.get $prop))
