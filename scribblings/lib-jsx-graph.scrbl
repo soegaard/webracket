@@ -2149,6 +2149,56 @@ Sets the translation points for a group.
 Updates the group members.
 }
 
+@section{Helper Constructors}
+
+These constructors cover helper classes that are easiest to exercise as
+standalone boards in the gallery.
+
+@defproc[(jsx-create-ticks [board jsx-board?]
+                           [parents any/c]
+                           [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Ticks"
+          (jsx-doc-url "Ticks"))
+Creates a ticks object on a board.
+}
+
+@defproc[(jsx-create-transformation [board jsx-board?]
+                                    [parents any/c]
+                                    [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Transformation"
+          (jsx-doc-url "Transformation"))
+Creates a transformation object on a board.
+}
+
+@defproc[(jsx-create-tracecurve [board jsx-board?]
+                                [parents any/c]
+                                [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Tracecurve"
+          (jsx-doc-url "Tracecurve"))
+Creates a tracecurve object on a board.
+}
+
+@defproc[(jsx-create-parallelogram [board jsx-board?]
+                                   [parents any/c]
+                                   [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Parallelogram"
+          (jsx-doc-url "Parallelogram"))
+Creates a parallelogram object on a board.
+}
+
+@defproc[(jsx-create-reflexangle [board jsx-board?]
+                                 [parents any/c]
+                                 [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "ReflexAngle"
+          (jsx-doc-url "ReflexAngle"))
+Creates a reflex angle object on a board.
+}
+
 @section{Geometry Elements}
 
 The @racket[jsx-element] wrapper covers JSXGraph geometry elements and

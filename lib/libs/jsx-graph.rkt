@@ -648,6 +648,31 @@
 (define-jsx-alias (jsx-board-create-tapemeasure/raw board parents attrs)
   js-jsx-board-create-tapemeasure)
 
+;; jsx-board-create-ticks/raw : external/raw any/c any/c -> external/raw
+;;   Create a ticks object on a board.
+(define-jsx-alias (jsx-board-create-ticks/raw board parents attrs)
+  js-jsx-board-create-ticks)
+
+;; jsx-board-create-transformation/raw : external/raw any/c any/c -> external/raw
+;;   Create a transformation object on a board.
+(define-jsx-alias (jsx-board-create-transformation/raw board parents attrs)
+  js-jsx-board-create-transformation)
+
+;; jsx-board-create-tracecurve/raw : external/raw any/c any/c -> external/raw
+;;   Create a tracecurve object on a board.
+(define-jsx-alias (jsx-board-create-tracecurve/raw board parents attrs)
+  js-jsx-board-create-tracecurve)
+
+;; jsx-board-create-parallelogram/raw : external/raw any/c any/c -> external/raw
+;;   Create a parallelogram object on a board.
+(define-jsx-alias (jsx-board-create-parallelogram/raw board parents attrs)
+  js-jsx-board-create-parallelogram)
+
+;; jsx-board-create-reflexangle/raw : external/raw any/c any/c -> external/raw
+;;   Create a reflexangle object on a board.
+(define-jsx-alias (jsx-board-create-reflexangle/raw board parents attrs)
+  js-jsx-board-create-reflexangle)
+
 ;; jsx-board-create-measurement/raw : external/raw any/c any/c -> external/raw
 ;;   Create a measurement on a board.
 (define-jsx-alias (jsx-board-create-measurement/raw board parents attrs)
@@ -1892,6 +1917,41 @@
 (define (jsx-create-tapemeasure board parents [attributes #f])
   (jsx-wrap-element
    (jsx-board-create-tapemeasure/raw (jsx-board-raw board) parents
+                                     (or attributes '#[]))))
+
+;; jsx-create-ticks : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a ticks object on a board.
+(define (jsx-create-ticks board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-ticks/raw (jsx-board-raw board) parents
+                               (or attributes '#[]))))
+
+;; jsx-create-transformation : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a transformation object on a board.
+(define (jsx-create-transformation board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-transformation/raw (jsx-board-raw board) parents
+                                        (or attributes '#[]))))
+
+;; jsx-create-tracecurve : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a tracecurve object on a board.
+(define (jsx-create-tracecurve board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-tracecurve/raw (jsx-board-raw board) parents
+                                    (or attributes '#[]))))
+
+;; jsx-create-parallelogram : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a parallelogram object on a board.
+(define (jsx-create-parallelogram board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-parallelogram/raw (jsx-board-raw board) parents
+                                       (or attributes '#[]))))
+
+;; jsx-create-reflexangle : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a reflexangle object on a board.
+(define (jsx-create-reflexangle board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-reflexangle/raw (jsx-board-raw board) parents
                                      (or attributes '#[]))))
 
 ;; jsx-create-measurement : jsx-board? any/c [any/c #f] -> jsx-element?

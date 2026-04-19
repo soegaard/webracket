@@ -80,6 +80,11 @@
 (define text-board-id "jsx-graph-gallery-text")
 (define foreignobject-board-id "jsx-graph-gallery-foreignobject")
 (define tapemeasure-board-id "jsx-graph-gallery-tapemeasure")
+(define ticks-board-id "jsx-graph-gallery-ticks")
+(define transformation-board-id "jsx-graph-gallery-transformation")
+(define tracecurve-board-id "jsx-graph-gallery-tracecurve")
+(define parallelogram-board-id "jsx-graph-gallery-parallelogram")
+(define reflexangle-board-id "jsx-graph-gallery-reflexangle")
 (define measurement-board-id "jsx-graph-gallery-measurement")
 (define circumcenter-board-id "jsx-graph-gallery-circumcenter")
 (define mirrorelement-board-id "jsx-graph-gallery-mirrorelement")
@@ -180,6 +185,11 @@
 (define text-board-ready? #f)
 (define foreignobject-board-ready? #f)
 (define tapemeasure-board-ready? #f)
+(define ticks-board-ready? #f)
+(define transformation-board-ready? #f)
+(define tracecurve-board-ready? #f)
+(define parallelogram-board-ready? #f)
+(define reflexangle-board-ready? #f)
 (define measurement-board-ready? #f)
 (define circumcenter-board-ready? #f)
 (define mirrorelement-board-ready? #f)
@@ -518,6 +528,32 @@
 (define perpendicularpoint-line #f)
 (define perpendicularpoint-point #f)
 (define perpendicularpoint-object #f)
+(define ticks-board #f)
+(define ticks-line #f)
+(define ticks-object #f)
+(define transformation-board #f)
+(define transformation-source #f)
+(define transformation-target #f)
+(define transformation-object #f)
+(define tracecurve-board #f)
+(define tracecurve-circle #f)
+(define tracecurve-point #f)
+(define tracecurve-glider #f)
+(define tracecurve-segment #f)
+(define tracecurve-midpoint #f)
+(define tracecurve-object #f)
+(define parallelogram-board #f)
+(define parallelogram-p1 #f)
+(define parallelogram-p2 #f)
+(define parallelogram-p3 #f)
+(define parallelogram-object #f)
+(define reflexangle-board #f)
+(define reflexangle-p1 #f)
+(define reflexangle-p2 #f)
+(define reflexangle-p3 #f)
+(define reflexangle-angle #f)
+(define reflexangle-text #f)
+(define reflexangle-object #f)
 (define constructions-board #f)
 (define widgets-board #f)
 (define widget-button #f)
@@ -4009,6 +4045,257 @@
         (void (jsx-board-full-update! perpendicularpoint-board))
         #t)))
 
+;; init-ticks-board! : -> boolean?
+;;   Build the JSXGraph ticks board once the browser assets have loaded.
+(define (init-ticks-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless ticks-board-ready?
+          (console-log "Ticks board")
+          (set! ticks-board
+                (jsx-create-board
+                 ticks-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-1 7 7 -1])
+                          (vector "axis" #t)
+                          (vector "keepaspectratio" #t)))))
+          (set! ticks-line
+                (jsx-create-line ticks-board
+                                 (jsx-parents (jsx-parents 0 3)
+                                              (jsx-parents 1 3))
+                                 (js-object
+                                  (vector (vector "name" "l")
+                                          (vector "strokeColor" "#2b6cb0")
+                                          (vector "strokeWidth" 3)))))
+          (set! ticks-object
+                (jsx-create-ticks ticks-board
+                                  (jsx-parents ticks-line 2)
+                                  (js-object
+                                   (vector (vector "ticksDistance" 2)
+                                           (vector "majorHeight" 40)
+                                           (vector "insertTicks" #f)
+                                           (vector "drawLabels" #t)))))
+          (set! ticks-board-ready? #t))
+        (void (jsx-board-full-update! ticks-board))
+        #t)))
+
+;; init-transformation-board! : -> boolean?
+;;   Build the JSXGraph transformation board once the browser assets have loaded.
+(define (init-transformation-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless transformation-board-ready?
+          (console-log "Transformation board")
+          (set! transformation-board
+                (jsx-create-board
+                 transformation-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-8 8 8 -8])
+                          (vector "axis" #t)
+                          (vector "keepaspectratio" #t)))))
+          (set! transformation-source
+                (jsx-create-point transformation-board
+                                  (jsx-parents 0 3)
+                                  (js-object (vector (vector "name" "A")
+                                                     (vector "fillColor" "#2b6cb0")
+                                                     (vector "size" 5)))))
+          (set! transformation-object
+                (jsx-create-transformation
+                 transformation-board
+                 (jsx-parents 2 0.5)
+                 (js-object (vector (vector "type" "scale")))))
+          (set! transformation-target
+                (jsx-create-point transformation-board
+                                  (jsx-parents transformation-source
+                                               transformation-object)
+                                  (js-object (vector (vector "name" "B")
+                                                     (vector "fillColor" "#d53f8c")
+                                                     (vector "size" 5)))))
+          (set! transformation-board-ready? #t))
+        (void (jsx-board-full-update! transformation-board))
+        #t)))
+
+;; init-tracecurve-board! : -> boolean?
+;;   Build the JSXGraph tracecurve board once the browser assets have loaded.
+(define (init-tracecurve-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless tracecurve-board-ready?
+          (console-log "Tracecurve board")
+          (set! tracecurve-board
+                (jsx-create-board
+                 tracecurve-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-4 4 4 -4])
+                          (vector "axis" #f)
+                          (vector "keepaspectratio" #t)))))
+          (set! tracecurve-circle
+                (jsx-create-circle tracecurve-board
+                                   (jsx-parents (jsx-parents 0 0)
+                                                (jsx-parents 2 0))
+                                   (js-object (vector (vector "strokeColor" "#2b6cb0")))))
+          (set! tracecurve-point
+                (jsx-create-point tracecurve-board
+                                  (jsx-parents -3 1)
+                                  (js-object (vector (vector "name" "P")
+                                                     (vector "size" 4)
+                                                     (vector "fillColor" "#2b6cb0")))))
+          (set! tracecurve-glider
+                (jsx-create-glider tracecurve-board
+                                   (jsx-parents 2 1 tracecurve-circle)
+                                   (js-object (vector (vector "name" "G")
+                                                      (vector "size" 4)
+                                                      (vector "fillColor" "#38a169")))))
+          (set! tracecurve-segment
+                (jsx-create-segment tracecurve-board
+                                    (jsx-parents tracecurve-glider
+                                                 tracecurve-point)
+                                    (js-object (vector (vector "strokeColor" "#718096")))))
+          (set! tracecurve-midpoint
+                (jsx-create-midpoint tracecurve-board
+                                     (jsx-parents tracecurve-segment)
+                                     (js-object (vector (vector "name" "M")
+                                                        (vector "size" 4)
+                                                        (vector "fillColor" "#d53f8c")))))
+          (set! tracecurve-object
+                (jsx-create-tracecurve tracecurve-board
+                                       (jsx-parents tracecurve-glider
+                                                    tracecurve-midpoint)
+                                       (js-object (vector (vector "strokeColor" "#d53f8c")
+                                                          (vector "strokeWidth" 2)))))
+          (set! tracecurve-board-ready? #t))
+        (void (jsx-board-full-update! tracecurve-board))
+        #t)))
+
+;; init-parallelogram-board! : -> boolean?
+;;   Build the JSXGraph parallelogram board once the browser assets have loaded.
+(define (init-parallelogram-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless parallelogram-board-ready?
+          (console-log "Parallelogram board")
+          (set! parallelogram-board
+                (jsx-create-board
+                 parallelogram-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 6 6 -6])
+                          (vector "axis" #t)
+                          (vector "keepaspectratio" #t)))))
+          (set! parallelogram-p1
+                (jsx-create-point parallelogram-board
+                                  (jsx-parents -3 -4)
+                                  (js-object (vector (vector "name" "A")
+                                                     (vector "size" 5)))))
+          (set! parallelogram-p2
+                (jsx-create-point parallelogram-board
+                                  (jsx-parents 3 -1)
+                                  (js-object (vector (vector "name" "B")
+                                                     (vector "size" 5)))))
+          (set! parallelogram-p3
+                (jsx-create-point parallelogram-board
+                                  (jsx-parents -2 0)
+                                  (js-object (vector (vector "name" "C")
+                                                     (vector "size" 5)))))
+          (set! parallelogram-object
+                (jsx-create-parallelogram
+                 parallelogram-board
+                 (jsx-parents parallelogram-p1
+                              parallelogram-p2
+                              parallelogram-p3)
+                 (js-object
+                  (vector (vector "hasInnerPoints" #t)
+                          (vector "parallelpoint"
+                                  (js-object
+                                   (vector (vector "size" 6)
+                                           (vector "face" "<<>>"))))))))
+          (set! parallelogram-board-ready? #t))
+        (void (jsx-board-full-update! parallelogram-board))
+        #t)))
+
+;; init-reflexangle-board! : -> boolean?
+;;   Build the JSXGraph reflex angle board once the browser assets have loaded.
+(define (init-reflexangle-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless reflexangle-board-ready?
+          (console-log "ReflexAngle board")
+          (set! reflexangle-board
+                (jsx-create-board
+                 reflexangle-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-1 7 7 -1])
+                          (vector "axis" #t)
+                          (vector "keepaspectratio" #t)))))
+          (set! reflexangle-p1
+                (jsx-create-point reflexangle-board
+                                  (jsx-parents 5 3)
+                                  (js-object (vector (vector "name" "A")
+                                                     (vector "size" 5)
+                                                     (vector "fillColor" "#2b6cb0")))))
+          (set! reflexangle-p2
+                (jsx-create-point reflexangle-board
+                                  (jsx-parents 1 1)
+                                  (js-object (vector (vector "name" "B")
+                                                     (vector "size" 5)
+                                                     (vector "fillColor" "#2b6cb0")))))
+          (set! reflexangle-p3
+                (jsx-create-point reflexangle-board
+                                  (jsx-parents 1 5)
+                                  (js-object (vector (vector "name" "C")
+                                                     (vector "size" 5)
+                                                     (vector "fillColor" "#2b6cb0")))))
+          (set! reflexangle-angle
+                (jsx-create-reflexangle
+                 reflexangle-board
+                 (jsx-parents reflexangle-p1
+                              reflexangle-p2
+                              reflexangle-p3)
+                 (js-object (vector (vector "radius" 2)
+                                    (vector "strokeColor" "#d53f8c")
+                                    (vector "fillColor" "#fed7d7")
+                                    (vector "fillOpacity" 0.4)))))
+          (set! reflexangle-text
+                (jsx-create-text
+                 reflexangle-board
+                 (jsx-parents
+                  4.2
+                  4.8
+                  (procedure->external
+                   (lambda ()
+                     (format "ReflexAngle board: angle = ~a rad."
+                             (jsx-angle-value reflexangle-angle "rad")))))
+                 (js-object
+                  (vector (vector "fontSize" 14)
+                          (vector "anchorX" "left")))))
+          (set! reflexangle-board-ready? #t))
+        (void (jsx-board-full-update! reflexangle-board))
+        #t)))
+
 ;; init-constructions-board! : -> boolean?
 ;;   Build the JSXGraph construction board once the browser assets have loaded.
 (define (init-constructions-board!)
@@ -4386,6 +4673,11 @@
   (define orthogonalprojection-ready? (init-orthogonalprojection-board!))
   (define parallelpoint-ready? (init-parallelpoint-board!))
   (define perpendicularpoint-ready? (init-perpendicularpoint-board!))
+  (define ticks-ready? (init-ticks-board!))
+  (define transformation-ready? (init-transformation-board!))
+  (define tracecurve-ready? (init-tracecurve-board!))
+  (define parallelogram-ready? (init-parallelogram-board!))
+  (define reflexangle-ready? (init-reflexangle-board!))
   (define widgets-ready? (init-widgets-board!))
   (define annotation-ready? (init-annotation-board!))
   (when (and geometry-ready? group-ready? chart-ready?
@@ -4393,14 +4685,15 @@
              checkbox-ready? input-ready? slider-ready? smartlabel-ready? text-ready?
              foreignobject-ready? tapemeasure-ready? measurement-ready? circumcenter-ready? mirrorelement-ready?
              mirrorpoint-ready? otherintersection-ready? orthogonalprojection-ready? parallelpoint-ready? perpendicularpoint-ready?
+             ticks-ready? transformation-ready? tracecurve-ready? parallelogram-ready? reflexangle-ready?
              riemannsum-ready? slopefield-ready? vectorfield-ready? implicitcurve-ready? spline-ready?
              cardinalspline-ready? comb-ready? metapostspline-ready? polygonalchain-ready? regularpolygon-ready?
              hyperbola-ready? parabola-ready? stepfunction-ready? inequality-ready? turtle-ready?
              geometry-board-ready? group-board-ready? chart-board-ready?
-             point-board-ready? line-board-ready? arc-board-ready? angle-board-ready? sector-board-ready? arrowparallel-board-ready? axis-board-ready? segment-board-ready? intersection-board-ready? grid-board-ready? boxplot-board-ready? tangent-board-ready? tangentto-board-ready? polarline-board-ready? polepoint-board-ready? radicalaxis-board-ready? circumcircle-board-ready? circumcirclearc-board-ready? circumcirclesector-board-ready? semicircle-board-ready? majorarc-board-ready? majorsector-board-ready? curveintersection-board-ready? curvedifference-board-ready? curveunion-board-ready? derivative-board-ready? integral-board-ready? riemannsum-board-ready? slopefield-board-ready? vectorfield-board-ready? implicitcurve-board-ready? spline-board-ready? incircle-board-ready? foreignobject-board-ready? tapemeasure-board-ready? measurement-board-ready? circumcenter-board-ready? mirrorelement-board-ready? widgets-board-ready? annotation-board-ready?)
+             point-board-ready? line-board-ready? arc-board-ready? angle-board-ready? sector-board-ready? arrowparallel-board-ready? axis-board-ready? segment-board-ready? intersection-board-ready? grid-board-ready? boxplot-board-ready? tangent-board-ready? tangentto-board-ready? polarline-board-ready? polepoint-board-ready? radicalaxis-board-ready? circumcircle-board-ready? circumcirclearc-board-ready? circumcirclesector-board-ready? semicircle-board-ready? majorarc-board-ready? majorsector-board-ready? curveintersection-board-ready? curvedifference-board-ready? curveunion-board-ready? derivative-board-ready? integral-board-ready? riemannsum-board-ready? slopefield-board-ready? vectorfield-board-ready? implicitcurve-board-ready? spline-board-ready? incircle-board-ready? foreignobject-board-ready? tapemeasure-board-ready? measurement-board-ready? circumcenter-board-ready? mirrorelement-board-ready? ticks-board-ready? transformation-board-ready? tracecurve-board-ready? parallelogram-board-ready? reflexangle-board-ready? widgets-board-ready? annotation-board-ready?)
     (set-status! "Boards ready.")
     (set-summary!
-     (format "Created geometry, group, chart, point, line, arc, angle, sector, arrow, arrowparallel, circle, glider, button, legend, axis, segment, intersection, normal, grid, boxplot, tangent, tangentto, polarline, polepoint, radicalaxis, circumcircle, circumcirclearc, circumcirclesector, semicircle, majorarc, majorsector, curveintersection, curvedifference, curveunion, derivative, integral, riemannsum, slopefield, vectorfield, implicitcurve, spline, cardinalspline, comb, metapostspline, polygonalchain, regularpolygon, hyperbola, parabola, stepfunction, inequality, turtle, incircle, conic, ellipse, functiongraph, curve, polygon, midpoint, parallel, perpendicular, reflection, bisector, checkbox, input, slider, smartlabel, text, foreignobject, tapemeasure, measurement, circumcenter, mirrorelement, mirrorpoint, otherintersection, orthogonalprojection, parallelpoint, perpendicularpoint, widget, and annotation boards. Geometry objects: ~a. Group objects: ~a. Chart objects: ~a. Point objects: ~a. Line objects: ~a. Arc objects: ~a. Angle objects: ~a. Sector objects: ~a. Arrow objects: ~a. Arrowparallel objects: ~a. Circle objects: ~a. Glider objects: ~a. Button objects: ~a. Legend objects: ~a. Axis objects: ~a. Segment objects: ~a. Intersection objects: ~a. Normal objects: ~a. Grid objects: ~a. Boxplot objects: ~a. Tangent objects: ~a. TangentTo objects: ~a. Polarline objects: ~a. Polepoint objects: ~a. RadicalAxis objects: ~a. Circumcircle objects: ~a. CircumcircleArc objects: ~a. CircumcircleSector objects: ~a. Semicircle objects: ~a. MajorArc objects: ~a. MajorSector objects: ~a. CurveIntersection objects: ~a. CurveDifference objects: ~a. CurveUnion objects: ~a. Derivative objects: ~a. Integral objects: ~a. Riemannsum objects: ~a. Slopefield objects: ~a. Vectorfield objects: ~a. ImplicitCurve objects: ~a. Spline objects: ~a. Cardinalspline objects: ~a. Comb objects: ~a. MetapostSpline objects: ~a. PolygonalChain objects: ~a. RegularPolygon objects: ~a. Hyperbola objects: ~a. Parabola objects: ~a. Stepfunction objects: ~a. Inequality objects: ~a. Turtle objects: ~a. Incircle objects: ~a. Conic objects: ~a. Ellipse objects: ~a. Functiongraph objects: ~a. Curve objects: ~a. Polygon objects: ~a. Midpoint objects: ~a. Parallel objects: ~a. Perpendicular objects: ~a. Reflection objects: ~a. Bisector objects: ~a. Checkbox objects: ~a. Input objects: ~a. Slider objects: ~a. Smartlabel objects: ~a. Text objects: ~a. ForeignObject objects: ~a. Tapemeasure objects: ~a. Measurement objects: ~a. Circumcenter objects: ~a. MirrorElement objects: ~a. MirrorPoint objects: ~a. OtherIntersection objects: ~a. Orthogonalprojection objects: ~a. Parallelpoint objects: ~a. PerpendicularPoint objects: ~a. Widget objects: ~a. Annotation objects: ~a."
+     (format "Created geometry, group, chart, point, line, arc, angle, sector, arrow, arrowparallel, circle, glider, button, legend, axis, segment, intersection, normal, grid, boxplot, tangent, tangentto, polarline, polepoint, radicalaxis, circumcircle, circumcirclearc, circumcirclesector, semicircle, majorarc, majorsector, curveintersection, curvedifference, curveunion, derivative, integral, riemannsum, slopefield, vectorfield, implicitcurve, spline, cardinalspline, comb, metapostspline, polygonalchain, regularpolygon, hyperbola, parabola, stepfunction, inequality, turtle, incircle, conic, ellipse, functiongraph, curve, polygon, midpoint, parallel, perpendicular, reflection, bisector, checkbox, input, slider, smartlabel, text, foreignobject, tapemeasure, measurement, circumcenter, mirrorelement, ticks, transformation, tracecurve, parallelogram, reflexangle, mirrorpoint, otherintersection, orthogonalprojection, parallelpoint, perpendicularpoint, widget, and annotation boards. Geometry objects: ~a. Group objects: ~a. Chart objects: ~a. Point objects: ~a. Line objects: ~a. Arc objects: ~a. Angle objects: ~a. Sector objects: ~a. Arrow objects: ~a. Arrowparallel objects: ~a. Circle objects: ~a. Glider objects: ~a. Button objects: ~a. Legend objects: ~a. Axis objects: ~a. Segment objects: ~a. Intersection objects: ~a. Normal objects: ~a. Grid objects: ~a. Boxplot objects: ~a. Tangent objects: ~a. TangentTo objects: ~a. Polarline objects: ~a. Polepoint objects: ~a. RadicalAxis objects: ~a. Circumcircle objects: ~a. CircumcircleArc objects: ~a. CircumcircleSector objects: ~a. Semicircle objects: ~a. MajorArc objects: ~a. MajorSector objects: ~a. CurveIntersection objects: ~a. CurveDifference objects: ~a. CurveUnion objects: ~a. Derivative objects: ~a. Integral objects: ~a. Riemannsum objects: ~a. Slopefield objects: ~a. Vectorfield objects: ~a. ImplicitCurve objects: ~a. Spline objects: ~a. Cardinalspline objects: ~a. Comb objects: ~a. MetapostSpline objects: ~a. PolygonalChain objects: ~a. RegularPolygon objects: ~a. Hyperbola objects: ~a. Parabola objects: ~a. Stepfunction objects: ~a. Inequality objects: ~a. Turtle objects: ~a. Incircle objects: ~a. Conic objects: ~a. Ellipse objects: ~a. Functiongraph objects: ~a. Curve objects: ~a. Polygon objects: ~a. Midpoint objects: ~a. Parallel objects: ~a. Perpendicular objects: ~a. Reflection objects: ~a. Bisector objects: ~a. Checkbox objects: ~a. Input objects: ~a. Slider objects: ~a. Smartlabel objects: ~a. Text objects: ~a. ForeignObject objects: ~a. Tapemeasure objects: ~a. Measurement objects: ~a. Circumcenter objects: ~a. MirrorElement objects: ~a. Ticks objects: ~a. Transformation objects: ~a. Tracecurve objects: ~a. Parallelogram objects: ~a. ReflexAngle objects: ~a. MirrorPoint objects: ~a. OtherIntersection objects: ~a. Orthogonalprojection objects: ~a. Parallelpoint objects: ~a. PerpendicularPoint objects: ~a. Widget objects: ~a. Annotation objects: ~a."
              (jsx-board-num-objects geometry-board)
              (jsx-board-num-objects group-board)
              (jsx-board-num-objects chart-board)
@@ -4473,6 +4766,11 @@
              (jsx-board-num-objects measurement-board)
              (jsx-board-num-objects circumcenter-board)
              (jsx-board-num-objects mirrorelement-board)
+             (jsx-board-num-objects ticks-board)
+             (jsx-board-num-objects transformation-board)
+             (jsx-board-num-objects tracecurve-board)
+             (jsx-board-num-objects parallelogram-board)
+             (jsx-board-num-objects reflexangle-board)
              (jsx-board-num-objects mirrorpoint-board)
              (jsx-board-num-objects otherintersection-board)
              (jsx-board-num-objects orthogonalprojection-board)
@@ -4636,6 +4934,16 @@
     (jsx-board-full-update! circumcenter-board))
   (when mirrorelement-board
     (jsx-board-full-update! mirrorelement-board))
+  (when ticks-board
+    (jsx-board-full-update! ticks-board))
+  (when transformation-board
+    (jsx-board-full-update! transformation-board))
+  (when tracecurve-board
+    (jsx-board-full-update! tracecurve-board))
+  (when parallelogram-board
+    (jsx-board-full-update! parallelogram-board))
+  (when reflexangle-board
+    (jsx-board-full-update! reflexangle-board))
   (when mirrorpoint-board
     (jsx-board-full-update! mirrorpoint-board))
   (when otherintersection-board
@@ -4951,6 +5259,27 @@
                 #:attrs '((style "width: 720px; height: 420px;")))
      (text "Text board: the plain text object should appear on its own board.")
      (container #:id text-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (gallery-headline "Helper Constructors")
+     (text "Ticks board: the line should show tick marks and labels.")
+     (container #:id ticks-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "Transformation board: the transformed point should stay tied to its source point.")
+     (container #:id transformation-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "Tracecurve board: the traced curve should follow the moving glider and midpoint.")
+     (container #:id tracecurve-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "Parallelogram board: the fourth vertex should stay implied by the three draggable points.")
+     (container #:id parallelogram-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "ReflexAngle board: the reflex angle should stay attached to the three points.")
+     (container #:id reflexangle-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
      (gallery-headline "Remaining Helpers")

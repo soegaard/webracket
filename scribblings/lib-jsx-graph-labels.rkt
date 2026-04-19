@@ -209,6 +209,11 @@
   jsx-create-image
   jsx-create-foreignobject
   jsx-create-tapemeasure
+  jsx-create-ticks
+  jsx-create-transformation
+  jsx-create-tracecurve
+  jsx-create-parallelogram
+  jsx-create-reflexangle
   jsx-create-measurement
   jsx-create-circumcenter
   jsx-create-mirrorelement
@@ -637,6 +642,11 @@
 (define jsx-create-image any/c)
 (define jsx-create-foreignobject any/c)
 (define jsx-create-tapemeasure any/c)
+(define jsx-create-ticks any/c)
+(define jsx-create-transformation any/c)
+(define jsx-create-tracecurve any/c)
+(define jsx-create-parallelogram any/c)
+(define jsx-create-reflexangle any/c)
 (define jsx-create-measurement any/c)
 (define jsx-create-circumcenter any/c)
 (define jsx-create-mirrorelement any/c)

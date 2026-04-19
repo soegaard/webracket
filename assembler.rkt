@@ -2783,6 +2783,11 @@ var imports = {
         'create-smartlabel':         ((board, parents, attrs) => board.create('smartlabel', from_fasl(parents), from_fasl(attrs))),
         'create-foreignobject':      ((board, parents, attrs) => board.create('foreignobject', from_fasl(parents), from_fasl(attrs))),
         'create-tapemeasure':        ((board, parents, attrs) => board.create('tapemeasure', from_fasl(parents), from_fasl(attrs))),
+        'create-ticks':              ((board, parents, attrs) => board.create('ticks', from_fasl(parents), from_fasl(attrs))),
+        'create-transformation':     ((board, parents, attrs) => board.create('transform', from_fasl(parents), from_fasl(attrs))),
+        'create-tracecurve':         ((board, parents, attrs) => board.create('tracecurve', from_fasl(parents), from_fasl(attrs))),
+        'create-parallelogram':      ((board, parents, attrs) => board.create('parallelogram', from_fasl(parents), from_fasl(attrs))),
+        'create-reflexangle':        ((board, parents, attrs) => board.create('reflexangle', from_fasl(parents), from_fasl(attrs))),
         'create-measurement':        ((board, parents, attrs) => board.create('measurement', from_fasl(parents), from_fasl(attrs))),
         'create-circumcenter':       ((board, parents, attrs) => board.create('circumcenter', from_fasl(parents), from_fasl(attrs))),
         'create-mirrorelement':      ((board, parents, attrs) => board.create('mirrorelement', from_fasl(parents), from_fasl(attrs))),
@@ -2937,6 +2942,11 @@ var imports = {
         'create-smartlabel'()         { throw new Error('DOM not available in this environment'); },
         'create-foreignobject'()      { throw new Error('DOM not available in this environment'); },
         'create-tapemeasure'()        { throw new Error('DOM not available in this environment'); },
+        'create-ticks'()              { throw new Error('DOM not available in this environment'); },
+        'create-transformation'()     { throw new Error('DOM not available in this environment'); },
+        'create-tracecurve'()         { throw new Error('DOM not available in this environment'); },
+        'create-parallelogram'()      { throw new Error('DOM not available in this environment'); },
+        'create-reflexangle'()        { throw new Error('DOM not available in this environment'); },
         'create-measurement'()        { throw new Error('DOM not available in this environment'); },
         'create-circumcenter'()       { throw new Error('DOM not available in this environment'); },
         'create-mirrorelement'()      { throw new Error('DOM not available in this environment'); },
@@ -3136,6 +3146,36 @@ var imports = {
         'Value':                    (tapemeasure => tapemeasure.Value())
     } : {
         'Value'()                   { throw new Error('DOM not available in this environment'); }
+    },
+    // JSXGraph Ticks
+    'jsx-ticks': hasDOM ? {
+        'create':                   ((board, parents, attrs) => board.create('ticks', from_fasl(parents), from_fasl(attrs)))
+    } : {
+        'create'()                  { throw new Error('DOM not available in this environment'); }
+    },
+    // JSXGraph Transformation
+    'jsx-transformation': hasDOM ? {
+        'create':                   ((board, parents, attrs) => board.create('transform', from_fasl(parents), from_fasl(attrs)))
+    } : {
+        'create'()                  { throw new Error('DOM not available in this environment'); }
+    },
+    // JSXGraph Tracecurve
+    'jsx-tracecurve': hasDOM ? {
+        'create':                   ((board, parents, attrs) => board.create('tracecurve', from_fasl(parents), from_fasl(attrs)))
+    } : {
+        'create'()                  { throw new Error('DOM not available in this environment'); }
+    },
+    // JSXGraph Parallelogram
+    'jsx-parallelogram': hasDOM ? {
+        'create':                   ((board, parents, attrs) => board.create('parallelogram', from_fasl(parents), from_fasl(attrs)))
+    } : {
+        'create'()                  { throw new Error('DOM not available in this environment'); }
+    },
+    // JSXGraph ReflexAngle
+    'jsx-reflexangle': hasDOM ? {
+        'create':                   ((board, parents, attrs) => board.create('reflexangle', from_fasl(parents), from_fasl(attrs)))
+    } : {
+        'create'()                  { throw new Error('DOM not available in this environment'); }
     },
     // JSXGraph Point Relation Helpers
     'jsx-mirrorpoint': hasDOM ? {

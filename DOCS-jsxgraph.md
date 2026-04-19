@@ -261,6 +261,11 @@ Reference roots:
 | [`js-jsx-board-create-image`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-image board #[-5 5 "url"] attrs)` | create an image object on the board. |
 | [`js-jsx-board-create-foreignobject`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-foreignobject board #["<div>foo</div>" #[-5 5] #[140 60]] attrs)` | create a foreign object on the board. |
 | [`js-jsx-board-create-tapemeasure`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-tapemeasure board #[#[-4 0] #[4 0]] attrs)` | create a tape measure on the board. |
+| [`js-jsx-board-create-ticks`](https://jsxgraph.org/docs/symbols/Ticks.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-ticks board #[line [1 4 5]] attrs)` | create a ticks object on a line or axis. |
+| [`js-jsx-board-create-transformation`](https://jsxgraph.org/docs/symbols/Transformation.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-transformation board #[2 0.5] attrs)` | create a transformation object on a board. |
+| [`js-jsx-board-create-tracecurve`](https://jsxgraph.org/docs/symbols/Tracecurve.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-tracecurve board #[g1 p2] attrs)` | create a trace curve from a glider and a point. |
+| [`js-jsx-board-create-parallelogram`](https://jsxgraph.org/docs/symbols/Parallelogram.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-parallelogram board #[p1 p2 p3] attrs)` | create a parallelogram from three points. |
+| [`js-jsx-board-create-reflexangle`](https://jsxgraph.org/docs/symbols/ReflexAngle.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-reflexangle board #[p1 p2 p3] attrs)` | create a reflex angle from three points. |
 | [`js-jsx-board-create-measurement`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-measurement board #[0 0 ["Radius" circle]] attrs)` | create a measurement on the board. |
 | [`js-jsx-board-create-circumcenter`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-circumcenter board #[p1 p2 p3] attrs)` | create a circumcenter point on the board. |
 | [`js-jsx-board-create-mirrorelement`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-mirrorelement board #[obj mirr] attrs)` | create a mirrored element on the board. |
@@ -534,9 +539,9 @@ control the slider range and value.
 
 ## Chapter 24 — Coverage Checklist
 
-- This document covers **207** functions from `ffi/jsxgraph.ffi`.
-- Total documented functions: **217**
-- `board api`: 70 functions
+- This document covers **212** functions from `ffi/jsxgraph.ffi`.
+- Total documented functions: **222**
+- `board api`: 75 functions
 - `board properties`: 8 functions
 - `geometryelement bridge`: 3 functions
 - `line bridge`: 2 functions

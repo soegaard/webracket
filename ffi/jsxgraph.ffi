@@ -464,6 +464,36 @@
   #:name   "create-tapemeasure"
   (-> (extern value value) (extern/raw)))
 
+; (js-jsx-board-create-ticks board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-ticks
+  #:module "jsx-board"
+  #:name   "create-ticks"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-transformation board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-transformation
+  #:module "jsx-board"
+  #:name   "create-transformation"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-tracecurve board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-tracecurve
+  #:module "jsx-board"
+  #:name   "create-tracecurve"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-parallelogram board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-parallelogram
+  #:module "jsx-board"
+  #:name   "create-parallelogram"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-reflexangle board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-reflexangle
+  #:module "jsx-board"
+  #:name   "create-reflexangle"
+  (-> (extern value value) (extern/raw)))
+
 ; (js-jsx-board-create-measurement board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign js-jsx-board-create-measurement
   #:module "jsx-board"
