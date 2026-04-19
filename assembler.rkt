@@ -2720,6 +2720,41 @@ var imports = {
         'create-midpoint':           ((board, parents, attrs) => board.create('midpoint', from_fasl(parents), from_fasl(attrs))),
         'create-parallel':           ((board, parents, attrs) => board.create('parallel', from_fasl(parents), from_fasl(attrs))),
         'create-arrowparallel':      ((board, parents, attrs) => board.create('arrowparallel', from_fasl(parents), from_fasl(attrs))),
+        'create-axis':               ((board, parents, attrs) => board.create('axis', from_fasl(parents), from_fasl(attrs))),
+        'create-grid':               ((board, parents, attrs) => board.create('grid', from_fasl(parents), from_fasl(attrs))),
+        'create-boxplot':            ((board, parents, attrs) => board.create('boxplot', from_fasl(parents), from_fasl(attrs))),
+        'create-tangent':            ((board, parents, attrs) => board.create('tangent', from_fasl(parents), from_fasl(attrs))),
+        'create-tangentto':          ((board, parents, attrs) => board.create('tangentto', from_fasl(parents), from_fasl(attrs))),
+        'create-polarline':          ((board, parents, attrs) => board.create('polarline', from_fasl(parents), from_fasl(attrs))),
+        'create-polepoint':          ((board, parents, attrs) => board.create('polepoint', from_fasl(parents), from_fasl(attrs))),
+        'create-radicalaxis':        ((board, parents, attrs) => board.create('radicalaxis', from_fasl(parents), from_fasl(attrs))),
+        'create-circumcircle':       ((board, parents, attrs) => board.create('circumcircle', from_fasl(parents), from_fasl(attrs))),
+        'create-incircle':           ((board, parents, attrs) => board.create('incircle', from_fasl(parents), from_fasl(attrs))),
+        'create-circumcirclearc':    ((board, parents, attrs) => board.create('circumcirclearc', from_fasl(parents), from_fasl(attrs))),
+        'create-circumcirclesector': ((board, parents, attrs) => board.create('circumcirclesector', from_fasl(parents), from_fasl(attrs))),
+        'create-semicircle':         ((board, parents, attrs) => board.create('semicircle', from_fasl(parents), from_fasl(attrs))),
+        'create-majorarc':           ((board, parents, attrs) => board.create('majorarc', from_fasl(parents), from_fasl(attrs))),
+        'create-majorsector':        ((board, parents, attrs) => board.create('majorsector', from_fasl(parents), from_fasl(attrs))),
+        'create-curveintersection':  ((board, parents, attrs) => board.create('curveintersection', from_fasl(parents), from_fasl(attrs))),
+        'create-curvedifference':    ((board, parents, attrs) => board.create('curvedifference', from_fasl(parents), from_fasl(attrs))),
+        'create-curveunion':         ((board, parents, attrs) => board.create('curveunion', from_fasl(parents), from_fasl(attrs))),
+        'create-derivative':         ((board, parents, attrs) => board.create('derivative', from_fasl(parents), from_fasl(attrs))),
+        'create-integral':           ((board, parents, attrs) => board.create('integral', from_fasl(parents), from_fasl(attrs))),
+        'create-riemannsum':         ((board, parents, attrs) => board.create('riemannsum', from_fasl(parents), from_fasl(attrs))),
+        'create-slopefield':         ((board, parents, attrs) => board.create('slopefield', from_fasl(parents), from_fasl(attrs))),
+        'create-vectorfield':        ((board, parents, attrs) => board.create('vectorfield', from_fasl(parents), from_fasl(attrs))),
+        'create-implicitcurve':      ((board, parents, attrs) => board.create('implicitcurve', from_fasl(parents), from_fasl(attrs))),
+        'create-spline':             ((board, parents, attrs) => board.create('spline', from_fasl(parents), from_fasl(attrs))),
+        'create-cardinalspline':     ((board, parents, attrs) => board.create('cardinalspline', from_fasl(parents), from_fasl(attrs))),
+        'create-comb':               ((board, parents, attrs) => board.create('comb', from_fasl(parents), from_fasl(attrs))),
+        'create-metapostspline':     ((board, parents, attrs) => board.create('metapostspline', from_fasl(parents), from_fasl(attrs))),
+        'create-polygonalchain':     ((board, parents, attrs) => board.create('polygonalchain', from_fasl(parents), from_fasl(attrs))),
+        'create-regularpolygon':     ((board, parents, attrs) => board.create('regularpolygon', from_fasl(parents), from_fasl(attrs))),
+        'create-hyperbola':          ((board, parents, attrs) => board.create('hyperbola', from_fasl(parents), from_fasl(attrs))),
+        'create-parabola':           ((board, parents, attrs) => board.create('parabola', from_fasl(parents), from_fasl(attrs))),
+        'create-stepfunction':       ((board, parents, attrs) => board.create('stepfunction', from_fasl(parents), from_fasl(attrs))),
+        'create-inequality':         ((board, parents, attrs) => board.create('inequality', from_fasl(parents), from_fasl(attrs))),
+        'create-turtle':             ((board, parents, attrs) => board.create('turtle', from_fasl(parents), from_fasl(attrs))),
         'create-perpendicular':      ((board, parents, attrs) => board.create('perpendicular', from_fasl(parents), from_fasl(attrs))),
         'create-reflection':         ((board, parents, attrs) => board.create('reflection', from_fasl(parents), from_fasl(attrs))),
         'create-bisector':           ((board, parents, attrs) => board.create('bisector', from_fasl(parents), from_fasl(attrs))),
@@ -2854,6 +2889,21 @@ var imports = {
         'create-midpoint'()           { throw new Error('DOM not available in this environment'); },
         'create-parallel'()           { throw new Error('DOM not available in this environment'); },
         'create-arrowparallel'()      { throw new Error('DOM not available in this environment'); },
+        'create-axis'()               { throw new Error('DOM not available in this environment'); },
+        'create-grid'()               { throw new Error('DOM not available in this environment'); },
+        'create-boxplot'()            { throw new Error('DOM not available in this environment'); },
+        'create-tangent'()            { throw new Error('DOM not available in this environment'); },
+        'create-tangentto'()          { throw new Error('DOM not available in this environment'); },
+        'create-polarline'()          { throw new Error('DOM not available in this environment'); },
+        'create-polepoint'()          { throw new Error('DOM not available in this environment'); },
+        'create-radicalaxis'()        { throw new Error('DOM not available in this environment'); },
+        'create-circumcircle'()       { throw new Error('DOM not available in this environment'); },
+        'create-incircle'()           { throw new Error('DOM not available in this environment'); },
+        'create-circumcirclearc'()    { throw new Error('DOM not available in this environment'); },
+        'create-circumcirclesector'() { throw new Error('DOM not available in this environment'); },
+        'create-semicircle'()         { throw new Error('DOM not available in this environment'); },
+        'create-majorarc'()           { throw new Error('DOM not available in this environment'); },
+        'create-majorsector'()        { throw new Error('DOM not available in this environment'); },
         'create-perpendicular'()      { throw new Error('DOM not available in this environment'); },
         'create-reflection'()         { throw new Error('DOM not available in this environment'); },
         'create-bisector'()           { throw new Error('DOM not available in this environment'); },
@@ -3219,6 +3269,24 @@ var imports = {
     } : {
         'call'()                      { throw new Error('DOM not available in this environment'); },
         'call/nullish'()              { throw new Error('DOM not available in this environment'); }
+    },
+    // JSXGraph Riemannsum
+    'jsx-riemannsum': hasDOM ? {
+        'Value': ((riemannsum) => riemannsum.Value())
+    } : {
+        'Value'()                     { throw new Error('DOM not available in this environment'); }
+    },
+    // JSXGraph Slopefield
+    'jsx-slopefield': hasDOM ? {
+        'setF': ((field, func) => field.setF(from_fasl(func)))
+    } : {
+        'setF'()                      { throw new Error('DOM not available in this environment'); }
+    },
+    // JSXGraph Vectorfield
+    'jsx-vectorfield': hasDOM ? {
+        'setF': ((field, func) => field.setF(from_fasl(func)))
+    } : {
+        'setF'()                      { throw new Error('DOM not available in this environment'); }
     },
     // JSXGraph Polygon
     'jsx-polygon': hasDOM ? {
