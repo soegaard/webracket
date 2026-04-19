@@ -1486,6 +1486,7 @@
                        (field $realm  (ref eq))   ;; $false or $Symbol
                        (field $invoke (ref $ProcedureInvoker))
                        ; from $Closure
+                       (field $debug-id (ref eq)) ;; $false or a $Symbol used for debug lookup
                        (field $code   (ref $ClosureCode))
                        (field $free   (ref $Free)))))
 
@@ -1499,6 +1500,7 @@
                        (field $realm  (ref eq))
                        (field $invoke (ref $ProcedureInvoker))
                        ;; inherited $Closure fields
+                       (field $debug-id (ref eq))
                        (field $code   (ref $ClosureCode))  ;; dispatcher
                        (field $free   (ref $Free))         ;; can be an empty array
                        ;; new, typed payload
@@ -1578,6 +1580,7 @@
                        (field $arity  (ref eq))   ;; fixnum (i31 with lsb=0) or (arity-at-least n)
                        (field $realm  (ref eq))   ;; $false or $Symbol
                        (field $invoke (ref $ProcedureInvoker))
+                       (field $debug-id (ref eq))
                        (field $code   (ref $ClosureCode))
                        (field $free   (ref $Free)))))
           
@@ -1591,6 +1594,7 @@
                        (field $arity  (ref eq))   ;; fixnum (i31 with lsb=0) or (arity-at-least n)
                        (field $realm  (ref eq))   ;; $false or $Symbol
                        (field $invoke (ref $ProcedureInvoker))
+                       (field $debug-id (ref eq))
                        (field $code   (ref $ClosureCode))
                        (field $free   (ref $Free)))))
 
@@ -1603,6 +1607,7 @@
                        (field $arity  (ref eq))   ;; fixnum (i31 with lsb=0) or (arity-at-least n)
                        (field $realm  (ref eq))   ;; $false or $Symbol
                        (field $invoke (ref $ProcedureInvoker))
+                       (field $debug-id (ref eq))
                        (field $code   (ref $ClosureCode))
                        (field $free   (ref $Free)))))
 
@@ -1615,6 +1620,7 @@
                        (field $arity  (ref eq))   ;; fixnum (i31 with lsb=0) or (arity-at-least n)
                        (field $realm  (ref eq))   ;; $false or $Symbol
                        (field $invoke (ref $ProcedureInvoker))
+                       (field $debug-id (ref eq))
                        (field $code   (ref $ClosureCode))
                        (field $free   (ref $Free)))))
 
@@ -3355,6 +3361,7 @@
                              (global.get $zero)          ; arity: todo
                              (global.get $false)         ; realm: #f or $Symbol
                              (ref.func $invoke-closure) ; invoke (used by apply, map, etc.)
+                             (global.get $false)         ; debug-id
                              (ref.func $dummy-code)
                              (array.new_fixed $Free 0)))
          (global $closedapp-clos (mut (ref $Closure)) (global.get $dummy-closure))
@@ -32860,6 +32867,37 @@
                                 (i32.const 0)))
                (local.get $len))
 
+         ;; callback-debug-id : callback-id -> fasl-debug-id-byte-length
+         ;; Encodes the callback's closure debug-id in linear memory at 0, or #f.
+         (func $callback-debug-id (export "callback-debug-id")
+               (param $id i32)
+               (result i32)
+
+               (local $proc (ref $Procedure))
+               (local $len  i32)
+               (local $debug-id (ref eq))
+
+               (local.set $proc
+                          (ref.cast (ref $Procedure)
+                                    (call $growable-array-ref
+                                          (global.get $callback-registry)
+                                          (local.get $id))))
+               (local.set $debug-id
+                          (if (result (ref eq))
+                              (ref.test (ref $Closure) (local.get $proc))
+                              (then (struct.get $Closure $debug-id
+                                                (ref.cast (ref $Closure) (local.get $proc))))
+                              (else (global.get $false))))
+               (global.set $result-bytes
+                           (call $s-exp->fasl
+                                 (local.get $debug-id)
+                                 (global.get $false)))
+               (local.set $len
+                          (call $copy-bytes-to-memory
+                                (ref.cast (ref $Bytes) (global.get $result-bytes))
+                                (i32.const 0)))
+               (local.get $len))
+
          (func $procedure->external (export "procedure->external")
                (param $proc (ref eq))
                (result (ref eq))
@@ -33732,6 +33770,7 @@
                            (ref.i31 (i32.const 4))     ; arity: 2
                            (global.get $false)         ; realm: #f or $Symbol
                            (ref.func $invoke-closure) ; invoke (used by apply, map, etc.)
+                           (global.get $false)         ; debug-id
                            (ref.func $struct-accessor)
                            (local.get $free)))
 
@@ -33923,6 +33962,7 @@
                            (ref.i31 (i32.shl (local.get $arity) (i32.const 1))) ; arity
                            (global.get $false)         ; realm: #f or $Symbol
                            (ref.func $invoke-closure)  ; invoke (used by apply, map, etc.)
+                           (global.get $false)         ; debug-id
                            (local.get $code)
                            (local.get $free)))
 
@@ -33944,6 +33984,7 @@
                            (ref.i31 (i32.const 6))     ; arity: 3
                            (global.get $false)         ; realm: #f or $Symbol
                            (ref.func $invoke-closure)  ; invoke (used by apply, map, etc.)
+                           (global.get $false)         ; debug-id
                            (ref.func $struct-mutator)
                            (local.get $free)))
 
@@ -34035,6 +34076,7 @@
                            (ref.i31 (i32.const 4))     ; arity: 2
                            (local.get $realm)          ; realm: #f or $Symbol
                            (ref.func $invoke-closure)  ; invoke (used by apply, map, etc.)
+                           (global.get $false)         ; debug-id
                            (ref.func $struct-mutator/specialized)
                            (local.get $free)))
 
@@ -34265,6 +34307,7 @@
                            (ref.i31 (i32.const 2))     ; arity: 1
                            (global.get $false)         ; realm: #f or $Symbol
                            (ref.func $invoke-closure)  ; invoke (used by apply, map, etc.)
+                           (global.get $false)         ; debug-id
                            (ref.func $struct-predicate)
                            (local.get $free)))
 
@@ -34362,6 +34405,7 @@
                            (ref.i31 (i32.const 2))           ; arity: 1
                            (local.get $realm)                ; realm: #f or $Symbol
                            (ref.func $invoke-closure)        ; invoke (used by apply, map, etc.)
+                           (global.get $false)               ; debug-id
                            (ref.func $struct-field-accessor/specialized)
                            (local.get $free)))
 
@@ -35558,6 +35602,7 @@
                                       (ref.i31 (i32.const 2))     ; arity = 1
                                       (global.get $false)
                                       (ref.func $invoke-closure)
+                                      (global.get $false)
                                       (ref.func $struct-type-property-predicate)
                                       (local.get $pred-free)))
 
@@ -35576,6 +35621,7 @@
                                       (ref.i31 (i32.const -4))    ; arity-at-least 1 (optional fallback)
                                       (local.get $realm)
                                       (ref.func $invoke-closure)
+                                      (global.get $false)
                                       (ref.func $struct-type-property-accessor)
                                       (local.get $acc-free)))
 
@@ -35717,13 +35763,14 @@
                (if (ref.test (ref $CaseClosure) (local.get $proc))
                    (then
                     (local.set $case-proc (ref.cast (ref $CaseClosure) (local.get $proc)))
-                    (return
+                     (return
                      (struct.new $CaseClosure
                                  (i32.const 0)                                 ;; hash
                                  (local.get $name)
                                  (struct.get $CaseClosure $arity   (local.get $case-proc))
                                  (local.get $realm*)
                                  (struct.get $CaseClosure $invoke  (local.get $case-proc))
+                                 (struct.get $CaseClosure $debug-id (local.get $case-proc))
                                  (struct.get $CaseClosure $code    (local.get $case-proc))
                                  (struct.get $CaseClosure $free    (local.get $case-proc))
                                  (struct.get $CaseClosure $arities (local.get $case-proc))
@@ -35738,6 +35785,7 @@
                                 (struct.get $Closure $arity  (ref.cast (ref $Closure) (local.get $proc)))
                                 (local.get $realm*)
                                 (struct.get $Closure $invoke (ref.cast (ref $Closure) (local.get $proc)))
+                                (struct.get $Closure $debug-id (ref.cast (ref $Closure) (local.get $proc)))
                                 (struct.get $Closure $code   (ref.cast (ref $Closure) (local.get $proc)))
                                 (struct.get $Closure $free   (ref.cast (ref $Closure) (local.get $proc)))))))
                ;; Step 4: If $proc is a PrimitiveClosure
@@ -42864,6 +42912,7 @@
                                              (ref.i31 (i32.const 4))
                                              (global.get $false)
                                              (ref.func $invoke-closure)
+                                             (global.get $false)
                                              (ref.func $equal+hash-recur/equal)
                                              (array.new_fixed $Free 0)))
                      (global.set $equal+hash-recur/equal-always
@@ -42873,6 +42922,7 @@
                                              (ref.i31 (i32.const 4))
                                              (global.get $false)
                                              (ref.func $invoke-closure)
+                                             (global.get $false)
                                              (ref.func $equal+hash-recur/equal-always)
                                              (array.new_fixed $Free 0)))
                      (global.set $equal+hash-recur/hash
@@ -42882,6 +42932,7 @@
                                              (ref.i31 (i32.const 2))
                                              (global.get $false)
                                              (ref.func $invoke-closure)
+                                             (global.get $false)
                                              (ref.func $equal+hash-recur/hash)
                                              (array.new_fixed $Free 0)))
                      

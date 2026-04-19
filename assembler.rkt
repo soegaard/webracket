@@ -89,6 +89,7 @@ var callback_export;
 var callback_accepts_argc_export;
 var callback_expected_arity_export;
 var callback_name_export;
+var callback_debug_id_export;
 
 function read_u32(arr, i) {
   return ((arr[i] << 24) | (arr[i + 1] << 16) |
@@ -735,9 +736,19 @@ function callback_name_text(id) {
     return null;
 }
 
-function callback_label_text(id) {
-    const name = callback_name_text(id);
-    return name ? `${name} (callback id ${id})` : `callback id ${id}`;
+function callback_debug_id_text(id) {
+    if (!callback_debug_id_export) {
+        return null;
+    }
+    const len = callback_debug_id_export(id);
+    const value = fasl_to_js_value(new Uint8Array(memory.buffer, 0, len))[0];
+    if (typeof value === 'symbol') {
+        return Symbol.keyFor(value) ?? value.description ?? String(value);
+    }
+    if (typeof value === 'string' && value.length > 0) {
+        return value;
+    }
+    return null;
 }
 
 function callback_display_name_text(id) {
@@ -746,7 +757,9 @@ function callback_display_name_text(id) {
 
 function callback_error_text(id, argc, kind, detail) {
     const expected = callback_expected_arity_text(id);
-    return `WebRacket callback error\n  kind: ${kind}\n  name: ${callback_display_name_text(id)}\n  id: ${id}\n  expected: ${expected}\n  argc: ${argc}\n  detail: ${detail}`;
+    const debug_id = callback_debug_id_text(id);
+    const debug_line = debug_id ? `\n  debug-id: ${debug_id}` : '';
+    return `WebRacket callback error\n  kind: ${kind}\n  name: ${callback_display_name_text(id)}\n  id: ${id}${debug_line}\n  expected: ${expected}\n  argc: ${argc}\n  detail: ${detail}`;
 }
 
 export function make_callback(id) {
@@ -3400,11 +3413,13 @@ const wasmModule
       .then(results  => { const { entry, get_bytes, copy_bytes_to_memory, callback,
                                   ['callback-accepts-argc']: callback_accepts_argc,
                                   ['callback-expected-arity']: callback_expected_arity,
-                                  ['callback-name']: callback_name } = results.instance.exports;
+                                  ['callback-name']: callback_name,
+                                  ['callback-debug-id']: callback_debug_id } = results.instance.exports;
                           callback_export = callback;
                           callback_accepts_argc_export = callback_accepts_argc;
                           callback_expected_arity_export = callback_expected_arity;
                           callback_name_export = callback_name;
+                          callback_debug_id_export = callback_debug_id;
                           var result;
                           try {
                             result = entry();

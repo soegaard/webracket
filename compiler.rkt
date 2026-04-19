@@ -4600,6 +4600,12 @@
                (add-symbol-constant name name) ; on purpose name twice
                `(global.get ,$name)]
          [else `(global.get $false)]))
+     (define debug-id-expr
+       (let ()
+         (define debug-id (syntax-e (variable-id l)))
+         (define $debug-id (string->symbol (~a "$symbol:" debug-id)))
+         (add-symbol-constant debug-id debug-id)
+         `(global.get ,$debug-id)))
      
      ; If there is no self-reference then allocation is simple.
      ; If there is a  self-reference we first need to allocate the closure,
@@ -4631,6 +4637,7 @@
                 ,(Imm ar)                      ; arity: fixnum
                 (global.get $the-racket-realm) ; realm: #f or $Symbol
                 (ref.func $invoke-closure)     ; invoke (used by apply, map, etc.)
+                ,debug-id-expr                 ; debug-id
                 (ref.func ,(Label l)) 
                 (array.new_fixed $Free ,(length ae1)
                                  ,@(for/list ([ae ae1])
@@ -4647,6 +4654,7 @@
                                ,(Imm ar)                   ; arity: todo
                                (global.get $false)         ; realm: #f or $Symbol
                                (ref.func $invoke-closure)  ; invoke (used by apply, map, etc.)
+                               ,debug-id-expr              ; debug-id
                                (ref.func ,(Label l))
                                (global.get $empty-free)))
                  ; 2. Fill in the correct array of free variables.
@@ -4685,7 +4693,13 @@
                              (add-symbol-constant name name) ; on purpose name twice
                              `(global.get ,$name)]
                          [else
-                          `(global.get $false)])])
+                          `(global.get $false)])]
+            [debug-id-expr
+             (let ()
+               (define debug-id (syntax-e (variable-id l)))
+               (define $debug-id (string->symbol (~a "$symbol:" debug-id)))
+               (add-symbol-constant debug-id debug-id)
+               `(global.get ,$debug-id))])
        `(block (result (ref $CaseClosure))
                ,@fills
                (struct.new $CaseClosure
@@ -4694,6 +4708,7 @@
                            ,arity-expr                                    ;; $arity  = normalized set
                            (global.get $false)                           ;; $realm
                            (ref.func $invoke-case-closure)               ;; $invoke
+                           ,debug-id-expr                               ;; $debug-id
                            (ref.func $code:case-lambda-dispatch)         ;; $code (dispatcher)
                            (global.get $empty-free)                      ;; $free (unused here)
                            ,(Reference $ars)                             ;; $arities (typed field)
@@ -5755,6 +5770,11 @@
      
      (define (AllocateClosure ca dest) ; called by letrec-values
        ; Allocates a closure in which the $free array contains zeros only.
+       (define (closure-debug-id-expr l)
+         (define debug-id (syntax-e (variable-id l)))
+         (define $debug-id (string->symbol (~a "$symbol:" debug-id)))
+         (add-symbol-constant debug-id debug-id)
+         `(global.get ,$debug-id))
        (nanopass-case (LANF+closure ClosureAllocation) ca
          [(closure ,s ,in ,l ,ar ,ae1 ...)
           (let ([us (make-list (length ae1) (Undefined))])
@@ -5772,6 +5792,7 @@
                                ,(Imm ar)                   ; arity: 
                                (global.get $false)         ; realm: #f or $Symbol
                                (ref.func $invoke-closure)  ; invoke (used by apply, map, etc.)
+                               ,(closure-debug-id-expr l)  ; debug-id
                                (ref.func ,(Label l))
                                (array.new_fixed $Free ,(length ae1) ,@us))))]
          [else (error 'AllocateClosure "internal error, got: ~a" ca)]))
