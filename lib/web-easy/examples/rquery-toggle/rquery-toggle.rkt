@@ -3,7 +3,7 @@
 ;;;
 
 (include-lib web-easy)
-(include-lib query)
+(include-lib rquery)
 
 (define @count (@ 0))
 (define @increment-enabled? (@ #t))
@@ -20,26 +20,26 @@
 (define (decrement! _evt)
   (obs-update! @count sub1))
 
-(define query-toggle-app
+(define rquery-toggle-app
   (window
    (container
     (h1 "Query Toggle")
     (P "This example uses .off to temporarily disable the + button.")
     (P "The handler removed with .off must match the event name and callback used with .on.")
     (hpanel
-     (Button #:id "query-toggle-decrement" "-")
+     (Button #:id "rquery-toggle-decrement" "-")
      (text (obs-map @count number->string))
-     (Button #:id "query-toggle-increment" "+")
-     (Button #:id "query-toggle-switch" @switch-label)))))
+     (Button #:id "rquery-toggle-increment" "+")
+     (Button #:id "rquery-toggle-switch" @switch-label)))))
 
 (define app-renderer
-  (render query-toggle-app))
+  (render rquery-toggle-app))
 
 (mount-renderer! app-renderer)
 
-(define decrement-button ($ "#query-toggle-decrement"))
-(define increment-button ($ "#query-toggle-increment"))
-(define switch-button ($ "#query-toggle-switch"))
+(define decrement-button ($ "#rquery-toggle-decrement"))
+(define increment-button ($ "#rquery-toggle-increment"))
+(define switch-button ($ "#rquery-toggle-switch"))
 
 ($chain decrement-button
   .on "click"

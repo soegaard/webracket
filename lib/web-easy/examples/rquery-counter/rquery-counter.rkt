@@ -3,27 +3,27 @@
 ;;;
 
 (include-lib web-easy)
-(include-lib query)
+(include-lib rquery)
 
 (define @count (@ 0))
 
-(define query-counter-app
+(define rquery-counter-app
   (window
    (container
     (h1 "Query Counter")
     (P "This example uses query selectors and .on to wire the buttons.")
     (hpanel
-     (Button #:id "query-counter-decrement" "-")
+     (Button #:id "rquery-counter-decrement" "-")
      (text (obs-map @count number->string))
-     (Button #:id "query-counter-increment" "+")))))
+     (Button #:id "rquery-counter-increment" "+")))))
 
 (define app-renderer
-  (render query-counter-app))
+  (render rquery-counter-app))
 
 (mount-renderer! app-renderer)
 
-(define decrement-button ($ "#query-counter-decrement"))
-(define increment-button ($ "#query-counter-increment"))
+(define decrement-button ($ "#rquery-counter-decrement"))
+(define increment-button ($ "#rquery-counter-increment"))
 
 ($chain decrement-button
   .on "click"

@@ -1,13 +1,13 @@
 ;;;
-;;; query wrapper smoke test
+;;; rquery wrapper smoke test
 ;;;
 
-;; Minimal smoke test for `(include-lib query)`.
+;; Minimal smoke test for `(include-lib rquery)`.
 ;;
 ;; Build:
-;;   racket -l errortrace -t ../webracket.rkt -- --browser test-query.rkt
+;;   racket -l errortrace -t ../webracket.rkt -- --browser test-rquery.rkt
 
-(include-lib query)
+(include-lib rquery)
 
 (define (check-equal got want label)
   (unless (equal? got want)
@@ -30,9 +30,9 @@
 (define body (document-body))
 (define page
   (sxml->dom
-   '(div (@ (id "query-root"))
+   '(div (@ (id "rquery-root"))
          (p (@ (id "text-host")))
-         (div (@ (id "query-host"))
+         (div (@ (id "rquery-host"))
               (h1 (@ (id "hw")))
               (div (@ (id "toggle-host") (class "alpha")))
               (div (@ (class "card") (id "card-1"))
@@ -97,7 +97,7 @@
 (element-set-class-name! hw-elem "card active")
 
 (list
- (list "query include-lib"
+ (list "rquery include-lib"
        (let ()
          (check-equal (safe-list-ref '(a b c) 2) 'c "safe list ref")
          (check-equal (safe-vector-ref #(7 8 9) 1) 8 "safe vector ref")

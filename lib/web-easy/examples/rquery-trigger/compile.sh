@@ -7,7 +7,7 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 cd "$SCRIPT_DIR"
 mkdir -p generated
 
-BASENAME="query-helpers"
+BASENAME="rquery-trigger"
 
 racket "$ROOT_DIR/webracket.rkt" --browser --ffi dom "$BASENAME.rkt"
 
@@ -19,7 +19,7 @@ for ext in html js wasm wasm.map.sexp wat; do
 done
 
 # Keep required theme CSS next to generated HTML for simple static serving.
-cp -f "$ROOT_DIR/lib/web-easy/themes/web-easy-core.css" "generated/web-easy-core.css"
-cp -f "$ROOT_DIR/lib/web-easy/themes/theme-light.css" "generated/theme-light.css"
+cp -f "$ROOT_DIR/lib/web-easy/themes/web-easy-core.css"            "generated/web-easy-core.css"
+cp -f "$ROOT_DIR/lib/web-easy/themes/theme-light.css"     "generated/theme-light.css"
 
 echo "compiled: generated/$BASENAME.html"

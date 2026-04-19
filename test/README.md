@@ -36,7 +36,7 @@ Array wrapper tests
 Query wrapper tests
 -------------------
 
-- `test-query.rkt` for the browser-side `query` wrapper
+- `test-rquery.rkt` for the browser-side `rquery` wrapper
 
 The query wrapper exposes:
 
@@ -54,7 +54,7 @@ other browser-facing tests. For example:
 
 `racket -l errortrace -t ../webracket.rkt -- --ffi ../ffi/standard.ffi --ffi ../ffi/dom.ffi -r test-dom-facade.rkt`
 
-`racket -l errortrace -t ../webracket.rkt -- --browser test-query.rkt`
+`racket -l errortrace -t ../webracket.rkt -- --browser test-rquery.rkt`
 
 To run the whole DOM browser suite from `test/`, use:
 

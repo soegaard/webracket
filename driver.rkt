@@ -77,7 +77,7 @@
     (iterator   . "iterator.ffi")
     (jsx-graph  . "jsxgraph.ffi")
     (media      . "media.ffi")
-    (query      . "dom.ffi")
+    (rquery     . "dom.ffi")
     (performance . "performance.ffi")
     (storage    . "dom.ffi")
     (indexed-db . "dom.ffi")

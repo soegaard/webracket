@@ -1,13 +1,13 @@
 #lang webracket
 
 ;;;
-;;; Query wrappers
+;;; RQuery wrappers
 ;;;
 
 (include-lib document)
 (include-lib element)
 (include-lib event)
-(require-lib query-chain)
+(require-lib rquery-chain)
 
 ;; safe-list-ref : (listof any/c) exact-nonnegative-integer? -> (or/c #f any/c)
 ;;   Return the list element at i when it is in range, otherwise #f.
@@ -289,9 +289,9 @@
 (define (.val! sel value)
   ($val! sel value))
 
-;; query-data-attr-name : symbol? any/c -> string?
+;; rquery-data-attr-name : symbol? any/c -> string?
 ;;   Normalize a data helper name to a data-* attribute name.
-(define (query-data-attr-name who name)
+(define (rquery-data-attr-name who name)
   (define name* (element-stringish->string who name))
   (if (and (<= 5 (string-length name*))
            (string=? (substring name* 0 5) "data-"))
@@ -303,7 +303,7 @@
 (define ($data sel name)
   (check-$selection '$data sel)
   (define x ($first sel))
-  (and x (element-get-attribute x (query-data-attr-name '$data name))))
+  (and x (element-get-attribute x (rquery-data-attr-name '$data name))))
 
 ;; .data : $selection? (or/c string? symbol?) -> (or/c #f string?)
 ;;   Chainable alias for $data.
@@ -314,7 +314,7 @@
 ;;   Set a data-* attribute on each selected element and return the selection.
 (define ($data! sel name value)
   (check-$selection '$data! sel)
-  (define name* (query-data-attr-name '$data! name))
+  (define name* (rquery-data-attr-name '$data! name))
   (for ([x (in-vector ($selection->vector sel))])
     (element-set-attribute! x name* value))
   sel)
@@ -350,9 +350,9 @@
 (define (.off sel event-name listener . options)
   (apply $off event-name listener sel options))
 
-;; query-event-name->string : symbol? any/c -> string?
+;; rquery-event-name->string : symbol? any/c -> string?
 ;;   Normalize a query event name to a browser string.
-(define (query-event-name->string who event-name)
+(define (rquery-event-name->string who event-name)
   (cond
     [(string? event-name) event-name]
     [(symbol? event-name) (symbol->string event-name)]
@@ -382,7 +382,7 @@
 ;;   Dispatch a bubbling DOM event on each selected element and return the selection.
 (define ($trigger event-name sel)
   (check-$selection '$trigger sel)
-  (define event-name* (query-event-name->string '$trigger event-name))
+  (define event-name* (rquery-event-name->string '$trigger event-name))
   (for ([x (in-vector ($selection->vector sel))])
     (define evt
       (js-new (js-var "Event")

@@ -7,7 +7,7 @@ ROOT_DIR="$(cd "$SCRIPT_DIR/../../../.." && pwd)"
 cd "$SCRIPT_DIR"
 mkdir -p generated
 
-BASENAME="query-toggle"
+BASENAME="rquery-delegate-list"
 
 racket "$ROOT_DIR/webracket.rkt" --browser --ffi dom "$BASENAME.rkt"
 

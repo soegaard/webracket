@@ -2,24 +2,24 @@
 
 @(require scribble/manual
           "webracket-scribble-utils.rkt"
-          (for-label (lib "scribblings/lib-query-labels.rkt" "webracket"))
+          (for-label (lib "scribblings/lib-rquery-labels.rkt" "webracket"))
           (for-label (lib "scribblings/lib-document-labels.rkt" "webracket"))
           (for-label (lib "scribblings/lib-element-labels.rkt" "webracket"))
           (for-label (lib "scribblings/lib-event-labels.rkt" "webracket"))
           )
 
-@title{Library: @racketid[query]}
-@declare-exporting[(lib "scribblings/lib-query-labels.rkt" "webracket")]
+@title{Library: @racketid[rquery]}
+@declare-exporting[(lib "scribblings/lib-rquery-labels.rkt" "webracket")]
 
-@(how-to-require include-lib query (lib "libs/query.rkt"))
+@(how-to-require include-lib rquery (lib "libs/rquery.rkt"))
 
-The @racket[query] library provides a small set of tools for finding
+The @racket[rquery] library provides a small set of tools for finding
 DOM elements and working with the resulting selections.
 
-@margin-note{The @racket[query] library is still experimental. Its API
+@margin-note{The @racket[rquery] library is still experimental. Its API
 may change as the selection helpers settle.}
 
-Use @racket[query] when you want to:
+Use @racket[rquery] when you want to:
 
 @itemlist[
   @item{select elements with CSS selectors}
@@ -37,19 +37,19 @@ accept the same values as documented in the underlying DOM libraries.
 Start by including the library, building a small page sample,
 selecting a heading, and reading its text.
 
-The page sample is equivalent to @tt{<div id="query-root"><h1 id="hw">Hello
+The page sample is equivalent to @tt{<div id="rquery-root"><h1 id="hw">Hello
 World!</h1></div>}.
 
 @racketblock[
 (include-lib document)
 (include-lib sxml)
-(include-lib query)
+(include-lib rquery)
 
 (code:comment "Build a small page sample in the current document.")
 (define at (string->symbol "@"))
 (define page
   (sxml->dom
-   `(div (,at (id "query-root"))
+   `(div (,at (id "rquery-root"))
          (h1 (,at (id "hw"))
              "Hello World!"))))
 

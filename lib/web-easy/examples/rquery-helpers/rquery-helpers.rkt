@@ -3,13 +3,13 @@
 ;;;
 
 (include-lib web-easy)
-(include-lib query)
+(include-lib rquery)
 
-(define query-helpers-app
+(define rquery-helpers-app
   (window
    (container
     (Style
-     ".query-helpers-badge {\n"
+     ".rquery-helpers-badge {\n"
      "  display: inline-flex;\n"
      "  align-items: center;\n"
      "  justify-content: center;\n"
@@ -21,13 +21,13 @@
      "  color: #edf0ff;\n"
      "  transition: transform 140ms ease, box-shadow 140ms ease, background 140ms ease, color 140ms ease;\n"
      "}\n"
-     ".query-helpers-badge.highlight {\n"
+     ".rquery-helpers-badge.highlight {\n"
      "  background: #ffd36c;\n"
      "  color: #281800;\n"
      "  box-shadow: 0 12px 28px rgba(255, 211, 108, 0.28);\n"
      "  transform: translateY(-1px);\n"
      "}\n"
-     ".query-helpers-controls {\n"
+     ".rquery-helpers-controls {\n"
      "  display: flex;\n"
      "  flex-wrap: wrap;\n"
      "  gap: 0.75rem;\n"
@@ -35,36 +35,36 @@
     (h1 "Query Helpers")
     (P "This example shows .text!, .toggle-class!, .val, .val!, .data, and .data! working together.")
     (vpanel
-     (P #:id "query-helpers-status" "Status: Ready")
-     (Input #:id "query-helpers-input"
+     (P #:id "rquery-helpers-status" "Status: Ready")
+     (Input #:id "rquery-helpers-input"
             #:type "text"
             #:value "Hello Web Easy")
-     (container #:id "query-helpers-badge"
-                #:class "query-helpers-badge"
+     (container #:id "rquery-helpers-badge"
+                #:class "rquery-helpers-badge"
                 #:attrs (list (cons 'data-state "cold"))
        "Badge")
-     (P #:id "query-helpers-note" "Data state: cold")
-     (hpanel #:class "query-helpers-controls"
-      (Button #:id "query-helpers-load" "Load preset")
-      (Button #:id "query-helpers-mirror" "Mirror input")
-      (Button #:id "query-helpers-toggle" "Toggle highlight")
-      (Button #:id "query-helpers-stamp" "Stamp data")
-      (Button #:id "query-helpers-read" "Read data"))))))
+     (P #:id "rquery-helpers-note" "Data state: cold")
+     (hpanel #:class "rquery-helpers-controls"
+      (Button #:id "rquery-helpers-load" "Load preset")
+      (Button #:id "rquery-helpers-mirror" "Mirror input")
+      (Button #:id "rquery-helpers-toggle" "Toggle highlight")
+      (Button #:id "rquery-helpers-stamp" "Stamp data")
+      (Button #:id "rquery-helpers-read" "Read data"))))))
 
 (define app-renderer
-  (render query-helpers-app))
+  (render rquery-helpers-app))
 
 (mount-renderer! app-renderer)
 
-(define status ($ "#query-helpers-status"))
-(define note ($ "#query-helpers-note"))
-(define field ($ "#query-helpers-input"))
-(define badge ($ "#query-helpers-badge"))
-(define load-button ($ "#query-helpers-load"))
-(define mirror-button ($ "#query-helpers-mirror"))
-(define toggle-button ($ "#query-helpers-toggle"))
-(define stamp-button ($ "#query-helpers-stamp"))
-(define read-button ($ "#query-helpers-read"))
+(define status ($ "#rquery-helpers-status"))
+(define note ($ "#rquery-helpers-note"))
+(define field ($ "#rquery-helpers-input"))
+(define badge ($ "#rquery-helpers-badge"))
+(define load-button ($ "#rquery-helpers-load"))
+(define mirror-button ($ "#rquery-helpers-mirror"))
+(define toggle-button ($ "#rquery-helpers-toggle"))
+(define stamp-button ($ "#rquery-helpers-stamp"))
+(define read-button ($ "#rquery-helpers-read"))
 
 (define (set-status! text)
   ($text! status text))
