@@ -141,6 +141,20 @@
                      [res (js-send/value arr "slice" (vector 1))])
                 (and (vector? res)
                      (equal? res #(20 30)))))
+        (list "js-send/value roundtrip keeps assoc list"
+              (let* ([old
+                      '(("https://denis.usj.es/denisathome/" 11581204)
+                        ("https://einstein.phys.uwm.edu/" 247818087)
+                        ("https://gaiaathome.eu/gaiaathome/" 436200)
+                        ("https://gpugrid.net/gpugrid/" 145802833)
+                        ("http://milkyway.cs.rpi.edu/milkyway/" 13139027)
+                        ("https://boinc.bakerlab.org/rosetta/" 11617382)
+                        ("https://www.sidock.si/sidock/" 2589583)
+                        ("http://gene.disi.unitn.it/test/" 18879152)
+                        ("https://www.worldcommunitygrid.org/" 73694377))]
+                     [id  (js-eval "(x => x)")]
+                     [new (js-send/value id "call" (vector (js-global-this) old))])
+                (equal? old new)))
         (list "js-send/boolean"
               (let ([arr (js-array/extern (vector 1 2 3))])
                 (and (equal? (js-send/boolean arr "includes" (vector 2)) #t)
