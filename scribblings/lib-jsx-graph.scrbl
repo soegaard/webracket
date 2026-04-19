@@ -39,6 +39,15 @@ The main constructors return checked wrapper structs:
 for @racket[JXG.Point] values, and @racket[jsx-element] for other
 geometry objects.
 
+Type notes for the wrapped API:
+
+@itemlist[
+  @item{Board and element arguments use the checked wrappers in the public API.}
+  @item{Constructor @racket[parents] are usually packed with @racket[jsx-parents] and therefore arrive as vectors.}
+  @item{Special constructors that accept callable parents are documented explicitly below.}
+  @item{Constructor @racket[attributes] are raw JSXGraph option objects, usually built with @racket[js-object].}
+]
+
 @section{Quick Start}
 
 Start by including the library, making a board, and adding a pair of
@@ -136,7 +145,7 @@ Wraps a JSXGraph point object.
 }
 
 @defproc[(jsx-create-board [container-id string?]
-                           [maybe-attributes (or/c #f any/c) #f])
+                           [maybe-attributes (or/c #f external/raw) #f])
          jsx-board?]{
 @(jsx-bar "JXG.JSXGraph"
           (jsx-doc-url "JXG.JSXGraph"))
@@ -145,8 +154,8 @@ Creates a JSXGraph board for the container with the given id.
 
 @defproc[(jsx-create [board jsx-board?]
                      [element-type (or/c string? symbol?)]
-                     [parents any/c]
-                     [attributes (or/c #f any/c) #f])
+                     [parents vector?]
+                     [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "JXG.Board"
           (jsx-doc-url "JXG.Board"))
@@ -154,8 +163,8 @@ Creates a JSXGraph element of the requested type on @racket[board].
 }
 
 @defproc[(jsx-create-point [board jsx-board?]
-                           [parents any/c]
-                           [attributes (or/c #f any/c) #f])
+                           [parents vector?]
+                           [attributes (or/c #f external/raw) #f])
          jsx-point?]{
 @(jsx-bar "Point"
           (jsx-doc-url "Point"))
@@ -163,8 +172,8 @@ Creates a point on @racket[board].
 }
 
 @defproc[(jsx-create-line [board jsx-board?]
-                          [parents any/c]
-                          [attributes (or/c #f any/c) #f])
+                          [parents vector?]
+                          [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Line"
           (jsx-doc-url "Line"))
@@ -176,7 +185,7 @@ Creates a line on @racket[board].
 @defproc[(jsx-line-direction [line jsx-element?])
          any/c]{
 @(jsx-bar "Direction"
-          (string-append (jsx-doc-url "Line")
+          (string-append (jsx-doc-url "JXG.Line")
                          "#Direction"))
 Returns the direction vector of @racket[line].
 }
@@ -184,7 +193,7 @@ Returns the direction vector of @racket[line].
 @defproc[(jsx-line-get-angle [line jsx-element?])
          any/c]{
 @(jsx-bar "getAngle"
-          (string-append (jsx-doc-url "Line")
+          (string-append (jsx-doc-url "JXG.Line")
                          "#getAngle"))
 Returns the angle of @racket[line].
 }
@@ -192,7 +201,7 @@ Returns the angle of @racket[line].
 @defproc[(jsx-line-get-rise [line jsx-element?])
          any/c]{
 @(jsx-bar "getRise"
-          (string-append (jsx-doc-url "Line")
+          (string-append (jsx-doc-url "JXG.Line")
                          "#getRise"))
 Returns the rise of @racket[line].
 }
@@ -200,7 +209,7 @@ Returns the rise of @racket[line].
 @defproc[(jsx-line-get-slope [line jsx-element?])
          any/c]{
 @(jsx-bar "getSlope"
-          (string-append (jsx-doc-url "Line")
+          (string-append (jsx-doc-url "JXG.Line")
                          "#getSlope"))
 Returns the slope of @racket[line].
 }
@@ -208,7 +217,7 @@ Returns the slope of @racket[line].
 @defproc[(jsx-line-horizontal? [line jsx-element?])
          boolean?]{
 @(jsx-bar "isHorizontal"
-          (string-append (jsx-doc-url "Line")
+          (string-append (jsx-doc-url "JXG.Line")
                          "#isHorizontal"))
 Returns @racket[#t] when @racket[line] is horizontal.
 }
@@ -216,7 +225,7 @@ Returns @racket[#t] when @racket[line] is horizontal.
 @defproc[(jsx-line-vertical? [line jsx-element?])
          boolean?]{
 @(jsx-bar "isVertical"
-          (string-append (jsx-doc-url "Line")
+          (string-append (jsx-doc-url "JXG.Line")
                          "#isVertical"))
 Returns @racket[#t] when @racket[line] is vertical.
 }
@@ -224,7 +233,7 @@ Returns @racket[#t] when @racket[line] is vertical.
 @defproc[(jsx-line-l [line jsx-element?])
          any/c]{
 @(jsx-bar "L"
-          (string-append (jsx-doc-url "Line")
+          (string-append (jsx-doc-url "JXG.Line")
                          "#L"))
 Returns the @racket[L] helper for @racket[line].
 }
@@ -232,7 +241,7 @@ Returns the @racket[L] helper for @racket[line].
 @defproc[(jsx-line-slope [line jsx-element?])
          any/c]{
 @(jsx-bar "Slope"
-          (string-append (jsx-doc-url "Line")
+          (string-append (jsx-doc-url "JXG.Line")
                          "#Slope"))
 Returns the slope alias for @racket[line].
 }
@@ -241,7 +250,7 @@ Returns the slope alias for @racket[line].
                                      [length any/c])
          void?]{
 @(jsx-bar "setFixedLength"
-          (string-append (jsx-doc-url "Line")
+          (string-append (jsx-doc-url "JXG.Line")
                          "#setFixedLength"))
 Sets a fixed length on @racket[line].
 }
@@ -250,7 +259,7 @@ Sets a fixed length on @racket[line].
                      [t any/c])
          any/c]{
 @(jsx-bar "X"
-          (string-append (jsx-doc-url "Line")
+          (string-append (jsx-doc-url "JXG.Line")
                          "#X"))
 Evaluates the @racket[X] function on @racket[line].
 }
@@ -259,7 +268,7 @@ Evaluates the @racket[X] function on @racket[line].
                      [t any/c])
          any/c]{
 @(jsx-bar "Y"
-          (string-append (jsx-doc-url "Line")
+          (string-append (jsx-doc-url "JXG.Line")
                          "#Y"))
 Evaluates the @racket[Y] function on @racket[line].
 }
@@ -268,14 +277,14 @@ Evaluates the @racket[Y] function on @racket[line].
                      [t any/c])
          any/c]{
 @(jsx-bar "Z"
-          (string-append (jsx-doc-url "Line")
+          (string-append (jsx-doc-url "JXG.Line")
                          "#Z"))
 Evaluates the @racket[Z] function on @racket[line].
 }
 
 @defproc[(jsx-create-segment [board jsx-board?]
-                             [parents any/c]
-                             [attributes (or/c #f any/c) #f])
+                             [parents vector?]
+                             [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Segment"
           (jsx-doc-url "Segment"))
@@ -283,8 +292,8 @@ Creates a segment on @racket[board].
 }
 
 @defproc[(jsx-create-arc [board jsx-board?]
-                         [parents any/c]
-                         [attributes (or/c #f any/c) #f])
+                         [parents vector?]
+                         [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Arc"
           (jsx-doc-url "Arc"))
@@ -292,8 +301,8 @@ Creates an arc on @racket[board].
 }
 
 @defproc[(jsx-create-angle [board jsx-board?]
-                           [parents any/c]
-                           [attributes (or/c #f any/c) #f])
+                           [parents vector?]
+                           [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Angle"
           (jsx-doc-url "Angle"))
@@ -301,8 +310,8 @@ Creates an angle on @racket[board].
 }
 
 @defproc[(jsx-create-sector [board jsx-board?]
-                            [parents any/c]
-                            [attributes (or/c #f any/c) #f])
+                            [parents vector?]
+                            [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Sector"
           (jsx-doc-url "Sector"))
@@ -310,8 +319,8 @@ Creates a sector on @racket[board].
 }
 
 @defproc[(jsx-create-glider [board jsx-board?]
-                            [parents any/c]
-                            [attributes (or/c #f any/c) #f])
+                            [parents vector?]
+                            [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Glider"
           (jsx-doc-url "Glider"))
@@ -319,8 +328,8 @@ Creates a glider on @racket[board].
 }
 
 @defproc[(jsx-create-circle [board jsx-board?]
-                            [parents any/c]
-                            [attributes (or/c #f any/c) #f])
+                            [parents vector?]
+                            [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Circle"
           (jsx-doc-url "Circle"))
@@ -328,8 +337,8 @@ Creates a circle on @racket[board].
 }
 
 @defproc[(jsx-create-conic [board jsx-board?]
-                           [parents any/c]
-                           [attributes (or/c #f any/c) #f])
+                           [parents vector?]
+                           [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Conic"
           (jsx-doc-url "Conic"))
@@ -337,8 +346,8 @@ Creates a conic section on @racket[board].
 }
 
 @defproc[(jsx-create-ellipse [board jsx-board?]
-                             [parents any/c]
-                             [attributes (or/c #f any/c) #f])
+                             [parents vector?]
+                             [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Ellipse"
           (jsx-doc-url "Ellipse"))
@@ -346,8 +355,8 @@ Creates an ellipse on @racket[board].
 }
 
 @defproc[(jsx-create-curve [board jsx-board?]
-                           [parents any/c]
-                           [attributes (or/c #f any/c) #f])
+                           [parents (or/c vector? procedure?)]
+                           [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Curve"
           (jsx-doc-url "Curve"))
@@ -355,8 +364,8 @@ Creates a curve on @racket[board].
 }
 
 @defproc[(jsx-create-functiongraph [board jsx-board?]
-                                   [parents any/c]
-                                   [attributes (or/c #f any/c) #f])
+                                   [parents (or/c vector? procedure?)]
+                                   [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Functiongraph"
           (jsx-doc-url "Functiongraph"))
@@ -368,7 +377,7 @@ Creates a function graph on @racket[board].
 @defproc[(jsx-arc-get-radius [arc jsx-element?])
          any/c]{
 @(jsx-bar "getRadius"
-          (string-append (jsx-doc-url "Arc")
+          (string-append (jsx-doc-url "JXG.Arc")
                          "#getRadius"))
 Returns the deprecated radius getter for @racket[arc].
 }
@@ -378,7 +387,7 @@ Returns the deprecated radius getter for @racket[arc].
                                     [y any/c])
          boolean?]{
 @(jsx-bar "hasPointSector"
-          (string-append (jsx-doc-url "Arc")
+          (string-append (jsx-doc-url "JXG.Arc")
                          "#hasPointSector"))
 Returns @racket[#t] when the point @racket[(x, y)] lies inside the arc sector.
 }
@@ -386,7 +395,7 @@ Returns @racket[#t] when the point @racket[(x, y)] lies inside the arc sector.
 @defproc[(jsx-arc-radius [arc jsx-element?])
          any/c]{
 @(jsx-bar "Radius"
-          (string-append (jsx-doc-url "Arc")
+          (string-append (jsx-doc-url "JXG.Arc")
                          "#Radius"))
 Returns the current radius of @racket[arc].
 }
@@ -396,7 +405,7 @@ Returns the current radius of @racket[arc].
                         [rad any/c])
          any/c]{
 @(jsx-bar "Value"
-          (string-append (jsx-doc-url "Arc")
+          (string-append (jsx-doc-url "JXG.Arc")
                          "#Value"))
 Returns the arc length or angle value for @racket[arc].
 }
@@ -406,7 +415,7 @@ Returns the arc length or angle value for @racket[arc].
 @defproc[(jsx-angle-free? [angle jsx-element?])
          boolean?]{
 @(jsx-bar "free"
-          (string-append (jsx-doc-url "Angle")
+          (string-append (jsx-doc-url "JXG.Angle")
                          "#free"))
 Returns @racket[#t] when the angle is free.
 }
@@ -415,7 +424,7 @@ Returns @racket[#t] when the angle is free.
                                [val any/c])
          void?]{
 @(jsx-bar "setAngle"
-          (string-append (jsx-doc-url "Angle")
+          (string-append (jsx-doc-url "JXG.Angle")
                          "#setAngle"))
 Sets the angle value on @racket[angle].
 }
@@ -424,7 +433,7 @@ Sets the angle value on @racket[angle].
                           [unit any/c])
          any/c]{
 @(jsx-bar "Value"
-          (string-append (jsx-doc-url "Angle")
+          (string-append (jsx-doc-url "JXG.Angle")
                          "#Value"))
 Returns the current angle value for @racket[angle].
 }
@@ -434,7 +443,7 @@ Returns the current angle value for @racket[angle].
 @defproc[(jsx-sector-area [sector jsx-element?])
          any/c]{
 @(jsx-bar "Area"
-          (string-append (jsx-doc-url "Sector")
+          (string-append (jsx-doc-url "JXG.Sector")
                          "#Area"))
 Returns the area of @racket[sector].
 }
@@ -444,7 +453,7 @@ Returns the area of @racket[sector].
                                        [y any/c])
          boolean?]{
 @(jsx-bar "hasPointSector"
-          (string-append (jsx-doc-url "Sector")
+          (string-append (jsx-doc-url "JXG.Sector")
                          "#hasPointSector"))
 Returns @racket[#t] when the point lies inside @racket[sector].
 }
@@ -452,7 +461,7 @@ Returns @racket[#t] when the point lies inside @racket[sector].
 @defproc[(jsx-sector-l [sector jsx-element?])
          any/c]{
 @(jsx-bar "L"
-          (string-append (jsx-doc-url "Sector")
+          (string-append (jsx-doc-url "JXG.Sector")
                          "#L"))
 Returns the arc length of @racket[sector].
 }
@@ -460,7 +469,7 @@ Returns the arc length of @racket[sector].
 @defproc[(jsx-sector-perimeter [sector jsx-element?])
          any/c]{
 @(jsx-bar "Perimeter"
-          (string-append (jsx-doc-url "Sector")
+          (string-append (jsx-doc-url "JXG.Sector")
                          "#Perimeter"))
 Returns the perimeter of @racket[sector].
 }
@@ -468,7 +477,7 @@ Returns the perimeter of @racket[sector].
 @defproc[(jsx-sector-radius [sector jsx-element?])
          any/c]{
 @(jsx-bar "Radius"
-          (string-append (jsx-doc-url "Sector")
+          (string-append (jsx-doc-url "JXG.Sector")
                          "#Radius"))
 Returns the radius of @racket[sector].
 }
@@ -479,7 +488,7 @@ Returns the radius of @racket[sector].
                                             [oldcoords any/c])
          any/c]{
 @(jsx-bar "setPositionDirectly"
-          (string-append (jsx-doc-url "Sector")
+          (string-append (jsx-doc-url "JXG.Sector")
                          "#setPositionDirectly"))
 Moves @racket[sector] by direct coordinates.
 }
@@ -488,7 +497,7 @@ Moves @racket[sector] by direct coordinates.
                                  [value any/c])
          any/c]{
 @(jsx-bar "setRadius"
-          (string-append (jsx-doc-url "Sector")
+          (string-append (jsx-doc-url "JXG.Sector")
                          "#setRadius"))
 Sets the radius of @racket[sector].
 }
@@ -501,7 +510,7 @@ Sets the radius of @racket[sector].
                                       [delay any/c])
          void?]{
 @(jsx-bar "startAnimation"
-          (string-append (jsx-doc-url "Glider")
+          (string-append (jsx-doc-url "JXG.Glider")
                          "#startAnimation"))
 Starts the glider animation loop.
 }
@@ -509,7 +518,7 @@ Starts the glider animation loop.
 @defproc[(jsx-glider-stop-animation! [glider jsx-element?])
          void?]{
 @(jsx-bar "stopAnimation"
-          (string-append (jsx-doc-url "Glider")
+          (string-append (jsx-doc-url "JXG.Glider")
                          "#stopAnimation"))
 Stops the glider animation loop.
 }
@@ -519,7 +528,7 @@ Stops the glider animation loop.
 @defproc[(jsx-circle-area [circle jsx-element?])
          any/c]{
 @(jsx-bar "Area"
-          (string-append (jsx-doc-url "Circle")
+          (string-append (jsx-doc-url "JXG.Circle")
                          "#Area"))
 Returns the area of @racket[circle].
 }
@@ -527,7 +536,7 @@ Returns the area of @racket[circle].
 @defproc[(jsx-circle-bounds [circle jsx-element?])
          any/c]{
 @(jsx-bar "bounds"
-          (string-append (jsx-doc-url "Circle")
+          (string-append (jsx-doc-url "JXG.Circle")
                          "#bounds"))
 Returns the bounding box of @racket[circle].
 }
@@ -535,7 +544,7 @@ Returns the bounding box of @racket[circle].
 @defproc[(jsx-circle-diameter [circle jsx-element?])
          any/c]{
 @(jsx-bar "Diameter"
-          (string-append (jsx-doc-url "Circle")
+          (string-append (jsx-doc-url "JXG.Circle")
                          "#Diameter"))
 Returns the diameter of @racket[circle].
 }
@@ -543,7 +552,7 @@ Returns the diameter of @racket[circle].
 @defproc[(jsx-circle-get-radius [circle jsx-element?])
          any/c]{
 @(jsx-bar "getRadius"
-          (string-append (jsx-doc-url "Circle")
+          (string-append (jsx-doc-url "JXG.Circle")
                          "#getRadius"))
 Returns the radius helper value of @racket[circle].
 }
@@ -551,7 +560,7 @@ Returns the radius helper value of @racket[circle].
 @defproc[(jsx-circle-perimeter [circle jsx-element?])
          any/c]{
 @(jsx-bar "Perimeter"
-          (string-append (jsx-doc-url "Circle")
+          (string-append (jsx-doc-url "JXG.Circle")
                          "#Perimeter"))
 Returns the perimeter of @racket[circle].
 }
@@ -560,7 +569,7 @@ Returns the perimeter of @racket[circle].
                              [radius any/c])
          void?]{
 @(jsx-bar "Radius"
-          (string-append (jsx-doc-url "Circle")
+          (string-append (jsx-doc-url "JXG.Circle")
                          "#Radius"))
 Sets the radius of @racket[circle].
 }
@@ -569,7 +578,7 @@ Sets the radius of @racket[circle].
                                  [radius any/c])
          void?]{
 @(jsx-bar "setRadius"
-          (string-append (jsx-doc-url "Circle")
+          (string-append (jsx-doc-url "JXG.Circle")
                          "#setRadius"))
 Sets the radius of @racket[circle].
 }
@@ -577,7 +586,7 @@ Sets the radius of @racket[circle].
 @defproc[(jsx-circle-update-quadraticform! [circle jsx-element?])
          void?]{
 @(jsx-bar "updateQuadraticform"
-          (string-append (jsx-doc-url "Circle")
+          (string-append (jsx-doc-url "JXG.Circle")
                          "#updateQuadraticform"))
 Updates the circle quadratic form.
 }
@@ -585,7 +594,7 @@ Updates the circle quadratic form.
 @defproc[(jsx-circle-update-renderer! [circle jsx-element?])
          void?]{
 @(jsx-bar "updateRenderer"
-          (string-append (jsx-doc-url "Circle")
+          (string-append (jsx-doc-url "JXG.Circle")
                          "#updateRenderer"))
 Refreshes the circle renderer.
 }
@@ -593,7 +602,7 @@ Refreshes the circle renderer.
 @defproc[(jsx-circle-update-stdform! [circle jsx-element?])
          void?]{
 @(jsx-bar "updateStdform"
-          (string-append (jsx-doc-url "Circle")
+          (string-append (jsx-doc-url "JXG.Circle")
                          "#updateStdform"))
 Updates the circle standard form.
 }
@@ -602,7 +611,7 @@ Updates the circle standard form.
                        [t any/c])
          any/c]{
 @(jsx-bar "X"
-          (string-append (jsx-doc-url "Circle")
+          (string-append (jsx-doc-url "JXG.Circle")
                          "#X"))
 Evaluates the @racket[X] function on @racket[circle].
 }
@@ -611,7 +620,7 @@ Evaluates the @racket[X] function on @racket[circle].
                        [t any/c])
          any/c]{
 @(jsx-bar "Y"
-          (string-append (jsx-doc-url "Circle")
+          (string-append (jsx-doc-url "JXG.Circle")
                          "#Y"))
 Evaluates the @racket[Y] function on @racket[circle].
 }
@@ -620,7 +629,7 @@ Evaluates the @racket[Y] function on @racket[circle].
                        [t any/c])
          any/c]{
 @(jsx-bar "Z"
-          (string-append (jsx-doc-url "Circle")
+          (string-append (jsx-doc-url "JXG.Circle")
                          "#Z"))
 Evaluates the @racket[Z] function on @racket[circle].
 }
@@ -630,7 +639,7 @@ Evaluates the @racket[Z] function on @racket[circle].
 @defproc[(jsx-curve-allocate-points! [curve jsx-element?])
          any/c]{
 @(jsx-bar "allocatePoints"
-          (string-append (jsx-doc-url "Curve")
+          (string-append (jsx-doc-url "JXG.Curve")
                          "#allocatePoints"))
 Allocates the point cache for @racket[curve].
 }
@@ -638,7 +647,7 @@ Allocates the point cache for @racket[curve].
 @defproc[(jsx-curve-generate-term [curve jsx-element?])
          any/c]{
 @(jsx-bar "generateTerm"
-          (string-append (jsx-doc-url "Curve")
+          (string-append (jsx-doc-url "JXG.Curve")
                          "#generateTerm"))
 Generates the curve term helper.
 }
@@ -646,7 +655,7 @@ Generates the curve term helper.
 @defproc[(jsx-curve-get-label-position [curve jsx-element?])
          any/c]{
 @(jsx-bar "getLabelPosition"
-          (string-append (jsx-doc-url "Curve")
+          (string-append (jsx-doc-url "JXG.Curve")
                          "#getLabelPosition"))
 Returns the label position helper for @racket[curve].
 }
@@ -654,7 +663,7 @@ Returns the label position helper for @racket[curve].
 @defproc[(jsx-curve-get-transformation-source [curve jsx-element?])
          any/c]{
 @(jsx-bar "getTransformationSource"
-          (string-append (jsx-doc-url "Curve")
+          (string-append (jsx-doc-url "JXG.Curve")
                          "#getTransformationSource"))
 Returns the transformation source of @racket[curve].
 }
@@ -664,7 +673,7 @@ Returns the transformation source of @racket[curve].
                                [y any/c])
          boolean?]{
 @(jsx-bar "hasPoint"
-          (string-append (jsx-doc-url "Curve")
+          (string-append (jsx-doc-url "JXG.Curve")
                          "#hasPoint"))
 Returns @racket[#t] when screen coordinates hit @racket[curve].
 }
@@ -673,7 +682,7 @@ Returns @racket[#t] when screen coordinates hit @racket[curve].
                                                       [data any/c])
          any/c]{
 @(jsx-bar "interpolationFunctionFromArray"
-          (string-append (jsx-doc-url "Curve")
+          (string-append (jsx-doc-url "JXG.Curve")
                          "#interpolationFunctionFromArray"))
 Builds an interpolation function from sample data.
 }
@@ -681,7 +690,7 @@ Builds an interpolation function from sample data.
 @defproc[(jsx-curve-max-x [curve jsx-element?])
          any/c]{
 @(jsx-bar "maxX"
-          (string-append (jsx-doc-url "Curve")
+          (string-append (jsx-doc-url "JXG.Curve")
                          "#maxX"))
 Returns the maximum x-value of @racket[curve].
 }
@@ -689,7 +698,7 @@ Returns the maximum x-value of @racket[curve].
 @defproc[(jsx-curve-min-x [curve jsx-element?])
          any/c]{
 @(jsx-bar "minX"
-          (string-append (jsx-doc-url "Curve")
+          (string-append (jsx-doc-url "JXG.Curve")
                          "#minX"))
 Returns the minimum x-value of @racket[curve].
 }
@@ -698,7 +707,7 @@ Returns the minimum x-value of @racket[curve].
                              [where any/c])
          any/c]{
 @(jsx-bar "moveTo"
-          (string-append (jsx-doc-url "Curve")
+          (string-append (jsx-doc-url "JXG.Curve")
                          "#moveTo"))
 Moves @racket[curve] to a new location.
 }
@@ -706,7 +715,7 @@ Moves @racket[curve] to a new location.
 @defproc[(jsx-curve-notify-parents! [curve jsx-element?])
          any/c]{
 @(jsx-bar "notifyParents"
-          (string-append (jsx-doc-url "Curve")
+          (string-append (jsx-doc-url "JXG.Curve")
                          "#notifyParents"))
 Notifies parents of a curve change.
 }
@@ -714,7 +723,7 @@ Notifies parents of a curve change.
 @defproc[(jsx-curve-update-curve! [curve jsx-element?])
          any/c]{
 @(jsx-bar "updateCurve"
-          (string-append (jsx-doc-url "Curve")
+          (string-append (jsx-doc-url "JXG.Curve")
                          "#updateCurve"))
 Updates the curve data.
 }
@@ -722,7 +731,7 @@ Updates the curve data.
 @defproc[(jsx-curve-update-data-array! [curve jsx-element?])
          any/c]{
 @(jsx-bar "updateDataArray"
-          (string-append (jsx-doc-url "Curve")
+          (string-append (jsx-doc-url "JXG.Curve")
                          "#updateDataArray"))
 Updates the curve data array.
 }
@@ -730,7 +739,7 @@ Updates the curve data array.
 @defproc[(jsx-curve-update-renderer! [curve jsx-element?])
          any/c]{
 @(jsx-bar "updateRenderer"
-          (string-append (jsx-doc-url "Curve")
+          (string-append (jsx-doc-url "JXG.Curve")
                          "#updateRenderer"))
 Refreshes the curve renderer.
 }
@@ -738,14 +747,14 @@ Refreshes the curve renderer.
 @defproc[(jsx-curve-update-transform! [curve jsx-element?])
          any/c]{
 @(jsx-bar "updateTransform"
-          (string-append (jsx-doc-url "Curve")
+          (string-append (jsx-doc-url "JXG.Curve")
                          "#updateTransform"))
 Updates a curve transformation.
 }
 
 @defproc[(jsx-create-polygon [board jsx-board?]
-                             [parents any/c]
-                             [attributes (or/c #f any/c) #f])
+                             [parents vector?]
+                             [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Polygon"
           (jsx-doc-url "JXG.Polygon"))
@@ -753,8 +762,8 @@ Creates a polygon on @racket[board].
 }
 
 @defproc[(jsx-create-midpoint [board jsx-board?]
-                              [parents any/c]
-                              [attributes (or/c #f any/c) #f])
+                              [parents vector?]
+                              [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Midpoint"
           (jsx-doc-url "Midpoint"))
@@ -762,8 +771,8 @@ Creates a midpoint on @racket[board].
 }
 
 @defproc[(jsx-create-parallel [board jsx-board?]
-                              [parents any/c]
-                              [attributes (or/c #f any/c) #f])
+                              [parents vector?]
+                              [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Parallel"
           (jsx-doc-url "Parallel"))
@@ -771,8 +780,8 @@ Creates a parallel line on @racket[board].
 }
 
 @defproc[(jsx-create-arrowparallel [board jsx-board?]
-                                   [parents any/c]
-                                   [attributes (or/c #f any/c) #f])
+                                   [parents vector?]
+                                   [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Arrowparallel"
           (jsx-doc-url "Arrowparallel"))
@@ -780,8 +789,8 @@ Creates an arrowparallel on @racket[board].
 }
 
 @defproc[(jsx-create-axis [board jsx-board?]
-                          [parents any/c]
-                          [attributes (or/c #f any/c) #f])
+                          [parents vector?]
+                          [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Axis"
           (jsx-doc-url "Axis"))
@@ -789,8 +798,8 @@ Creates an axis on @racket[board].
 }
 
 @defproc[(jsx-create-grid [board jsx-board?]
-                          [parents any/c]
-                          [attributes (or/c #f any/c) #f])
+                          [parents vector?]
+                          [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Grid"
           (jsx-doc-url "Grid"))
@@ -798,8 +807,8 @@ Creates a grid on @racket[board].
 }
 
 @defproc[(jsx-create-boxplot [board jsx-board?]
-                             [parents any/c]
-                             [attributes (or/c #f any/c) #f])
+                             [parents vector?]
+                             [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Boxplot"
           (jsx-doc-url "Boxplot"))
@@ -807,8 +816,8 @@ Creates a boxplot on @racket[board].
 }
 
 @defproc[(jsx-create-tangent [board jsx-board?]
-                             [parents any/c]
-                             [attributes (or/c #f any/c) #f])
+                             [parents vector?]
+                             [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Tangent"
           (jsx-doc-url "Tangent"))
@@ -816,8 +825,8 @@ Creates a tangent line on @racket[board].
 }
 
 @defproc[(jsx-create-tangentto [board jsx-board?]
-                               [parents any/c]
-                               [attributes (or/c #f any/c) #f])
+                               [parents vector?]
+                               [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "TangentTo"
           (jsx-doc-url "TangentTo"))
@@ -825,8 +834,8 @@ Creates a tangent-to line on @racket[board].
 }
 
 @defproc[(jsx-create-polarline [board jsx-board?]
-                               [parents any/c]
-                               [attributes (or/c #f any/c) #f])
+                               [parents vector?]
+                               [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "PolarLine"
           (jsx-doc-url "PolarLine"))
@@ -834,8 +843,8 @@ Creates a polar line on @racket[board].
 }
 
 @defproc[(jsx-create-polepoint [board jsx-board?]
-                               [parents any/c]
-                               [attributes (or/c #f any/c) #f])
+                               [parents vector?]
+                               [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "PolePoint"
           (jsx-doc-url "PolePoint"))
@@ -843,8 +852,8 @@ Creates a pole point on @racket[board].
 }
 
 @defproc[(jsx-create-radicalaxis [board jsx-board?]
-                                 [parents any/c]
-                                 [attributes (or/c #f any/c) #f])
+                                 [parents vector?]
+                                 [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "RadicalAxis"
           (jsx-doc-url "RadicalAxis"))
@@ -852,8 +861,8 @@ Creates a radical axis on @racket[board].
 }
 
 @defproc[(jsx-create-circumcircle [board jsx-board?]
-                                  [parents any/c]
-                                  [attributes (or/c #f any/c) #f])
+                                  [parents vector?]
+                                  [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Circumcircle"
           (jsx-doc-url "Circumcircle"))
@@ -861,8 +870,8 @@ Creates a circumcircle on @racket[board].
 }
 
 @defproc[(jsx-create-incircle [board jsx-board?]
-                              [parents any/c]
-                              [attributes (or/c #f any/c) #f])
+                              [parents vector?]
+                              [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Incircle"
           (jsx-doc-url "Incircle"))
@@ -870,8 +879,8 @@ Creates an incircle on @racket[board].
 }
 
 @defproc[(jsx-create-incenter [board jsx-board?]
-                              [parents any/c]
-                              [attributes (or/c #f any/c) #f])
+                              [parents vector?]
+                              [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Incenter"
           (jsx-doc-url "Incenter"))
@@ -879,8 +888,8 @@ Creates an incenter on @racket[board].
 }
 
 @defproc[(jsx-create-minorarc [board jsx-board?]
-                              [parents any/c]
-                              [attributes (or/c #f any/c) #f])
+                              [parents vector?]
+                              [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "MinorArc"
           (jsx-doc-url "MinorArc"))
@@ -888,8 +897,8 @@ Creates a minor arc on @racket[board].
 }
 
 @defproc[(jsx-create-minorsector [board jsx-board?]
-                                 [parents any/c]
-                                 [attributes (or/c #f any/c) #f])
+                                 [parents vector?]
+                                 [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "MinorSector"
           (jsx-doc-url "MinorSector"))
@@ -897,8 +906,8 @@ Creates a minor sector on @racket[board].
 }
 
 @defproc[(jsx-create-circumcirclearc [board jsx-board?]
-                                     [parents any/c]
-                                     [attributes (or/c #f any/c) #f])
+                                     [parents vector?]
+                                     [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "CircumcircleArc"
           (jsx-doc-url "CircumcircleArc"))
@@ -906,8 +915,8 @@ Creates a circumcircle arc on @racket[board].
 }
 
 @defproc[(jsx-create-circumcirclesector [board jsx-board?]
-                                        [parents any/c]
-                                        [attributes (or/c #f any/c) #f])
+                                        [parents vector?]
+                                        [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "CircumcircleSector"
           (jsx-doc-url "CircumcircleSector"))
@@ -915,8 +924,8 @@ Creates a circumcircle sector on @racket[board].
 }
 
 @defproc[(jsx-create-semicircle [board jsx-board?]
-                                [parents any/c]
-                                [attributes (or/c #f any/c) #f])
+                                [parents vector?]
+                                [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Semicircle"
           (jsx-doc-url "Semicircle"))
@@ -924,8 +933,8 @@ Creates a semicircle on @racket[board].
 }
 
 @defproc[(jsx-create-majorarc [board jsx-board?]
-                              [parents any/c]
-                              [attributes (or/c #f any/c) #f])
+                              [parents vector?]
+                              [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "MajorArc"
           (jsx-doc-url "MajorArc"))
@@ -933,8 +942,8 @@ Creates a major arc on @racket[board].
 }
 
 @defproc[(jsx-create-majorsector [board jsx-board?]
-                                 [parents any/c]
-                                 [attributes (or/c #f any/c) #f])
+                                 [parents vector?]
+                                 [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "MajorSector"
           (jsx-doc-url "MajorSector"))
@@ -942,8 +951,8 @@ Creates a major sector on @racket[board].
 }
 
 @defproc[(jsx-create-curveintersection [board jsx-board?]
-                                       [parents any/c]
-                                       [attributes (or/c #f any/c) #f])
+                                       [parents vector?]
+                                       [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "CurveIntersection"
           (jsx-doc-url "CurveIntersection"))
@@ -951,8 +960,8 @@ Creates a curve intersection on @racket[board].
 }
 
 @defproc[(jsx-create-curvedifference [board jsx-board?]
-                                     [parents any/c]
-                                     [attributes (or/c #f any/c) #f])
+                                     [parents vector?]
+                                     [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "CurveDifference"
           (jsx-doc-url "CurveDifference"))
@@ -960,8 +969,8 @@ Creates a curve difference on @racket[board].
 }
 
 @defproc[(jsx-create-curveunion [board jsx-board?]
-                                [parents any/c]
-                                [attributes (or/c #f any/c) #f])
+                                [parents vector?]
+                                [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "CurveUnion"
           (jsx-doc-url "CurveUnion"))
@@ -969,8 +978,8 @@ Creates a curve union on @racket[board].
 }
 
 @defproc[(jsx-create-derivative [board jsx-board?]
-                                [parents any/c]
-                                [attributes (or/c #f any/c) #f])
+                                [parents vector?]
+                                [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Derivative"
           (jsx-doc-url "Derivative"))
@@ -978,8 +987,8 @@ Creates a derivative curve on @racket[board].
 }
 
 @defproc[(jsx-create-integral [board jsx-board?]
-                              [parents any/c]
-                              [attributes (or/c #f any/c) #f])
+                              [parents vector?]
+                              [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Integral"
           (jsx-doc-url "Integral"))
@@ -987,8 +996,8 @@ Creates an integral on @racket[board].
 }
 
 @defproc[(jsx-create-riemannsum [board jsx-board?]
-                                [parents any/c]
-                                [attributes (or/c #f any/c) #f])
+                                [parents vector?]
+                                [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Riemannsum"
           (jsx-doc-url "Riemannsum"))
@@ -1004,8 +1013,8 @@ Reads the current value of a Riemann sum visualization.
 }
 
 @defproc[(jsx-create-slopefield [board jsx-board?]
-                                [parents any/c]
-                                [attributes (or/c #f any/c) #f])
+                                [parents vector?]
+                                [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Slopefield"
           (jsx-doc-url "Slopefield"))
@@ -1022,8 +1031,8 @@ Updates the defining function of a slope field.
 }
 
 @defproc[(jsx-create-vectorfield [board jsx-board?]
-                                 [parents any/c]
-                                 [attributes (or/c #f any/c) #f])
+                                 [parents vector?]
+                                 [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Vectorfield"
           (jsx-doc-url "Vectorfield"))
@@ -1040,8 +1049,8 @@ Updates the defining function of a vector field.
 }
 
 @defproc[(jsx-create-implicitcurve [board jsx-board?]
-                                   [parents any/c]
-                                   [attributes (or/c #f any/c) #f])
+                                   [parents vector?]
+                                   [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "ImplicitCurve"
           (jsx-doc-url "ImplicitCurve"))
@@ -1049,8 +1058,8 @@ Creates an implicit curve on @racket[board].
 }
 
 @defproc[(jsx-create-spline [board jsx-board?]
-                            [parents any/c]
-                            [attributes (or/c #f any/c) #f])
+                            [parents vector?]
+                            [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Spline"
           (jsx-doc-url "Spline"))
@@ -1058,8 +1067,8 @@ Creates a spline on @racket[board].
 }
 
 @defproc[(jsx-create-cardinalspline [board jsx-board?]
-                                    [parents any/c]
-                                    [attributes (or/c #f any/c) #f])
+                                    [parents vector?]
+                                    [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Cardinalspline"
           (jsx-doc-url "Cardinalspline"))
@@ -1067,8 +1076,8 @@ Creates a cardinal spline on @racket[board].
 }
 
 @defproc[(jsx-create-comb [board jsx-board?]
-                          [parents any/c]
-                          [attributes (or/c #f any/c) #f])
+                          [parents vector?]
+                          [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Comb"
           (jsx-doc-url "Comb"))
@@ -1076,8 +1085,8 @@ Creates a comb on @racket[board].
 }
 
 @defproc[(jsx-create-metapostspline [board jsx-board?]
-                                    [parents any/c]
-                                    [attributes (or/c #f any/c) #f])
+                                    [parents vector?]
+                                    [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Metapostspline"
           (jsx-doc-url "Metapostspline"))
@@ -1085,8 +1094,8 @@ Creates a metapost spline on @racket[board].
 }
 
 @defproc[(jsx-create-polygonalchain [board jsx-board?]
-                                    [parents any/c]
-                                    [attributes (or/c #f any/c) #f])
+                                    [parents vector?]
+                                    [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "PolygonalChain"
           (jsx-doc-url "PolygonalChain"))
@@ -1094,8 +1103,8 @@ Creates a polygonal chain on @racket[board].
 }
 
 @defproc[(jsx-create-regularpolygon [board jsx-board?]
-                                    [parents any/c]
-                                    [attributes (or/c #f any/c) #f])
+                                    [parents vector?]
+                                    [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "RegularPolygon"
           (jsx-doc-url "RegularPolygon"))
@@ -1103,8 +1112,8 @@ Creates a regular polygon on @racket[board].
 }
 
 @defproc[(jsx-create-hyperbola [board jsx-board?]
-                               [parents any/c]
-                               [attributes (or/c #f any/c) #f])
+                               [parents vector?]
+                               [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Hyperbola"
           (jsx-doc-url "Hyperbola"))
@@ -1112,8 +1121,8 @@ Creates a hyperbola on @racket[board].
 }
 
 @defproc[(jsx-create-parabola [board jsx-board?]
-                              [parents any/c]
-                              [attributes (or/c #f any/c) #f])
+                              [parents vector?]
+                              [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Parabola"
           (jsx-doc-url "Parabola"))
@@ -1121,8 +1130,8 @@ Creates a parabola on @racket[board].
 }
 
 @defproc[(jsx-create-stepfunction [board jsx-board?]
-                                  [parents any/c]
-                                  [attributes (or/c #f any/c) #f])
+                                  [parents vector?]
+                                  [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Stepfunction"
           (jsx-doc-url "Stepfunction"))
@@ -1130,8 +1139,8 @@ Creates a step function on @racket[board].
 }
 
 @defproc[(jsx-create-inequality [board jsx-board?]
-                                [parents any/c]
-                                [attributes (or/c #f any/c) #f])
+                                [parents vector?]
+                                [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Inequality"
           (jsx-doc-url "Inequality"))
@@ -1139,8 +1148,8 @@ Creates an inequality visualization on @racket[board].
 }
 
 @defproc[(jsx-create-turtle [board jsx-board?]
-                            [parents any/c]
-                            [attributes (or/c #f any/c) #f])
+                            [parents vector?]
+                            [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Turtle"
           (jsx-doc-url "Turtle"))
@@ -1148,8 +1157,8 @@ Creates a turtle on @racket[board].
 }
 
 @defproc[(jsx-create-slopetriangle [board jsx-board?]
-                                   [parents any/c]
-                                   [attributes (or/c #f any/c) #f])
+                                   [parents vector?]
+                                   [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Slopetriangle"
           (jsx-doc-url "Slopetriangle"))
@@ -1157,8 +1166,8 @@ Creates a slope triangle on @racket[board].
 }
 
 @defproc[(jsx-create-perpendicular [board jsx-board?]
-                                   [parents any/c]
-                                   [attributes (or/c #f any/c) #f])
+                                   [parents vector?]
+                                   [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Perpendicular"
           (jsx-doc-url "Perpendicular"))
@@ -1166,8 +1175,8 @@ Creates a perpendicular line on @racket[board].
 }
 
 @defproc[(jsx-create-reflection [board jsx-board?]
-                                [parents any/c]
-                                [attributes (or/c #f any/c) #f])
+                                [parents vector?]
+                                [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Reflection"
           (jsx-doc-url "Reflection"))
@@ -1175,8 +1184,8 @@ Creates a reflection on @racket[board].
 }
 
 @defproc[(jsx-create-bisector [board jsx-board?]
-                              [parents any/c]
-                              [attributes (or/c #f any/c) #f])
+                              [parents vector?]
+                              [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Bisector"
           (jsx-doc-url "Bisector"))
@@ -1184,8 +1193,8 @@ Creates a bisector on @racket[board].
 }
 
 @defproc[(jsx-create-normal [board jsx-board?]
-                            [parents any/c]
-                            [attributes (or/c #f any/c) #f])
+                            [parents vector?]
+                            [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Normal"
           (jsx-doc-url "Normal"))
@@ -1330,8 +1339,8 @@ Refreshes the polygon renderer.
 }
 
 @defproc[(jsx-create-intersection [board jsx-board?]
-                                  [parents any/c]
-                                  [attributes (or/c #f any/c) #f])
+                                  [parents vector?]
+                                  [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Intersection"
           (jsx-doc-url "Intersection"))
@@ -1339,8 +1348,8 @@ Creates an intersection point on @racket[board].
 }
 
 @defproc[(jsx-create-arrow [board jsx-board?]
-                           [parents any/c]
-                           [attributes (or/c #f any/c) #f])
+                           [parents vector?]
+                           [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Arrow"
           (jsx-doc-url "Arrow"))
@@ -1348,8 +1357,8 @@ Creates an arrow on @racket[board].
 }
 
 @defproc[(jsx-create-button [board jsx-board?]
-                            [parents any/c]
-                            [attributes (or/c #f any/c) #f])
+                            [parents vector?]
+                            [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Button"
           (jsx-doc-url "Button"))
@@ -1357,8 +1366,8 @@ Creates a button on @racket[board].
 }
 
 @defproc[(jsx-create-checkbox [board jsx-board?]
-                              [parents any/c]
-                              [attributes (or/c #f any/c) #f])
+                              [parents vector?]
+                              [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Checkbox"
           (jsx-doc-url "Checkbox"))
@@ -1370,14 +1379,14 @@ Creates a checkbox on @racket[board].
 @defproc[(jsx-checkbox-value [checkbox jsx-element?])
          boolean?]{
 @(jsx-bar "Value"
-          (string-append (jsx-doc-url "Checkbox")
+          (string-append (jsx-doc-url "JXG.Checkbox")
                          "#Value"))
 Returns the current checkbox value.
 }
 
 @defproc[(jsx-create-input [board jsx-board?]
-                           [parents any/c]
-                           [attributes (or/c #f any/c) #f])
+                           [parents vector?]
+                           [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Input"
           (jsx-doc-url "Input"))
@@ -1390,7 +1399,7 @@ Creates an input field on @racket[board].
                          [value any/c])
          jsx-element?]{
 @(jsx-bar "set"
-          (string-append (jsx-doc-url "Input")
+          (string-append (jsx-doc-url "JXG.Input")
                          "#set"))
 Sets the current value of @racket[input].
 }
@@ -1398,14 +1407,14 @@ Sets the current value of @racket[input].
 @defproc[(jsx-input-value [input jsx-element?])
          string?]{
 @(jsx-bar "Value"
-          (string-append (jsx-doc-url "Input")
+          (string-append (jsx-doc-url "JXG.Input")
                          "#Value"))
 Returns the current input value.
 }
 
 @defproc[(jsx-create-slider [board jsx-board?]
-                            [parents any/c]
-                            [attributes (or/c #f any/c) #f])
+                            [parents vector?]
+                            [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Slider"
           (jsx-doc-url "Slider"))
@@ -1418,7 +1427,7 @@ Creates a slider on @racket[board].
                               [value any/c])
          jsx-element?]{
 @(jsx-bar "setMax"
-          (string-append (jsx-doc-url "Slider")
+          (string-append (jsx-doc-url "JXG.Slider")
                          "#setMax"))
 Sets the maximum slider value.
 }
@@ -1427,7 +1436,7 @@ Sets the maximum slider value.
                               [value any/c])
          jsx-element?]{
 @(jsx-bar "setMin"
-          (string-append (jsx-doc-url "Slider")
+          (string-append (jsx-doc-url "JXG.Slider")
                          "#setMin"))
 Sets the minimum slider value.
 }
@@ -1436,7 +1445,7 @@ Sets the minimum slider value.
                                 [value any/c])
          jsx-element?]{
 @(jsx-bar "setValue"
-          (string-append (jsx-doc-url "Slider")
+          (string-append (jsx-doc-url "JXG.Slider")
                          "#setValue"))
 Sets the current slider value.
 }
@@ -1444,14 +1453,14 @@ Sets the current slider value.
 @defproc[(jsx-slider-value [slider jsx-element?])
          number?]{
 @(jsx-bar "Value"
-          (string-append (jsx-doc-url "Slider")
+          (string-append (jsx-doc-url "JXG.Slider")
                          "#Value"))
 Returns the current slider value.
 }
 
 @defproc[(jsx-create-chart [board jsx-board?]
-                           [parents any/c]
-                           [attributes (or/c #f any/c) #f])
+                           [parents vector?]
+                           [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Chart"
           (jsx-doc-url "Chart"))
@@ -1546,8 +1555,8 @@ Updates the chart renderer.
 }
 
 @defproc[(jsx-create-legend [board jsx-board?]
-                            [parents any/c]
-                            [attributes (or/c #f any/c) #f])
+                            [parents vector?]
+                            [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Legend"
           (jsx-doc-url "Legend"))
@@ -1555,8 +1564,8 @@ Creates a legend on @racket[board].
 }
 
 @defproc[(jsx-create-smartlabel [board jsx-board?]
-                                [parents any/c]
-                                [attributes (or/c #f any/c) #f])
+                                [parents vector?]
+                                [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Smartlabel"
           (jsx-doc-url "Smartlabel"))
@@ -1564,8 +1573,8 @@ Creates a smart label on @racket[board].
 }
 
 @defproc[(jsx-create-text [board jsx-board?]
-                          [parents any/c]
-                          [attributes (or/c #f any/c) #f])
+                          [parents vector?]
+                          [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Text"
           (jsx-doc-url "Text"))
@@ -1573,8 +1582,8 @@ Creates a text element on @racket[board].
 }
 
 @defproc[(jsx-create-image [board jsx-board?]
-                           [parents any/c]
-                           [attributes (or/c #f any/c) #f])
+                           [parents vector?]
+                           [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Image"
           (jsx-doc-url "Image"))
@@ -1582,8 +1591,8 @@ Creates an image element on @racket[board].
 }
 
 @defproc[(jsx-create-group [board jsx-board?]
-                           [parents any/c]
-                           [attributes (or/c #f any/c) #f])
+                           [parents vector?]
+                           [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Group"
           (jsx-doc-url "JXG.Group"))
@@ -1591,8 +1600,8 @@ Creates a group on @racket[board].
 }
 
 @defproc[(jsx-create-foreignobject [board jsx-board?]
-                                   [parents any/c]
-                                   [attributes (or/c #f any/c) #f])
+                                   [parents vector?]
+                                   [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "ForeignObject"
           (jsx-doc-url "ForeignObject"))
@@ -1600,8 +1609,8 @@ Creates a foreign object on @racket[board].
 }
 
 @defproc[(jsx-create-tapemeasure [board jsx-board?]
-                                 [parents any/c]
-                                 [attributes (or/c #f any/c) #f])
+                                 [parents vector?]
+                                 [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Tapemeasure"
           (jsx-doc-url "Tapemeasure"))
@@ -1611,14 +1620,14 @@ Creates a tape measure on @racket[board].
 @defproc[(jsx-tapemeasure-value [tapemeasure jsx-element?])
          any/c]{
 @(jsx-bar "Value"
-          (string-append (jsx-doc-url "Tapemeasure")
+          (string-append (jsx-doc-url "JXG.Tapemeasure")
                          "#Value"))
 Returns the current tape-measure value.
 }
 
 @defproc[(jsx-create-hatch [board jsx-board?]
-                           [parents any/c]
-                           [attributes (or/c #f any/c) #f])
+                           [parents vector?]
+                           [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Hatch"
           (jsx-doc-url "Hatch"))
@@ -1626,8 +1635,8 @@ Creates a hatch object on @racket[board].
 }
 
 @defproc[(jsx-create-measurement [board jsx-board?]
-                                 [parents any/c]
-                                 [attributes (or/c #f any/c) #f])
+                                 [parents vector?]
+                                 [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Measurement"
           (jsx-doc-url "Measurement"))
@@ -1635,8 +1644,8 @@ Creates a measurement on @racket[board].
 }
 
 @defproc[(jsx-create-bisectorlines [board jsx-board?]
-                                   [parents any/c]
-                                   [attributes (or/c #f any/c) #f])
+                                   [parents vector?]
+                                   [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Bisectorlines"
           (jsx-doc-url "Bisectorlines"))
@@ -1644,8 +1653,8 @@ Creates a bisectorlines object on @racket[board].
 }
 
 @defproc[(jsx-create-perpendicularsegment [board jsx-board?]
-                                         [parents any/c]
-                                         [attributes (or/c #f any/c) #f])
+                                         [parents vector?]
+                                         [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "PerpendicularSegment"
           (jsx-doc-url "PerpendicularSegment"))
@@ -1653,8 +1662,8 @@ Creates a perpendicular segment on @racket[board].
 }
 
 @defproc[(jsx-create-circumcenter [board jsx-board?]
-                                  [parents any/c]
-                                  [attributes (or/c #f any/c) #f])
+                                  [parents vector?]
+                                  [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Circumcenter"
           (jsx-doc-url "Circumcenter"))
@@ -1662,8 +1671,8 @@ Creates a circumcenter point on @racket[board].
 }
 
 @defproc[(jsx-create-mirrorelement [board jsx-board?]
-                                   [parents any/c]
-                                   [attributes (or/c #f any/c) #f])
+                                   [parents vector?]
+                                   [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "MirrorElement"
           (jsx-doc-url "MirrorElement"))
@@ -1671,8 +1680,8 @@ Creates a mirrored element on @racket[board].
 }
 
 @defproc[(jsx-create-mirrorpoint [board jsx-board?]
-                                 [parents any/c]
-                                 [attributes (or/c #f any/c) #f])
+                                 [parents vector?]
+                                 [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "MirrorPoint"
           (jsx-doc-url "MirrorPoint"))
@@ -1680,8 +1689,8 @@ Creates a mirror point on @racket[board].
 }
 
 @defproc[(jsx-create-otherintersection [board jsx-board?]
-                                       [parents any/c]
-                                       [attributes (or/c #f any/c) #f])
+                                       [parents vector?]
+                                       [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "OtherIntersection"
           (jsx-doc-url "OtherIntersection"))
@@ -1689,8 +1698,8 @@ Creates the other intersection on @racket[board].
 }
 
 @defproc[(jsx-create-orthogonalprojection [board jsx-board?]
-                                          [parents any/c]
-                                          [attributes (or/c #f any/c) #f])
+                                          [parents vector?]
+                                          [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Orthogonalprojection"
           (jsx-doc-url "Orthogonalprojection"))
@@ -1698,8 +1707,8 @@ Creates an orthogonal projection on @racket[board].
 }
 
 @defproc[(jsx-create-parallelpoint [board jsx-board?]
-                                   [parents any/c]
-                                   [attributes (or/c #f any/c) #f])
+                                   [parents vector?]
+                                   [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Parallelpoint"
           (jsx-doc-url "Parallelpoint"))
@@ -1707,8 +1716,8 @@ Creates a parallel point on @racket[board].
 }
 
 @defproc[(jsx-create-perpendicularpoint [board jsx-board?]
-                                        [parents any/c]
-                                        [attributes (or/c #f any/c) #f])
+                                        [parents vector?]
+                                        [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "PerpendicularPoint"
           (jsx-doc-url "PerpendicularPoint"))
@@ -1721,7 +1730,7 @@ Creates a perpendicular point on @racket[board].
                               [args any/c] ...)
          any/c]{
 @(jsx-bar "H"
-          (string-append (jsx-doc-url "ForeignObject")
+          (string-append (jsx-doc-url "JXG.ForeignObject")
                          "#H"))
 Returns the foreign object H helper.
 }
@@ -1730,7 +1739,7 @@ Returns the foreign object H helper.
                               [args any/c] ...)
          any/c]{
 @(jsx-bar "W"
-          (string-append (jsx-doc-url "ForeignObject")
+          (string-append (jsx-doc-url "JXG.ForeignObject")
                          "#W"))
 Returns the foreign object W helper.
 }
@@ -1739,7 +1748,7 @@ Returns the foreign object W helper.
                                        [args any/c] ...)
          boolean?]{
 @(jsx-bar "hasPoint"
-          (string-append (jsx-doc-url "ForeignObject")
+          (string-append (jsx-doc-url "JXG.ForeignObject")
                          "#hasPoint"))
 Checks whether a point hits @racket[foreignobject].
 }
@@ -1748,7 +1757,7 @@ Checks whether a point hits @racket[foreignobject].
                                       [args any/c] ...)
          void?]{
 @(jsx-bar "setSize"
-          (string-append (jsx-doc-url "ForeignObject")
+          (string-append (jsx-doc-url "JXG.ForeignObject")
                          "#setSize"))
 Sets the size of @racket[foreignobject].
 }
@@ -1757,7 +1766,7 @@ Sets the size of @racket[foreignobject].
                                     [args any/c] ...)
          void?]{
 @(jsx-bar "update"
-          (string-append (jsx-doc-url "ForeignObject")
+          (string-append (jsx-doc-url "JXG.ForeignObject")
                          "#update"))
 Updates @racket[foreignobject].
 }
@@ -1766,7 +1775,7 @@ Updates @racket[foreignobject].
                                              [args any/c] ...)
          void?]{
 @(jsx-bar "updateRenderer"
-          (string-append (jsx-doc-url "ForeignObject")
+          (string-append (jsx-doc-url "JXG.ForeignObject")
                          "#updateRenderer"))
 Refreshes the foreign object renderer.
 }
@@ -1775,7 +1784,7 @@ Refreshes the foreign object renderer.
                                          [args any/c] ...)
          void?]{
 @(jsx-bar "updateSize"
-          (string-append (jsx-doc-url "ForeignObject")
+          (string-append (jsx-doc-url "JXG.ForeignObject")
                          "#updateSize"))
 Updates the foreign object size.
 }
@@ -1784,7 +1793,7 @@ Updates the foreign object size.
                                          [args any/c] ...)
          void?]{
 @(jsx-bar "updateSpan"
-          (string-append (jsx-doc-url "ForeignObject")
+          (string-append (jsx-doc-url "JXG.ForeignObject")
                          "#updateSpan"))
 Updates the foreign object span.
 }
@@ -2142,7 +2151,7 @@ The @racket[jsx-group] wrappers expose the documented
 @racketid[JXG.Group] methods that are useful for the gallery example.
 
 @defproc[(jsx-group-add-parents! [group jsx-element?]
-                                 [parents any/c])
+                                 [parents vector?])
          void?]{
 @(jsx-bar "addParents"
           (string-append (jsx-doc-url "JXG.Group")
@@ -2245,8 +2254,8 @@ These constructors cover helper classes that are easiest to exercise as
 standalone boards in the gallery.
 
 @defproc[(jsx-create-ticks [board jsx-board?]
-                           [parents any/c]
-                           [attributes (or/c #f any/c) #f])
+                           [parents vector?]
+                           [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Ticks"
           (jsx-doc-url "Ticks"))
@@ -2254,8 +2263,8 @@ Creates a ticks object on a board.
 }
 
 @defproc[(jsx-create-transformation [board jsx-board?]
-                                    [parents any/c]
-                                    [attributes (or/c #f any/c) #f])
+                                    [parents vector?]
+                                    [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Transformation"
           (jsx-doc-url "Transformation"))
@@ -2263,8 +2272,8 @@ Creates a transformation object on a board.
 }
 
 @defproc[(jsx-create-tracecurve [board jsx-board?]
-                                [parents any/c]
-                                [attributes (or/c #f any/c) #f])
+                                [parents vector?]
+                                [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Tracecurve"
           (jsx-doc-url "Tracecurve"))
@@ -2272,8 +2281,8 @@ Creates a tracecurve object on a board.
 }
 
 @defproc[(jsx-create-parallelogram [board jsx-board?]
-                                   [parents any/c]
-                                   [attributes (or/c #f any/c) #f])
+                                   [parents vector?]
+                                   [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "Parallelogram"
           (jsx-doc-url "Parallelogram"))
@@ -2281,8 +2290,8 @@ Creates a parallelogram object on a board.
 }
 
 @defproc[(jsx-create-reflexangle [board jsx-board?]
-                                 [parents any/c]
-                                 [attributes (or/c #f any/c) #f])
+                                 [parents vector?]
+                                 [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "ReflexAngle"
           (jsx-doc-url "ReflexAngle"))
@@ -2290,8 +2299,8 @@ Creates a reflex angle object on a board.
 }
 
 @defproc[(jsx-create-nonreflexangle [board jsx-board?]
-                                     [parents any/c]
-                                     [attributes (or/c #f any/c) #f])
+                                     [parents vector?]
+                                     [attributes (or/c #f external/raw) #f])
          jsx-element?]{
 @(jsx-bar "NonReflexAngle"
           (jsx-doc-url "NonReflexAngle"))
@@ -2509,7 +2518,7 @@ Sets the geometry element name.
 }
 
 @defproc[(jsx-element-set-parents! [element any/c]
-                                   [parents any/c])
+                                   [parents vector?])
          void?]{
 @(jsx-bar "setParents"
           (string-append (jsx-doc-url "JXG.GeometryElement")
@@ -2615,7 +2624,7 @@ Adds descendants to a geometry element.
 }
 
 @defproc[(jsx-element-add-parents! [element any/c]
-                                   [parents any/c])
+                                   [parents vector?])
          void?]{
 @(jsx-bar "addParents"
           (string-append (jsx-doc-url "JXG.GeometryElement")
