@@ -18,6 +18,7 @@
 (define wat-filename    (make-parameter #f))
 (define wasm-filename   (make-parameter #f))
 (define host-filename   (make-parameter #f))
+(define dest-dir        (make-parameter #f))
 (define label-map-forms (make-parameter #t))
 (define dump-passes-dir (make-parameter #f))
 (define dump-passes-limit (make-parameter #f))
@@ -50,6 +51,8 @@
                              (wasm-filename filename)]
    [("--host-file") filename "Filename for the host file"
                              (host-filename filename)]
+   [("--dest") dirname "Write default outputs under <dir>"
+               (dest-dir dirname)]
    [("--label-map-forms") "Include (form ...) entries in .wasm.map.sexp"
                           (label-map-forms #t)]
    [("--no-label-map-forms") "Omit (form ...) entries in .wasm.map.sexp"
@@ -117,6 +120,7 @@
                      #:wat-filename  (wat-filename)
                      #:wasm-filename (wasm-filename)
                      #:host-filename (host-filename)
+                     #:dest-dir      (dest-dir)
                      #:label-map-forms? (label-map-forms)
                      #:dump-passes-dir (dump-passes-dir)
                      #:dump-passes-limit (dump-passes-limit)

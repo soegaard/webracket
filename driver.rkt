@@ -209,6 +209,7 @@
          #:wat-filename      wat-filename
          #:wasm-filename     wasm-filename
          #:host-filename     host-filename      ; default: "runtime.js"
+         #:dest-dir          dest-dir
          #:label-map-forms?  label-map-forms?
          #:dump-passes-dir   dump-passes-dir
          #:dump-passes-limit dump-passes-limit  ; max number of passes to dump
@@ -305,13 +306,20 @@
     (check-node! 'drive-compilation))
 
   ; Precompute output paths for preflight checks.
-  (define out-wat  (or wat-filename  (path-replace-extension filename ".wat")))
-  (define out-wasm (or wasm-filename (path-replace-extension filename ".wasm")))
+  (define (default-output-path ext)
+    (define source-base (or (file-name-from-path filename) filename))
+    (define default-name (path-replace-extension source-base ext))
+    (if dest-dir
+        (build-path dest-dir default-name)
+        (path-replace-extension filename ext)))
+
+  (define out-wat  (or wat-filename  (default-output-path ".wat")))
+  (define out-wasm (or wasm-filename (default-output-path ".wasm")))
   (define out-map  (path-replace-extension out-wasm ".wasm.map.sexp"))
   (define out-host (or host-filename
                        (if node?
-                           (path-replace-extension filename ".js")
-                           (path-replace-extension filename ".html"))))
+                           (default-output-path ".js")
+                           (default-output-path ".html"))))
 
   ; Preflight: ensure output files do not collide.
   (ensure-distinct-output-files!

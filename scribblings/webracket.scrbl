@@ -10,7 +10,7 @@
 
 @include-section["Installation.scrbl"]
 
-@include-section["Command-Line_Tool.scrbl"]
+@include-section["command-line-tool.scrbl"]
 
 @include-section["Callback_Source_Map_Tool.scrbl"]
 
