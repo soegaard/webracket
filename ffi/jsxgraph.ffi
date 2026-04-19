@@ -452,6 +452,66 @@
   #:name   "create-smartlabel"
   (-> (extern value value) (extern/raw)))
 
+; (js-jsx-board-create-foreignobject board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-foreignobject
+  #:module "jsx-board"
+  #:name   "create-foreignobject"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-tapemeasure board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-tapemeasure
+  #:module "jsx-board"
+  #:name   "create-tapemeasure"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-measurement board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-measurement
+  #:module "jsx-board"
+  #:name   "create-measurement"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-circumcenter board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-circumcenter
+  #:module "jsx-board"
+  #:name   "create-circumcenter"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-mirrorelement board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-mirrorelement
+  #:module "jsx-board"
+  #:name   "create-mirrorelement"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-mirrorpoint board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-mirrorpoint
+  #:module "jsx-mirrorpoint"
+  #:name   "create"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-otherintersection board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-otherintersection
+  #:module "jsx-otherintersection"
+  #:name   "create"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-orthogonalprojection board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-orthogonalprojection
+  #:module "jsx-orthogonalprojection"
+  #:name   "create"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-parallelpoint board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-parallelpoint
+  #:module "jsx-parallelpoint"
+  #:name   "create"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-perpendicularpoint board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-perpendicularpoint
+  #:module "jsx-perpendicularpoint"
+  #:name   "create"
+  (-> (extern value value) (extern/raw)))
+
 ; (js-jsx-checkbox-Value checkbox:Extern) -> Boolean
 (define-foreign js-jsx-checkbox-Value
   #:module "jsx-checkbox"
@@ -1033,6 +1093,60 @@
   #:module "jsx-image"
   #:name   "updateSpan"
   (-> (extern value) (extern/raw)))
+
+; (js-jsx-foreignobject-H foreignobject:Extern args:Value) -> Extern
+(define-foreign js-jsx-foreignobject-H
+  #:module "jsx-foreignobject"
+  #:name   "H"
+  (-> (extern) (extern/raw)))
+
+; (js-jsx-foreignobject-W foreignobject:Extern args:Value) -> Extern
+(define-foreign js-jsx-foreignobject-W
+  #:module "jsx-foreignobject"
+  #:name   "W"
+  (-> (extern) (extern/raw)))
+
+; (js-jsx-foreignobject-has-point foreignobject:Extern args:Value) -> Boolean
+(define-foreign js-jsx-foreignobject-has-point
+  #:module "jsx-foreignobject"
+  #:name   "hasPoint"
+  (-> (extern value value) (boolean)))
+
+; (js-jsx-foreignobject-set-size foreignobject:Extern args:Value) -> Extern
+(define-foreign js-jsx-foreignobject-set-size
+  #:module "jsx-foreignobject"
+  #:name   "setSize"
+  (-> (extern value) (extern/raw)))
+
+; (js-jsx-foreignobject-update foreignobject:Extern args:Value) -> Extern
+(define-foreign js-jsx-foreignobject-update
+  #:module "jsx-foreignobject"
+  #:name   "update"
+  (-> (extern) (extern/raw)))
+
+; (js-jsx-foreignobject-update-renderer foreignobject:Extern args:Value) -> Extern
+(define-foreign js-jsx-foreignobject-update-renderer
+  #:module "jsx-foreignobject"
+  #:name   "updateRenderer"
+  (-> (extern) (extern/raw)))
+
+; (js-jsx-foreignobject-update-size foreignobject:Extern args:Value) -> Extern
+(define-foreign js-jsx-foreignobject-update-size
+  #:module "jsx-foreignobject"
+  #:name   "updateSize"
+  (-> (extern) (extern/raw)))
+
+; (js-jsx-foreignobject-update-span foreignobject:Extern args:Value) -> Extern
+(define-foreign js-jsx-foreignobject-update-span
+  #:module "jsx-foreignobject"
+  #:name   "updateSpan"
+  (-> (extern) (extern/raw)))
+
+; (js-jsx-tapemeasure-Value tapemeasure:Extern) -> Float
+(define-foreign js-jsx-tapemeasure-Value
+  #:module "jsx-tapemeasure"
+  #:name   "Value"
+  (-> (extern) (f64)))
 
 ;; Update board state and redraw as needed
 ; (js-jsx-board-update! board:Extern) -> Extern

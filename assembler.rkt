@@ -2781,6 +2781,11 @@ var imports = {
         'create-chart':              ((board, parents, attrs) => board.create('chart', from_fasl(parents), from_fasl(attrs))),
         'create-legend':             ((board, parents, attrs) => board.create('legend', from_fasl(parents), from_fasl(attrs))),
         'create-smartlabel':         ((board, parents, attrs) => board.create('smartlabel', from_fasl(parents), from_fasl(attrs))),
+        'create-foreignobject':      ((board, parents, attrs) => board.create('foreignobject', from_fasl(parents), from_fasl(attrs))),
+        'create-tapemeasure':        ((board, parents, attrs) => board.create('tapemeasure', from_fasl(parents), from_fasl(attrs))),
+        'create-measurement':        ((board, parents, attrs) => board.create('measurement', from_fasl(parents), from_fasl(attrs))),
+        'create-circumcenter':       ((board, parents, attrs) => board.create('circumcenter', from_fasl(parents), from_fasl(attrs))),
+        'create-mirrorelement':      ((board, parents, attrs) => board.create('mirrorelement', from_fasl(parents), from_fasl(attrs))),
         'create-text':               ((board, parents, attrs) => board.create('text', from_fasl(parents), from_fasl(attrs))),
         'create-image':              ((board, parents, attrs) => board.create('image', from_fasl(parents), from_fasl(attrs))),
         'create-group':              ((board, parents, attrs) => board.create('group', from_fasl(parents), from_fasl(attrs))),
@@ -2930,6 +2935,11 @@ var imports = {
         'create-chart'()              { throw new Error('DOM not available in this environment'); },
         'create-legend'()             { throw new Error('DOM not available in this environment'); },
         'create-smartlabel'()         { throw new Error('DOM not available in this environment'); },
+        'create-foreignobject'()      { throw new Error('DOM not available in this environment'); },
+        'create-tapemeasure'()        { throw new Error('DOM not available in this environment'); },
+        'create-measurement'()        { throw new Error('DOM not available in this environment'); },
+        'create-circumcenter'()       { throw new Error('DOM not available in this environment'); },
+        'create-mirrorelement'()      { throw new Error('DOM not available in this environment'); },
         'create-text'()               { throw new Error('DOM not available in this environment'); },
         'create-image'()              { throw new Error('DOM not available in this environment'); },
         'create-group'()              { throw new Error('DOM not available in this environment'); },
@@ -3100,6 +3110,58 @@ var imports = {
         'updateText'()               { throw new Error('DOM not available in this environment'); },
         'utf8_decode'()              { throw new Error('DOM not available in this environment'); },
         'valueTagToJessieCode'()     { throw new Error('DOM not available in this environment'); }
+    },
+    // JSXGraph ForeignObject
+    'jsx-foreignobject': hasDOM ? {
+        'H':                        (foreignobject => foreignobject.H()),
+        'W':                        (foreignobject => foreignobject.W()),
+        'hasPoint':                 ((foreignobject, x, y) => foreignobject.hasPoint(from_fasl(x), from_fasl(y))),
+        'setSize':                  ((foreignobject, width, height) => foreignobject.setSize(from_fasl(width), from_fasl(height))),
+        'update':                   (foreignobject => foreignobject.update()),
+        'updateRenderer':           (foreignobject => foreignobject.updateRenderer()),
+        'updateSize':               (foreignobject => foreignobject.updateSize()),
+        'updateSpan':               (foreignobject => foreignobject.updateSpan())
+    } : {
+        'H'()                       { throw new Error('DOM not available in this environment'); },
+        'W'()                       { throw new Error('DOM not available in this environment'); },
+        'hasPoint'()                { throw new Error('DOM not available in this environment'); },
+        'setSize'()                 { throw new Error('DOM not available in this environment'); },
+        'update'()                  { throw new Error('DOM not available in this environment'); },
+        'updateRenderer'()          { throw new Error('DOM not available in this environment'); },
+        'updateSize'()              { throw new Error('DOM not available in this environment'); },
+        'updateSpan'()              { throw new Error('DOM not available in this environment'); }
+    },
+    // JSXGraph Tapemeasure
+    'jsx-tapemeasure': hasDOM ? {
+        'Value':                    (tapemeasure => tapemeasure.Value())
+    } : {
+        'Value'()                   { throw new Error('DOM not available in this environment'); }
+    },
+    // JSXGraph Point Relation Helpers
+    'jsx-mirrorpoint': hasDOM ? {
+        'create':                   ((board, parents, attrs) => board.create('mirrorpoint', from_fasl(parents), from_fasl(attrs)))
+    } : {
+        'create'()                  { throw new Error('DOM not available in this environment'); }
+    },
+    'jsx-otherintersection': hasDOM ? {
+        'create':                   ((board, parents, attrs) => board.create('otherintersection', from_fasl(parents), from_fasl(attrs)))
+    } : {
+        'create'()                  { throw new Error('DOM not available in this environment'); }
+    },
+    'jsx-orthogonalprojection': hasDOM ? {
+        'create':                   ((board, parents, attrs) => board.create('orthogonalprojection', from_fasl(parents), from_fasl(attrs)))
+    } : {
+        'create'()                  { throw new Error('DOM not available in this environment'); }
+    },
+    'jsx-parallelpoint': hasDOM ? {
+        'create':                   ((board, parents, attrs) => board.create('parallelpoint', from_fasl(parents), from_fasl(attrs)))
+    } : {
+        'create'()                  { throw new Error('DOM not available in this environment'); }
+    },
+    'jsx-perpendicularpoint': hasDOM ? {
+        'create':                   ((board, parents, attrs) => board.create('perpendicularpoint', from_fasl(parents), from_fasl(attrs)))
+    } : {
+        'create'()                  { throw new Error('DOM not available in this environment'); }
     },
     // JSXGraph Checkbox
     'jsx-checkbox': hasDOM ? {

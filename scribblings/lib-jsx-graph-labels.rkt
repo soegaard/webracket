@@ -207,6 +207,16 @@
   jsx-create-smartlabel
   jsx-create-text
   jsx-create-image
+  jsx-create-foreignobject
+  jsx-create-tapemeasure
+  jsx-create-measurement
+  jsx-create-circumcenter
+  jsx-create-mirrorelement
+  jsx-create-mirrorpoint
+  jsx-create-otherintersection
+  jsx-create-orthogonalprojection
+  jsx-create-parallelpoint
+  jsx-create-perpendicularpoint
   jsx-create-group
   jsx-checkbox-value
   jsx-input-set!
@@ -224,6 +234,15 @@
   jsx-chart-draw-spline
   jsx-chart-update-data-array!
   jsx-chart-update-renderer!
+  jsx-foreignobject-H
+  jsx-foreignobject-W
+  jsx-foreignobject-has-point?
+  jsx-foreignobject-set-size!
+  jsx-foreignobject-update!
+  jsx-foreignobject-update-renderer!
+  jsx-foreignobject-update-size!
+  jsx-foreignobject-update-span!
+  jsx-tapemeasure-value
   jsx-text-_createFctUpdateText
   jsx-text-_setText
   jsx-text-bounds
@@ -616,6 +635,16 @@
 (define jsx-create-smartlabel any/c)
 (define jsx-create-text any/c)
 (define jsx-create-image any/c)
+(define jsx-create-foreignobject any/c)
+(define jsx-create-tapemeasure any/c)
+(define jsx-create-measurement any/c)
+(define jsx-create-circumcenter any/c)
+(define jsx-create-mirrorelement any/c)
+(define jsx-create-mirrorpoint any/c)
+(define jsx-create-otherintersection any/c)
+(define jsx-create-orthogonalprojection any/c)
+(define jsx-create-parallelpoint any/c)
+(define jsx-create-perpendicularpoint any/c)
 (define jsx-create-group any/c)
 (define jsx-checkbox-value any/c)
 (define jsx-input-set! any/c)
@@ -633,6 +662,15 @@
 (define jsx-chart-draw-spline any/c)
 (define jsx-chart-update-data-array! any/c)
 (define jsx-chart-update-renderer! any/c)
+(define jsx-foreignobject-H any/c)
+(define jsx-foreignobject-W any/c)
+(define jsx-foreignobject-has-point? any/c)
+(define jsx-foreignobject-set-size! any/c)
+(define jsx-foreignobject-update! any/c)
+(define jsx-foreignobject-update-renderer! any/c)
+(define jsx-foreignobject-update-size! any/c)
+(define jsx-foreignobject-update-span! any/c)
+(define jsx-tapemeasure-value any/c)
 (define jsx-text-_createFctUpdateText any/c)
 (define jsx-text-_setText any/c)
 (define jsx-text-bounds any/c)

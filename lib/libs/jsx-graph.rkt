@@ -638,6 +638,56 @@
 (define-jsx-alias (jsx-board-create-smartlabel/raw board parents attrs)
   js-jsx-board-create-smartlabel)
 
+;; jsx-board-create-foreignobject/raw : external/raw any/c any/c -> external/raw
+;;   Create a foreignobject on a board.
+(define-jsx-alias (jsx-board-create-foreignobject/raw board parents attrs)
+  js-jsx-board-create-foreignobject)
+
+;; jsx-board-create-tapemeasure/raw : external/raw any/c any/c -> external/raw
+;;   Create a tapemeasure on a board.
+(define-jsx-alias (jsx-board-create-tapemeasure/raw board parents attrs)
+  js-jsx-board-create-tapemeasure)
+
+;; jsx-board-create-measurement/raw : external/raw any/c any/c -> external/raw
+;;   Create a measurement on a board.
+(define-jsx-alias (jsx-board-create-measurement/raw board parents attrs)
+  js-jsx-board-create-measurement)
+
+;; jsx-board-create-circumcenter/raw : external/raw any/c any/c -> external/raw
+;;   Create a circumcenter on a board.
+(define-jsx-alias (jsx-board-create-circumcenter/raw board parents attrs)
+  js-jsx-board-create-circumcenter)
+
+;; jsx-board-create-mirrorelement/raw : external/raw any/c any/c -> external/raw
+;;   Create a mirrorelement on a board.
+(define-jsx-alias (jsx-board-create-mirrorelement/raw board parents attrs)
+  js-jsx-board-create-mirrorelement)
+
+;; jsx-board-create-mirrorpoint/raw : external/raw any/c any/c -> external/raw
+;;   Create a mirror point on a board.
+(define-jsx-alias (jsx-board-create-mirrorpoint/raw board parents attrs)
+  js-jsx-board-create-mirrorpoint)
+
+;; jsx-board-create-otherintersection/raw : external/raw any/c any/c -> external/raw
+;;   Create an other intersection on a board.
+(define-jsx-alias (jsx-board-create-otherintersection/raw board parents attrs)
+  js-jsx-board-create-otherintersection)
+
+;; jsx-board-create-orthogonalprojection/raw : external/raw any/c any/c -> external/raw
+;;   Create an orthogonal projection on a board.
+(define-jsx-alias (jsx-board-create-orthogonalprojection/raw board parents attrs)
+  js-jsx-board-create-orthogonalprojection)
+
+;; jsx-board-create-parallelpoint/raw : external/raw any/c any/c -> external/raw
+;;   Create a parallel point on a board.
+(define-jsx-alias (jsx-board-create-parallelpoint/raw board parents attrs)
+  js-jsx-board-create-parallelpoint)
+
+;; jsx-board-create-perpendicularpoint/raw : external/raw any/c any/c -> external/raw
+;;   Create a perpendicular point on a board.
+(define-jsx-alias (jsx-board-create-perpendicularpoint/raw board parents attrs)
+  js-jsx-board-create-perpendicularpoint)
+
 ;; jsx-board-create-text/raw : external/raw any/c any/c -> external/raw
 ;;   Create a text element on a board.
 (define-jsx-alias (jsx-board-create-text/raw board parents attrs)
@@ -1830,6 +1880,76 @@
    (jsx-board-create-smartlabel/raw (jsx-board-raw board) parents
                                     (or attributes '#[]))))
 
+;; jsx-create-foreignobject : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a foreignobject on a board.
+(define (jsx-create-foreignobject board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-foreignobject/raw (jsx-board-raw board) parents
+                                       (or attributes '#[]))))
+
+;; jsx-create-tapemeasure : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a tapemeasure on a board.
+(define (jsx-create-tapemeasure board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-tapemeasure/raw (jsx-board-raw board) parents
+                                     (or attributes '#[]))))
+
+;; jsx-create-measurement : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a measurement on a board.
+(define (jsx-create-measurement board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-measurement/raw (jsx-board-raw board) parents
+                                     (or attributes '#[]))))
+
+;; jsx-create-circumcenter : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a circumcenter on a board.
+(define (jsx-create-circumcenter board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-circumcenter/raw (jsx-board-raw board) parents
+                                      (or attributes '#[]))))
+
+;; jsx-create-mirrorelement : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a mirrorelement on a board.
+(define (jsx-create-mirrorelement board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-mirrorelement/raw (jsx-board-raw board) parents
+                                       (or attributes '#[]))))
+
+;; jsx-create-mirrorpoint : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a mirror point on a board.
+(define (jsx-create-mirrorpoint board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-mirrorpoint/raw (jsx-board-raw board) parents
+                                     (or attributes '#[]))))
+
+;; jsx-create-otherintersection : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create an other intersection on a board.
+(define (jsx-create-otherintersection board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-otherintersection/raw (jsx-board-raw board) parents
+                                           (or attributes '#[]))))
+
+;; jsx-create-orthogonalprojection : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create an orthogonal projection on a board.
+(define (jsx-create-orthogonalprojection board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-orthogonalprojection/raw (jsx-board-raw board) parents
+                                              (or attributes '#[]))))
+
+;; jsx-create-parallelpoint : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a parallel point on a board.
+(define (jsx-create-parallelpoint board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-parallelpoint/raw (jsx-board-raw board) parents
+                                       (or attributes '#[]))))
+
+;; jsx-create-perpendicularpoint : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a perpendicular point on a board.
+(define (jsx-create-perpendicularpoint board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-perpendicularpoint/raw (jsx-board-raw board) parents
+                                            (or attributes '#[]))))
+
 ;; jsx-input-set! : jsx-element? any/c -> jsx-element?
 ;;   Set the current input value.
 (define (jsx-input-set! input value)
@@ -2358,6 +2478,101 @@
 (define (jsx-image-update-span! image . args)
   (jsx-image-update-span!/raw image (list->vector args))
   (void))
+
+;; jsx-foreignobject-H/raw : external/raw any/c -> external/raw
+;;   Read the foreign object H helper.
+(define-jsx-alias (jsx-foreignobject-H/raw foreignobject args)
+  js-jsx-foreignobject-H)
+
+;; jsx-foreignobject-W/raw : external/raw any/c -> external/raw
+;;   Read the foreign object W helper.
+(define-jsx-alias (jsx-foreignobject-W/raw foreignobject args)
+  js-jsx-foreignobject-W)
+
+;; jsx-foreignobject-has-point?/raw : external/raw any/c -> boolean?
+;;   Check whether a point hits the foreign object.
+(define-jsx-alias (jsx-foreignobject-has-point?/raw foreignobject args)
+  js-jsx-foreignobject-has-point)
+
+;; jsx-foreignobject-set-size!/raw : external/raw any/c -> external/raw
+;;   Set the foreign object size directly.
+(define-jsx-alias (jsx-foreignobject-set-size!/raw foreignobject args)
+  js-jsx-foreignobject-set-size)
+
+;; jsx-foreignobject-update!/raw : external/raw any/c -> external/raw
+;;   Update a foreign object.
+(define-jsx-alias (jsx-foreignobject-update!/raw foreignobject args)
+  js-jsx-foreignobject-update)
+
+;; jsx-foreignobject-update-renderer!/raw : external/raw any/c -> external/raw
+;;   Refresh the foreign object renderer.
+(define-jsx-alias (jsx-foreignobject-update-renderer!/raw foreignobject args)
+  js-jsx-foreignobject-update-renderer)
+
+;; jsx-foreignobject-update-size!/raw : external/raw any/c -> external/raw
+;;   Update the foreign object size.
+(define-jsx-alias (jsx-foreignobject-update-size!/raw foreignobject args)
+  js-jsx-foreignobject-update-size)
+
+;; jsx-foreignobject-update-span!/raw : external/raw any/c -> external/raw
+;;   Update the foreign object span.
+(define-jsx-alias (jsx-foreignobject-update-span!/raw foreignobject args)
+  js-jsx-foreignobject-update-span)
+
+;; jsx-foreignobject-H : jsx-element? any/c ... -> any/c
+;;   Read the foreign object H helper.
+(define (jsx-foreignobject-H foreignobject . args)
+  (jsx-foreignobject-H/raw foreignobject (list->vector args)))
+
+;; jsx-foreignobject-W : jsx-element? any/c ... -> any/c
+;;   Read the foreign object W helper.
+(define (jsx-foreignobject-W foreignobject . args)
+  (jsx-foreignobject-W/raw foreignobject (list->vector args)))
+
+;; jsx-foreignobject-has-point? : jsx-element? any/c ... -> boolean?
+;;   Check whether a point hits the foreign object.
+(define (jsx-foreignobject-has-point? foreignobject . args)
+  (jsx-foreignobject-has-point?/raw foreignobject (list->vector args)))
+
+;; jsx-foreignobject-set-size! : jsx-element? any/c ... -> void?
+;;   Set the foreign object size directly.
+(define (jsx-foreignobject-set-size! foreignobject . args)
+  (jsx-foreignobject-set-size!/raw foreignobject (list->vector args))
+  (void))
+
+;; jsx-foreignobject-update! : jsx-element? any/c ... -> void?
+;;   Update a foreign object.
+(define (jsx-foreignobject-update! foreignobject . args)
+  (jsx-foreignobject-update!/raw foreignobject (list->vector args))
+  (void))
+
+;; jsx-foreignobject-update-renderer! : jsx-element? any/c ... -> void?
+;;   Refresh the foreign object renderer.
+(define (jsx-foreignobject-update-renderer! foreignobject . args)
+  (jsx-foreignobject-update-renderer!/raw foreignobject (list->vector args))
+  (void))
+
+;; jsx-foreignobject-update-size! : jsx-element? any/c ... -> void?
+;;   Update the foreign object size.
+(define (jsx-foreignobject-update-size! foreignobject . args)
+  (jsx-foreignobject-update-size!/raw foreignobject (list->vector args))
+  (void))
+
+;; jsx-foreignobject-update-span! : jsx-element? any/c ... -> void?
+;;   Update the foreign object span.
+(define (jsx-foreignobject-update-span! foreignobject . args)
+  (jsx-foreignobject-update-span!/raw foreignobject (list->vector args))
+  (void))
+
+;; jsx-tapemeasure-value/raw : external/raw any/c -> any/c
+;;   Read the tapemeasure value.
+(define-jsx-alias (jsx-tapemeasure-value/raw tapemeasure args)
+  js-jsx-tapemeasure-Value)
+
+;; jsx-tapemeasure-value : jsx-element? -> any/c
+;;   Read the tapemeasure value.
+(define (jsx-tapemeasure-value tapemeasure)
+  (jsx-tapemeasure-value/raw tapemeasure (vector)))
 
 ;;; -------------------------------------------------------------------
 ;;; Geometry element helpers

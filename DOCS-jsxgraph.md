@@ -21,7 +21,8 @@ Current scope:
   derivative, integral, riemannsum, slopefield, vectorfield, implicitcurve,
   spline, cardinalspline, comb, metapostspline, polygonalchain, regularpolygon,
   hyperbola, parabola, stepfunction, inequality, turtle, slider,
-  chart, legend, smartlabel, arrow, button, checkbox, and input
+  chart, legend, smartlabel, arrow, button, checkbox, input,
+  foreignobject, tapemeasure, measurement, circumcenter, and mirrorelement
   bridge helpers
 - Chart bridge helpers
 
@@ -65,6 +66,16 @@ All function names are linked to JSXGraph API documentation.
 - [Style and Renderer Refresh](#style-and-renderer-refresh)
 - [Minimal Geometry Constructors](#minimal-geometry-constructors)
 - [Chapter 24 — Coverage Checklist](#chapter-24--coverage-checklist)
+- [Chapter 25 — ForeignObject Bridge](#chapter-25--foreignobject-bridge)
+- [Chapter 26 — Tapemeasure Bridge](#chapter-26--tapemeasure-bridge)
+- [Chapter 27 — Measurement Bridge](#chapter-27--measurement-bridge)
+- [Chapter 28 — Circumcenter Bridge](#chapter-28--circumcenter-bridge)
+- [Chapter 29 — MirrorElement Bridge](#chapter-29--mirrorelement-bridge)
+- [Chapter 30 — MirrorPoint Bridge](#chapter-30--mirrorpoint-bridge)
+- [Chapter 31 — OtherIntersection Bridge](#chapter-31--otherintersection-bridge)
+- [Chapter 32 — Orthogonalprojection Bridge](#chapter-32--orthogonalprojection-bridge)
+- [Chapter 33 — Parallelpoint Bridge](#chapter-33--parallelpoint-bridge)
+- [Chapter 34 — PerpendicularPoint Bridge](#chapter-34--perpendicularpoint-bridge)
 
 ## Chapter 2 — Conventions
 
@@ -248,6 +259,16 @@ Reference roots:
 | [`js-jsx-board-create-smartlabel`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-smartlabel board #[p] attrs)` | create a smartlabel on the board. |
 | [`js-jsx-board-create-text`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-text board #[-5 5 "A"] attrs)` | create a text label or annotation on the board. |
 | [`js-jsx-board-create-image`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-image board #[-5 5 "url"] attrs)` | create an image object on the board. |
+| [`js-jsx-board-create-foreignobject`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-foreignobject board #["<div>foo</div>" #[-5 5] #[140 60]] attrs)` | create a foreign object on the board. |
+| [`js-jsx-board-create-tapemeasure`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-tapemeasure board #[#[-4 0] #[4 0]] attrs)` | create a tape measure on the board. |
+| [`js-jsx-board-create-measurement`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-measurement board #[0 0 ["Radius" circle]] attrs)` | create a measurement on the board. |
+| [`js-jsx-board-create-circumcenter`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-circumcenter board #[p1 p2 p3] attrs)` | create a circumcenter point on the board. |
+| [`js-jsx-board-create-mirrorelement`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-mirrorelement board #[obj mirr] attrs)` | create a mirrored element on the board. |
+| [`js-jsx-board-create-mirrorpoint`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-mirrorpoint board #[p1 p2] attrs)` | create a mirrored point on the board. |
+| [`js-jsx-board-create-otherintersection`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-otherintersection board #[el1 el2 p] attrs)` | create the other intersection of two elements. |
+| [`js-jsx-board-create-orthogonalprojection`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-orthogonalprojection board #[p l] attrs)` | create the orthogonal projection of a point onto a line. |
+| [`js-jsx-board-create-parallelpoint`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-parallelpoint board #[p1 p2 p3] attrs)` | create a point parallel to a base vector. |
+| [`js-jsx-board-create-perpendicularpoint`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-perpendicularpoint board #[p l] attrs)` | create a perpendicular projection point. |
 
 ### 7.2 Lifecycle and Updates
 
@@ -513,9 +534,9 @@ control the slider range and value.
 
 ## Chapter 24 — Coverage Checklist
 
-- This document covers **188** functions from `ffi/jsxgraph.ffi`.
-- Total documented functions: **193**
-- `board api`: 55 functions
+- This document covers **207** functions from `ffi/jsxgraph.ffi`.
+- Total documented functions: **217**
+- `board api`: 70 functions
 - `board properties`: 8 functions
 - `geometryelement bridge`: 3 functions
 - `line bridge`: 2 functions
@@ -527,6 +548,8 @@ control the slider range and value.
 - `curve bridge`: 5 functions
 - `polygon bridge`: 2 functions
 - `chart bridge`: 9 functions
+- `foreignobject bridge`: 8 functions
+- `tapemeasure bridge`: 1 function
 - `checkbox bridge`: 1 function
 - `input bridge`: 2 functions
 - `slider bridge`: 5 functions
@@ -534,3 +557,78 @@ control the slider range and value.
 - `point getters`: 19 functions
 - `point setters`: 17 functions
 - `point methods`: 8 functions
+
+## Chapter 25 — ForeignObject Bridge
+
+The `ForeignObject` bridge covers the JSXGraph methods specific to
+foreign object elements.
+
+| Function | Input types | Output type | Example | Use when |
+|---|---|---|---|---|
+| [`js-jsx-foreignobject-H`](https://jsxgraph.org/docs/symbols/ForeignObject.html#H) | `(extern)` | `(extern/raw)` | `(js-jsx-foreignobject-H foreignobject)` | read the foreign object H helper. |
+| [`js-jsx-foreignobject-W`](https://jsxgraph.org/docs/symbols/ForeignObject.html#W) | `(extern)` | `(extern/raw)` | `(js-jsx-foreignobject-W foreignobject)` | read the foreign object W helper. |
+| [`js-jsx-foreignobject-has-point`](https://jsxgraph.org/docs/symbols/ForeignObject.html#hasPoint) | `(extern value value)` | `(boolean)` | `(js-jsx-foreignobject-has-point foreignobject 10 10)` | test whether a point hits the foreign object. |
+| [`js-jsx-foreignobject-set-size`](https://jsxgraph.org/docs/symbols/ForeignObject.html#setSize) | `(extern value)` | `(extern/raw)` | `(js-jsx-foreignobject-set-size foreignobject size)` | set the foreign object size. |
+| [`js-jsx-foreignobject-update`](https://jsxgraph.org/docs/symbols/ForeignObject.html#update) | `(extern)` | `(extern/raw)` | `(js-jsx-foreignobject-update foreignobject)` | update the foreign object. |
+| [`js-jsx-foreignobject-update-renderer`](https://jsxgraph.org/docs/symbols/ForeignObject.html#updateRenderer) | `(extern)` | `(extern/raw)` | `(js-jsx-foreignobject-update-renderer foreignobject)` | refresh the foreign object renderer. |
+| [`js-jsx-foreignobject-update-size`](https://jsxgraph.org/docs/symbols/ForeignObject.html#updateSize) | `(extern)` | `(extern/raw)` | `(js-jsx-foreignobject-update-size foreignobject)` | update the foreign object size. |
+| [`js-jsx-foreignobject-update-span`](https://jsxgraph.org/docs/symbols/ForeignObject.html#updateSpan) | `(extern)` | `(extern/raw)` | `(js-jsx-foreignobject-update-span foreignobject)` | update the foreign object span. |
+
+## Chapter 26 — Tapemeasure Bridge
+
+The `Tapemeasure` bridge currently exposes the tape measure value
+helper.
+
+| Function | Input types | Output type | Example | Use when |
+|---|---|---|---|---|
+| [`js-jsx-tapemeasure-Value`](https://jsxgraph.org/docs/symbols/Tapemeasure.html#Value) | `(extern)` | `(f64)` | `(js-jsx-tapemeasure-Value tapemeasure)` | read the tape measure value. |
+
+## Chapter 27 — Measurement Bridge
+
+The `Measurement` wrapper is constructor-only in this batch. Use
+`js-jsx-board-create-measurement` or `jsx-create-measurement` to add a
+measurement board element.
+
+## Chapter 28 — Circumcenter Bridge
+
+The `Circumcenter` wrapper is constructor-only in this batch. Use
+`js-jsx-board-create-circumcenter` or `jsx-create-circumcenter` to add
+the circumcenter point to a triangle construction.
+
+## Chapter 29 — MirrorElement Bridge
+
+The `MirrorElement` wrapper is constructor-only in this batch. Use
+`js-jsx-board-create-mirrorelement` or `jsx-create-mirrorelement` to
+add a mirrored object to a board.
+
+## Chapter 30 — MirrorPoint Bridge
+
+The `MirrorPoint` wrapper is constructor-only in this batch. Use
+`js-jsx-board-create-mirrorpoint` or `jsx-create-mirrorpoint` to add a
+mirrored point to a board.
+
+## Chapter 31 — OtherIntersection Bridge
+
+The `OtherIntersection` wrapper is constructor-only in this batch. Use
+`js-jsx-board-create-otherintersection` or `jsx-create-otherintersection`
+to add the other intersection of two elements to a board.
+
+## Chapter 32 — Orthogonalprojection Bridge
+
+The `Orthogonalprojection` wrapper is constructor-only in this batch.
+Use `js-jsx-board-create-orthogonalprojection` or
+`jsx-create-orthogonalprojection` to add the orthogonal projection of a
+point onto a line.
+
+## Chapter 33 — Parallelpoint Bridge
+
+The `Parallelpoint` wrapper is constructor-only in this batch. Use
+`js-jsx-board-create-parallelpoint` or `jsx-create-parallelpoint` to
+add a point parallel to a base vector.
+
+## Chapter 34 — PerpendicularPoint Bridge
+
+The `PerpendicularPoint` wrapper is constructor-only in this batch.
+Use `js-jsx-board-create-perpendicularpoint` or
+`jsx-create-perpendicularpoint` to add the perpendicular projection of
+a point onto a line.

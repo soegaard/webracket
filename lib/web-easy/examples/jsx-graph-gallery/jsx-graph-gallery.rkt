@@ -21,6 +21,9 @@
 (define sector-board-id "jsx-graph-gallery-sector")
 (define arrowparallel-board-id "jsx-graph-gallery-arrowparallel")
 (define axis-board-id "jsx-graph-gallery-axis")
+(define segment-board-id "jsx-graph-gallery-segment")
+(define intersection-board-id "jsx-graph-gallery-intersection")
+(define orthogonal-board-id "jsx-graph-gallery-normal")
 (define grid-board-id "jsx-graph-gallery-grid")
 (define boxplot-board-id "jsx-graph-gallery-boxplot")
 (define tangent-board-id "jsx-graph-gallery-tangent")
@@ -75,6 +78,16 @@
 (define slider-board-id "jsx-graph-gallery-slider")
 (define smartlabel-board-id "jsx-graph-gallery-smartlabel")
 (define text-board-id "jsx-graph-gallery-text")
+(define foreignobject-board-id "jsx-graph-gallery-foreignobject")
+(define tapemeasure-board-id "jsx-graph-gallery-tapemeasure")
+(define measurement-board-id "jsx-graph-gallery-measurement")
+(define circumcenter-board-id "jsx-graph-gallery-circumcenter")
+(define mirrorelement-board-id "jsx-graph-gallery-mirrorelement")
+(define mirrorpoint-board-id "jsx-graph-gallery-mirrorpoint")
+(define otherintersection-board-id "jsx-graph-gallery-otherintersection")
+(define orthogonalprojection-board-id "jsx-graph-gallery-orthogonalprojection")
+(define parallelpoint-board-id "jsx-graph-gallery-parallelpoint")
+(define perpendicularpoint-board-id "jsx-graph-gallery-perpendicularpoint")
 (define constructions-board-id "jsx-graph-gallery-constructions")
 (define widgets-board-id "jsx-graph-gallery-widgets")
 (define annotation-board-id "jsx-graph-gallery-annotation")
@@ -108,6 +121,9 @@
 (define sector-board-ready? #f)
 (define arrowparallel-board-ready? #f)
 (define axis-board-ready? #f)
+(define segment-board-ready? #f)
+(define intersection-board-ready? #f)
+(define orthogonal-board-ready? #f)
 (define grid-board-ready? #f)
 (define boxplot-board-ready? #f)
 (define tangent-board-ready? #f)
@@ -162,6 +178,16 @@
 (define slider-board-ready? #f)
 (define smartlabel-board-ready? #f)
 (define text-board-ready? #f)
+(define foreignobject-board-ready? #f)
+(define tapemeasure-board-ready? #f)
+(define measurement-board-ready? #f)
+(define circumcenter-board-ready? #f)
+(define mirrorelement-board-ready? #f)
+(define mirrorpoint-board-ready? #f)
+(define otherintersection-board-ready? #f)
+(define orthogonalprojection-board-ready? #f)
+(define parallelpoint-board-ready? #f)
+(define perpendicularpoint-board-ready? #f)
 (define constructions-board-ready? #f)
 (define widgets-board-ready? #f)
 (define annotation-board-ready? #f)
@@ -195,6 +221,22 @@
 (define axis-board #f)
 (define axis-x #f)
 (define axis-y #f)
+(define segment-board #f)
+(define segment-a #f)
+(define segment-b #f)
+(define segment-object #f)
+(define intersection-board #f)
+(define intersection-a #f)
+(define intersection-b #f)
+(define intersection-c #f)
+(define intersection-d #f)
+(define intersection-line-1 #f)
+(define intersection-line-2 #f)
+(define intersection-point #f)
+(define orthogonal-board #f)
+(define orthogonal-curve #f)
+(define orthogonal-point #f)
+(define orthogonal-object #f)
 (define grid-board #f)
 (define grid-object #f)
 (define grid-mode "standard")
@@ -425,6 +467,57 @@
 (define smartlabel-object #f)
 (define text-board #f)
 (define text-object #f)
+(define foreignobject-board #f)
+(define foreignobject-object #f)
+(define tapemeasure-board #f)
+(define tapemeasure-a #f)
+(define tapemeasure-b #f)
+(define tapemeasure-object #f)
+(define measurement-board #f)
+(define measurement-a #f)
+(define measurement-b #f)
+(define measurement-circle #f)
+(define measurement-object #f)
+(define circumcenter-board #f)
+(define circumcenter-a #f)
+(define circumcenter-b #f)
+(define circumcenter-c #f)
+(define circumcenter-triangle #f)
+(define circumcenter-object #f)
+(define mirrorelement-board #f)
+(define mirrorelement-a #f)
+(define mirrorelement-mirror #f)
+(define mirrorelement-object #f)
+(define mirrorpoint-board #f)
+(define mirrorpoint-a #f)
+(define mirrorpoint-b #f)
+(define mirrorpoint-object #f)
+(define otherintersection-board #f)
+(define otherintersection-center-1 #f)
+(define otherintersection-through-1 #f)
+(define otherintersection-center-2 #f)
+(define otherintersection-through-2 #f)
+(define otherintersection-circle-1 #f)
+(define otherintersection-circle-2 #f)
+(define otherintersection-primary #f)
+(define otherintersection-secondary #f)
+(define orthogonalprojection-board #f)
+(define orthogonalprojection-line-a #f)
+(define orthogonalprojection-line-b #f)
+(define orthogonalprojection-line #f)
+(define orthogonalprojection-point #f)
+(define orthogonalprojection-object #f)
+(define parallelpoint-board #f)
+(define parallelpoint-p1 #f)
+(define parallelpoint-p2 #f)
+(define parallelpoint-p3 #f)
+(define parallelpoint-object #f)
+(define perpendicularpoint-board #f)
+(define perpendicularpoint-line-a #f)
+(define perpendicularpoint-line-b #f)
+(define perpendicularpoint-line #f)
+(define perpendicularpoint-point #f)
+(define perpendicularpoint-object #f)
 (define constructions-board #f)
 (define widgets-board #f)
 (define widget-button #f)
@@ -1047,6 +1140,141 @@
                                           (vector "strokeColor" "#c53030")))))
           (set! axis-board-ready? #t))
         (void (jsx-board-full-update! axis-board))
+        #t)))
+
+;; init-segment-board! : -> boolean?
+;;   Build the JSXGraph segment board once the browser assets have loaded.
+(define (init-segment-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless segment-board-ready?
+          (console-log "Segment board")
+          (set! segment-board
+                (jsx-create-board
+                 segment-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-4 4 4 -4])
+                          (vector "axis" #t)
+                          (vector "keepaspectratio" #t)))))
+          (set! segment-a
+                (jsx-create-point segment-board
+                                  (jsx-parents -2 1)
+                                  (js-object (vector (vector "name" "A")
+                                                     (vector "size" 4)))))
+          (set! segment-b
+                (jsx-create-point segment-board
+                                  (jsx-parents 2 -1)
+                                  (js-object (vector (vector "name" "B")
+                                                     (vector "size" 4)))))
+          (set! segment-object
+                (jsx-create-segment segment-board
+                                    (jsx-parents segment-a segment-b)
+                                    (js-object (vector (vector "name" "AB")))))
+          (set! segment-board-ready? #t))
+        (void (jsx-board-full-update! segment-board))
+        #t)))
+
+;; init-intersection-board! : -> boolean?
+;;   Build the JSXGraph intersection board once the browser assets have loaded.
+(define (init-intersection-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless intersection-board-ready?
+          (console-log "Intersection board")
+          (set! intersection-board
+                (jsx-create-board
+                 intersection-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-4 4 4 -4])
+                          (vector "axis" #t)
+                          (vector "keepaspectratio" #t)))))
+          (set! intersection-a
+                (jsx-create-point intersection-board
+                                  (jsx-parents -2 2)
+                                  (js-object (vector (vector "name" "A")
+                                                     (vector "size" 4)))))
+          (set! intersection-b
+                (jsx-create-point intersection-board
+                                  (jsx-parents 2 -1)
+                                  (js-object (vector (vector "name" "B")
+                                                     (vector "size" 4)))))
+          (set! intersection-c
+                (jsx-create-point intersection-board
+                                  (jsx-parents -2 -1)
+                                  (js-object (vector (vector "name" "C")
+                                                     (vector "size" 4)))))
+          (set! intersection-d
+                (jsx-create-point intersection-board
+                                  (jsx-parents 2 2)
+                                  (js-object (vector (vector "name" "D")
+                                                     (vector "size" 4)))))
+          (set! intersection-line-1
+                (jsx-create-line intersection-board
+                                 (jsx-parents intersection-a intersection-b)
+                                 (js-object (vector (vector "name" "l1")))))
+          (set! intersection-line-2
+                (jsx-create-line intersection-board
+                                 (jsx-parents intersection-c intersection-d)
+                                 (js-object (vector (vector "name" "l2")))))
+          (set! intersection-point
+                (jsx-create-intersection intersection-board
+                                         (jsx-parents intersection-line-1
+                                                      intersection-line-2)
+                                         (js-object (vector (vector "name" "I")
+                                                            (vector "size" 4)
+                                                            (vector "fillColor" "#c53030")
+                                                            (vector "strokeColor" "#c53030")))))
+          (set! intersection-board-ready? #t))
+        (void (jsx-board-full-update! intersection-board))
+        #t)))
+
+;; init-orthogonal-board! : -> boolean?
+;;   Build the JSXGraph normal board once the browser assets have loaded.
+(define (init-orthogonal-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless orthogonal-board-ready?
+          (console-log "Normal board")
+          (set! orthogonal-board
+                (jsx-create-board
+                 orthogonal-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-4 4 4 -4])
+                          (vector "axis" #t)
+                          (vector "keepaspectratio" #t)))))
+          (set! orthogonal-curve
+                (jsx-create-circle orthogonal-board
+                                   (jsx-parents (jsx-parents 0 0)
+                                                (jsx-parents 1 0))
+                                   (js-object (vector (vector "name" "c")))))
+          (set! orthogonal-point
+                (jsx-create-point orthogonal-board
+                                  (jsx-parents 1.5 1.4)
+                                  (js-object (vector (vector "name" "P")
+                                                     (vector "size" 4)
+                                                     (vector "fillColor" "#c53030")
+                                                     (vector "strokeColor" "#c53030")))))
+          (set! orthogonal-object
+                (jsx-create-normal orthogonal-board
+                                   (jsx-parents orthogonal-curve orthogonal-point)
+                                   (js-object (vector (vector "name" "n")))))
+          (set! orthogonal-board-ready? #t))
+        (void (jsx-board-full-update! orthogonal-board))
         #t)))
 
 ;; init-grid-board! : -> boolean?
@@ -3266,6 +3494,521 @@
         (void (jsx-board-full-update! text-board))
         #t)))
 
+;; init-foreignobject-board! : -> boolean?
+;;   Build the JSXGraph foreign object board once the browser assets have loaded.
+(define (init-foreignobject-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless foreignobject-board-ready?
+          (console-log "ForeignObject board")
+          (set! foreignobject-board
+                (jsx-create-board
+                 foreignobject-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 4 6 -4])
+                          (vector "axis" #t)
+                          (vector "keepaspectratio" #t)))))
+          (set! foreignobject-object
+                (jsx-create-foreignobject
+                 foreignobject-board
+                 (jsx-parents
+                  "<div style='padding:0.5rem 0.75rem;background:#e6fffa;border:1px solid #38b2ac;border-radius:0.5rem;'>ForeignObject board</div>"
+                  (jsx-parents -3 1)
+                  (jsx-parents 220 80))
+                 (js-object
+                  (vector (vector "name" "foreignObject")))))
+          (set! foreignobject-board-ready? #t))
+        (void (jsx-board-full-update! foreignobject-board))
+        #t)))
+
+;; init-tapemeasure-board! : -> boolean?
+;;   Build the JSXGraph tapemeasure board once the browser assets have loaded.
+(define (init-tapemeasure-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless tapemeasure-board-ready?
+          (console-log "Tapemeasure board")
+          (set! tapemeasure-board
+                (jsx-create-board
+                 tapemeasure-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 4 6 -4])
+                          (vector "axis" #t)
+                          (vector "keepaspectratio" #t)))))
+          (set! tapemeasure-a
+                (jsx-create-point tapemeasure-board
+                                  (jsx-parents -3 -1)
+                                  (js-object (vector (vector "name" "A")
+                                                     (vector "size" 4)))))
+          (set! tapemeasure-b
+                (jsx-create-point tapemeasure-board
+                                  (jsx-parents 3 1)
+                                  (js-object (vector (vector "name" "B")
+                                                     (vector "size" 4)))))
+          (set! tapemeasure-object
+                (jsx-create-tapemeasure
+                 tapemeasure-board
+                 (jsx-parents (jsx-parents -3 -1)
+                              (jsx-parents 3 1))
+                 (js-object
+                  (vector (vector "name" "tape")))))
+          (set! tapemeasure-board-ready? #t))
+        (void (jsx-board-full-update! tapemeasure-board))
+        #t)))
+
+;; init-measurement-board! : -> boolean?
+;;   Build the JSXGraph measurement board once the browser assets have loaded.
+(define (init-measurement-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless measurement-board-ready?
+          (console-log "Measurement board")
+          (set! measurement-board
+                (jsx-create-board
+                 measurement-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 5 6 -4])
+                          (vector "axis" #t)
+                          (vector "keepaspectratio" #t)))))
+          (set! measurement-a
+                (jsx-create-point measurement-board
+                                  (jsx-parents -2 1)
+                                  (js-object (vector (vector "name" "A")
+                                                     (vector "size" 4)))))
+          (set! measurement-b
+                (jsx-create-point measurement-board
+                                  (jsx-parents 2 1)
+                                  (js-object (vector (vector "name" "B")
+                                                     (vector "size" 4)))))
+          (set! measurement-circle
+                (jsx-create-circle measurement-board
+                                   (jsx-parents measurement-a measurement-b)
+                                   (js-object
+                                    (vector (vector "strokeColor" "#2b6cb0")
+                                            (vector "strokeWidth" 3)))))
+          (set! measurement-object
+                (jsx-create-measurement
+                 measurement-board
+                 (jsx-parents 0 -2 (jsx-parents "Radius" measurement-circle))
+                 (js-object
+                  (vector (vector "name" "radius")))))
+          (set! measurement-board-ready? #t))
+        (void (jsx-board-full-update! measurement-board))
+        #t)))
+
+;; init-circumcenter-board! : -> boolean?
+;;   Build the JSXGraph circumcenter board once the browser assets have loaded.
+(define (init-circumcenter-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless circumcenter-board-ready?
+          (console-log "Circumcenter board")
+          (set! circumcenter-board
+                (jsx-create-board
+                 circumcenter-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 6 6 -6])
+                          (vector "axis" #t)
+                          (vector "keepaspectratio" #t)))))
+          (set! circumcenter-a
+                (jsx-create-point circumcenter-board
+                                  (jsx-parents -3 -1)
+                                  (js-object (vector (vector "name" "A")
+                                                     (vector "size" 4)))))
+          (set! circumcenter-b
+                (jsx-create-point circumcenter-board
+                                  (jsx-parents 0 3)
+                                  (js-object (vector (vector "name" "B")
+                                                     (vector "size" 4)))))
+          (set! circumcenter-c
+                (jsx-create-point circumcenter-board
+                                  (jsx-parents 3 -1)
+                                  (js-object (vector (vector "name" "C")
+                                                     (vector "size" 4)))))
+          (set! circumcenter-triangle
+                (jsx-create-polygon circumcenter-board
+                                    (jsx-parents circumcenter-a
+                                                 circumcenter-b
+                                                 circumcenter-c)
+                                    (js-object
+                                     (vector (vector "fillOpacity" 0.05)
+                                             (vector "strokeColor" "#4a5568")))))
+          (set! circumcenter-object
+                (jsx-create-circumcenter
+                 circumcenter-board
+                 (jsx-parents circumcenter-a circumcenter-b circumcenter-c)
+                 (js-object
+                  (vector (vector "name" "O")
+                          (vector "size" 4)
+                          (vector "strokeColor" "#d53f8c")
+                          (vector "fillColor" "#d53f8c")))))
+          (set! circumcenter-board-ready? #t))
+        (void (jsx-board-full-update! circumcenter-board))
+        #t)))
+
+;; init-mirrorelement-board! : -> boolean?
+;;   Build the JSXGraph mirror element board once the browser assets have loaded.
+(define (init-mirrorelement-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless mirrorelement-board-ready?
+          (console-log "MirrorElement board")
+          (set! mirrorelement-board
+                (jsx-create-board
+                 mirrorelement-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 6 6 -6])
+                          (vector "axis" #t)
+                          (vector "keepaspectratio" #t)))))
+          (set! mirrorelement-a
+                (jsx-create-point mirrorelement-board
+                                  (jsx-parents -2 1)
+                                  (js-object (vector (vector "name" "A")
+                                                     (vector "size" 5)
+                                                     (vector "fillColor" "#2b6cb0")))))
+          (set! mirrorelement-mirror
+                (jsx-create-point mirrorelement-board
+                                  (jsx-parents 0 0)
+                                  (js-object (vector (vector "name" "M")
+                                                     (vector "size" 5)
+                                                     (vector "fillColor" "#38a169")))))
+          (set! mirrorelement-object
+                (jsx-create-mirrorelement
+                 mirrorelement-board
+                 (jsx-parents mirrorelement-a mirrorelement-mirror)
+                 (js-object
+                  (vector (vector "name" "D")
+                          (vector "size" 5)
+                          (vector "strokeColor" "#d53f8c")
+                          (vector "fillColor" "#d53f8c")))))
+          (set! mirrorelement-board-ready? #t))
+        (void (jsx-board-full-update! mirrorelement-board))
+        #t)))
+
+;; init-mirrorpoint-board! : -> boolean?
+;;   Build the JSXGraph mirror point board once the browser assets have loaded.
+(define (init-mirrorpoint-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless mirrorpoint-board-ready?
+          (console-log "MirrorPoint board")
+          (set! mirrorpoint-board
+                (jsx-create-board
+                 mirrorpoint-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-5 5 5 -5])
+                          (vector "axis" #t)
+                          (vector "keepaspectratio" #t)))))
+          (set! mirrorpoint-a
+                (jsx-create-point mirrorpoint-board
+                                  (jsx-parents -1 1)
+                                  (js-object (vector (vector "name" "A")
+                                                     (vector "size" 5)
+                                                     (vector "fillColor" "#2b6cb0")))))
+          (set! mirrorpoint-b
+                (jsx-create-point mirrorpoint-board
+                                  (jsx-parents 2 -1)
+                                  (js-object (vector (vector "name" "B")
+                                                     (vector "size" 5)
+                                                     (vector "fillColor" "#38a169")))))
+          (set! mirrorpoint-object
+                (jsx-create-mirrorpoint
+                 mirrorpoint-board
+                 (jsx-parents mirrorpoint-a mirrorpoint-b)
+                 (js-object
+                  (vector (vector "name" "C")
+                          (vector "size" 5)
+                          (vector "strokeColor" "#d53f8c")
+                          (vector "fillColor" "#d53f8c")))))
+          (set! mirrorpoint-board-ready? #t))
+        (void (jsx-board-full-update! mirrorpoint-board))
+        #t)))
+
+;; init-otherintersection-board! : -> boolean?
+;;   Build the JSXGraph other-intersection board once the browser assets have loaded.
+(define (init-otherintersection-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless otherintersection-board-ready?
+          (console-log "OtherIntersection board")
+          (set! otherintersection-board
+                (jsx-create-board
+                 otherintersection-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-5 5 5 -5])
+                          (vector "axis" #t)
+                          (vector "keepaspectratio" #t)))))
+          (set! otherintersection-center-1
+                (jsx-create-point otherintersection-board
+                                  (jsx-parents -1 0)
+                                  (js-object (vector (vector "name" "O1")
+                                                     (vector "size" 5)
+                                                     (vector "fillColor" "#2b6cb0")))))
+          (set! otherintersection-through-1
+                (jsx-create-point otherintersection-board
+                                  (jsx-parents 1 0)
+                                  (js-object (vector (vector "name" "P1")
+                                                     (vector "size" 5)
+                                                     (vector "fillColor" "#2b6cb0")))))
+          (set! otherintersection-center-2
+                (jsx-create-point otherintersection-board
+                                  (jsx-parents 1 0)
+                                  (js-object (vector (vector "name" "O2")
+                                                     (vector "size" 5)
+                                                     (vector "fillColor" "#38a169")))))
+          (set! otherintersection-through-2
+                (jsx-create-point otherintersection-board
+                                  (jsx-parents -1 0)
+                                  (js-object (vector (vector "name" "P2")
+                                                     (vector "size" 5)
+                                                     (vector "fillColor" "#38a169")))))
+          (set! otherintersection-circle-1
+                (jsx-create-circle otherintersection-board
+                                   (jsx-parents otherintersection-center-1
+                                                otherintersection-through-1)
+                                   (js-object
+                                    (vector (vector "name" "c1")
+                                            (vector "strokeColor" "#2b6cb0")
+                                            (vector "strokeWidth" 3)))))
+          (set! otherintersection-circle-2
+                (jsx-create-circle otherintersection-board
+                                   (jsx-parents otherintersection-center-2
+                                                otherintersection-through-2)
+                                   (js-object
+                                    (vector (vector "name" "c2")
+                                            (vector "strokeColor" "#38a169")
+                                            (vector "strokeWidth" 3)))))
+          (set! otherintersection-primary
+                (jsx-create-intersection
+                 otherintersection-board
+                 (jsx-parents otherintersection-circle-1
+                              otherintersection-circle-2
+                              0)
+                 (js-object
+                  (vector (vector "name" "I")
+                          (vector "size" 5)
+                          (vector "strokeColor" "#d69e2e")
+                          (vector "fillColor" "#d69e2e")))))
+          (set! otherintersection-secondary
+                (jsx-create-otherintersection
+                 otherintersection-board
+                 (jsx-parents otherintersection-circle-1
+                              otherintersection-circle-2
+                              otherintersection-primary)
+                 (js-object
+                  (vector (vector "name" "J")
+                          (vector "size" 5)
+                          (vector "strokeColor" "#d53f8c")
+                          (vector "fillColor" "#d53f8c")))))
+          (set! otherintersection-board-ready? #t))
+        (void (jsx-board-full-update! otherintersection-board))
+        #t)))
+
+;; init-orthogonalprojection-board! : -> boolean?
+;;   Build the JSXGraph orthogonal projection board once the browser assets have loaded.
+(define (init-orthogonalprojection-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless orthogonalprojection-board-ready?
+          (console-log "Orthogonalprojection board")
+          (set! orthogonalprojection-board
+                (jsx-create-board
+                 orthogonalprojection-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 5 6 -5])
+                          (vector "axis" #t)
+                          (vector "keepaspectratio" #t)))))
+          (set! orthogonalprojection-line-a
+                (jsx-create-point orthogonalprojection-board
+                                  (jsx-parents -3 -1)
+                                  (js-object (vector (vector "name" "A")
+                                                     (vector "size" 5)
+                                                     (vector "fillColor" "#2b6cb0")))))
+          (set! orthogonalprojection-line-b
+                (jsx-create-point orthogonalprojection-board
+                                  (jsx-parents 3 1)
+                                  (js-object (vector (vector "name" "B")
+                                                     (vector "size" 5)
+                                                     (vector "fillColor" "#2b6cb0")))))
+          (set! orthogonalprojection-line
+                (jsx-create-line orthogonalprojection-board
+                                 (jsx-parents orthogonalprojection-line-a
+                                              orthogonalprojection-line-b)
+                                 (js-object
+                                  (vector (vector "name" "l")
+                                          (vector "strokeColor" "#2b6cb0")
+                                          (vector "strokeWidth" 3)))))
+          (set! orthogonalprojection-point
+                (jsx-create-point orthogonalprojection-board
+                                  (jsx-parents -1 3)
+                                  (js-object (vector (vector "name" "P")
+                                                     (vector "size" 5)
+                                                     (vector "fillColor" "#38a169")))))
+          (set! orthogonalprojection-object
+                (jsx-create-orthogonalprojection
+                 orthogonalprojection-board
+                 (jsx-parents orthogonalprojection-point
+                              orthogonalprojection-line)
+                 (js-object
+                  (vector (vector "name" "Q")
+                          (vector "size" 5)
+                          (vector "strokeColor" "#d53f8c")
+                          (vector "fillColor" "#d53f8c")))))
+          (set! orthogonalprojection-board-ready? #t))
+        (void (jsx-board-full-update! orthogonalprojection-board))
+        #t)))
+
+;; init-parallelpoint-board! : -> boolean?
+;;   Build the JSXGraph parallel point board once the browser assets have loaded.
+(define (init-parallelpoint-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless parallelpoint-board-ready?
+          (console-log "Parallelpoint board")
+          (set! parallelpoint-board
+                (jsx-create-board
+                 parallelpoint-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 5 6 -5])
+                          (vector "axis" #t)
+                          (vector "keepaspectratio" #t)))))
+          (set! parallelpoint-p1
+                (jsx-create-point parallelpoint-board
+                                  (jsx-parents -3 -1)
+                                  (js-object (vector (vector "name" "A")
+                                                     (vector "size" 5)
+                                                     (vector "fillColor" "#2b6cb0")))))
+          (set! parallelpoint-p2
+                (jsx-create-point parallelpoint-board
+                                  (jsx-parents -1 1)
+                                  (js-object (vector (vector "name" "B")
+                                                     (vector "size" 5)
+                                                     (vector "fillColor" "#2b6cb0")))))
+          (set! parallelpoint-p3
+                (jsx-create-point parallelpoint-board
+                                  (jsx-parents 2 -1)
+                                  (js-object (vector (vector "name" "C")
+                                                     (vector "size" 5)
+                                                     (vector "fillColor" "#38a169")))))
+          (set! parallelpoint-object
+                (jsx-create-parallelpoint
+                 parallelpoint-board
+                 (jsx-parents parallelpoint-p1
+                              parallelpoint-p2
+                              parallelpoint-p3)
+                 (js-object
+                  (vector (vector "name" "D")
+                          (vector "size" 5)
+                          (vector "strokeColor" "#d53f8c")
+                          (vector "fillColor" "#d53f8c")))))
+          (set! parallelpoint-board-ready? #t))
+        (void (jsx-board-full-update! parallelpoint-board))
+        #t)))
+
+;; init-perpendicularpoint-board! : -> boolean?
+;;   Build the JSXGraph perpendicular point board once the browser assets have loaded.
+(define (init-perpendicularpoint-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless perpendicularpoint-board-ready?
+          (console-log "PerpendicularPoint board")
+          (set! perpendicularpoint-board
+                (jsx-create-board
+                 perpendicularpoint-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 5 6 -5])
+                          (vector "axis" #t)
+                          (vector "keepaspectratio" #t)))))
+          (set! perpendicularpoint-line-a
+                (jsx-create-point perpendicularpoint-board
+                                  (jsx-parents -3 -1)
+                                  (js-object (vector (vector "name" "A")
+                                                     (vector "size" 5)
+                                                     (vector "fillColor" "#2b6cb0")))))
+          (set! perpendicularpoint-line-b
+                (jsx-create-point perpendicularpoint-board
+                                  (jsx-parents 3 1)
+                                  (js-object (vector (vector "name" "B")
+                                                     (vector "size" 5)
+                                                     (vector "fillColor" "#2b6cb0")))))
+          (set! perpendicularpoint-line
+                (jsx-create-line perpendicularpoint-board
+                                 (jsx-parents perpendicularpoint-line-a
+                                              perpendicularpoint-line-b)
+                                 (js-object
+                                  (vector (vector "name" "l")
+                                          (vector "strokeColor" "#2b6cb0")
+                                          (vector "strokeWidth" 3)))))
+          (set! perpendicularpoint-point
+                (jsx-create-point perpendicularpoint-board
+                                  (jsx-parents -1 3)
+                                  (js-object (vector (vector "name" "P")
+                                                     (vector "size" 5)
+                                                     (vector "fillColor" "#38a169")))))
+          (set! perpendicularpoint-object
+                (jsx-create-perpendicularpoint
+                 perpendicularpoint-board
+                 (jsx-parents perpendicularpoint-point
+                              perpendicularpoint-line)
+                 (js-object
+                  (vector (vector "name" "Q")
+                          (vector "size" 5)
+                          (vector "strokeColor" "#d53f8c")
+                          (vector "fillColor" "#d53f8c")))))
+          (set! perpendicularpoint-board-ready? #t))
+        (void (jsx-board-full-update! perpendicularpoint-board))
+        #t)))
+
 ;; init-constructions-board! : -> boolean?
 ;;   Build the JSXGraph construction board once the browser assets have loaded.
 (define (init-constructions-board!)
@@ -3576,6 +4319,9 @@
   (define sector-ready? (init-sector-board!))
   (define arrowparallel-ready? (init-arrowparallel-board!))
   (define axis-ready? (init-axis-board!))
+  (define segment-ready? (init-segment-board!))
+  (define intersection-ready? (init-intersection-board!))
+  (define orthogonal-ready? (init-orthogonal-board!))
   (define grid-ready? (init-grid-board!))
   (define boxplot-ready? (init-boxplot-board!))
   (define tangent-ready? (init-tangent-board!))
@@ -3630,19 +4376,31 @@
   (define slider-ready? (init-slider-board!))
   (define smartlabel-ready? (init-smartlabel-board!))
   (define text-ready? (init-text-board!))
+  (define foreignobject-ready? (init-foreignobject-board!))
+  (define tapemeasure-ready? (init-tapemeasure-board!))
+  (define measurement-ready? (init-measurement-board!))
+  (define circumcenter-ready? (init-circumcenter-board!))
+  (define mirrorelement-ready? (init-mirrorelement-board!))
+  (define mirrorpoint-ready? (init-mirrorpoint-board!))
+  (define otherintersection-ready? (init-otherintersection-board!))
+  (define orthogonalprojection-ready? (init-orthogonalprojection-board!))
+  (define parallelpoint-ready? (init-parallelpoint-board!))
+  (define perpendicularpoint-ready? (init-perpendicularpoint-board!))
   (define widgets-ready? (init-widgets-board!))
   (define annotation-ready? (init-annotation-board!))
   (when (and geometry-ready? group-ready? chart-ready?
-             point-ready? line-ready? arc-ready? angle-ready? sector-ready? arrow-ready? arrowparallel-ready? circle-ready? glider-ready? button-ready? legend-ready? axis-ready? grid-ready? boxplot-ready? tangent-ready? tangentto-ready? polarline-ready? polepoint-ready? radicalaxis-ready? circumcircle-ready? circumcirclearc-ready? circumcirclesector-ready? semicircle-ready? majorarc-ready? majorsector-ready? curveintersection-ready? curvedifference-ready? curveunion-ready? derivative-ready? integral-ready? incircle-ready? conic-ready? ellipse-ready? functiongraph-ready? curve-ready? polygon-ready? midpoint-ready? parallel-ready? perpendicular-ready? reflection-ready? bisector-ready? widgets-ready? annotation-ready?
+             point-ready? line-ready? arc-ready? angle-ready? sector-ready? arrow-ready? arrowparallel-ready? circle-ready? glider-ready? button-ready? legend-ready? axis-ready? segment-ready? intersection-ready? orthogonal-ready? grid-ready? boxplot-ready? tangent-ready? tangentto-ready? polarline-ready? polepoint-ready? radicalaxis-ready? circumcircle-ready? circumcirclearc-ready? circumcirclesector-ready? semicircle-ready? majorarc-ready? majorsector-ready? curveintersection-ready? curvedifference-ready? curveunion-ready? derivative-ready? integral-ready? incircle-ready? conic-ready? ellipse-ready? functiongraph-ready? curve-ready? polygon-ready? midpoint-ready? parallel-ready? perpendicular-ready? reflection-ready? bisector-ready? widgets-ready? annotation-ready?
              checkbox-ready? input-ready? slider-ready? smartlabel-ready? text-ready?
+             foreignobject-ready? tapemeasure-ready? measurement-ready? circumcenter-ready? mirrorelement-ready?
+             mirrorpoint-ready? otherintersection-ready? orthogonalprojection-ready? parallelpoint-ready? perpendicularpoint-ready?
              riemannsum-ready? slopefield-ready? vectorfield-ready? implicitcurve-ready? spline-ready?
              cardinalspline-ready? comb-ready? metapostspline-ready? polygonalchain-ready? regularpolygon-ready?
              hyperbola-ready? parabola-ready? stepfunction-ready? inequality-ready? turtle-ready?
              geometry-board-ready? group-board-ready? chart-board-ready?
-             point-board-ready? line-board-ready? arc-board-ready? angle-board-ready? sector-board-ready? arrowparallel-board-ready? axis-board-ready? grid-board-ready? boxplot-board-ready? tangent-board-ready? tangentto-board-ready? polarline-board-ready? polepoint-board-ready? radicalaxis-board-ready? circumcircle-board-ready? circumcirclearc-board-ready? circumcirclesector-board-ready? semicircle-board-ready? majorarc-board-ready? majorsector-board-ready? curveintersection-board-ready? curvedifference-board-ready? curveunion-board-ready? derivative-board-ready? integral-board-ready? riemannsum-board-ready? slopefield-board-ready? vectorfield-board-ready? implicitcurve-board-ready? spline-board-ready? incircle-board-ready? widgets-board-ready? annotation-board-ready?)
+             point-board-ready? line-board-ready? arc-board-ready? angle-board-ready? sector-board-ready? arrowparallel-board-ready? axis-board-ready? segment-board-ready? intersection-board-ready? grid-board-ready? boxplot-board-ready? tangent-board-ready? tangentto-board-ready? polarline-board-ready? polepoint-board-ready? radicalaxis-board-ready? circumcircle-board-ready? circumcirclearc-board-ready? circumcirclesector-board-ready? semicircle-board-ready? majorarc-board-ready? majorsector-board-ready? curveintersection-board-ready? curvedifference-board-ready? curveunion-board-ready? derivative-board-ready? integral-board-ready? riemannsum-board-ready? slopefield-board-ready? vectorfield-board-ready? implicitcurve-board-ready? spline-board-ready? incircle-board-ready? foreignobject-board-ready? tapemeasure-board-ready? measurement-board-ready? circumcenter-board-ready? mirrorelement-board-ready? widgets-board-ready? annotation-board-ready?)
     (set-status! "Boards ready.")
     (set-summary!
-     (format "Created geometry, group, chart, point, line, arc, angle, sector, arrow, arrowparallel, circle, glider, button, legend, axis, grid, boxplot, tangent, tangentto, polarline, polepoint, radicalaxis, circumcircle, circumcirclearc, circumcirclesector, semicircle, majorarc, majorsector, curveintersection, curvedifference, curveunion, derivative, integral, riemannsum, slopefield, vectorfield, implicitcurve, spline, cardinalspline, comb, metapostspline, polygonalchain, regularpolygon, hyperbola, parabola, stepfunction, inequality, turtle, incircle, conic, ellipse, functiongraph, curve, polygon, midpoint, parallel, perpendicular, reflection, bisector, checkbox, input, slider, smartlabel, text, widget, and annotation boards. Geometry objects: ~a. Group objects: ~a. Chart objects: ~a. Point objects: ~a. Line objects: ~a. Arc objects: ~a. Angle objects: ~a. Sector objects: ~a. Arrow objects: ~a. Arrowparallel objects: ~a. Circle objects: ~a. Glider objects: ~a. Button objects: ~a. Legend objects: ~a. Axis objects: ~a. Grid objects: ~a. Boxplot objects: ~a. Tangent objects: ~a. TangentTo objects: ~a. Polarline objects: ~a. Polepoint objects: ~a. RadicalAxis objects: ~a. Circumcircle objects: ~a. CircumcircleArc objects: ~a. CircumcircleSector objects: ~a. Semicircle objects: ~a. MajorArc objects: ~a. MajorSector objects: ~a. CurveIntersection objects: ~a. CurveDifference objects: ~a. CurveUnion objects: ~a. Derivative objects: ~a. Integral objects: ~a. Riemannsum objects: ~a. Slopefield objects: ~a. Vectorfield objects: ~a. ImplicitCurve objects: ~a. Spline objects: ~a. Cardinalspline objects: ~a. Comb objects: ~a. MetapostSpline objects: ~a. PolygonalChain objects: ~a. RegularPolygon objects: ~a. Hyperbola objects: ~a. Parabola objects: ~a. Stepfunction objects: ~a. Inequality objects: ~a. Turtle objects: ~a. Incircle objects: ~a. Conic objects: ~a. Ellipse objects: ~a. Functiongraph objects: ~a. Curve objects: ~a. Polygon objects: ~a. Midpoint objects: ~a. Parallel objects: ~a. Perpendicular objects: ~a. Reflection objects: ~a. Bisector objects: ~a. Checkbox objects: ~a. Input objects: ~a. Slider objects: ~a. Smartlabel objects: ~a. Text objects: ~a. Widget objects: ~a. Annotation objects: ~a."
+     (format "Created geometry, group, chart, point, line, arc, angle, sector, arrow, arrowparallel, circle, glider, button, legend, axis, segment, intersection, normal, grid, boxplot, tangent, tangentto, polarline, polepoint, radicalaxis, circumcircle, circumcirclearc, circumcirclesector, semicircle, majorarc, majorsector, curveintersection, curvedifference, curveunion, derivative, integral, riemannsum, slopefield, vectorfield, implicitcurve, spline, cardinalspline, comb, metapostspline, polygonalchain, regularpolygon, hyperbola, parabola, stepfunction, inequality, turtle, incircle, conic, ellipse, functiongraph, curve, polygon, midpoint, parallel, perpendicular, reflection, bisector, checkbox, input, slider, smartlabel, text, foreignobject, tapemeasure, measurement, circumcenter, mirrorelement, mirrorpoint, otherintersection, orthogonalprojection, parallelpoint, perpendicularpoint, widget, and annotation boards. Geometry objects: ~a. Group objects: ~a. Chart objects: ~a. Point objects: ~a. Line objects: ~a. Arc objects: ~a. Angle objects: ~a. Sector objects: ~a. Arrow objects: ~a. Arrowparallel objects: ~a. Circle objects: ~a. Glider objects: ~a. Button objects: ~a. Legend objects: ~a. Axis objects: ~a. Segment objects: ~a. Intersection objects: ~a. Normal objects: ~a. Grid objects: ~a. Boxplot objects: ~a. Tangent objects: ~a. TangentTo objects: ~a. Polarline objects: ~a. Polepoint objects: ~a. RadicalAxis objects: ~a. Circumcircle objects: ~a. CircumcircleArc objects: ~a. CircumcircleSector objects: ~a. Semicircle objects: ~a. MajorArc objects: ~a. MajorSector objects: ~a. CurveIntersection objects: ~a. CurveDifference objects: ~a. CurveUnion objects: ~a. Derivative objects: ~a. Integral objects: ~a. Riemannsum objects: ~a. Slopefield objects: ~a. Vectorfield objects: ~a. ImplicitCurve objects: ~a. Spline objects: ~a. Cardinalspline objects: ~a. Comb objects: ~a. MetapostSpline objects: ~a. PolygonalChain objects: ~a. RegularPolygon objects: ~a. Hyperbola objects: ~a. Parabola objects: ~a. Stepfunction objects: ~a. Inequality objects: ~a. Turtle objects: ~a. Incircle objects: ~a. Conic objects: ~a. Ellipse objects: ~a. Functiongraph objects: ~a. Curve objects: ~a. Polygon objects: ~a. Midpoint objects: ~a. Parallel objects: ~a. Perpendicular objects: ~a. Reflection objects: ~a. Bisector objects: ~a. Checkbox objects: ~a. Input objects: ~a. Slider objects: ~a. Smartlabel objects: ~a. Text objects: ~a. ForeignObject objects: ~a. Tapemeasure objects: ~a. Measurement objects: ~a. Circumcenter objects: ~a. MirrorElement objects: ~a. MirrorPoint objects: ~a. OtherIntersection objects: ~a. Orthogonalprojection objects: ~a. Parallelpoint objects: ~a. PerpendicularPoint objects: ~a. Widget objects: ~a. Annotation objects: ~a."
              (jsx-board-num-objects geometry-board)
              (jsx-board-num-objects group-board)
              (jsx-board-num-objects chart-board)
@@ -3653,6 +4411,9 @@
              (jsx-board-num-objects sector-board)
              (jsx-board-num-objects arrowparallel-board)
              (jsx-board-num-objects axis-board)
+             (jsx-board-num-objects segment-board)
+             (jsx-board-num-objects intersection-board)
+             (jsx-board-num-objects orthogonal-board)
              (jsx-board-num-objects grid-board)
              (jsx-board-num-objects boxplot-board)
              (jsx-board-num-objects tangent-board)
@@ -3707,16 +4468,26 @@
              (jsx-board-num-objects slider-board)
              (jsx-board-num-objects smartlabel-board)
              (jsx-board-num-objects text-board)
+             (jsx-board-num-objects foreignobject-board)
+             (jsx-board-num-objects tapemeasure-board)
+             (jsx-board-num-objects measurement-board)
+             (jsx-board-num-objects circumcenter-board)
+             (jsx-board-num-objects mirrorelement-board)
+             (jsx-board-num-objects mirrorpoint-board)
+             (jsx-board-num-objects otherintersection-board)
+             (jsx-board-num-objects orthogonalprojection-board)
+             (jsx-board-num-objects parallelpoint-board)
+             (jsx-board-num-objects perpendicularpoint-board)
              (jsx-board-num-objects widgets-board)
              (jsx-board-num-objects annotation-board))))
   (and geometry-ready? group-ready? chart-ready?
-             arrow-ready? arrowparallel-ready? circle-ready? glider-ready? button-ready? legend-ready? axis-ready? grid-ready? boxplot-ready? tangent-ready? tangentto-ready? polarline-ready? polepoint-ready? radicalaxis-ready? circumcircle-ready? circumcirclearc-ready? circumcirclesector-ready? semicircle-ready? majorarc-ready? majorsector-ready? curveintersection-ready? curvedifference-ready? curveunion-ready? derivative-ready? integral-ready? incircle-ready? conic-ready? ellipse-ready? functiongraph-ready? curve-ready? polygon-ready? midpoint-ready? parallel-ready? perpendicular-ready? reflection-ready? bisector-ready? widgets-ready? annotation-ready?
+             arrow-ready? arrowparallel-ready? circle-ready? glider-ready? button-ready? legend-ready? axis-ready? segment-ready? intersection-ready? grid-ready? boxplot-ready? tangent-ready? tangentto-ready? polarline-ready? polepoint-ready? radicalaxis-ready? circumcircle-ready? circumcirclearc-ready? circumcirclesector-ready? semicircle-ready? majorarc-ready? majorsector-ready? curveintersection-ready? curvedifference-ready? curveunion-ready? derivative-ready? integral-ready? incircle-ready? conic-ready? ellipse-ready? functiongraph-ready? curve-ready? polygon-ready? midpoint-ready? parallel-ready? perpendicular-ready? reflection-ready? bisector-ready? widgets-ready? annotation-ready?
              checkbox-ready? input-ready? slider-ready? smartlabel-ready? text-ready?
              riemannsum-ready? slopefield-ready? vectorfield-ready? implicitcurve-ready? spline-ready?
              cardinalspline-ready? comb-ready? metapostspline-ready? polygonalchain-ready? regularpolygon-ready?
              hyperbola-ready? parabola-ready? stepfunction-ready? inequality-ready? turtle-ready?
        geometry-board-ready? group-board-ready? chart-board-ready?
-       arrowparallel-board-ready? axis-board-ready? grid-board-ready? boxplot-board-ready? tangent-board-ready? tangentto-board-ready? polarline-board-ready? polepoint-board-ready? radicalaxis-board-ready? circumcircle-board-ready? circumcirclearc-board-ready? circumcirclesector-board-ready? semicircle-board-ready? majorarc-board-ready? majorsector-board-ready? curveintersection-board-ready? curvedifference-board-ready? curveunion-board-ready? derivative-board-ready? integral-board-ready? riemannsum-board-ready? slopefield-board-ready? vectorfield-board-ready? implicitcurve-board-ready? spline-board-ready? incircle-board-ready? widgets-board-ready? annotation-board-ready?))
+       arrowparallel-board-ready? axis-board-ready? segment-board-ready? intersection-board-ready? orthogonal-board-ready? grid-board-ready? boxplot-board-ready? tangent-board-ready? tangentto-board-ready? polarline-board-ready? polepoint-board-ready? radicalaxis-board-ready? circumcircle-board-ready? circumcirclearc-board-ready? circumcirclesector-board-ready? semicircle-board-ready? majorarc-board-ready? majorsector-board-ready? curveintersection-board-ready? curvedifference-board-ready? curveunion-board-ready? derivative-board-ready? integral-board-ready? riemannsum-board-ready? slopefield-board-ready? vectorfield-board-ready? implicitcurve-board-ready? spline-board-ready? incircle-board-ready? mirrorpoint-board-ready? otherintersection-board-ready? orthogonalprojection-board-ready? parallelpoint-board-ready? perpendicularpoint-board-ready? widgets-board-ready? annotation-board-ready?))
 
 ;; refresh-gallery! : -> void?
 ;;   Force a redraw of the live gallery boards.
@@ -3741,6 +4512,12 @@
     (jsx-board-full-update! arrowparallel-board))
   (when axis-board
     (jsx-board-full-update! axis-board))
+  (when segment-board
+    (jsx-board-full-update! segment-board))
+  (when intersection-board
+    (jsx-board-full-update! intersection-board))
+  (when orthogonal-board
+    (jsx-board-full-update! orthogonal-board))
   (when grid-board
     (jsx-board-full-update! grid-board))
   (when boxplot-board
@@ -3849,6 +4626,26 @@
     (jsx-board-full-update! smartlabel-board))
   (when text-board
     (jsx-board-full-update! text-board))
+  (when foreignobject-board
+    (jsx-board-full-update! foreignobject-board))
+  (when tapemeasure-board
+    (jsx-board-full-update! tapemeasure-board))
+  (when measurement-board
+    (jsx-board-full-update! measurement-board))
+  (when circumcenter-board
+    (jsx-board-full-update! circumcenter-board))
+  (when mirrorelement-board
+    (jsx-board-full-update! mirrorelement-board))
+  (when mirrorpoint-board
+    (jsx-board-full-update! mirrorpoint-board))
+  (when otherintersection-board
+    (jsx-board-full-update! otherintersection-board))
+  (when orthogonalprojection-board
+    (jsx-board-full-update! orthogonalprojection-board))
+  (when parallelpoint-board
+    (jsx-board-full-update! parallelpoint-board))
+  (when perpendicularpoint-board
+    (jsx-board-full-update! perpendicularpoint-board))
   (when widgets-board
     (jsx-board-full-update! widgets-board))
   (when annotation-board
@@ -3912,6 +4709,18 @@
                 #:attrs '((style "width: 720px; height: 420px;")))
      (text "Axis board: the x-axis and y-axis are shown as a dedicated axis example.")
      (container #:id axis-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "Segment board: the segment should stay between the two draggable endpoints.")
+     (container #:id segment-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "Intersection board: the two lines should cross at the red intersection point.")
+     (container #:id intersection-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "Normal board: the normal line should stay perpendicular to the circle at the chosen point.")
+     (container #:id orthogonal-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
      (gallery-headline "Relation Helpers")
@@ -4142,6 +4951,48 @@
                 #:attrs '((style "width: 720px; height: 420px;")))
      (text "Text board: the plain text object should appear on its own board.")
      (container #:id text-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (gallery-headline "Remaining Helpers")
+     (text "ForeignObject board: the HTML box should appear at its position and size.")
+     (container #:id foreignobject-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "Tapemeasure board: the tape measure should span the two endpoints.")
+     (container #:id tapemeasure-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "Measurement board: the measurement should label the radius of the circle.")
+     (container #:id measurement-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "Circumcenter board: the triangle should show its circumcenter O.")
+     (container #:id circumcenter-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "MirrorElement board: D should stay mirrored across M.")
+     (container #:id mirrorelement-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (gallery-headline "Point Relations")
+     (text "MirrorPoint board: the reflected point should stay mirrored across the base points.")
+     (container #:id mirrorpoint-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "OtherIntersection board: the secondary intersection should stay visible on the two circles.")
+     (container #:id otherintersection-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "Orthogonalprojection board: the projected point should stay perpendicular to the base line.")
+     (container #:id orthogonalprojection-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "Parallelpoint board: the constructed point should stay parallel to the base vector.")
+     (container #:id parallelpoint-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "PerpendicularPoint board: the constructed point should stay perpendicular to the base line.")
+     (container #:id perpendicularpoint-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
      (hpanel

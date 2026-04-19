@@ -20,7 +20,7 @@ Use @racket[jsx-graph] when you want to:
 @itemlist[
   @item{create a @racket[JXG.JSXGraph] board in the current page}
   @item{create arbitrary JSXGraph elements with @racket[jsx-create] or the specialized constructors}
-  @item{build geometry objects such as @racket[JXG.Point], @racket[JXG.Line], @racket[JXG.Arc], @racket[JXG.Angle], @racket[JXG.Sector], @racket[JXG.Circle], @racket[JXG.Conic], @racket[JXG.Ellipse], @racket[JXG.Functiongraph], @racket[JXG.Riemannsum], @racket[JXG.Slopefield], @racket[JXG.Vectorfield], @racket[JXG.ImplicitCurve], @racket[JXG.Spline], @racket[JXG.Cardinalspline], @racket[JXG.Comb], @racket[JXG.Metapostspline], @racket[JXG.PolygonalChain], @racket[JXG.RegularPolygon], @racket[JXG.Hyperbola], @racket[JXG.Parabola], @racket[JXG.Stepfunction], @racket[JXG.Inequality], @racket[JXG.Turtle], @racket[JXG.Polygon], and @racket[JXG.Text]}
+  @item{build geometry objects such as @racket[JXG.Point], @racket[JXG.Line], @racket[JXG.Arc], @racket[JXG.Angle], @racket[JXG.Sector], @racket[JXG.Circle], @racket[JXG.Conic], @racket[JXG.Ellipse], @racket[JXG.Functiongraph], @racket[JXG.Riemannsum], @racket[JXG.Slopefield], @racket[JXG.Vectorfield], @racket[JXG.ImplicitCurve], @racket[JXG.Spline], @racket[JXG.Cardinalspline], @racket[JXG.Comb], @racket[JXG.Metapostspline], @racket[JXG.PolygonalChain], @racket[JXG.RegularPolygon], @racket[JXG.Hyperbola], @racket[JXG.Parabola], @racket[JXG.Stepfunction], @racket[JXG.Inequality], @racket[JXG.Turtle], @racket[JXG.Polygon], @racket[JXG.Text], @racket[JXG.ForeignObject], @racket[JXG.Tapemeasure], @racket[JXG.Measurement], @racket[JXG.Circumcenter], and @racket[JXG.MirrorElement]}
   @item{create chart objects with @racket[JXG.Chart]}
   @item{create legends and smart labels}
   @item{create widget-like elements such as buttons, checkboxes, sliders, and inputs}
@@ -1525,6 +1525,178 @@ Creates an image element on @racket[board].
 @(jsx-bar "Group"
           (jsx-doc-url "JXG.Group"))
 Creates a group on @racket[board].
+}
+
+@defproc[(jsx-create-foreignobject [board jsx-board?]
+                                   [parents any/c]
+                                   [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "ForeignObject"
+          (jsx-doc-url "ForeignObject"))
+Creates a foreign object on @racket[board].
+}
+
+@defproc[(jsx-create-tapemeasure [board jsx-board?]
+                                 [parents any/c]
+                                 [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Tapemeasure"
+          (jsx-doc-url "Tapemeasure"))
+Creates a tape measure on @racket[board].
+}
+
+@defproc[(jsx-tapemeasure-value [tapemeasure jsx-element?])
+         any/c]{
+@(jsx-bar "Value"
+          (string-append (jsx-doc-url "Tapemeasure")
+                         "#Value"))
+Returns the current tape-measure value.
+}
+
+@defproc[(jsx-create-measurement [board jsx-board?]
+                                 [parents any/c]
+                                 [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Measurement"
+          (jsx-doc-url "Measurement"))
+Creates a measurement on @racket[board].
+}
+
+@defproc[(jsx-create-circumcenter [board jsx-board?]
+                                  [parents any/c]
+                                  [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Circumcenter"
+          (jsx-doc-url "Circumcenter"))
+Creates a circumcenter point on @racket[board].
+}
+
+@defproc[(jsx-create-mirrorelement [board jsx-board?]
+                                   [parents any/c]
+                                   [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "MirrorElement"
+          (jsx-doc-url "MirrorElement"))
+Creates a mirrored element on @racket[board].
+}
+
+@defproc[(jsx-create-mirrorpoint [board jsx-board?]
+                                 [parents any/c]
+                                 [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "MirrorPoint"
+          (jsx-doc-url "MirrorPoint"))
+Creates a mirror point on @racket[board].
+}
+
+@defproc[(jsx-create-otherintersection [board jsx-board?]
+                                       [parents any/c]
+                                       [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "OtherIntersection"
+          (jsx-doc-url "OtherIntersection"))
+Creates the other intersection on @racket[board].
+}
+
+@defproc[(jsx-create-orthogonalprojection [board jsx-board?]
+                                          [parents any/c]
+                                          [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Orthogonalprojection"
+          (jsx-doc-url "Orthogonalprojection"))
+Creates an orthogonal projection on @racket[board].
+}
+
+@defproc[(jsx-create-parallelpoint [board jsx-board?]
+                                   [parents any/c]
+                                   [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Parallelpoint"
+          (jsx-doc-url "Parallelpoint"))
+Creates a parallel point on @racket[board].
+}
+
+@defproc[(jsx-create-perpendicularpoint [board jsx-board?]
+                                        [parents any/c]
+                                        [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "PerpendicularPoint"
+          (jsx-doc-url "PerpendicularPoint"))
+Creates a perpendicular point on @racket[board].
+}
+
+@section{ForeignObject Helpers}
+
+@defproc[(jsx-foreignobject-H [foreignobject jsx-element?]
+                              [args any/c] ...)
+         any/c]{
+@(jsx-bar "H"
+          (string-append (jsx-doc-url "ForeignObject")
+                         "#H"))
+Returns the foreign object H helper.
+}
+
+@defproc[(jsx-foreignobject-W [foreignobject jsx-element?]
+                              [args any/c] ...)
+         any/c]{
+@(jsx-bar "W"
+          (string-append (jsx-doc-url "ForeignObject")
+                         "#W"))
+Returns the foreign object W helper.
+}
+
+@defproc[(jsx-foreignobject-has-point? [foreignobject jsx-element?]
+                                       [args any/c] ...)
+         boolean?]{
+@(jsx-bar "hasPoint"
+          (string-append (jsx-doc-url "ForeignObject")
+                         "#hasPoint"))
+Checks whether a point hits @racket[foreignobject].
+}
+
+@defproc[(jsx-foreignobject-set-size! [foreignobject jsx-element?]
+                                      [args any/c] ...)
+         void?]{
+@(jsx-bar "setSize"
+          (string-append (jsx-doc-url "ForeignObject")
+                         "#setSize"))
+Sets the size of @racket[foreignobject].
+}
+
+@defproc[(jsx-foreignobject-update! [foreignobject jsx-element?]
+                                    [args any/c] ...)
+         void?]{
+@(jsx-bar "update"
+          (string-append (jsx-doc-url "ForeignObject")
+                         "#update"))
+Updates @racket[foreignobject].
+}
+
+@defproc[(jsx-foreignobject-update-renderer! [foreignobject jsx-element?]
+                                             [args any/c] ...)
+         void?]{
+@(jsx-bar "updateRenderer"
+          (string-append (jsx-doc-url "ForeignObject")
+                         "#updateRenderer"))
+Refreshes the foreign object renderer.
+}
+
+@defproc[(jsx-foreignobject-update-size! [foreignobject jsx-element?]
+                                         [args any/c] ...)
+         void?]{
+@(jsx-bar "updateSize"
+          (string-append (jsx-doc-url "ForeignObject")
+                         "#updateSize"))
+Updates the foreign object size.
+}
+
+@defproc[(jsx-foreignobject-update-span! [foreignobject jsx-element?]
+                                         [args any/c] ...)
+         void?]{
+@(jsx-bar "updateSpan"
+          (string-append (jsx-doc-url "ForeignObject")
+                         "#updateSpan"))
+Updates the foreign object span.
 }
 
 @section{Text Helpers}
