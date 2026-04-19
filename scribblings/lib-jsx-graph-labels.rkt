@@ -138,6 +138,23 @@
   jsx-dot
   jsx-create-board
   jsx-create
+  jsx-create-view3d
+  jsx-view3d-create
+  jsx-view3d-create-point3d
+  jsx-view3d-create-line3d
+  jsx-view3d-create-circle3d
+  jsx-view3d-create-plane3d
+  jsx-view3d-create-axes3d
+  jsx-view3d-create-axis3d
+  jsx-view3d-create-functiongraph3d
+  jsx-view3d-create-sphere3d
+  jsx-view3d-create-intersectioncircle3d
+  jsx-view3d-create-intersectionline3d
+  jsx-view3d-create-curve3d
+  jsx-view3d-create-parametricsurface3d
+  jsx-view3d-create-polyhedron3d
+  jsx-view3d-create-text3d
+  jsx-view3d-create-vectorfield3d
   jsx-create-point
   jsx-create-line
   jsx-create-segment
@@ -573,6 +590,18 @@
 (define jsx-dot any/c)
 (define jsx-create-board any/c)
 (define jsx-create any/c)
+(define jsx-create-view3d any/c)
+(define jsx-view3d-create any/c)
+(define jsx-view3d-create-point3d any/c)
+(define jsx-view3d-create-line3d any/c)
+(define jsx-view3d-create-circle3d any/c)
+(define jsx-view3d-create-plane3d any/c)
+(define jsx-view3d-create-axes3d any/c)
+(define jsx-view3d-create-axis3d any/c)
+(define jsx-view3d-create-functiongraph3d any/c)
+(define jsx-view3d-create-sphere3d any/c)
+(define jsx-view3d-create-intersectioncircle3d any/c)
+(define jsx-view3d-create-intersectionline3d any/c)
 (define jsx-create-point any/c)
 (define jsx-create-line any/c)
 (define jsx-create-segment any/c)

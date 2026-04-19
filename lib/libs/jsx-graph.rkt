@@ -293,6 +293,99 @@
 (define-jsx-alias (jsx-board-create/raw board element-type parents attrs)
   js-jsx-board-create)
 
+;; jsx-create-view3d : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a 3D view on a board.
+(define (jsx-create-view3d board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create/raw (jsx-board-raw board)
+                         "view3d"
+                         (jsx-unpack-array parents)
+                         (or attributes (js-object (vector))))))
+
+;; jsx-view3d-create : jsx-element? string? any/c [any/c #f] -> jsx-element?
+;;   Create a 3D element inside a 3D view.
+(define (jsx-view3d-create view element-type parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-element-call view "create"
+                     (vector element-type
+                             (jsx-unpack-array parents)
+                             (or attributes (js-object (vector)))))))
+
+;; jsx-view3d-create-point3d : jsx-element? any/c [any/c #f] -> jsx-element?
+;;   Create a 3D point inside a 3D view.
+(define (jsx-view3d-create-point3d view parents [attributes #f])
+  (jsx-view3d-create view "point3d" parents attributes))
+
+;; jsx-view3d-create-line3d : jsx-element? any/c [any/c #f] -> jsx-element?
+;;   Create a 3D line inside a 3D view.
+(define (jsx-view3d-create-line3d view parents [attributes #f])
+  (jsx-view3d-create view "line3d" parents attributes))
+
+;; jsx-view3d-create-circle3d : jsx-element? any/c [any/c #f] -> jsx-element?
+;;   Create a 3D circle inside a 3D view.
+(define (jsx-view3d-create-circle3d view parents [attributes #f])
+  (jsx-view3d-create view "circle3d" parents attributes))
+
+;; jsx-view3d-create-plane3d : jsx-element? any/c [any/c #f] -> jsx-element?
+;;   Create a 3D plane inside a 3D view.
+(define (jsx-view3d-create-plane3d view parents [attributes #f])
+  (jsx-view3d-create view "plane3d" parents attributes))
+
+;; jsx-view3d-create-axes3d : jsx-element? any/c [any/c #f] -> jsx-element?
+;;   Create 3D axes inside a 3D view.
+(define (jsx-view3d-create-axes3d view parents [attributes #f])
+  (jsx-view3d-create view "axes3d" parents attributes))
+
+;; jsx-view3d-create-axis3d : jsx-element? any/c [any/c #f] -> jsx-element?
+;;   Create a 3D axis inside a 3D view.
+(define (jsx-view3d-create-axis3d view parents [attributes #f])
+  (jsx-view3d-create view "axis3d" parents attributes))
+
+;; jsx-view3d-create-functiongraph3d : jsx-element? any/c [any/c #f] -> jsx-element?
+;;   Create a 3D function graph inside a 3D view.
+(define (jsx-view3d-create-functiongraph3d view parents [attributes #f])
+  (jsx-view3d-create view "functiongraph3d" (jsx-callable-pack parents) attributes))
+
+;; jsx-view3d-create-sphere3d : jsx-element? any/c [any/c #f] -> jsx-element?
+;;   Create a 3D sphere inside a 3D view.
+(define (jsx-view3d-create-sphere3d view parents [attributes #f])
+  (jsx-view3d-create view "sphere3d" parents attributes))
+
+;; jsx-view3d-create-intersectioncircle3d : jsx-element? any/c [any/c #f] -> jsx-element?
+;;   Create the circle intersection of two 3D solids inside a 3D view.
+(define (jsx-view3d-create-intersectioncircle3d view parents [attributes #f])
+  (jsx-view3d-create view "intersectioncircle3d" parents attributes))
+
+;; jsx-view3d-create-intersectionline3d : jsx-element? any/c [any/c #f] -> jsx-element?
+;;   Create the line intersection of two 3D planes inside a 3D view.
+(define (jsx-view3d-create-intersectionline3d view parents [attributes #f])
+  (jsx-view3d-create view "intersectionline3d" parents attributes))
+
+;; jsx-view3d-create-curve3d : jsx-element? any/c [any/c #f] -> jsx-element?
+;;   Create a 3D curve inside a 3D view.
+(define (jsx-view3d-create-curve3d view parents [attributes #f])
+  (jsx-view3d-create view "curve3d" (jsx-callable-pack parents) attributes))
+
+;; jsx-view3d-create-parametricsurface3d : jsx-element? any/c [any/c #f] -> jsx-element?
+;;   Create a 3D parametric surface inside a 3D view.
+(define (jsx-view3d-create-parametricsurface3d view parents [attributes #f])
+  (jsx-view3d-create view "parametricsurface3d" (jsx-callable-pack parents) attributes))
+
+;; jsx-view3d-create-polyhedron3d : jsx-element? any/c [any/c #f] -> jsx-element?
+;;   Create a 3D polyhedron inside a 3D view.
+(define (jsx-view3d-create-polyhedron3d view parents [attributes #f])
+  (jsx-view3d-create view "polyhedron3d" parents attributes))
+
+;; jsx-view3d-create-text3d : jsx-element? any/c [any/c #f] -> jsx-element?
+;;   Create 3D text inside a 3D view.
+(define (jsx-view3d-create-text3d view parents [attributes #f])
+  (jsx-view3d-create view "text3d" parents attributes))
+
+;; jsx-view3d-create-vectorfield3d : jsx-element? any/c [any/c #f] -> jsx-element?
+;;   Create a 3D vector field inside a 3D view.
+(define (jsx-view3d-create-vectorfield3d view parents [attributes #f])
+  (jsx-view3d-create view "vectorfield3d" (jsx-callable-pack parents) attributes))
+
 ;; jsx-board-create-point/raw : external/raw any/c any/c -> external/raw
 ;;   Create a point on a board.
 (define-jsx-alias (jsx-board-create-point/raw board parents attrs)

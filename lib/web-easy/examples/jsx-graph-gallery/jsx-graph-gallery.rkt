@@ -98,6 +98,21 @@
 (define constructions-board-id "jsx-graph-gallery-constructions")
 (define widgets-board-id "jsx-graph-gallery-widgets")
 (define annotation-board-id "jsx-graph-gallery-annotation")
+(define view3d-board-id "jsx-graph-gallery-view3d")
+(define point3d-board-id "jsx-graph-gallery-point3d")
+(define line3d-board-id "jsx-graph-gallery-line3d")
+(define circle3d-board-id "jsx-graph-gallery-circle3d")
+(define plane3d-board-id "jsx-graph-gallery-plane3d")
+(define axes3d-board-id "jsx-graph-gallery-axes3d")
+(define axis3d-board-id "jsx-graph-gallery-axis3d")
+(define functiongraph3d-board-id "jsx-graph-gallery-functiongraph3d")
+(define intersectioncircle3d-board-id "jsx-graph-gallery-intersectioncircle3d")
+(define intersectionline3d-board-id "jsx-graph-gallery-intersectionline3d")
+(define curve3d-board-id "jsx-graph-gallery-curve3d")
+(define parametricsurface3d-board-id "jsx-graph-gallery-parametricsurface3d")
+(define polyhedron3d-board-id "jsx-graph-gallery-polyhedron3d")
+(define text3d-board-id "jsx-graph-gallery-text3d")
+(define vectorfield3d-board-id "jsx-graph-gallery-vectorfield3d")
 
 (define @status (@ "Loading JSXGraph assets..."))
 (define @summary (@ "Waiting for the boards to initialize."))
@@ -205,6 +220,21 @@
 (define constructions-board-ready? #f)
 (define widgets-board-ready? #f)
 (define annotation-board-ready? #f)
+(define view3d-board-ready? #f)
+(define point3d-board-ready? #f)
+(define line3d-board-ready? #f)
+(define circle3d-board-ready? #f)
+(define plane3d-board-ready? #f)
+(define axes3d-board-ready? #f)
+(define axis3d-board-ready? #f)
+(define functiongraph3d-board-ready? #f)
+(define intersectioncircle3d-board-ready? #f)
+(define intersectionline3d-board-ready? #f)
+(define curve3d-board-ready? #f)
+(define parametricsurface3d-board-ready? #f)
+(define polyhedron3d-board-ready? #f)
+(define text3d-board-ready? #f)
+(define vectorfield3d-board-ready? #f)
 
 (define point-board #f)
 (define point-free #f)
@@ -577,11 +607,173 @@
 (define annotation-board #f)
 (define annotation-slider #f)
 (define annotation-text #f)
+(define view3d-board #f)
+(define view3d-view #f)
+(define point3d-board #f)
+(define point3d-view #f)
+(define point3d-point #f)
+(define line3d-board #f)
+(define line3d-view #f)
+(define line3d-point-1 #f)
+(define line3d-point-2 #f)
+(define line3d-line #f)
+(define circle3d-board #f)
+(define circle3d-view #f)
+(define circle3d-center #f)
+(define circle3d-point #f)
+(define circle3d-circle #f)
+(define plane3d-board #f)
+(define plane3d-view #f)
+(define plane3d-point-1 #f)
+(define plane3d-point-2 #f)
+(define plane3d-point-3 #f)
+(define plane3d-plane #f)
+(define plane3d-footprint #f)
+(define axes3d-board #f)
+(define axes3d-view #f)
+(define axes3d-axes #f)
+(define axis3d-board #f)
+(define axis3d-view #f)
+(define axis3d-axis #f)
+(define functiongraph3d-board #f)
+(define functiongraph3d-view #f)
+(define functiongraph3d-surface #f)
+(define intersectioncircle3d-board #f)
+(define intersectioncircle3d-view #f)
+(define intersectioncircle3d-sphere-1 #f)
+(define intersectioncircle3d-sphere-2 #f)
+(define intersectioncircle3d-intersection #f)
+(define intersectionline3d-board #f)
+(define intersectionline3d-view #f)
+(define intersectionline3d-plane-1 #f)
+(define intersectionline3d-plane-2 #f)
+(define intersectionline3d-line #f)
+(define curve3d-board #f)
+(define curve3d-view #f)
+(define curve3d-curve #f)
+(define parametricsurface3d-board #f)
+(define parametricsurface3d-view #f)
+(define parametricsurface3d-surface #f)
+(define polyhedron3d-board #f)
+(define polyhedron3d-view #f)
+(define polyhedron3d-object #f)
+(define text3d-board #f)
+(define text3d-view #f)
+(define text3d-object #f)
+(define vectorfield3d-board #f)
+(define vectorfield3d-view #f)
+(define vectorfield3d-object #f)
 
 ;; extern-present? : any/c -> boolean?
 ;;   Check whether a JS value is a live external value.
 (define (extern-present? v)
   (external? v))
+
+;; gallery-3d-view-options : -> any/c
+;;   Build the 3D view options that match the official hidden-plane examples.
+(define (gallery-3d-view-options)
+  (js-object
+   (vector (vector "projection" "parallel")
+           (vector "axesPosition" "none")
+           (vector "xPlaneRear"
+                   (js-object
+                    (vector (vector "fillColor" "#fff")
+                            (vector "mesh3d"
+                                    (js-object (vector (vector "visible" #f)))))))
+           (vector "yPlaneRear"
+                   (js-object
+                    (vector (vector "fillColor" "#fff")
+                            (vector "mesh3d"
+                                    (js-object (vector (vector "visible" #f)))))))
+           (vector "zPlaneRear"
+                   (js-object
+                    (vector (vector "fillColor" "#fff")
+                            (vector "mesh3d"
+                                    (js-object (vector (vector "visible" #f)))))))
+           (vector "xPlaneFront"
+                   (js-object
+                    (vector (vector "visible" #t)
+                            (vector "fillColor" "#fff")
+                            (vector "mesh3d"
+                                    (js-object (vector (vector "visible" #f)))))))
+           (vector "yPlaneFront"
+                   (js-object
+                    (vector (vector "visible" #t)
+                            (vector "fillColor" "#fff")
+                            (vector "mesh3d"
+                                    (js-object (vector (vector "visible" #f)))))))
+           (vector "zPlaneFront"
+                   (js-object
+                    (vector (vector "visible" #t)
+                            (vector "fillColor" "#fff")
+                            (vector "mesh3d"
+                                    (js-object (vector (vector "visible" #f)))))))
+           (vector "xPlaneRearYAxis" (js-object (vector (vector "visible" #f))))
+           (vector "xPlaneRearZAxis" (js-object (vector (vector "visible" #f))))
+           (vector "yPlaneRearXAxis" (js-object (vector (vector "visible" #f))))
+           (vector "yPlaneRearZAxis" (js-object (vector (vector "visible" #f))))
+           (vector "zPlaneRearXAxis" (js-object (vector (vector "visible" #f))))
+           (vector "zPlaneRearYAxis" (js-object (vector (vector "visible" #f))))
+           (vector "xPlaneFrontYAxis" (js-object (vector (vector "visible" #f))))
+           (vector "xPlaneFrontZAxis" (js-object (vector (vector "visible" #f))))
+           (vector "yPlaneFrontXAxis" (js-object (vector (vector "visible" #f))))
+           (vector "yPlaneFrontZAxis" (js-object (vector (vector "visible" #f))))
+           (vector "zPlaneFrontXAxis" (js-object (vector (vector "visible" #f))))
+           (vector "zPlaneFrontYAxis" (js-object (vector (vector "visible" #f)))))))
+
+;; gallery-3d-view-options/trackball : -> any/c
+;;   Build the 3D view options used by the main 3D gallery board.
+(define (gallery-3d-view-options/trackball)
+  (js-object
+   (vector (vector "projection" "central")
+           (vector "axesPosition" "none")
+           (vector "xPlaneRear"
+                   (js-object
+                    (vector (vector "fillColor" "#fff")
+                            (vector "mesh3d"
+                                    (js-object (vector (vector "visible" #f)))))))
+           (vector "yPlaneRear"
+                   (js-object
+                    (vector (vector "fillColor" "#fff")
+                            (vector "mesh3d"
+                                    (js-object (vector (vector "visible" #f)))))))
+           (vector "zPlaneRear"
+                   (js-object
+                    (vector (vector "fillColor" "#fff")
+                            (vector "mesh3d"
+                                    (js-object (vector (vector "visible" #f)))))))
+           (vector "xPlaneFront"
+                   (js-object
+                    (vector (vector "visible" #t)
+                            (vector "fillColor" "#fff")
+                            (vector "mesh3d"
+                                    (js-object (vector (vector "visible" #f)))))))
+           (vector "yPlaneFront"
+                   (js-object
+                    (vector (vector "visible" #t)
+                            (vector "fillColor" "#fff")
+                            (vector "mesh3d"
+                                    (js-object (vector (vector "visible" #f)))))))
+           (vector "zPlaneFront"
+                   (js-object
+                    (vector (vector "visible" #t)
+                            (vector "fillColor" "#fff")
+                            (vector "mesh3d"
+                                    (js-object (vector (vector "visible" #f)))))))
+           (vector "xPlaneRearYAxis" (js-object (vector (vector "visible" #f))))
+           (vector "xPlaneRearZAxis" (js-object (vector (vector "visible" #f))))
+           (vector "yPlaneRearXAxis" (js-object (vector (vector "visible" #f))))
+           (vector "yPlaneRearZAxis" (js-object (vector (vector "visible" #f))))
+           (vector "zPlaneRearXAxis" (js-object (vector (vector "visible" #f))))
+           (vector "zPlaneRearYAxis" (js-object (vector (vector "visible" #f))))
+           (vector "xPlaneFrontYAxis" (js-object (vector (vector "visible" #f))))
+           (vector "xPlaneFrontZAxis" (js-object (vector (vector "visible" #f))))
+           (vector "yPlaneFrontXAxis" (js-object (vector (vector "visible" #f))))
+           (vector "yPlaneFrontZAxis" (js-object (vector (vector "visible" #f))))
+           (vector "zPlaneFrontXAxis" (js-object (vector (vector "visible" #f))))
+           (vector "zPlaneFrontYAxis" (js-object (vector (vector "visible" #f))))
+           (vector "trackball"
+                   (js-object (vector (vector "enabled" #t)))))))
 
 ;; set-status! : string? -> void?
 ;;   Update the status line in the gallery.
@@ -748,7 +940,8 @@
                  group-board-id
                  (js-object
                   (vector (vector "boundingbox" #[-6 6 6 -6])
-                          (vector "axis" #t)
+                          (vector "axis" #f)
+                          (vector "grid" #f)
                           (vector "keepaspectratio" #t)))))
           (set! group-p
                 (jsx-create-point group-board
@@ -1344,6 +1537,7 @@
                  (js-object
                   (vector (vector "boundingbox" #[-6 6 6 -6])
                           (vector "axis" #f)
+                          (vector "grid" #f)
                           (vector "keepaspectratio" #t)))))
           (refresh-grid-board!)
           (set! grid-board-ready? #t))
@@ -1397,7 +1591,8 @@
                  tangent-board-id
                  (js-object
                   (vector (vector "boundingbox" #[-6 6 6 -6])
-                          (vector "axis" #t)
+                          (vector "axis" #f)
+                          (vector "grid" #f)
                           (vector "keepaspectratio" #t)))))
           (set! tangent-curve
                 (jsx-create-functiongraph
@@ -1857,7 +2052,8 @@
                  curveintersection-board-id
                  (js-object
                   (vector (vector "boundingbox" #[-6 6 6 -6])
-                          (vector "axis" #t)
+                          (vector "axis" #f)
+                          (vector "grid" #f)
                           (vector "keepaspectratio" #t)))))
           (set! curveintersection-f-1
                 (jsx-create-circle curveintersection-board
@@ -1895,7 +2091,8 @@
                  curvedifference-board-id
                  (js-object
                   (vector (vector "boundingbox" #[-6 6 6 -6])
-                          (vector "axis" #t)
+                          (vector "axis" #f)
+                          (vector "grid" #f)
                           (vector "keepaspectratio" #t)))))
           (set! curvedifference-f-1
                 (jsx-create-circle curvedifference-board
@@ -1933,7 +2130,8 @@
                  curveunion-board-id
                  (js-object
                   (vector (vector "boundingbox" #[-6 6 6 -6])
-                          (vector "axis" #t)
+                          (vector "axis" #f)
+                          (vector "grid" #f)
                           (vector "keepaspectratio" #t)))))
           (set! curveunion-f-1
                 (jsx-create-circle curveunion-board
@@ -1971,7 +2169,8 @@
                  derivative-board-id
                  (js-object
                   (vector (vector "boundingbox" #[-6 6 6 -6])
-                          (vector "axis" #t)
+                          (vector "axis" #f)
+                          (vector "grid" #f)
                           (vector "keepaspectratio" #t)))))
           (set! derivative-curve
                 (jsx-create-functiongraph derivative-board
@@ -2005,7 +2204,8 @@
                  integral-board-id
                  (js-object
                   (vector (vector "boundingbox" #[-6 6 6 -6])
-                          (vector "axis" #t)
+                          (vector "axis" #f)
+                          (vector "grid" #f)
                           (vector "keepaspectratio" #t)))))
           (set! integral-curve
                 (jsx-create-functiongraph integral-board
@@ -2313,7 +2513,8 @@
                  comb-board-id
                  (js-object
                   (vector (vector "boundingbox" #[-6 6 6 -6])
-                          (vector "axis" #t)
+                          (vector "axis" #f)
+                          (vector "grid" #f)
                           (vector "keepaspectratio" #t)))))
           (define comb-p1
             (jsx-create-point comb-board
@@ -2448,7 +2649,8 @@
                  polygonalchain-board-id
                  (js-object
                   (vector (vector "boundingbox" #[-6 6 6 -6])
-                          (vector "axis" #t)
+                          (vector "axis" #f)
+                          (vector "grid" #f)
                           (vector "keepaspectratio" #t)))))
           (define chain-points
             (jsx-parents (jsx-create-point polygonalchain-board (jsx-parents -4 0)
@@ -2536,7 +2738,7 @@
                  hyperbola-board-id
                  (js-object
                   (vector (vector "boundingbox" #[-6 6 6 -6])
-                          (vector "axis" #t)
+                          (vector "axis" #f)
                           (vector "keepaspectratio" #t)))))
           (set! hyperbola-a (jsx-create-point hyperbola-board (jsx-parents -1 4)
                                               (js-object (vector (vector "name" "A")))))
@@ -4720,6 +4922,766 @@
         (void (jsx-board-full-update! annotation-board))
         #t)))
 
+;; init-view3d-board! : -> boolean?
+;;   Build the JSXGraph view3d board once the browser assets have loaded.
+(define (init-view3d-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless view3d-board-ready?
+          (console-log "View3D board")
+          (set! view3d-board
+                (jsx-create-board
+                 view3d-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 6 6 -6])
+                          (vector "axis" #f)
+                          (vector "grid" #f)
+                          (vector "keepaspectratio" #t)))))
+          (set! view3d-view
+                (jsx-create-view3d
+                 view3d-board
+                 (jsx-parents (vector -4 -3)
+                              (vector 8 8)
+                              (vector (vector -5 5)
+                                      (vector -5 5)
+                                      (vector -5 5)))
+                 (js-object
+                  (vector (vector "projection" "parallel")
+                          (vector "axesPosition" "none")
+                          (vector "trackball"
+                                  (js-object (vector (vector "enabled" #t))))))))
+          (set! view3d-board-ready? #t))
+        (void (jsx-board-full-update! view3d-board))
+        #t)))
+
+;; init-point3d-board! : -> boolean?
+;;   Build the JSXGraph point3d board once the browser assets have loaded.
+(define (init-point3d-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless point3d-board-ready?
+          (console-log "Point3D board")
+          (set! point3d-board
+                (jsx-create-board
+                 point3d-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 6 6 -6])
+                          (vector "axis" #f)
+                          (vector "grid" #f)
+                          (vector "keepaspectratio" #t)))))
+          (set! point3d-view
+                (jsx-create-view3d
+                 point3d-board
+                 (jsx-parents (vector -4 -3)
+                              (vector 8 8)
+                              (vector (vector -5 5)
+                                      (vector -5 5)
+                                      (vector -5 5)))
+                 (gallery-3d-view-options)))
+          (set! point3d-point
+                (jsx-view3d-create-point3d
+                 point3d-view
+                 (vector 1 2 2)
+                 (js-object
+                  (vector (vector "name" "A")
+                          (vector "size" 5)
+                          (vector "fillColor" "#c53030")
+                          (vector "strokeColor" "#9b2c2c")))))
+          (set! point3d-board-ready? #t))
+        (void (jsx-board-full-update! point3d-board))
+        #t)))
+
+;; init-line3d-board! : -> boolean?
+;;   Build the JSXGraph line3d board once the browser assets have loaded.
+(define (init-line3d-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless line3d-board-ready?
+          (console-log "Line3D board")
+          (set! line3d-board
+                (jsx-create-board
+                 line3d-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 6 6 -6])
+                          (vector "axis" #f)
+                          (vector "grid" #f)
+                          (vector "keepaspectratio" #t)))))
+          (set! line3d-view
+                (jsx-create-view3d
+                 line3d-board
+                 (jsx-parents (vector -4 -3)
+                              (vector 8 8)
+                              (vector (vector -5 5)
+                                      (vector -5 5)
+                                      (vector -5 5)))
+                 (gallery-3d-view-options)))
+          (set! line3d-point-1
+                (jsx-view3d-create-point3d
+                 line3d-view
+                 (vector 1 3 3)
+                 (js-object
+                  (vector (vector "name" "A")
+                          (vector "size" 4)
+                          (vector "visible" #t)))))
+          (set! line3d-point-2
+                (jsx-view3d-create-point3d
+                 line3d-view
+                 (vector -3 -3 -3)
+                 (js-object
+                  (vector (vector "name" "B")
+                          (vector "size" 4)
+                          (vector "visible" #t)))))
+          (set! line3d-line
+                (jsx-view3d-create-line3d
+                 line3d-view
+                 (jsx-parents line3d-point-1 line3d-point-2)
+                 (js-object
+                  (vector (vector "strokeColor" "#2b6cb0")
+                          (vector "strokeWidth" 3)
+                          (vector "point1"
+                                  (js-object (vector (vector "visible" #t))))
+                          (vector "point2"
+                                  (js-object (vector (vector "visible" #t))))))))
+          (set! line3d-board-ready? #t))
+        (void (jsx-board-full-update! line3d-board))
+        #t)))
+
+;; init-circle3d-board! : -> boolean?
+;;   Build the JSXGraph circle3d board once the browser assets have loaded.
+(define (init-circle3d-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless circle3d-board-ready?
+          (console-log "Circle3D board")
+          (set! circle3d-board
+                (jsx-create-board
+                 circle3d-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 6 6 -6])
+                          (vector "axis" #f)
+                          (vector "grid" #f)
+                          (vector "keepaspectratio" #t)))))
+          (set! circle3d-view
+                (jsx-create-view3d
+                 circle3d-board
+                 (jsx-parents (vector -4 -3)
+                              (vector 8 8)
+                              (vector (vector -5 5)
+                                      (vector -5 5)
+                                      (vector -5 5)))
+                 (gallery-3d-view-options)))
+          (set! circle3d-center
+                (jsx-view3d-create-point3d
+                 circle3d-view
+                 (vector 0 0 0)
+                 (js-object
+                  (vector (vector "name" "O")
+                          (vector "size" 4)
+                          (vector "fillColor" "#2b6cb0")
+                          (vector "strokeColor" "#2c5282")))))
+          (set! circle3d-point
+                (jsx-view3d-create-point3d
+                 circle3d-view
+                 (vector 2 0 0)
+                 (js-object
+                  (vector (vector "name" "P")
+                          (vector "size" 4)
+                          (vector "fillColor" "#c53030")
+                          (vector "strokeColor" "#9b2c2c")))))
+          (set! circle3d-circle
+                (jsx-view3d-create-circle3d
+                 circle3d-view
+                 (jsx-parents circle3d-center
+                              (vector 0 0 0 1)
+                              2)
+                 (js-object
+                  (vector (vector "strokeColor" "#2b6cb0")
+                          (vector "fillOpacity" 0.08)))))
+          (set! circle3d-board-ready? #t))
+        (void (jsx-board-full-update! circle3d-board))
+        #t)))
+
+;; init-plane3d-board! : -> boolean?
+;;   Build the JSXGraph plane3d board once the browser assets have loaded.
+(define (init-plane3d-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless plane3d-board-ready?
+          (console-log "Plane3D board")
+          (set! plane3d-board
+                (jsx-create-board
+                 plane3d-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 6 6 -6])
+                          (vector "axis" #f)
+                          (vector "grid" #f)
+                          (vector "keepaspectratio" #t)))))
+          (set! plane3d-view
+                (jsx-create-view3d
+                 plane3d-board
+                 (jsx-parents (vector -4 -3)
+                              (vector 8 8)
+                              (vector (vector -5 5)
+                                      (vector -5 5)
+                                      (vector -5 5)))
+                 (gallery-3d-view-options)))
+          (set! plane3d-point-1
+                (jsx-view3d-create-point3d
+                 plane3d-view
+                 (vector -4 -2 -1)
+                 (js-object
+                  (vector (vector "name" "A")
+                          (vector "size" 6)
+                          (vector "fillColor" "#2b6cb0")
+                          (vector "strokeColor" "#2c5282")))))
+          (set! plane3d-point-2
+                (jsx-view3d-create-point3d
+                 plane3d-view
+                 (vector 2 -1 1)
+                 (js-object
+                  (vector (vector "name" "B")
+                          (vector "size" 6)
+                          (vector "fillColor" "#c53030")
+                          (vector "strokeColor" "#9b2c2c")))))
+          (set! plane3d-point-3
+                (jsx-view3d-create-point3d
+                 plane3d-view
+                 (vector 0 3 0)
+                 (js-object
+                  (vector (vector "name" "C")
+                          (vector "size" 6)
+                          (vector "fillColor" "#38a169")
+                          (vector "strokeColor" "#276749")))))
+          (set! plane3d-footprint
+                (jsx-view3d-create
+                 plane3d-view
+                 "polygon3d"
+                 (jsx-parents plane3d-point-1
+                              plane3d-point-2
+                              plane3d-point-3)
+                 (js-object
+                  (vector (vector "fillColor" "#f6e05e")
+                          (vector "fillOpacity" 0.7)
+                          (vector "strokeColor" "#975a16")
+                          (vector "strokeWidth" 5)))))
+          (set! plane3d-plane
+                (jsx-view3d-create-plane3d
+                 plane3d-view
+                 (jsx-parents plane3d-point-1
+                              plane3d-point-2
+                              plane3d-point-3)
+                 (js-object
+                  (vector (vector "fillColor" "#f6ad55")
+                          (vector "fillOpacity" 0.92)
+                          (vector "strokeColor" "#b45309")
+                          (vector "strokeWidth" 4)))))
+          (set! plane3d-board-ready? #t))
+        (void (jsx-board-full-update! plane3d-board))
+        #t)))
+
+;; init-axes3d-board! : -> boolean?
+;;   Build the JSXGraph axes3d board once the browser assets have loaded.
+(define (init-axes3d-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless axes3d-board-ready?
+          (console-log "Axes3D board")
+          (set! axes3d-board
+                (jsx-create-board
+                 axes3d-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 6 6 -6])
+                          (vector "axis" #f)
+                          (vector "grid" #f)
+                          (vector "keepaspectratio" #t)))))
+          (set! axes3d-view
+                (jsx-create-view3d
+                 axes3d-board
+                 (jsx-parents (vector -4 -3)
+                              (vector 8 8)
+                              (vector (vector -5 5)
+                                      (vector -5 5)
+                                      (vector -5 5)))
+                 (gallery-3d-view-options)))
+          (set! axes3d-axes
+                (jsx-view3d-create-axes3d
+                 axes3d-view
+                 (jsx-parents)
+                 (js-object
+                  (vector (vector "axesPosition" "center")
+                          (vector "strokeColor" "#2b6cb0")
+                          (vector "fillOpacity" 0)
+                          (vector "highlightFillOpacity" 0)
+                          (vector "strokeOpacity" 0)
+                          (vector "highlightStrokeOpacity" 0)))))
+          (set! axes3d-board-ready? #t))
+        (void (jsx-board-full-update! axes3d-board))
+        #t)))
+
+;; init-axis3d-board! : -> boolean?
+;;   Build the JSXGraph axis3d board once the browser assets have loaded.
+(define (init-axis3d-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless axis3d-board-ready?
+          (console-log "Axis3D board")
+          (set! axis3d-board
+                (jsx-create-board
+                 axis3d-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 6 6 -6])
+                          (vector "axis" #f)
+                          (vector "grid" #f)
+                          (vector "keepaspectratio" #t)))))
+          (set! axis3d-view
+                (jsx-create-view3d
+                 axis3d-board
+                 (jsx-parents (vector -4 -3)
+                              (vector 8 8)
+                              (vector (vector -5 5)
+                                      (vector -5 5)
+                                      (vector -5 5)))
+                 (gallery-3d-view-options)))
+          (set! axis3d-axis
+                (jsx-view3d-create-axis3d
+                 axis3d-view
+                 (jsx-parents (vector -2 -2 -2)
+                              (vector 3 3 3))
+                 (js-object
+                  (vector (vector "strokeColor" "#c53030")
+                          (vector "strokeWidth" 3)))))
+          (set! axis3d-board-ready? #t))
+        (void (jsx-board-full-update! axis3d-board))
+        #t)))
+
+;; init-functiongraph3d-board! : -> boolean?
+;;   Build the JSXGraph functiongraph3d board once the browser assets have loaded.
+(define (init-functiongraph3d-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless functiongraph3d-board-ready?
+          (console-log "Functiongraph3D board")
+          (set! functiongraph3d-board
+                (jsx-create-board
+                 functiongraph3d-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 6 6 -6])
+                          (vector "axis" #f)
+                          (vector "grid" #f)
+                          (vector "keepaspectratio" #t)))))
+          (set! functiongraph3d-view
+                (jsx-create-view3d
+                 functiongraph3d-board
+                 (jsx-parents (vector -4 -3)
+                              (vector 8 8)
+                              (vector (vector -5 5)
+                                      (vector -5 5)
+                                      (vector -5 5)))
+                 (gallery-3d-view-options)))
+          (set! functiongraph3d-surface
+                (jsx-view3d-create-functiongraph3d
+                 functiongraph3d-view
+                 (jsx-parents
+                  (lambda (x y) (sin (/ (* x y) 4)))
+                  (vector -5 5)
+                  (vector -5 5))
+                 (js-object
+                  (vector (vector "strokeWidth" 0.5)
+                          (vector "stepsU" 24)
+                          (vector "stepsV" 24)))))
+          (set! functiongraph3d-board-ready? #t))
+        (void (jsx-board-full-update! functiongraph3d-board))
+        #t)))
+
+;; init-intersectioncircle3d-board! : -> boolean?
+;;   Build the JSXGraph intersectioncircle3d board once the browser assets have loaded.
+(define (init-intersectioncircle3d-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless intersectioncircle3d-board-ready?
+          (console-log "IntersectionCircle3D board")
+          (set! intersectioncircle3d-board
+                (jsx-create-board
+                 intersectioncircle3d-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 6 6 -6])
+                          (vector "axis" #f)
+                          (vector "grid" #f)
+                          (vector "keepaspectratio" #t)))))
+          (set! intersectioncircle3d-view
+                (jsx-create-view3d
+                 intersectioncircle3d-board
+                 (jsx-parents (vector -4 -3)
+                              (vector 8 8)
+                              (vector (vector -5 5)
+                                      (vector -5 5)
+                                      (vector -5 5)))
+                 (gallery-3d-view-options)))
+          (set! intersectioncircle3d-sphere-1
+                (jsx-view3d-create-sphere3d
+                 intersectioncircle3d-view
+                 (jsx-parents (vector -1 0 0) 2)
+                 (js-object
+                  (vector (vector "fillColor" "#68d391")
+                          (vector "fillOpacity" 0.25)))))
+          (set! intersectioncircle3d-sphere-2
+                (jsx-view3d-create-sphere3d
+                 intersectioncircle3d-view
+                 (jsx-parents (vector 1 0 0) 2)
+                 (js-object
+                  (vector (vector "fillColor" "#fc8181")
+                          (vector "fillOpacity" 0.25)))))
+          (set! intersectioncircle3d-intersection
+                (jsx-view3d-create-intersectioncircle3d
+                 intersectioncircle3d-view
+                 (jsx-parents intersectioncircle3d-sphere-1
+                              intersectioncircle3d-sphere-2)
+                 (js-object
+                  (vector (vector "strokeColor" "#2b6cb0")
+                          (vector "strokeWidth" 3)))))
+          (set! intersectioncircle3d-board-ready? #t))
+        (void (jsx-board-full-update! intersectioncircle3d-board))
+        #t)))
+
+;; init-intersectionline3d-board! : -> boolean?
+;;   Build the JSXGraph intersectionline3d board once the browser assets have loaded.
+(define (init-intersectionline3d-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless intersectionline3d-board-ready?
+          (console-log "IntersectionLine3D board")
+          (set! intersectionline3d-board
+                (jsx-create-board
+                 intersectionline3d-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 6 6 -6])
+                          (vector "axis" #f)
+                          (vector "grid" #f)
+                          (vector "keepaspectratio" #t)))))
+          (set! intersectionline3d-view
+                (jsx-create-view3d
+                 intersectionline3d-board
+                 (jsx-parents (vector -4 -3)
+                              (vector 8 8)
+                              (vector (vector -5 5)
+                                      (vector -5 5)
+                                      (vector -5 5)))
+                 (gallery-3d-view-options)))
+          (set! intersectionline3d-plane-1
+                (jsx-view3d-create-plane3d
+                 intersectionline3d-view
+                 (jsx-parents (vector 2 2 0)
+                              (vector 1 0 0)
+                              (vector 0 1 0))
+                 (js-object
+                  (vector (vector "fillColor" "#68d391")
+                          (vector "fillOpacity" 0.25)))))
+          (set! intersectionline3d-plane-2
+                (jsx-view3d-create-plane3d
+                 intersectionline3d-view
+                 (jsx-parents (vector 2 2 0)
+                              (vector -2 1 1)
+                              (vector 1 -2 1))
+                 (js-object
+                  (vector (vector "fillColor" "#fc8181")
+                          (vector "fillOpacity" 0.25)))))
+          (set! intersectionline3d-line
+                (jsx-view3d-create-intersectionline3d
+                 intersectionline3d-view
+                 (jsx-parents intersectionline3d-plane-1
+                              intersectionline3d-plane-2)
+                 (js-object
+                  (vector (vector "strokeColor" "#2b6cb0")
+                          (vector "strokeWidth" 3)))))
+          (set! intersectionline3d-board-ready? #t))
+        (void (jsx-board-full-update! intersectionline3d-board))
+        #t)))
+
+;; init-curve3d-board! : -> boolean?
+;;   Build the JSXGraph curve3d board once the browser assets have loaded.
+(define (init-curve3d-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless curve3d-board-ready?
+          (console-log "Curve3D board")
+          (set! curve3d-board
+                (jsx-create-board
+                 curve3d-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 6 6 -6])
+                          (vector "axis" #f)
+                          (vector "grid" #f)
+                          (vector "keepaspectratio" #t)))))
+          (set! curve3d-view
+                (jsx-create-view3d
+                 curve3d-board
+                 (jsx-parents (vector -4 -3)
+                              (vector 8 8)
+                              (vector (vector -5 5)
+                                      (vector -5 5)
+                                      (vector -5 5)))
+                 (gallery-3d-view-options)))
+          (set! curve3d-curve
+                (jsx-view3d-create-curve3d
+                 curve3d-view
+                 (jsx-parents
+                  (lambda (t) (cos t))
+                  (lambda (t) (sin t))
+                  (lambda (t) (/ t 4))
+                  (vector 0 (* 2 pi)))
+                 (js-object
+                  (vector (vector "strokeColor" "#2b6cb0")
+                          (vector "strokeWidth" 3)))))
+          (set! curve3d-board-ready? #t))
+        (void (jsx-board-full-update! curve3d-board))
+        #t)))
+
+;; init-parametricsurface3d-board! : -> boolean?
+;;   Build the JSXGraph parametricsurface3d board once the browser assets have loaded.
+(define (init-parametricsurface3d-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless parametricsurface3d-board-ready?
+          (console-log "ParametricSurface3D board")
+          (set! parametricsurface3d-board
+                (jsx-create-board
+                 parametricsurface3d-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 6 6 -6])
+                          (vector "axis" #f)
+                          (vector "grid" #f)
+                          (vector "keepaspectratio" #t)))))
+          (set! parametricsurface3d-view
+                (jsx-create-view3d
+                 parametricsurface3d-board
+                 (jsx-parents (vector -4 -3)
+                              (vector 8 8)
+                              (vector (vector -5 5)
+                                      (vector -5 5)
+                                      (vector -5 5)))
+                 (gallery-3d-view-options)))
+          (set! parametricsurface3d-surface
+                (jsx-view3d-create-parametricsurface3d
+                 parametricsurface3d-view
+                 (jsx-parents
+                  (lambda (u v) (* 2 (sin u) (cos v)))
+                  (lambda (u v) (* 2 (sin u) (sin v)))
+                  (lambda (u v) (* 2 (cos u)))
+                  (vector 0 (* 2 pi))
+                  (vector 0 pi))
+                 (js-object
+                  (vector (vector "strokeColor" "#c53030")
+                          (vector "stepsU" 24)
+                          (vector "stepsV" 16)))))
+          (set! parametricsurface3d-board-ready? #t))
+        (void (jsx-board-full-update! parametricsurface3d-board))
+        #t)))
+
+;; init-polyhedron3d-board! : -> boolean?
+;;   Build the JSXGraph polyhedron3d board once the browser assets have loaded.
+(define (init-polyhedron3d-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless polyhedron3d-board-ready?
+          (console-log "Polyhedron3D board")
+          (set! polyhedron3d-board
+                (jsx-create-board
+                 polyhedron3d-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 6 6 -6])
+                          (vector "axis" #f)
+                          (vector "grid" #f)
+                          (vector "keepaspectratio" #t)))))
+          (set! polyhedron3d-view
+                (jsx-create-view3d
+                 polyhedron3d-board
+                 (jsx-parents (vector -4 -3)
+                              (vector 8 8)
+                              (vector (vector -5 5)
+                                      (vector -5 5)
+                                      (vector -5 5)))
+                 (gallery-3d-view-options)))
+          (set! polyhedron3d-object
+                (jsx-view3d-create-polyhedron3d
+                 polyhedron3d-view
+                 (jsx-parents
+                  (vector (vector -3 -3 -3)
+                          (vector 3 -3 -3)
+                          (vector 3 3 -3)
+                          (vector -3 3 -3)
+                          (vector -3 -3 3)
+                          (vector 3 -3 3)
+                          (vector 3 3 3)
+                          (vector -3 3 3))
+                  (vector (vector 0 1 2 3)
+                          (vector 4 5 6 7)
+                          (vector 0 1 5 4)
+                          (vector 1 2 6 5)
+                          (vector 2 3 7 6)
+                          (vector 3 0 4 7)))
+                 (js-object
+                  (vector (vector "fillColorArray" (vector "#2b6cb0" "#c53030" "#38a169" "#d69e2e"))
+                          (vector "fillOpacity" 0.7)
+                          (vector "strokeColor" "#2d3748")
+                          (vector "strokeWidth" 1)))))
+          (set! polyhedron3d-board-ready? #t))
+        (void (jsx-board-full-update! polyhedron3d-board))
+        #t)))
+
+;; init-text3d-board! : -> boolean?
+;;   Build the JSXGraph text3d board once the browser assets have loaded.
+(define (init-text3d-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless text3d-board-ready?
+          (console-log "Text3D board")
+          (set! text3d-board
+                (jsx-create-board
+                 text3d-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 6 6 -6])
+                          (vector "axis" #f)
+                          (vector "grid" #f)
+                          (vector "keepaspectratio" #t)))))
+          (set! text3d-view
+                (jsx-create-view3d
+                 text3d-board
+                 (jsx-parents (vector -4 -3)
+                              (vector 8 8)
+                              (vector (vector -5 5)
+                                      (vector -5 5)
+                                      (vector -5 5)))
+                 (gallery-3d-view-options)))
+          (set! text3d-object
+                (jsx-view3d-create-text3d
+                 text3d-view
+                 (vector 0 0 0 "3D text")
+                 (js-object
+                  (vector (vector "anchorX" "middle")
+                          (vector "anchorY" "middle")
+                          (vector "fontSize" 18)
+                          (vector "fillColor" "#c53030")))))
+          (set! text3d-board-ready? #t))
+        (void (jsx-board-full-update! text3d-board))
+        #t)))
+
+;; init-vectorfield3d-board! : -> boolean?
+;;   Build the JSXGraph vectorfield3d board once the browser assets have loaded.
+(define (init-vectorfield3d-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless vectorfield3d-board-ready?
+          (console-log "Vectorfield3D board")
+          (set! vectorfield3d-board
+                (jsx-create-board
+                 vectorfield3d-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-6 6 6 -6])
+                          (vector "axis" #f)
+                          (vector "grid" #f)
+                          (vector "keepaspectratio" #t)))))
+          (set! vectorfield3d-view
+                (jsx-create-view3d
+                 vectorfield3d-board
+                 (jsx-parents (vector -4 -3)
+                              (vector 8 8)
+                              (vector (vector -5 5)
+                                      (vector -5 5)
+                                      (vector -5 5)))
+                 (gallery-3d-view-options)))
+          (set! vectorfield3d-object
+                (jsx-view3d-create-vectorfield3d
+                 vectorfield3d-view
+                 (jsx-parents
+                  (vector
+                   (lambda (x y z) (cos y))
+                   (lambda (x y z) (sin x))
+                   (lambda (x y z) z))
+                  (vector -2 5 2)
+                  (vector -2 5 2)
+                  (vector -2 5 2))
+                 (js-object
+                  (vector (vector "strokeColor" "#2b6cb0")
+                          (vector "scale" 0.5)))))
+          (set! vectorfield3d-board-ready? #t))
+        (void (jsx-board-full-update! vectorfield3d-board))
+        #t)))
+
 ;; init-boards! : -> boolean?
 ;;   Build both gallery boards once the browser assets have loaded.
 (define (init-boards!)
@@ -4809,6 +5771,21 @@
   (define perpendicularsegment-ready? (init-perpendicularsegment-board!))
   (define widgets-ready? (init-widgets-board!))
   (define annotation-ready? (init-annotation-board!))
+  (define view3d-ready? (init-view3d-board!))
+  (define point3d-ready? (init-point3d-board!))
+  (define line3d-ready? (init-line3d-board!))
+  (define circle3d-ready? (init-circle3d-board!))
+  (define plane3d-ready? (init-plane3d-board!))
+  (define axes3d-ready? (init-axes3d-board!))
+  (define axis3d-ready? (init-axis3d-board!))
+  (define functiongraph3d-ready? (init-functiongraph3d-board!))
+  (define intersectioncircle3d-ready? (init-intersectioncircle3d-board!))
+  (define intersectionline3d-ready? (init-intersectionline3d-board!))
+  (define curve3d-ready? (init-curve3d-board!))
+  (define parametricsurface3d-ready? (init-parametricsurface3d-board!))
+  (define polyhedron3d-ready? (init-polyhedron3d-board!))
+  (define text3d-ready? (init-text3d-board!))
+  (define vectorfield3d-ready? (init-vectorfield3d-board!))
   (when (and geometry-ready? group-ready? chart-ready?
              point-ready? line-ready? arc-ready? angle-ready? sector-ready? arrow-ready? arrowparallel-ready? circle-ready? glider-ready? button-ready? legend-ready? axis-ready? segment-ready? intersection-ready? orthogonal-ready? grid-ready? boxplot-ready? tangent-ready? tangentto-ready? polarline-ready? polepoint-ready? radicalaxis-ready? circumcircle-ready? circumcirclearc-ready? circumcirclesector-ready? semicircle-ready? majorarc-ready? majorsector-ready? curveintersection-ready? curvedifference-ready? curveunion-ready? derivative-ready? integral-ready? incircle-ready? conic-ready? ellipse-ready? functiongraph-ready? curve-ready? polygon-ready? midpoint-ready? parallel-ready? perpendicular-ready? reflection-ready? bisector-ready? widgets-ready? annotation-ready?
              checkbox-ready? input-ready? slider-ready? smartlabel-ready? text-ready?
@@ -4819,11 +5796,14 @@
              riemannsum-ready? slopefield-ready? vectorfield-ready? implicitcurve-ready? spline-ready?
              cardinalspline-ready? comb-ready? metapostspline-ready? polygonalchain-ready? regularpolygon-ready?
              hyperbola-ready? parabola-ready? stepfunction-ready? inequality-ready? turtle-ready?
+             view3d-ready? point3d-ready? line3d-ready? circle3d-ready? plane3d-ready?
+             axes3d-ready? axis3d-ready? functiongraph3d-ready? intersectioncircle3d-ready? intersectionline3d-ready?
+             curve3d-ready? parametricsurface3d-ready? polyhedron3d-ready? text3d-ready? vectorfield3d-ready?
              geometry-board-ready? group-board-ready? chart-board-ready?
              point-board-ready? line-board-ready? arc-board-ready? angle-board-ready? sector-board-ready? arrowparallel-board-ready? axis-board-ready? segment-board-ready? intersection-board-ready? grid-board-ready? boxplot-board-ready? tangent-board-ready? tangentto-board-ready? polarline-board-ready? polepoint-board-ready? radicalaxis-board-ready? circumcircle-board-ready? circumcirclearc-board-ready? circumcirclesector-board-ready? semicircle-board-ready? majorarc-board-ready? majorsector-board-ready? curveintersection-board-ready? curvedifference-board-ready? curveunion-board-ready? derivative-board-ready? integral-board-ready? riemannsum-board-ready? slopefield-board-ready? vectorfield-board-ready? implicitcurve-board-ready? spline-board-ready? incircle-board-ready? foreignobject-board-ready? tapemeasure-board-ready? measurement-board-ready? circumcenter-board-ready? mirrorelement-board-ready? ticks-board-ready? transformation-board-ready? tracecurve-board-ready? parallelogram-board-ready? reflexangle-board-ready? widgets-board-ready? annotation-board-ready?)
     (set-status! "Boards ready.")
     (set-summary!
-       (format "Created geometry, group, chart, point, line, arc, angle, sector, arrow, arrowparallel, circle, glider, button, legend, axis, segment, intersection, normal, grid, boxplot, tangent, tangentto, polarline, polepoint, radicalaxis, circumcircle, circumcirclearc, circumcirclesector, semicircle, majorarc, majorsector, curveintersection, curvedifference, curveunion, derivative, integral, riemannsum, slopefield, vectorfield, implicitcurve, spline, cardinalspline, comb, metapostspline, polygonalchain, regularpolygon, hyperbola, parabola, stepfunction, inequality, turtle, incircle, conic, ellipse, functiongraph, curve, polygon, midpoint, parallel, perpendicular, reflection, bisector, checkbox, input, slider, smartlabel, text, foreignobject, tapemeasure, measurement, circumcenter, mirrorelement, ticks, transformation, tracecurve, parallelogram, reflexangle, bisectorlines, perpendicularsegment, mirrorpoint, otherintersection, orthogonalprojection, parallelpoint, perpendicularpoint, widget, and annotation boards. Geometry objects: ~a. Group objects: ~a. Chart objects: ~a. Point objects: ~a. Line objects: ~a. Arc objects: ~a. Angle objects: ~a. Sector objects: ~a. Arrow objects: ~a. Arrowparallel objects: ~a. Circle objects: ~a. Glider objects: ~a. Button objects: ~a. Legend objects: ~a. Axis objects: ~a. Segment objects: ~a. Intersection objects: ~a. Normal objects: ~a. Grid objects: ~a. Boxplot objects: ~a. Tangent objects: ~a. TangentTo objects: ~a. Polarline objects: ~a. Polepoint objects: ~a. RadicalAxis objects: ~a. Circumcircle objects: ~a. CircumcircleArc objects: ~a. CircumcircleSector objects: ~a. Semicircle objects: ~a. MajorArc objects: ~a. MajorSector objects: ~a. CurveIntersection objects: ~a. CurveDifference objects: ~a. CurveUnion objects: ~a. Derivative objects: ~a. Integral objects: ~a. Riemannsum objects: ~a. Slopefield objects: ~a. Vectorfield objects: ~a. ImplicitCurve objects: ~a. Spline objects: ~a. Cardinalspline objects: ~a. Comb objects: ~a. MetapostSpline objects: ~a. PolygonalChain objects: ~a. RegularPolygon objects: ~a. Hyperbola objects: ~a. Parabola objects: ~a. Stepfunction objects: ~a. Inequality objects: ~a. Turtle objects: ~a. Incircle objects: ~a. Conic objects: ~a. Ellipse objects: ~a. Functiongraph objects: ~a. Curve objects: ~a. Polygon objects: ~a. Midpoint objects: ~a. Parallel objects: ~a. Perpendicular objects: ~a. Reflection objects: ~a. Bisector objects: ~a. Checkbox objects: ~a. Input objects: ~a. Slider objects: ~a. Smartlabel objects: ~a. Text objects: ~a. ForeignObject objects: ~a. Tapemeasure objects: ~a. Measurement objects: ~a. Circumcenter objects: ~a. MirrorElement objects: ~a. Ticks objects: ~a. Transformation objects: ~a. Tracecurve objects: ~a. Parallelogram objects: ~a. ReflexAngle objects: ~a. Bisectorlines objects: ~a. PerpendicularSegment objects: ~a. MirrorPoint objects: ~a. OtherIntersection objects: ~a. Orthogonalprojection objects: ~a. Parallelpoint objects: ~a. PerpendicularPoint objects: ~a. Widget objects: ~a. Annotation objects: ~a."
+       (format "Created geometry, group, chart, point, line, arc, angle, sector, arrow, arrowparallel, circle, glider, button, legend, axis, segment, intersection, normal, grid, boxplot, tangent, tangentto, polarline, polepoint, radicalaxis, circumcircle, circumcirclearc, circumcirclesector, semicircle, majorarc, majorsector, curveintersection, curvedifference, curveunion, derivative, integral, riemannsum, slopefield, vectorfield, implicitcurve, spline, cardinalspline, comb, metapostspline, polygonalchain, regularpolygon, hyperbola, parabola, stepfunction, inequality, turtle, incircle, conic, ellipse, functiongraph, curve, polygon, midpoint, parallel, perpendicular, reflection, bisector, checkbox, input, slider, smartlabel, text, foreignobject, tapemeasure, measurement, circumcenter, mirrorelement, ticks, transformation, tracecurve, parallelogram, reflexangle, bisectorlines, perpendicularsegment, mirrorpoint, otherintersection, orthogonalprojection, parallelpoint, perpendicularpoint, widget, annotation, curve3d, parametricsurface3d, polyhedron3d, text3d, and vectorfield3d boards. Geometry objects: ~a. Group objects: ~a. Chart objects: ~a. Point objects: ~a. Line objects: ~a. Arc objects: ~a. Angle objects: ~a. Sector objects: ~a. Arrow objects: ~a. Arrowparallel objects: ~a. Circle objects: ~a. Glider objects: ~a. Button objects: ~a. Legend objects: ~a. Axis objects: ~a. Segment objects: ~a. Intersection objects: ~a. Normal objects: ~a. Grid objects: ~a. Boxplot objects: ~a. Tangent objects: ~a. TangentTo objects: ~a. Polarline objects: ~a. Polepoint objects: ~a. RadicalAxis objects: ~a. Circumcircle objects: ~a. CircumcircleArc objects: ~a. CircumcircleSector objects: ~a. Semicircle objects: ~a. MajorArc objects: ~a. MajorSector objects: ~a. CurveIntersection objects: ~a. CurveDifference objects: ~a. CurveUnion objects: ~a. Derivative objects: ~a. Integral objects: ~a. Riemannsum objects: ~a. Slopefield objects: ~a. Vectorfield objects: ~a. ImplicitCurve objects: ~a. Spline objects: ~a. Cardinalspline objects: ~a. Comb objects: ~a. MetapostSpline objects: ~a. PolygonalChain objects: ~a. RegularPolygon objects: ~a. Hyperbola objects: ~a. Parabola objects: ~a. Stepfunction objects: ~a. Inequality objects: ~a. Turtle objects: ~a. Incircle objects: ~a. Conic objects: ~a. Ellipse objects: ~a. Functiongraph objects: ~a. Curve objects: ~a. Polygon objects: ~a. Midpoint objects: ~a. Parallel objects: ~a. Perpendicular objects: ~a. Reflection objects: ~a. Bisector objects: ~a. Checkbox objects: ~a. Input objects: ~a. Slider objects: ~a. Smartlabel objects: ~a. Text objects: ~a. ForeignObject objects: ~a. Tapemeasure objects: ~a. Measurement objects: ~a. Circumcenter objects: ~a. MirrorElement objects: ~a. Ticks objects: ~a. Transformation objects: ~a. Tracecurve objects: ~a. Parallelogram objects: ~a. ReflexAngle objects: ~a. Bisectorlines objects: ~a. PerpendicularSegment objects: ~a. MirrorPoint objects: ~a. OtherIntersection objects: ~a. Orthogonalprojection objects: ~a. Parallelpoint objects: ~a. PerpendicularPoint objects: ~a. Widget objects: ~a. Annotation objects: ~a. Curve3D objects: ~a. ParametricSurface3D objects: ~a. Polyhedron3D objects: ~a. Text3D objects: ~a. Vectorfield3D objects: ~a."
              (jsx-board-num-objects geometry-board)
              (jsx-board-num-objects group-board)
              (jsx-board-num-objects chart-board)
@@ -4909,7 +5889,12 @@
              (jsx-board-num-objects parallelpoint-board)
              (jsx-board-num-objects perpendicularpoint-board)
              (jsx-board-num-objects widgets-board)
-             (jsx-board-num-objects annotation-board))))
+             (jsx-board-num-objects annotation-board)
+             (jsx-board-num-objects curve3d-board)
+             (jsx-board-num-objects parametricsurface3d-board)
+             (jsx-board-num-objects polyhedron3d-board)
+             (jsx-board-num-objects text3d-board)
+             (jsx-board-num-objects vectorfield3d-board))))
   (and geometry-ready? group-ready? chart-ready?
              arrow-ready? arrowparallel-ready? circle-ready? glider-ready? button-ready? legend-ready? axis-ready? segment-ready? intersection-ready? grid-ready? boxplot-ready? tangent-ready? tangentto-ready? polarline-ready? polepoint-ready? radicalaxis-ready? circumcircle-ready? circumcirclearc-ready? circumcirclesector-ready? semicircle-ready? majorarc-ready? majorsector-ready? curveintersection-ready? curvedifference-ready? curveunion-ready? derivative-ready? integral-ready? incircle-ready? conic-ready? ellipse-ready? functiongraph-ready? curve-ready? polygon-ready? midpoint-ready? parallel-ready? perpendicular-ready? reflection-ready? bisector-ready? widgets-ready? annotation-ready?
              checkbox-ready? input-ready? slider-ready? smartlabel-ready? text-ready?
@@ -4917,7 +5902,8 @@
              cardinalspline-ready? comb-ready? metapostspline-ready? polygonalchain-ready? regularpolygon-ready?
              hyperbola-ready? parabola-ready? stepfunction-ready? inequality-ready? turtle-ready?
        geometry-board-ready? group-board-ready? chart-board-ready?
-       arrowparallel-board-ready? axis-board-ready? segment-board-ready? intersection-board-ready? orthogonal-board-ready? grid-board-ready? boxplot-board-ready? tangent-board-ready? tangentto-board-ready? polarline-board-ready? polepoint-board-ready? radicalaxis-board-ready? circumcircle-board-ready? circumcirclearc-board-ready? circumcirclesector-board-ready? semicircle-board-ready? majorarc-board-ready? majorsector-board-ready? curveintersection-board-ready? curvedifference-board-ready? curveunion-board-ready? derivative-board-ready? integral-board-ready? riemannsum-board-ready? slopefield-board-ready? vectorfield-board-ready? implicitcurve-board-ready? spline-board-ready? incircle-board-ready? mirrorpoint-board-ready? otherintersection-board-ready? orthogonalprojection-board-ready? parallelpoint-board-ready? perpendicularpoint-board-ready? bisectorlines-ready? perpendicularsegment-ready? widgets-board-ready? annotation-board-ready?))
+       arrowparallel-board-ready? axis-board-ready? segment-board-ready? intersection-board-ready? orthogonal-board-ready? grid-board-ready? boxplot-board-ready? tangent-board-ready? tangentto-board-ready? polarline-board-ready? polepoint-board-ready? radicalaxis-board-ready? circumcircle-board-ready? circumcirclearc-board-ready? circumcirclesector-board-ready? semicircle-board-ready? majorarc-board-ready? majorsector-board-ready? curveintersection-board-ready? curvedifference-board-ready? curveunion-board-ready? derivative-board-ready? integral-board-ready? riemannsum-board-ready? slopefield-board-ready? vectorfield-board-ready? implicitcurve-board-ready? spline-board-ready? incircle-board-ready? mirrorpoint-board-ready? otherintersection-board-ready? orthogonalprojection-board-ready? parallelpoint-board-ready? perpendicularpoint-board-ready? bisectorlines-ready? perpendicularsegment-ready? widgets-board-ready? annotation-board-ready?
+       curve3d-ready? parametricsurface3d-ready? polyhedron3d-ready? text3d-ready? vectorfield3d-ready?))
 
 ;; refresh-gallery! : -> void?
 ;;   Force a redraw of the live gallery boards.
@@ -5090,6 +6076,36 @@
     (jsx-board-full-update! widgets-board))
   (when annotation-board
     (jsx-board-full-update! annotation-board))
+  (when view3d-board
+    (jsx-board-full-update! view3d-board))
+  (when point3d-board
+    (jsx-board-full-update! point3d-board))
+  (when line3d-board
+    (jsx-board-full-update! line3d-board))
+  (when circle3d-board
+    (jsx-board-full-update! circle3d-board))
+  (when plane3d-board
+    (jsx-board-full-update! plane3d-board))
+  (when axes3d-board
+    (jsx-board-full-update! axes3d-board))
+  (when axis3d-board
+    (jsx-board-full-update! axis3d-board))
+  (when functiongraph3d-board
+    (jsx-board-full-update! functiongraph3d-board))
+  (when intersectioncircle3d-board
+    (jsx-board-full-update! intersectioncircle3d-board))
+  (when intersectionline3d-board
+    (jsx-board-full-update! intersectionline3d-board))
+  (when curve3d-board
+    (jsx-board-full-update! curve3d-board))
+  (when parametricsurface3d-board
+    (jsx-board-full-update! parametricsurface3d-board))
+  (when polyhedron3d-board
+    (jsx-board-full-update! polyhedron3d-board))
+  (when text3d-board
+    (jsx-board-full-update! text3d-board))
+  (when vectorfield3d-board
+    (jsx-board-full-update! vectorfield3d-board))
   (set-status! "Boards refreshed.")
   (set-summary! "The live gallery boards were redrawn, including the new class examples."))
 
@@ -5463,6 +6479,69 @@
                 #:attrs '((style "width: 720px; height: 420px;")))
      (text "PerpendicularPoint board: the constructed point should stay perpendicular to the base line.")
      (container #:id perpendicularpoint-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (gallery-headline "3D Views")
+     (text "View3D board: the 3D cube should appear cleanly, without the 2D grid backdrop.")
+     (container #:id view3d-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "Point3D board: the red point should appear in the clean 3D view.")
+     (container #:id point3d-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "Line3D board: the line should connect the two 3D points in the clean 3D view.")
+     (container #:id line3d-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "Circle3D board: the circle should sit in the clean 3D view and follow its center and radius.")
+     (container #:id circle3d-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "Plane3D board: the plane should pass through the three 3D points in the clean 3D view.")
+     (container #:id plane3d-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (gallery-headline "3D Extras")
+     (text "Axes3D board: the 3D axes should appear with a centered origin and no 2D backdrop grid.")
+     (container #:id axes3d-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "Axis3D board: the 3D axis should connect the two end points in the clean 3D view.")
+     (container #:id axis3d-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "Functiongraph3D board: the surface should follow the function of x and y in the clean 3D view.")
+     (container #:id functiongraph3d-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "IntersectionCircle3D board: the circle should follow the two spheres in the clean 3D view.")
+     (container #:id intersectioncircle3d-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "IntersectionLine3D board: the line should follow the two planes in the clean 3D view.")
+     (container #:id intersectionline3d-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (gallery-headline "3D Curves and Surfaces")
+     (text "Curve3D board: the curve should trace a smooth 3D helix in the clean 3D view.")
+     (container #:id curve3d-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "ParametricSurface3D board: the surface should show the spherical parameterization.")
+     (container #:id parametricsurface3d-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "Polyhedron3D board: the cube should show all six faces in the clean 3D view.")
+     (container #:id polyhedron3d-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "Text3D board: the 3D text should appear at the origin of the clean 3D view.")
+     (container #:id text3d-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "Vectorfield3D board: the vector field should show arrows over the 3D cube.")
+     (container #:id vectorfield3d-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
      (hpanel
