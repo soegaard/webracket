@@ -102,15 +102,9 @@ The examples are heavily inspired by the @racket[gui-easy] Quickstart.
 
 @subsection{JSXGraph Examples}
 
-The @tt{examples/jsx-graph/} folder contains a richer JSXGraph showcase
-that creates a board, points, and several derived geometry objects.
-
-The @tt{examples/jsx-graph-gallery/} folder contains a broader gallery
-that demonstrates the JSXGraph wrapper classes in separate boards.
-
-The @tt{examples/jsx-graph-minimal/} folder contains a smaller probe
-that creates just a board, two points, and a line. It is useful as a
-minimal browser check for the @racket[jsx-graph] wrapper.
+The @tt{examples/jsx-graph-gallery/} folder contains the JSXGraph
+gallery used to exercise the wrapper classes in separate boards and
+stress the browser bridge.
 
 @subsection{Hello World}
 
