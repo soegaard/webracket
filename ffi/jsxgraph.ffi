@@ -164,6 +164,216 @@
   #:name   "create-arrowparallel"
   (-> (extern value value) (extern/raw)))
 
+; (js-jsx-board-create-axis board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-axis
+  #:module "jsx-board"
+  #:name   "create-axis"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-grid board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-grid
+  #:module "jsx-board"
+  #:name   "create-grid"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-boxplot board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-boxplot
+  #:module "jsx-board"
+  #:name   "create-boxplot"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-tangent board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-tangent
+  #:module "jsx-board"
+  #:name   "create-tangent"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-tangentto board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-tangentto
+  #:module "jsx-board"
+  #:name   "create-tangentto"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-polarline board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-polarline
+  #:module "jsx-board"
+  #:name   "create-polarline"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-polepoint board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-polepoint
+  #:module "jsx-board"
+  #:name   "create-polepoint"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-radicalaxis board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-radicalaxis
+  #:module "jsx-board"
+  #:name   "create-radicalaxis"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-circumcircle board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-circumcircle
+  #:module "jsx-board"
+  #:name   "create-circumcircle"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-incircle board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-incircle
+  #:module "jsx-board"
+  #:name   "create-incircle"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-circumcirclearc board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-circumcirclearc
+  #:module "jsx-board"
+  #:name   "create-circumcirclearc"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-circumcirclesector board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-circumcirclesector
+  #:module "jsx-board"
+  #:name   "create-circumcirclesector"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-semicircle board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-semicircle
+  #:module "jsx-board"
+  #:name   "create-semicircle"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-majorarc board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-majorarc
+  #:module "jsx-board"
+  #:name   "create-majorarc"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-majorsector board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-majorsector
+  #:module "jsx-board"
+  #:name   "create-majorsector"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-curveintersection board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-curveintersection
+  #:module "jsx-board"
+  #:name   "create-curveintersection"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-curvedifference board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-curvedifference
+  #:module "jsx-board"
+  #:name   "create-curvedifference"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-curveunion board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-curveunion
+  #:module "jsx-board"
+  #:name   "create-curveunion"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-derivative board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-derivative
+  #:module "jsx-board"
+  #:name   "create-derivative"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-integral board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-integral
+  #:module "jsx-board"
+  #:name   "create-integral"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-riemannsum board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-riemannsum
+  #:module "jsx-board"
+  #:name   "create-riemannsum"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-slopefield board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-slopefield
+  #:module "jsx-board"
+  #:name   "create-slopefield"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-vectorfield board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-vectorfield
+  #:module "jsx-board"
+  #:name   "create-vectorfield"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-implicitcurve board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-implicitcurve
+  #:module "jsx-board"
+  #:name   "create-implicitcurve"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-spline board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-spline
+  #:module "jsx-board"
+  #:name   "create-spline"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-cardinalspline board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-cardinalspline
+  #:module "jsx-board"
+  #:name   "create-cardinalspline"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-comb board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-comb
+  #:module "jsx-board"
+  #:name   "create-comb"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-metapostspline board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-metapostspline
+  #:module "jsx-board"
+  #:name   "create-metapostspline"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-polygonalchain board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-polygonalchain
+  #:module "jsx-board"
+  #:name   "create-polygonalchain"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-regularpolygon board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-regularpolygon
+  #:module "jsx-board"
+  #:name   "create-regularpolygon"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-hyperbola board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-hyperbola
+  #:module "jsx-board"
+  #:name   "create-hyperbola"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-parabola board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-parabola
+  #:module "jsx-board"
+  #:name   "create-parabola"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-stepfunction board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-stepfunction
+  #:module "jsx-board"
+  #:name   "create-stepfunction"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-inequality board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-inequality
+  #:module "jsx-board"
+  #:name   "create-inequality"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-turtle board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-turtle
+  #:module "jsx-board"
+  #:name   "create-turtle"
+  (-> (extern value value) (extern/raw)))
+
 ; (js-jsx-board-create-perpendicular board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign js-jsx-board-create-perpendicular
   #:module "jsx-board"
@@ -1604,6 +1814,29 @@
   #:module "jsx-curve"
   #:name   "call/nullish"
   (-> (extern string/symbol value) (extern)))
+
+;; Read the riemann sum value.
+;; riemannsum : extern
+(define-foreign js-jsx-riemannsum-Value
+  #:module "jsx-riemannsum"
+  #:name   "Value"
+  (-> (extern) (f64)))
+
+;; Set the slope field function.
+;; slopefield : extern
+;; func : value
+(define-foreign js-jsx-slopefield-setF
+  #:module "jsx-slopefield"
+  #:name   "setF"
+  (-> (extern value) ()))
+
+;; Set the vector field function.
+;; vectorfield : extern
+;; func : value
+(define-foreign js-jsx-vectorfield-setF
+  #:module "jsx-vectorfield"
+  #:name   "setF"
+  (-> (extern value) ()))
 
 ;; Call a Polygon method and return the raw JavaScript result.
 ;; polygon : extern
