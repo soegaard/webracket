@@ -1,0 +1,17 @@
+import { chromium } from 'file:///Users/soegaard/Dropbox/GitHub/webracket/.local-tools/node_modules/playwright/index.mjs';
+
+const browser = await chromium.launch({ headless: true });
+const page = await browser.newPage();
+
+page.on('console', msg => {
+  console.log('CONSOLE', msg.type(), msg.text());
+});
+
+page.on('pageerror', err => {
+  console.log('PAGEERROR', err.message);
+});
+
+await page.goto('http://127.0.0.1:8127/callback-repro.html', { waitUntil: 'load' });
+await page.click('#press-button');
+await page.waitForTimeout(2000);
+await browser.close();

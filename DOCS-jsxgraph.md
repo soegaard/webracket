@@ -15,7 +15,13 @@ Current scope:
 - Point methods for hit-testing, style updates, and renderer updates
 - Line, arc, angle, sector, glider, circle, conic, ellipse, curve, functiongraph,
   polygon, midpoint, parallel, perpendicular, reflection, bisector, normal,
-  slider, chart, legend, smartlabel, arrow, button, checkbox, and input
+  grid, boxplot, tangent, tangentto, polarline, polepoint, radicalaxis,
+  circumcircle, incircle, circumcirclearc, circumcirclesector, semicircle,
+  majorarc, majorsector, curveintersection, curvedifference, curveunion,
+  derivative, integral, riemannsum, slopefield, vectorfield, implicitcurve,
+  spline, cardinalspline, comb, metapostspline, polygonalchain, regularpolygon,
+  hyperbola, parabola, stepfunction, inequality, turtle, slider,
+  chart, legend, smartlabel, arrow, button, checkbox, and input
   bridge helpers
 - Chart bridge helpers
 
@@ -192,6 +198,41 @@ Reference roots:
 | [`js-jsx-board-create-midpoint`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-midpoint board #[p q] attrs)` | create a midpoint from parent points or a segment. |
 | [`js-jsx-board-create-parallel`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-parallel board #[l p] attrs)` | create a parallel line from a reference line and point. |
 | [`js-jsx-board-create-arrowparallel`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-arrowparallel board #[p q r] attrs)` | create an arrowparallel from three parent points. |
+| [`js-jsx-board-create-axis`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-axis board #[p q] attrs)` | create an axis from parent points. |
+| [`js-jsx-board-create-grid`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-grid board #[] attrs)` | create a grid on the board. |
+| [`js-jsx-board-create-boxplot`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-boxplot board #[Q 2 4] attrs)` | create a boxplot from quantiles and placement data. |
+| [`js-jsx-board-create-tangent`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-tangent board #[g1] attrs)` | create a tangent line from a parent curve or glider. |
+| [`js-jsx-board-create-tangentto`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-tangentto board #[c p 0] attrs)` | create a tangent line from a conic/circle and an external point. |
+| [`js-jsx-board-create-polarline`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-polarline board #[c p] attrs)` | create a polar line from a conic/circle and a point. |
+| [`js-jsx-board-create-polepoint`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-polepoint board #[c l] attrs)` | create a pole point from a conic/circle and a line. |
+| [`js-jsx-board-create-radicalaxis`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-radicalaxis board #[c1 c2] attrs)` | create a radical axis from two circles. |
+| [`js-jsx-board-create-circumcircle`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-circumcircle board #[p1 p2 p3] attrs)` | create a circumcircle from three points. |
+| [`js-jsx-board-create-incircle`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-incircle board #[p1 p2 p3] attrs)` | create an incircle from three points. |
+| [`js-jsx-board-create-circumcirclearc`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-circumcirclearc board #[p1 p2 p3] attrs)` | create a circumcircle arc from three points. |
+| [`js-jsx-board-create-circumcirclesector`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-circumcirclesector board #[p1 p2 p3] attrs)` | create a circumcircle sector from three points. |
+| [`js-jsx-board-create-semicircle`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-semicircle board #[p1 p2] attrs)` | create a semicircle from two points. |
+| [`js-jsx-board-create-majorarc`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-majorarc board #[p1 p2 p3] attrs)` | create a major arc from three points. |
+| [`js-jsx-board-create-majorsector`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-majorsector board #[p1 p2 p3] attrs)` | create a major sector from three points. |
+| [`js-jsx-board-create-curveintersection`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-curveintersection board #[c1 c2] attrs)` | create a curve intersection from two closed paths. |
+| [`js-jsx-board-create-curvedifference`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-curvedifference board #[c1 c2] attrs)` | create a curve difference from two closed paths. |
+| [`js-jsx-board-create-curveunion`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-curveunion board #[c1 c2] attrs)` | create a curve union from two closed paths. |
+| [`js-jsx-board-create-derivative`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-derivative board #[curve] attrs)` | create a derivative curve from a parent curve. |
+| [`js-jsx-board-create-integral`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-integral board #[[-2 2] curve] attrs)` | create an integral visualization from an interval and curve. |
+| [`js-jsx-board-create-riemannsum`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-riemannsum board #[f 8 "upper" -2 5] attrs)` | create a Riemann sum visualization from a function, bar count, and interval. |
+| [`js-jsx-board-create-slopefield`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-slopefield board #[f xData yData] attrs)` | create a slope field from a defining function and mesh data. |
+| [`js-jsx-board-create-vectorfield`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-vectorfield board #[f xData yData] attrs)` | create a vector field from a defining function and mesh data. |
+| [`js-jsx-board-create-implicitcurve`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-implicitcurve board #[f] attrs)` | create an implicit curve from a two-variable equation. |
+| [`js-jsx-board-create-spline`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-spline board #[p1 p2 p3 p4] attrs)` | create a spline interpolating sample points. |
+| [`js-jsx-board-create-cardinalspline`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-cardinalspline board #[points tau "centripetal"] attrs)` | create a cardinal spline from sample points and tension parameters. |
+| [`js-jsx-board-create-comb`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-comb board #[p1 p2] attrs)` | create a comb from two points. |
+| [`js-jsx-board-create-metapostspline`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-metapostspline board #[points controls] attrs)` | create a metapost spline from sample points and control data. |
+| [`js-jsx-board-create-polygonalchain`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-polygonalchain board #[points] attrs)` | create a polygonal chain from a point array. |
+| [`js-jsx-board-create-regularpolygon`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-regularpolygon board #[p1 p2 5] attrs)` | create a regular polygon from two points and a vertex count. |
+| [`js-jsx-board-create-hyperbola`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-hyperbola board #[A B C] attrs)` | create a hyperbola from three parent points. |
+| [`js-jsx-board-create-parabola`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-parabola board #[C l] attrs)` | create a parabola from a focus point and a line. |
+| [`js-jsx-board-create-stepfunction`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-stepfunction board #[xs ys] attrs)` | create a step function from sample points. |
+| [`js-jsx-board-create-inequality`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-inequality board #[l] attrs)` | create an inequality shading from a line or function. |
+| [`js-jsx-board-create-turtle`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-turtle board #[0 0] attrs)` | create a turtle drawing object. |
 | [`js-jsx-board-create-perpendicular`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-perpendicular board #[l p] attrs)` | create a perpendicular line from a reference line and point. |
 | [`js-jsx-board-create-reflection`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-reflection board #[obj axis] attrs)` | create a reflection of an object across a line or axis. |
 | [`js-jsx-board-create-bisector`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-bisector board #[p q r] attrs)` | create an angle bisector from three parent points. |
@@ -267,6 +308,14 @@ Reference root: [JXG.Curve](https://jsxgraph.org/docs/symbols/JXG.Curve.html)
 |---|---|---|---|---|
 | [`js-jsx-curve-call`](https://jsxgraph.org/docs/symbols/JXG.Curve.html) | `(extern string/symbol value)` | `(extern/raw)` | `(js-jsx-curve-call curve "updateCurve" args)` | call a curve method and keep the raw JavaScript result. |
 | [`js-jsx-curve-call/nullish`](https://jsxgraph.org/docs/symbols/JXG.Curve.html) | `(extern string/symbol value)` | `(extern)` | `(js-jsx-curve-call/nullish curve "updateTransform" args)` | call a curve mutator and treat nullish results as absence. |
+
+### Curve-family specifics
+
+| Function | Input types | Output type | Example | Use when |
+|---|---|---|---|---|
+| [`js-jsx-riemannsum-Value`](https://jsxgraph.org/docs/symbols/Riemannsum.html#Value) | `(extern)` | `(f64)` | `(js-jsx-riemannsum-Value rs)` | read the current Riemann sum value. |
+| [`js-jsx-slopefield-setF`](https://jsxgraph.org/docs/symbols/Slopefield.html#setF) | `(extern value)` | `()` | `(js-jsx-slopefield-setF field f)` | update the defining function of a slope field. |
+| [`js-jsx-vectorfield-setF`](https://jsxgraph.org/docs/symbols/Vectorfield.html#setF) | `(extern value)` | `()` | `(js-jsx-vectorfield-setF field f)` | update the defining function of a vector field. |
 
 ## Chapter 12 — Polygon Bridge
 
@@ -464,9 +513,9 @@ control the slider range and value.
 
 ## Chapter 24 — Coverage Checklist
 
-- This document covers **170** functions from `ffi/jsxgraph.ffi`.
-- Total documented functions: **170**
-- `board api`: 35 functions
+- This document covers **188** functions from `ffi/jsxgraph.ffi`.
+- Total documented functions: **193**
+- `board api`: 55 functions
 - `board properties`: 8 functions
 - `geometryelement bridge`: 3 functions
 - `line bridge`: 2 functions
@@ -475,7 +524,7 @@ control the slider range and value.
 - `sector bridge`: 7 functions
 - `glider bridge`: 2 functions
 - `circle bridge`: 2 functions
-- `curve bridge`: 3 functions
+- `curve bridge`: 5 functions
 - `polygon bridge`: 2 functions
 - `chart bridge`: 9 functions
 - `checkbox bridge`: 1 function

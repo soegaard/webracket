@@ -8,10 +8,12 @@
 (include-lib jsx-graph)
 (include-lib console)
 
+(define (gallery-headline title)
+  (h2 title #:style "margin: 1.8rem 0 0.6rem; font-size: 1.35rem;"))
+
 (define geometry-board-id "jsx-graph-gallery-geometry")
 (define group-board-id "jsx-graph-gallery-group")
 (define chart-board-id "jsx-graph-gallery-chart")
-(define primitives-board-id "jsx-graph-gallery-primitives")
 (define point-board-id "jsx-graph-gallery-point")
 (define line-board-id "jsx-graph-gallery-line")
 (define arc-board-id "jsx-graph-gallery-arc")
@@ -99,7 +101,6 @@
 (define geometry-board-ready? #f)
 (define group-board-ready? #f)
 (define chart-board-ready? #f)
-(define primitives-board-ready? #f)
 (define point-board-ready? #f)
 (define line-board-ready? #f)
 (define arc-board-ready? #f)
@@ -165,14 +166,23 @@
 (define widgets-board-ready? #f)
 (define annotation-board-ready? #f)
 
-(define primitives-board #f)
 (define point-board #f)
-(define point-object #f)
+(define point-free #f)
+(define point-fixed #f)
+(define point-restricted #f)
+(define point-base-line #f)
 (define line-board #f)
 (define line-object #f)
 (define arc-board #f)
+(define arc-p1 #f)
+(define arc-p2 #f)
+(define arc-p3 #f)
+(define arc-leg-1 #f)
+(define arc-leg-2 #f)
 (define arc-object #f)
 (define angle-board #f)
+(define angle-leg-1 #f)
+(define angle-leg-2 #f)
 (define angle-object #f)
 (define sector-board #f)
 (define sector-object #f)
@@ -187,6 +197,7 @@
 (define axis-y #f)
 (define grid-board #f)
 (define grid-object #f)
+(define grid-mode "standard")
 (define boxplot-board #f)
 (define boxplot-q #f)
 (define boxplot-object #f)
@@ -231,6 +242,7 @@
 (define circumcircle-p1 #f)
 (define circumcircle-p2 #f)
 (define circumcircle-p3 #f)
+(define circumcircle-triangle #f)
 (define circumcircle-object #f)
 (define circumcirclearc-board #f)
 (define circumcirclearc-p1 #f)
@@ -284,6 +296,7 @@
 (define vectorfield-object #f)
 (define implicitcurve-board #f)
 (define implicitcurve-object #f)
+(define implicitcurve-text #f)
 (define spline-board #f)
 (define spline-p1 #f)
 (define spline-p2 #f)
@@ -369,6 +382,7 @@
 (define midpoint-board #f)
 (define midpoint-a #f)
 (define midpoint-b #f)
+(define midpoint-segment #f)
 (define midpoint-object #f)
 (define parallel-board #f)
 (define parallel-a #f)
@@ -387,16 +401,23 @@
 (define reflection-b #f)
 (define reflection-c #f)
 (define reflection-line #f)
+(define reflection-segment #f)
 (define reflection-object #f)
 (define bisector-board #f)
 (define bisector-a #f)
 (define bisector-b #f)
 (define bisector-c #f)
+(define bisector-ab #f)
+(define bisector-bc #f)
+(define bisector-angle #f)
 (define bisector-object #f)
 (define checkbox-board #f)
 (define checkbox-object #f)
+(define checkbox-status #f)
 (define input-board #f)
 (define input-object #f)
+(define input-graph #f)
+(define input-expression "Math.sin(x)")
 (define slider-board #f)
 (define slider-object #f)
 (define smartlabel-board #f)
@@ -406,6 +427,11 @@
 (define text-object #f)
 (define constructions-board #f)
 (define widgets-board #f)
+(define widget-button #f)
+(define widget-button-label #f)
+(define widget-graph #f)
+(define widget-expression "Math.sin(x)")
+(define widget-graph-visible? #t)
 (define annotation-board #f)
 (define annotation-slider #f)
 (define annotation-text #f)
@@ -424,6 +450,53 @@
 ;;   Update the summary line in the gallery.
 (define (set-summary! s)
   (obs-set! @summary s))
+
+;; grid-style-attributes : string? -> any/c
+;;   Return the JSXGraph attributes for a named grid style.
+(define (grid-style-attributes mode)
+  (cond
+    [(string=? mode "standard")
+     (js-object (vector))]
+    [(string=? mode "fancy")
+     (js-object
+      (vector (vector "major"
+                      (js-object
+                       (vector (vector "face" "plus")
+                               (vector "size" 7)
+                               (vector "strokeColor" "green")
+                               (vector "strokeOpacity" 1))))
+              (vector "minor"
+                      (js-object
+                       (vector (vector "size" 4))))
+              (vector "minorElements" 3)))]
+    [else
+     (js-object
+      (vector (vector "major"
+                      (js-object
+                       (vector (vector "face" "regularPolygon")
+                               (vector "size" 8)
+                               (vector "strokeColor" "blue")
+                               (vector "fillColor" "orange")
+                               (vector "strokeOpacity" 1))))
+              (vector "minor"
+                      (js-object
+                       (vector (vector "face" "diamond")
+                               (vector "size" 4)
+                               (vector "strokeColor" "green")
+                               (vector "fillColor" "grey"))))
+              (vector "minorElements" 1)
+              (vector "includeBoundaries" #f)))]))
+
+;; refresh-grid-board! : -> void?
+;;   Rebuild the grid board using the current grid mode.
+(define (refresh-grid-board!)
+  (when grid-board
+    (jsx-board-remove-grids! grid-board)
+    (set! grid-object
+          (jsx-create-grid grid-board
+                           (jsx-parents)
+                           (grid-style-attributes grid-mode)))
+    (jsx-board-full-update! grid-board)))
 
 ;; ensure-jsxgraph-assets! : -> void?
 ;;   Load the JSXGraph CSS and core script with a local fallback.
@@ -572,8 +645,9 @@
   (if (not (extern-present? jsxgraph))
       #f
       (let ()
-        (define x-values (jsx-parents -3 -2 -1 0 1 2 3 4 5 6 7 8))
-        (define data-values (jsx-parents 4 7 7 27 33 37 46 22 11 4 1 0))
+        ;; Shift the bars left and slightly down so the legend stays clear.
+        (define x-values (jsx-parents -5 -4 -3 -2 -1 0 1 2 3 4 5 6))
+        (define data-values (jsx-parents 0 3 3 23 29 33 42 18 7 0 0 0))
         (define colors (jsx-parents "green" "yellow" "red" "blue"))
         (unless chart-board-ready?
           (console-log "Chart board")
@@ -590,124 +664,19 @@
                  (jsx-parents x-values data-values)
                  (js-object
                   (vector (vector "chartStyle" "bar")
-                          (vector "width" 1.0)
+                          (vector "width" 1.4)
                           (vector "labels" data-values)
                           (vector "colors" colors)))))
           (set! chart-legend
                 (jsx-create-legend
                  chart-board
-                 (jsx-parents 8 45)
+                 (jsx-parents 10 45)
                  (js-object
                   (vector (vector "labels" data-values)
                           (vector "colors" colors)
                           (vector "strokeWidth" 5)))))
           (set! chart-board-ready? #t))
         (void (jsx-board-full-update! chart-board))
-        #t)))
-
-;; init-primitives-board! : -> boolean?
-;;   Build the JSXGraph primitives board once the browser assets have loaded.
-(define (init-primitives-board!)
-  (define win (js-window-window))
-  (define jxg (js-ref win "JXG"))
-  (define jsxgraph (and (extern-present? jxg)
-                        (js-ref jxg "JSXGraph")))
-  (if (not (extern-present? jsxgraph))
-      #f
-      (let ()
-        (unless primitives-board-ready?
-          (console-log "Primitives board")
-          (set! primitives-board
-                (jsx-create-board
-                 primitives-board-id
-                 (js-object
-                  (vector (vector "boundingbox" #[-8 8 8 -8])
-                          (vector "axis" #t)
-                          (vector "keepaspectratio" #t)))))
-          (let ()
-            (define line-a (jsx-create-point primitives-board
-                                             (jsx-parents -6 2)
-                                             (js-object (vector (vector "name" "A")
-                                                                (vector "size" 4)))))
-            (define line-b (jsx-create-point primitives-board
-                                             (jsx-parents -2 4)
-                                             (js-object (vector (vector "name" "B")
-                                                                (vector "size" 4)))))
-            (define segment-c (jsx-create-point primitives-board
-                                                (jsx-parents -6 -3)
-                                                (js-object (vector (vector "name" "C")
-                                                                   (vector "size" 4)))))
-            (define segment-d (jsx-create-point primitives-board
-                                                (jsx-parents -2 -2)
-                                                (js-object (vector (vector "name" "D")
-                                                                   (vector "size" 4)))))
-            (define arc-e (jsx-create-point primitives-board
-                                            (jsx-parents 1 3)
-                                            (js-object (vector (vector "name" "E")
-                                                               (vector "size" 4)))))
-            (define arc-f (jsx-create-point primitives-board
-                                            (jsx-parents 2 4)
-                                            (js-object (vector (vector "name" "F")
-                                                               (vector "size" 4)))))
-            (define arc-g (jsx-create-point primitives-board
-                                            (jsx-parents 3 3)
-                                            (js-object (vector (vector "name" "G")
-                                                               (vector "size" 4)))))
-            (define angle-h (jsx-create-point primitives-board
-                                              (jsx-parents 1 -1)
-                                              (js-object (vector (vector "name" "H")
-                                                                 (vector "size" 4)))))
-            (define angle-i (jsx-create-point primitives-board
-                                              (jsx-parents 2 -2)
-                                              (js-object (vector (vector "name" "I")
-                                                                 (vector "size" 4)))))
-            (define angle-j (jsx-create-point primitives-board
-                                              (jsx-parents 3 -1)
-                                              (js-object (vector (vector "name" "J")
-                                                                 (vector "size" 4)))))
-            (define sector-k (jsx-create-point primitives-board
-                                               (jsx-parents 4 3)
-                                               (js-object (vector (vector "name" "K")
-                                                                  (vector "size" 4)))))
-            (define sector-l (jsx-create-point primitives-board
-                                               (jsx-parents 5 4)
-                                               (js-object (vector (vector "name" "L")
-                                                                  (vector "size" 4)))))
-            (define sector-m (jsx-create-point primitives-board
-                                               (jsx-parents 6 3)
-                                               (js-object (vector (vector "name" "M")
-                                                                  (vector "size" 4)))))
-            (define circle-center (jsx-create-point primitives-board
-                                                    (jsx-parents -4 0)
-                                                    (js-object (vector (vector "name" "O")
-                                                                       (vector "size" 4)))))
-            (define circle-through (jsx-create-point primitives-board
-                                                     (jsx-parents -4 1)
-                                                     (js-object (vector (vector "name" "P")
-                                                                        (vector "size" 4)))))
-            (define primitives-line (jsx-create-line primitives-board
-                                                     (jsx-parents line-a line-b)))
-            (define primitives-segment (jsx-create-segment primitives-board
-                                                           (jsx-parents segment-c segment-d)))
-            (define primitives-arc (jsx-create-arc primitives-board
-                                                   (jsx-parents arc-e arc-f arc-g)))
-            (define primitives-angle (jsx-create-angle primitives-board
-                                                       (jsx-parents angle-h angle-i angle-j)))
-            (define primitives-sector (jsx-create-sector primitives-board
-                                                         (jsx-parents sector-k sector-l sector-m)))
-            (define primitives-circle (jsx-create-circle primitives-board
-                                                         (jsx-parents circle-center circle-through)))
-            (define primitives-glider (jsx-create-glider primitives-board
-                                                         (jsx-parents -4 1 primitives-circle)))
-            (void primitives-line)
-            (void primitives-segment)
-            (void primitives-arc)
-            (void primitives-angle)
-            (void primitives-sector)
-            (void primitives-circle)
-            (void primitives-glider))
-          (set! primitives-board-ready? #t))
-        (void (jsx-board-full-update! primitives-board))
         #t)))
 
 ;; init-point-board! : -> boolean?
@@ -729,14 +698,38 @@
                   (vector (vector "boundingbox" #[-4 4 4 -4])
                           (vector "axis" #t)
                           (vector "keepaspectratio" #t)))))
-          (set! point-object
+          (set! point-free
                 (jsx-create-point point-board
-                                  (jsx-parents 0 0)
+                                  (jsx-parents -2 1)
                                   (js-object
-                                   (vector (vector "name" "P")
+                                   (vector (vector "name" "A")
                                            (vector "size" 6)
                                            (vector "strokeColor" "#2b6cb0")
+                                           (vector "fillColor" "#2b6cb0")))))
+          (set! point-fixed
+                (jsx-create-point point-board
+                                  (jsx-parents 2 1)
+                                  (js-object
+                                   (vector (vector "name" "B")
+                                           (vector "size" 6)
+                                           (vector "fixed" #t)
+                                           (vector "strokeColor" "#c53030")
                                            (vector "fillColor" "#c53030")))))
+          (set! point-base-line
+                (jsx-create-line point-board
+                                 (jsx-parents point-free point-fixed)
+                                 (js-object
+                                  (vector (vector "strokeColor" "#4a5568")
+                                          (vector "strokeWidth" 2)))))
+          (set! point-restricted
+                (jsx-create-glider
+                 point-board
+                 (jsx-parents 0 -1 point-base-line)
+                 (js-object
+                  (vector (vector "name" "C")
+                          (vector "size" 6)
+                          (vector "strokeColor" "#805ad5")
+                          (vector "fillColor" "#805ad5")))))
           (set! point-board-ready? #t))
         (void (jsx-board-full-update! point-board))
         #t)))
@@ -770,12 +763,48 @@
                               (jsx-parents 2 -1)
                               (js-object (vector (vector "name" "B")
                                                  (vector "size" 4)))))
+          (define line-segment-p1
+            (jsx-create-point line-board
+                              (jsx-parents -3 1)
+                              (js-object (vector (vector "name" "C")
+                                                 (vector "size" 4)))))
+          (define line-segment-p2
+            (jsx-create-point line-board
+                              (jsx-parents -1 3)
+                              (js-object (vector (vector "name" "D")
+                                                 (vector "size" 4)))))
+          (define line-ray-p1
+            (jsx-create-point line-board
+                              (jsx-parents 0 -2)
+                              (js-object (vector (vector "name" "E")
+                                                 (vector "size" 4)))))
+          (define line-ray-p2
+            (jsx-create-point line-board
+                              (jsx-parents 3 -2)
+                              (js-object (vector (vector "name" "F")
+                                                 (vector "size" 4)))))
           (set! line-object
                 (jsx-create-line line-board
                                  (jsx-parents line-p1 line-p2)
                                  (js-object
                                   (vector (vector "strokeColor" "#2b6cb0")
                                           (vector "strokeWidth" 3)))))
+          (define line-segment
+            (jsx-create-segment line-board
+                                (jsx-parents line-segment-p1 line-segment-p2)
+                                (js-object
+                                 (vector (vector "strokeColor" "#4a5568")
+                                         (vector "strokeWidth" 3)))))
+          (define line-ray
+            (jsx-create-line line-board
+                             (jsx-parents line-ray-p1 line-ray-p2)
+                             (js-object
+                              (vector (vector "straightFirst" #f)
+                                      (vector "straightLast" #t)
+                                      (vector "strokeColor" "#d53f8c")
+                                      (vector "strokeWidth" 3)))))
+          (void line-segment)
+          (void line-ray)
           (set! line-board-ready? #t))
         (void (jsx-board-full-update! line-board))
         #t)))
@@ -814,12 +843,23 @@
                               (jsx-parents 2 1)
                               (js-object (vector (vector "name" "C")
                                                  (vector "size" 4)))))
+          (set! arc-leg-1
+                (jsx-create-segment arc-board
+                                    (jsx-parents arc-p2 arc-p1)
+                                    (js-object (vector (vector "strokeColor" "#4a5568")
+                                                       (vector "strokeWidth" 2)))))
+          (set! arc-leg-2
+                (jsx-create-segment arc-board
+                                    (jsx-parents arc-p1 arc-p3)
+                                    (js-object (vector (vector "strokeColor" "#4a5568")
+                                                       (vector "strokeWidth" 2)))))
           (set! arc-object
                 (jsx-create-arc arc-board
                                 (jsx-parents arc-p1 arc-p2 arc-p3)
                                 (js-object
                                  (vector (vector "strokeColor" "#d53f8c")
-                                         (vector "strokeWidth" 3)))))
+                                         (vector "strokeWidth" 3)
+                                         (vector "fillOpacity" 0.12)))))
           (set! arc-board-ready? #t))
         (void (jsx-board-full-update! arc-board))
         #t)))
@@ -858,6 +898,18 @@
                               (jsx-parents 2 -1)
                               (js-object (vector (vector "name" "C")
                                                  (vector "size" 4)))))
+          (set! angle-leg-1
+                (jsx-create-segment angle-board
+                                    (jsx-parents angle-p2 angle-p1)
+                                    (js-object
+                                     (vector (vector "strokeColor" "#718096")
+                                             (vector "strokeWidth" 2)))))
+          (set! angle-leg-2
+                (jsx-create-segment angle-board
+                                    (jsx-parents angle-p2 angle-p3)
+                                    (js-object
+                                     (vector (vector "strokeColor" "#718096")
+                                             (vector "strokeWidth" 2)))))
           (set! angle-object
                 (jsx-create-angle angle-board
                                   (jsx-parents angle-p1 angle-p2 angle-p3)
@@ -1016,10 +1068,7 @@
                   (vector (vector "boundingbox" #[-6 6 6 -6])
                           (vector "axis" #f)
                           (vector "keepaspectratio" #t)))))
-          (set! grid-object
-                (jsx-create-grid grid-board
-                                 (jsx-parents)
-                                 (js-object (vector))))
+          (refresh-grid-board!)
           (set! grid-board-ready? #t))
         (void (jsx-board-full-update! grid-board))
         #t)))
@@ -1312,6 +1361,13 @@
                                                   (js-object (vector (vector "name" "B")))))
           (set! circumcircle-p3 (jsx-create-point circumcircle-board (jsx-parents 3 3)
                                                   (js-object (vector (vector "name" "C")))))
+          (set! circumcircle-triangle
+                (jsx-create-polygon circumcircle-board
+                                    (jsx-parents circumcircle-p1 circumcircle-p2 circumcircle-p3)
+                                    (js-object
+                                     (vector (vector "fillOpacity" 0.12)
+                                             (vector "strokeColor" "#4a5568")
+                                             (vector "highlightStrokeColor" "#4a5568")))))
           (set! circumcircle-object
                 (jsx-create-circumcircle circumcircle-board
                                          (jsx-parents circumcircle-p1 circumcircle-p2 circumcircle-p3)
@@ -1450,11 +1506,25 @@
                                               (js-object (vector (vector "name" "B")))))
           (set! majorarc-p3 (jsx-create-point majorarc-board (jsx-parents 3 3)
                                               (js-object (vector (vector "name" "C")))))
+          (define majorarc-ac
+            (jsx-create-segment majorarc-board
+                                (jsx-parents majorarc-p1 majorarc-p3)
+                                (js-object
+                                 (vector (vector "strokeColor" "#718096")
+                                         (vector "strokeWidth" 2)))))
+          (define majorarc-ab
+            (jsx-create-segment majorarc-board
+                                (jsx-parents majorarc-p1 majorarc-p2)
+                                (js-object
+                                 (vector (vector "strokeColor" "#718096")
+                                         (vector "strokeWidth" 2)))))
           (set! majorarc-object
                 (jsx-create-majorarc majorarc-board
                                      (jsx-parents majorarc-p1 majorarc-p2 majorarc-p3)
                                      (js-object
                                       (vector (vector "strokeColor" "#2b6cb0")))))
+          (void majorarc-ac)
+          (void majorarc-ab)
           (set! majorarc-board-ready? #t))
         (void (jsx-board-full-update! majorarc-board))
         #t)))
@@ -1824,6 +1894,13 @@
                                            (vector (vector "strokeWidth" 3)
                                                    (vector "strokeColor" "#c53030")
                                                    (vector "strokeOpacity" 0.8)))))
+          (set! implicitcurve-text
+                (jsx-create-text
+                 implicitcurve-board
+                 (jsx-parents -7 6 "Implicit curve relation: x^2/16 + y^2 - 1 = 0")
+                 (js-object
+                  (vector (vector "fontSize" 14)
+                          (vector "anchorX" "left")))))
           (set! implicitcurve-board-ready? #t))
         (void (jsx-board-full-update! implicitcurve-board))
         #t)))
@@ -2497,11 +2574,29 @@
                           (vector "keepaspectratio" #t)))))
           (set! turtle-object
                 (jsx-create-turtle turtle-board
-                                   (jsx-parents 0 0)
+                                   (jsx-parents -3 -1.25 0)
                                    (js-object
                                     (vector (vector "strokeColor" "#2b6cb0")
                                             (vector "strokeWidth" 3)
                                             (vector "strokeOpacity" 0.6)))))
+          (let ()
+            (define (turtle-call! method . args)
+              (jsx-element-call/nullish turtle-object method (list->vector args)))
+            (define (koch! len depth)
+              (cond
+                [(zero? depth)
+                 (turtle-call! "forward" len)]
+                [else
+                 (define next (/ len 3))
+                 (koch! next (sub1 depth))
+                 (turtle-call! "right" 60)
+                 (koch! next (sub1 depth))
+                 (turtle-call! "left" 120)
+                 (koch! next (sub1 depth))
+                 (turtle-call! "right" 60)
+                 (koch! next (sub1 depth))]))
+            (turtle-call! "penDown")
+            (koch! 6 4))
           (set! turtle-board-ready? #t))
         (void (jsx-board-full-update! turtle-board))
         #t)))
@@ -2651,7 +2746,9 @@
           (set! glider-object
                 (jsx-create-glider glider-board
                                    (jsx-parents -1 2 glider-base-circle)
-                                   (js-object (vector (vector "strokeColor" "#c53030")))))
+                                   (js-object (vector (vector "name" "A")
+                                                      (vector "strokeColor" "#c53030")
+                                                      (vector "fillColor" "#f56565")))))
           (set! glider-point glider-object)
           (set! glider-board-ready? #t))
         (void (jsx-board-full-update! glider-board))
@@ -2754,6 +2851,11 @@
                 (jsx-create-point midpoint-board
                                   (jsx-parents 2 -1)
                                   (js-object (vector (vector "name" "B")))))
+          (set! midpoint-segment
+                (jsx-create-segment midpoint-board
+                                    (jsx-parents midpoint-a midpoint-b)
+                                    (js-object (vector (vector "strokeColor" "#4a5568")
+                                                       (vector "strokeWidth" 2)))))
           (set! midpoint-object
                 (jsx-create-midpoint midpoint-board
                                      (jsx-parents midpoint-a midpoint-b)
@@ -2870,15 +2972,18 @@
           (set! reflection-a
                 (jsx-create-point reflection-board
                                   (jsx-parents -4 2)
-                                  (js-object (vector (vector "name" "A")))))
+                                  (js-object (vector (vector "name" "A")
+                                                     (vector "size" 4)))))
           (set! reflection-b
                 (jsx-create-point reflection-board
                                   (jsx-parents 4 1)
-                                  (js-object (vector (vector "name" "B")))))
+                                  (js-object (vector (vector "name" "B")
+                                                     (vector "size" 4)))))
           (set! reflection-c
                 (jsx-create-point reflection-board
                                   (jsx-parents -1 -3)
-                                  (js-object (vector (vector "name" "C")))))
+                                  (js-object (vector (vector "name" "C")
+                                                     (vector "size" 4)))))
           (set! reflection-line
                 (jsx-create-line reflection-board
                                  (jsx-parents reflection-a reflection-b)
@@ -2886,7 +2991,15 @@
           (set! reflection-object
                 (jsx-create-reflection reflection-board
                                        (jsx-parents reflection-c reflection-line)
-                                       (js-object (vector (vector "strokeColor" "#d53f8c")))))
+                                       (js-object (vector (vector "name" "D")
+                                                          (vector "size" 4)
+                                                          (vector "fillColor" "#c53030")
+                                                          (vector "strokeColor" "#9b2c2c")))))
+          (set! reflection-segment
+                (jsx-create-segment reflection-board
+                                    (jsx-parents reflection-c reflection-object)
+                                    (js-object (vector (vector "strokeColor" "#4a5568")
+                                                       (vector "strokeWidth" 2)))))
           (set! reflection-board-ready? #t))
         (void (jsx-board-full-update! reflection-board))
         #t)))
@@ -2922,6 +3035,23 @@
                 (jsx-create-point bisector-board
                                   (jsx-parents 3 2)
                                   (js-object (vector (vector "name" "C")))))
+          (set! bisector-ab
+                (jsx-create-line bisector-board
+                                 (jsx-parents bisector-a bisector-b)
+                                 (js-object (vector (vector "strokeColor" "#4a5568")
+                                                    (vector "straightFirst" #f)
+                                                    (vector "straightLast" #f)))))
+          (set! bisector-bc
+                (jsx-create-line bisector-board
+                                 (jsx-parents bisector-b bisector-c)
+                                 (js-object (vector (vector "strokeColor" "#4a5568")
+                                                    (vector "straightFirst" #f)
+                                                    (vector "straightLast" #f)))))
+          (set! bisector-angle
+                (jsx-create-angle bisector-board
+                                  (jsx-parents bisector-a bisector-b bisector-c)
+                                  (js-object (vector (vector "fillOpacity" 0.12)
+                                                     (vector "strokeColor" "#4a5568")))))
           (set! bisector-object
                 (jsx-create-bisector bisector-board
                                      (jsx-parents bisector-a bisector-b bisector-c)
@@ -2949,12 +3079,44 @@
                   (vector (vector "boundingbox" #[-4 4 4 -4])
                           (vector "axis" #t)
                           (vector "keepaspectratio" #t)))))
+          (console-log "Checkbox board: create checkbox")
           (set! checkbox-object
                 (jsx-create-checkbox
                  checkbox-board
                  (jsx-parents -2 1 "Show it")
                  (js-object
-                  (vector (vector "name" "check")))))
+                  (vector (vector "name" "check")
+                          (vector "checked" #t)))))
+          (console-log "Checkbox board: create status")
+          (set! checkbox-status
+                (jsx-create-text
+                 checkbox-board
+                 (jsx-parents
+                  -2
+                  0
+                  (procedure->external
+                   (lambda args
+                     (if (jsx-checkbox-value checkbox-object)
+                         "Red point is shown."
+                         "Red point is hidden."))))
+                 (js-object
+                  (vector (vector "fontSize" 14)
+                          (vector "anchorX" "left")))))
+          (console-log "Checkbox board: create point")
+          (define checkbox-indicator
+            (jsx-create-point
+             checkbox-board
+             (jsx-parents 0 0)
+             (js-object
+              (vector (vector "name" "P")
+                      (vector "size" 6)
+                      (vector "fillColor" "#c53030")
+                      (vector "strokeColor" "#9b2c2c")
+                      (vector "visible"
+                              (procedure->external
+                               (lambda args
+                                 (jsx-checkbox-value checkbox-object))))))))
+          (console-log "Checkbox board: ready")
           (set! checkbox-board-ready? #t))
         (void (jsx-board-full-update! checkbox-board))
         #t)))
@@ -2978,12 +3140,26 @@
                   (vector (vector "boundingbox" #[-4 4 4 -4])
                           (vector "axis" #t)
                           (vector "keepaspectratio" #t)))))
+            (define (input-evaluate-expression x)
+              (define expr
+                (string-replace (jsx-input-value input-object) "^" "**"))
+              (define js-code
+                (format "(function(x){ return (~a); })(~a)" expr x))
+              (with-handlers ([exn:fail? (lambda (exn) 0)])
+                (js-send/value (js-global-this) 'eval (vector js-code))))
           (set! input-object
                 (jsx-create-input
                  input-board
-                 (jsx-parents -2 0 "f(x)" "Enter function")
+                 (jsx-parents -3.2 3.1 "f(x)" "Enter function")
                  (js-object
                   (vector (vector "cssStyle" "width: 10em")))))
+          (set! input-graph
+                (jsx-create-functiongraph
+                 input-board
+                 (jsx-parents input-evaluate-expression -4 4)
+                 (js-object
+                  (vector (vector "strokeColor" "#2b6cb0")
+                          (vector "strokeWidth" 3)))))
           (set! input-board-ready? #t))
         (void (jsx-board-full-update! input-board))
         #t)))
@@ -3010,9 +3186,9 @@
           (set! slider-object
                 (jsx-create-slider
                  slider-board
-                 (jsx-parents (jsx-parents -5 -1)
-                              (jsx-parents 5 -1)
-                              (jsx-parents -2 0 2))
+                 (jsx-parents (jsx-parents -3 -1)
+                              (jsx-parents 3 -1)
+                              (jsx-parents -1 0 2))
                  (js-object
                   (vector (vector "name" "t")
                           (vector "strokeColor" "black")
@@ -3248,25 +3424,51 @@
                           (vector "axis" #t)
                           (vector "keepaspectratio" #t)))))
           (let ()
-            (define widget-button
+            (define (widget-evaluate-expression x)
+              (define expr (string-replace widget-expression "^" "**"))
+              (define js-code
+                (format "(function(x){ return (~a); })(~a)" expr x))
+              (with-handlers ([exn:fail? (lambda (exn) 0)])
+                (js-send/value (js-global-this) 'eval (vector js-code))))
+            (define (widget-update-graph!)
+              (when widget-graph
+                (jsx-element-update! widget-graph)
+                (if (and widget-graph-visible?
+                         (jsx-checkbox-value widget-checkbox))
+                    (jsx-element-show! widget-graph)
+                    (jsx-element-hide! widget-graph))))
+            (define (widget-update-button-label!)
+              (when widget-button-label
+                (jsx-element-set-label-text!
+                 widget-button-label
+                 (if widget-graph-visible?
+                     "Hide graph"
+                     "Show graph"))))
+            (set! widget-button
               (jsx-create-button
                widgets-board
                (jsx-parents -4 4 "Click me"
                             (procedure->external
-                             (lambda ()
-                               (set-summary! "The JSXGraph button on the widget board was clicked."))))
+                             (lambda args
+                               (set! widget-expression (jsx-input-value widget-input))
+                               (set! widget-graph-visible? (not widget-graph-visible?))
+                               (widget-update-graph!))))
                (js-object
                 (vector (vector "name" "button")))))
+            (console-log "Widgets board: button ready")
+            (set! widget-button-label widget-button)
             (define widget-checkbox
               (jsx-create-checkbox widgets-board
                                    (jsx-parents -4 2 "Show me")
                                    (js-object
                                     (vector (vector "name" "checkbox")))))
+            (console-log "Widgets board: checkbox ready")
             (define widget-input
               (jsx-create-input widgets-board
-                                (jsx-parents -4 0 "x^2" "f(x)=")
+                                (jsx-parents -4 0 "Math.sin(x)" "f(x)=")
                                 (js-object
                                  (vector (vector "cssStyle" "width: 5em")))))
+            (console-log "Widgets board: input ready")
             (define widget-slider
               (jsx-create-slider widgets-board
                                  (jsx-parents (jsx-parents -5 -3)
@@ -3276,17 +3478,29 @@
                                   (vector (vector "name" "t")
                                           (vector "strokeColor" "black")
                                           (vector "fillColor" "white")))))
+            (console-log "Widgets board: slider ready")
             (define widget-text
               (jsx-create-text widgets-board
-                               (jsx-parents -4 -5 "Widget board: use the input, checkbox, slider, and button.")
+                               (jsx-parents -4 -5 "Widget board: enter a JavaScript expression, click the button to toggle the graph, and use the checkbox to show or hide it.")
                                (js-object
                                 (vector (vector "fontSize" 14)
                                         (vector "anchorX" "left")))))
+            (console-log "Widgets board: text ready")
+            (set! widget-graph
+                  (jsx-create-functiongraph
+                   widgets-board
+                   (jsx-parents widget-evaluate-expression -5 5)
+                   (js-object
+                    (vector (vector "strokeColor" "#2b6cb0")
+                            (vector "strokeWidth" 3)))))
+            (console-log "Widgets board: graph ready")
             (void widget-button)
             (void widget-checkbox)
             (void widget-input)
             (void widget-slider)
-            (void widget-text))
+            (void widget-text)
+            (void widget-graph)
+            (widget-update-button-label!))
           (set! widgets-board-ready? #t))
         (void (jsx-board-full-update! widgets-board))
         #t)))
@@ -3329,7 +3543,7 @@
                     4
                     (procedure->external
                      (lambda ()
-                       (format "Annotation board: slider value = ~a. Move the slider below to update this text."
+                       (format "Annotation board: slider value = ~a.~nMove the slider below to update this text."
                                (jsx-slider-value annotation-slider)))))
                    (js-object
                     (vector (vector "fontSize" 14)
@@ -3355,7 +3569,6 @@
   (define geometry-ready? (init-geometry-board!))
   (define group-ready? (init-group-board!))
   (define chart-ready? (init-chart-board!))
-  (define primitives-ready? (init-primitives-board!))
   (define point-ready? (init-point-board!))
   (define line-ready? (init-line-board!))
   (define arc-ready? (init-arc-board!))
@@ -3417,24 +3630,22 @@
   (define slider-ready? (init-slider-board!))
   (define smartlabel-ready? (init-smartlabel-board!))
   (define text-ready? (init-text-board!))
-  (define constructions-ready? (init-constructions-board!))
   (define widgets-ready? (init-widgets-board!))
   (define annotation-ready? (init-annotation-board!))
   (when (and geometry-ready? group-ready? chart-ready?
-             primitives-ready? point-ready? line-ready? arc-ready? angle-ready? sector-ready? arrow-ready? arrowparallel-ready? circle-ready? glider-ready? button-ready? legend-ready? axis-ready? grid-ready? boxplot-ready? tangent-ready? tangentto-ready? polarline-ready? polepoint-ready? radicalaxis-ready? circumcircle-ready? circumcirclearc-ready? circumcirclesector-ready? semicircle-ready? majorarc-ready? majorsector-ready? curveintersection-ready? curvedifference-ready? curveunion-ready? derivative-ready? integral-ready? incircle-ready? conic-ready? ellipse-ready? functiongraph-ready? curve-ready? polygon-ready? midpoint-ready? parallel-ready? perpendicular-ready? reflection-ready? bisector-ready? constructions-ready? widgets-ready? annotation-ready?
+             point-ready? line-ready? arc-ready? angle-ready? sector-ready? arrow-ready? arrowparallel-ready? circle-ready? glider-ready? button-ready? legend-ready? axis-ready? grid-ready? boxplot-ready? tangent-ready? tangentto-ready? polarline-ready? polepoint-ready? radicalaxis-ready? circumcircle-ready? circumcirclearc-ready? circumcirclesector-ready? semicircle-ready? majorarc-ready? majorsector-ready? curveintersection-ready? curvedifference-ready? curveunion-ready? derivative-ready? integral-ready? incircle-ready? conic-ready? ellipse-ready? functiongraph-ready? curve-ready? polygon-ready? midpoint-ready? parallel-ready? perpendicular-ready? reflection-ready? bisector-ready? widgets-ready? annotation-ready?
              checkbox-ready? input-ready? slider-ready? smartlabel-ready? text-ready?
              riemannsum-ready? slopefield-ready? vectorfield-ready? implicitcurve-ready? spline-ready?
              cardinalspline-ready? comb-ready? metapostspline-ready? polygonalchain-ready? regularpolygon-ready?
              hyperbola-ready? parabola-ready? stepfunction-ready? inequality-ready? turtle-ready?
              geometry-board-ready? group-board-ready? chart-board-ready?
-             primitives-board-ready? point-board-ready? line-board-ready? arc-board-ready? angle-board-ready? sector-board-ready? arrowparallel-board-ready? axis-board-ready? grid-board-ready? boxplot-board-ready? tangent-board-ready? tangentto-board-ready? polarline-board-ready? polepoint-board-ready? radicalaxis-board-ready? circumcircle-board-ready? circumcirclearc-board-ready? circumcirclesector-board-ready? semicircle-board-ready? majorarc-board-ready? majorsector-board-ready? curveintersection-board-ready? curvedifference-board-ready? curveunion-board-ready? derivative-board-ready? integral-board-ready? riemannsum-board-ready? slopefield-board-ready? vectorfield-board-ready? implicitcurve-board-ready? spline-board-ready? incircle-board-ready? constructions-board-ready? widgets-board-ready? annotation-board-ready?)
+             point-board-ready? line-board-ready? arc-board-ready? angle-board-ready? sector-board-ready? arrowparallel-board-ready? axis-board-ready? grid-board-ready? boxplot-board-ready? tangent-board-ready? tangentto-board-ready? polarline-board-ready? polepoint-board-ready? radicalaxis-board-ready? circumcircle-board-ready? circumcirclearc-board-ready? circumcirclesector-board-ready? semicircle-board-ready? majorarc-board-ready? majorsector-board-ready? curveintersection-board-ready? curvedifference-board-ready? curveunion-board-ready? derivative-board-ready? integral-board-ready? riemannsum-board-ready? slopefield-board-ready? vectorfield-board-ready? implicitcurve-board-ready? spline-board-ready? incircle-board-ready? widgets-board-ready? annotation-board-ready?)
     (set-status! "Boards ready.")
     (set-summary!
-     (format "Created geometry, group, chart, primitive, point, line, arc, angle, sector, arrow, arrowparallel, circle, glider, button, legend, axis, grid, boxplot, tangent, tangentto, polarline, polepoint, radicalaxis, circumcircle, circumcirclearc, circumcirclesector, semicircle, majorarc, majorsector, curveintersection, curvedifference, curveunion, derivative, integral, riemannsum, slopefield, vectorfield, implicitcurve, spline, cardinalspline, comb, metapostspline, polygonalchain, regularpolygon, hyperbola, parabola, stepfunction, inequality, turtle, incircle, conic, ellipse, functiongraph, curve, polygon, midpoint, parallel, perpendicular, reflection, bisector, checkbox, input, slider, smartlabel, text, construction, widget, and annotation boards. Geometry objects: ~a. Group objects: ~a. Chart objects: ~a. Primitive objects: ~a. Point objects: ~a. Line objects: ~a. Arc objects: ~a. Angle objects: ~a. Sector objects: ~a. Arrow objects: ~a. Arrowparallel objects: ~a. Circle objects: ~a. Glider objects: ~a. Button objects: ~a. Legend objects: ~a. Axis objects: ~a. Grid objects: ~a. Boxplot objects: ~a. Tangent objects: ~a. TangentTo objects: ~a. Polarline objects: ~a. Polepoint objects: ~a. RadicalAxis objects: ~a. Circumcircle objects: ~a. CircumcircleArc objects: ~a. CircumcircleSector objects: ~a. Semicircle objects: ~a. MajorArc objects: ~a. MajorSector objects: ~a. CurveIntersection objects: ~a. CurveDifference objects: ~a. CurveUnion objects: ~a. Derivative objects: ~a. Integral objects: ~a. Riemannsum objects: ~a. Slopefield objects: ~a. Vectorfield objects: ~a. ImplicitCurve objects: ~a. Spline objects: ~a. Cardinalspline objects: ~a. Comb objects: ~a. MetapostSpline objects: ~a. PolygonalChain objects: ~a. RegularPolygon objects: ~a. Hyperbola objects: ~a. Parabola objects: ~a. Stepfunction objects: ~a. Inequality objects: ~a. Turtle objects: ~a. Incircle objects: ~a. Conic objects: ~a. Ellipse objects: ~a. Functiongraph objects: ~a. Curve objects: ~a. Polygon objects: ~a. Midpoint objects: ~a. Parallel objects: ~a. Perpendicular objects: ~a. Reflection objects: ~a. Bisector objects: ~a. Checkbox objects: ~a. Input objects: ~a. Slider objects: ~a. Smartlabel objects: ~a. Text objects: ~a. Construction objects: ~a. Widget objects: ~a. Annotation objects: ~a."
+     (format "Created geometry, group, chart, point, line, arc, angle, sector, arrow, arrowparallel, circle, glider, button, legend, axis, grid, boxplot, tangent, tangentto, polarline, polepoint, radicalaxis, circumcircle, circumcirclearc, circumcirclesector, semicircle, majorarc, majorsector, curveintersection, curvedifference, curveunion, derivative, integral, riemannsum, slopefield, vectorfield, implicitcurve, spline, cardinalspline, comb, metapostspline, polygonalchain, regularpolygon, hyperbola, parabola, stepfunction, inequality, turtle, incircle, conic, ellipse, functiongraph, curve, polygon, midpoint, parallel, perpendicular, reflection, bisector, checkbox, input, slider, smartlabel, text, widget, and annotation boards. Geometry objects: ~a. Group objects: ~a. Chart objects: ~a. Point objects: ~a. Line objects: ~a. Arc objects: ~a. Angle objects: ~a. Sector objects: ~a. Arrow objects: ~a. Arrowparallel objects: ~a. Circle objects: ~a. Glider objects: ~a. Button objects: ~a. Legend objects: ~a. Axis objects: ~a. Grid objects: ~a. Boxplot objects: ~a. Tangent objects: ~a. TangentTo objects: ~a. Polarline objects: ~a. Polepoint objects: ~a. RadicalAxis objects: ~a. Circumcircle objects: ~a. CircumcircleArc objects: ~a. CircumcircleSector objects: ~a. Semicircle objects: ~a. MajorArc objects: ~a. MajorSector objects: ~a. CurveIntersection objects: ~a. CurveDifference objects: ~a. CurveUnion objects: ~a. Derivative objects: ~a. Integral objects: ~a. Riemannsum objects: ~a. Slopefield objects: ~a. Vectorfield objects: ~a. ImplicitCurve objects: ~a. Spline objects: ~a. Cardinalspline objects: ~a. Comb objects: ~a. MetapostSpline objects: ~a. PolygonalChain objects: ~a. RegularPolygon objects: ~a. Hyperbola objects: ~a. Parabola objects: ~a. Stepfunction objects: ~a. Inequality objects: ~a. Turtle objects: ~a. Incircle objects: ~a. Conic objects: ~a. Ellipse objects: ~a. Functiongraph objects: ~a. Curve objects: ~a. Polygon objects: ~a. Midpoint objects: ~a. Parallel objects: ~a. Perpendicular objects: ~a. Reflection objects: ~a. Bisector objects: ~a. Checkbox objects: ~a. Input objects: ~a. Slider objects: ~a. Smartlabel objects: ~a. Text objects: ~a. Widget objects: ~a. Annotation objects: ~a."
              (jsx-board-num-objects geometry-board)
              (jsx-board-num-objects group-board)
              (jsx-board-num-objects chart-board)
-             (jsx-board-num-objects primitives-board)
              (jsx-board-num-objects point-board)
              (jsx-board-num-objects line-board)
              (jsx-board-num-objects arc-board)
@@ -3496,17 +3707,16 @@
              (jsx-board-num-objects slider-board)
              (jsx-board-num-objects smartlabel-board)
              (jsx-board-num-objects text-board)
-             (jsx-board-num-objects constructions-board)
              (jsx-board-num-objects widgets-board)
              (jsx-board-num-objects annotation-board))))
   (and geometry-ready? group-ready? chart-ready?
-             primitives-ready? arrow-ready? arrowparallel-ready? circle-ready? glider-ready? button-ready? legend-ready? axis-ready? grid-ready? boxplot-ready? tangent-ready? tangentto-ready? polarline-ready? polepoint-ready? radicalaxis-ready? circumcircle-ready? circumcirclearc-ready? circumcirclesector-ready? semicircle-ready? majorarc-ready? majorsector-ready? curveintersection-ready? curvedifference-ready? curveunion-ready? derivative-ready? integral-ready? incircle-ready? conic-ready? ellipse-ready? functiongraph-ready? curve-ready? polygon-ready? midpoint-ready? parallel-ready? perpendicular-ready? reflection-ready? bisector-ready? constructions-ready? widgets-ready? annotation-ready?
+             arrow-ready? arrowparallel-ready? circle-ready? glider-ready? button-ready? legend-ready? axis-ready? grid-ready? boxplot-ready? tangent-ready? tangentto-ready? polarline-ready? polepoint-ready? radicalaxis-ready? circumcircle-ready? circumcirclearc-ready? circumcirclesector-ready? semicircle-ready? majorarc-ready? majorsector-ready? curveintersection-ready? curvedifference-ready? curveunion-ready? derivative-ready? integral-ready? incircle-ready? conic-ready? ellipse-ready? functiongraph-ready? curve-ready? polygon-ready? midpoint-ready? parallel-ready? perpendicular-ready? reflection-ready? bisector-ready? widgets-ready? annotation-ready?
              checkbox-ready? input-ready? slider-ready? smartlabel-ready? text-ready?
              riemannsum-ready? slopefield-ready? vectorfield-ready? implicitcurve-ready? spline-ready?
              cardinalspline-ready? comb-ready? metapostspline-ready? polygonalchain-ready? regularpolygon-ready?
              hyperbola-ready? parabola-ready? stepfunction-ready? inequality-ready? turtle-ready?
        geometry-board-ready? group-board-ready? chart-board-ready?
-       primitives-board-ready? arrowparallel-board-ready? axis-board-ready? grid-board-ready? boxplot-board-ready? tangent-board-ready? tangentto-board-ready? polarline-board-ready? polepoint-board-ready? radicalaxis-board-ready? circumcircle-board-ready? circumcirclearc-board-ready? circumcirclesector-board-ready? semicircle-board-ready? majorarc-board-ready? majorsector-board-ready? curveintersection-board-ready? curvedifference-board-ready? curveunion-board-ready? derivative-board-ready? integral-board-ready? riemannsum-board-ready? slopefield-board-ready? vectorfield-board-ready? implicitcurve-board-ready? spline-board-ready? incircle-board-ready? constructions-board-ready? widgets-board-ready? annotation-board-ready?))
+       arrowparallel-board-ready? axis-board-ready? grid-board-ready? boxplot-board-ready? tangent-board-ready? tangentto-board-ready? polarline-board-ready? polepoint-board-ready? radicalaxis-board-ready? circumcircle-board-ready? circumcirclearc-board-ready? circumcirclesector-board-ready? semicircle-board-ready? majorarc-board-ready? majorsector-board-ready? curveintersection-board-ready? curvedifference-board-ready? curveunion-board-ready? derivative-board-ready? integral-board-ready? riemannsum-board-ready? slopefield-board-ready? vectorfield-board-ready? implicitcurve-board-ready? spline-board-ready? incircle-board-ready? widgets-board-ready? annotation-board-ready?))
 
 ;; refresh-gallery! : -> void?
 ;;   Force a redraw of the live gallery boards.
@@ -3517,8 +3727,6 @@
     (jsx-board-full-update! group-board))
   (when chart-board
     (jsx-board-full-update! chart-board))
-  (when primitives-board
-    (jsx-board-full-update! primitives-board))
   (when point-board
     (jsx-board-full-update! point-board))
   (when line-board
@@ -3641,8 +3849,6 @@
     (jsx-board-full-update! smartlabel-board))
   (when text-board
     (jsx-board-full-update! text-board))
-  (when constructions-board
-    (jsx-board-full-update! constructions-board))
   (when widgets-board
     (jsx-board-full-update! widgets-board))
   (when annotation-board
@@ -3657,6 +3863,7 @@
      (h1 "JSXGraph Gallery")
      (text "A small browser gallery for the jsx-graph wrapper.")
      (text "It shows the jsx-graph classes in several separate boards.")
+     (gallery-headline "Composite Boards")
      (text "Geometry board: drag the free points and the arrow, slider, and smart label should update together.")
      (container #:id geometry-board-id
                 #:class "jxgbox"
@@ -3669,15 +3876,12 @@
      (container #:id chart-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
-     (text "Primitive board: line, segment, arc, angle, sector, circle, and glider each show a separate primitive.")
-     (container #:id primitives-board-id
-                #:class "jxgbox"
-                #:attrs '((style "width: 720px; height: 420px;")))
-     (text "Point board: the single draggable point should appear on its own board.")
+     (gallery-headline "Basic Geometry")
+     (text "Point board: A is free, B is fixed, and C is restricted to the line through A and B.")
      (container #:id point-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
-     (text "Line board: the line should be defined by the two draggable endpoints.")
+     (text "Line board: the line, segment, and ray should each be visible on this board.")
      (container #:id line-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
@@ -3693,10 +3897,7 @@
      (container #:id sector-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
-     (text "Construction board: conic, ellipse, function graph, polygon, midpoint, parallel, perpendicular, reflection, bisector, normal, and intersection demonstrate the higher-level constructors.")
-     (container #:id constructions-board-id
-                #:class "jxgbox"
-                #:attrs '((style "width: 720px; height: 420px;")))
+     (gallery-headline "Construction Helpers")
      (text "Widget board: the button, checkbox, input, and slider show the interactive widget wrappers.")
      (container #:id widgets-board-id
                 #:class "jxgbox"
@@ -3713,7 +3914,17 @@
      (container #:id axis-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
+     (gallery-headline "Relation Helpers")
      (text "Grid board: a dedicated grid example should show a visible square mesh.")
+     (container #:attrs '((style "max-width: 260px;")))
+     (choice #:id "grid-style-choice"
+             '(("standard" "Standard")
+               ("fancy" "Fancy")
+               ("extreme" "Extreme Fancy"))
+             grid-mode
+             (lambda (mode)
+               (set! grid-mode mode)
+               (refresh-grid-board!)))
      (container #:id grid-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
@@ -3737,7 +3948,7 @@
      (container #:id polepoint-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
-     (text "RadicalAxis board: the radical axis should reflect the two circles shown.")
+     (text "RadicalAxis board: the radical axis should separate the two circles shown; the circles intentionally have different sizes.")
      (container #:id radicalaxis-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
@@ -3765,6 +3976,7 @@
      (container #:id majorsector-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
+     (gallery-headline "Curves and Analysis")
      (text "CurveIntersection board: the overlap of the two circles should be visible as the intersected path.")
      (container #:id curveintersection-board-id
                 #:class "jxgbox"
@@ -3841,7 +4053,8 @@
      (container #:id inequality-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
-     (text "Turtle board: the turtle should appear at the origin and be ready for drawing commands.")
+     (gallery-headline "Special Demos")
+     (text "Turtle board: the turtle should trace a Koch curve from left to right.")
      (container #:id turtle-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
@@ -3877,10 +4090,11 @@
      (container #:id circle-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
-     (text "Glider board: the glider should stay on the circle while you drag it.")
+     (text "Glider board: A is the glider point and should stay on the circle while you drag it.")
      (container #:id glider-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
+     (gallery-headline "Interactive Widgets")
      (text "Button board: clicking the button should update the board summary text.")
      (container #:id button-board-id
                 #:class "jxgbox"
@@ -3889,6 +4103,7 @@
      (container #:id legend-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
+     (gallery-headline "Form Controls and Labels")
      (text "Midpoint board: the midpoint should stay centered between the two draggable endpoints.")
      (container #:id midpoint-board-id
                 #:class "jxgbox"
@@ -3901,7 +4116,7 @@
      (container #:id perpendicular-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
-     (text "Reflection board: the reflected point should stay mirrored across the base line.")
+     (text "Reflection board: the reflected point D should stay mirrored across the base line.")
      (container #:id reflection-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
@@ -3909,15 +4124,15 @@
      (container #:id bisector-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
-     (text "Checkbox board: the checkbox should toggle on and off on its own board.")
+     (text "Checkbox board: tick the box to show or hide the red point.")
      (container #:id checkbox-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
-     (text "Input board: the input field should be visible and editable on its own board.")
+     (text "Input board: enter a JavaScript expression and the graph should update on this board.")
      (container #:id input-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
-     (text "Slider board: the slider should be visible on its own board.")
+     (text "Slider board: the slider should be visible on its own board, and it should be compact.")
      (container #:id slider-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))

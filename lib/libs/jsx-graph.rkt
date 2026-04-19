@@ -89,6 +89,42 @@
     [else
      (jsx-unwrap value)]))
 
+;; jsx-callable-pack : any/c -> any/c
+;;   Convert nested procedures into raw browser callbacks.
+(define (jsx-callable-pack value)
+  (cond
+    [(procedure? value) (procedure->external value)]
+    [(vector? value)
+     (for/vector #:length (vector-length value)
+         ([item (in-vector value)])
+       (jsx-callable-pack item))]
+    [(list? value)
+     (list->vector (map jsx-callable-pack value))]
+    [else
+     (jsx-unwrap value)]))
+
+;; jsx-curve-parents : any/c -> any/c
+;;   Convert curve parents into raw browser values.
+(define (jsx-curve-parents value)
+  (cond
+    [(procedure? value)
+     (procedure->external
+      (lambda args
+        (cond
+          [(null? args)
+           (error 'jsx-create-curve
+                  "curve callback expects at least one argument")]
+          [else
+           (value (car args))])))]
+    [(vector? value)
+     (for/vector #:length (vector-length value)
+         ([item (in-vector value)])
+       (jsx-curve-parents item))]
+    [(list? value)
+     (list->vector (map jsx-curve-parents value))]
+    [else
+     (jsx-unwrap value)]))
+
 ;; jsx-element-call : any/c string? vector? -> any/c
 ;;   Call a GeometryElement method on a wrapped element.
 (define (jsx-element-call element method args)
@@ -213,6 +249,21 @@
   (js-jsx-curve-call/nullish (jsx-unwrap curve) method args)
   (void))
 
+;; jsx-riemannsum-value/raw : external/raw -> f64
+;;   Read the value of a riemann sum.
+(define (jsx-riemannsum-value/raw riemannsum)
+  (js-jsx-riemannsum-Value riemannsum))
+
+;; jsx-slopefield-set-f!/raw : external/raw any/c -> void?
+;;   Set the slope field function.
+(define (jsx-slopefield-set-f!/raw field func)
+  (js-jsx-slopefield-setF field func))
+
+;; jsx-vectorfield-set-f!/raw : external/raw any/c -> void?
+;;   Set the vector field function.
+(define (jsx-vectorfield-set-f!/raw field func)
+  (js-jsx-vectorfield-setF field func))
+
 ;; jsx-polygon-call : any/c string? vector? -> any/c
 ;;   Call a Polygon method on a wrapped polygon element.
 (define (jsx-polygon-call polygon method args)
@@ -321,6 +372,206 @@
 ;;   Create an arrowparallel on a board.
 (define-jsx-alias (jsx-board-create-arrowparallel/raw board parents attrs)
   js-jsx-board-create-arrowparallel)
+
+;; jsx-board-create-axis/raw : external/raw any/c any/c -> external/raw
+;;   Create an axis on a board.
+(define-jsx-alias (jsx-board-create-axis/raw board parents attrs)
+  js-jsx-board-create-axis)
+
+;; jsx-board-create-grid/raw : external/raw any/c any/c -> external/raw
+;;   Create a grid on a board.
+(define-jsx-alias (jsx-board-create-grid/raw board parents attrs)
+  js-jsx-board-create-grid)
+
+;; jsx-board-create-boxplot/raw : external/raw any/c any/c -> external/raw
+;;   Create a boxplot on a board.
+(define-jsx-alias (jsx-board-create-boxplot/raw board parents attrs)
+  js-jsx-board-create-boxplot)
+
+;; jsx-board-create-tangent/raw : external/raw any/c any/c -> external/raw
+;;   Create a tangent on a board.
+(define-jsx-alias (jsx-board-create-tangent/raw board parents attrs)
+  js-jsx-board-create-tangent)
+
+;; jsx-board-create-tangentto/raw : external/raw any/c any/c -> external/raw
+;;   Create a tangentto on a board.
+(define-jsx-alias (jsx-board-create-tangentto/raw board parents attrs)
+  js-jsx-board-create-tangentto)
+
+;; jsx-board-create-polarline/raw : external/raw any/c any/c -> external/raw
+;;   Create a polarline on a board.
+(define-jsx-alias (jsx-board-create-polarline/raw board parents attrs)
+  js-jsx-board-create-polarline)
+
+;; jsx-board-create-polepoint/raw : external/raw any/c any/c -> external/raw
+;;   Create a polepoint on a board.
+(define-jsx-alias (jsx-board-create-polepoint/raw board parents attrs)
+  js-jsx-board-create-polepoint)
+
+;; jsx-board-create-radicalaxis/raw : external/raw any/c any/c -> external/raw
+;;   Create a radicalaxis on a board.
+(define-jsx-alias (jsx-board-create-radicalaxis/raw board parents attrs)
+  js-jsx-board-create-radicalaxis)
+
+;; jsx-board-create-circumcircle/raw : external/raw any/c any/c -> external/raw
+;;   Create a circumcircle on a board.
+(define-jsx-alias (jsx-board-create-circumcircle/raw board parents attrs)
+  js-jsx-board-create-circumcircle)
+
+;; jsx-board-create-incircle/raw : external/raw any/c any/c -> external/raw
+;;   Create an incircle on a board.
+(define-jsx-alias (jsx-board-create-incircle/raw board parents attrs)
+  js-jsx-board-create-incircle)
+
+;; jsx-board-create-circumcirclearc/raw : external/raw any/c any/c -> external/raw
+;;   Create a circumcirclearc on a board.
+(define-jsx-alias (jsx-board-create-circumcirclearc/raw board parents attrs)
+  js-jsx-board-create-circumcirclearc)
+
+;; jsx-board-create-circumcirclesector/raw : external/raw any/c any/c -> external/raw
+;;   Create a circumcirclesector on a board.
+(define-jsx-alias (jsx-board-create-circumcirclesector/raw board parents attrs)
+  js-jsx-board-create-circumcirclesector)
+
+;; jsx-board-create-semicircle/raw : external/raw any/c any/c -> external/raw
+;;   Create a semicircle on a board.
+(define-jsx-alias (jsx-board-create-semicircle/raw board parents attrs)
+  js-jsx-board-create-semicircle)
+
+;; jsx-board-create-majorarc/raw : external/raw any/c any/c -> external/raw
+;;   Create a majorarc on a board.
+(define-jsx-alias (jsx-board-create-majorarc/raw board parents attrs)
+  js-jsx-board-create-majorarc)
+
+;; jsx-board-create-majorsector/raw : external/raw any/c any/c -> external/raw
+;;   Create a majorsector on a board.
+(define-jsx-alias (jsx-board-create-majorsector/raw board parents attrs)
+  js-jsx-board-create-majorsector)
+
+;; jsx-board-create-curveintersection/raw : external/raw any/c any/c -> external/raw
+;;   Create a curveintersection on a board.
+(define-jsx-alias (jsx-board-create-curveintersection/raw board parents attrs)
+  js-jsx-board-create-curveintersection)
+
+;; jsx-board-create-curvedifference/raw : external/raw any/c any/c -> external/raw
+;;   Create a curvedifference on a board.
+(define-jsx-alias (jsx-board-create-curvedifference/raw board parents attrs)
+  js-jsx-board-create-curvedifference)
+
+;; jsx-board-create-curveunion/raw : external/raw any/c any/c -> external/raw
+;;   Create a curveunion on a board.
+(define-jsx-alias (jsx-board-create-curveunion/raw board parents attrs)
+  js-jsx-board-create-curveunion)
+
+;; jsx-board-create-derivative/raw : external/raw any/c any/c -> external/raw
+;;   Create a derivative on a board.
+(define-jsx-alias (jsx-board-create-derivative/raw board parents attrs)
+  js-jsx-board-create-derivative)
+
+;; jsx-board-create-integral/raw : external/raw any/c any/c -> external/raw
+;;   Create an integral on a board.
+(define-jsx-alias (jsx-board-create-integral/raw board parents attrs)
+  js-jsx-board-create-integral)
+
+;; jsx-board-create-riemannsum/raw : external/raw any/c any/c -> external/raw
+;;   Create a riemannsum on a board.
+(define-jsx-alias (jsx-board-create-riemannsum/raw board parents attrs)
+  js-jsx-board-create-riemannsum)
+
+;; jsx-board-create-slopefield/raw : external/raw any/c any/c -> external/raw
+;;   Create a slopefield on a board.
+(define-jsx-alias (jsx-board-create-slopefield/raw board parents attrs)
+  js-jsx-board-create-slopefield)
+
+;; jsx-board-create-vectorfield/raw : external/raw any/c any/c -> external/raw
+;;   Create a vectorfield on a board.
+(define-jsx-alias (jsx-board-create-vectorfield/raw board parents attrs)
+  js-jsx-board-create-vectorfield)
+
+;; jsx-board-create-implicitcurve/raw : external/raw any/c any/c -> external/raw
+;;   Create an implicitcurve on a board.
+(define-jsx-alias (jsx-board-create-implicitcurve/raw board parents attrs)
+  js-jsx-board-create-implicitcurve)
+
+;; jsx-board-create-spline/raw : external/raw any/c any/c -> external/raw
+;;   Create a spline on a board.
+(define-jsx-alias (jsx-board-create-spline/raw board parents attrs)
+  js-jsx-board-create-spline)
+
+;; jsx-board-create-cardinalspline/raw : external/raw any/c any/c -> external/raw
+;;   Create a cardinalspline on a board.
+(define-jsx-alias (jsx-board-create-cardinalspline/raw board parents attrs)
+  js-jsx-board-create-cardinalspline)
+
+;; jsx-board-create-comb/raw : external/raw any/c any/c -> external/raw
+;;   Create a comb on a board.
+(define-jsx-alias (jsx-board-create-comb/raw board parents attrs)
+  js-jsx-board-create-comb)
+
+;; jsx-board-create-metapostspline/raw : external/raw any/c any/c -> external/raw
+;;   Create a metapostspline on a board.
+(define-jsx-alias (jsx-board-create-metapostspline/raw board parents attrs)
+  js-jsx-board-create-metapostspline)
+
+;; jsx-board-create-polygonalchain/raw : external/raw any/c any/c -> external/raw
+;;   Create a polygonalchain on a board.
+(define-jsx-alias (jsx-board-create-polygonalchain/raw board parents attrs)
+  js-jsx-board-create-polygonalchain)
+
+;; jsx-board-create-regularpolygon/raw : external/raw any/c any/c -> external/raw
+;;   Create a regularpolygon on a board.
+(define-jsx-alias (jsx-board-create-regularpolygon/raw board parents attrs)
+  js-jsx-board-create-regularpolygon)
+
+;; jsx-board-create-hyperbola/raw : external/raw any/c any/c -> external/raw
+;;   Create a hyperbola on a board.
+(define-jsx-alias (jsx-board-create-hyperbola/raw board parents attrs)
+  js-jsx-board-create-hyperbola)
+
+;; jsx-board-create-parabola/raw : external/raw any/c any/c -> external/raw
+;;   Create a parabola on a board.
+(define-jsx-alias (jsx-board-create-parabola/raw board parents attrs)
+  js-jsx-board-create-parabola)
+
+;; jsx-board-create-stepfunction/raw : external/raw any/c any/c -> external/raw
+;;   Create a stepfunction on a board.
+(define-jsx-alias (jsx-board-create-stepfunction/raw board parents attrs)
+  js-jsx-board-create-stepfunction)
+
+;; jsx-board-create-inequality/raw : external/raw any/c any/c -> external/raw
+;;   Create an inequality on a board.
+(define-jsx-alias (jsx-board-create-inequality/raw board parents attrs)
+  js-jsx-board-create-inequality)
+
+;; jsx-board-create-turtle/raw : external/raw any/c any/c -> external/raw
+;;   Create a turtle on a board.
+(define-jsx-alias (jsx-board-create-turtle/raw board parents attrs)
+  js-jsx-board-create-turtle)
+
+;; jsx-board-create-curveintersection/raw : external/raw any/c any/c -> external/raw
+;;   Create a curveintersection on a board.
+(define-jsx-alias (jsx-board-create-curveintersection/raw board parents attrs)
+  js-jsx-board-create-curveintersection)
+
+;; jsx-board-create-curvedifference/raw : external/raw any/c any/c -> external/raw
+;;   Create a curvedifference on a board.
+(define-jsx-alias (jsx-board-create-curvedifference/raw board parents attrs)
+  js-jsx-board-create-curvedifference)
+
+;; jsx-board-create-curveunion/raw : external/raw any/c any/c -> external/raw
+;;   Create a curveunion on a board.
+(define-jsx-alias (jsx-board-create-curveunion/raw board parents attrs)
+  js-jsx-board-create-curveunion)
+
+;; jsx-board-create-derivative/raw : external/raw any/c any/c -> external/raw
+;;   Create a derivative on a board.
+(define-jsx-alias (jsx-board-create-derivative/raw board parents attrs)
+  js-jsx-board-create-derivative)
+
+;; jsx-board-create-integral/raw : external/raw any/c any/c -> external/raw
+;;   Create an integral on a board.
+(define-jsx-alias (jsx-board-create-integral/raw board parents attrs)
+  js-jsx-board-create-integral)
 
 ;; jsx-board-create-perpendicular/raw : external/raw any/c any/c -> external/raw
 ;;   Create a perpendicular line on a board.
@@ -973,7 +1224,9 @@
 ;;   Create a curve on a board.
 (define (jsx-create-curve board parents [attributes #f])
   (jsx-wrap-element
-   (jsx-board-create-curve/raw (jsx-board-raw board) parents (or attributes '#[]))))
+   (jsx-board-create-curve/raw (jsx-board-raw board)
+                               (jsx-curve-parents parents)
+                               (or attributes '#[]))))
 
 ;; jsx-create-functiongraph : jsx-board? any/c [any/c #f] -> jsx-element?
 ;;   Create a functiongraph on a board.
@@ -1006,6 +1259,263 @@
 (define (jsx-create-arrowparallel board parents [attributes #f])
   (jsx-wrap-element
    (jsx-board-create-arrowparallel/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-axis : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create an axis on a board.
+(define (jsx-create-axis board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-axis/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-grid : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a grid on a board.
+(define (jsx-create-grid board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-grid/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-boxplot : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a boxplot on a board.
+(define (jsx-create-boxplot board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-boxplot/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-tangent : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a tangent on a board.
+(define (jsx-create-tangent board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-tangent/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-tangentto : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a tangentto on a board.
+(define (jsx-create-tangentto board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-tangentto/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-polarline : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a polarline on a board.
+(define (jsx-create-polarline board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-polarline/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-polepoint : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a polepoint on a board.
+(define (jsx-create-polepoint board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-polepoint/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-radicalaxis : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a radicalaxis on a board.
+(define (jsx-create-radicalaxis board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-radicalaxis/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-circumcircle : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a circumcircle on a board.
+(define (jsx-create-circumcircle board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-circumcircle/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-incircle : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create an incircle on a board.
+(define (jsx-create-incircle board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-incircle/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-circumcirclearc : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a circumcirclearc on a board.
+(define (jsx-create-circumcirclearc board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-circumcirclearc/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-circumcirclesector : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a circumcirclesector on a board.
+(define (jsx-create-circumcirclesector board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-circumcirclesector/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-semicircle : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a semicircle on a board.
+(define (jsx-create-semicircle board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-semicircle/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-majorarc : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a majorarc on a board.
+(define (jsx-create-majorarc board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-majorarc/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-majorsector : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a majorsector on a board.
+(define (jsx-create-majorsector board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-majorsector/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-curveintersection : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a curveintersection element.
+(define (jsx-create-curveintersection board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-curveintersection/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-curvedifference : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a curvedifference element.
+(define (jsx-create-curvedifference board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-curvedifference/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-curveunion : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a curveunion element.
+(define (jsx-create-curveunion board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-curveunion/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-derivative : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a derivative element.
+(define (jsx-create-derivative board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-derivative/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-integral : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create an integral element.
+(define (jsx-create-integral board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-integral/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-riemannsum : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a riemannsum element.
+(define (jsx-create-riemannsum board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-riemannsum/raw (jsx-board-raw board)
+                                    (jsx-callable-pack parents)
+                                    (or attributes '#[]))))
+
+;; jsx-create-slopefield : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a slopefield element.
+(define (jsx-create-slopefield board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-slopefield/raw (jsx-board-raw board)
+                                    (jsx-callable-pack parents)
+                                    (or attributes '#[]))))
+
+;; jsx-create-vectorfield : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a vectorfield element.
+(define (jsx-create-vectorfield board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-vectorfield/raw (jsx-board-raw board)
+                                     (jsx-callable-pack parents)
+                                     (or attributes '#[]))))
+
+;; jsx-create-implicitcurve : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create an implicitcurve element.
+(define (jsx-create-implicitcurve board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-implicitcurve/raw (jsx-board-raw board)
+                                       (jsx-callable-pack parents)
+                                       (or attributes '#[]))))
+
+;; jsx-create-spline : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a spline element.
+(define (jsx-create-spline board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-spline/raw (jsx-board-raw board)
+                                (jsx-callable-pack parents)
+                                (or attributes '#[]))))
+
+;; jsx-create-cardinalspline : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a cardinal spline element.
+(define (jsx-create-cardinalspline board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-cardinalspline/raw (jsx-board-raw board)
+                                        (jsx-callable-pack parents)
+                                        (or attributes '#[]))))
+
+;; jsx-create-comb : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a comb element.
+(define (jsx-create-comb board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-comb/raw (jsx-board-raw board)
+                              (jsx-callable-pack parents)
+                              (or attributes '#[]))))
+
+;; jsx-create-metapostspline : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a metapost spline element.
+(define (jsx-create-metapostspline board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-metapostspline/raw (jsx-board-raw board)
+                                        (jsx-callable-pack parents)
+                                        (or attributes '#[]))))
+
+;; jsx-create-polygonalchain : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a polygonal chain element.
+(define (jsx-create-polygonalchain board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-polygonalchain/raw (jsx-board-raw board)
+                                        (jsx-callable-pack parents)
+                                        (or attributes '#[]))))
+
+;; jsx-create-regularpolygon : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a regular polygon element.
+(define (jsx-create-regularpolygon board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-regularpolygon/raw (jsx-board-raw board)
+                                        (jsx-callable-pack parents)
+                                        (or attributes '#[]))))
+
+;; jsx-create-hyperbola : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a hyperbola element.
+(define (jsx-create-hyperbola board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-hyperbola/raw (jsx-board-raw board)
+                                   (jsx-callable-pack parents)
+                                   (or attributes '#[]))))
+
+;; jsx-create-parabola : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a parabola element.
+(define (jsx-create-parabola board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-parabola/raw (jsx-board-raw board)
+                                  (jsx-callable-pack parents)
+                                  (or attributes '#[]))))
+
+;; jsx-create-stepfunction : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a stepfunction element.
+(define (jsx-create-stepfunction board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-stepfunction/raw (jsx-board-raw board)
+                                      (jsx-callable-pack parents)
+                                      (or attributes '#[]))))
+
+;; jsx-create-inequality : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create an inequality element.
+(define (jsx-create-inequality board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-inequality/raw (jsx-board-raw board)
+                                    (jsx-callable-pack parents)
+                                    (or attributes '#[]))))
+
+;; jsx-create-turtle : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a turtle element.
+(define (jsx-create-turtle board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-turtle/raw (jsx-board-raw board)
+                                (jsx-callable-pack parents)
+                                (or attributes '#[]))))
+
+;; jsx-riemannsum-value : jsx-element? -> any/c
+;;   Read the value of a riemann sum.
+(define (jsx-riemannsum-value riemannsum)
+  (jsx-riemannsum-value/raw (jsx-unwrap riemannsum)))
+
+;; jsx-slopefield-set-f! : jsx-element? any/c -> void?
+;;   Set the slope field function.
+(define (jsx-slopefield-set-f! field func)
+  (jsx-slopefield-set-f!/raw (jsx-unwrap field) (jsx-callable-pack func))
+  (void))
+
+;; jsx-vectorfield-set-f! : jsx-element? any/c -> void?
+;;   Set the vector field function.
+(define (jsx-vectorfield-set-f! field func)
+  (jsx-vectorfield-set-f!/raw (jsx-unwrap field) (jsx-callable-pack func))
+  (void))
 
 ;; jsx-circle-area : jsx-element? -> any/c
 ;;   Read the area of a circle.
