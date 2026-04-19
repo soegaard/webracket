@@ -500,6 +500,18 @@
   #:name   "create-measurement"
   (-> (extern value value) (extern/raw)))
 
+; (js-jsx-board-create-bisectorlines board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-bisectorlines
+  #:module "jsx-board"
+  #:name   "create-bisectorlines"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-perpendicularsegment board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-perpendicularsegment
+  #:module "jsx-board"
+  #:name   "create-perpendicularsegment"
+  (-> (extern value value) (extern/raw)))
+
 ; (js-jsx-board-create-circumcenter board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign js-jsx-board-create-circumcenter
   #:module "jsx-board"

@@ -215,6 +215,8 @@
   jsx-create-parallelogram
   jsx-create-reflexangle
   jsx-create-measurement
+  jsx-create-bisectorlines
+  jsx-create-perpendicularsegment
   jsx-create-circumcenter
   jsx-create-mirrorelement
   jsx-create-mirrorpoint
@@ -648,6 +650,8 @@
 (define jsx-create-parallelogram any/c)
 (define jsx-create-reflexangle any/c)
 (define jsx-create-measurement any/c)
+(define jsx-create-bisectorlines any/c)
+(define jsx-create-perpendicularsegment any/c)
 (define jsx-create-circumcenter any/c)
 (define jsx-create-mirrorelement any/c)
 (define jsx-create-mirrorpoint any/c)

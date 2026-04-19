@@ -85,6 +85,8 @@
 (define tracecurve-board-id "jsx-graph-gallery-tracecurve")
 (define parallelogram-board-id "jsx-graph-gallery-parallelogram")
 (define reflexangle-board-id "jsx-graph-gallery-reflexangle")
+(define bisectorlines-board-id "jsx-graph-gallery-bisectorlines")
+(define perpendicularsegment-board-id "jsx-graph-gallery-perpendicularsegment")
 (define measurement-board-id "jsx-graph-gallery-measurement")
 (define circumcenter-board-id "jsx-graph-gallery-circumcenter")
 (define mirrorelement-board-id "jsx-graph-gallery-mirrorelement")
@@ -190,6 +192,8 @@
 (define tracecurve-board-ready? #f)
 (define parallelogram-board-ready? #f)
 (define reflexangle-board-ready? #f)
+(define bisectorlines-board-ready? #f)
+(define perpendicularsegment-board-ready? #f)
 (define measurement-board-ready? #f)
 (define circumcenter-board-ready? #f)
 (define mirrorelement-board-ready? #f)
@@ -554,6 +558,15 @@
 (define reflexangle-angle #f)
 (define reflexangle-text #f)
 (define reflexangle-object #f)
+(define bisectorlines-board #f)
+(define bisectorlines-line-1 #f)
+(define bisectorlines-line-2 #f)
+(define bisectorlines-object #f)
+(define perpendicularsegment-board #f)
+(define perpendicularsegment-line-a #f)
+(define perpendicularsegment-line-b #f)
+(define perpendicularsegment-point #f)
+(define perpendicularsegment-object #f)
 (define constructions-board #f)
 (define widgets-board #f)
 (define widget-button #f)
@@ -4296,6 +4309,120 @@
         (void (jsx-board-full-update! reflexangle-board))
         #t)))
 
+;; init-bisectorlines-board! : -> boolean?
+;;   Build the JSXGraph bisectorlines board once the browser assets have loaded.
+(define (init-bisectorlines-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless bisectorlines-board-ready?
+          (console-log "Bisectorlines board")
+          (set! bisectorlines-board
+                (jsx-create-board
+                 bisectorlines-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-5 5 5 -5])
+                          (vector "axis" #t)
+                          (vector "keepaspectratio" #t)))))
+          (define bisectorlines-p1
+            (jsx-create-point bisectorlines-board
+                              (jsx-parents -4 2)
+                              (js-object (vector (vector "name" "A")
+                                                 (vector "size" 4)
+                                                 (vector "fillColor" "#2b6cb0")))))
+          (define bisectorlines-p2
+            (jsx-create-point bisectorlines-board
+                              (jsx-parents 3 1)
+                              (js-object (vector (vector "name" "B")
+                                                 (vector "size" 4)
+                                                 (vector "fillColor" "#2b6cb0")))))
+          (define bisectorlines-p3
+            (jsx-create-point bisectorlines-board
+                              (jsx-parents -2 -3)
+                              (js-object (vector (vector "name" "C")
+                                                 (vector "size" 4)
+                                                 (vector "fillColor" "#d53f8c")))))
+          (define bisectorlines-p4
+            (jsx-create-point bisectorlines-board
+                              (jsx-parents 4 -2)
+                              (js-object (vector (vector "name" "D")
+                                                 (vector "size" 4)
+                                                 (vector "fillColor" "#d53f8c")))))
+          (set! bisectorlines-line-1
+                (jsx-create-line bisectorlines-board
+                                 (jsx-parents bisectorlines-p1 bisectorlines-p2)
+                                 (js-object (vector (vector "strokeColor" "#2b6cb0")
+                                                    (vector "strokeWidth" 2)))))
+          (set! bisectorlines-line-2
+                (jsx-create-line bisectorlines-board
+                                 (jsx-parents bisectorlines-p3 bisectorlines-p4)
+                                 (js-object (vector (vector "strokeColor" "#d53f8c")
+                                                    (vector "strokeWidth" 2)))))
+          (set! bisectorlines-object
+                (jsx-create-bisectorlines
+                 bisectorlines-board
+                 (jsx-parents bisectorlines-line-1 bisectorlines-line-2)
+                 (js-object (vector (vector "name" "BL")))))
+          (set! bisectorlines-board-ready? #t))
+        (void (jsx-board-full-update! bisectorlines-board))
+        #t)))
+
+;; init-perpendicularsegment-board! : -> boolean?
+;;   Build the JSXGraph perpendicular segment board once the browser assets have loaded.
+(define (init-perpendicularsegment-board!)
+  (define win (js-window-window))
+  (define jxg (js-ref win "JXG"))
+  (define jsxgraph (and (extern-present? jxg)
+                        (js-ref jxg "JSXGraph")))
+  (if (not (extern-present? jsxgraph))
+      #f
+      (let ()
+        (unless perpendicularsegment-board-ready?
+          (console-log "PerpendicularSegment board")
+          (set! perpendicularsegment-board
+                (jsx-create-board
+                 perpendicularsegment-board-id
+                 (js-object
+                  (vector (vector "boundingbox" #[-5 5 5 -5])
+                          (vector "axis" #t)
+                          (vector "keepaspectratio" #t)))))
+          (define perpendicularsegment-line-a
+            (jsx-create-point perpendicularsegment-board
+                              (jsx-parents -4 -1)
+                              (js-object (vector (vector "name" "A")
+                                                 (vector "size" 4)))))
+          (define perpendicularsegment-line-b
+            (jsx-create-point perpendicularsegment-board
+                              (jsx-parents 4 1)
+                              (js-object (vector (vector "name" "B")
+                                                 (vector "size" 4)))))
+          (define perpendicularsegment-point
+            (jsx-create-point perpendicularsegment-board
+                              (jsx-parents 0 3)
+                              (js-object (vector (vector "name" "C")
+                                                 (vector "size" 4)
+                                                 (vector "fillColor" "#d53f8c")))))
+          (define perpendicularsegment-line
+            (jsx-create-line perpendicularsegment-board
+                             (jsx-parents perpendicularsegment-line-a
+                                          perpendicularsegment-line-b)
+                             (js-object (vector (vector "strokeColor" "#2b6cb0")
+                                                (vector "strokeWidth" 2)))))
+          (set! perpendicularsegment-object
+                (jsx-create-perpendicularsegment
+                 perpendicularsegment-board
+                 (jsx-parents perpendicularsegment-line
+                              perpendicularsegment-point)
+                 (js-object (vector (vector "strokeColor" "#d53f8c")
+                                    (vector "strokeWidth" 2)))))
+          (set! perpendicularsegment-board-ready? #t))
+        (void (jsx-board-full-update! perpendicularsegment-board))
+        #t)))
+
 ;; init-constructions-board! : -> boolean?
 ;;   Build the JSXGraph construction board once the browser assets have loaded.
 (define (init-constructions-board!)
@@ -4678,6 +4805,8 @@
   (define tracecurve-ready? (init-tracecurve-board!))
   (define parallelogram-ready? (init-parallelogram-board!))
   (define reflexangle-ready? (init-reflexangle-board!))
+  (define bisectorlines-ready? (init-bisectorlines-board!))
+  (define perpendicularsegment-ready? (init-perpendicularsegment-board!))
   (define widgets-ready? (init-widgets-board!))
   (define annotation-ready? (init-annotation-board!))
   (when (and geometry-ready? group-ready? chart-ready?
@@ -4686,6 +4815,7 @@
              foreignobject-ready? tapemeasure-ready? measurement-ready? circumcenter-ready? mirrorelement-ready?
              mirrorpoint-ready? otherintersection-ready? orthogonalprojection-ready? parallelpoint-ready? perpendicularpoint-ready?
              ticks-ready? transformation-ready? tracecurve-ready? parallelogram-ready? reflexangle-ready?
+             bisectorlines-ready? perpendicularsegment-ready?
              riemannsum-ready? slopefield-ready? vectorfield-ready? implicitcurve-ready? spline-ready?
              cardinalspline-ready? comb-ready? metapostspline-ready? polygonalchain-ready? regularpolygon-ready?
              hyperbola-ready? parabola-ready? stepfunction-ready? inequality-ready? turtle-ready?
@@ -4693,7 +4823,7 @@
              point-board-ready? line-board-ready? arc-board-ready? angle-board-ready? sector-board-ready? arrowparallel-board-ready? axis-board-ready? segment-board-ready? intersection-board-ready? grid-board-ready? boxplot-board-ready? tangent-board-ready? tangentto-board-ready? polarline-board-ready? polepoint-board-ready? radicalaxis-board-ready? circumcircle-board-ready? circumcirclearc-board-ready? circumcirclesector-board-ready? semicircle-board-ready? majorarc-board-ready? majorsector-board-ready? curveintersection-board-ready? curvedifference-board-ready? curveunion-board-ready? derivative-board-ready? integral-board-ready? riemannsum-board-ready? slopefield-board-ready? vectorfield-board-ready? implicitcurve-board-ready? spline-board-ready? incircle-board-ready? foreignobject-board-ready? tapemeasure-board-ready? measurement-board-ready? circumcenter-board-ready? mirrorelement-board-ready? ticks-board-ready? transformation-board-ready? tracecurve-board-ready? parallelogram-board-ready? reflexangle-board-ready? widgets-board-ready? annotation-board-ready?)
     (set-status! "Boards ready.")
     (set-summary!
-     (format "Created geometry, group, chart, point, line, arc, angle, sector, arrow, arrowparallel, circle, glider, button, legend, axis, segment, intersection, normal, grid, boxplot, tangent, tangentto, polarline, polepoint, radicalaxis, circumcircle, circumcirclearc, circumcirclesector, semicircle, majorarc, majorsector, curveintersection, curvedifference, curveunion, derivative, integral, riemannsum, slopefield, vectorfield, implicitcurve, spline, cardinalspline, comb, metapostspline, polygonalchain, regularpolygon, hyperbola, parabola, stepfunction, inequality, turtle, incircle, conic, ellipse, functiongraph, curve, polygon, midpoint, parallel, perpendicular, reflection, bisector, checkbox, input, slider, smartlabel, text, foreignobject, tapemeasure, measurement, circumcenter, mirrorelement, ticks, transformation, tracecurve, parallelogram, reflexangle, mirrorpoint, otherintersection, orthogonalprojection, parallelpoint, perpendicularpoint, widget, and annotation boards. Geometry objects: ~a. Group objects: ~a. Chart objects: ~a. Point objects: ~a. Line objects: ~a. Arc objects: ~a. Angle objects: ~a. Sector objects: ~a. Arrow objects: ~a. Arrowparallel objects: ~a. Circle objects: ~a. Glider objects: ~a. Button objects: ~a. Legend objects: ~a. Axis objects: ~a. Segment objects: ~a. Intersection objects: ~a. Normal objects: ~a. Grid objects: ~a. Boxplot objects: ~a. Tangent objects: ~a. TangentTo objects: ~a. Polarline objects: ~a. Polepoint objects: ~a. RadicalAxis objects: ~a. Circumcircle objects: ~a. CircumcircleArc objects: ~a. CircumcircleSector objects: ~a. Semicircle objects: ~a. MajorArc objects: ~a. MajorSector objects: ~a. CurveIntersection objects: ~a. CurveDifference objects: ~a. CurveUnion objects: ~a. Derivative objects: ~a. Integral objects: ~a. Riemannsum objects: ~a. Slopefield objects: ~a. Vectorfield objects: ~a. ImplicitCurve objects: ~a. Spline objects: ~a. Cardinalspline objects: ~a. Comb objects: ~a. MetapostSpline objects: ~a. PolygonalChain objects: ~a. RegularPolygon objects: ~a. Hyperbola objects: ~a. Parabola objects: ~a. Stepfunction objects: ~a. Inequality objects: ~a. Turtle objects: ~a. Incircle objects: ~a. Conic objects: ~a. Ellipse objects: ~a. Functiongraph objects: ~a. Curve objects: ~a. Polygon objects: ~a. Midpoint objects: ~a. Parallel objects: ~a. Perpendicular objects: ~a. Reflection objects: ~a. Bisector objects: ~a. Checkbox objects: ~a. Input objects: ~a. Slider objects: ~a. Smartlabel objects: ~a. Text objects: ~a. ForeignObject objects: ~a. Tapemeasure objects: ~a. Measurement objects: ~a. Circumcenter objects: ~a. MirrorElement objects: ~a. Ticks objects: ~a. Transformation objects: ~a. Tracecurve objects: ~a. Parallelogram objects: ~a. ReflexAngle objects: ~a. MirrorPoint objects: ~a. OtherIntersection objects: ~a. Orthogonalprojection objects: ~a. Parallelpoint objects: ~a. PerpendicularPoint objects: ~a. Widget objects: ~a. Annotation objects: ~a."
+       (format "Created geometry, group, chart, point, line, arc, angle, sector, arrow, arrowparallel, circle, glider, button, legend, axis, segment, intersection, normal, grid, boxplot, tangent, tangentto, polarline, polepoint, radicalaxis, circumcircle, circumcirclearc, circumcirclesector, semicircle, majorarc, majorsector, curveintersection, curvedifference, curveunion, derivative, integral, riemannsum, slopefield, vectorfield, implicitcurve, spline, cardinalspline, comb, metapostspline, polygonalchain, regularpolygon, hyperbola, parabola, stepfunction, inequality, turtle, incircle, conic, ellipse, functiongraph, curve, polygon, midpoint, parallel, perpendicular, reflection, bisector, checkbox, input, slider, smartlabel, text, foreignobject, tapemeasure, measurement, circumcenter, mirrorelement, ticks, transformation, tracecurve, parallelogram, reflexangle, bisectorlines, perpendicularsegment, mirrorpoint, otherintersection, orthogonalprojection, parallelpoint, perpendicularpoint, widget, and annotation boards. Geometry objects: ~a. Group objects: ~a. Chart objects: ~a. Point objects: ~a. Line objects: ~a. Arc objects: ~a. Angle objects: ~a. Sector objects: ~a. Arrow objects: ~a. Arrowparallel objects: ~a. Circle objects: ~a. Glider objects: ~a. Button objects: ~a. Legend objects: ~a. Axis objects: ~a. Segment objects: ~a. Intersection objects: ~a. Normal objects: ~a. Grid objects: ~a. Boxplot objects: ~a. Tangent objects: ~a. TangentTo objects: ~a. Polarline objects: ~a. Polepoint objects: ~a. RadicalAxis objects: ~a. Circumcircle objects: ~a. CircumcircleArc objects: ~a. CircumcircleSector objects: ~a. Semicircle objects: ~a. MajorArc objects: ~a. MajorSector objects: ~a. CurveIntersection objects: ~a. CurveDifference objects: ~a. CurveUnion objects: ~a. Derivative objects: ~a. Integral objects: ~a. Riemannsum objects: ~a. Slopefield objects: ~a. Vectorfield objects: ~a. ImplicitCurve objects: ~a. Spline objects: ~a. Cardinalspline objects: ~a. Comb objects: ~a. MetapostSpline objects: ~a. PolygonalChain objects: ~a. RegularPolygon objects: ~a. Hyperbola objects: ~a. Parabola objects: ~a. Stepfunction objects: ~a. Inequality objects: ~a. Turtle objects: ~a. Incircle objects: ~a. Conic objects: ~a. Ellipse objects: ~a. Functiongraph objects: ~a. Curve objects: ~a. Polygon objects: ~a. Midpoint objects: ~a. Parallel objects: ~a. Perpendicular objects: ~a. Reflection objects: ~a. Bisector objects: ~a. Checkbox objects: ~a. Input objects: ~a. Slider objects: ~a. Smartlabel objects: ~a. Text objects: ~a. ForeignObject objects: ~a. Tapemeasure objects: ~a. Measurement objects: ~a. Circumcenter objects: ~a. MirrorElement objects: ~a. Ticks objects: ~a. Transformation objects: ~a. Tracecurve objects: ~a. Parallelogram objects: ~a. ReflexAngle objects: ~a. Bisectorlines objects: ~a. PerpendicularSegment objects: ~a. MirrorPoint objects: ~a. OtherIntersection objects: ~a. Orthogonalprojection objects: ~a. Parallelpoint objects: ~a. PerpendicularPoint objects: ~a. Widget objects: ~a. Annotation objects: ~a."
              (jsx-board-num-objects geometry-board)
              (jsx-board-num-objects group-board)
              (jsx-board-num-objects chart-board)
@@ -4771,6 +4901,8 @@
              (jsx-board-num-objects tracecurve-board)
              (jsx-board-num-objects parallelogram-board)
              (jsx-board-num-objects reflexangle-board)
+             (jsx-board-num-objects bisectorlines-board)
+             (jsx-board-num-objects perpendicularsegment-board)
              (jsx-board-num-objects mirrorpoint-board)
              (jsx-board-num-objects otherintersection-board)
              (jsx-board-num-objects orthogonalprojection-board)
@@ -4785,7 +4917,7 @@
              cardinalspline-ready? comb-ready? metapostspline-ready? polygonalchain-ready? regularpolygon-ready?
              hyperbola-ready? parabola-ready? stepfunction-ready? inequality-ready? turtle-ready?
        geometry-board-ready? group-board-ready? chart-board-ready?
-       arrowparallel-board-ready? axis-board-ready? segment-board-ready? intersection-board-ready? orthogonal-board-ready? grid-board-ready? boxplot-board-ready? tangent-board-ready? tangentto-board-ready? polarline-board-ready? polepoint-board-ready? radicalaxis-board-ready? circumcircle-board-ready? circumcirclearc-board-ready? circumcirclesector-board-ready? semicircle-board-ready? majorarc-board-ready? majorsector-board-ready? curveintersection-board-ready? curvedifference-board-ready? curveunion-board-ready? derivative-board-ready? integral-board-ready? riemannsum-board-ready? slopefield-board-ready? vectorfield-board-ready? implicitcurve-board-ready? spline-board-ready? incircle-board-ready? mirrorpoint-board-ready? otherintersection-board-ready? orthogonalprojection-board-ready? parallelpoint-board-ready? perpendicularpoint-board-ready? widgets-board-ready? annotation-board-ready?))
+       arrowparallel-board-ready? axis-board-ready? segment-board-ready? intersection-board-ready? orthogonal-board-ready? grid-board-ready? boxplot-board-ready? tangent-board-ready? tangentto-board-ready? polarline-board-ready? polepoint-board-ready? radicalaxis-board-ready? circumcircle-board-ready? circumcirclearc-board-ready? circumcirclesector-board-ready? semicircle-board-ready? majorarc-board-ready? majorsector-board-ready? curveintersection-board-ready? curvedifference-board-ready? curveunion-board-ready? derivative-board-ready? integral-board-ready? riemannsum-board-ready? slopefield-board-ready? vectorfield-board-ready? implicitcurve-board-ready? spline-board-ready? incircle-board-ready? mirrorpoint-board-ready? otherintersection-board-ready? orthogonalprojection-board-ready? parallelpoint-board-ready? perpendicularpoint-board-ready? bisectorlines-ready? perpendicularsegment-ready? widgets-board-ready? annotation-board-ready?))
 
 ;; refresh-gallery! : -> void?
 ;;   Force a redraw of the live gallery boards.
@@ -5301,6 +5433,15 @@
                 #:attrs '((style "width: 720px; height: 420px;")))
      (text "MirrorElement board: D should stay mirrored across M.")
      (container #:id mirrorelement-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (gallery-headline "Composition Helpers")
+     (text "Bisectorlines board: the bisector between two lines should stay visible.")
+     (container #:id bisectorlines-board-id
+                #:class "jxgbox"
+                #:attrs '((style "width: 720px; height: 420px;")))
+     (text "PerpendicularSegment board: the segment should stay perpendicular to the line.")
+     (container #:id perpendicularsegment-board-id
                 #:class "jxgbox"
                 #:attrs '((style "width: 720px; height: 420px;")))
      (gallery-headline "Point Relations")

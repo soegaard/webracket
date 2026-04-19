@@ -1562,6 +1562,24 @@ Returns the current tape-measure value.
 Creates a measurement on @racket[board].
 }
 
+@defproc[(jsx-create-bisectorlines [board jsx-board?]
+                                   [parents any/c]
+                                   [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Bisectorlines"
+          (jsx-doc-url "Bisectorlines"))
+Creates a bisectorlines object on @racket[board].
+}
+
+@defproc[(jsx-create-perpendicularsegment [board jsx-board?]
+                                         [parents any/c]
+                                         [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "PerpendicularSegment"
+          (jsx-doc-url "PerpendicularSegment"))
+Creates a perpendicular segment on @racket[board].
+}
+
 @defproc[(jsx-create-circumcenter [board jsx-board?]
                                   [parents any/c]
                                   [attributes (or/c #f any/c) #f])

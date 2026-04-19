@@ -22,7 +22,8 @@ Current scope:
   spline, cardinalspline, comb, metapostspline, polygonalchain, regularpolygon,
   hyperbola, parabola, stepfunction, inequality, turtle, slider,
   chart, legend, smartlabel, arrow, button, checkbox, input,
-  foreignobject, tapemeasure, measurement, circumcenter, and mirrorelement
+  foreignobject, tapemeasure, measurement, circumcenter, bisectorlines,
+  perpendicularsegment, and mirrorelement
   bridge helpers
 - Chart bridge helpers
 
@@ -76,6 +77,8 @@ All function names are linked to JSXGraph API documentation.
 - [Chapter 32 — Orthogonalprojection Bridge](#chapter-32--orthogonalprojection-bridge)
 - [Chapter 33 — Parallelpoint Bridge](#chapter-33--parallelpoint-bridge)
 - [Chapter 34 — PerpendicularPoint Bridge](#chapter-34--perpendicularpoint-bridge)
+- [Chapter 35 — Bisectorlines Bridge](#chapter-35--bisectorlines-bridge)
+- [Chapter 36 — PerpendicularSegment Bridge](#chapter-36--perpendicularsegment-bridge)
 
 ## Chapter 2 — Conventions
 
@@ -539,9 +542,9 @@ control the slider range and value.
 
 ## Chapter 24 — Coverage Checklist
 
-- This document covers **212** functions from `ffi/jsxgraph.ffi`.
-- Total documented functions: **222**
-- `board api`: 75 functions
+- This document covers **214** functions from `ffi/jsxgraph.ffi`.
+- Total documented functions: **224**
+- `board api`: 77 functions
 - `board properties`: 8 functions
 - `geometryelement bridge`: 3 functions
 - `line bridge`: 2 functions
@@ -637,3 +640,16 @@ The `PerpendicularPoint` wrapper is constructor-only in this batch.
 Use `js-jsx-board-create-perpendicularpoint` or
 `jsx-create-perpendicularpoint` to add the perpendicular projection of
 a point onto a line.
+
+## Chapter 35 — Bisectorlines Bridge
+
+The `Bisectorlines` wrapper is constructor-only in this batch. Use
+`js-jsx-board-create-bisectorlines` or `jsx-create-bisectorlines` to
+add the bisector between two lines.
+
+## Chapter 36 — PerpendicularSegment Bridge
+
+The `PerpendicularSegment` wrapper is constructor-only in this batch.
+Use `js-jsx-board-create-perpendicularsegment` or
+`jsx-create-perpendicularsegment` to add the perpendicular segment
+from a point to a line.

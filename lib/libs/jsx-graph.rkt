@@ -678,6 +678,16 @@
 (define-jsx-alias (jsx-board-create-measurement/raw board parents attrs)
   js-jsx-board-create-measurement)
 
+;; jsx-board-create-bisectorlines/raw : external/raw any/c any/c -> external/raw
+;;   Create a bisectorlines object on a board.
+(define-jsx-alias (jsx-board-create-bisectorlines/raw board parents attrs)
+  js-jsx-board-create-bisectorlines)
+
+;; jsx-board-create-perpendicularsegment/raw : external/raw any/c any/c -> external/raw
+;;   Create a perpendicularsegment object on a board.
+(define-jsx-alias (jsx-board-create-perpendicularsegment/raw board parents attrs)
+  js-jsx-board-create-perpendicularsegment)
+
 ;; jsx-board-create-circumcenter/raw : external/raw any/c any/c -> external/raw
 ;;   Create a circumcenter on a board.
 (define-jsx-alias (jsx-board-create-circumcenter/raw board parents attrs)
@@ -1960,6 +1970,20 @@
   (jsx-wrap-element
    (jsx-board-create-measurement/raw (jsx-board-raw board) parents
                                      (or attributes '#[]))))
+
+;; jsx-create-bisectorlines : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a bisectorlines object on a board.
+(define (jsx-create-bisectorlines board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-bisectorlines/raw (jsx-board-raw board) parents
+                                       (or attributes '#[]))))
+
+;; jsx-create-perpendicularsegment : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a perpendicularsegment object on a board.
+(define (jsx-create-perpendicularsegment board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-perpendicularsegment/raw (jsx-board-raw board) parents
+                                              (or attributes '#[]))))
 
 ;; jsx-create-circumcenter : jsx-board? any/c [any/c #f] -> jsx-element?
 ;;   Create a circumcenter on a board.
