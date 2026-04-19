@@ -12,6 +12,8 @@
 
 @include-section["Command-Line_Tool.scrbl"]
 
+@include-section["Callback_Source_Map_Tool.scrbl"]
+
 @include-section["webracket-for-racket-programmers.scrbl"]
 
 @include-section["WebRacket_at_a_Glance.scrbl"]
