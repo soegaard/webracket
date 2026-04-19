@@ -148,12 +148,16 @@
   jsx-view3d-create-axis3d
   jsx-view3d-create-functiongraph3d
   jsx-view3d-create-sphere3d
+  jsx-view3d-create-face3d
+  jsx-view3d-create-surface3d
   jsx-view3d-create-intersectioncircle3d
   jsx-view3d-create-intersectionline3d
   jsx-view3d-create-curve3d
   jsx-view3d-create-parametricsurface3d
   jsx-view3d-create-polyhedron3d
   jsx-view3d-create-text3d
+  jsx-view3d-create-ticks3d
+  jsx-view3d-create-transformation3d
   jsx-view3d-create-vectorfield3d
   jsx-create-point
   jsx-create-line

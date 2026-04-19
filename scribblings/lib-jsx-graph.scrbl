@@ -20,7 +20,7 @@ Use @racket[jsx-graph] when you want to:
 @itemlist[
   @item{create a @racket[JXG.JSXGraph] board in the current page}
   @item{create arbitrary JSXGraph elements with @racket[jsx-create] or the specialized constructors}
-  @item{create 3D scenes with @racket[jsx-create-view3d] and the 3D helpers such as @racket[jsx-view3d-create-point3d], @racket[jsx-view3d-create-line3d], @racket[jsx-view3d-create-circle3d], @racket[jsx-view3d-create-plane3d], @racket[jsx-view3d-create-axis3d], @racket[jsx-view3d-create-functiongraph3d], @racket[jsx-view3d-create-curve3d], @racket[jsx-view3d-create-parametricsurface3d], @racket[jsx-view3d-create-polyhedron3d], @racket[jsx-view3d-create-text3d], and @racket[jsx-view3d-create-vectorfield3d]}
+  @item{create 3D scenes with @racket[jsx-create-view3d] and the 3D helpers such as @racket[jsx-view3d-create-point3d], @racket[jsx-view3d-create-line3d], @racket[jsx-view3d-create-circle3d], @racket[jsx-view3d-create-plane3d], @racket[jsx-view3d-create-axis3d], @racket[jsx-view3d-create-functiongraph3d], @racket[jsx-view3d-create-sphere3d], @racket[jsx-view3d-create-face3d], @racket[jsx-view3d-create-surface3d], @racket[jsx-view3d-create-curve3d], @racket[jsx-view3d-create-parametricsurface3d], @racket[jsx-view3d-create-polyhedron3d], @racket[jsx-view3d-create-text3d], @racket[jsx-view3d-create-ticks3d], @racket[jsx-view3d-create-transformation3d], and @racket[jsx-view3d-create-vectorfield3d]}
   @item{build geometry objects such as @racket[JXG.Point], @racket[JXG.Line], @racket[JXG.Arc], @racket[JXG.Angle], @racket[JXG.Sector], @racket[JXG.Circle], @racket[JXG.Conic], @racket[JXG.Ellipse], @racket[JXG.Functiongraph], @racket[JXG.Riemannsum], @racket[JXG.Slopefield], @racket[JXG.Vectorfield], @racket[JXG.ImplicitCurve], @racket[JXG.Spline], @racket[JXG.Cardinalspline], @racket[JXG.Comb], @racket[JXG.Metapostspline], @racket[JXG.PolygonalChain], @racket[JXG.RegularPolygon], @racket[JXG.Hyperbola], @racket[JXG.Parabola], @racket[JXG.Stepfunction], @racket[JXG.Inequality], @racket[JXG.Turtle], @racket[JXG.Polygon], @racket[JXG.Text], @racket[JXG.ForeignObject], @racket[JXG.Tapemeasure], @racket[JXG.Measurement], @racket[JXG.Circumcenter], and @racket[JXG.MirrorElement]}
   @item{create chart objects with @racket[JXG.Chart]}
   @item{create legends and smart labels}
@@ -117,11 +117,9 @@ inside that board. A compact example is:
 (void board view p)
 ]
 
-The dedicated gallery section uses the 3D helpers to show a view, a
-point, a line, a circle, and a plane in separate example boards.
-
-Those helpers can also create axes, axis segments, surfaces, and
-3D intersections when JSXGraph provides those element types.
+The dedicated gallery section uses the 3D helpers to show a view,
+basic 3D primitives, intersections, curves, surfaces, solids, and
+other 3D element types in separate example boards.
 
 @section{API Reference}
 

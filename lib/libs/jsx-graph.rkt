@@ -125,6 +125,28 @@
     [else
      (jsx-unwrap value)]))
 
+;; jsx-surface3d-parents : any/c -> any/c
+;;   Convert surface3d parents into raw browser values.
+(define (jsx-surface3d-parents value)
+  (cond
+    [(procedure? value)
+     (procedure->external
+      (lambda args
+        (cond
+          [(null? args) 0]
+          [(null? (cdr args))
+           (value (car args) 0)]
+          [else
+           (value (car args) (cadr args))])))]
+    [(vector? value)
+     (for/vector #:length (vector-length value)
+         ([item (in-vector value)])
+       (jsx-surface3d-parents item))]
+    [(list? value)
+     (list->vector (map jsx-surface3d-parents value))]
+    [else
+     (jsx-unwrap value)]))
+
 ;; jsx-element-call : any/c string? vector? -> any/c
 ;;   Call a GeometryElement method on a wrapped element.
 (define (jsx-element-call element method args)
@@ -351,6 +373,18 @@
 (define (jsx-view3d-create-sphere3d view parents [attributes #f])
   (jsx-view3d-create view "sphere3d" parents attributes))
 
+;; jsx-view3d-create-face3d : jsx-element? any/c [any/c #f] -> jsx-element?
+;;   Create a 3D face inside a 3D view from a polyhedron and face index.
+(define (jsx-view3d-create-face3d view parents [attributes #f])
+  (jsx-view3d-create view "face3d" (jsx-callable-pack parents) attributes))
+
+;; jsx-view3d-create-surface3d : jsx-element? any/c [any/c #f] -> jsx-element?
+;;   Create a 3D surface inside a 3D view.
+;;
+;;   JSXGraph's runtime registers the implementation as parametricsurface3d.
+(define (jsx-view3d-create-surface3d view parents [attributes #f])
+  (jsx-view3d-create view "parametricsurface3d" (jsx-surface3d-parents parents) attributes))
+
 ;; jsx-view3d-create-intersectioncircle3d : jsx-element? any/c [any/c #f] -> jsx-element?
 ;;   Create the circle intersection of two 3D solids inside a 3D view.
 (define (jsx-view3d-create-intersectioncircle3d view parents [attributes #f])
@@ -369,7 +403,7 @@
 ;; jsx-view3d-create-parametricsurface3d : jsx-element? any/c [any/c #f] -> jsx-element?
 ;;   Create a 3D parametric surface inside a 3D view.
 (define (jsx-view3d-create-parametricsurface3d view parents [attributes #f])
-  (jsx-view3d-create view "parametricsurface3d" (jsx-callable-pack parents) attributes))
+  (jsx-view3d-create view "parametricsurface3d" (jsx-surface3d-parents parents) attributes))
 
 ;; jsx-view3d-create-polyhedron3d : jsx-element? any/c [any/c #f] -> jsx-element?
 ;;   Create a 3D polyhedron inside a 3D view.
@@ -380,6 +414,18 @@
 ;;   Create 3D text inside a 3D view.
 (define (jsx-view3d-create-text3d view parents [attributes #f])
   (jsx-view3d-create view "text3d" parents attributes))
+
+;; jsx-view3d-create-ticks3d : jsx-element? any/c [any/c #f] -> jsx-element?
+;;   Create 3D ticks inside a 3D view.
+(define (jsx-view3d-create-ticks3d view parents [attributes #f])
+  (jsx-view3d-create view "ticks3d" (jsx-unpack-array parents) attributes))
+
+;; jsx-view3d-create-transformation3d : jsx-element? any/c [any/c #f] -> jsx-element?
+;;   Create a 3D transformation inside a 3D view.
+;;
+;;   JSXGraph's runtime registers the implementation as transform3d.
+(define (jsx-view3d-create-transformation3d view parents [attributes #f])
+  (jsx-view3d-create view "transform3d" (jsx-callable-pack parents) attributes))
 
 ;; jsx-view3d-create-vectorfield3d : jsx-element? any/c [any/c #f] -> jsx-element?
 ;;   Create a 3D vector field inside a 3D view.
