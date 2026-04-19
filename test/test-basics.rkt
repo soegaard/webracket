@@ -4500,7 +4500,7 @@
                             (let ([vec-result (cadr converted)])
                               (list (equal? (vector? vec-result) #t)
                                     ; Full Racket doesn't recur through vectors
-                                    (equal? (vector-ref vec-result 0) 'x)
+                                    (equal? (equal? (vector-ref vec-result 0) 'x) #f)
                                     (vector-ref vec-result 0)
                                     (equal? (correlated? (vector-ref vec-result 0)) #t)
                                     (list (vector-ref vec-result 1) 'y))))))
@@ -4543,7 +4543,8 @@
                            (equal? (correlated-property with-number 123)  'number)
                            (equal? (correlated-property prop-source 'tag) 'value)
                            (equal? (and (member 'tag keys) #t)            #t)
-                           (equal? (not (member 123  keys)) #t)           #t)))
+                           (equal? (and (member 123 keys) #t)             #t)
+                           #t)))
 
               (list "make-instance/basic"
                     (let* ([inst   (make-instance 'custom-name 'payload #f 'first 1 'second 'two)]

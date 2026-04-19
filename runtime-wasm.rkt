@@ -38703,25 +38703,9 @@
 
                (if (ref.test (ref $Vector) (local.get $v))
                    (then
-                    (local.set $vec (ref.cast (ref $Vector) (local.get $v)))
-                    (local.set $arr (struct.get $Vector $arr (local.get $vec)))
-                    (local.set $len (array.len (local.get $arr)))
-                    (local.set $new-arr (call $make-array (local.get $len) (global.get $false)))
-                    (local.set $i (i32.const 0))
-                    (block $done
-                           (loop $loop
-                                 (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
-                                 (local.set $elem (array.get $Array (local.get $arr) (local.get $i)))
-                                 (local.set $elem-datum (call $correlated->datum/convert (local.get $who) (local.get $elem)))
-                                 (array.set $Array (local.get $new-arr) (local.get $i) (local.get $elem-datum))
-                                 (local.set $i (i32.add (local.get $i) (i32.const 1)))
-                                 (br $loop)))
-                    (local.set $hash (struct.get $Vector $hash (local.get $vec)))
-                    (local.set $immutable (struct.get $Vector $immutable (local.get $vec)))
-                    (return (struct.new $Vector
-                                        (local.get $hash)
-                                        (local.get $immutable)
-                                        (local.get $new-arr)))))
+                    ;; Match Racket's behavior: recurse through pairs, but preserve
+                    ;; vector elements as-is, including correlated values.
+                    (return (local.get $v))))
 
                (if (ref.test (ref $Box) (local.get $v))
                    (then
@@ -38978,15 +38962,11 @@
                                                         (struct.get $Pair $a (local.get $pair))))
                             (local.set $list (struct.get $Pair $d (local.get $pair)))
                             (local.set $key (struct.get $Pair $a (local.get $entry)))
-                            (if (ref.eq (call $symbol? (local.get $key)) (global.get $true))
-                                (then
-                                 (if (ref.eq (call $symbol-interned? (local.get $key)) (global.get $true))
-                                     (then
-                                      (local.set $acc
-                                                 (struct.new $Pair
-                                                             (i32.const 0)
-                                                             (local.get $key)
-                                                             (local.get $acc)))))))
+                            (local.set $acc
+                                       (struct.new $Pair
+                                                   (i32.const 0)
+                                                   (local.get $key)
+                                                   (local.get $acc)))
                             (br $loop)))
                (local.get $acc))
          
