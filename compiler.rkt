@@ -2236,6 +2236,11 @@
          (define i i/is)
          (map (λ (e) (Expr e ρ i)) es)]))
 
+    (define (with-source-stx stx src)
+      (if (syntax? src)
+          (syntax-property stx 'source-stx src)
+          stx))
+
     (define (wrap e s ρ i)
       ; Rather than wrap `e` in a `procedure-rename`, we
       ; annotate `s` to hold the inferred name.
@@ -2248,10 +2253,14 @@
         [x    (with-output-language (LFE Expr)
                 (nanopass-case (LFE Expr) e
                   [(λ ,s ,f ,e ...) 
-                   `(λ ,#`(inferred-name #,x s)
+                   (define named-s
+                     (with-source-stx #`(inferred-name #,x s) s))
+                   `(λ ,named-s
                       ,f ,e ...)]
                   [(case-lambda ,s (,f ,e0 ,e ...) ...)
-                   `(case-lambda ,#`(inferred-name #,x s)
+                   (define named-s
+                     (with-source-stx #`(inferred-name #,x s) s))
+                   `(case-lambda ,named-s
                                  (,f ,e0 ,e ...) ...)]
                   [else (error 'wrap "expected a λ or case-lambda, got: ~a" e)]))]
         [else (with-output-language (LFE Expr)
