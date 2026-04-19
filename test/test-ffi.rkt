@@ -203,12 +203,42 @@
                              (void? v)))]
                      [res (js-send f "call" (vector (js-global-this) obj (js-undefined)))])
                 (equal? res #t)))
-        (list "procedure->external/raised exception stays a callback failure"
-              (with-handlers ([exn? (λ (_) #t)])
+        (list "procedure->external/arity mismatch reports stable callback details"
+              (with-handlers ([exn:fail?
+                               (λ (e)
+                                 (define msg (exn-message e))
+                                 (and (string-contains? msg "WebRacket callback error")
+                                      (string-contains? msg "kind: arity-mismatch")
+                                      (string-contains? msg "name: on-click")
+                                      (string-contains? msg "id: ")
+                                      (string-contains? msg "expected: 0")
+                                      (string-contains? msg "argc: 1")
+                                      (string-contains? msg "detail: callback arity mismatch")))])
                 (define f
                   (procedure->external
-                   (λ ()
-                     (error 'callback "boom"))))
+                   (procedure-rename
+                    (λ ()
+                      (void))
+                    'on-click)))
+                (js-send f "call" (vector (js-global-this) 1))
+                #f))
+        (list "procedure->external/raised exception stays a callback failure"
+              (with-handlers ([exn:fail?
+                               (λ (e)
+                                 (define msg (exn-message e))
+                                 (and (string-contains? msg "WebRacket callback error")
+                                      (string-contains? msg "kind: callback-failed")
+                                      (string-contains? msg "name: callback-handler")
+                                      (string-contains? msg "id: ")
+                                      (string-contains? msg "expected: 0")
+                                      (string-contains? msg "argc: 0")
+                                      (string-contains? msg "detail: callback: boom")))])
+                (define f
+                  (procedure->external
+                   (procedure-rename
+                    (λ ()
+                      (error 'callback "boom"))
+                    'callback-handler)))
                 (js-send f "call" (vector (js-global-this)))
                 #f))
         (list "procedure->external/non-fasl result stays a callback failure"

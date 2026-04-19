@@ -740,14 +740,22 @@ function callback_label_text(id) {
     return name ? `${name} (callback id ${id})` : `callback id ${id}`;
 }
 
+function callback_display_name_text(id) {
+    return callback_name_text(id) ?? 'unknown';
+}
+
+function callback_error_text(id, argc, kind, detail) {
+    const expected = callback_expected_arity_text(id);
+    return `WebRacket callback error\n  kind: ${kind}\n  name: ${callback_display_name_text(id)}\n  id: ${id}\n  expected: ${expected}\n  argc: ${argc}\n  detail: ${detail}`;
+}
+
 export function make_callback(id) {
     return (...args) => {
         const argc = args.length;
         if (callback_accepts_argc_export &&
             callback_accepts_argc_export(id, argc) === 0) {
-            const expected = callback_expected_arity_text(id);
             throw new TypeError(
-                `WebRacket callback arity mismatch (${callback_label_text(id)}): expected ${expected}, given ${argc}.`
+                callback_error_text(id, argc, 'arity-mismatch', 'callback arity mismatch')
             );
         }
         try {
@@ -764,7 +772,7 @@ export function make_callback(id) {
                 ? payload
                 : 'The callback raised a WebRacket exception.';
             throw new Error(
-                `WebRacket callback failed\n(${callback_label_text(id)}, argc ${argc}):\n\n${message}`
+                callback_error_text(id, argc, 'callback-failed', message)
             );
         } catch (err) {
             const isWasmException = (typeof WebAssembly.Exception !== 'undefined') &&
@@ -774,14 +782,17 @@ export function make_callback(id) {
                     ? (callback_accepts_argc_export(id, argc) === 0)
                     : false;
                 if (isArityMismatch) {
-                    const expected = callback_expected_arity_text(id);
                     throw new TypeError(
-                        `WebRacket callback arity mismatch (${callback_label_text(id)}): expected ${expected}, given ${argc}.`
+                        callback_error_text(id, argc, 'arity-mismatch', 'callback arity mismatch')
                     );
                 }
-                const label = callback_label_text(id);
                 const wrapped = new Error(
-                    `WebRacket callback failed\n(${label}, argc ${argc}):\n\nThe callback raised a WebRacket exception.`
+                    callback_error_text(
+                        id,
+                        argc,
+                        'callback-failed',
+                        'The callback raised a WebRacket exception.'
+                    )
                 );
                 wrapped.cause = err;
                 throw wrapped;
