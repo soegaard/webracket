@@ -562,6 +562,21 @@
 (define-jsx-alias (jsx-board-create-incircle/raw board parents attrs)
   js-jsx-board-create-incircle)
 
+;; jsx-board-create-incenter/raw : external/raw any/c any/c -> external/raw
+;;   Create an incenter on a board.
+(define-jsx-alias (jsx-board-create-incenter/raw board parents attrs)
+  js-jsx-board-create-incenter)
+
+;; jsx-board-create-minorarc/raw : external/raw any/c any/c -> external/raw
+;;   Create a minor arc on a board.
+(define-jsx-alias (jsx-board-create-minorarc/raw board parents attrs)
+  js-jsx-board-create-minorarc)
+
+;; jsx-board-create-minorsector/raw : external/raw any/c any/c -> external/raw
+;;   Create a minor sector on a board.
+(define-jsx-alias (jsx-board-create-minorsector/raw board parents attrs)
+  js-jsx-board-create-minorsector)
+
 ;; jsx-board-create-circumcirclearc/raw : external/raw any/c any/c -> external/raw
 ;;   Create a circumcirclearc on a board.
 (define-jsx-alias (jsx-board-create-circumcirclearc/raw board parents attrs)
@@ -792,6 +807,11 @@
 (define-jsx-alias (jsx-board-create-ticks/raw board parents attrs)
   js-jsx-board-create-ticks)
 
+;; jsx-board-create-hatch/raw : external/raw any/c any/c -> external/raw
+;;   Create a hatch object on a board.
+(define-jsx-alias (jsx-board-create-hatch/raw board parents attrs)
+  js-jsx-board-create-hatch)
+
 ;; jsx-board-create-transformation/raw : external/raw any/c any/c -> external/raw
 ;;   Create a transformation object on a board.
 (define-jsx-alias (jsx-board-create-transformation/raw board parents attrs)
@@ -802,6 +822,11 @@
 (define-jsx-alias (jsx-board-create-tracecurve/raw board parents attrs)
   js-jsx-board-create-tracecurve)
 
+;; jsx-board-create-slopetriangle/raw : external/raw any/c any/c -> external/raw
+;;   Create a slope triangle on a board.
+(define-jsx-alias (jsx-board-create-slopetriangle/raw board parents attrs)
+  js-jsx-board-create-slopetriangle)
+
 ;; jsx-board-create-parallelogram/raw : external/raw any/c any/c -> external/raw
 ;;   Create a parallelogram object on a board.
 (define-jsx-alias (jsx-board-create-parallelogram/raw board parents attrs)
@@ -811,6 +836,11 @@
 ;;   Create a reflexangle object on a board.
 (define-jsx-alias (jsx-board-create-reflexangle/raw board parents attrs)
   js-jsx-board-create-reflexangle)
+
+;; jsx-board-create-nonreflexangle/raw : external/raw any/c any/c -> external/raw
+;;   Create a non-reflex angle on a board.
+(define-jsx-alias (jsx-board-create-nonreflexangle/raw board parents attrs)
+  js-jsx-board-create-nonreflexangle)
 
 ;; jsx-board-create-measurement/raw : external/raw any/c any/c -> external/raw
 ;;   Create a measurement on a board.
@@ -1544,6 +1574,24 @@
   (jsx-wrap-element
    (jsx-board-create-incircle/raw (jsx-board-raw board) parents (or attributes '#[]))))
 
+;; jsx-create-incenter : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create an incenter on a board.
+(define (jsx-create-incenter board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-incenter/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-minorarc : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a minor arc on a board.
+(define (jsx-create-minorarc board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-minorarc/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
+;; jsx-create-minorsector : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a minor sector on a board.
+(define (jsx-create-minorsector board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-minorsector/raw (jsx-board-raw board) parents (or attributes '#[]))))
+
 ;; jsx-create-circumcirclearc : jsx-board? any/c [any/c #f] -> jsx-element?
 ;;   Create a circumcirclearc on a board.
 (define (jsx-create-circumcirclearc board parents [attributes #f])
@@ -1723,6 +1771,22 @@
    (jsx-board-create-turtle/raw (jsx-board-raw board)
                                 (jsx-callable-pack parents)
                                 (or attributes '#[]))))
+
+;; jsx-create-nonreflexangle : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a non-reflex angle on a board.
+(define (jsx-create-nonreflexangle board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-nonreflexangle/raw (jsx-board-raw board)
+                                        (jsx-callable-pack parents)
+                                        (or attributes '#[]))))
+
+;; jsx-create-slopetriangle : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a slope triangle on a board.
+(define (jsx-create-slopetriangle board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-slopetriangle/raw (jsx-board-raw board)
+                                       (jsx-callable-pack parents)
+                                       (or attributes '#[]))))
 
 ;; jsx-riemannsum-value : jsx-element? -> any/c
 ;;   Read the value of a riemann sum.
@@ -2073,6 +2137,13 @@
 (define (jsx-create-ticks board parents [attributes #f])
   (jsx-wrap-element
    (jsx-board-create-ticks/raw (jsx-board-raw board) parents
+                               (or attributes '#[]))))
+
+;; jsx-create-hatch : jsx-board? any/c [any/c #f] -> jsx-element?
+;;   Create a hatch object on a board.
+(define (jsx-create-hatch board parents [attributes #f])
+  (jsx-wrap-element
+   (jsx-board-create-hatch/raw (jsx-board-raw board) parents
                                (or attributes '#[]))))
 
 ;; jsx-create-transformation : jsx-board? any/c [any/c #f] -> jsx-element?

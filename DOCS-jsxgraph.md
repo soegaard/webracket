@@ -79,6 +79,12 @@ All function names are linked to JSXGraph API documentation.
 - [Chapter 34 — PerpendicularPoint Bridge](#chapter-34--perpendicularpoint-bridge)
 - [Chapter 35 — Bisectorlines Bridge](#chapter-35--bisectorlines-bridge)
 - [Chapter 36 — PerpendicularSegment Bridge](#chapter-36--perpendicularsegment-bridge)
+- [Chapter 37 — Incenter Bridge](#chapter-37--incenter-bridge)
+- [Chapter 38 — MinorArc Bridge](#chapter-38--minorarc-bridge)
+- [Chapter 39 — MinorSector Bridge](#chapter-39--minorsector-bridge)
+- [Chapter 40 — NonReflexAngle Bridge](#chapter-40--nonreflexangle-bridge)
+- [Chapter 41 — Slopetriangle Bridge](#chapter-41--slopetriangle-bridge)
+- [Chapter 42 — Hatch Bridge](#chapter-42--hatch-bridge)
 
 ## Chapter 2 — Conventions
 
@@ -222,6 +228,11 @@ Reference roots:
 | [`js-jsx-board-create-radicalaxis`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-radicalaxis board #[c1 c2] attrs)` | create a radical axis from two circles. |
 | [`js-jsx-board-create-circumcircle`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-circumcircle board #[p1 p2 p3] attrs)` | create a circumcircle from three points. |
 | [`js-jsx-board-create-incircle`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-incircle board #[p1 p2 p3] attrs)` | create an incircle from three points. |
+| [`js-jsx-board-create-incenter`](https://jsxgraph.org/docs/symbols/Incenter.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-incenter board #[p1 p2 p3] attrs)` | create an incenter from three points. |
+| [`js-jsx-board-create-minorarc`](https://jsxgraph.org/docs/symbols/MinorArc.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-minorarc board #[p1 p2 p3] attrs)` | create a minor arc from three points. |
+| [`js-jsx-board-create-minorsector`](https://jsxgraph.org/docs/symbols/MinorSector.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-minorsector board #[p1 p2 p3] attrs)` | create a minor sector from three points. |
+| [`js-jsx-board-create-nonreflexangle`](https://jsxgraph.org/docs/symbols/NonReflexAngle.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-nonreflexangle board #[p1 p2 p3] attrs)` | create a non-reflex angle from three points. |
+| [`js-jsx-board-create-slopetriangle`](https://jsxgraph.org/docs/symbols/Slopetriangle.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-slopetriangle board #[line glider] attrs)` | create a slope triangle from a line or tangent. |
 | [`js-jsx-board-create-circumcirclearc`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-circumcirclearc board #[p1 p2 p3] attrs)` | create a circumcircle arc from three points. |
 | [`js-jsx-board-create-circumcirclesector`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-circumcirclesector board #[p1 p2 p3] attrs)` | create a circumcircle sector from three points. |
 | [`js-jsx-board-create-semicircle`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-semicircle board #[p1 p2] attrs)` | create a semicircle from two points. |
@@ -264,6 +275,7 @@ Reference roots:
 | [`js-jsx-board-create-image`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-image board #[-5 5 "url"] attrs)` | create an image object on the board. |
 | [`js-jsx-board-create-foreignobject`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-foreignobject board #["<div>foo</div>" #[-5 5] #[140 60]] attrs)` | create a foreign object on the board. |
 | [`js-jsx-board-create-tapemeasure`](https://jsxgraph.org/docs/symbols/JXG.Board.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-tapemeasure board #[#[-4 0] #[4 0]] attrs)` | create a tape measure on the board. |
+| [`js-jsx-board-create-hatch`](https://jsxgraph.org/docs/symbols/Hatch.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-hatch board #[line 3] attrs)` | create a hatch object on a line or curve. |
 | [`js-jsx-board-create-ticks`](https://jsxgraph.org/docs/symbols/Ticks.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-ticks board #[line [1 4 5]] attrs)` | create a ticks object on a line or axis. |
 | [`js-jsx-board-create-transformation`](https://jsxgraph.org/docs/symbols/Transformation.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-transformation board #[2 0.5] attrs)` | create a transformation object on a board. |
 | [`js-jsx-board-create-tracecurve`](https://jsxgraph.org/docs/symbols/Tracecurve.html) | `(extern value value)` | `(extern/raw)` | `(js-jsx-board-create-tracecurve board #[g1 p2] attrs)` | create a trace curve from a glider and a point. |
@@ -653,3 +665,39 @@ The `PerpendicularSegment` wrapper is constructor-only in this batch.
 Use `js-jsx-board-create-perpendicularsegment` or
 `jsx-create-perpendicularsegment` to add the perpendicular segment
 from a point to a line.
+
+## Chapter 37 — Incenter Bridge
+
+The `Incenter` wrapper is constructor-only in this batch. Use
+`js-jsx-board-create-incenter` or `jsx-create-incenter` to add the
+incenter of a triangle.
+
+## Chapter 38 — MinorArc Bridge
+
+The `MinorArc` wrapper is constructor-only in this batch. Use
+`js-jsx-board-create-minorarc` or `jsx-create-minorarc` to add a minor
+arc from three points.
+
+## Chapter 39 — MinorSector Bridge
+
+The `MinorSector` wrapper is constructor-only in this batch. Use
+`js-jsx-board-create-minorsector` or `jsx-create-minorsector` to add a
+minor sector from three points.
+
+## Chapter 40 — NonReflexAngle Bridge
+
+The `NonReflexAngle` wrapper is constructor-only in this batch. Use
+`js-jsx-board-create-nonreflexangle` or `jsx-create-nonreflexangle` to
+add a non-reflex angle from three points.
+
+## Chapter 41 — Slopetriangle Bridge
+
+The `Slopetriangle` wrapper is constructor-only in this batch. Use
+`js-jsx-board-create-slopetriangle` or `jsx-create-slopetriangle` to
+add a slope triangle from a line or tangent.
+
+## Chapter 42 — Hatch Bridge
+
+The `Hatch` wrapper is constructor-only in this batch. Use
+`js-jsx-board-create-hatch` or `jsx-create-hatch` to add hatch marks
+to a line or curve.

@@ -185,6 +185,9 @@
   jsx-create-radicalaxis
   jsx-create-circumcircle
   jsx-create-incircle
+  jsx-create-incenter
+  jsx-create-minorarc
+  jsx-create-minorsector
   jsx-create-circumcirclearc
   jsx-create-circumcirclesector
   jsx-create-semicircle
@@ -213,6 +216,7 @@
   jsx-create-stepfunction
   jsx-create-inequality
   jsx-create-turtle
+  jsx-create-nonreflexangle
   jsx-create-perpendicular
   jsx-create-reflection
   jsx-create-bisector
@@ -230,9 +234,11 @@
   jsx-create-image
   jsx-create-foreignobject
   jsx-create-tapemeasure
+  jsx-create-hatch
   jsx-create-ticks
   jsx-create-transformation
   jsx-create-tracecurve
+  jsx-create-slopetriangle
   jsx-create-parallelogram
   jsx-create-reflexangle
   jsx-create-measurement
@@ -604,8 +610,17 @@
 (define jsx-view3d-create-axis3d any/c)
 (define jsx-view3d-create-functiongraph3d any/c)
 (define jsx-view3d-create-sphere3d any/c)
+(define jsx-view3d-create-face3d any/c)
+(define jsx-view3d-create-surface3d any/c)
 (define jsx-view3d-create-intersectioncircle3d any/c)
 (define jsx-view3d-create-intersectionline3d any/c)
+(define jsx-view3d-create-curve3d any/c)
+(define jsx-view3d-create-parametricsurface3d any/c)
+(define jsx-view3d-create-polyhedron3d any/c)
+(define jsx-view3d-create-text3d any/c)
+(define jsx-view3d-create-ticks3d any/c)
+(define jsx-view3d-create-transformation3d any/c)
+(define jsx-view3d-create-vectorfield3d any/c)
 (define jsx-create-point any/c)
 (define jsx-create-line any/c)
 (define jsx-create-segment any/c)
@@ -632,6 +647,9 @@
 (define jsx-create-radicalaxis any/c)
 (define jsx-create-circumcircle any/c)
 (define jsx-create-incircle any/c)
+(define jsx-create-incenter any/c)
+(define jsx-create-minorarc any/c)
+(define jsx-create-minorsector any/c)
 (define jsx-create-circumcirclearc any/c)
 (define jsx-create-circumcirclesector any/c)
 (define jsx-create-semicircle any/c)
@@ -660,6 +678,7 @@
 (define jsx-create-stepfunction any/c)
 (define jsx-create-inequality any/c)
 (define jsx-create-turtle any/c)
+(define jsx-create-nonreflexangle any/c)
 (define jsx-create-perpendicular any/c)
 (define jsx-create-reflection any/c)
 (define jsx-create-bisector any/c)
@@ -677,9 +696,11 @@
 (define jsx-create-image any/c)
 (define jsx-create-foreignobject any/c)
 (define jsx-create-tapemeasure any/c)
+(define jsx-create-hatch any/c)
 (define jsx-create-ticks any/c)
 (define jsx-create-transformation any/c)
 (define jsx-create-tracecurve any/c)
+(define jsx-create-slopetriangle any/c)
 (define jsx-create-parallelogram any/c)
 (define jsx-create-reflexangle any/c)
 (define jsx-create-measurement any/c)

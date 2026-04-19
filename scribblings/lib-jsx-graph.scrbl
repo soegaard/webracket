@@ -21,7 +21,7 @@ Use @racket[jsx-graph] when you want to:
   @item{create a @racket[JXG.JSXGraph] board in the current page}
   @item{create arbitrary JSXGraph elements with @racket[jsx-create] or the specialized constructors}
   @item{create 3D scenes with @racket[jsx-create-view3d] and the 3D helpers such as @racket[jsx-view3d-create-point3d], @racket[jsx-view3d-create-line3d], @racket[jsx-view3d-create-circle3d], @racket[jsx-view3d-create-plane3d], @racket[jsx-view3d-create-axis3d], @racket[jsx-view3d-create-functiongraph3d], @racket[jsx-view3d-create-sphere3d], @racket[jsx-view3d-create-face3d], @racket[jsx-view3d-create-surface3d], @racket[jsx-view3d-create-curve3d], @racket[jsx-view3d-create-parametricsurface3d], @racket[jsx-view3d-create-polyhedron3d], @racket[jsx-view3d-create-text3d], @racket[jsx-view3d-create-ticks3d], @racket[jsx-view3d-create-transformation3d], and @racket[jsx-view3d-create-vectorfield3d]}
-  @item{build geometry objects such as @racket[JXG.Point], @racket[JXG.Line], @racket[JXG.Arc], @racket[JXG.Angle], @racket[JXG.Sector], @racket[JXG.Circle], @racket[JXG.Conic], @racket[JXG.Ellipse], @racket[JXG.Functiongraph], @racket[JXG.Riemannsum], @racket[JXG.Slopefield], @racket[JXG.Vectorfield], @racket[JXG.ImplicitCurve], @racket[JXG.Spline], @racket[JXG.Cardinalspline], @racket[JXG.Comb], @racket[JXG.Metapostspline], @racket[JXG.PolygonalChain], @racket[JXG.RegularPolygon], @racket[JXG.Hyperbola], @racket[JXG.Parabola], @racket[JXG.Stepfunction], @racket[JXG.Inequality], @racket[JXG.Turtle], @racket[JXG.Polygon], @racket[JXG.Text], @racket[JXG.ForeignObject], @racket[JXG.Tapemeasure], @racket[JXG.Measurement], @racket[JXG.Circumcenter], and @racket[JXG.MirrorElement]}
+  @item{build geometry objects such as @racket[JXG.Point], @racket[JXG.Line], @racket[JXG.Arc], @racket[JXG.Angle], @racket[JXG.Sector], @racket[JXG.Circle], @racket[JXG.Conic], @racket[JXG.Ellipse], @racket[JXG.Functiongraph], @racket[JXG.Riemannsum], @racket[JXG.Slopefield], @racket[JXG.Vectorfield], @racket[JXG.ImplicitCurve], @racket[JXG.Spline], @racket[JXG.Cardinalspline], @racket[JXG.Comb], @racket[JXG.Metapostspline], @racket[JXG.PolygonalChain], @racket[JXG.RegularPolygon], @racket[JXG.Hyperbola], @racket[JXG.Parabola], @racket[JXG.Stepfunction], @racket[JXG.Inequality], @racket[JXG.Turtle], @racket[JXG.Polygon], @racket[JXG.Text], @racket[JXG.ForeignObject], @racket[JXG.Tapemeasure], @racket[JXG.Hatch], @racket[JXG.Measurement], @racket[JXG.Circumcenter], @racket[JXG.Incenter], @racket[JXG.MinorArc], @racket[JXG.MinorSector], @racket[JXG.NonReflexAngle], @racket[JXG.Slopetriangle], and @racket[JXG.MirrorElement]}
   @item{create chart objects with @racket[JXG.Chart]}
   @item{create legends and smart labels}
   @item{create widget-like elements such as buttons, checkboxes, sliders, and inputs}
@@ -869,6 +869,33 @@ Creates a circumcircle on @racket[board].
 Creates an incircle on @racket[board].
 }
 
+@defproc[(jsx-create-incenter [board jsx-board?]
+                              [parents any/c]
+                              [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Incenter"
+          (jsx-doc-url "Incenter"))
+Creates an incenter on @racket[board].
+}
+
+@defproc[(jsx-create-minorarc [board jsx-board?]
+                              [parents any/c]
+                              [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "MinorArc"
+          (jsx-doc-url "MinorArc"))
+Creates a minor arc on @racket[board].
+}
+
+@defproc[(jsx-create-minorsector [board jsx-board?]
+                                 [parents any/c]
+                                 [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "MinorSector"
+          (jsx-doc-url "MinorSector"))
+Creates a minor sector on @racket[board].
+}
+
 @defproc[(jsx-create-circumcirclearc [board jsx-board?]
                                      [parents any/c]
                                      [attributes (or/c #f any/c) #f])
@@ -1118,6 +1145,15 @@ Creates an inequality visualization on @racket[board].
 @(jsx-bar "Turtle"
           (jsx-doc-url "Turtle"))
 Creates a turtle on @racket[board].
+}
+
+@defproc[(jsx-create-slopetriangle [board jsx-board?]
+                                   [parents any/c]
+                                   [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Slopetriangle"
+          (jsx-doc-url "Slopetriangle"))
+Creates a slope triangle on @racket[board].
 }
 
 @defproc[(jsx-create-perpendicular [board jsx-board?]
@@ -1578,6 +1614,15 @@ Creates a tape measure on @racket[board].
           (string-append (jsx-doc-url "Tapemeasure")
                          "#Value"))
 Returns the current tape-measure value.
+}
+
+@defproc[(jsx-create-hatch [board jsx-board?]
+                           [parents any/c]
+                           [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Hatch"
+          (jsx-doc-url "Hatch"))
+Creates a hatch object on @racket[board].
 }
 
 @defproc[(jsx-create-measurement [board jsx-board?]
@@ -2242,6 +2287,15 @@ Creates a parallelogram object on a board.
 @(jsx-bar "ReflexAngle"
           (jsx-doc-url "ReflexAngle"))
 Creates a reflex angle object on a board.
+}
+
+@defproc[(jsx-create-nonreflexangle [board jsx-board?]
+                                     [parents any/c]
+                                     [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "NonReflexAngle"
+          (jsx-doc-url "NonReflexAngle"))
+Creates a non-reflex angle on a board.
 }
 
 @section{Geometry Elements}

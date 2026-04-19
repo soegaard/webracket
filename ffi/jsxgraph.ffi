@@ -224,10 +224,28 @@
   #:name   "create-incircle"
   (-> (extern value value) (extern/raw)))
 
+; (js-jsx-board-create-incenter board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-incenter
+  #:module "jsx-board"
+  #:name   "create-incenter"
+  (-> (extern value value) (extern/raw)))
+
 ; (js-jsx-board-create-circumcirclearc board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign js-jsx-board-create-circumcirclearc
   #:module "jsx-board"
   #:name   "create-circumcirclearc"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-minorarc board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-minorarc
+  #:module "jsx-board"
+  #:name   "create-minorarc"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-minorsector board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-minorsector
+  #:module "jsx-board"
+  #:name   "create-minorsector"
   (-> (extern value value) (extern/raw)))
 
 ; (js-jsx-board-create-circumcirclesector board:Extern parents:Value attributes:Value) -> Extern
@@ -374,6 +392,12 @@
   #:name   "create-turtle"
   (-> (extern value value) (extern/raw)))
 
+; (js-jsx-board-create-slopetriangle board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-slopetriangle
+  #:module "jsx-board"
+  #:name   "create-slopetriangle"
+  (-> (extern value value) (extern/raw)))
+
 ; (js-jsx-board-create-perpendicular board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign js-jsx-board-create-perpendicular
   #:module "jsx-board"
@@ -470,6 +494,12 @@
   #:name   "create-ticks"
   (-> (extern value value) (extern/raw)))
 
+; (js-jsx-board-create-hatch board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-hatch
+  #:module "jsx-board"
+  #:name   "create-hatch"
+  (-> (extern value value) (extern/raw)))
+
 ; (js-jsx-board-create-transformation board:Extern parents:Value attributes:Value) -> Extern
 (define-foreign js-jsx-board-create-transformation
   #:module "jsx-board"
@@ -492,6 +522,12 @@
 (define-foreign js-jsx-board-create-reflexangle
   #:module "jsx-board"
   #:name   "create-reflexangle"
+  (-> (extern value value) (extern/raw)))
+
+; (js-jsx-board-create-nonreflexangle board:Extern parents:Value attributes:Value) -> Extern
+(define-foreign js-jsx-board-create-nonreflexangle
+  #:module "jsx-board"
+  #:name   "create-nonreflexangle"
   (-> (extern value value) (extern/raw)))
 
 ; (js-jsx-board-create-measurement board:Extern parents:Value attributes:Value) -> Extern
