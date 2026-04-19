@@ -20,7 +20,7 @@ Use @racket[jsx-graph] when you want to:
 @itemlist[
   @item{create a @racket[JXG.JSXGraph] board in the current page}
   @item{create arbitrary JSXGraph elements with @racket[jsx-create] or the specialized constructors}
-  @item{build geometry objects such as @racket[JXG.Point], @racket[JXG.Line], @racket[JXG.Arc], @racket[JXG.Angle], @racket[JXG.Sector], @racket[JXG.Circle], @racket[JXG.Conic], @racket[JXG.Ellipse], @racket[JXG.Functiongraph], @racket[JXG.Polygon], and @racket[JXG.Text]}
+  @item{build geometry objects such as @racket[JXG.Point], @racket[JXG.Line], @racket[JXG.Arc], @racket[JXG.Angle], @racket[JXG.Sector], @racket[JXG.Circle], @racket[JXG.Conic], @racket[JXG.Ellipse], @racket[JXG.Functiongraph], @racket[JXG.Riemannsum], @racket[JXG.Slopefield], @racket[JXG.Vectorfield], @racket[JXG.ImplicitCurve], @racket[JXG.Spline], @racket[JXG.Cardinalspline], @racket[JXG.Comb], @racket[JXG.Metapostspline], @racket[JXG.PolygonalChain], @racket[JXG.RegularPolygon], @racket[JXG.Hyperbola], @racket[JXG.Parabola], @racket[JXG.Stepfunction], @racket[JXG.Inequality], @racket[JXG.Turtle], @racket[JXG.Polygon], and @racket[JXG.Text]}
   @item{create chart objects with @racket[JXG.Chart]}
   @item{create legends and smart labels}
   @item{create widget-like elements such as buttons, checkboxes, sliders, and inputs}
@@ -750,6 +750,347 @@ Creates a parallel line on @racket[board].
 @(jsx-bar "Arrowparallel"
           (jsx-doc-url "Arrowparallel"))
 Creates an arrowparallel on @racket[board].
+}
+
+@defproc[(jsx-create-axis [board jsx-board?]
+                          [parents any/c]
+                          [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Axis"
+          (jsx-doc-url "Axis"))
+Creates an axis on @racket[board].
+}
+
+@defproc[(jsx-create-grid [board jsx-board?]
+                          [parents any/c]
+                          [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Grid"
+          (jsx-doc-url "Grid"))
+Creates a grid on @racket[board].
+}
+
+@defproc[(jsx-create-boxplot [board jsx-board?]
+                             [parents any/c]
+                             [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Boxplot"
+          (jsx-doc-url "Boxplot"))
+Creates a boxplot on @racket[board].
+}
+
+@defproc[(jsx-create-tangent [board jsx-board?]
+                             [parents any/c]
+                             [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Tangent"
+          (jsx-doc-url "Tangent"))
+Creates a tangent line on @racket[board].
+}
+
+@defproc[(jsx-create-tangentto [board jsx-board?]
+                               [parents any/c]
+                               [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "TangentTo"
+          (jsx-doc-url "TangentTo"))
+Creates a tangent-to line on @racket[board].
+}
+
+@defproc[(jsx-create-polarline [board jsx-board?]
+                               [parents any/c]
+                               [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "PolarLine"
+          (jsx-doc-url "PolarLine"))
+Creates a polar line on @racket[board].
+}
+
+@defproc[(jsx-create-polepoint [board jsx-board?]
+                               [parents any/c]
+                               [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "PolePoint"
+          (jsx-doc-url "PolePoint"))
+Creates a pole point on @racket[board].
+}
+
+@defproc[(jsx-create-radicalaxis [board jsx-board?]
+                                 [parents any/c]
+                                 [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "RadicalAxis"
+          (jsx-doc-url "RadicalAxis"))
+Creates a radical axis on @racket[board].
+}
+
+@defproc[(jsx-create-circumcircle [board jsx-board?]
+                                  [parents any/c]
+                                  [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Circumcircle"
+          (jsx-doc-url "Circumcircle"))
+Creates a circumcircle on @racket[board].
+}
+
+@defproc[(jsx-create-incircle [board jsx-board?]
+                              [parents any/c]
+                              [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Incircle"
+          (jsx-doc-url "Incircle"))
+Creates an incircle on @racket[board].
+}
+
+@defproc[(jsx-create-circumcirclearc [board jsx-board?]
+                                     [parents any/c]
+                                     [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "CircumcircleArc"
+          (jsx-doc-url "CircumcircleArc"))
+Creates a circumcircle arc on @racket[board].
+}
+
+@defproc[(jsx-create-circumcirclesector [board jsx-board?]
+                                        [parents any/c]
+                                        [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "CircumcircleSector"
+          (jsx-doc-url "CircumcircleSector"))
+Creates a circumcircle sector on @racket[board].
+}
+
+@defproc[(jsx-create-semicircle [board jsx-board?]
+                                [parents any/c]
+                                [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Semicircle"
+          (jsx-doc-url "Semicircle"))
+Creates a semicircle on @racket[board].
+}
+
+@defproc[(jsx-create-majorarc [board jsx-board?]
+                              [parents any/c]
+                              [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "MajorArc"
+          (jsx-doc-url "MajorArc"))
+Creates a major arc on @racket[board].
+}
+
+@defproc[(jsx-create-majorsector [board jsx-board?]
+                                 [parents any/c]
+                                 [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "MajorSector"
+          (jsx-doc-url "MajorSector"))
+Creates a major sector on @racket[board].
+}
+
+@defproc[(jsx-create-curveintersection [board jsx-board?]
+                                       [parents any/c]
+                                       [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "CurveIntersection"
+          (jsx-doc-url "CurveIntersection"))
+Creates a curve intersection on @racket[board].
+}
+
+@defproc[(jsx-create-curvedifference [board jsx-board?]
+                                     [parents any/c]
+                                     [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "CurveDifference"
+          (jsx-doc-url "CurveDifference"))
+Creates a curve difference on @racket[board].
+}
+
+@defproc[(jsx-create-curveunion [board jsx-board?]
+                                [parents any/c]
+                                [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "CurveUnion"
+          (jsx-doc-url "CurveUnion"))
+Creates a curve union on @racket[board].
+}
+
+@defproc[(jsx-create-derivative [board jsx-board?]
+                                [parents any/c]
+                                [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Derivative"
+          (jsx-doc-url "Derivative"))
+Creates a derivative curve on @racket[board].
+}
+
+@defproc[(jsx-create-integral [board jsx-board?]
+                              [parents any/c]
+                              [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Integral"
+          (jsx-doc-url "Integral"))
+Creates an integral on @racket[board].
+}
+
+@defproc[(jsx-create-riemannsum [board jsx-board?]
+                                [parents any/c]
+                                [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Riemannsum"
+          (jsx-doc-url "Riemannsum"))
+Creates a Riemann sum visualization on @racket[board].
+}
+
+@defproc[(jsx-riemannsum-value [riemannsum jsx-element?])
+         any/c]{
+@(jsx-bar "Value"
+          (string-append (jsx-doc-url "Riemannsum")
+                         "#Value"))
+Reads the current value of a Riemann sum visualization.
+}
+
+@defproc[(jsx-create-slopefield [board jsx-board?]
+                                [parents any/c]
+                                [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Slopefield"
+          (jsx-doc-url "Slopefield"))
+Creates a slope field on @racket[board].
+}
+
+@defproc[(jsx-slopefield-set-f! [field jsx-element?]
+                                [func any/c])
+         void?]{
+@(jsx-bar "setF"
+          (string-append (jsx-doc-url "Slopefield")
+                         "#setF"))
+Updates the defining function of a slope field.
+}
+
+@defproc[(jsx-create-vectorfield [board jsx-board?]
+                                 [parents any/c]
+                                 [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Vectorfield"
+          (jsx-doc-url "Vectorfield"))
+Creates a vector field on @racket[board].
+}
+
+@defproc[(jsx-vectorfield-set-f! [field jsx-element?]
+                                 [func any/c])
+         void?]{
+@(jsx-bar "setF"
+          (string-append (jsx-doc-url "Vectorfield")
+                         "#setF"))
+Updates the defining function of a vector field.
+}
+
+@defproc[(jsx-create-implicitcurve [board jsx-board?]
+                                   [parents any/c]
+                                   [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "ImplicitCurve"
+          (jsx-doc-url "ImplicitCurve"))
+Creates an implicit curve on @racket[board].
+}
+
+@defproc[(jsx-create-spline [board jsx-board?]
+                            [parents any/c]
+                            [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Spline"
+          (jsx-doc-url "Spline"))
+Creates a spline on @racket[board].
+}
+
+@defproc[(jsx-create-cardinalspline [board jsx-board?]
+                                    [parents any/c]
+                                    [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Cardinalspline"
+          (jsx-doc-url "Cardinalspline"))
+Creates a cardinal spline on @racket[board].
+}
+
+@defproc[(jsx-create-comb [board jsx-board?]
+                          [parents any/c]
+                          [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Comb"
+          (jsx-doc-url "Comb"))
+Creates a comb on @racket[board].
+}
+
+@defproc[(jsx-create-metapostspline [board jsx-board?]
+                                    [parents any/c]
+                                    [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Metapostspline"
+          (jsx-doc-url "Metapostspline"))
+Creates a metapost spline on @racket[board].
+}
+
+@defproc[(jsx-create-polygonalchain [board jsx-board?]
+                                    [parents any/c]
+                                    [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "PolygonalChain"
+          (jsx-doc-url "PolygonalChain"))
+Creates a polygonal chain on @racket[board].
+}
+
+@defproc[(jsx-create-regularpolygon [board jsx-board?]
+                                    [parents any/c]
+                                    [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "RegularPolygon"
+          (jsx-doc-url "RegularPolygon"))
+Creates a regular polygon on @racket[board].
+}
+
+@defproc[(jsx-create-hyperbola [board jsx-board?]
+                               [parents any/c]
+                               [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Hyperbola"
+          (jsx-doc-url "Hyperbola"))
+Creates a hyperbola on @racket[board].
+}
+
+@defproc[(jsx-create-parabola [board jsx-board?]
+                              [parents any/c]
+                              [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Parabola"
+          (jsx-doc-url "Parabola"))
+Creates a parabola on @racket[board].
+}
+
+@defproc[(jsx-create-stepfunction [board jsx-board?]
+                                  [parents any/c]
+                                  [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Stepfunction"
+          (jsx-doc-url "Stepfunction"))
+Creates a step function on @racket[board].
+}
+
+@defproc[(jsx-create-inequality [board jsx-board?]
+                                [parents any/c]
+                                [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Inequality"
+          (jsx-doc-url "Inequality"))
+Creates an inequality visualization on @racket[board].
+}
+
+@defproc[(jsx-create-turtle [board jsx-board?]
+                            [parents any/c]
+                            [attributes (or/c #f any/c) #f])
+         jsx-element?]{
+@(jsx-bar "Turtle"
+          (jsx-doc-url "Turtle"))
+Creates a turtle on @racket[board].
 }
 
 @defproc[(jsx-create-perpendicular [board jsx-board?]

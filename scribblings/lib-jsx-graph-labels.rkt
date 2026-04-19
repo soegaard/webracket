@@ -154,6 +154,44 @@
   jsx-create-midpoint
   jsx-create-parallel
   jsx-create-arrowparallel
+  jsx-create-axis
+  jsx-create-grid
+  jsx-create-boxplot
+  jsx-create-tangent
+  jsx-create-tangentto
+  jsx-create-polarline
+  jsx-create-polepoint
+  jsx-create-radicalaxis
+  jsx-create-circumcircle
+  jsx-create-incircle
+  jsx-create-circumcirclearc
+  jsx-create-circumcirclesector
+  jsx-create-semicircle
+  jsx-create-majorarc
+  jsx-create-majorsector
+  jsx-create-curveintersection
+  jsx-create-curvedifference
+  jsx-create-curveunion
+  jsx-create-derivative
+  jsx-create-integral
+  jsx-create-riemannsum
+  jsx-riemannsum-value
+  jsx-create-slopefield
+  jsx-slopefield-set-f!
+  jsx-create-vectorfield
+  jsx-vectorfield-set-f!
+  jsx-create-implicitcurve
+  jsx-create-spline
+  jsx-create-cardinalspline
+  jsx-create-comb
+  jsx-create-metapostspline
+  jsx-create-polygonalchain
+  jsx-create-regularpolygon
+  jsx-create-hyperbola
+  jsx-create-parabola
+  jsx-create-stepfunction
+  jsx-create-inequality
+  jsx-create-turtle
   jsx-create-perpendicular
   jsx-create-reflection
   jsx-create-bisector
@@ -525,6 +563,44 @@
 (define jsx-create-midpoint any/c)
 (define jsx-create-parallel any/c)
 (define jsx-create-arrowparallel any/c)
+(define jsx-create-axis any/c)
+(define jsx-create-grid any/c)
+(define jsx-create-boxplot any/c)
+(define jsx-create-tangent any/c)
+(define jsx-create-tangentto any/c)
+(define jsx-create-polarline any/c)
+(define jsx-create-polepoint any/c)
+(define jsx-create-radicalaxis any/c)
+(define jsx-create-circumcircle any/c)
+(define jsx-create-incircle any/c)
+(define jsx-create-circumcirclearc any/c)
+(define jsx-create-circumcirclesector any/c)
+(define jsx-create-semicircle any/c)
+(define jsx-create-majorarc any/c)
+(define jsx-create-majorsector any/c)
+(define jsx-create-curveintersection any/c)
+(define jsx-create-curvedifference any/c)
+(define jsx-create-curveunion any/c)
+(define jsx-create-derivative any/c)
+(define jsx-create-integral any/c)
+(define jsx-create-riemannsum any/c)
+(define jsx-riemannsum-value any/c)
+(define jsx-create-slopefield any/c)
+(define jsx-slopefield-set-f! any/c)
+(define jsx-create-vectorfield any/c)
+(define jsx-vectorfield-set-f! any/c)
+(define jsx-create-implicitcurve any/c)
+(define jsx-create-spline any/c)
+(define jsx-create-cardinalspline any/c)
+(define jsx-create-comb any/c)
+(define jsx-create-metapostspline any/c)
+(define jsx-create-polygonalchain any/c)
+(define jsx-create-regularpolygon any/c)
+(define jsx-create-hyperbola any/c)
+(define jsx-create-parabola any/c)
+(define jsx-create-stepfunction any/c)
+(define jsx-create-inequality any/c)
+(define jsx-create-turtle any/c)
 (define jsx-create-perpendicular any/c)
 (define jsx-create-reflection any/c)
 (define jsx-create-bisector any/c)

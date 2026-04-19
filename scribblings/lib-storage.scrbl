@@ -11,21 +11,28 @@
 @(how-to-require include-lib storage (lib "libs/storage.rkt"))
 @(compile-option-bar "Compile option: " "--ffi dom")
 
-The @racket[storage] library provides checked wrappers for the browser
-@tt{Storage} API. It gives WebRacket programs direct access to
-@racketid[localStorage] and @racketid[sessionStorage] without exposing
-raw browser objects.
+The Web Storage API gives browsers a simple synchronous key/value
+store. It is the usual choice when a page needs a small amount of
+client-side state that should be available through @racketid[localStorage]
+or @racketid[sessionStorage].
 
-Use @racket[storage] when you want to:
+In WebRacket, the @racket[storage] library provides checked wrappers
+for the browser @tt{Storage} object. That lets programs read and write
+browser storage without handling raw JavaScript objects directly.
+
+@(mdn-bar "Storage API"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Storage")
+
+The two storage areas behave slightly differently:
 
 @itemlist[
-  @item{read or write local and session storage entries}
-  @item{inspect stored keys and lengths}
-  @item{keep browser state in a simple key/value store}
+  @item{@racket[session-storage] is partitioned by both browser tab and origin, so each tab gets its own origin-scoped area and the data disappears when the tab closes}
+  @item{@racket[local-storage] is partitioned by origin only, so every document with the same origin shares the same area and the data survives browser restarts}
 ]
 
-String-like arguments accept either strings or symbols. Optional
-arguments use @racket[#f] to mean that the argument is omitted.
+Both storage areas are synchronous, so a large amount of storage work
+can block other browser activity while it runs. String-like arguments
+accept either strings or symbols.
 
 @section{Storage Quick Start}
 
@@ -45,7 +52,9 @@ arguments use @racket[#f] to mean that the argument is omitted.
 @section{Storage API}
 
 @defproc[(storage [raw external/raw]) storage?]{
-Wraps a browser @racketid[Storage] object.
+@(mdn-bar "Storage"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Storage")
+Wraps a browser @racketid[Storage] object in a checked struct.
 }
 
 @defproc[(storage? [v any/c]) boolean?]{
@@ -53,22 +62,32 @@ Returns @racket[#t] when @racket[v] is a wrapped browser storage value.
 }
 
 @defproc[(local-storage) storage?]{
+@(mdn-bar "Window: localStorage property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage")
 Returns the current page's @racketid[localStorage] object as a checked wrapper.
 }
 
 @defproc[(session-storage) storage?]{
+@(mdn-bar "Window: sessionStorage property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Window/sessionStorage")
 Returns the current page's @racketid[sessionStorage] object as a checked wrapper.
 }
 
 @defproc[(storage-length [value storage?]) exact-nonnegative-integer?]{
+@(mdn-bar "Storage: length property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Storage/length")
 Returns the number of stored entries.
 }
 
 @defproc[(storage-key [value storage?] [index exact-nonnegative-integer?]) (or/c #f string?)]{
+@(mdn-bar "Storage: key() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Storage/key")
 Returns the key stored at a numeric position.
 }
 
 @defproc[(storage-get-item [value storage?] [key (or/c string? symbol?)]) (or/c #f string?)]{
+@(mdn-bar "Storage: getItem() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Storage/getItem")
 Returns the stored value for @racket[key], if present.
 }
 
@@ -76,15 +95,21 @@ Returns the stored value for @racket[key], if present.
                             [key (or/c string? symbol?)]
                             [data (or/c string? symbol?)])
          void?]{
+@(mdn-bar "Storage: setItem() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Storage/setItem")
 Stores a string value under @racket[key].
 }
 
 @defproc[(storage-remove-item! [value storage?]
                                [key (or/c string? symbol?)])
          void?]{
+@(mdn-bar "Storage: removeItem() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Storage/removeItem")
 Removes the entry for @racket[key].
 }
 
 @defproc[(storage-clear! [value storage?]) void?]{
+@(mdn-bar "Storage: clear() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Storage/clear")
 Removes all stored values.
 }
