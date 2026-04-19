@@ -115,7 +115,10 @@
 ;; fetch : any/c [any/c #f] -> external/raw
 ;;   Start a fetch request.
 (define (fetch request [init #f])
-  (js-window-fetch request (fetch-resolve-optional init)))
+  (define request* (if (fetch-request? request)
+                       (fetch-request-raw request)
+                       request))
+  (js-window-fetch request* (fetch-resolve-optional init)))
 
 ;; fetch-request-method : fetch-request-info? -> any/c
 ;;   Read the request method.
