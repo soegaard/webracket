@@ -53,6 +53,32 @@ Run:
 racket tools/check-wrapper-arity.rkt lib/web-easy/smoke
 ```
 
+find-callback-source.rkt
+------------------------
+Looks up a generated callback/debug label such as `label.4054` in a
+`.wasm.map.sexp` file and prints the recorded source location.
+
+By default it prints:
+- label
+- source path with line and column
+- span
+- `same-as` target when present
+
+Optional:
+- `--show-form` prints the recorded source form when the map includes it
+
+Run:
+
+```sh
+racket tools/find-callback-source.rkt test/test-ffi.wasm.map.sexp label.5792
+```
+
+With the recorded form:
+
+```sh
+racket tools/find-callback-source.rkt --show-form test/test-ffi.wasm.map.sexp label.5792
+```
+
 fetch-html-element-attributes.mjs
 ---------------------------------
 Generator for a machine-readable HTML element/attribute snapshot.
