@@ -248,6 +248,8 @@
 ;; element-has-pointer-capture? : element? exact-nonnegative-integer? -> boolean?
 ;;   Report whether this element has pointer capture for a pointer id.
 (define (element-has-pointer-capture? element pointer-id)
+  (unless (exact-nonnegative-integer? pointer-id)
+    (raise-argument-error 'element-has-pointer-capture? "exact-nonnegative-integer?" pointer-id))
   (element-i32->boolean
    (js-has-pointer-capture (element-unwrap element) pointer-id)))
 
@@ -744,12 +746,16 @@
 ;; element-set-pointer-capture! : element? exact-nonnegative-integer? -> void?
 ;;   Capture pointer events for a pointer id.
 (define (element-set-pointer-capture! element pointer-id)
+  (unless (exact-nonnegative-integer? pointer-id)
+    (raise-argument-error 'element-set-pointer-capture! "exact-nonnegative-integer?" pointer-id))
   (js-set-pointer-capture! (element-unwrap element) pointer-id)
   (void))
 
 ;; element-release-pointer-capture! : element? exact-nonnegative-integer? -> void?
 ;;   Release pointer capture for a pointer id.
 (define (element-release-pointer-capture! element pointer-id)
+  (unless (exact-nonnegative-integer? pointer-id)
+    (raise-argument-error 'element-release-pointer-capture! "exact-nonnegative-integer?" pointer-id))
   (js-release-pointer-capture! (element-unwrap element) pointer-id)
   (void))
 
