@@ -8,6 +8,7 @@
 ;;   racket -l errortrace -t ../webracket.rkt -- --browser test-rquery.rkt
 
 (include-lib rquery)
+(include-lib sxml)
 
 (define (check-equal got want label)
   (unless (equal? got want)
