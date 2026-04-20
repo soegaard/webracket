@@ -7,6 +7,33 @@
 ;; Build:
 ;;   racket -l errortrace -t ../webracket.rkt -- --ffi ../ffi/standard.ffi --ffi ../ffi/dom.ffi -r test-dom-window-document.rkt
 
+(require (for-syntax racket/base
+                     racket/file
+                     racket/path))
+
+(define-syntax (element-source-uses-direct-bindings? stx)
+  (syntax-case stx ()
+    [(_)
+     (let* ([src0 (syntax-source stx)]
+            [src  (cond
+                    [(path? src0) src0]
+                    [(string? src0) (string->path src0)]
+                    [else #f])]
+            [base-dir (if src
+                          (or (path-only src) (current-directory))
+                          (current-directory))]
+            [element-path (simplify-path
+                           (build-path base-dir ".." "lib" "libs" "element.rkt"))]
+            [text (file->string element-path)]
+            [ok? (and (not (regexp-match? #rx"element-prop-ref" text))
+                      (not (regexp-match? #rx"Reflect" text))
+                      (regexp-match? #rx"define-element-getter element-id js-element-id" text)
+                      (regexp-match? #rx"define-element-getter element-class-name js-element-class-name" text)
+                      (regexp-match? #rx"define-element-wrap-getter element-class-list js-element-class-list dom-token-list-wrap" text)
+                      (regexp-match? #rx"define-element-wrap-getter element-children js-element-children html-collection-wrap" text)
+                      (regexp-match? #rx"define-element-wrap-getter element-parent-element js-element-parent-element element-wrap" text))])
+       #`#,(datum->syntax stx ok?))]))
+
 (include-lib window)
 (include-lib performance)
 (include-lib document)
@@ -260,6 +287,8 @@
          (check-equal (element-id host) "dom-host-2" "element set id")
          (element-set-class-name! host 'sprout)
          (check-equal (element-class-name host) "sprout" "element set class name")
+         (check-true (element-source-uses-direct-bindings?)
+                     "element source uses direct bindings without Reflect.get")
          (define class-list (element-class-list class-box))
          (check-true (or (not class-list) (dom-token-list? class-list))
                      "element class list wrapper")
@@ -393,8 +422,14 @@
          (check-true (element? (html-collection-item host-children 0)) "element children item")
          (check-true (element? (html-collection-named-item host-children 'dom-child))
                      "element children named item")
+         (check-equal (element-id (html-collection-item host-children 0))
+                      "dom-child"
+                      "element children direct binding item identity")
          (check-true (element? (element-first-element-child host)) "element first child")
          (check-true (element? (element-last-element-child host)) "element last child")
+         (check-equal (element-id (element-parent-element child))
+                      "dom-host-2"
+                      "element parent direct binding identity")
          (check-equal (element-tag-name host) "DIV" "element tag name")
          (check-equal (element-local-name host) "div" "element local name")
          (check-true (or (not (element-namespace-uri host))

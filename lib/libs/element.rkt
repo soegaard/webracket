@@ -42,6 +42,9 @@
   (define (name element)
     (element-i32->boolean (binding (element-unwrap element)))))
 
+;; Element property access in this library should stay on the direct
+;; js-element-* bindings instead of routing through Reflect.get.
+
 ;; element-nodeish->value : any/c -> any/c
 ;;   Normalize a node-like value for DOM insertion helpers.
 (define (element-nodeish->value value)
@@ -142,8 +145,7 @@
 
 ;; element-class-list : element? -> (or/c #f dom-token-list?)
 ;;   Read an element class list.
-(define (element-class-list element)
-  (dom-token-list-wrap (js-element-class-list (element-unwrap element))))
+(define-element-wrap-getter element-class-list js-element-class-list dom-token-list-wrap)
 
 ;; element-tag-name : element? -> string?
 ;;   Read the element tag name.
@@ -374,18 +376,21 @@
 
 ;; element-parent-element : element? -> (or/c #f element?)
 ;;   Read the parent element.
-(define (element-parent-element element)
-  (element-wrap (js-element-parent-element (element-unwrap element))))
+(define-element-wrap-getter element-parent-element js-element-parent-element element-wrap)
 
 ;; element-previous-element-sibling : element? -> (or/c #f element?)
 ;;   Read the previous element sibling.
-(define (element-previous-element-sibling element)
-  (element-wrap (js-element-previous-element-sibling (element-unwrap element))))
+(define-element-wrap-getter
+  element-previous-element-sibling
+  js-element-previous-element-sibling
+  element-wrap)
 
 ;; element-next-element-sibling : element? -> (or/c #f element?)
 ;;   Read the next element sibling.
-(define (element-next-element-sibling element)
-  (element-wrap (js-element-next-element-sibling (element-unwrap element))))
+(define-element-wrap-getter
+  element-next-element-sibling
+  js-element-next-element-sibling
+  element-wrap)
 
 ;; element-get-elements-by-class-name : element? (or/c string? symbol?) -> html-collection?
 ;;   Read descendant elements with matching class names as a wrapped HTMLCollection.
@@ -411,8 +416,7 @@
 
 ;; element-children : element? -> html-collection?
 ;;   Read the child elements as a wrapped HTMLCollection.
-(define (element-children element)
-  (html-collection-wrap (js-element-children (element-unwrap element))))
+(define-element-wrap-getter element-children js-element-children html-collection-wrap)
 
 ;; element-scroll-top : element? -> real?
 ;;   Read an element's vertical scroll offset.
