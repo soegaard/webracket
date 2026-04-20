@@ -75,6 +75,7 @@ EOF
   )
   pict_examples=(
     pict-playground
+    pict-fish-school
   )
   machine_written_examples=(
     audio-oscillator
