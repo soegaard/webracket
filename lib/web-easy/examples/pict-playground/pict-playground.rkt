@@ -25,6 +25,7 @@
 (define canvas-name "pict-playground-canvas")
 (define canvas-width 720.)
 (define canvas-height 480.)
+(define rotation-center-dot-radius 5.)
 
 (define @preset (@ "Fish"))
 (define @direction (@ "left"))
@@ -62,6 +63,16 @@
   (dc 'font "12px Georgia")
   (dc 'fill-text "web-easy hosts the canvas; web-pict renders the scene." 18. 26.))
 
+;; draw-rotation-center-dot! : any/c real? real? -> void?
+;;   Draw a temporary marker for the current rotation center.
+(define (draw-rotation-center-dot! dc cx cy)
+  (dc 'save)
+  (dc 'fill-style "red")
+  (dc 'begin-path)
+  (dc 'arc cx cy rotation-center-dot-radius 0. (* 2. pi))
+  (dc 'fill)
+  (dc 'restore))
+
 ;; string->direction : string? -> symbol?
 ;;   Normalize a direction choice to the symbol that `standard-fish` expects.
 (define (string->direction s)
@@ -90,8 +101,9 @@
 ;; poster-pict : -> pict?
 ;;   Build a composed poster scene around the fish.
 (define (poster-pict)
-  (define fish (standard-fish 180 92
-                              #:direction 'right
+  (define fish (standard-fish (obs-peek @fish-width)
+                              (obs-peek @fish-height)
+                              #:direction (string->direction (obs-peek @direction))
                               #:color (obs-peek @fish-color)
                               #:eye-color (obs-peek @eye-color)
                               #:open-mouth (/ (obs-peek @mouth-open) 100.0)))
@@ -110,11 +122,12 @@
 ;; explain-pict : -> pict?
 ;;   Build a small composition and overlay pict metrics.
 (define (explain-pict)
-  (define fish (standard-fish 160 84
-                              #:direction 'right
-                              #:color "tomato"
-                              #:eye-color "midnightblue"
-                              #:open-mouth #f))
+  (define fish (standard-fish (obs-peek @fish-width)
+                              (obs-peek @fish-height)
+                              #:direction (string->direction (obs-peek @direction))
+                              #:color (obs-peek @fish-color)
+                              #:eye-color (obs-peek @eye-color)
+                              #:open-mouth (/ (obs-peek @mouth-open) 100.0)))
   (define base
     (vc-append 10
                (text "Pict anatomy" null 20)
@@ -134,18 +147,70 @@
 
 ;; rotate-around-center : pict? real? -> pict?
 ;;   Rotate p around its visual center instead of its top-left origin.
+(define (rotate-around-center/info p theta)
+  (define w      (pict-width p))
+  (define h      (pict-height p))
+  (define cx     (/ w 2.0))
+  (define cy     (/ h 2.0))
+  (define c      (cos theta))
+  (define s      (sin theta))
+  (define drawer (make-pict-drawer p))
+  (define rotated (rotate p theta))
+
+  (define (rot-x x y)
+    (- (* x c) (* y s)))
+  (define (rot-y x y)
+    (+ (* x s) (* y c)))
+
+  (define x0 (rot-x (- cx) (- cy)))
+  (define y0 (rot-y (- cx) (- cy)))
+  (define x1 (rot-x cx (- cy)))
+  (define y1 (rot-y cx (- cy)))
+  (define x2 (rot-x (- cx) cy))
+  (define y2 (rot-y (- cx) cy))
+  (define x3 (rot-x cx cy))
+  (define y3 (rot-y cx cy))
+
+  (define min-x (min x0 x1 x2 x3))
+  (define min-y (min y0 y1 y2 y3))
+  (define anchor-x (- cx min-x))
+  (define anchor-y (- cy min-y))
+
+  (values
+   (dc (lambda (dc x y)
+         (define t (dc 'transform))
+         (dc 'translate (+ x (- min-x)) (+ y (- min-y)))
+         (dc 'translate cx cy)
+         (dc 'rotate theta)
+         (dc 'translate (- cx) (- cy))
+         (drawer dc 0 0)
+         (dc 'transform t))
+       (pict-width rotated)
+       (pict-height rotated)
+       (pict-ascent rotated)
+       (pict-descent rotated))
+   anchor-x
+   anchor-y))
+
 (define (rotate-around-center p theta)
-  (define cx (/ (pict-width p) 2.0))
-  (define cy (/ (pict-height p) 2.0))
-  (translate (rotate (translate p (- cx) (- cy)) theta)
-             cx
-             cy))
+  (define-values (rotated _anchor-x _anchor-y)
+    (rotate-around-center/info p theta))
+  rotated)
 
 ;; transformed-pict : -> pict?
 ;;   Apply the shared rotation and scaling controls.
+(define (transformed-pict/info)
+  (define-values (rotated anchor-x anchor-y)
+    (rotate-around-center/info (current-pict) (rotation-radians)))
+  (define factor (scale-factor))
+  (values (scale rotated factor)
+          (* anchor-x factor)
+          (* anchor-y factor)))
+
 (define (transformed-pict)
-  (scale (rotate-around-center (current-pict) (rotation-radians))
-         (scale-factor)))
+  (define-values (p _anchor-x _anchor-y)
+    (transformed-pict/info))
+  p)
 
 ;; draw-current-pict! : -> void?
 ;;   Redraw the preview canvas using the current control values.
@@ -157,11 +222,15 @@
      (void)]
     [else
      (define dc (canvas-context->dc ctx))
-     (define p  (transformed-pict))
-     (define x  (max 0.0 (/ (- canvas-width (pict-width p)) 2.0)))
-     (define y  (max 0.0 (/ (- canvas-height (pict-height p)) 2.0)))
+     (define-values (p anchor-x anchor-y)
+       (transformed-pict/info))
+     (define rotation-cx (/ canvas-width 2.0))
+     (define rotation-cy (/ canvas-height 2.0))
+     (define x  (- rotation-cx anchor-x))
+     (define y  (- rotation-cy anchor-y))
      (fill-background! dc)
      (draw-pict p dc x y)
+     (draw-rotation-center-dot! dc rotation-cx rotation-cy)
      (:= @status
          (format "~a preset, ~ax~a pict, scale ~a%, rotation ~a°"
                  (obs-peek @preset)
