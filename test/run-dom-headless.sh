@@ -42,6 +42,18 @@ trap 'kill "$SERVER_PID" >/dev/null 2>&1 || true' EXIT
 
 sleep 1
 
+if grep -q "tcp-listen: listen failed" /tmp/webracket-dom-headless.log; then
+  echo "DOM browser server failed to bind port $PORT."
+  cat /tmp/webracket-dom-headless.log
+  exit 1
+fi
+
+if ! curl -sf "$BASE_URL/test-dom-window-document.html" >/dev/null; then
+  echo "DOM browser server did not become ready at $BASE_URL."
+  cat /tmp/webracket-dom-headless.log
+  exit 1
+fi
+
 SMOKE_BASE_URL="$BASE_URL" \
 SMOKE_NODE_MODULES="$LOCAL_NODE_MODULES" \
 SMOKE_CHROME_EXECUTABLE="$CHROME_EXECUTABLE" \
