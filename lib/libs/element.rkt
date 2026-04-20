@@ -17,6 +17,13 @@
 (define (element-i32->boolean v)
   (not (zero? v)))
 
+;; element-real->flonum : symbol? any/c -> real?
+;;   Validate a real coordinate and coerce it to an inexact value for FFI calls.
+(define (element-real->flonum who v)
+  (unless (real? v)
+    (raise-argument-error who "real?" v))
+  (exact->inexact v))
+
 ;; define-element-getter : (name binding) -> syntax
 ;;   Define a direct getter for an element property binding.
 (define-syntax-rule (define-element-getter name binding)
@@ -43,13 +50,14 @@
     (element-i32->boolean (binding (element-unwrap element)))))
 
 ;; Element property access in this library should stay on the direct
-;; js-element-* bindings instead of routing through Reflect.get.
+;; js-element-* bindings instead of routing through reflective lookup.
 
 ;; element-nodeish->value : any/c -> any/c
 ;;   Normalize a node-like value for DOM insertion helpers.
 (define (element-nodeish->value value)
   (cond
     [(symbol? value) (symbol->string value)]
+    [(string? value) value]
     [(dom-node? value) (dom-node-raw value)]
     [(dom-element? value) (dom-element-raw value)]
     [(dom-text? value) (dom-text-raw value)]
@@ -165,7 +173,8 @@
 
 ;; element-is-connected? : element? -> boolean?
 ;;   Report whether the element is connected to a document.
-(define-element-boolean-getter element-is-connected? js-element-is-connected)
+(define (element-is-connected? element)
+  (js-element-is-connected (element-unwrap element)))
 
 ;; append-child! : external? external? -> void?
 ;;   Append a child node.
@@ -176,25 +185,29 @@
 ;; element-append! : element? any/c -> void?
 ;;   Append a node or text to an element.
 (define (element-append! element child)
-  (js-append! (element-unwrap element) (element-nodeish->value child))
+  (js-send/extern/nullish (element-unwrap element) "append"
+                          (vector (element-nodeish->value child)))
   (void))
 
 ;; element-prepend! : element? any/c -> void?
 ;;   Prepend a node or text to an element.
 (define (element-prepend! element child)
-  (js-prepend! (element-unwrap element) (element-nodeish->value child))
+  (js-send/extern/nullish (element-unwrap element) "prepend"
+                          (vector (element-nodeish->value child)))
   (void))
 
 ;; element-before! : element? any/c -> void?
 ;;   Insert a node or text before an element.
 (define (element-before! element sibling)
-  (js-before! (element-unwrap element) (element-nodeish->value sibling))
+  (js-send/extern/nullish (element-unwrap element) "before"
+                          (vector (element-nodeish->value sibling)))
   (void))
 
 ;; element-after! : element? any/c -> void?
 ;;   Insert a node or text after an element.
 (define (element-after! element sibling)
-  (js-after! (element-unwrap element) (element-nodeish->value sibling))
+  (js-send/extern/nullish (element-unwrap element) "after"
+                          (vector (element-nodeish->value sibling)))
   (void))
 
 ;; set-attribute! : external? (or/c string? symbol?) (or/c string? symbol?) -> void?
@@ -274,11 +287,13 @@
 
 ;; dom-token-list-value : dom-token-list? -> (or/c #f string?)
 ;;   Read the class list value.
-(define-element-getter dom-token-list-value js-dom-token-list-value)
+(define (dom-token-list-value class-list)
+  (js-dom-token-list-value (dom-token-list-unwrap class-list)))
 
 ;; dom-token-list-length : dom-token-list? -> exact-nonnegative-integer?
 ;;   Read the number of class tokens.
-(define-element-getter dom-token-list-length js-dom-token-list-length)
+(define (dom-token-list-length class-list)
+  (js-dom-token-list-length (dom-token-list-unwrap class-list)))
 
 ;; dom-token-list-item : dom-token-list? exact-nonnegative-integer? -> (or/c #f string?)
 ;;   Read the class token at an index.
@@ -346,7 +361,8 @@
 
 ;; html-collection-length : html-collection? -> exact-nonnegative-integer?
 ;;   Read the number of elements in an HTMLCollection.
-(define-element-getter html-collection-length js-html-collection-length)
+(define (html-collection-length collection)
+  (js-html-collection-length (html-collection-unwrap collection)))
 
 ;; html-collection-item : html-collection? exact-nonnegative-integer? -> (or/c #f element?)
 ;;   Read the element at a given index.
@@ -424,7 +440,11 @@
 
 ;; element-set-scroll-top! : element? real? -> void?
 ;;   Set an element's vertical scroll offset.
-(define-element-setter element-set-scroll-top! js-set-element-scroll-top! values)
+(define (element-set-scroll-top! element value)
+  (js-set! (element-unwrap element)
+           "scrollTop"
+           (element-real->flonum 'element-set-scroll-top! value))
+  (void))
 
 ;; element-scroll-left : element? -> real?
 ;;   Read an element's horizontal scroll offset.
@@ -432,7 +452,11 @@
 
 ;; element-set-scroll-left! : element? real? -> void?
 ;;   Set an element's horizontal scroll offset.
-(define-element-setter element-set-scroll-left! js-set-element-scroll-left! values)
+(define (element-set-scroll-left! element value)
+  (js-set! (element-unwrap element)
+           "scrollLeft"
+           (element-real->flonum 'element-set-scroll-left! value))
+  (void))
 
 ;; element-scroll-width : element? -> exact-nonnegative-integer?
 ;;   Read an element's scroll width.
@@ -542,11 +566,13 @@
 
 ;; shadow-root-mode : shadow-root? -> string?
 ;;   Read the shadow root mode.
-(define-element-getter shadow-root-mode js-shadow-root-mode)
+(define (shadow-root-mode shadow-root)
+  (js-shadow-root-mode (shadow-root-unwrap shadow-root)))
 
 ;; shadow-root-delegates-focus? : shadow-root? -> boolean?
 ;;   Report whether the shadow root delegates focus.
-(define-element-boolean-getter shadow-root-delegates-focus? js-shadow-root-delegates-focus)
+(define (shadow-root-delegates-focus? shadow-root)
+  (js-shadow-root-delegates-focus (shadow-root-unwrap shadow-root)))
 
 ;; element-animate : element? any/c [any/c] -> animation?
 ;;   Start an animation on an element.

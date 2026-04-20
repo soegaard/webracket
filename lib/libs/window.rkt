@@ -9,6 +9,13 @@
 (define (window-i32->boolean v)
   (not (zero? v)))
 
+;; window-real->flonum : symbol? any/c -> real?
+;;   Validate a real coordinate and coerce it to an inexact value for FFI calls.
+(define (window-real->flonum who v)
+  (unless (real? v)
+    (raise-argument-error who "real?" v))
+  (exact->inexact v))
+
 ;; window-stringish->string : symbol? any/c -> string?
 ;;   Normalize a string-like wrapper argument to a browser string.
 (define (window-stringish->string who v)
@@ -408,12 +415,14 @@
 ;; window-scroll-to : real? real? [or/c #f window-scroll-options? procedure?] -> void?
 ;;   Scroll the window to an absolute position.
 (define (window-scroll-to x y [options #f])
+  (define x* (window-real->flonum 'window-scroll-to x))
+  (define y* (window-real->flonum 'window-scroll-to y))
   (define options* (window-resolve-scroll-options options))
   (cond
     [(eq? options* #f)
-     (js-window-scroll-to x y (void))]
+     (js-window-scroll-to x* y* (void))]
     [(window-scroll-options? options*)
-     (js-window-scroll-to x y (window-scroll-options->raw options* x y))]
+     (js-window-scroll-to x* y* (window-scroll-options->raw options* x* y*))]
     [else
      (raise-argument-error 'window-scroll-to
                            "(or/c #f window-scroll-options? procedure?)"
@@ -423,12 +432,14 @@
 ;; window-scroll-by : real? real? [or/c #f window-scroll-options? procedure?] -> void?
 ;;   Scroll the window by a relative offset.
 (define (window-scroll-by x y [options #f])
+  (define x* (window-real->flonum 'window-scroll-by x))
+  (define y* (window-real->flonum 'window-scroll-by y))
   (define options* (window-resolve-scroll-options options))
   (cond
     [(eq? options* #f)
-     (js-window-scroll-by x y (void))]
+     (js-window-scroll-by x* y* (void))]
     [(window-scroll-options? options*)
-     (js-window-scroll-by x y (window-scroll-options->raw options* x y))]
+     (js-window-scroll-by x* y* (window-scroll-options->raw options* x* y*))]
     [else
      (raise-argument-error 'window-scroll-by
                            "(or/c #f window-scroll-options? procedure?)"
@@ -438,12 +449,14 @@
 ;; window-scroll : real? real? [or/c #f window-scroll-options? procedure?] -> void?
 ;;   Scroll the document to an absolute position.
 (define (window-scroll x y [options #f])
+  (define x* (window-real->flonum 'window-scroll x))
+  (define y* (window-real->flonum 'window-scroll y))
   (define options* (window-resolve-scroll-options options))
   (cond
     [(eq? options* #f)
-     (js-window-scroll x y (void))]
+     (js-window-scroll x* y* (void))]
     [(window-scroll-options? options*)
-     (js-window-scroll x y (window-scroll-options->raw options* x y))]
+     (js-window-scroll x* y* (window-scroll-options->raw options* x* y*))]
     [else
      (raise-argument-error 'window-scroll
                            "(or/c #f window-scroll-options? procedure?)"
@@ -453,25 +466,29 @@
 ;; window-resize-to : real? real? -> void?
 ;;   Resize the window to a given size.
 (define (window-resize-to w h)
-  (js-window-resize-to w h)
+  (js-window-resize-to (window-real->flonum 'window-resize-to w)
+                       (window-real->flonum 'window-resize-to h))
   (void))
 
 ;; window-resize-by : real? real? -> void?
 ;;   Resize the window by a delta.
 (define (window-resize-by w h)
-  (js-window-resize-by w h)
+  (js-window-resize-by (window-real->flonum 'window-resize-by w)
+                       (window-real->flonum 'window-resize-by h))
   (void))
 
 ;; window-move-to : real? real? -> void?
 ;;   Move the window to a given position.
 (define (window-move-to x y)
-  (js-window-move-to x y)
+  (js-window-move-to (window-real->flonum 'window-move-to x)
+                     (window-real->flonum 'window-move-to y))
   (void))
 
 ;; window-move-by : real? real? -> void?
 ;;   Move the window by a given delta.
 (define (window-move-by x y)
-  (js-window-move-by x y)
+  (js-window-move-by (window-real->flonum 'window-move-by x)
+                     (window-real->flonum 'window-move-by y))
   (void))
 
 ;; window-set-timeout : external? -> u32?
@@ -540,7 +557,7 @@
   (define pseudo-element* (window-resolve-stringish-optional 'window-get-computed-style
                                                              pseudo-element))
   (css-style-declaration-wrap
-   (js-window-get-computed-style element pseudo-element*)))
+   (js-window-get-computed-style (element-unwrap element) pseudo-element*)))
 
 ;; window-structured-clone : any/c [any/c #f] -> any/c
 ;;   Clone a value using the structured-clone algorithm.

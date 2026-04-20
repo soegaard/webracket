@@ -299,17 +299,17 @@
 ;; selection-is-collapsed? : dom-selection? -> boolean?
 ;;   Report whether the current selection is collapsed.
 (define (selection-is-collapsed? selection)
-  (not (zero? (js-ref (dom-selection-unwrap selection) "isCollapsed"))))
+  (js-ref (dom-selection-unwrap selection) "isCollapsed"))
 
 ;; selection-anchor-node : dom-selection? -> (or/c #f dom-node?)
 ;;   Read the anchor node for the current selection.
 (define (selection-anchor-node selection)
-  (dom-node-wrap (js-ref/extern (dom-selection-unwrap selection) "anchorNode")))
+  (dom-node-wrap (js-ref (dom-selection-unwrap selection) "anchorNode")))
 
 ;; selection-focus-node : dom-selection? -> (or/c #f dom-node?)
 ;;   Read the focus node for the current selection.
 (define (selection-focus-node selection)
-  (dom-node-wrap (js-ref/extern (dom-selection-unwrap selection) "focusNode")))
+  (dom-node-wrap (js-ref (dom-selection-unwrap selection) "focusNode")))
 
 ;; selection-to-string : dom-selection? -> string?
 ;;   Convert the current selection to text.
@@ -348,7 +348,7 @@
 ;; media-query-list-matches? : media-query-list? -> boolean?
 ;;   Report whether the media query currently matches.
 (define (media-query-list-matches? media-query-list)
-  (not (zero? (js-ref (media-query-list-unwrap media-query-list) "matches"))))
+  (js-ref (media-query-list-unwrap media-query-list) "matches"))
 
 ;; css-style-declaration : external/raw -> css-style-declaration?
 ;;   Wrap a browser CSSStyleDeclaration object.

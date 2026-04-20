@@ -362,7 +362,7 @@
   #:doc    "Inserts a node or text after an element."
   #:mdn    "Element/after"
   ;; Variadic in JavaScript; this version handles a single node or string.
-  (-> (extern extern) ()))
+  (-> (extern value) ()))
 
 (define-foreign js-animate
   #:module "element"
@@ -378,7 +378,7 @@
   #:doc    "Appends a node or text to an element."
   #:mdn    "Element/append"
   ;; Variadic in JavaScript; this version handles a single node or string.
-  (-> (extern extern) ()))
+  (-> (extern value) ()))
 
 (define-foreign js-attach-shadow!
   #:module "element"
@@ -393,7 +393,7 @@
   #:doc    "Inserts a node or text before an element."
   #:mdn    "Element/before"
   ;; Variadic in JavaScript; this version handles a single node or string.
-  (-> (extern extern) ()))
+  (-> (extern value) ()))
 
 (define-foreign js-closest
   #:module "element"
@@ -421,14 +421,14 @@
   #:name   "get-attribute"
   #:doc    "Returns the value of an attribute."
   #:mdn    "Element/getAttribute"
-  (-> (extern string) (extern)))
+  (-> (extern string) (string)))
 
 (define-foreign js-get-attribute-ns
   #:module "element"
   #:name   "get-attribute-ns"
   #:doc    "Returns the value of a namespaced attribute."
   #:mdn    "Element/getAttributeNS"
-  (-> (extern string string) (extern)))
+  (-> (extern string string) (string)))
 
 (define-foreign js-get-attribute-names
   #:module "element"
@@ -442,7 +442,7 @@
   #:name   "dom-token-list-item"
   #:doc    "Returns the token at a given index."
   #:mdn    "DOMTokenList/item"
-  (-> (extern i32) (extern)))
+  (-> (extern i32) (string)))
 
 (define-foreign js-get-attribute-node
   #:module "element"
@@ -555,7 +555,7 @@
   #:doc    "Prepends a node or text to an element."
   #:mdn    "Element/prepend"
   ;; Variadic in JavaScript; this version handles a single node or string.
-  (-> (extern extern) ()))
+  (-> (extern value) ()))
 
 (define-foreign js-element-query-selector
   #:module "element"
