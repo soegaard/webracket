@@ -111,10 +111,10 @@
 ;;   Build a small composition and overlay pict metrics.
 (define (explain-pict)
   (define fish (standard-fish 160 84
-                              #:direction 'left
+                              #:direction 'right
                               #:color "tomato"
                               #:eye-color "midnightblue"
-                              #:open-mouth #t))
+                              #:open-mouth #f))
   (define base
     (vc-append 10
                (text "Pict anatomy" null 20)

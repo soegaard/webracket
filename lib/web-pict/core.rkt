@@ -2342,6 +2342,61 @@
 ;;; Standard Fish
 ;;;
 
+(define (standard-fish-mirror-x direction w x0)
+  (if (eq? direction 'left) x0 (- w x0)))
+
+(define (standard-fish-flip-x direction w x0 w0)
+  (if (eq? direction 'left) x0 (- w x0 w0)))
+
+(define (standard-fish-draw-polygon dc pts)
+  (when (pair? pts)
+    (dc 'begin-path)
+    (dc 'move-to (caar pts) (cdar pts))
+    (for-each (lambda (pt) (dc 'line-to (car pt) (cdr pt))) (cdr pts))
+    (dc 'close-path)
+    (dc 'fill)))
+
+(define (standard-fish-step-delta poly-delta-scale step)
+  (* step poly-delta-scale))
+
+(define (standard-fish-draw-top-bottom-tail-step dc direction w h delta color-str)
+  (dc 'fill-style color-str)
+  (standard-fish-draw-polygon
+   dc
+   (list (cons (standard-fish-mirror-x direction w (+ (* 1/2 w) delta)) (* 1/10 h))
+         (cons (standard-fish-mirror-x direction w (- (* 3/4 w) delta)) delta)
+         (cons (standard-fish-mirror-x direction w (- (* 3/4 w) delta)) (- (* 2/10 h) delta))))
+  (standard-fish-draw-polygon
+   dc
+   (list (cons (standard-fish-mirror-x direction w (+ (* 1/2 w) delta)) (* 9/10 h))
+         (cons (standard-fish-mirror-x direction w (- (* 3/4 w) delta)) (- h delta))
+         (cons (standard-fish-mirror-x direction w (- (* 3/4 w) delta)) (+ (* 8/10 h) delta))))
+  (standard-fish-draw-polygon
+   dc
+   (list (cons (standard-fish-mirror-x direction w (+ (* 3/4 w) delta)) (/ h 2))
+         (cons (standard-fish-mirror-x direction w (- w delta)) (+ (* 1/10 h) delta))
+         (cons (standard-fish-mirror-x direction w (- w delta)) (- (* 9/10 h) delta)))))
+
+(define (standard-fish-draw-body-half-step dc w h step color-str top?)
+  (define body-width  (- (* 6/4 w) (* 2 step)))
+  (define body-height (- (* 4 h) (* 2 step)))
+  (dc 'fill-style color-str)
+  (dc 'begin-path)
+  (dc 'ellipse (/ w 2)
+      (if top? (- h) (* 2 h))
+      (/ body-width 2)
+      (/ body-height 2)
+      0 0 (* 2. pi))
+  (dc 'fill))
+
+(define (standard-fish-draw-middle-fin-step dc direction w h delta color-str)
+  (dc 'fill-style color-str)
+  (standard-fish-draw-polygon
+   dc
+   (list (cons (standard-fish-mirror-x direction w (+ (* 1/2 w) delta)) (/ h 2))
+         (cons (standard-fish-mirror-x direction w (- (* 5/8 w) delta)) (+ (* 1/4 h) delta))
+         (cons (standard-fish-mirror-x direction w (- (* 5/8 w) delta)) (- (* 3/4 h) delta)))))
+
 (define/key (standard-fish w h
                            #:direction [direction 'left]
                            #:color [c "blue"]
@@ -2379,18 +2434,37 @@
     (error 'standard-fish "expected direction 'left or 'right, got: ~a" direction))
 
   (define base-color        (ensure-color 'standard-fish c))
-  (define outline-color     (scale-color 0.7  base-color))
-  (define fin-color         (scale-color 1.1  base-color))
-  (define tail-color        (scale-color 0.85 base-color))
+  (define dark-color        (scale-color 0.8  base-color))
   (define body-color-str    (color->string base-color))
-  (define outline-color-str (color->string outline-color))
-  (define fin-color-str     (color->string fin-color))
-  (define tail-color-str    (color->string tail-color))
 
   (define eye-spec
     (cond
       [(not ec) #f]
+      [(eq? ec 'x) ec]
       [else     (ensure-color 'standard-fish ec)]))
+
+  (define (interpolate-channel start end t)
+    (define value (+ start (* (- end start) t)))
+    (inexact->exact (floor value)))
+
+  (define (interpolate-color start-col end-col t)
+    (define start-rgb (color-value (ensure-color 'standard-fish start-col)))
+    (define end-rgb   (color-value (ensure-color 'standard-fish end-col)))
+    (cond
+      [(and (rgb-color? start-rgb) (rgb-color? end-rgb))
+       (color
+        (rgb-color
+         (interpolate-channel (rgb-color-r start-rgb) (rgb-color-r end-rgb) t)
+         (interpolate-channel (rgb-color-g start-rgb) (rgb-color-g end-rgb) t)
+         (interpolate-channel (rgb-color-b start-rgb) (rgb-color-b end-rgb) t)
+         (interpolate-channel (rgb-color-a start-rgb) (rgb-color-a end-rgb) t)))]
+      [else (ensure-color 'standard-fish end-col)]))
+
+  (define c0 (color->string (interpolate-color dark-color base-color 0.0)))
+  (define c1 (color->string (interpolate-color dark-color base-color 0.25)))
+  (define c2 (color->string (interpolate-color dark-color base-color 0.5)))
+  (define c3 (color->string (interpolate-color dark-color base-color 0.75)))
+  (define c4 (color->string (interpolate-color dark-color base-color 1.0)))
 
   (define (clamp-01 v)
     (cond
@@ -2406,120 +2480,100 @@
 
   (define mouth-open? (> mouth-open-amt 0.0))
 
-  (dc (lambda (dc x y)
-        (define lw            3.0)
-        (define body-rx       (* w 0.45))
-        (define body-ry       (* h 0.42))
-        (define body-cx       body-rx)
-        (define body-cy       (* h 0.5))
-        (define tail-base-x   (* w 0.7))
-        (define tail-top-y    (* h 0.15))
-        (define tail-bottom-y (* h 0.85))
-        (define fin-top-y     (* h 0.18))
-        (define fin-bottom-y  (* h 0.82))
-        (define mouth-x       (* w 0.05))
-        (define mouth-length  (* w 0.18))
-        (define mouth-span    (* h 0.3 mouth-open-amt))
-        (define eye-radius    (* (min w h) 0.075))
-        (define eye-cx        (* w 0.27))
-        (define eye-cy        (* h 0.35))
-
-        (dc 'save)
-        (dc 'translate x y)
-        (when (eq? direction 'right)
-          (dc 'translate w 0)
-          (dc 'scale -1 1))
-
-        ;; Tail
-        (dc 'begin-path)
-        (dc 'move-to tail-base-x tail-top-y)
-        (dc 'line-to w (* h 0.5))
-        (dc 'line-to tail-base-x tail-bottom-y)
-        (dc 'close-path)
-        (dc 'fill-style tail-color-str)
-        (dc 'fill)
-        (dc 'stroke-style outline-color-str)
-        (dc 'line-width lw)
-        (dc 'stroke)
-
-        ;; Fins (top and bottom)
-        (define fin-width  (* w 0.22))
-        (define fin-offset (* w 0.45))
-        (define (draw-fin top?)
-          (define base-y (if top? fin-top-y fin-bottom-y))
-          (define tip-y  (if top? 0 h))
+  (flip-y
+   (dc (lambda (dc x y)
+         (define poly-delta-scale (min 1.0 (* w 1/100)))
+         (define (clip-half flip?)
+           (define dy (if flip? (/ h 2) 0))
+         (define mouth-y
+           (if flip?
+               (* 1/6 mouth-open-amt h)
+               (+ (* 1/3 h) (* 1/6 (- 1 mouth-open-amt) h))))
+          (define (offset-y y0)
+            (+ dy y0))
           (dc 'begin-path)
-          (dc 'move-to (- fin-offset (* fin-width 0.6)) base-y)
-          (dc 'line-to (+ fin-offset (* fin-width 0.4)) tip-y)
-          (dc 'line-to (+ fin-offset (* fin-width 0.8)) base-y)
-          (dc 'close-path)
-          (dc 'fill-style fin-color-str)
-          (dc 'fill)
-          (dc 'stroke-style outline-color-str)
-          (dc 'line-width lw)
-          (dc 'stroke))
-        (draw-fin #t)
-        (draw-fin #f)
+          (if mouth-open?
+              (begin
+                 (dc 'move-to (standard-fish-mirror-x direction w 0) (offset-y dy))
+                 (dc 'line-to (standard-fish-mirror-x direction w w) (offset-y dy))
+                 (dc 'line-to (standard-fish-mirror-x direction w w) (offset-y (- (* 1/2 h) dy)))
+                 (dc 'line-to (standard-fish-mirror-x direction w (* 1/6 w)) (offset-y (- (* 1/2 h) dy)))
+                 (dc 'line-to (standard-fish-mirror-x direction w 0) (offset-y mouth-y))
+                 (dc 'close-path))
+               (begin
+                 (dc 'rect 0 dy w (/ h 2))
+                 (void)))
+           (dc 'clip))
 
-        ;; Body
-        (dc 'begin-path)
-        (dc 'ellipse body-cx body-cy body-rx body-ry 0 0 (* 2. pi))
-        (dc 'fill-style body-color-str)
-        (dc 'fill)
-        (dc 'stroke-style outline-color-str)
-        (dc 'line-width lw)
-        (dc 'stroke)
+         (dc 'save)
+         (dc 'translate x y)
 
-        ;; Accent stripes
-        (for-each
-         (lambda (offset)
+         (standard-fish-draw-top-bottom-tail-step dc direction w h (standard-fish-step-delta poly-delta-scale 0) c0)
+         (standard-fish-draw-top-bottom-tail-step dc direction w h (standard-fish-step-delta poly-delta-scale 1) c1)
+         (standard-fish-draw-top-bottom-tail-step dc direction w h (standard-fish-step-delta poly-delta-scale 2) c2)
+         (standard-fish-draw-top-bottom-tail-step dc direction w h (standard-fish-step-delta poly-delta-scale 3) c3)
+         (standard-fish-draw-top-bottom-tail-step dc direction w h (standard-fish-step-delta poly-delta-scale 4) c4)
+
+         (dc 'save)
+         (clip-half #f)
+         (standard-fish-draw-body-half-step dc w h 0 c0 #f)
+         (standard-fish-draw-body-half-step dc w h 1 c1 #f)
+         (standard-fish-draw-body-half-step dc w h 2 c2 #f)
+         (standard-fish-draw-body-half-step dc w h 3 c3 #f)
+         (standard-fish-draw-body-half-step dc w h 4 c4 #f)
+         (dc 'restore)
+
+         (dc 'save)
+         (clip-half #t)
+         (standard-fish-draw-body-half-step dc w h 0 c0 #t)
+         (standard-fish-draw-body-half-step dc w h 1 c1 #t)
+         (standard-fish-draw-body-half-step dc w h 2 c2 #t)
+         (standard-fish-draw-body-half-step dc w h 3 c3 #t)
+         (standard-fish-draw-body-half-step dc w h 4 c4 #t)
+         (dc 'restore)
+
+         (when mouth-open?
+           (dc 'stroke-style body-color-str)
+           (dc 'line-width 1)
            (dc 'begin-path)
-           (dc 'move-to (+ (* w 0.38) offset) (* h 0.25))
-           (dc 'line-to (+ (* w 0.32) offset) (* h 0.75))
-           (dc 'stroke-style outline-color-str)
-           (dc 'line-width (/ lw 1.4))
+           (dc 'move-to (if (eq? direction 'left) (* 1/6 w) 6) (/ h 2))
+           (dc 'line-to (+ (if (eq? direction 'left) w (* 5/6 w)) -6) (/ h 2))
            (dc 'stroke))
-         (list 0.0 (* w 0.07) (* w 0.14)))
 
-        ;; Mouth
-        (dc 'stroke-style outline-color-str)
-        (dc 'line-width (/ lw 1.2))
-        (if mouth-open?
-            (begin
-              (dc 'begin-path)
-              (dc 'move-to mouth-x (- (* h 0.5) mouth-span))
-              (dc 'line-to (+ mouth-x mouth-length) (* h 0.5))
-              (dc 'line-to mouth-x (+ (* h 0.5) mouth-span))
-              (dc 'close-path)
-              (dc 'fill-style "white")
-              (dc 'fill)
-              (dc 'stroke))
-            (begin
-              (dc 'begin-path)
-              (dc 'move-to mouth-x (* h 0.5))
-              (dc 'line-to (+ mouth-x mouth-length) (* h 0.5))
-              (dc 'stroke)))
+         (standard-fish-draw-middle-fin-step dc direction w h (standard-fish-step-delta poly-delta-scale 0) c0)
+         (standard-fish-draw-middle-fin-step dc direction w h (standard-fish-step-delta poly-delta-scale 1) c1)
+         (standard-fish-draw-middle-fin-step dc direction w h (standard-fish-step-delta poly-delta-scale 2) c2)
+         (standard-fish-draw-middle-fin-step dc direction w h (standard-fish-step-delta poly-delta-scale 3) c3)
+         (standard-fish-draw-middle-fin-step dc direction w h (standard-fish-step-delta poly-delta-scale 4) c4)
 
-        ;; Eye
-        (when eye-spec
-          (dc 'begin-path)
-          (dc 'ellipse eye-cx eye-cy (* eye-radius 1.1) (* eye-radius 1.1) 0 0 (* 2. pi))
-          (dc 'fill-style (color->string eye-spec))
-          (dc 'fill)
-          (dc 'stroke-style outline-color-str)
-          (dc 'line-width (/ lw 1.3))
-          (dc 'stroke)
-          (dc 'begin-path)
-          (dc 'ellipse (+ eye-cx (* eye-radius 0.25))
-              (- eye-cy (* eye-radius 0.2))
-              (* eye-radius 0.35)
-              (* eye-radius 0.35)
-              0 0 (* 2. pi))
-          (dc 'fill-style outline-color-str)
-          (dc 'fill))
+         (when eye-spec
+           (if (eq? eye-spec 'x)
+               (let* ([ew (* 1/10 w)]
+                      [eh (* 1/10 h)]
+                      [x0 (standard-fish-flip-x direction w (* 1/5 w) ew)]
+                      [x1 (+ x0 ew)]
+                      [y0 (* 2/3 h)]
+                      [y1 (+ y0 eh)])
+                 (dc 'stroke-style "black")
+                 (dc 'line-width 1)
+                 (dc 'begin-path)
+                 (dc 'move-to x0 y0)
+                 (dc 'line-to x1 y1)
+                 (dc 'move-to x0 y1)
+                 (dc 'line-to x1 y0)
+                 (dc 'stroke))
+               (begin
+                 (dc 'fill-style (color->string eye-spec))
+                 (dc 'begin-path)
+                 (dc 'ellipse (standard-fish-mirror-x direction w (* 1/4 w))
+                     (* 2/3 h)
+                     (* 1/20 w)
+                     (* 1/10 h)
+                     0 0 (* 2. pi))
+                 (dc 'fill))))
 
-        (dc 'restore))
-      w h))
+         (dc 'restore))
+       w h)))
 
 
 
@@ -2647,33 +2701,22 @@
 ;;; Explainers
 ;;;
 
-(define (explain p         
-                 #;#:border     [border     "Firebrick"]
-                 #;#:ascent     [ascent     "MediumSeaGreen"]
-                 #;#:baseline   [baseline   "DodgerBlue"]
-                 #;#:scale      [scale      5]
-                 #;#:line-width [line-width 1])
-  (define b  border)
-  (define a  ascent)
-  (define d  baseline)
-  (define s  scale)
-  (define lw line-width)  
+(define/key (explain p
+                     #:border     [b  "Firebrick"]
+                     #:ascent     [a  "MediumSeaGreen"]
+                     #:baseline   [d  "DodgerBlue"]
+                     #:scale      [s  5]
+                     #:line-width [lw 1])
   (explain-child* p p b a d s lw))
 
-(define (explain-child
-         p
-         ; #;#:border     [border     "Firebrick"]
-         ; #;#:ascent     [ascent     "MediumSeaGreen"]
-         ; #;#:baseline   [baseline   "DodgerBlue"]
-         ; #;#:scale      [scale      5]
-         ; #;#:line-width [line-width 1])
-         . child-path)
-  (define b "Firebrick")
-  (define a "MediumSeaGreen")
-  (define d "DodgerBlue")
-  (define s 5)
-  (define lw 1)
-  
+(define/key (explain-child
+             p
+             #:border     [b  "Firebrick"]
+             #:ascent     [a  "MediumSeaGreen"]
+             #:baseline   [d  "DodgerBlue"]
+             #:scale      [s  5]
+             #:line-width [lw 1]
+             . child-path)
   (scale
    (for/fold ([p p])
              ([c (in-list child-path)])
