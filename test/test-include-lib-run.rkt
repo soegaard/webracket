@@ -197,6 +197,72 @@
         (with-handlers ([exn:fail:filesystem? void])
           (delete-file audio-main)))))
 
+  ;; Regression: browser mode should select `web-pict/main-browser.rkt`.
+  (let ()
+    (define web-pict-browser
+      (make-temporary-file "webracket-include-lib-web-pict-browser-~a.rkt"))
+    (define web-pict-browser-base (path-replace-extension web-pict-browser #""))
+    (define browser-outputs
+      (list (path-add-extension web-pict-browser-base ".wat")
+            (path-add-extension web-pict-browser-base ".wasm")
+            (path-add-extension web-pict-browser-base ".js")
+            (path-add-extension web-pict-browser-base ".html")
+            (path-add-extension web-pict-browser-base ".wasm.map.sexp")))
+    (dynamic-wind
+      void
+      (lambda ()
+        (for ([p (in-list browser-outputs)])
+          (with-handlers ([exn:fail:filesystem? void])
+            (when (file-exists? p) (delete-file p))))
+        (call-with-output-file web-pict-browser
+          (lambda (out)
+            (displayln "(include-lib web-pict)" out)
+            (displayln "(displayln (pict-width (disk 10)))" out))
+          #:exists 'truncate/replace)
+        (let-values ([(browser-status browser-output)
+                      (run-browser (path->string web-pict-browser))])
+          (unless (zero? browser-status)
+            (error 'test-include-lib-run
+                   (format "web-pict browser include-lib repro failed (~a): ~a"
+                           browser-status browser-output)))
+          (unless (file-exists? (path-add-extension web-pict-browser-base ".html"))
+            (error 'test-include-lib-run
+                   (format "web-pict browser include-lib repro missing html output: ~a"
+                           web-pict-browser)))))
+      (lambda ()
+        (for ([p (in-list browser-outputs)])
+          (with-handlers ([exn:fail:filesystem? void])
+            (when (file-exists? p) (delete-file p))))
+        (with-handlers ([exn:fail:filesystem? void])
+          (delete-file web-pict-browser)))))
+
+  ;; Regression: internal implementation helpers should stay hidden in
+  ;; browser-mode `(include-lib web-pict)` consumers.
+  (let ()
+    (define web-pict-private
+      (make-temporary-file "webracket-include-lib-web-pict-private-~a.rkt"))
+    (dynamic-wind
+      void
+      (lambda ()
+        (call-with-output-file web-pict-private
+          (lambda (out)
+            (displayln "(include-lib web-pict)" out)
+            (displayln "(register-bitmap! \"demo\" #f)" out))
+          #:exists 'truncate/replace)
+        (let-values ([(private-status private-output)
+                      (run-browser (path->string web-pict-private))])
+          (when (zero? private-status)
+            (error 'test-include-lib-run
+                   "web-pict private helper unexpectedly leaked into include-lib"))
+          (unless (or (string-contains? private-output "register-bitmap!")
+                      (string-contains? private-output "unbound"))
+            (error 'test-include-lib-run
+                   (format "web-pict private helper failure missing expected text: ~a"
+                           private-output)))))
+      (lambda ()
+        (with-handlers ([exn:fail:filesystem? void])
+          (delete-file web-pict-private)))))
+
   )
 
 (module+ main
