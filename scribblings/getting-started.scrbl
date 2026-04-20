@@ -1,5 +1,6 @@
 #lang scribble/manual
-@(require scribble-tools)
+@(require scribble-tools
+          (only-in (lib "core.rkt" "webracket") include-lib))
 
 @title{Getting Started}
 
@@ -67,17 +68,17 @@ Hello World page in the browser.
 Create a file named @tt{hello.rkt} with the following contents:
 
 @filebox["hello.rkt"
-@racketblock[
-(include-lib web-easy)
+@racketmod[webracket
+  (include-lib web-easy)
 
-(define hello-world-app
-  (window
-    (container
-      (h1 "Hello World")
-      (text "Have a nice day."))))
+  (define hello-world-app
+    (window
+      (container
+        (h1 "Hello World")
+        (text "Have a nice day."))))
 
-(mount-renderer!
- (render hello-world-app))
+  (mount-renderer!
+   (render hello-world-app))
 ]]
 
 
@@ -189,5 +190,3 @@ A WebRacket program:
   @item{compiled to WebAssembly}
   @item{runs inside the browser}
   @item{interacts with the page through libraries and FFI}]
-
-

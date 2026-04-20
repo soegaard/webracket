@@ -147,6 +147,12 @@
     [else
      (jsx-unwrap value)]))
 
+;; jsx-attributes : [identifier any/c] ... -> external/raw
+;;   Build a JSXGraph option object from option-style pairs.
+;;   Kebab-case keys are rewritten to the camelCase spelling JSXGraph expects.
+(define-syntax-rule (jsx-attributes [key value] ...)
+  (jsx-attributes* (list (list 'key value) ...)))
+
 ;; jsx-element-call : any/c string? vector? -> any/c
 ;;   Call a GeometryElement method on a wrapped element.
 (define (jsx-element-call element method args)
@@ -322,7 +328,7 @@
    (jsx-board-create/raw (jsx-board-raw board)
                          "view3d"
                          (jsx-unpack-array parents)
-                         (or attributes (js-object (vector))))))
+                         (or attributes (jsx-attributes)))))
 
 ;; jsx-view3d-create : jsx-element? string? any/c [any/c #f] -> jsx-element?
 ;;   Create a 3D element inside a 3D view.
@@ -331,7 +337,7 @@
    (jsx-element-call view "create"
                      (vector element-type
                              (jsx-unpack-array parents)
-                             (or attributes (js-object (vector)))))))
+                             (or attributes (jsx-attributes))))))
 
 ;; jsx-view3d-create-point3d : jsx-element? any/c [any/c #f] -> jsx-element?
 ;;   Create a 3D point inside a 3D view.
@@ -1293,6 +1299,40 @@
     [else
      (raise-argument-error 'jsx-key->string "(or/c string? symbol?)" x)]))
 
+;; jsx-kebab->camel-string : string? -> string?
+;;   Convert kebab-case to camelCase for JSXGraph option keys.
+(define (jsx-kebab->camel-string s)
+  (let loop ([chars (string->list s)]
+             [capitalize? #f]
+             [acc '()])
+    (cond
+      [(null? chars)
+       (list->string (reverse acc))]
+      [else
+       (define ch (car chars))
+       (cond
+         [(char=? ch #\-)
+          (loop (cdr chars) #t acc)]
+         [capitalize?
+          (loop (cdr chars) #f (cons (char-upcase ch) acc))]
+         [else
+          (loop (cdr chars) #f (cons ch acc))])])))
+
+;; jsx-option-key->string : any/c -> string?
+;;   Convert an option key to the browser spelling.
+(define (jsx-option-key->string x)
+  (jsx-kebab->camel-string (jsx-key->string x)))
+
+;; jsx-attributes* : (listof (list/c symbol? any/c)) -> external/raw
+;;   Build a raw JSXGraph option object from key/value pairs.
+(define (jsx-attributes* attrs)
+  (js-object
+   (list->vector
+    (map (lambda (attr)
+           (vector (jsx-option-key->string (car attr))
+                   (cadr attr)))
+         attrs))))
+
 ;; jsx-parents : any/c ... -> vector?
 ;;   Pack parent values into the vector shape JSXGraph expects.
 (define (jsx-parents . xs)
@@ -1339,10 +1379,10 @@
 (define (jsx-create-board container-id [maybe-attributes #f])
   (define attrs
     (or maybe-attributes
-        (js-object
-         (vector (vector "boundingbox" #[-5 5 5 -5])
-                 (vector "axis" #t)
-                 (vector "keepaspectratio" #t)))))
+        (jsx-attributes
+         [boundingbox #[-5 5 5 -5]]
+         [axis #t]
+         [keepaspectratio #t])))
   (jsx-wrap-board (jsx-init-board/raw container-id attrs)))
 
 ;; jsx-create : jsx-board? (or/c string? symbol?) any/c [any/c #f] -> jsx-element?
@@ -1910,7 +1950,7 @@
 (define (jsx-curve-min-x curve)
   (jsx-curve-call curve "minX" (vector)))
 
-;; jsx-curve-move-to! : jsx-element? any/c -> any/c
+;; jsx-curve-move-to! : jsx-element? (or/c vector? list?) -> any/c
 ;;   Move a curve to a new location.
 (define (jsx-curve-move-to! curve where)
   (jsx-curve-call curve "moveTo" (vector where)))
@@ -3035,7 +3075,7 @@
 (define (jsx-element-update-renderer! element)
   (jsx-element-call/nullish element "updateRenderer" (vector)))
 
-;; jsx-element-update-visibility! : any/c any/c -> void?
+;; jsx-element-update-visibility! : any/c external/raw -> void?
 ;;   Update the visibility of a geometry element.
 (define (jsx-element-update-visibility! element parent-val)
   (jsx-element-call/nullish element "updateVisibility" (vector parent-val)))
@@ -3121,7 +3161,7 @@
 (define (jsx-element-draggable? element)
   (jsx-element-call element "draggable" (vector)))
 
-;; jsx-element-eval : any/c any/c -> any/c
+;; jsx-element-eval : any/c external/raw -> any/c
 ;;   Evaluate a geometry-element-specific value.
 (define (jsx-element-eval element val)
   (jsx-element-call element "eval" (vector val)))
@@ -3146,7 +3186,7 @@
 (define (jsx-element-generate-polynomial element)
   (jsx-element-call element "generatePolynomial" (vector)))
 
-;; jsx-element-handle-snap-to-grid! : any/c any/c any/c -> any/c
+;; jsx-element-handle-snap-to-grid! : any/c any/c external/raw -> any/c
 ;;   Handle snapping of a geometry element to the grid.
 (define (jsx-element-handle-snap-to-grid! element force from-parent)
   (jsx-element-call element "handleSnapToGrid" (vector force from-parent)))
@@ -3256,7 +3296,7 @@
   (js-jsx-board-add-resize-event-handlers! (jsx-board-raw board))
   (void))
 
-;; jsx-board-add-touch-event-handlers! : jsx-board? any/c -> void?
+;; jsx-board-add-touch-event-handlers! : jsx-board? boolean? -> void?
 ;;   Register touch event handlers.
 (define (jsx-board-add-touch-event-handlers! board apple-gestures)
   (js-jsx-board-add-touch-event-handlers! (jsx-board-raw board) apple-gestures)
@@ -3599,13 +3639,13 @@
   (js-jsx-board-update-csstransforms! (jsx-board-raw board))
   (void))
 
-;; jsx-board-update-elements! : jsx-board? any/c -> void?
+;; jsx-board-update-elements! : jsx-board? boolean? -> void?
 ;;   Update the board elements.
 (define (jsx-board-update-elements! board drag)
   (js-jsx-board-update-elements! (jsx-board-raw board) drag)
   (void))
 
-;; jsx-board-update-hooks! : jsx-board? any/c -> void?
+;; jsx-board-update-hooks! : jsx-board? string? -> void?
 ;;   Run hooked board callbacks.
 (define (jsx-board-update-hooks! board m)
   (js-jsx-board-update-hooks! (jsx-board-raw board) m)
@@ -3617,19 +3657,19 @@
   (js-jsx-board-update-conditions! (jsx-board-raw board))
   (void))
 
-;; jsx-board-suppress-default! : jsx-board? any/c -> void?
+;; jsx-board-suppress-default! : jsx-board? external/raw -> void?
 ;;   Suppress the default event action.
 (define (jsx-board-suppress-default! board e)
   (js-jsx-board-suppress-default! (jsx-board-raw board) e)
   (void))
 
-;; jsx-board-init-infobox! : jsx-board? any/c -> void?
+;; jsx-board-init-infobox! : jsx-board? external/raw -> void?
 ;;   Initialize the board infobox.
 (define (jsx-board-init-infobox! board attributes)
   (js-jsx-board-init-infobox! (jsx-board-raw board) attributes)
   (void))
 
-;; jsx-board-init-move-object! : jsx-board? any/c any/c any/c any/c -> void?
+;; jsx-board-init-move-object! : jsx-board? real? real? external/raw string? -> void?
 ;;   Prepare a board object move.
 (define (jsx-board-init-move-object! board x y evt type)
   (js-jsx-board-init-move-object! (jsx-board-raw board) x y evt type)
@@ -3699,13 +3739,13 @@
   (js-jsx-board-stop-intersection-observer! (jsx-board-raw board))
   (void))
 
-;; jsx-board-update-infobox! : jsx-board? any/c -> void?
+;; jsx-board-update-infobox! : jsx-board? jsx-element? -> void?
 ;;   Update the board infobox for a geometry element.
 (define (jsx-board-update-infobox! board el)
   (js-jsx-board-update-infobox! (jsx-board-raw board) (jsx-unwrap el))
   (void))
 
-;; jsx-board-set-id : jsx-board? any/c any/c -> string?
+;; jsx-board-set-id : jsx-board? jsx-element? (or/c string? symbol?) -> string?
 ;;   Compose a unique id for an element on the board.
 (define (jsx-board-set-id board obj type)
   (js-jsx-board-set-id (jsx-board-raw board) (jsx-unwrap obj) type))
