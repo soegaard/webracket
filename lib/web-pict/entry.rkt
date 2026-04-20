@@ -166,6 +166,7 @@
                 rounded-rectangle
                 filled-rounded-rectangle
                 bitmap
+                standard-fish
                 scale-to-fit
                 scale
                 flip-x
@@ -373,6 +374,7 @@
             rounded-rectangle
             filled-rounded-rectangle
             bitmap
+            standard-fish
             scale-to-fit
             scale
             flip-x

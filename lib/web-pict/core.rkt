@@ -2342,192 +2342,184 @@
 ;;; Standard Fish
 ;;;
 
-#;(define standard-fish 
-  (lambda (w h [direction 'left] [c "blue"] [ec #f] [mouth-open #f])
-    (define (ensure-color who value)
-      (cond
-        [(color? value)      value]
-        [(rgb-color? value) (color value)]
-        [(string? value)    (make-color value)]
-        [(list? value)      (apply make-color value)]
-        [else
-         (error who "expected a color, got: ~a" value)]))
+(define/key (standard-fish w h
+                           #:direction [direction 'left]
+                           #:color [c "blue"]
+                           #:eye-color [ec "black"]
+                           #:open-mouth [mouth-open #f])
+  (define (ensure-color who value)
+    (cond
+      [(color? value)      value]
+      [(rgb-color? value)  (color value)]
+      [(string? value)     (make-color value)]
+      [(list? value)       (apply make-color value)]
+      [else
+       (error who "expected a color, got: ~a" value)]))
 
-    (define (scale-color factor col)
-      (define normalized (ensure-color 'standard-fish col))
-      (define raw        (color-value normalized))
-      (cond
-        [(rgb-color? raw)
-         (define (scale-channel v)
-           (define scaled  (* (exact->inexact v) factor))
-           (define clipped (max 0 (min 255 scaled)))
-           (inexact->exact (round clipped)))
-         (color (rgb-color (scale-channel (rgb-color-r raw))
-                           (scale-channel (rgb-color-g raw))
-                           (scale-channel (rgb-color-b raw))
-                           (rgb-color-a raw)))]
-        [else normalized]))
+  (define (scale-color factor col)
+    (define normalized (ensure-color 'standard-fish col))
+    (define raw        (color-value normalized))
+    (cond
+      [(rgb-color? raw)
+       (define (scale-channel v)
+         (define scaled  (* (exact->inexact v) factor))
+         (define clipped (max 0 (min 255 scaled)))
+         (inexact->exact (round clipped)))
+       (color (rgb-color (scale-channel (rgb-color-r raw))
+                         (scale-channel (rgb-color-g raw))
+                         (scale-channel (rgb-color-b raw))
+                         (rgb-color-a raw)))]
+      [else normalized]))
 
-    (unless (memq direction '(left right))
-      (error 'standard-fish "expected direction 'left or 'right, got: ~a" direction))
+  (unless (real? w)
+    (raise-argument-error 'standard-fish "real?" w))
+  (unless (real? h)
+    (raise-argument-error 'standard-fish "real?" h))
+  (unless (memq direction '(left right))
+    (error 'standard-fish "expected direction 'left or 'right, got: ~a" direction))
 
-    (define base-color        (ensure-color 'standard-fish c))
-    (define outline-color     (scale-color 0.7  base-color))
-    (define fin-color         (scale-color 1.1  base-color))
-    (define tail-color        (scale-color 0.85 base-color))
-    (define body-color-str    (color->string base-color))
-    (define outline-color-str (color->string outline-color))
-    (define fin-color-str     (color->string fin-color))
-    (define tail-color-str    (color->string tail-color))
+  (define base-color        (ensure-color 'standard-fish c))
+  (define outline-color     (scale-color 0.7  base-color))
+  (define fin-color         (scale-color 1.1  base-color))
+  (define tail-color        (scale-color 0.85 base-color))
+  (define body-color-str    (color->string base-color))
+  (define outline-color-str (color->string outline-color))
+  (define fin-color-str     (color->string fin-color))
+  (define tail-color-str    (color->string tail-color))
 
-    (js-log (list body-color-str outline-color-str fin-color-str tail-color-str))
+  (define eye-spec
+    (cond
+      [(not ec) #f]
+      [else     (ensure-color 'standard-fish ec)]))
 
-    (define eye-spec
-      (cond
-        [(eq? ec 'x) 'x]
-        [(not ec)    #f]
-        [else        (ensure-color 'standard-fish ec)]))
+  (define (clamp-01 v)
+    (cond
+      [(<= v 0.0) 0.0]
+      [(>= v 1.0) 1.0]
+      [else v]))
 
-    (define (clamp-01 v)
-      (cond
-        [(<= v 0.0) 0.0]
-        [(>= v 1.0) 1.0]
-        [else v]))
+  (define mouth-open-amt
+    (cond
+      [(number? mouth-open) (clamp-01 (exact->inexact mouth-open))]
+      [mouth-open           1.0]
+      [else                 0.0]))
 
-    (define mouth-open-amt
-      (cond
-        [(number? mouth-open) (clamp-01 (exact->inexact mouth-open))]
-        [mouth-open           1.0]
-        [else                 0.0]))
+  (define mouth-open? (> mouth-open-amt 0.0))
 
-    (define mouth-open? (> mouth-open-amt 0.0))
-    
-    (dc (lambda (dc x y)
-          ; (define lw (max 1.0 (/ (max (exact->inexact w) (exact->inexact h)) 60.0)))
-          (define lw            3.0)
-          (define body-rx       (* w 0.45))
-          (define body-ry       (* h 0.42))
-          (define body-cx       body-rx)
-          (define body-cy       (* h 0.5))
-          (define tail-base-x   (* w 0.7))
-          (define tail-top-y    (* h 0.15))
-          (define tail-bottom-y (* h 0.85))
-          (define fin-top-y     (* h 0.18))
-          (define fin-bottom-y  (* h 0.82))
-          (define mouth-x       (* w 0.05))
-          (define mouth-length  (* w 0.18))
-          (define mouth-span    (* h 0.3 mouth-open-amt))
-          (define eye-radius    (* (min w h) 0.075))
-          (define eye-cx        (* w 0.27))
-          (define eye-cy        (* h 0.35))
-          
-          (dc 'save)
-          (dc 'translate x y)
-          (when (eq? direction 'right)
-            (dc 'translate w 0)
-            (dc 'scale -1 1))
+  (dc (lambda (dc x y)
+        (define lw            3.0)
+        (define body-rx       (* w 0.45))
+        (define body-ry       (* h 0.42))
+        (define body-cx       body-rx)
+        (define body-cy       (* h 0.5))
+        (define tail-base-x   (* w 0.7))
+        (define tail-top-y    (* h 0.15))
+        (define tail-bottom-y (* h 0.85))
+        (define fin-top-y     (* h 0.18))
+        (define fin-bottom-y  (* h 0.82))
+        (define mouth-x       (* w 0.05))
+        (define mouth-length  (* w 0.18))
+        (define mouth-span    (* h 0.3 mouth-open-amt))
+        (define eye-radius    (* (min w h) 0.075))
+        (define eye-cx        (* w 0.27))
+        (define eye-cy        (* h 0.35))
 
-          ;; Tail
+        (dc 'save)
+        (dc 'translate x y)
+        (when (eq? direction 'right)
+          (dc 'translate w 0)
+          (dc 'scale -1 1))
+
+        ;; Tail
+        (dc 'begin-path)
+        (dc 'move-to tail-base-x tail-top-y)
+        (dc 'line-to w (* h 0.5))
+        (dc 'line-to tail-base-x tail-bottom-y)
+        (dc 'close-path)
+        (dc 'fill-style tail-color-str)
+        (dc 'fill)
+        (dc 'stroke-style outline-color-str)
+        (dc 'line-width lw)
+        (dc 'stroke)
+
+        ;; Fins (top and bottom)
+        (define fin-width  (* w 0.22))
+        (define fin-offset (* w 0.45))
+        (define (draw-fin top?)
+          (define base-y (if top? fin-top-y fin-bottom-y))
+          (define tip-y  (if top? 0 h))
           (dc 'begin-path)
-          (dc 'move-to tail-base-x tail-top-y)
-          (dc 'line-to w (* h 0.5))
-          (dc 'line-to tail-base-x tail-bottom-y)
+          (dc 'move-to (- fin-offset (* fin-width 0.6)) base-y)
+          (dc 'line-to (+ fin-offset (* fin-width 0.4)) tip-y)
+          (dc 'line-to (+ fin-offset (* fin-width 0.8)) base-y)
           (dc 'close-path)
-          (dc 'fill-style tail-color-str)
+          (dc 'fill-style fin-color-str)
           (dc 'fill)
           (dc 'stroke-style outline-color-str)
           (dc 'line-width lw)
-          (dc 'stroke)
+          (dc 'stroke))
+        (draw-fin #t)
+        (draw-fin #f)
 
-          ;; Fins (top and bottom)
-          (define fin-width  (* w 0.22))
-          (define fin-offset (* w 0.45))
-          (define (draw-fin top?)
-            (define base-y (if top? fin-top-y fin-bottom-y))
-            (define tip-y  (if top? 0 h))
-            (dc 'begin-path)
-            (dc 'move-to (- fin-offset (* fin-width 0.6)) base-y)
-            (dc 'line-to (+ fin-offset (* fin-width 0.4)) tip-y)
-            (dc 'line-to (+ fin-offset (* fin-width 0.8)) base-y)
-            (dc 'close-path)
-            (dc 'fill-style fin-color-str)
-            (dc 'fill)
-            (dc 'stroke-style outline-color-str)
-            (dc 'line-width lw)
-            (dc 'stroke))
-          (draw-fin #t)
-          (draw-fin #f)
+        ;; Body
+        (dc 'begin-path)
+        (dc 'ellipse body-cx body-cy body-rx body-ry 0 0 (* 2. pi))
+        (dc 'fill-style body-color-str)
+        (dc 'fill)
+        (dc 'stroke-style outline-color-str)
+        (dc 'line-width lw)
+        (dc 'stroke)
 
-          ;; Body
+        ;; Accent stripes
+        (for-each
+         (lambda (offset)
+           (dc 'begin-path)
+           (dc 'move-to (+ (* w 0.38) offset) (* h 0.25))
+           (dc 'line-to (+ (* w 0.32) offset) (* h 0.75))
+           (dc 'stroke-style outline-color-str)
+           (dc 'line-width (/ lw 1.4))
+           (dc 'stroke))
+         (list 0.0 (* w 0.07) (* w 0.14)))
+
+        ;; Mouth
+        (dc 'stroke-style outline-color-str)
+        (dc 'line-width (/ lw 1.2))
+        (if mouth-open?
+            (begin
+              (dc 'begin-path)
+              (dc 'move-to mouth-x (- (* h 0.5) mouth-span))
+              (dc 'line-to (+ mouth-x mouth-length) (* h 0.5))
+              (dc 'line-to mouth-x (+ (* h 0.5) mouth-span))
+              (dc 'close-path)
+              (dc 'fill-style "white")
+              (dc 'fill)
+              (dc 'stroke))
+            (begin
+              (dc 'begin-path)
+              (dc 'move-to mouth-x (* h 0.5))
+              (dc 'line-to (+ mouth-x mouth-length) (* h 0.5))
+              (dc 'stroke)))
+
+        ;; Eye
+        (when eye-spec
           (dc 'begin-path)
-          (dc 'ellipse body-cx body-cy body-rx body-ry 0 0 (* 2. pi))
-          (dc 'fill-style body-color-str)
+          (dc 'ellipse eye-cx eye-cy (* eye-radius 1.1) (* eye-radius 1.1) 0 0 (* 2. pi))
+          (dc 'fill-style (color->string eye-spec))
           (dc 'fill)
           (dc 'stroke-style outline-color-str)
-          (dc 'line-width lw)
+          (dc 'line-width (/ lw 1.3))
           (dc 'stroke)
+          (dc 'begin-path)
+          (dc 'ellipse (+ eye-cx (* eye-radius 0.25))
+              (- eye-cy (* eye-radius 0.2))
+              (* eye-radius 0.35)
+              (* eye-radius 0.35)
+              0 0 (* 2. pi))
+          (dc 'fill-style outline-color-str)
+          (dc 'fill))
 
-          ;; Accent stripes
-          (for-each
-           (lambda (offset)
-             (dc 'begin-path)
-             (dc 'move-to (+ (* w 0.38) offset) (* h 0.25))
-             (dc 'line-to (+ (* w 0.32) offset) (* h 0.75))
-             (dc 'stroke-style outline-color-str)
-             (dc 'line-width (/ lw 1.4))
-             (dc 'stroke))
-           (list 0.0 (* w 0.07) (* w 0.14)))
-
-          ;; Mouth
-          (dc 'stroke-style outline-color-str)
-          (dc 'line-width (/ lw 1.2))
-          (if mouth-open?
-              (begin
-                (dc 'begin-path)
-                (dc 'move-to mouth-x (- (* h 0.5) mouth-span))
-                (dc 'line-to (+ mouth-x mouth-length) (* h 0.5))
-                (dc 'line-to mouth-x (+ (* h 0.5) mouth-span))
-                (dc 'close-path)
-                (dc 'fill-style "white")
-                (dc 'fill)
-                (dc 'stroke))
-              (begin
-                (dc 'begin-path)
-                (dc 'move-to mouth-x (* h 0.5))
-                (dc 'line-to (+ mouth-x mouth-length) (* h 0.5))
-                (dc 'stroke)))
-
-          ;; Eye
-          #;(when eye-spec
-            (if (eq? eye-spec 'x)
-                (let ([diag (* eye-radius 0.9)])
-                  (dc 'begin-path)
-                  (dc 'move-to (- eye-cx diag) (- eye-cy diag))
-                  (dc 'line-to (+ eye-cx diag) (+ eye-cy diag))
-                  (dc 'move-to (- eye-cx diag) (+ eye-cy diag))
-                  (dc 'line-to (+ eye-cx diag) (- eye-cy diag))
-                  (dc 'stroke-style outline-color-str)
-                  (dc 'line-width (/ lw 1.1))
-                  (dc 'stroke))
-                (begin
-                  (dc 'begin-path)
-                  (dc 'ellipse eye-cx eye-cy (* eye-radius 1.1) (* eye-radius 1.1) 0 0 (* 2. pi))
-                  (dc 'fill-style (color->string eye-spec))
-                  (dc 'fill)
-                  (dc 'stroke-style outline-color-str)
-                  (dc 'line-width (/ lw 1.3))
-                  (dc 'stroke)
-                  (dc 'begin-path)
-                  (dc 'ellipse (+ eye-cx (* eye-radius 0.25))
-                      (- eye-cy (* eye-radius 0.2))
-                      (* eye-radius 0.35)
-                      (* eye-radius 0.35)
-                      0 0 (* 2. pi))
-                  (dc 'fill-style outline-color-str)
-                  (dc 'fill))))
-
-          (dc 'restore))
-        w h)))
+        (dc 'restore))
+      w h))
 
 
 
