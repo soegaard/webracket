@@ -13,6 +13,7 @@ if [ "${SMOKE_SKIP_COMPILE:-0}" = "1" ]; then
 else
   "$SCRIPT_DIR/run-browser-smoke-all-compile.sh"
   "$SCRIPT_DIR/run-browser-parity-all-compile.sh"
+  "$SCRIPT_DIR/run-browser-solar-showcase-compile.sh"
   "$SCRIPT_DIR/run-browser-theme-showcase-compile.sh"
 fi
 

@@ -93,8 +93,8 @@ test-browser-link-contract.html	77
 test-browser-card-variants-contract.html	77
 test-browser-table-align-contract.html	76
 test-browser-dropdown-keyboard-deep.html	72
-test-browser-scrollspy-contract.html	70
-test-browser-parity-scrollspy-contract.html	70
+test-browser-scrollspy-contract.html	191
+test-browser-parity-scrollspy-contract.html	196
 test-browser-divider-contract.html	67
-test-browser-parity-scrollspy-keyboard-deep.html	53
-test-browser-scrollspy-keyboard-deep.html	52
+test-browser-parity-scrollspy-keyboard-deep.html	145
+test-browser-scrollspy-keyboard-deep.html	180
