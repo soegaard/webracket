@@ -25,7 +25,6 @@
 (define canvas-name "pict-playground-canvas")
 (define canvas-width 720.)
 (define canvas-height 480.)
-(define rotation-center-dot-radius 5.)
 
 (define @preset (@ "Fish"))
 (define @direction (@ "left"))
@@ -62,16 +61,6 @@
   (dc 'fill-style "#8aa0b7")
   (dc 'font "12px Georgia")
   (dc 'fill-text "web-easy hosts the canvas; web-pict renders the scene." 18. 26.))
-
-;; draw-rotation-center-dot! : any/c real? real? -> void?
-;;   Draw a temporary marker for the current rotation center.
-(define (draw-rotation-center-dot! dc cx cy)
-  (dc 'save)
-  (dc 'fill-style "red")
-  (dc 'begin-path)
-  (dc 'arc cx cy rotation-center-dot-radius 0. (* 2. pi))
-  (dc 'fill)
-  (dc 'restore))
 
 ;; string->direction : string? -> symbol?
 ;;   Normalize a direction choice to the symbol that `standard-fish` expects.
@@ -230,7 +219,6 @@
      (define y  (- rotation-cy anchor-y))
      (fill-background! dc)
      (draw-pict p dc x y)
-     (draw-rotation-center-dot! dc rotation-cx rotation-cy)
      (:= @status
          (format "~a preset, ~ax~a pict, scale ~a%, rotation ~a°"
                  (obs-peek @preset)

@@ -73,6 +73,9 @@ EOF
     7gui-circle
     7gui-circle-extended
   )
+  pict_examples=(
+    pict-playground
+  )
   machine_written_examples=(
     audio-oscillator
     audio-buffer-playback
@@ -130,6 +133,17 @@ EOF
             <h3>Fact box</h3>
             <p>7 GUI is a small benchmark suite that helps compare how different UI libraries handle common interaction patterns. The seven tasks are intentionally simple, but they reveal how much ceremony a toolkit needs for state, validation, layout, and updates.</p>
           </aside>
+        </div>
+      </section>
+      <section class="section">
+        <h2>Pict</h2>
+        <p>Examples that combine <code>web-easy</code> controls with <code>web-pict</code> canvas rendering.</p>
+        <div class="section-grid">
+          <ul>
+EOF
+  emit_example_items "${pict_examples[@]}"
+  cat <<'EOF'
+          </ul>
         </div>
       </section>
       <section class="section">
