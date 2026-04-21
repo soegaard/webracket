@@ -1836,12 +1836,12 @@
                        (field $count    (mut i32)))))        ;; number of key/value pairs currently stored
 
           (type $VariableReference ; opaque value returned by #%variable-reference
-                ; TODO: This is a dummy implementation in order to get code from the
-                ;       expansion of `for`-loops running.
+                ; Minimal payload needed by variable-reference predicates.
                 (sub $Heap
                      (struct
                        (field $hash (mut i32))
-                       ; todo: add fields
+                       (field $constant?   (ref eq))
+                       (field $from-unsafe? (ref eq))
                        )))
           (type $External 
             (sub $Heap
@@ -37351,22 +37351,21 @@
         (func $namespace? (type $Prim1)
               ,@(make-predicate-body '$Namespace))
         
-        ; We need dummy implementations of `#%variable-reference` and `variable-reference-from-unsafe?`
-        ; in order to run code from an expand `for`.
-
-        ; The form `#%variable-reference` can occur in a fully expanded syntax,
-        ; so it is handled elsewhere (for now, we only handle the case `(#%variable-reference)`.
+        ; The form `#%variable-reference` can occur in fully expanded syntax,
+        ; so the compiler builds $VariableReference instances directly.
 
         ; This function determines if the variable stems from a module compiled in unsafe mode or not.
         (func $variable-reference-from-unsafe? (type $Prim1)
               (param  $varref (ref eq))
               (result (ref eq))
-              (global.get $true))
+              (struct.get $VariableReference $from-unsafe?
+                          (ref.cast (ref $VariableReference) (local.get $varref))))
 
         (func $variable-reference-constant? (type $Prim1)
               (param $varref (ref eq))
               (result (ref eq))
-              (global.get $true))  ; todo: simple implementation for now.
+              (struct.get $VariableReference $constant?
+                          (ref.cast (ref $VariableReference) (local.get $varref))))
 
         (func $raise-unbound-variable-reference (type $Prim1)
               (param $name (ref eq))

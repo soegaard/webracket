@@ -5291,9 +5291,15 @@
      ; ',#f ; use-mapping? TODO: this should be #t but that isn't implemented yet in runtime
      ]
     [(variable-reference ,s ,vrx)
-     ; todo: dummy for now
-     `(struct.new $VariableReference 
-                  (i32.const 0))] ; hash
+     (define-values (constant? from-unsafe?)
+       (nanopass-case (LANF+closure VariableReferenceId) vrx
+         [(anonymous ,s0)        (values #f #f)]
+         [(non-top ,s0 ,x0)      (values #t #f)]
+         [(top ,s0 ,x0)          (values #f #f)]))
+     `(struct.new $VariableReference
+                  (i32.const 0)
+                  ,(Imm constant?)
+                  ,(Imm from-unsafe?))] ; hash, constant?, from-unsafe?
     [(quote-syntax ,s ,d)
      (raise-syntax-error 'generate-code "quote-syntax gone at this point")])
 
