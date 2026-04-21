@@ -841,65 +841,24 @@
   (append
    (make-inline-specs/by-name
     ;; Variadic
+    ;; - names
     '(list*
-      symbol<?
-      keyword<?
-      string=?
-      string<?
-      string<=?
-      string>?
-      string>=?
-      string-ci=?
-      string-ci<?
-      string-ci<=?
-      string-ci>?
-      string-ci>=?
-      +
-      *
-      -
-      /
-      unsafe-fx+
-      unsafe-fx*
-      unsafe-fx-
-      unsafe-fxand
-      unsafe-fxior
-      unsafe-fxxor
-      apply
-      vector-count
-      map
-      andmap
-      ormap
-      append-map
-      count
-      for-each
-      foldl
-      foldr
-      vector-map
-      vector-map!
-      filter-map
-      fx-/wraparound
-      unsafe-fx-/wraparound
-      min
-      max
-      flmin
-      flmax
-      unsafe-flmin
-      unsafe-flmax
-      fxmin
-      fxmax
-      unsafe-fxmin
-      unsafe-fxmax
-      gcd
-      lcm
-      make-instance
-      instance-set-variable-value!
-      instance-variable-value
-      append*
-      cartesian-product
-      string-append-immutable
-      string-append*
-      bytes-append*)
+      symbol<? keyword<?
+      string=? string<?  string<=?  string>?  string>=?  string-ci=?
+      string-ci<?  string-ci<=?  string-ci>?  string-ci>=?
+      + * - /
+      fx-/wraparound     
+      unsafe-fx+ unsafe-fx* unsafe-fx- unsafe-fx-/wraparound
+      unsafe-fxand unsafe-fxior unsafe-fxxor       
+      unsafe-flmin unsafe-flmax unsafe-fxmin unsafe-fxmax            
+      append* apply cartesian-product vector-count map andmap ormap
+      append-map count for-each foldl foldr vector-map vector-map! filter-map      
+      min max flmin flmax fxmin fxmax gcd lcm
+      make-instance instance-set-variable-value! instance-variable-value
+      string-append-immutable string-append* bytes-append*)
+    ; - kind
     'variadic
+    ; - min-proc
     (λ (name)
       (case name
         [(+ * unsafe-fx+ unsafe-fx* cartesian-product string-append-immutable gcd lcm) 0]
@@ -915,7 +874,9 @@
         [(foldl foldr instance-set-variable-value!) 3]
         [(make-instance) 1]
         [else 2]))
+    ; - max-proc
     (λ (_name) #f)
+    ; - rest-start-proc
     (λ (name)
       (case name
         [(apply list*) 1]
@@ -1133,11 +1094,11 @@
        string-join
        string->bytes/utf-8
        bytes->path
-       datum->correlated
-       correlated-property
-       inclusive-range
-       inclusive-range-proc
-       struct->list
+         datum->correlated
+         correlated-property
+         inclusive-range
+         inclusive-range-proc
+         struct->list
        make-struct-type
        make-struct-field-accessor
        make-struct-field-mutator
@@ -1160,9 +1121,10 @@
          [else 1]))
      (λ (name)
        (case name
-         [(raise procedure-arity-includes? number->string
+         [(raise number->string
                  struct-type-property-predicate-procedure? hash->list hash-keys
                  hash-values string-join bytes->path) 2]
+         [(procedure-arity-includes?) 3]
          [(string->bytes/utf-8) 4]
          [(hash-for-each hash-map hash-map/copy) 3]
          [(instantiate-linklet) 4]
@@ -7061,6 +7023,10 @@
           
           (equal? (run '(string=? (make-string 1 #\a) (make-string 1 #\b))) #f)
           (equal? (run '(string=? (make-string 2 #\a) (make-string 2 #\b))) #f)))
+  (define (test-procedure-arity)
+    (and (equal? (run '(procedure-arity-includes? (lambda (x [y 0]) x) 1)) #t)
+         (equal? (run '(procedure-arity-includes? (lambda (x) x) 1 #f)) #t)
+         (equal? (run '(procedure-arity-includes? (lambda (x) x) 2)) #f)))
   (define (test-assignments)
     (and  (equal? (run '(let ([x 11]) (begin (set! x 12) x)))        12)
           (equal? (run '(let ([x 12]) (begin (set! x (+ x 1)) x)))   13)
@@ -7334,6 +7300,7 @@
         (list "Assignments"                   (test-assignments))      
         (list "Byte strings"                  (test-bytes))
         (list "Strings"                       (test-strings))
+        (list "Procedure arity"               (test-procedure-arity))
         (list "Multiple Values"               (test-multiple-values))
         ;; Tests below require the expander to be present.
         "-- Derived Constructs --"
