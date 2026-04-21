@@ -2231,6 +2231,24 @@
                    (else
                     (local.get $v))))
 
+         (func $expect-n-values
+               (param $v (ref eq))
+               (param $n i32)
+               (result (ref $Values))
+               (if (result (ref $Values))
+                   (ref.test (ref $Values) (local.get $v))
+                   (then
+                    (if (i32.eqz
+                         (i32.eq
+                          (array.len (ref.cast (ref $Values) (local.get $v)))
+                          (local.get $n)))
+                        (then (call $raise-wrong-number-of-values-received)
+                              (unreachable)))
+                    (ref.cast (ref $Values) (local.get $v)))
+                   (else
+                    (call $raise-wrong-number-of-values-received)
+                    (unreachable))))
+
          ;; Convert a host exception caught at an FFI boundary into a
          ;; regular WebRacket exn:fail so `with-handlers` can catch it.
          (func $raise-ffi-host-exception

@@ -6270,6 +6270,7 @@
                                                           (global.get $undefined))))
                         ,(Expr e x0 <stat>))]
        [(list x ...)  (define vals (emit-fresh-local 'vals '(ref eq) '(global.get $undefined)))
+                      (define mv   (emit-fresh-local 'mv '(ref $Values)))
                       `(block
                         #;,@(for/list ([x0 x])
                               `(global.set ,($$ (variable-id x0)) 
@@ -6277,10 +6278,10 @@
                                                      (struct.new $Boxed
                                                                  (global.get $false)))))
                         ,(Expr e vals <stat>)
+                        (local.set ,(LocalVar mv) (call $expect-n-values ,(Reference vals) (i32.const ,(length x))))
                         ,@(for/list ([x0 x] [i (in-naturals)])
                             (Store! x0 `(array.get $Values
-                                                   (ref.cast (ref $Values)
-                                                             (local.get ,($$ (variable-id vals))))
+                                                   ,(Reference mv)
                                                    (i32.const ,i)))))])]
     [(define-syntaxes ,s (,x ...) ,e)
      (error 'generate-code "TODO define-syntaxes")])
