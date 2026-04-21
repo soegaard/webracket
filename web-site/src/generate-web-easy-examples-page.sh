@@ -56,13 +56,13 @@ EOF
     add-two-numbers
     todo-lists
   )
-  query_examples=(
-    query-helpers
-    query-counter
-    query-toggle
-    query-delegate-list
-    query-once
-    query-trigger
+  rquery_examples=(
+    rquery-helpers
+    rquery-counter
+    rquery-toggle
+    rquery-delegate-list
+    rquery-once
+    rquery-trigger
   )
   seven_gui_examples=(
     7gui-counter
@@ -110,12 +110,12 @@ EOF
         </div>
       </section>
       <section class="section">
-        <h2>Query Examples</h2>
-        <p>Examples that show the <code>query</code> helpers, from <code>.text!</code>, <code>.val!</code>, and <code>.data!</code> to <code>.on</code>, <code>.off</code>, <code>.once</code>, <code>.trigger</code>, and <code>.on-delegate</code> for selector-based event wiring.</p>
+        <h2>RQuery Examples</h2>
+        <p>Examples that show the <code>rquery</code> helpers, from <code>.text!</code>, <code>.val!</code>, and <code>.data!</code> to <code>.on</code>, <code>.off</code>, <code>.once</code>, <code>.trigger</code>, and <code>.on-delegate</code> for selector-based event wiring.</p>
         <div class="section-grid">
           <ul>
 EOF
-  emit_example_items "${query_examples[@]}"
+  emit_example_items "${rquery_examples[@]}"
   cat <<'EOF'
           </ul>
         </div>
