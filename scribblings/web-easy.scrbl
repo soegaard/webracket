@@ -113,7 +113,7 @@ We begin with a Hello World program.
 
 The simplest version is:
 
-@racketblock[
+@racketmod[webracket
 (define hello-world-app-1
   (window
    (h1 "Hello World")
@@ -128,7 +128,7 @@ browser window. Thus the header and text have no side margins.
 
 To restrict the width, we can put the contents in a container.
 
-@racketblock[
+@racketmod[webracket
 (define hello-world-app-2
   (window
    (container
@@ -157,7 +157,7 @@ of the text.
 @margin-note{Currently our poor-man's keyword arguments need to be
 last in a call.}
 
-@racketblock[
+@racketmod[webracket
 (define hello-world-app-3
   (window
    (container ; #:attrs '()  ; `((style ,my-container-style))
@@ -167,7 +167,7 @@ last in a call.}
 
 Similarly, we can change the default width for a container.
 
-@racketblock[
+@racketmod[webracket
 (define my-container-style
   "  width: min(600px, calc(100vw - 28px));")
              
@@ -175,7 +175,7 @@ Similarly, we can change the default width for a container.
   (window
    (container 
       (h1 "Hello World")
-      (text "Have a nice day.")
+    (text "Have a nice day.")
     #:attrs `((style ,my-container-style)))))]
 
 
@@ -187,7 +187,7 @@ the user interface needs to update reflecting these changes.
 
 In @racketid[web-easy] state is represented via @em{observables}.
 
-@racketblock[
+@racketmod[webracket
 (define |@count| (|@| 0))
 
 (define a-single-counter-app
@@ -217,7 +217,7 @@ To sum up, @racket[~>] is used to read (and map) the value of an observable,
 and @racket[<~] is used to update. As an alternative to these
 short names, one can use @racket[obs-map] and @racket[obs-update!].
 
-@racketblock[
+@racketmod[webracket
 (define |@count| (|@| 0))
 
 (define a-single-counter-app-2
@@ -235,7 +235,7 @@ short names, one can use @racket[obs-map] and @racket[obs-update!].
 Converting a single counter into a reusable counter component
 is straight forward.
 
-@racketblock[
+@racketmod[webracket
 (define (counter |@count| action)
   (hpanel
    (button "-" (λ () (action sub1)))
@@ -257,7 +257,7 @@ is straight forward.
 @subsection{Dynamic Counters}
 
 
-@racketblock[
+@racketmod[webracket
 (define |@counters| (|@| '((0 . 0))))
 
 (define (append-counter counts)
@@ -376,7 +376,7 @@ of one or more observables.
 For example, this produces an observable whose value is always a list of
 the current values of three source observables:
 
-@racketblock[
+@racketmod[webracket
 (obs-combine list |@circles| |@selected-circle| |@diam|)]
 }
 
@@ -401,14 +401,14 @@ observable arguments.
 
 Example:
 
-@racketblock[
+@racketmod[webracket
 (obs-watch! |@circles| |@selected-circle| |@diam|
   (λ (circles selected-circle diam)
     (redraw-canvas! circles)))]
 
 This is equivalent to:
 
-@racketblock[
+@racketmod[webracket
 (obs-observe! (obs-combine list |@circles| |@selected-circle| |@diam|)
   (λ (state)
     (match state
@@ -459,7 +459,7 @@ fields such as @tt{offsetX}, @tt{offsetY}, @tt{clientX}, and @tt{clientY}.
 
 Example:
 
-@racketblock[
+@racketmod[webracket
 (Input #:on-keydown
         (lambda (evt)
           (define key (js-ref evt "key"))
@@ -511,7 +511,7 @@ event object passed to primitive @racket[#:on-*] callbacks:
 
 Example:
 
-@racketblock[
+@racketmod[webracket
 (Canvas #:on-contextmenu
         (lambda (evt)
           (prevent-default! evt)
@@ -577,7 +577,7 @@ include:
 Prefer ordinary views, callbacks, and observables when the behavior can
 already be expressed declaratively.
 
-@racketblock[
+@racketmod[webracket
 (define |@input| (|@| #f))
 
 (vpanel
@@ -607,7 +607,7 @@ when you need lower-level control over exactly when or how focus is moved.
 Components that forward root attributes can also forward @racket[#:ref]
 and generic bubbling DOM event keywords such as @racket[#:on-keydown].
 
-@racketblock[
+@racketmod[webracket
 (Input #:autofocus #t)
 
 (Div #:tabindex 0
@@ -1013,7 +1013,7 @@ A common pattern is:
 
 @subsection{Theme Example}
 
-@racketblock[
+@racketmod[webracket
 (code:comment "Define two named themes that share the same core CSS.")
 (define light-theme
   (theme 'light
@@ -1111,7 +1111,7 @@ built-in semantic/compound constructors are implemented with
 @racket[html-element-children], and internal
 @racket[observable-element-children] remain on @racket[define/key].
 
-@racketblock[
+@racketmod[webracket
 (define/component Example
   #:root-tag 'div
   #:rest children
@@ -1140,7 +1140,7 @@ Attribute-list entries in @racket[#:attrs] must match @racket[html-attr-entry/c]
 
 Example:
 
-@racketblock[
+@racketmod[webracket
 (H1 "Title"
     #:attrs '((id "hero")
               (title "Welcome")
@@ -1153,7 +1153,7 @@ element-specific + @tt{data-*}/@tt{aria-*}).
 
 Example:
 
-@racketblock[
+@racketmod[webracket
 (H1 "Title"
     #:id "hero"
     #:lang "en"
@@ -1167,7 +1167,7 @@ Primitive DOM event callbacks receive the raw browser event object.
 
 Example with direct keywords and @racket[#:attrs]:
 
-@racketblock[
+@racketmod[webracket
 (window
  (container
   (H1 "Profile"
@@ -1676,7 +1676,7 @@ Element-specific keyword attributes: @tt{@(attrs->keyword-string (attrs-for-tags
 
 Example:
 
-@racketblock[
+@racketmod[webracket
 (Form
  #:action "/submit"
  #:method "post"
@@ -2128,7 +2128,7 @@ This embeds script-driven drawing content and may include fallback child content
 Primitive event callbacks work directly on @racket[Canvas].
 For example:
 
-@racketblock[
+@racketmod[webracket
 (Canvas
  #:width 400
  #:height 300
@@ -3185,7 +3185,7 @@ that wrapper's top-left corner.
 
 Example:
 
-@racketblock[
+@racketmod[webracket
 (Div #:style "position: relative;"
      (Canvas #:id "circle-canvas")
      (menu-popup
