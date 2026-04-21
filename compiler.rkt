@@ -750,9 +750,37 @@
   (and (<= min n)
        (or (not max) (<= n max))))
 
+;; primitive-inline-spec-covers-arity? : primitive-inline-spec? arity? -> boolean?
+;;   Check whether spec covers the full primitive arity shape.
+;;   That is, the inline spec must include the entire set of argument counts
+;;   that the primitive may legally receive.
+(define (primitive-inline-spec-covers-arity? spec arity)
+  (cond
+    [(arity-at-least? arity)
+     (and (not (primitive-inline-spec-max spec))
+          (<= (primitive-inline-spec-min spec)
+              (arity-at-least-value arity)))]
+    [(integer? arity)
+     (primitive-inline-spec-covers? spec arity)]
+    [(list? arity)
+     (for/and ([sub (in-list arity)])
+       (primitive-inline-spec-covers-arity? spec sub))]
+    [else
+     #t]))
+
 (define primitive-inline-priminfo-skip-set
   (seteq 'fx-/wraparound
          'unsafe-fx-/wraparound
+         'get-output-bytes
+         'unsafe-fx=
+         'unsafe-fx<
+         'unsafe-fx>
+         'unsafe-fx<=
+         'unsafe-fx>=
+         'unsafe-fxand
+         'unsafe-fxior
+         'unsafe-fxxor
+         'apply
          'peek-bytes
          'peek-string))
 
@@ -805,7 +833,12 @@
         (error who
                "spec arity for ~a is not accepted by priminfo: ~a"
                name
-               n))))
+               n)))
+    (unless (primitive-inline-spec-covers-arity? spec desc-arity)
+      (error who
+             "spec arity for ~a does not cover priminfo arity: ~a"
+             name
+             desc-arity)))
   (void))
 
 ;; build-primitive-inline-spec-table : (listof primitive-inline-spec?) -> hasheq?
@@ -1187,7 +1220,19 @@
   (check-exn exn:fail?
              (λ ()
                (primitive-inline-spec-valid?
-                (primitive-inline-spec 'demo 'optional/default 1 2 #f #f)))))
+                (primitive-inline-spec 'demo 'optional/default 1 2 #f #f))))
+  (check-exn exn:fail?
+             (λ ()
+               (primitive-inline-spec-valid?
+                (primitive-inline-spec 'procedure-arity-includes? 'fixed 2 2 #f #f))))
+  (check-false
+   (primitive-inline-spec-covers-arity?
+    (primitive-inline-spec 'demo 'fixed 2 2 #f #f)
+    (arity-at-least 1)))
+  (check-true
+   (primitive-inline-spec-covers-arity?
+    (primitive-inline-spec 'demo 'variadic 1 #f 1 #f)
+    (arity-at-least 1))))
 
 ;;;
 ;;; Primitives
