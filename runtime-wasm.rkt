@@ -128,6 +128,21 @@
                  #:when name)
         name))
 
+    (define (list->eq-set xs)
+      (define ht (make-hasheq))
+      (eq-set-add-all! ht xs)
+      ht)
+
+    (define (eq-set-add-all! ht xs)
+      (for ([x (in-list xs)])
+        (hash-set! ht x #t)))
+
+    (define (eq-set-keys ht)
+      (hash-keys ht))
+
+    (define (eq-set-keys/sorted ht)
+      (sort (hash-keys ht) symbol<?))
+
     (define (analyze-runtime-primitives module)
       (define (primitive-global-init-form? x)
         (and (pair? x)
@@ -136,17 +151,20 @@
              (symbol? (cadr x))
              (hash-ref primitive-global->symbol (cadr x) #f)))
       (define (walk-symbol-refs x symbol->value)
-        (cond
-          [(primitive-global-init-form? x) '()]
-          [(symbol? x)
-           (define v (hash-ref symbol->value x #f))
-           (if v
-               (list (if (eq? v #t) x v))
-               '())]
-          [(pair? x)
-           (append (walk-symbol-refs (car x) symbol->value)
-                   (walk-symbol-refs (cdr x) symbol->value))]
-          [else '()]))
+        (define refs (make-hasheq))
+        (define (walk x)
+          (cond
+            [(primitive-global-init-form? x) (void)]
+            [(symbol? x)
+             (define v (hash-ref symbol->value x #f))
+             (when v
+               (hash-set! refs (if (eq? v #t) x v) #t))]
+            [(pair? x)
+             (walk (car x))
+             (walk (cdr x))]
+            [else (void)]))
+        (walk x)
+        (eq-set-keys refs))
       (define primitive-ref->symbol
         (let ([ht (make-hasheq)])
           (for ([(k v) (in-hash primitive-func->symbol)])
@@ -179,17 +197,13 @@
         (define name (module-func-name form))
         (when name
           (define refs
-            (for/list ([sym (in-list (remove-duplicates
-                                      (walk-symbol-refs (cddr form) primitive-ref->symbol)))]
+            (for/list ([sym (in-list (walk-symbol-refs (cddr form) primitive-ref->symbol))]
                        #:when (not (eq? sym name)))
               sym))
           (hash-set! func->primitive-refs name refs)
           (hash-set! func->func-refs
                      name
-                     (remove-duplicates
-                      (walk-symbol-refs (cddr form) named-funcs-ht)))))
-      (define primitive-func-names
-        (hash-keys primitive-func->symbol))
+                     (walk-symbol-refs (cddr form) named-funcs-ht))))
       (define primitive-func-name?
         (λ (name) (and (symbol? name) (hash-ref primitive-func->symbol name #f))))
       (define exported-runtime-functions
@@ -199,97 +213,106 @@
                                (pair? (func-export-names form))
                                (not (primitive-func-name? name))))
           name))
+      (define (collect-nonprimitive-function-refs x)
+        (define refs (make-hasheq))
+        (define (walk x)
+          (cond
+            [(symbol? x)
+             (when (and (hash-ref named-funcs-ht x #f)
+                        (not (primitive-func-name? x)))
+               (hash-set! refs x #t))]
+            [(pair? x)
+             (walk (car x))
+             (walk (cdr x))]
+            [else (void)]))
+        (walk x)
+        (eq-set-keys refs))
       (define module-root-funcs
-        (remove-duplicates
-         (append exported-runtime-functions
-                 (append*
-                  (for/list ([form (in-list (cdr module))]
-                             #:unless (or (module-func-name form)
-                                          (and (pair? form)
-                                               (eq? (car form) 'elem)
-                                               (pair? (cdr form))
-                                               (eq? (cadr form) 'declare)
-                                               (pair? (cddr form))
-                                               (eq? (caddr form) 'funcref))))
-                    (let loop ([x form])
-                      (cond
-                        [(symbol? x)
-                         (if (and (hash-ref named-funcs-ht x #f)
-                                  (not (primitive-func-name? x)))
-                             (list x)
-                             '())]
-                        [(pair? x)
-                         (append (loop (car x))
-                                 (loop (cdr x)))]
-                        [else '()])))))))
+        (let ([roots (list->eq-set exported-runtime-functions)])
+          (for ([form (in-list (cdr module))]
+                #:unless (or (module-func-name form)
+                             (and (pair? form)
+                                  (eq? (car form) 'elem)
+                                  (pair? (cdr form))
+                                  (eq? (cadr form) 'declare)
+                                  (pair? (cddr form))
+                                  (eq? (caddr form) 'funcref))))
+            (eq-set-add-all! roots (collect-nonprimitive-function-refs form)))
+          (eq-set-keys roots)))
       (define elem-root-functions
-        (remove-duplicates
-         (append*
-          (for/list ([form (in-list (cdr module))]
-                     #:when (and (pair? form)
-                                 (eq? (car form) 'elem)
-                                 (pair? (cdr form))
-                                 (eq? (cadr form) 'declare)
-                                 (pair? (cddr form))
-                                 (eq? (caddr form) 'funcref)))
-            (filter (λ (name) (not (primitive-func-name? name)))
-                    (walk-symbol-refs form named-funcs-ht))))))
+        (let ([roots (make-hasheq)])
+          (for ([form (in-list (cdr module))]
+                #:when (and (pair? form)
+                            (eq? (car form) 'elem)
+                            (pair? (cdr form))
+                            (eq? (cadr form) 'declare)
+                            (pair? (cddr form))
+                            (eq? (caddr form) 'funcref)))
+            (eq-set-add-all! roots
+                             (filter (λ (name) (not (primitive-func-name? name)))
+                                     (walk-symbol-refs form named-funcs-ht))))
+          (eq-set-keys roots)))
       (define (reachable-runtime-funcs roots)
-        (let loop ([pending roots] [seen '()])
+        (let loop ([pending roots] [seen (make-hasheq)])
           (match pending
-            ['() (remove-duplicates seen)]
+            ['() (eq-set-keys seen)]
             [(cons name rest)
              (cond
-               [(memq name seen)
+               [(hash-ref seen name #f)
                 (loop rest seen)]
                [(primitive-func-name? name)
                 (loop rest seen)]
                [else
+                (hash-set! seen name #t)
                 (loop (append (hash-ref func->func-refs name '()) rest)
-                      (cons name seen))])])))
+                      seen)])])))
       (define runtime-funcs (reachable-runtime-funcs module-root-funcs))
       (define runtime-root-primitives
-        (sort
-         (remove-duplicates
-          (append*
-           (for/list ([name (in-list runtime-funcs)])
-             (hash-ref func->primitive-refs name '()))))
-         symbol<?))
+        (let ([roots (make-hasheq)])
+          (for ([name (in-list runtime-funcs)])
+            (eq-set-add-all! roots (hash-ref func->primitive-refs name '())))
+          (eq-set-keys/sorted roots)))
       (define primitive-graph
         (for/list ([pr (in-list (sort described-primitives symbol<?))])
           (define start ($ pr))
           (define reachable
             (let loop ([pending (hash-ref func->func-refs start '())]
-                       [seen (list start)])
+                       [seen (let ([ht (make-hasheq)])
+                               (hash-set! ht start #t)
+                               ht)])
               (match pending
-                ['() seen]
+                ['() (eq-set-keys seen)]
                 [(cons name rest)
                  (cond
-                   [(memq name seen)
+                   [(hash-ref seen name #f)
                     (loop rest seen)]
                    [(primitive-func-name? name)
                     (loop rest seen)]
                    [else
+                    (hash-set! seen name #t)
                     (loop (append (hash-ref func->func-refs name '()) rest)
-                          (cons name seen))])])))
+                          seen)])])))
           (cons pr
-                (sort
-                 (remove-duplicates
-                  (filter (λ (dep) (not (eq? dep pr)))
-                          (append*
-                           (for/list ([name (in-list reachable)])
-                             (hash-ref func->primitive-refs name '())))))
-                 symbol<?))))
+                (let ([deps (make-hasheq)])
+                  (for ([name (in-list reachable)])
+                    (for ([dep (in-list (hash-ref func->primitive-refs name '()))]
+                          #:unless (eq? dep pr))
+                      (hash-set! deps dep #t)))
+                  (eq-set-keys/sorted deps)))))
       (define incoming-primitives
-        (remove-duplicates
-         (append*
-          (for/list ([entry (in-list primitive-graph)])
-            (cdr entry)))))
+        (let ([incoming (make-hasheq)])
+          (for ([entry (in-list primitive-graph)])
+            (eq-set-add-all! incoming (cdr entry)))
+          (eq-set-keys incoming)))
+      (define incoming-primitives-ht
+        (list->eq-set incoming-primitives))
+      (define runtime-root-primitives-ht
+        (list->eq-set runtime-root-primitives))
       (define isolated-primitives
         (sort
          (for/list ([pr (in-list described-primitives)]
-                    #:unless (or (memq pr incoming-primitives)
-                                 (memq pr runtime-root-primitives)))
+                    #:unless (or (hash-ref incoming-primitives-ht pr #f)
+                                 (hash-ref runtime-root-primitives-ht pr #f)))
            pr)
          symbol<?))
       (list (cons 'primitive-graph primitive-graph)
@@ -314,16 +337,21 @@
       (cdr (assq key analysis)))
 
     (define (primitive-transitive-closure roots graph)
-      (let loop ([pending (remove-duplicates roots)]
-                 [seen '()])
+      (define graph-ht
+        (for/hasheq ([entry (in-list graph)])
+          (values (car entry) (cdr entry))))
+      (let loop ([pending roots]
+                 [seen (make-hasheq)])
         (match pending
-          ['() (sort seen symbol<?)]
+          ['() (eq-set-keys/sorted seen)]
           [(cons pr rest)
-           (if (memq pr seen)
+           (if (hash-ref seen pr #f)
                (loop rest seen)
-               (loop (append (cdr (or (assq pr graph) (cons pr '())))
+               (begin
+                 (hash-set! seen pr #t)
+                 (loop (append (hash-ref graph-ht pr '())
                              rest)
-                     (cons pr seen)))])))
+                      seen)))])))
 
     (define (primitive-retained-set analysis)
       (define graph          (primitive-graph-ref analysis 'primitive-graph))
@@ -335,13 +363,13 @@
     (define (primitive-refs-for-functions analysis function-names)
       (define function-primitive-refs
         (primitive-graph-ref analysis 'function-primitive-refs))
-      (sort
-       (remove-duplicates
-        (append*
-         (for/list ([name (in-list function-names)])
-           (cdr (or (assq name function-primitive-refs)
-                    (cons name '()))))))
-       symbol<?))
+      (define function-primitive-refs-ht
+        (for/hasheq ([entry (in-list function-primitive-refs)])
+          (values (car entry) (cdr entry))))
+      (define refs (make-hasheq))
+      (for ([name (in-list function-names)])
+        (eq-set-add-all! refs (hash-ref function-primitive-refs-ht name '())))
+      (eq-set-keys/sorted refs))
 
     (define (retained-function-set analysis retained-primitives)
       (define function-graph (primitive-graph-ref analysis 'function-graph))
@@ -353,13 +381,16 @@
       (define retained-primitive-funcs
         (for/list ([pr (in-list retained-primitives)])
           ($ pr)))
+      (define function-graph-ht
+        (for/hasheq ([entry (in-list function-graph)])
+          (values (car entry) (cdr entry))))
       (let loop ([pending (append module-roots elem-roots retained-primitive-funcs)]
-                 [seen '()])
+                 [seen (make-hasheq)])
         (match pending
-          ['() (sort (remove-duplicates seen) symbol<?)]
+          ['() (eq-set-keys/sorted seen)]
           [(cons name rest)
            (cond
-             [(memq name seen)
+             [(hash-ref seen name #f)
               (loop rest seen)]
              [(and (hash-ref primitive-func->symbol name #f)
                    (not (hash-ref retained-primitive-ht
@@ -367,9 +398,10 @@
                                   #f)))
               (loop rest seen)]
              [else
-              (loop (append (cdr (or (assq name function-graph) (cons name '())))
+              (hash-set! seen name #t)
+              (loop (append (hash-ref function-graph-ht name '())
                             rest)
-                    (cons name seen))])])))
+                    seen)])])))
 
     (define (prune-runtime-module module retained-primitives retained-functions)
       (define retained-ht
