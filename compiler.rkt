@@ -6014,10 +6014,9 @@
            (match x*
              ; A single target accepts either one ordinary value or a $Values bundle
              ; of length 1. Anything else must raise a value-count error.
-             [(list x)         (define t (emit-fresh-local 'letv1)) ; (ref eq)
-                                `(block
-                                  ,(CExpr ce t <stat>)
-                                  ,(Store! x `(call $expect-one-value ,(Reference t))))]
+             [(list x)         `(block
+                                  ,(CExpr ce x <stat>)
+                                  ,(Store! x `(call $expect-one-value ,(Reference x))))]
              ; multiple values are returned in an $Values array [v0,v1,...].
              ; to avoid allocating an extra variable, we receive the array in x0,
              ; then assign the individual variables (in reverse order so x0 is last)
