@@ -83,12 +83,23 @@
 
     (define all-primitives primitives)
     (define active-primitives primitives)
+    (define all-ffi-foreigns (current-ffi-foreigns))
+    (define active-ffi-foreigns all-ffi-foreigns)
+    (define active-ffi-imports-wat (current-ffi-imports-wat))
+    (define active-ffi-funcs-wat   (current-ffi-funcs-wat))
     (define active-primitives-sorted
       (λ ()
         (sort active-primitives symbol<?)))
 
     (define described-primitives
       (filter primitive->description all-primitives))
+
+    (define ffi-primitive-name-set
+      (for/hasheq ([f (in-list all-ffi-foreigns)])
+        (values (foreign-racket-name f) #t)))
+
+    (define (ffi-import-name f)
+      (string->symbol (~a "$" (foreign-racket-name f) "/imported")))
 
     (define primitive-func->symbol
       (for/hasheq ([pr (in-list described-primitives)])
@@ -462,7 +473,7 @@
         `(global ,($ (prim: pr)) (mut (ref eq)) ,(Imm (undefined)))))
 
     (define (declare-ffi-primitives-as-globals)
-      (for/list ([f (in-list (current-ffi-foreigns))])
+      (for/list ([f (in-list active-ffi-foreigns)])
         (define pr (foreign-racket-name f))
         `(global ,($ (prim: pr)) (mut (ref eq)) ,(Imm (undefined)))))
 
@@ -1212,7 +1223,7 @@
                                (primitive-description-result-arity desc)))))))
 
     (define (initialize-ffi-primitives-as-globals)
-      (for/list ([f (in-list (current-ffi-foreigns))])
+      (for/list ([f (in-list active-ffi-foreigns)])
         (define pr    (foreign-racket-name f))
         (define ar    (length (foreign-argument-types f)))
         (define shape (arity->shape ar))
@@ -1335,7 +1346,7 @@
         (add-runtime-symbol-constant pr)))
 
     (define (add-ffi-symbol-constants)
-      (for ([f (in-list (current-ffi-foreigns))])
+      (for ([f (in-list active-ffi-foreigns)])
         (add-runtime-symbol-constant (foreign-racket-name f))))
 
     (add-ffi-symbol-constants)
@@ -2556,10 +2567,10 @@
              (param externref))
 
         ;; FFI related imports
-        ,@(current-ffi-imports-wat) ; generated from "driver.rkt" in "define-foreign.rkt"
+        ,@active-ffi-imports-wat ; generated from "driver.rkt" in "define-foreign.rkt"
          
 
-         ,@(current-ffi-funcs-wat)   ; generated from "driver.rkt" in "define-foreign.rkt"
+         ,@active-ffi-funcs-wat   ; generated from "driver.rkt" in "define-foreign.rkt"
          
 
          ;;;
@@ -34293,7 +34304,7 @@
               ,@(for/list ([pr (in-list (sort (remove* todo-handle-later active-primitives) symbol<?))])
                   `(ref.func ,($ pr)))
               ;; Declare FFI-backed primitive wrappers.
-              ,@(for/list ([f (in-list (current-ffi-foreigns))])
+              ,@(for/list ([f (in-list active-ffi-foreigns)])
                   `(ref.func ,($ (foreign-racket-name f)))))
 
          
@@ -43478,6 +43489,33 @@
                
                ))
 
+    (define active-ffi-primitive-names
+      (if (current-tree-shake?)
+          (sort
+           (filter (λ (pr) (hash-ref ffi-primitive-name-set pr #f))
+                   (remove-duplicates used-primitives))
+           symbol<?)
+          (sort (hash-keys ffi-primitive-name-set) symbol<?)))
+    (set! active-ffi-foreigns
+          (for/list ([f (in-list all-ffi-foreigns)]
+                     #:when (memq (foreign-racket-name f) active-ffi-primitive-names))
+            f))
+    (define active-ffi-import-name-set
+      (list->eq-set (map ffi-import-name active-ffi-foreigns)))
+    (define active-ffi-func-name-set
+      (list->eq-set (map (λ (f) ($ (foreign-racket-name f))) active-ffi-foreigns)))
+    (set! active-ffi-imports-wat
+          (for/list ([form (in-list (current-ffi-imports-wat))]
+                     #:do [(define name (module-func-name form))]
+                     #:when (and name
+                                 (hash-ref active-ffi-import-name-set name #f)))
+            form))
+    (set! active-ffi-funcs-wat
+          (for/list ([form (in-list (current-ffi-funcs-wat))]
+                     #:do [(define name (module-func-name form))]
+                     #:when (and name
+                                 (hash-ref active-ffi-func-name-set name #f)))
+            form))
     (define full-module (build-runtime-module))
     (define analysis    (analyze-runtime-primitives full-module))
     (define-values (retained-primitives retained-functions)

@@ -6787,6 +6787,27 @@
     (delete-directory/files dump-dir)
     (values mod report))
 
+  (define (compile/primitive-report/ffi stx ffi-path)
+    (define fs    (ffi-file->foreigns ffi-path))
+    (define ims   (map foreign->import fs))
+    (define prims (map foreign->primitive fs))
+    (define dump-dir (make-temporary-file "webracket-tree-shaker-ffi~a" 'directory))
+    (define mod
+      (parameterize ([current-pass-dump-dir dump-dir]
+                     [current-ffi-foreigns fs]
+                     [current-ffi-imports-wat ims]
+                     [current-ffi-funcs-wat prims])
+        (comp stx)))
+    (define report
+      (with-input-from-file (build-path dump-dir "runtime-primitives.sexp")
+        read))
+    (delete-directory/files dump-dir)
+    (parameterize ([current-ffi-foreigns '()]
+                   [current-ffi-imports-wat '()]
+                   [current-ffi-funcs-wat '()])
+      (reset-ffi-primitives))
+    (values mod report))
+
   (let-values ([(mod report)
                 (compile/primitive-report #'(module tree-shake-acos webracket
                                                    (acos 0.0)))])
@@ -6814,7 +6835,19 @@
     (check-true (pair? (assq 'summary report))))
 
   (check-equal? (run-expr #'(append '(1) '(2 3) '(4)))
-                '(1 2 3 4)))
+                '(1 2 3 4))
+
+  (let-values ([(mod report)
+                (compile/primitive-report/ffi
+                 #'(module tree-shake-ffi-console-unused webracket
+                     "hello")
+                 (build-path (current-directory) "ffi" "console.ffi"))])
+    (check-false (module-has-top-level-form? mod 'func '$js-console-info))
+    (check-false (module-has-top-level-form? mod 'func '$js-console-log))
+    (check-false (module-has-top-level-form? mod 'global '$prim:js-console-log))
+    (check-false (module-has-top-level-form? mod 'global '$prim:js-console-info))
+    (check-true (pair? (assq 'summary report))))
+  )
   
 (define (comp-- stx)
   (reset-counter!)
