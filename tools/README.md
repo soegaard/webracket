@@ -137,3 +137,28 @@ racket tools/thematic \
   --theme-class we-theme-bootstrap \
   --selector ':root'
 ```
+
+thematic-scope
+--------------
+Scopes a Bootstrap stylesheet under one wrapper selector so the original
+Bootstrap theme can be shown beside a generated `web-easy` theme without
+iframes.
+
+It rewrites qualified rule selectors under a scope such as `.bs-preview`,
+preserves top-level imports, recursively scopes nested rules inside `@media`
+and similar blocks, and leaves blocks like `@keyframes` and `@font-face`
+unchanged.
+
+Inputs:
+- Bootstrap CSS file (`--input`)
+- output stylesheet path (`--output`)
+- optional wrapper selector (`--scope`, default `.bs-preview`)
+
+Example:
+
+```sh
+racket tools/thematic-scope \
+  --input /path/to/bootstrap.css \
+  --output /tmp/bootstrap-scoped.css \
+  --scope '.bs-preview'
+```

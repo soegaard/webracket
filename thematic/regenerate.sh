@@ -17,6 +17,12 @@ do
     --theme-class "we-theme-$theme" \
     --selector ':root'
   cp "$OUT_DIR/$theme.css" "$SMOKE_OUT_DIR/thematic-$theme.css"
+
+  racket "$ROOT_DIR/tools/thematic-scope" \
+    --input "$ROOT_DIR/thematic/original/$theme/bootstrap.css" \
+    --output "$OUT_DIR/bootstrap-$theme-scoped.css" \
+    --scope '.bs-preview'
+  cp "$OUT_DIR/bootstrap-$theme-scoped.css" "$SMOKE_OUT_DIR/bootstrap-$theme-scoped.css"
 done
 
 for theme in lux sandstone

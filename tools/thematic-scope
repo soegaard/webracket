@@ -1,0 +1,12 @@
+#lang racket/base
+
+;;;
+;;; thematic-scope
+;;;
+
+(require racket/runtime-path)
+
+(define-runtime-path tool-path "../thematic/scope-bootstrap.rkt")
+
+(parameterize ([current-command-line-arguments (current-command-line-arguments)])
+  ((dynamic-require tool-path 'main)))

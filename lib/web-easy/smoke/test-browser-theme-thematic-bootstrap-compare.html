@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>thematic bootstrap compare</title>
+  <link rel="stylesheet" href="../themes/web-easy-core.css">
+  <link id="bootstrap-theme-link" rel="stylesheet" href="./generated/bootstrap-lux-scoped.css">
+  <style id="we-theme-style"></style>
+  <style>
+    :root {
+      --page-bg: #f5f6f8;
+      --page-fg: #1b2430;
+      --panel-bg: #ffffff;
+      --panel-border: #ccd4dc;
+      --accent: #2b6d8f;
+      --shadow: 0 8px 24px rgba(17, 24, 39, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #f8fafc 0%, #eef2f6 100%);
+      color: var(--page-fg);
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(255, 255, 255, 0.94);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid #d8dfe6;
+      box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+    }
+
+    .topbar-inner {
+      max-width: 1700px;
+      margin: 0 auto;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .brand h1,
+    .brand p {
+      margin: 0;
+    }
+
+    .brand h1 {
+      font-size: 17px;
+      letter-spacing: 0.02em;
+    }
+
+    .brand p {
+      font-size: 12px;
+      opacity: 0.78;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .controls strong {
+      font-size: 13px;
+    }
+
+    .controls select,
+    .controls a {
+      font: inherit;
+      font-size: 13px;
+      border-radius: 8px;
+      border: 1px solid #aebdca;
+      background: #fff;
+      color: #233543;
+      text-decoration: none;
+      padding: 6px 10px;
+    }
+
+    .controls select:hover,
+    .controls a:hover {
+      border-color: #6f92a8;
+    }
+
+    .page {
+      max-width: 1700px;
+      margin: 0 auto;
+      padding: 16px;
+    }
+
+    .lead {
+      margin: 0 0 14px 0;
+      padding: 12px 14px;
+      border: 1px solid var(--panel-border);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: var(--shadow);
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .compare-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .compare-panel {
+      border: 1px solid var(--panel-border);
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: var(--shadow);
+      overflow: clip;
+      min-width: 0;
+    }
+
+    .compare-panel > header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--panel-border);
+      background: linear-gradient(180deg, #fbfdff 0%, #f0f5f9 100%);
+    }
+
+    .compare-panel h2,
+    .compare-panel p {
+      margin: 0;
+    }
+
+    .compare-panel h2 {
+      font-size: 14px;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .compare-panel p {
+      font-size: 12px;
+      opacity: 0.75;
+    }
+
+    .compare-panel .surface {
+      padding: 14px;
+    }
+
+    .component-stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .sample-card {
+      border: 1px solid #d8e0e8;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.85);
+      overflow: clip;
+    }
+
+    .sample-card > h3 {
+      margin: 0;
+      padding: 8px 10px;
+      border-bottom: 1px solid #dbe4ec;
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: #386f8d;
+      background: #f8fbfd;
+    }
+
+    .sample-card > .sample-body {
+      padding: 12px;
+    }
+
+    .sample-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .bs-preview,
+    .we-preview {
+      min-width: 0;
+    }
+
+    .bs-preview .sample-note,
+    .we-preview .sample-note {
+      margin: 0 0 10px 0;
+      font-size: 13px;
+      opacity: 0.82;
+    }
+
+    .we-preview {
+      padding: 6px;
+      border-radius: 12px;
+    }
+
+    .we-preview .sample-card {
+      border-color: rgba(120, 138, 160, 0.25);
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .we-preview .sample-card > h3 {
+      border-bottom-color: rgba(120, 138, 160, 0.25);
+      background: transparent;
+      color: inherit;
+      opacity: 0.9;
+    }
+
+    .compare-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .compare-table-wrap {
+      overflow-x: auto;
+    }
+
+    @media (max-width: 1150px) {
+      .compare-grid,
+      .sample-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <h1>Thematic Bootstrap Compare</h1>
+        <p>Compare the original scoped Bootstrap theme with the generated web-easy theme without iframes.</p>
+      </div>
+      <div class="controls">
+        <strong>Theme</strong>
+        <select id="theme-select" aria-label="Choose theme">
+          <option value="superhero">Superhero</option>
+          <option value="sketchy">Sketchy</option>
+          <option value="lux">Lux</option>
+          <option value="lux-boost">Lux Boost</option>
+          <option value="sandstone">Sandstone</option>
+          <option value="sandstone-boost">Sandstone Boost</option>
+        </select>
+        <span id="current">current=lux</span>
+        <a href="./test-browser-theme-thematic.html">Open Widget Preview</a>
+        <a href="./test-browser-theme-thematic-compare.html">Open Boost Compare</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="page">
+    <p class="lead">
+      The left side uses the original Bootswatch CSS scoped under <code>.bs-preview</code>.
+      The right side uses the generated `web-easy` theme CSS scoped under <code>.we-preview</code>.
+      The markup is not identical, but the component set is intentionally parallel so theme personality is easy to compare.
+    </p>
+
+    <div class="compare-grid">
+      <section class="compare-panel">
+        <header>
+          <div>
+            <h2 id="bootstrap-title">Original Bootstrap</h2>
+            <p id="bootstrap-subtitle">Bootswatch theme preview under scoped Bootstrap CSS</p>
+          </div>
+        </header>
+        <div class="surface">
+          <div class="bs-preview" id="bootstrap-preview">
+            <div class="component-stack">
+              <section class="sample-card">
+                <h3>Navigation</h3>
+                <div class="sample-body">
+                  <nav class="navbar navbar-expand-lg bg-body-tertiary border rounded px-3 py-2 mb-3">
+                    <span class="navbar-brand mb-0 h1">Theme Kit</span>
+                    <div class="navbar-nav flex-row gap-2">
+                      <a class="nav-link active" href="#">Overview</a>
+                      <a class="nav-link" href="#">Tables</a>
+                      <a class="nav-link" href="#">Dialogs</a>
+                    </div>
+                  </nav>
+                  <ul class="nav nav-tabs">
+                    <li class="nav-item"><a class="nav-link active" href="#">Overview</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Details</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#">Help</a></li>
+                  </ul>
+                </div>
+              </section>
+
+              <div class="sample-grid">
+                <section class="sample-card">
+                  <h3>Buttons And Badges</h3>
+                  <div class="sample-body">
+                    <p class="sample-note">Primary, outline, neutral, and semantic accents.</p>
+                    <div class="d-flex flex-wrap gap-2 mb-3">
+                      <button type="button" class="btn btn-primary">Primary</button>
+                      <button type="button" class="btn btn-outline-primary">Outline</button>
+                      <button type="button" class="btn btn-secondary">Secondary</button>
+                      <button type="button" class="btn btn-light">Light</button>
+                    </div>
+                    <div class="compare-badges">
+                      <span class="badge text-bg-primary">Primary</span>
+                      <span class="badge text-bg-secondary">Secondary</span>
+                      <span class="badge text-bg-success">Success</span>
+                      <span class="badge text-bg-danger">Danger</span>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="sample-card">
+                  <h3>Card</h3>
+                  <div class="sample-body">
+                    <div class="card">
+                      <div class="card-header">Profile Summary</div>
+                      <div class="card-body">
+                        <h5 class="card-title">Alice Johnson</h5>
+                        <p class="card-text">Theme-focused sample content for cards, body text, and button emphasis.</p>
+                        <a href="#" class="btn btn-primary">Open</a>
+                      </div>
+                      <div class="card-footer text-body-secondary">Updated 2 minutes ago</div>
+                    </div>
+                  </div>
+                </section>
+              </div>
+
+              <div class="sample-grid">
+                <section class="sample-card">
+                  <h3>List Group</h3>
+                  <div class="sample-body">
+                    <div class="list-group">
+                      <button type="button" class="list-group-item list-group-item-action active" aria-current="true">Current item</button>
+                      <button type="button" class="list-group-item list-group-item-action">Release notes</button>
+                      <button type="button" class="list-group-item list-group-item-action">Deployment checklist</button>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="sample-card">
+                  <h3>Table</h3>
+                  <div class="sample-body compare-table-wrap">
+                    <table class="table table-hover align-middle mb-0">
+                      <thead>
+                        <tr><th scope="col">Item</th><th scope="col">State</th><th scope="col">Owner</th></tr>
+                      </thead>
+                      <tbody>
+                        <tr><td>Build</td><td>Ready</td><td>Ops</td></tr>
+                        <tr><td>Docs</td><td>Review</td><td>Team</td></tr>
+                        <tr><td>Theme</td><td>Active</td><td>Design</td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="compare-panel">
+        <header>
+          <div>
+            <h2 id="we-title">Generated web-easy</h2>
+            <p id="we-subtitle">Scoped generated theme under .we-preview</p>
+          </div>
+        </header>
+        <div class="surface">
+          <div class="we-preview we-theme-lux" id="we-preview">
+            <div class="component-stack">
+              <section class="sample-card">
+                <h3>Navigation</h3>
+                <div class="sample-body">
+                  <div class="we-navigation-bar">
+                    <div class="we-navigation-bar-items">
+                      <button class="we-button we-button-ghost we-navbar-brand">Theme Kit</button>
+                      <button class="we-button we-button-ghost" aria-current="page">Overview</button>
+                      <button class="we-button we-button-ghost">Tables</button>
+                      <button class="we-button we-button-ghost">Dialogs</button>
+                    </div>
+                  </div>
+                  <div class="we-tab-panel" style="margin-top: 12px;">
+                    <div class="we-tab-list">
+                      <button class="we-tab-btn is-selected">Overview</button>
+                      <button class="we-tab-btn">Details</button>
+                      <button class="we-tab-btn">Help</button>
+                    </div>
+                    <div class="we-tab-content">Overview panel</div>
+                  </div>
+                </div>
+              </section>
+
+              <div class="sample-grid">
+                <section class="sample-card">
+                  <h3>Buttons And Badges</h3>
+                  <div class="sample-body">
+                    <p class="sample-note">Primary, outline, neutral, and semantic accents.</p>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px;">
+                      <button class="we-button we-button-primary">Primary</button>
+                      <button class="we-button we-button-outline-primary">Outline</button>
+                      <button class="we-button we-button-secondary">Secondary</button>
+                      <button class="we-button we-button-light">Light</button>
+                    </div>
+                    <div class="compare-badges">
+                      <span class="we-badge we-badge-primary">Primary</span>
+                      <span class="we-badge we-badge-secondary">Secondary</span>
+                      <span class="we-badge we-badge-success">Success</span>
+                      <span class="we-badge we-badge-danger">Danger</span>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="sample-card">
+                  <h3>Card</h3>
+                  <div class="sample-body">
+                    <div class="we-card">
+                      <div class="we-card-header">Profile Summary</div>
+                      <div class="we-card-body">
+                        <div class="we-heading">Alice Johnson</div>
+                        <div class="we-card-subtitle">Theme-focused sample content for cards, body text, and button emphasis.</div>
+                        <div><button class="we-button we-button-primary">Open</button></div>
+                      </div>
+                      <div class="we-card-footer">Updated 2 minutes ago</div>
+                    </div>
+                  </div>
+                </section>
+              </div>
+
+              <div class="sample-grid">
+                <section class="sample-card">
+                  <h3>List Group</h3>
+                  <div class="sample-body">
+                    <div class="we-list-group">
+                      <button class="we-list-group-item is-current">Current item</button>
+                      <button class="we-list-group-item">Release notes</button>
+                      <button class="we-list-group-item">Deployment checklist</button>
+                    </div>
+                  </div>
+                </section>
+
+                <section class="sample-card">
+                  <h3>Table</h3>
+                  <div class="sample-body compare-table-wrap">
+                    <table class="we-table">
+                      <tr><th>Item</th><th>State</th><th>Owner</th></tr>
+                      <tr><td>Build</td><td>Ready</td><td>Ops</td></tr>
+                      <tr><td>Docs</td><td>Review</td><td>Team</td></tr>
+                      <tr><td>Theme</td><td>Active</td><td>Design</td></tr>
+                    </table>
+                  </div>
+                </section>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const WE_CORE_SELECTOR = ".we-preview";
+    const THEMES = {
+      superhero: { bootstrap: "superhero", web: "superhero", label: "Superhero" },
+      sketchy: { bootstrap: "sketchy", web: "sketchy", label: "Sketchy" },
+      lux: { bootstrap: "lux", web: "lux", label: "Lux" },
+      "lux-boost": { bootstrap: "lux", web: "lux-boost", label: "Lux Boost" },
+      sandstone: { bootstrap: "sandstone", web: "sandstone", label: "Sandstone" },
+      "sandstone-boost": { bootstrap: "sandstone", web: "sandstone-boost", label: "Sandstone Boost" }
+    };
+
+    function scopeWeThemeCss(themeName, cssText) {
+      const exact = "html.we-theme-" + themeName;
+      return cssText
+        .replaceAll(exact + " body", WE_CORE_SELECTOR + ".we-theme-" + themeName)
+        .replaceAll(exact, WE_CORE_SELECTOR + ".we-theme-" + themeName);
+    }
+
+    async function applyTheme(name) {
+      const theme = THEMES[name] || THEMES.lux;
+      document.getElementById("theme-select").value = name;
+      document.getElementById("current").textContent = "current=" + name;
+      document.getElementById("bootstrap-title").textContent = theme.label.replace(" Boost", "") + " Bootstrap";
+      document.getElementById("we-title").textContent = theme.label + " web-easy";
+      document.getElementById("bootstrap-theme-link").href = "./generated/bootstrap-" + theme.bootstrap + "-scoped.css";
+
+      const wePreview = document.getElementById("we-preview");
+      wePreview.className = "we-preview we-theme-" + theme.web;
+
+      const css = await fetch("./generated/thematic-" + theme.web + ".css").then((r) => r.text());
+      document.getElementById("we-theme-style").textContent = scopeWeThemeCss(theme.web, css);
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const initialTheme = Object.prototype.hasOwnProperty.call(THEMES, params.get("theme")) ? params.get("theme") : "lux";
+    document.getElementById("theme-select").addEventListener("change", (e) => applyTheme(e.target.value));
+    applyTheme(initialTheme);
+  </script>
+</body>
+</html>
