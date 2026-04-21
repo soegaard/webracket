@@ -1708,7 +1708,7 @@
                 ;; (js-log y)
                 ;; (js-log x)
                 ;; (js-log (symbol->string y))
-                (let ([and list] [equal? list])
+                (let (#;[and list] #;[equal? list])
                 (list "symbol/string interop"
                       (and (equal? x "cb")
                            (equal? (symbol->string y) "ab")

@@ -726,6 +726,511 @@
   (or (not arity) (arity-accepts? arity n)))
 
 
+;;;
+;;; Inlining
+;;;
+
+(struct primitive-inline-spec
+  (name kind min max rest-start default)
+  #:transparent)
+
+;; primitive-inline-spec-accepted-counts : primitive-inline-spec? -> (listof exact-nonnegative-integer?)
+;;   Concrete arities covered by spec when the range is finite; otherwise #f.
+(define (primitive-inline-spec-accepted-counts spec)
+  (define min (primitive-inline-spec-min spec))
+  (define max (primitive-inline-spec-max spec))
+  (and max
+       (for/list ([n (in-range min (+ max 1))]) n)))
+
+;; primitive-inline-spec-covers? : primitive-inline-spec? exact-nonnegative-integer? -> boolean?
+;;   Check whether n is accepted by spec's declarative arity shape.
+(define (primitive-inline-spec-covers? spec n)
+  (define min (primitive-inline-spec-min spec))
+  (define max (primitive-inline-spec-max spec))
+  (and (<= min n)
+       (or (not max) (<= n max))))
+
+(define primitive-inline-priminfo-skip-set
+  (seteq 'fx-/wraparound
+         'unsafe-fx-/wraparound
+         'peek-bytes
+         'peek-string))
+
+;; primitive-inline-spec-valid? : primitive-inline-spec? -> void?
+;;   Validate one declarative inlining spec for internal consistency.
+(define (primitive-inline-spec-valid? spec)
+  (define who 'primitive-inline-spec)
+  (define kind       (primitive-inline-spec-kind spec))
+  (define name       (primitive-inline-spec-name spec))
+  (define min        (primitive-inline-spec-min spec))
+  (define max        (primitive-inline-spec-max spec))
+  (define rest-start (primitive-inline-spec-rest-start spec))
+  (define default    (primitive-inline-spec-default spec))
+  (unless (symbol? name)
+    (error who "expected primitive name symbol, got ~a" name))
+  (unless (exact-nonnegative-integer? min)
+    (error who "invalid minimum arity for ~a: ~a" name min))
+  (when (and max (not (exact-nonnegative-integer? max)))
+    (error who "invalid maximum arity for ~a: ~a" name max))
+  (when (and max (> min max))
+    (error who "invalid arity range for ~a: ~a..~a" name min max))
+  (case kind
+    [(fixed)
+     (unless (and max (= min max))
+       (error who "fixed spec for ~a must have min=max, got ~a..~a" name min max))
+     (when rest-start
+       (error who "fixed spec for ~a cannot have rest-start" name))]
+    [(optional variadic variadic-args)
+     (when default
+       (error who "~a spec for ~a cannot have a default" kind name))
+     (when (and (memq kind '(variadic variadic-args)) max)
+       (error who "~a spec for ~a cannot have a finite max" kind name))]
+    [(optional/default)
+     (unless default
+       (error who "optional/default spec for ~a requires a default" name))]
+    [(optional-rest)
+     (unless max
+       (error who "optional-rest spec for ~a requires a finite max" name))
+     (unless (exact-nonnegative-integer? rest-start)
+       (error who "optional-rest spec for ~a requires rest-start" name))]
+    [else
+     (error who "unknown spec kind for ~a: ~a" name kind)])
+  (when (and rest-start max (> rest-start max))
+    (error who "rest-start after maximum arity for ~a: ~a > ~a" name rest-start max))
+  (define desc-arity (and (not (set-member? primitive-inline-priminfo-skip-set name))
+                          (primitive-arity name)))
+  (when desc-arity
+    (for ([n (in-list (or (primitive-inline-spec-accepted-counts spec) (list min)))])
+      (unless (arity-accepts? desc-arity n)
+        (error who
+               "spec arity for ~a is not accepted by priminfo: ~a"
+               name
+               n))))
+  (void))
+
+;; build-primitive-inline-spec-table : (listof primitive-inline-spec?) -> hasheq?
+;;   Validate specs and build a lookup table keyed by primitive symbol.
+(define (build-primitive-inline-spec-table specs)
+  (define ht (make-hasheq))
+  (for ([spec (in-list specs)])
+    (primitive-inline-spec-valid? spec)
+    (define name (primitive-inline-spec-name spec))
+    (when (hash-has-key? ht name)
+      (error 'build-primitive-inline-spec-table
+             "duplicate primitive inline spec for ~a"
+             name))
+    (hash-set! ht name spec))
+  ht)
+
+(define (make-inline-specs names kind min max [rest-start #f] [default #f])
+  (for/list ([name (in-list names)])
+    (primitive-inline-spec name kind min max rest-start default)))
+
+(define (make-inline-specs/by-name names kind min-proc max-proc
+                                   [rest-start-proc (λ (_name) #f)]
+                                   [default-proc (λ (_name) #f)])
+  (for/list ([name (in-list names)])
+    (primitive-inline-spec name
+                           kind
+                           (min-proc name)
+                           (max-proc name)
+                           (rest-start-proc name)
+                           (default-proc name))))
+
+(define primitive-inline-specs
+  (append
+   (make-inline-specs/by-name
+    ;; Variadic
+    '(list*
+      symbol<?
+      keyword<?
+      string=?
+      string<?
+      string<=?
+      string>?
+      string>=?
+      string-ci=?
+      string-ci<?
+      string-ci<=?
+      string-ci>?
+      string-ci>=?
+      +
+      *
+      -
+      /
+      unsafe-fx+
+      unsafe-fx*
+      unsafe-fx-
+      unsafe-fxand
+      unsafe-fxior
+      unsafe-fxxor
+      apply
+      vector-count
+      map
+      andmap
+      ormap
+      append-map
+      count
+      for-each
+      foldl
+      foldr
+      vector-map
+      vector-map!
+      filter-map
+      fx-/wraparound
+      unsafe-fx-/wraparound
+      min
+      max
+      flmin
+      flmax
+      unsafe-flmin
+      unsafe-flmax
+      fxmin
+      fxmax
+      unsafe-fxmin
+      unsafe-fxmax
+      gcd
+      lcm
+      make-instance
+      instance-set-variable-value!
+      instance-variable-value
+      append*
+      cartesian-product
+      string-append-immutable
+      string-append*
+      bytes-append*)
+    'variadic
+    (λ (name)
+      (case name
+        [(+ * unsafe-fx+ unsafe-fx* cartesian-product string-append-immutable gcd lcm) 0]
+        [(- / unsafe-fx- fx-/wraparound unsafe-fx-/wraparound min max
+             flmin flmax unsafe-flmin unsafe-flmax
+             fxmin fxmax unsafe-fxmin unsafe-fxmax
+             append* string-append* bytes-append* list*) 1]
+        [(unsafe-fxand unsafe-fxior unsafe-fxxor) 1]
+        [(symbol<? keyword<?
+                   string=? string<? string<=? string>? string>=?
+                   string-ci=? string-ci<? string-ci<=? string-ci>? string-ci>=?) 1]
+        [(apply) 2]
+        [(foldl foldr instance-set-variable-value!) 3]
+        [(make-instance) 1]
+        [else 2]))
+    (λ (_name) #f)
+    (λ (name)
+      (case name
+        [(apply list*) 1]
+        [(vector-count map andmap ormap append-map count for-each vector-map vector-map! filter-map
+                       instance-variable-value) 2]
+        [(foldl foldr instance-set-variable-value!) 3]
+        [(+ * unsafe-fx+ unsafe-fx* cartesian-product string-append-immutable gcd lcm) 0]
+        [else 1])))
+   (make-inline-specs '(= < > <= >=) 'variadic-args 1 #f 1)
+   (append
+    (make-inline-specs
+     '(unsafe-fxnot
+       unsafe-fxpopcount
+       unsafe-fxpopcount16
+       unsafe-fxpopcount32
+       fasl->s-exp
+       get-output-bytes
+       get-output-string
+       call-with-output-string
+       struct-type-property?
+       struct-type-property-accessor-procedure?
+       struct-type-authentic?
+       instance-name
+       instance-data
+       instance-variable-names)
+     'fixed 1 1)
+    (make-inline-specs
+     '(symbol=?
+       unsafe-fx=
+       unsafe-fx<
+       unsafe-fx>
+       unsafe-fx<=
+       unsafe-fx>=
+       call-with-exception-handler
+       vector-filter
+       vector-filter-not
+       vector-argmax
+       vector-argmin
+       assw
+       assv
+       assq
+       assf
+       memf
+       findf
+       index-where
+       indexes-where
+       take
+       take-right
+       takef
+       takef-right
+       drop
+       drop-right
+       dropf
+       dropf-right
+       argmax
+       argmin
+       hash-filter
+       hash-filter-keys
+       hash-filter-values
+       unsafe-fx+/wraparound
+       unsafe-fx*/wraparound
+       unsafe-fxlshift/wraparound
+       unsafe-fxlshift
+       unsafe-fxrshift
+       unsafe-fxrshift/logical
+       unsafe-fxquotient
+       unsafe-fxremainder
+       unsafe-fxmodulo
+       instance-unset-variable!
+       bytes-join)
+     'fixed 2 2))
+   (append
+    (make-inline-specs/by-name
+     '(vector-copy!
+       string-copy!
+       bytes-copy!
+       substring
+       subbytes
+       string-utf-8-length
+       bytes->string/utf-8
+       bytes->string/latin-1
+       bytes-utf-8-length
+       vector-copy
+       vector->values
+       vector-extend
+       procedure-rename
+       string->number
+       floating-point-bytes->real
+       log
+       assoc
+       group-by
+       member
+       remove
+       remove*
+       index-of
+       indexes-of
+       list-prefix?
+       take-common-prefix
+       drop-common-prefix
+       split-common-prefix
+       hash-ref
+       hash-update!
+       random
+       flrandom
+       unsafe-flrandom
+       datum->syntax
+       read-bytes!
+       read-bytes-avail!
+       read-bytes-avail!*
+       read-string!
+       peek-bytes!
+       peek-string!
+       peek-bytes
+       peek-string
+       progress-evt?
+       write-char
+       write-bytes
+       write-string
+       make-vector
+       make-string
+       make-bytes
+       vector-sort!
+       vector-sort
+       struct->vector
+       real->floating-point-bytes
+       string-trim
+       string-split)
+     'optional
+     (λ (name)
+       (case name
+         [(vector-copy! string-copy! bytes-copy!) 3]
+         [(substring subbytes vector-extend procedure-rename datum->syntax) 2]
+         [(peek-bytes! peek-string!) 2]
+         [(string-trim string-split) 1]
+         [(assoc group-by member remove remove* index-of indexes-of
+                 list-prefix? take-common-prefix drop-common-prefix split-common-prefix
+                 hash-ref real->floating-point-bytes vector-sort! vector-sort
+                 ) 2]
+         [(hash-update!) 3]
+         [(random flrandom unsafe-flrandom) 0]
+         [(progress-evt? write-char) 1]
+         [(write-bytes write-string) 1]
+         [else 1]))
+     (λ (name)
+       (case name
+         [(vector-copy! string-copy! bytes-copy!) 5]
+         [(substring subbytes vector-copy vector->values vector-extend
+                       procedure-rename hash-ref) 3]
+         [(string-utf-8-length) 3]
+         [(bytes->string/utf-8 bytes->string/latin-1 bytes-utf-8-length) 4]
+         [(string->number datum->syntax) 5]
+         [(floating-point-bytes->real) 4]
+         [(log struct->vector) 2]
+         [(assoc group-by member remove remove* index-of indexes-of
+                 list-prefix? take-common-prefix drop-common-prefix split-common-prefix) 3]
+         [(read-bytes! read-bytes-avail! read-bytes-avail!* read-string!
+                       write-bytes write-string) 4]
+         [(peek-bytes! peek-string!) 5]
+         [(peek-bytes peek-string) 3]
+         [(progress-evt? make-vector make-string make-bytes) 2]
+         [(random) 2]
+         [(flrandom unsafe-flrandom) 1]
+         [(vector-sort! vector-sort) 4]
+         [(real->floating-point-bytes) 5]
+         [(hash-update!) 4]
+         [(string-trim) 5]
+         [(string-split) 4]
+         [else 2])))
+    (make-inline-specs
+     '(s-exp->fasl
+       open-input-string
+       open-input-bytes
+       read-bytes
+       read-string)
+     'optional 1 2)
+    (make-inline-specs
+     '(open-output-bytes
+       open-output-string
+       current-continuation-marks
+       gensym
+       make-hasheq
+       make-hasheqv
+       make-hash
+       make-hashalw
+       make-weak-hasheq
+       make-weak-hasheqv
+       make-weak-hash
+       make-weak-hashalw
+       byte-ready?
+       char-ready?
+       read-byte
+       read-char
+       newline)
+     'optional 0 1)
+    (make-inline-specs
+     '(raise-read-error
+       raise-read-eof-error)
+     'optional 6 7)
+    (make-inline-specs
+     '(read-line peek-byte peek-char)
+     'optional 0 2))
+   (append
+    (make-inline-specs/by-name
+     '(raise
+       procedure-arity-includes?
+       number->string
+       struct-type-property-predicate-procedure?
+       hash->list
+       hash-keys
+       hash-values
+       hash-for-each
+       hash-map
+       hash-map/copy
+       instantiate-linklet
+       string-join
+       string->bytes/utf-8
+       bytes->path
+       datum->correlated
+       correlated-property
+       inclusive-range
+       inclusive-range-proc
+       struct->list
+       make-struct-type
+       make-struct-field-accessor
+       make-struct-field-mutator
+       make-struct-type-property
+       string-replace)
+     'optional/default
+     (λ (name)
+       (case name
+         [(raise hash->list hash-keys hash-values
+                 string-join string->bytes/utf-8 bytes->path
+                 datum->correlated struct-type-property-predicate-procedure?) 1]
+         [(procedure-arity-includes?) 2]
+         [(number->string) 1]
+         [(hash-for-each hash-map hash-map/copy correlated-property) 2]
+         [(instantiate-linklet inclusive-range inclusive-range-proc) 2]
+         [(struct->list make-struct-type-property) 1]
+         [(make-struct-type) 4]
+         [(make-struct-field-accessor make-struct-field-mutator) 2]
+         [(string-replace) 3]
+         [else 1]))
+     (λ (name)
+       (case name
+         [(raise procedure-arity-includes? number->string
+                 struct-type-property-predicate-procedure? hash->list hash-keys
+                 hash-values string-join bytes->path) 2]
+         [(string->bytes/utf-8) 4]
+         [(hash-for-each hash-map hash-map/copy) 3]
+         [(instantiate-linklet) 4]
+         [(datum->correlated correlated-property inclusive-range inclusive-range-proc) 3]
+         [(struct->list) 2]
+         [(make-struct-type) 11]
+         [(make-struct-field-accessor make-struct-field-mutator) 5]
+         [(make-struct-type-property) 7]
+         [(string-replace) 4]
+         [else 3]))
+     (λ (_name) #f)
+     (λ (name)
+       (case name
+         [(string-replace) 'true]
+         [(struct->list) 'symbol:error]
+         [(string-join) 'string:space]
+         [(bytes->path datum->correlated correlated-property
+                       inclusive-range inclusive-range-proc) 'missing]
+         [else 'false])))
+   (make-inline-specs/by-name
+    '(make-input-port
+      peek-bytes-avail!
+      peek-bytes-avail!*)
+    'optional-rest
+    (λ (name)
+      (case name
+        [(make-input-port) 4]
+        [else 2]))
+    (λ (name)
+      (case name
+        [(make-input-port) 10]
+        [else 6]))
+    (λ (name)
+      (case name
+        [(make-input-port) 4]
+        [else 1])))))
+  )
+
+(define primitive-inline-spec-table #f)
+
+(define (ensure-primitive-inline-spec-table!)
+  (or primitive-inline-spec-table
+      (let ([ht (build-primitive-inline-spec-table primitive-inline-specs)])
+        (set! primitive-inline-spec-table ht)
+        ht)))
+
+(define (primitive-inline-spec-ref sym)
+  (hash-ref (ensure-primitive-inline-spec-table!) sym #f))
+
+(module+ test
+  (check-equal? (primitive-inline-spec-kind (primitive-inline-spec-ref 'substring))
+                'optional)
+  (check-equal? (primitive-inline-spec-default (primitive-inline-spec-ref 'string-join))
+                'string:space)
+  (check-exn exn:fail?
+             (λ ()
+               (build-primitive-inline-spec-table
+                (list (primitive-inline-spec 'demo 'fixed 1 1 #f #f)
+                      (primitive-inline-spec 'demo 'fixed 1 1 #f #f)))))
+  (check-exn exn:fail?
+             (λ ()
+               (primitive-inline-spec-valid?
+                (primitive-inline-spec 'demo 'optional/default 1 2 #f #f)))))
+
+;;;
+;;; Primitives
+;;;
+
 
 ;; Most primitives are either primitives or procedures in standard Racket.
 ;; We can therefore use reflection to look up information about arities,
@@ -4961,256 +5466,57 @@
                ,(finish (Reference tmp))))
 
 
+     (define (inline-prim-default default)
+       (case default
+         [(false)        (Imm #f)]
+         [(true)         (Imm #t)]
+         [(missing)      '(global.get $missing)]
+         [(string:space) '(global.get $string:space)]
+         [(symbol:error) '(global.get $symbol:error)]
+         [else
+          (error 'inline-prim-default "unknown inline default: ~a" default)]))
+
+     (define (inline-prim/spec spec sym ae1)
+       (define kind       (primitive-inline-spec-kind spec))
+       (define min        (primitive-inline-spec-min spec))
+       (define max        (primitive-inline-spec-max spec))
+       (define rest-start (primitive-inline-spec-rest-start spec))
+       (define default    (primitive-inline-spec-default spec))
+       (case kind
+         [(fixed)            (inline-prim/fixed sym ae1 min)]
+         [(optional)         (inline-prim/optional sym ae1 min max)]
+         [(optional/default) (inline-prim/optional/default sym ae1 min max
+                                                           (inline-prim-default default))]
+         [(optional-rest)    (inline-prim/optional-rest sym ae1 min max rest-start)]
+         [(variadic)         (inline-prim/variadic sym ae1 min rest-start)]
+         [(variadic-args)    (inline-prim/variadic-args sym ae1 min rest-start)]
+         [else
+          (error 'inline-prim/spec "unknown primitive spec kind: ~a" kind)]))
+
      (define sym (syntax->datum (variable-id pr)))
+     (define spec (primitive-inline-spec-ref sym))
      (define work
-       (case sym
-         ;;; Special Inlining
-         [(void)
+       (cond
+         [(eq? sym 'void)
           (define (AE ae)   `(drop ,(AExpr3 ae <effect>)))
           (define (AE* aes) (map AE aes))
           `(block (result (ref eq))
                   ,@(AE* ae1)
                   (global.get $void))]
-         [(list) 
+         [(eq? sym 'list)
           (build-rest-args (AExpr* ae1))]
-         [(list*)
-          ;; list* is a variadic primitive with ABI (x rest-list).
-          ;; Do not nest direct calls with raw values as tail.
-          (inline-prim/variadic sym ae1 1)]
-         [(values) ; variadic
+         [(eq? sym 'values)
           (define n   (length ae1))
           (define aes (AExpr* ae1))
           (case n
             [(1)   (first aes)]
             [else  `(array.new_fixed $Values ,n ,@aes)])]
-
-         [(= < > <= >=)
-          (define n      (length ae1))
-          (define aes    (AExpr* ae1))
-          (define $cmp/2 ($ (string->symbol (~a sym "/2"))))
-          (case n
-            [(2) `(call ,$cmp/2 ,@aes)]
-            [else (inline-prim/variadic-args sym ae1 1)])]
-
-         [(symbol<?) ; variadic, at least one argument
-          (inline-prim/variadic sym ae1 1)]
-         [(symbol=?) ; exact arity 2
-          (inline-prim/fixed sym ae1 2)]
-         [(keyword<?) ; variadic, at least one argument
-          (inline-prim/variadic sym ae1 1)]
-         [(string=?)
-          (inline-prim/variadic sym ae1 1)]
-         [(string<? string<=? string>? string>=?)
-          (inline-prim/variadic sym ae1 1)]
-         [(string-ci=? string-ci<? string-ci<=? string-ci>? string-ci>=?)
-          (inline-prim/variadic sym ae1 1)]
-         
-        ;;; Standard Inlining
-        [(+)                         (inline-prim/variadic sym ae1 0)]
-        [(*)                         (inline-prim/variadic sym ae1 0)]
-        [(-)                         (inline-prim/variadic sym ae1 1)]
-        [(/)                         (inline-prim/variadic sym ae1 1)]
-        [(unsafe-fx+)                (inline-prim/variadic sym ae1 0)]
-        [(unsafe-fx*)                (inline-prim/variadic sym ae1 0)]
-        [(unsafe-fx-)                (inline-prim/variadic sym ae1 1)]
-        [(unsafe-fx=
-          unsafe-fx<
-          unsafe-fx>
-          unsafe-fx<=
-          unsafe-fx>=)               (inline-prim/fixed sym ae1 2)]
-        [(unsafe-fxand
-          unsafe-fxior
-          unsafe-fxxor)              (inline-prim/variadic sym ae1 1)]
-        [(unsafe-fxnot)              (inline-prim/fixed sym ae1 1)]
-        [(unsafe-fxpopcount
-          unsafe-fxpopcount16
-          unsafe-fxpopcount32)       (inline-prim/fixed sym ae1 1)]
-        [(unsafe-fxlshift
-          unsafe-fxrshift
-          unsafe-fxrshift/logical)   (inline-prim/fixed sym ae1 2)]
-        
-        [(s-exp->fasl) ; 1 to 2 arguments
-         ;               (in the keyword-less version in "core.rkt"
-          (inline-prim/optional sym ae1 1 2)]
-        [(fasl->s-exp)                (inline-prim/fixed sym ae1 1)]
-
-        [(call-with-exception-handler)      (inline-prim/fixed sym ae1 2)]
-        [(raise)      (inline-prim/optional/default sym ae1 1 2 (Imm #t))]
-        [(raise-read-error)            (inline-prim/optional sym ae1 6 7)]
-        [(raise-read-eof-error)        (inline-prim/optional sym ae1 6 7)]
-        [(current-continuation-marks)  (inline-prim/optional sym ae1 0 1)]
-
-        [(gensym)                     (inline-prim/optional sym ae1 0 1)]
-
-        [(apply)                      (inline-prim/variadic sym ae1 2 1)]
-        
-         [(vector-copy!)               (inline-prim/optional sym ae1 3 5)]
-         [(string-copy!)               (inline-prim/optional sym ae1 3 5)]
-         [(bytes-copy!)                (inline-prim/optional sym ae1 3 5)]
-
-         [(open-input-string)          (inline-prim/optional sym ae1 1 2)]
-         [(open-input-bytes)           (inline-prim/optional sym ae1 1 2)]
-         [(get-output-bytes
-           get-output-string)          (inline-prim/fixed sym ae1 1)]
-         [(open-output-bytes)          (inline-prim/optional sym ae1 0 1)]
-         [(open-output-string)         (inline-prim/optional sym ae1 0 1)]
-         [(call-with-output-string)    (inline-prim/fixed sym ae1 1)]
-         [(make-input-port)            (inline-prim/optional-rest sym ae1 4 10 4)]
-
-         [(byte-ready?)                (inline-prim/optional sym ae1 0 1)]
-         [(char-ready?)                (inline-prim/optional sym ae1 0 1)]
-         [(read-byte)                  (inline-prim/optional sym ae1 0 1)]
-         [(read-char)                  (inline-prim/optional sym ae1 0 1)]
-         [(read-bytes!)                (inline-prim/optional sym ae1 1 4)]
-         [(read-bytes-avail!)          (inline-prim/optional sym ae1 1 4)]
-         [(read-bytes-avail!*)         (inline-prim/optional sym ae1 1 4)]
-         [(peek-bytes-avail!)          (inline-prim/optional-rest sym ae1 2 6 1)]
-         [(peek-bytes-avail!*)         (inline-prim/optional-rest sym ae1 2 6 1)]
-         [(read-string!)               (inline-prim/optional sym ae1 1 4)]
-         [(read-bytes)                 (inline-prim/optional sym ae1 1 2)]
-         [(read-string)                (inline-prim/optional sym ae1 1 2)]
-         [(read-line)                  (inline-prim/optional sym ae1 0 2)]
-         [(peek-bytes!)                (inline-prim/optional sym ae1 2 5)]
-         [(peek-string!)               (inline-prim/optional sym ae1 2 5)]
-         [(peek-bytes)                 (inline-prim/optional sym ae1 1 3)]
-         [(peek-string)                (inline-prim/optional sym ae1 1 3)]
-         [(peek-byte)                  (inline-prim/optional sym ae1 0 2)]
-         [(peek-char)                  (inline-prim/optional sym ae1 0 2)]
-         [(progress-evt?)              (inline-prim/optional sym ae1 1 2)]
-         
-         [(write-char)                 (inline-prim/optional sym ae1 1 2)]
-         [(newline)                    (inline-prim/optional sym ae1 0 1)]
-         [(write-bytes)                (inline-prim/optional sym ae1 1 4)]
-         [(write-string)               (inline-prim/optional sym ae1 1 4)]
-
-         [(make-vector)                (inline-prim/optional sym ae1 1 2)]
-         [(make-string)                (inline-prim/optional sym ae1 1 2)]
-         [(make-bytes)                 (inline-prim/optional sym ae1 1 2)]
-
-         [(substring)                  (inline-prim/optional sym ae1 2 3)]
-         [(subbytes)                   (inline-prim/optional sym ae1 2 3)]         
-         [(string-utf-8-length)        (inline-prim/optional sym ae1 1 3)]
-         [(string->bytes/utf-8)        (inline-prim/optional/default sym ae1 1 4 (Imm #f))]
-         [(bytes->string/utf-8)        (inline-prim/optional sym ae1 1 4)]
-         [(bytes->string/latin-1)      (inline-prim/optional sym ae1 1 4)]
-         [(bytes-utf-8-length)         (inline-prim/optional sym ae1 1 4)]
-
-         [(vector-copy)                (inline-prim/optional sym ae1 1 3)] ; "subvector"
-         [(vector->values)             (inline-prim/optional sym ae1 1 3)]
-         [(vector-extend)              (inline-prim/optional sym ae1 2 3)]
-         [(vector-count)               (inline-prim/variadic sym ae1 2 2)]
-         [(vector-sort!)               (inline-prim/optional sym ae1 2 4)]
-         [(vector-sort)                (inline-prim/optional sym ae1 2 4)]
-         
-         [(procedure-rename)           (inline-prim/optional sym ae1 2 3)]
-         [(procedure-arity-includes?)  (inline-prim/optional/default sym ae1 2  3 (Imm #f))]
-         [(make-hasheq make-hasheqv
-                       make-hash make-hashalw)     (inline-prim/optional sym ae1 0 1)]
-
-         [(make-weak-hasheq make-weak-hasheqv
-           make-weak-hash   make-weak-hashalw)   (inline-prim/optional sym ae1 0 1)]
-         [(number->string)             (inline-prim/optional/default sym ae1 1  2 (Imm #f))]
-         [(string->number)             (inline-prim/optional sym ae1 1 5)]
-         [(floating-point-bytes->real) (inline-prim/optional sym ae1 1 4)]
-         [(make-struct-type)           (inline-prim/optional/default sym ae1 4 11 (Imm #f))]
-         [(make-struct-field-accessor) (inline-prim/optional/default sym ae1 2  5 (Imm #f))]
-         [(make-struct-field-mutator)  (inline-prim/optional/default sym ae1 2  5 (Imm #f))]
-         [(make-struct-type-property)  (inline-prim/optional/default sym ae1 1  7 (Imm #f))]
-         [(struct-type-property?)      (inline-prim/fixed             sym ae1 1)]
-         [(struct-type-property-accessor-procedure?)  (inline-prim/fixed            sym ae1 1)]
-         [(struct-type-property-predicate-procedure?) (inline-prim/optional/default sym ae1 1  2 (Imm #f))]
-         [(struct-type-authentic?)     (inline-prim/fixed             sym ae1 1)]
-         [(struct->list)               (inline-prim/optional/default sym ae1 1  2 '(global.get $symbol:error))]
-         [(struct->vector)             (inline-prim/optional         sym ae1 1  2)]
-         [(log)                        (inline-prim/optional sym ae1 1 2)]
-         [(real->floating-point-bytes) (inline-prim/optional sym ae1 2 5)]
-         ; Todo: map and for-each needs to check that the first argument is a procedure
-        [(map)                        (inline-prim/variadic sym ae1 2 2)]
-        [(andmap)                     (inline-prim/variadic sym ae1 2 2)]
-        [(ormap)                      (inline-prim/variadic sym ae1 2 2)]
-        [(append-map)                 (inline-prim/variadic sym ae1 2 2)]
-        [(count)                      (inline-prim/variadic sym ae1 2 2)]
-        [(for-each)                   (inline-prim/variadic sym ae1 2 2)]
-         [(foldl foldr)                (inline-prim/variadic sym ae1 3)]
-         [(vector-map)                 (inline-prim/variadic sym ae1 2 2)]
-         [(vector-map!)                (inline-prim/variadic sym ae1 2 2)]
-
-         [(vector-filter vector-filter-not) (inline-prim/fixed sym ae1 2)]
-         [(vector-argmax vector-argmin)     (inline-prim/fixed sym ae1 2)]
-
-         [(assoc)                      (inline-prim/optional sym ae1 2 3)]
-         [(assw assv assq assf)        (inline-prim/fixed sym ae1 2)]
-         [(group-by)                   (inline-prim/optional sym ae1 2 3)]
-         [(member)                     (inline-prim/optional sym ae1 2 3)]
-         [(memf findf)                 (inline-prim/fixed sym ae1 2)]
-         [(remove)                     (inline-prim/optional sym ae1 2 3)]
-         [(remove*)                    (inline-prim/optional sym ae1 2 3)]
-         [(index-of indexes-of)        (inline-prim/optional sym ae1 2 3)]
-         [(index-where indexes-where)  (inline-prim/fixed sym ae1 2)]
-         [(take  take-right)           (inline-prim/fixed sym ae1 2)]
-         [(takef takef-right)          (inline-prim/fixed sym ae1 2)]
-         [(drop drop-right
-          dropf dropf-right)           (inline-prim/fixed sym ae1 2)]
-         [(list-prefix?)               (inline-prim/optional sym ae1 2 3)]
-         [(take-common-prefix)         (inline-prim/optional sym ae1 2 3)]
-         [(drop-common-prefix)         (inline-prim/optional sym ae1 2 3)]
-         [(split-common-prefix)        (inline-prim/optional sym ae1 2 3)]
-         [(argmax argmin)              (inline-prim/fixed sym ae1 2)]
-         [(filter-map)                 (inline-prim/variadic sym ae1 2)]
-         [(range)                      (inline-range sym ae1)]
-         [(range-proc)                (inline-range sym ae1)]
-         [(inclusive-range)
-          (inline-prim/optional/default sym ae1 2 3 '(global.get $missing))]
-         [(inclusive-range-proc)
-          (inline-prim/optional/default sym ae1 2 3 '(global.get $missing))]
-
-         [(take-common-prefix)         (inline-prim/optional sym ae1 2 3)]
-         [(drop-common-prefix)         (inline-prim/optional sym ae1 2 3)]
-         [(split-common-prefix)        (inline-prim/optional sym ae1 2 3)]
-         [(string-replace)             (inline-prim/optional/default sym ae1 3 4 (Imm #t))]
-
-         [(argmax argmin)              (inline-prim/fixed sym ae1 2)]
-
-         [(hash-ref)                   (inline-prim/optional sym ae1 2 3)]
-         [(hash->list)                 (inline-prim/optional/default sym ae1 1 2 (Imm #f))]
-         [(hash-keys hash-values)      (inline-prim/optional/default sym ae1 1 2 (Imm #f))]
-         [(hash-for-each)              (inline-prim/optional/default sym ae1 2 3 (Imm #f))]
-         [(hash-map)                   (inline-prim/optional/default sym ae1 2 3 (Imm #f))]
-         [(hash-map/copy)              (inline-prim/optional/default sym ae1 2 3 (Imm #f))]
-         [(hash-update!)               (inline-prim/optional sym ae1 3 4)]
-         [(hash-filter hash-filter-keys hash-filter-values)
-          (inline-prim/fixed sym ae1 2)]
-         
-         [(random)                     (inline-prim/optional sym ae1 0 2)]
-         [(flrandom unsafe-flrandom)   (inline-prim/optional sym ae1 0 1)]
-         [(fx-/wraparound)             (inline-prim/variadic sym ae1 1)]            ; actual arity: 1,2
-         [(unsafe-fx+/wraparound
-           unsafe-fx*/wraparound
-           unsafe-fxlshift/wraparound) (inline-prim/fixed sym ae1 2)]
-         [(unsafe-fx-/wraparound)      (inline-prim/variadic sym ae1 1)]            ; actual arity: 1,2
-
-         [(unsafe-fxquotient
-           unsafe-fxremainder
-           unsafe-fxmodulo)            (inline-prim/fixed sym ae1 2)]
-
-         [(min max)                               (inline-prim/variadic sym ae1 1)]
-         [(flmin flmax unsafe-flmin unsafe-flmax) (inline-prim/variadic sym ae1 1)] ; at least 1
-         [(fxmin fxmax unsafe-fxmin unsafe-fxmax) (inline-prim/variadic sym ae1 1)] ; at least 1
-         [(gcd lcm)                               (inline-prim/variadic sym ae1 0)] ; at least 0
-
-         [(datum->syntax)       (inline-prim/optional sym ae1 2 5)]
-         [(datum->correlated)   (inline-prim/optional/default sym ae1 1 3 '(global.get $missing))]
-         [(correlated-property) (inline-prim/optional/default sym ae1 2 3 '(global.get $missing))]
-
-         [(make-instance)                 (inline-prim/variadic sym ae1 1)]
-         [(instance-name instance-data)   (inline-prim/fixed    sym ae1 1)]
-         [(instance-variable-names)       (inline-prim/fixed    sym ae1 1)]
-         [(instance-set-variable-value!)  (inline-prim/variadic sym ae1 3)]
-         [(instance-unset-variable!)      (inline-prim/fixed    sym ae1 2)]
-         [(instance-variable-value)       (inline-prim/variadic sym ae1 2)]
-         [(instantiate-linklet)           (inline-prim/optional/default sym ae1 2 4 (Imm #f))]
-         
-         
+         [(memq sym '(range range-proc))
+          (inline-range sym ae1)]
+         [spec
+          (inline-prim/spec spec sym ae1)]
+         [else
+          (case sym
         [(fx= fx< fx> fx<= fx>=)
           ; variadic, at least one argument
           (define n   (length ae1))
@@ -5314,13 +5620,6 @@
              [(list v)      v]
              [(list v1 v2)  `(call $append/2 ,v1 ,v2)]
              [(list* vs)    `(call $append ,(build-rest-args aes))]))]
-
-        [(append*)
-         (inline-prim/variadic sym ae1 1)]
-        
-        [(cartesian-product)
-         (inline-prim/variadic sym ae1 0)]
-
         [(string-append)
          (let loop ([aes (AExpr* ae1)])
            (match aes
@@ -5328,21 +5627,6 @@
               [(list v)      `(call $string-copy ,v)]
               [(list v1 v2)  `(call $string-append/2 ,v1 ,v2)]
               [(list* vs)    `(call $string-append ,(build-rest-args aes))]) )]
-
-        [(string-append-immutable) ; variadic, at least zero arguments
-          (inline-prim/variadic sym ae1 0)]
-
-        [(string-append*)  (inline-prim/variadic sym ae1 1)]
-        [(bytes-append*)   (inline-prim/variadic sym ae1 1)]
-        [(bytes-join)      (inline-prim/fixed sym ae1 2)]
-
-        [(string-trim)     (inline-prim/optional sym ae1 1 5)]
-        [(string-split)    (inline-prim/optional sym ae1 1 4)]
-        [(string-join)
-         (inline-prim/optional/default sym ae1 1 2 '(global.get $string:space))]
-
-        [(bytes->path)
-         (inline-prim/optional/default sym ae1 1 2 '(global.get $missing))]
         
         [(vector-append)
          (let loop ([aes (AExpr* ae1)])
@@ -5490,7 +5774,7 @@
                          [n   (length aes)])
                     (if (primitive-arity-accepts? sym n)
                         `(call ,(Prim pr) ,@aes)
-                        (primapp-arity-error sym aes)))])])]))
+                        (primapp-arity-error sym aes)))])])])]))
 
      (match dd
        [(or '<value> '<effect>)
