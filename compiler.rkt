@@ -6250,7 +6250,18 @@
      ; That is, at this point the variables x ... are bound to a $Boxed instance.
      
      (match x
-       ['()           (Expr e <effect> <stat>)]
+       ['()           (define vals (emit-fresh-local 'vals '(ref eq) '(global.get $undefined)))
+                      `(block
+                        ,(Expr e vals <stat>)
+                        (if (ref.test (ref $Values) ,(Reference vals))
+                            (then
+                             (if (i32.eqz
+                                  (i32.eq
+                                   (array.len (ref.cast (ref $Values) ,(Reference vals)))
+                                   (i32.const 0)))
+                                 (then (call $raise-wrong-number-of-values-received))))
+                            (else
+                             (call $raise-wrong-number-of-values-received))))]
        ; Until we implement namespaces, top-level variables are
        ; stored as boxed global variables.
        ;              (Expr e dd cd)
