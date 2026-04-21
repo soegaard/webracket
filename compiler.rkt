@@ -6015,13 +6015,8 @@
              [(list x0 x1 ...)  (define mv (emit-fresh-local 'mv  '(ref null $Values)))
                                 (define t  (emit-fresh-local 'mvt)) ; (ref eq)
                                 (define n  (length (cons x0 x1)))
-                                ; The result of (CExpr ce t <stat>) always produces an (ref eq).
-                                ; To make casting easier, we make an extra local.
                                  `(block ,(CExpr ce t <stat>)
-                                         ,(Store! mv `(ref.cast (ref $Values) ,(Reference t)))
-                                         (if (i32.eqz (i32.eq (array.len ,(Reference mv))
-                                                              (i32.const ,n)))
-                                             (then (call $raise-wrong-number-of-values-received)))                                             
+                                         ,(Store! mv `(call $expect-n-values ,(Reference t) (i32.const ,n)))
                                          ,@(for/list ([x (cons x0 x1)]
                                                       [i (in-naturals)])
                                              (Store! x `(array.get $Values ,(Reference mv) (i32.const ,i)))))]
