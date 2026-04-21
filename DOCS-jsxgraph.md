@@ -50,6 +50,7 @@ All function names are linked to JSXGraph API documentation.
 - [Chapter 9 — Line Bridge](#chapter-9--line-bridge)
 - [Chapter 10 — Circle Bridge](#chapter-10--circle-bridge)
 - [Chapter 11 — Curve Bridge](#chapter-11--curve-bridge)
+- [Curve-family specifics](#curve-family-specifics)
 - [Chapter 12 — Polygon Bridge](#chapter-12--polygon-bridge)
 - [Chapter 13 — Arc Bridge](#chapter-13--arc-bridge)
 - [Chapter 14 — Angle Bridge](#chapter-14--angle-bridge)
@@ -555,7 +556,7 @@ control the slider range and value.
 ## Chapter 24 — Coverage Checklist
 
 - This document covers **214** functions from `ffi/jsxgraph.ffi`.
-- Total documented functions: **224**
+- Total documented functions: **239**
 - `board api`: 77 functions
 - `board properties`: 8 functions
 - `geometryelement bridge`: 3 functions
