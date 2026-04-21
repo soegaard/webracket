@@ -6253,19 +6253,16 @@
        ['()           (define vals (emit-fresh-local 'vals '(ref eq) '(global.get $undefined)))
                       `(block
                         ,(Expr e vals <stat>)
-                        (if (ref.test (ref $Values) ,(Reference vals))
-                            (then
-                             (if (i32.eqz
-                                  (i32.eq
-                                   (array.len (ref.cast (ref $Values) ,(Reference vals)))
-                                   (i32.const 0)))
-                                 (then (call $raise-wrong-number-of-values-received))))
-                            (else
-                             (call $raise-wrong-number-of-values-received))))]
+                        (drop (call $expect-zero-values ,(Reference vals))))]
        ; Until we implement namespaces, top-level variables are
        ; stored as boxed global variables.
        ;              (Expr e dd cd)
-       [(list x0)     (Expr e x0 <stat>)]
+       ; A single target accepts either one ordinary value or a $Values bundle
+       ; of length 1. Anything else must raise a value-count error.
+       [(list x0)     (define vals (emit-fresh-local 'vals '(ref eq) '(global.get $undefined)))
+                      `(block
+                        ,(Expr e vals <stat>)
+                        ,(Store! x0 `(call $expect-one-value ,(Reference vals))))]
        #;[(list x0)     `(block
                           (global.set ,($$ (variable-id x0)) 
                                     (ref.cast (ref eq) 
