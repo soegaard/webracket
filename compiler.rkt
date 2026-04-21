@@ -2613,12 +2613,17 @@
                 ,(build-begin
                   E (for/list ([complex complex-clauses])
                       (syntax-parse complex
-                        [[(xc)     ce]  (Expr #'(set! xc ce))]
+                        [[()       ce]  (Expr #'(let-values ([() ce]) 0))]
+                        [[(xc)     ce]  (with-syntax ([tc (car (generate-temporaries #'(xc)))])
+                                          (Expr #'(let-values ([(tc) ce])
+                                                    (begin
+                                                      (set! xc tc)
+                                                      0))))]
                         [[(xc ...) ce]  (with-syntax ([(tc ...) (generate-temporaries #'(xc ...))])
-                                          (if (eq? (syntax-e #'(xc ...)) '())
-                                              (Expr #'ce)
-                                              (Expr #'(let-values ([(tc ...) ce])
-                                                        (set! xc tc) ...))))]))
+                                          (Expr #'(let-values ([(tc ...) ce])
+                                                    (begin
+                                                      (set! xc tc) ...
+                                                      0))))]))
                   (Expr* #'(e0 e1 ...))))))]
         [(set! x:id e)                              `(set! ,E ,(variable #'x) ,(Expr #'e))]
         [(with-continuation-mark e0 e1 e2)          `(wcm ,E ,(Expr #'e0) ,(Expr #'e1) ,(Expr #'e2))]
@@ -6007,8 +6012,12 @@
            (for-each emit-local (reverse x*))
            ; Evaluate the ce* and store the results in the x*
            (match x*
-             ; single value return is the common case, so this needs to be fast
-             [(list x)         (CExpr ce x <stat>)]  ; single value
+             ; A single target accepts either one ordinary value or a $Values bundle
+             ; of length 1. Anything else must raise a value-count error.
+             [(list x)         (define t (emit-fresh-local 'letv1)) ; (ref eq)
+                                `(block
+                                  ,(CExpr ce t <stat>)
+                                  ,(Store! x `(call $expect-one-value ,(Reference t))))]
              ; multiple values are returned in an $Values array [v0,v1,...].
              ; to avoid allocating an extra variable, we receive the array in x0,
              ; then assign the individual variables (in reverse order so x0 is last)
