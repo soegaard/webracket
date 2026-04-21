@@ -159,6 +159,17 @@
                    #:do [(define name (module-func-name form))]
                    #:when name)
           name))
+      (define (func-export-names form)
+        (and (pair? form)
+             (eq? (car form) 'func)
+             (pair? (cdr form))
+             (symbol? (cadr form))
+             (for/list ([part (in-list (cddr form))]
+                        #:when (and (pair? part)
+                                    (eq? (car part) 'export)
+                                    (pair? (cdr part))
+                                    (string? (cadr part))))
+               (cadr part))))
       (define named-funcs-ht
         (for/hasheq ([name (in-list named-funcs)])
           (values name #t)))
@@ -181,28 +192,36 @@
         (hash-keys primitive-func->symbol))
       (define primitive-func-name?
         (λ (name) (and (symbol? name) (hash-ref primitive-func->symbol name #f))))
+      (define exported-runtime-functions
+        (for/list ([form (in-list (cdr module))]
+                   #:do [(define name (module-func-name form))]
+                   #:when (and name
+                               (pair? (func-export-names form))
+                               (not (primitive-func-name? name))))
+          name))
       (define module-root-funcs
         (remove-duplicates
-         (append*
-          (for/list ([form (in-list (cdr module))]
-                     #:unless (or (module-func-name form)
-                                  (and (pair? form)
-                                       (eq? (car form) 'elem)
-                                       (pair? (cdr form))
-                                       (eq? (cadr form) 'declare)
-                                       (pair? (cddr form))
-                                       (eq? (caddr form) 'funcref))))
-            (let loop ([x form])
-              (cond
-                [(symbol? x)
-                 (if (and (hash-ref named-funcs-ht x #f)
-                          (not (primitive-func-name? x)))
-                     (list x)
-                     '())]
-                [(pair? x)
-                 (append (loop (car x))
-                         (loop (cdr x)))]
-                [else '()]))))))
+         (append exported-runtime-functions
+                 (append*
+                  (for/list ([form (in-list (cdr module))]
+                             #:unless (or (module-func-name form)
+                                          (and (pair? form)
+                                               (eq? (car form) 'elem)
+                                               (pair? (cdr form))
+                                               (eq? (cadr form) 'declare)
+                                               (pair? (cddr form))
+                                               (eq? (caddr form) 'funcref))))
+                    (let loop ([x form])
+                      (cond
+                        [(symbol? x)
+                         (if (and (hash-ref named-funcs-ht x #f)
+                                  (not (primitive-func-name? x)))
+                             (list x)
+                             '())]
+                        [(pair? x)
+                         (append (loop (car x))
+                                 (loop (cdr x)))]
+                        [else '()])))))))
       (define elem-root-functions
         (remove-duplicates
          (append*
@@ -280,6 +299,7 @@
             (cons 'function-primitive-refs
                   (for/list ([name (in-list (sort named-funcs symbol<?))])
                     (cons name (sort (hash-ref func->primitive-refs name '()) symbol<?))))
+            (cons 'exported-runtime-functions (sort exported-runtime-functions symbol<?))
             (cons 'module-root-functions (sort module-root-funcs symbol<?))
             (cons 'elem-root-functions (sort elem-root-functions symbol<?))
             (cons 'reachable-runtime-functions (sort runtime-funcs symbol<?))

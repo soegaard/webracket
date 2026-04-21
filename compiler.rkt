@@ -6760,6 +6760,19 @@
            (pair? (cdr form))
            (equal? (cadr form) name))))
 
+  (define (module-func-exports mod name)
+    (for/or ([form (in-list (cdr mod))])
+      (and (pair? form)
+           (eq? (car form) 'func)
+           (pair? (cdr form))
+           (equal? (cadr form) name)
+           (for/list ([part (in-list (cddr form))]
+                      #:when (and (pair? part)
+                                  (eq? (car part) 'export)
+                                  (pair? (cdr part))
+                                  (string? (cadr part))))
+             (cadr part)))))
+
   (define (report-ref report key)
     (cdr (assq key report)))
 
@@ -6791,6 +6804,14 @@
     (check-true (module-has-top-level-form? mod 'func '$reverse))
     (check-true (pair? (memq 'append  (report-ref report 'retained-primitives))))
     (check-true (pair? (memq 'reverse (report-ref report 'retained-primitives)))))
+
+  (let-values ([(mod report)
+                (compile/primitive-report #'(module tree-shake-callback-exports webracket
+                                                   "hello world"))])
+    (check-not-false (member "callback" (module-func-exports mod '$callback)))
+    (check-not-false (member "callback-register" (module-func-exports mod '$callback-register)))
+    (check-not-false (member "callback-accepts-argc" (module-func-exports mod '$callback-accepts-argc)))
+    (check-true (pair? (assq 'summary report))))
 
   (check-equal? (run-expr #'(append '(1) '(2 3) '(4)))
                 '(1 2 3 4)))
