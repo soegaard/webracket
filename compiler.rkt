@@ -6026,7 +6026,10 @@
                                                       [i (in-naturals)])
                                              (Store! x `(array.get $Values ,(Reference mv) (i32.const ,i)))))]
              ; no values are expected
-             ['() (CExpr ce <effect> '<stat>)]))) ; todo: signal error if values are produced
+             ['()              (define t (emit-fresh-local 'letv0))
+                                `(block
+                                  ,(CExpr ce t <stat>)
+                                  (drop (call $expect-zero-values ,(Reference t))))])))
        (let* ([xs (map Var (append* x**))]            
               [e  (Expr e dd cd)])
          ; (displayln (list 'letv 'dd dd 'cd cd))
