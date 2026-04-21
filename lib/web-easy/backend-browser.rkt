@@ -709,57 +709,26 @@
           (js-replace-children! native (js-create-text-node (value->attr-string t)))
           (js-replace-children! native (js-create-text-node ""))))
 
+    ;; tag->element-name-rewrites : list?
+    ;;   Special backend tag rewrites to HTML element names.
+    (define tag->element-name-rewrites
+      '((window . "div")
+        (vpanel . "div")
+        (hpanel . "div")
+        (text . "span")
+        (menu-item . "button")
+        (checkbox . "input")
+        (choice . "select")
+        (radios . "div")
+        (slider . "input")
+        (menu-bar . "nav")
+        (image . "img")))
+
     ;; tag->element-name : symbol? -> string?
     ;;   Map backend tag symbol to HTML element name.
     (define (tag->element-name tag)
-      (case tag
-        [(window vpanel hpanel) "div"]
-        [(style) "style"]
-        [(group) "fieldset"]
-        [(legend) "legend"]
-        [(label) "label"]
-        [(span) "span"]
-        [(small) "small"]
-        [(p) "p"]
-        [(h1) "h1"]
-        [(h2) "h2"]
-        [(h3) "h3"]
-        [(h4) "h4"]
-        [(h5) "h5"]
-        [(h6) "h6"]
-        [(text) "span"]
-        [(menu-item) "button"]
-        [(button) "button"]
-        [(a) "a"]
-        [(hr) "hr"]
-        [(input) "input"]
-        [(textarea) "textarea"]
-        [(checkbox) "input"]
-        [(choice select) "select"]
-        [(radios) "div"]
-        [(slider) "input"]
-        [(progress) "progress"]
-        [(spacer) "div"]
-        [(table) "table"]
-        [(tr) "tr"]
-        [(th) "th"]
-        [(td) "td"]
-        [(menu-bar) "nav"]
-        [(menu) "div"]
-        [(div) "div"]
-        [(section) "section"]
-        [(article) "article"]
-        [(nav) "nav"]
-        [(main) "main"]
-        [(header) "header"]
-        [(footer) "footer"]
-        [(aside) "aside"]
-        [(form) "form"]
-        [(ul) "ul"]
-        [(ol) "ol"]
-        [(li) "li"]
-        [(img) "img"]
-        [(image) "img"]
+      (cond
+        [(assoc tag tag->element-name-rewrites) => cdr]
         ;; Allow primitive html-element tags that are not explicitly listed above.
         [else (symbol->string tag)]))
 
