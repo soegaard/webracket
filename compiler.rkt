@@ -6018,13 +6018,11 @@
                                   ,(CExpr ce x <stat>)
                                   ,(Store! x `(call $expect-one-value ,(Reference x))))]
              ; multiple values are returned in an $Values array [v0,v1,...].
-             ; to avoid allocating an extra variable, we receive the array in x0,
-             ; then assign the individual variables (in reverse order so x0 is last)
+             ; Reuse x0 for the raw result, then unpack the validated $Values.
              [(list x0 x1 ...)  (define mv (emit-fresh-local 'mv  '(ref null $Values)))
-                                (define t  (emit-fresh-local 'mvt)) ; (ref eq)
                                 (define n  (length (cons x0 x1)))
-                                 `(block ,(CExpr ce t <stat>)
-                                         ,(Store! mv `(call $expect-n-values ,(Reference t) (i32.const ,n)))
+                                 `(block ,(CExpr ce x0 <stat>)
+                                         ,(Store! mv `(call $expect-n-values ,(Reference x0) (i32.const ,n)))
                                          ,@(for/list ([x (cons x0 x1)]
                                                       [i (in-naturals)])
                                              (Store! x `(array.get $Values ,(Reference mv) (i32.const ,i)))))]
