@@ -25,6 +25,8 @@
 (define timings?        (make-parameter #f))
 (define pretty-wat?     (make-parameter #f))
 (define list-primitives? (make-parameter #f))
+(define tree-shake?     (make-parameter #t))
+(define tree-shake-report (make-parameter #f))
 
 (define browser         (make-parameter #f))
 (define nodejs          (make-parameter #t))   ; default
@@ -73,6 +75,13 @@
                         (pretty-wat? #f)]
    [("--list-primitives") "Print the list of all primitives and exit"
                           (list-primitives? #t)]
+   [("--tree-shake") "Tree shake runtime primitives (default)"
+                     (tree-shake? #t)]
+   [("--no-tree-shake") "Do not tree shake runtime primitives"
+                        (tree-shake? #f)]
+   [("--tree-shake-report") filename
+                            "Write the runtime primitive report to <filename>"
+                            (tree-shake-report filename)]
    [("--stdlib")             "Include the standard library (default)"
                              (stdlib? #t)]
    [("--no-stdlib")          "Do not include the standard library"
@@ -129,6 +138,8 @@
                      #:verbose?      (verbose-mode)
                      #:browser?      (browser)
                      #:node?         (nodejs)
+                     #:tree-shake?   (tree-shake?)
+                     #:tree-shake-report (tree-shake-report)
                      #:run-after?    (run-after)
                      #:ffi-files     (ffi-files)
                      #:stdlib?       (stdlib?)))

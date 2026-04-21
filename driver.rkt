@@ -41,7 +41,9 @@
          (only-in "parameters.rkt"  current-ffi-foreigns
                                     current-ffi-imports-wat
                                     current-ffi-funcs-wat
-                                    current-browser?)
+                                    current-browser?
+                                    current-tree-shake?
+                                    current-runtime-primitive-report-path)
          (only-in "timings.rkt"     now-ms format-timing-table)
          "wat-identifiers.rkt"
          racket/runtime-path
@@ -218,6 +220,8 @@
          #:verbose?          verbose?
          #:browser?          browser?
          #:node?             node?
+         #:tree-shake?       tree-shake?
+         #:tree-shake-report tree-shake-report
          #:run-after?        run-after?
          #:ffi-files         ffi-files    ; list of file paths for .ffi files
          #:stdlib?           stdlib?)     ; include standard library 
@@ -227,6 +231,8 @@
   (define t-driver-start (now-ms))
 
   (current-browser? browser?)
+  (current-tree-shake? tree-shake?)
+  (current-runtime-primitive-report-path tree-shake-report)
   (set-browser-mode! browser?)
 
   ; 0. Check that `filename` exists and is a source file.

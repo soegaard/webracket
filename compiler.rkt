@@ -5009,6 +5009,36 @@
     (define (TopLevelForm* ts dd)    (map (λ (t)  (TopLevelForm    t dd)) ts))
     (define (ModuleLevelForm* ms dd) (map (λ (m)  (ModuleLevelForm m dd)) ms))
     (define f-tmp                    (Var (new-var 'f))) ; used by app
+    (define used-primitives-ht       (make-hasheq))
+
+    (define (record-used-primitive! pr)
+      (hash-set! used-primitives-ht pr #t))
+
+    (define primitive-func->symbol
+      (for/hasheq ([pr (in-list primitives)])
+        (values ($ pr) pr)))
+
+    (define primitive-global->symbol
+      (for/hasheq ([pr (in-list primitives)])
+        (values ($ (prim: pr)) pr)))
+
+    ;; Record primitive roots after inlining so the runtime shaker sees the
+    ;; primitive references that survive code generation.
+    (define (record-used-primitives-in-wat! wat)
+      (define (walk x)
+        (cond
+          [(symbol? x)
+           (cond
+             [(hash-ref primitive-func->symbol x #f)
+              => record-used-primitive!]
+             [(hash-ref primitive-global->symbol x #f)
+              => record-used-primitive!]
+             [else (void)])]
+          [(pair? x)
+           (walk (car x))
+           (walk (cdr x))]
+          [else (void)]))
+      (walk wat))
 
     ;; Some expressions (e.g. let-values, letrec-values) need local
     ;; variables to hold values.
@@ -5244,7 +5274,9 @@
   
   (AExpr3 : AExpr (ae [dd #f]) -> * ()  ; only ca needs dest
     [,x               (if (memq (syntax-e (variable-id x)) primitives)
-                          (PrimRef x)     ; reference to primitive
+                          (begin
+                            (record-used-primitive! (syntax-e (variable-id x)))
+                            (PrimRef x)) ; reference to primitive
                           (Reference x))] ; reference to non-free variable
     [(free-ref ,x ,i) `(array.get $Free (local.get $free) (i32.const ,i))] ; x is the name
     [,ca              (ClosureAllocation ca dd)]
@@ -5352,6 +5384,7 @@
 
     ;; Inline Primitives. Inlining.
     [(primapp ,s ,pr ,ae1 ...)
+     (define sym (syntax->datum (variable-id pr)))
      (define (primapp-loc s)
        (and (syntax? s)
             (let* ([src (syntax-source s)]
@@ -5511,7 +5544,6 @@
          [else
           (error 'inline-prim/spec "unknown primitive spec kind: ~a" kind)]))
 
-     (define sym (syntax->datum (variable-id pr)))
      (define spec (primitive-inline-spec-ref sym))
      (define work
        (cond
@@ -5793,6 +5825,7 @@
                     (if (primitive-arity-accepts? sym n)
                         `(call ,(Prim pr) ,@aes)
                         (primapp-arity-error sym aes)))])])])]))
+     (record-used-primitives-in-wat! work)
 
      (match dd
        [(or '<value> '<effect>)
@@ -6419,21 +6452,27 @@
   (define gen
     (time-gen "generate-runtime"
       (λ ()
-        (generate-runtime
-         dls                              ; define-labels
-         tms                              ; top modules
-         entry-body                       ; expressions and general top-level forms
-         result                           ; variable that holds the result (in $entry)
-         ; program specific
-         (id-set->list top-vars)          ; top level variables (list of variables)
-         top-level-variable-declarations  ; wasm code for declaring top-level variables
-         entry-locals                     ; variables that are local to $entry
-         ; general
-         primitives                       ; primitives (list of symbols)
-         string-constants                 ; (list (list name string) ...)
-         bytes-constants                  ; (list (list name bytes) ...)
-         symbol-constants                 ; (list (list name symbol) ...)
-         ))))
+        (parameterize ([current-runtime-primitive-report-path
+                        (or (current-runtime-primitive-report-path)
+                            (and (current-pass-dump-dir)
+                                 (build-path (current-pass-dump-dir)
+                                             "runtime-primitives.sexp")))])
+          (generate-runtime
+           dls                              ; define-labels
+           tms                              ; top modules
+           entry-body                       ; expressions and general top-level forms
+           result                           ; variable that holds the result (in $entry)
+           ; program specific
+           (id-set->list top-vars)          ; top level variables (list of variables)
+           top-level-variable-declarations  ; wasm code for declaring top-level variables
+           entry-locals                     ; variables that are local to $entry
+           ; general
+           primitives                       ; primitives (list of symbols)
+           (sort (hash-keys used-primitives-ht) symbol<?)
+           string-constants                 ; (list (list name string) ...)
+           bytes-constants                  ; (list (list name bytes) ...)
+           symbol-constants                 ; (list (list name symbol) ...)
+           )))))
   (when (current-pass-timings?)
     (current-gen-timing-table
      (format-timing-table (reverse gen-times))))
@@ -6712,6 +6751,49 @@
                (parse
                 (unexpand
                  (topexpand stx)))))))))))))))))
+
+(module+ test
+  (define (module-has-top-level-form? mod head name)
+    (for/or ([form (in-list (cdr mod))])
+      (and (pair? form)
+           (eq? (car form) head)
+           (pair? (cdr form))
+           (equal? (cadr form) name))))
+
+  (define (report-ref report key)
+    (cdr (assq key report)))
+
+  (define (compile/primitive-report stx)
+    (define dump-dir (make-temporary-file "webracket-tree-shaker~a" 'directory))
+    (define mod
+      (parameterize ([current-pass-dump-dir dump-dir])
+        (comp stx)))
+    (define report
+      (with-input-from-file (build-path dump-dir "runtime-primitives.sexp")
+        read))
+    (delete-directory/files dump-dir)
+    (values mod report))
+
+  (let-values ([(mod report)
+                (compile/primitive-report #'(module tree-shake-acos webracket
+                                                   (acos 0.0)))])
+    (check-true  (module-has-top-level-form? mod 'func   '$acos))
+    (check-false (module-has-top-level-form? mod 'func   '$asin))
+    (check-true  (module-has-top-level-form? mod 'global '$prim:acos))
+    (check-false (module-has-top-level-form? mod 'global '$prim:asin))
+    (check-true  (pair? (memq 'acos   (report-ref report 'isolated-primitives))))
+    (check-false (pair? (memq 'append (report-ref report 'isolated-primitives)))))
+
+  (let-values ([(mod report)
+                (compile/primitive-report #'(module tree-shake-append webracket
+                                                   (append '(1) '(2 3) '(4))))])
+    (check-true (module-has-top-level-form? mod 'func '$append))
+    (check-true (module-has-top-level-form? mod 'func '$reverse))
+    (check-true (pair? (memq 'append  (report-ref report 'retained-primitives))))
+    (check-true (pair? (memq 'reverse (report-ref report 'retained-primitives)))))
+
+  (check-equal? (run-expr #'(append '(1) '(2 3) '(4)))
+                '(1 2 3 4)))
   
 (define (comp-- stx)
   (reset-counter!)
