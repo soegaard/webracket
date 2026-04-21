@@ -3261,9 +3261,9 @@ Positional arguments: @racket[columns] defines table columns and @racket[rows] i
 Build a keyed dynamic list view.
 
 Positional arguments:
-@racket[items] is the source collection/observable;
-@racket[render-item] builds per-item views;
-@racket[key-of] extracts stable item keys.
+@racket[items] is the source collection or an observable holding a collection;
+@racket[render-item] is called as @racket[(render-item key item)] and builds one view for each plain item value;
+@racket[key-of] extracts stable item keys from each item.
 }
 
 @defproc[(card [child view?] ...
