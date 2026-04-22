@@ -6,6 +6,7 @@
          "immediates.rkt"
          "priminfo.rkt"
          "parameters.rkt"
+         "timings.rkt"
          "structs.rkt")
 
 ; See the end of `generate-code` in `compiler.rkt` for an
@@ -109,6 +110,16 @@
       (for/hasheq ([pr (in-list described-primitives)])
         (values ($ (prim: pr)) pr)))
 
+    (define ffi-func->symbol
+      (for/hasheq ([f (in-list all-ffi-foreigns)])
+        (values ($ (foreign-racket-name f))
+                (foreign-racket-name f))))
+
+    (define ffi-global->symbol
+      (for/hasheq ([f (in-list all-ffi-foreigns)])
+        (define pr (foreign-racket-name f))
+        (values ($ (prim: pr)) pr)))
+
     (define (sexpr-primitive-refs x)
       (define refs '())
       (define (walk x)
@@ -133,6 +144,21 @@
            (symbol? (cadr form))
            (cadr form)))
 
+    (define (module-global-name form)
+      (and (pair? form)
+           (eq? (car form) 'global)
+           (pair? (cdr form))
+           (symbol? (cadr form))
+           (cadr form)))
+
+    (define (primitive-global-init-form? x)
+      (and (pair? x)
+           (eq? (car x) 'global.set)
+           (pair? (cdr x))
+           (symbol? (cadr x))
+           (or (hash-ref primitive-global->symbol (cadr x) #f)
+               (hash-ref ffi-global->symbol (cadr x) #f))))
+
     (define program-function-names
       (for/list ([form (in-list dls)]
                  #:do [(define name (module-func-name form))]
@@ -154,13 +180,18 @@
     (define (eq-set-keys/sorted ht)
       (sort (hash-keys ht) symbol<?))
 
+    (define (time-runtime-step label thunk)
+      (if (current-runtime-timing-rows)
+          (let-values ([(vals ms)
+                        (with-timing
+                          (λ ()
+                            (call-with-values thunk list)))])
+            (current-runtime-timing-rows
+             (cons (list label ms) (current-runtime-timing-rows)))
+            (apply values vals))
+          (thunk)))
+
     (define (analyze-runtime-primitives module)
-      (define (primitive-global-init-form? x)
-        (and (pair? x)
-             (eq? (car x) 'global.set)
-             (pair? (cdr x))
-             (symbol? (cadr x))
-             (hash-ref primitive-global->symbol (cadr x) #f)))
       (define (walk-symbol-refs x symbol->value)
         (define refs (make-hasheq))
         (define (walk x)
@@ -386,9 +417,9 @@
       (define function-graph (primitive-graph-ref analysis 'function-graph))
       (define module-roots   (primitive-graph-ref analysis 'module-root-functions))
       (define elem-roots     (primitive-graph-ref analysis 'elem-root-functions))
-      (define retained-primitive-ht
-        (for/hasheq ([pr (in-list retained-primitives)])
-          (values pr #t)))
+      (define retained-primitive-ht (make-hasheq))
+      (for ([pr (in-list retained-primitives)])
+        (hash-set! retained-primitive-ht pr #t))
       (define retained-primitive-funcs
         (for/list ([pr (in-list retained-primitives)])
           ($ pr)))
@@ -418,12 +449,53 @@
       (define retained-ht
         (for/hasheq ([name (in-list (append program-function-names retained-functions))])
           (values name #t)))
+      (define retained-primitive-ht (make-hasheq))
+      (for ([pr (in-list retained-primitives)])
+        (hash-set! retained-primitive-ht pr #t))
+      (for ([f (in-list active-ffi-foreigns)])
+        (hash-set! retained-primitive-ht (foreign-racket-name f) #t))
+      (define (retained-primitive-global-name? name)
+        (define pr
+          (or (hash-ref primitive-global->symbol name #f)
+              (hash-ref ffi-global->symbol name #f)))
+        (or (not pr)
+            (hash-ref retained-primitive-ht pr #f)))
+      (define (prune-elem-form form)
+        (match form
+          [`(elem declare funcref ,refs ...)
+           `(elem declare funcref
+                  ,@(for/list ([ref (in-list refs)]
+                               #:when (match ref
+                                        [`(ref.func ,name)
+                                         (hash-ref retained-ht name #f)]
+                                        [_ #t]))
+                      ref))]
+          [_ form]))
+      (define (prune-entry-form form)
+        (match form
+          [`(func $entry ,parts ...)
+           `(func $entry
+                  ,@(for/list ([part (in-list parts)]
+                               #:unless (and (primitive-global-init-form? part)
+                                             (not (retained-primitive-global-name?
+                                                   (cadr part)))))
+                      part))]
+          [_ form]))
       `(module
          ,@(for/list ([form (in-list (cdr module))]
                       #:unless (let ([name (module-func-name form)])
                                  (and name
-                                      (not (hash-ref retained-ht name #f)))))
-             form)))
+                                      (not (hash-ref retained-ht name #f))))
+                      #:unless (let ([name (module-global-name form)])
+                                 (and name
+                                      (not (retained-primitive-global-name? name)))))
+             (cond
+               [(eq? (module-func-name form) '$entry)
+                (prune-entry-form form)]
+               [(and (pair? form)
+                     (eq? (car form) 'elem))
+                (prune-elem-form form)]
+               [else form]))))
 
     (define (write-runtime-primitive-report! analysis retained-primitives)
       (define report-path (current-runtime-primitive-report-path))
@@ -43489,53 +43561,69 @@
                
                ))
 
-    (define active-ffi-primitive-names
-      (if (current-tree-shake?)
-          (sort
-           (filter (λ (pr) (hash-ref ffi-primitive-name-set pr #f))
-                   (remove-duplicates used-primitives))
-           symbol<?)
-          (sort (hash-keys ffi-primitive-name-set) symbol<?)))
-    (set! active-ffi-foreigns
-          (for/list ([f (in-list all-ffi-foreigns)]
-                     #:when (memq (foreign-racket-name f) active-ffi-primitive-names))
-            f))
-    (define active-ffi-import-name-set
-      (list->eq-set (map ffi-import-name active-ffi-foreigns)))
-    (define active-ffi-func-name-set
-      (list->eq-set (map (λ (f) ($ (foreign-racket-name f))) active-ffi-foreigns)))
-    (set! active-ffi-imports-wat
-          (for/list ([form (in-list (current-ffi-imports-wat))]
-                     #:do [(define name (module-func-name form))]
-                     #:when (and name
-                                 (hash-ref active-ffi-import-name-set name #f)))
-            form))
-    (set! active-ffi-funcs-wat
-          (for/list ([form (in-list (current-ffi-funcs-wat))]
-                     #:do [(define name (module-func-name form))]
-                     #:when (and name
-                                 (hash-ref active-ffi-func-name-set name #f)))
-            form))
-    (define full-module (build-runtime-module))
-    (define analysis    (analyze-runtime-primitives full-module))
+    (time-runtime-step
+     "ffi-wrapper-filter"
+     (λ ()
+       (define active-ffi-primitive-names
+         (if (current-tree-shake?)
+             (sort
+              (filter (λ (pr) (hash-ref ffi-primitive-name-set pr #f))
+                      (remove-duplicates used-primitives))
+              symbol<?)
+             (sort (hash-keys ffi-primitive-name-set) symbol<?)))
+       (set! active-ffi-foreigns
+             (for/list ([f (in-list all-ffi-foreigns)]
+                        #:when (memq (foreign-racket-name f) active-ffi-primitive-names))
+               f))
+       (define active-ffi-import-name-set
+         (list->eq-set (map ffi-import-name active-ffi-foreigns)))
+       (define active-ffi-func-name-set
+         (list->eq-set (map (λ (f) ($ (foreign-racket-name f))) active-ffi-foreigns)))
+       (set! active-ffi-imports-wat
+             (for/list ([form (in-list (current-ffi-imports-wat))]
+                        #:do [(define name (module-func-name form))]
+                        #:when (and name
+                                    (hash-ref active-ffi-import-name-set name #f)))
+               form))
+       (set! active-ffi-funcs-wat
+             (for/list ([form (in-list (current-ffi-funcs-wat))]
+                        #:do [(define name (module-func-name form))]
+                        #:when (and name
+                                    (hash-ref active-ffi-func-name-set name #f)))
+               form))))
+    (define full-module
+      (time-runtime-step "tree-shake-build-module" build-runtime-module))
+    (define analysis
+      (time-runtime-step "tree-shake-analyze"
+        (λ ()
+          (analyze-runtime-primitives full-module))))
     (define-values (retained-primitives retained-functions)
-      (if (current-tree-shake?)
-          (let loop ([retained-primitives (primitive-retained-set analysis)])
-            (define retained-functions
-              (retained-function-set analysis retained-primitives))
-            (define next-primitives
-              (sort (remove-duplicates
-                     (append retained-primitives
-                             (primitive-refs-for-functions analysis retained-functions)))
-                    symbol<?))
-        (if (equal? next-primitives retained-primitives)
-            (values retained-primitives retained-functions)
-            (loop next-primitives)))
-          (values (sort described-primitives symbol<?)
-                  '())))
-    (write-runtime-primitive-report! analysis retained-primitives)
+      (time-runtime-step
+       "tree-shake-retain"
+       (λ ()
+         (if (current-tree-shake?)
+             (let loop ([retained-primitives (primitive-retained-set analysis)])
+               (define retained-functions
+                 (retained-function-set analysis retained-primitives))
+               (define next-primitives
+                 (sort (remove-duplicates
+                        (append retained-primitives
+                                (primitive-refs-for-functions analysis retained-functions)))
+                       symbol<?))
+               (if (equal? next-primitives retained-primitives)
+                   (values retained-primitives retained-functions)
+                   (loop next-primitives)))
+             (values (sort described-primitives symbol<?)
+                     '())))))
+    (time-runtime-step
+     "tree-shake-report"
+     (λ ()
+       (write-runtime-primitive-report! analysis retained-primitives)))
     (set! active-primitives retained-primitives)
     (if (current-tree-shake?)
-        (prune-runtime-module (build-runtime-module) retained-primitives retained-functions)
+        (time-runtime-step
+         "tree-shake-prune"
+         (λ ()
+           (prune-runtime-module full-module retained-primitives retained-functions)))
         full-module)
     )))

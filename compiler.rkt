@@ -6449,30 +6449,37 @@
   ;; (displayln "-- primitives also declared as variables at top-level --")
   ;; (displayln primitives-also-declared-as-variables-at-top-level)
   
-  (define gen
+  (define-values (gen runtime-gen-rows)
     (time-gen "generate-runtime"
       (λ ()
         (parameterize ([current-runtime-primitive-report-path
                         (or (current-runtime-primitive-report-path)
                             (and (current-pass-dump-dir)
                                  (build-path (current-pass-dump-dir)
-                                             "runtime-primitives.sexp")))])
-          (generate-runtime
-           dls                              ; define-labels
-           tms                              ; top modules
-           entry-body                       ; expressions and general top-level forms
-           result                           ; variable that holds the result (in $entry)
-           ; program specific
-           (id-set->list top-vars)          ; top level variables (list of variables)
-           top-level-variable-declarations  ; wasm code for declaring top-level variables
-           entry-locals                     ; variables that are local to $entry
-           ; general
-           primitives                       ; primitives (list of symbols)
-           (sort (hash-keys used-primitives-ht) symbol<?)
-           string-constants                 ; (list (list name string) ...)
-           bytes-constants                  ; (list (list name bytes) ...)
-           symbol-constants                 ; (list (list name symbol) ...)
-           )))))
+                                             "runtime-primitives.sexp")))]
+                       [current-runtime-timing-rows
+                        (and (current-pass-timings?) '())])
+          (define mod
+            (generate-runtime
+             dls                              ; define-labels
+             tms                              ; top modules
+             entry-body                       ; expressions and general top-level forms
+             result                           ; variable that holds the result (in $entry)
+             ; program specific
+             (id-set->list top-vars)          ; top level variables (list of variables)
+             top-level-variable-declarations  ; wasm code for declaring top-level variables
+             entry-locals                     ; variables that are local to $entry
+             ; general
+             primitives                       ; primitives (list of symbols)
+             (sort (hash-keys used-primitives-ht) symbol<?)
+             string-constants                 ; (list (list name string) ...)
+             bytes-constants                  ; (list (list name bytes) ...)
+             symbol-constants                 ; (list (list name symbol) ...)
+             ))
+          (values mod (current-runtime-timing-rows))))))
+  (when (current-pass-timings?)
+    (when runtime-gen-rows
+      (set! gen-times (append runtime-gen-rows gen-times))))
   (when (current-pass-timings?)
     (current-gen-timing-table
      (format-timing-table (reverse gen-times))))
