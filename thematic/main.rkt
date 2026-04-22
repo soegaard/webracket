@@ -5,7 +5,7 @@
 
 (provide main)
 
-(require lexers/css
+(require parsers/css
          racket/cmdline
          racket/file
          racket/format
@@ -17,9 +17,6 @@
 
 (define-runtime-path theme-template-path
   "../lib/web-easy/themes/theme-light.css")
-
-(struct css-rule (selector declarations) #:transparent)
-(struct css-decl (name value) #:transparent)
 
 (struct rgb (r g b a) #:transparent)
 
@@ -116,34 +113,6 @@
 (define (normalize-selector s)
   (string-trim (strip-css-comments s)))
 
-;; split-selector-list : string? -> (listof string?)
-;;   Split a selector list on top-level commas and normalize each entry.
-(define (split-selector-list s)
-  (define raw (normalize-selector s))
-  (filter (lambda (part) (not (string-empty-or-whitespace? part)))
-          (map normalize-selector (string-split raw ","))))
-
-;; selector-list-matches? : string? string? -> boolean?
-;;   Determine whether requested selector appears in a possibly-comma-separated selector list.
-(define (selector-list-matches? selector-text requested-selector)
-  (member requested-selector (split-selector-list selector-text)))
-
-;; selector-pattern-matches? : string? string? -> boolean?
-;;   Determine whether requested selector appears as one selector in a selector list.
-(define (selector-pattern-matches? selector-text requested-selector)
-  (for/or ([selector (in-list (split-selector-list selector-text))])
-    (string=? selector requested-selector)))
-
-;; token-text : css-derived-token? -> string?
-;;   Extract the original token text.
-(define (token-text token)
-  (css-derived-token-text token))
-
-;; token-has-tag? : css-derived-token? symbol? -> boolean?
-;;   Check whether token carries tag.
-(define (token-has-tag? token tag)
-  (css-derived-token-has-tag? token tag))
-
 ;; update-delimiter-depths : string? integer? integer? integer? -> (values integer? integer? integer?)
 ;;   Update grouping depths based on delimiter text.
 (define (update-delimiter-depths text paren-depth bracket-depth brace-depth)
@@ -163,164 +132,49 @@
     [else
      (values paren-depth bracket-depth brace-depth)]))
 
-;; read-css-rules : string? -> (listof css-rule?)
-;;   Parse top-level qualified rules and their declarations from source.
+;; read-css-rules : string? -> css-stylesheet?
+;;   Parse source into a CSS stylesheet AST.
 (define (read-css-rules source)
-  (define tokens (css-string->derived-tokens source))
-  (define rules '())
-  (define state 'prelude)
-  (define prelude-parts '())
-  (define decl-name-parts '())
-  (define decl-value-parts '())
-  (define current-selector #f)
-  (define current-declarations '())
-  (define current-name #f)
-  (define current-rule-at? #f)
-  (define paren-depth 0)
-  (define bracket-depth 0)
-  (define brace-depth 0)
+  (parse-css source))
 
-  (define (top-level-value?)
-    (and (zero? paren-depth)
-         (zero? bracket-depth)
-         (= brace-depth 1)))
-
-  (define (top-level-prelude?)
-    (and (zero? paren-depth)
-         (zero? bracket-depth)
-         (zero? brace-depth)))
-
-  (define (finish-declaration!)
-    (define maybe-name (and current-name (string-trim current-name)))
-    (define maybe-value (trim-trailing-comment-space (apply string-append (reverse decl-value-parts))))
-    (when (and maybe-name
-               (not (string=? maybe-name ""))
-               (not (string=? maybe-value "")))
-      (set! current-declarations
-            (cons (css-decl maybe-name maybe-value) current-declarations)))
-    (set! current-name #f)
-    (set! decl-name-parts '())
-    (set! decl-value-parts '()))
-
-  (define (finish-rule!)
-    (when current-selector
-      (set! rules
-            (cons (css-rule current-selector (reverse current-declarations))
-                  rules)))
-    (set! state 'prelude)
-    (set! prelude-parts '())
-    (set! decl-name-parts '())
-    (set! decl-value-parts '())
-    (set! current-selector #f)
-    (set! current-declarations '())
-    (set! current-name #f)
-    (set! current-rule-at? #f))
-
-  (for ([token (in-list tokens)])
-    (define text (token-text token))
-    (define previous-brace-depth brace-depth)
-    (cond
-      [(eq? state 'prelude)
-       (cond
-         [(and (string=? text "{")
-               (top-level-prelude?))
-          (set! current-selector
-                (normalize-selector (apply string-append (reverse prelude-parts))))
-          (set! prelude-parts '())
-          (set! state (if current-rule-at? 'skip-block 'decl-name))]
-         [(and (string=? text ";")
-               (top-level-prelude?))
-          (set! prelude-parts '())
-          (set! current-rule-at? #f)]
-         [else
-          (when (token-has-tag? token 'at-rule-name)
-            (set! current-rule-at? #t))
-          (set! prelude-parts (cons text prelude-parts))])]
-      [(eq? state 'skip-block)
-       (when (and (string=? text "}")
-                  (= previous-brace-depth 1)
-                  (zero? paren-depth)
-                  (zero? bracket-depth))
-         (finish-rule!))]
-      [(eq? state 'decl-name)
-       (cond
-         [(and (string=? text ":")
-               (top-level-value?))
-          (set! current-name
-                (string-trim (apply string-append (reverse decl-name-parts))))
-          (set! decl-name-parts '())
-          (set! state 'decl-value)]
-         [(and (string=? text ";")
-               (top-level-value?))
-          (set! decl-name-parts '())]
-         [(and (string=? text "}")
-               (= previous-brace-depth 1)
-               (zero? paren-depth)
-               (zero? bracket-depth))
-          (finish-rule!)]
-         [else
-          (set! decl-name-parts (cons text decl-name-parts))])]
-      [(eq? state 'decl-value)
-       (cond
-         [(and (string=? text ";")
-               (top-level-value?))
-          (finish-declaration!)
-          (set! state 'decl-name)]
-         [(and (string=? text "}")
-               (= previous-brace-depth 1)
-               (zero? paren-depth)
-               (zero? bracket-depth))
-          (finish-declaration!)
-          (finish-rule!)]
-         [else
-          (set! decl-value-parts (cons text decl-value-parts))])])
-    (let-values ([(new-paren new-bracket new-brace)
-                  (update-delimiter-depths text paren-depth bracket-depth brace-depth)])
-      (set! paren-depth new-paren)
-      (set! bracket-depth new-bracket)
-      (set! brace-depth new-brace)))
-
-  (when (not (eq? state 'prelude))
-    (fail "could not parse CSS rules cleanly; unterminated block near selector ~a"
-          (or current-selector "<unknown>")))
-  (reverse rules))
+;; extract-top-level-imports/rules : css-stylesheet? -> (listof string?)
+;;   Preserve top-level @import rules from a parsed stylesheet for re-emission.
+(define (extract-top-level-imports/rules stylesheet)
+  (for/list ([rule (in-list (css-stylesheet-rules stylesheet))]
+             #:when (and (css-at-rule? rule)
+                         (string-ci=? (css-at-rule-name rule) "@import")
+                         (not (css-at-rule-block rule))))
+    (string-append (css-at-rule-name rule)
+                   " "
+                   (css-at-rule-prelude rule)
+                   ";")))
 
 ;; extract-top-level-imports : string? -> (listof string?)
-;;   Preserve top-level @import rules for re-emission in generated stylesheets.
+;;   Parse source and preserve top-level @import rules for re-emission.
 (define (extract-top-level-imports source)
-  (for/list ([line (in-list (string-split (strip-css-comments source) "\n"))]
-             #:when (regexp-match? #px"^\\s*@import\\b.*;\\s*$" line))
-    (string-trim line)))
+  (extract-top-level-imports/rules (read-css-rules source)))
 
-;; collect-custom-properties : (listof css-rule?) string? -> (hash/c string? string?)
+;; collect-custom-properties : css-stylesheet? string? -> (hash/c string? string?)
 ;;   Collect custom properties for selector from matching rules, later declarations win.
 (define (collect-custom-properties rules selector)
-  (define props (make-hash))
-  (for ([rule (in-list rules)]
-        #:when (selector-list-matches? (css-rule-selector rule) selector))
-    (for ([decl (in-list (css-rule-declarations rule))]
-          #:when (string-prefix? (css-decl-name decl) "--"))
-      (hash-set! props (css-decl-name decl) (css-decl-value decl))))
-  props)
+  (css-collect-custom-properties-in-selector-group rules selector))
+
+;; validate-bootstrap-selector! : string? -> void?
+;;   Check that selector is one of the supported Bootstrap theme roots.
+(define (validate-bootstrap-selector! selector)
+  (unless (regexp-match? selector-regexp selector)
+    (fail "unsupported selector ~s; use :root, [data-bs-theme=light], or [data-bs-theme=dark]"
+          selector)))
 
 ;; extract-bootstrap-theme : string? string? -> (hash/c string? string?)
 ;;   Parse source and return matching Bootstrap custom properties for selector.
 (define (extract-bootstrap-theme source selector)
-  (unless (regexp-match? selector-regexp selector)
-    (fail "unsupported selector ~s; use :root, [data-bs-theme=light], or [data-bs-theme=dark]"
-          selector))
-  (define props
-    (collect-custom-properties (read-css-rules source) selector))
-  (when (zero? (hash-count props))
-    (fail "no custom properties found for selector ~s" selector))
-  props)
+  (extract-bootstrap-theme/rules (read-css-rules source) selector))
 
-;; extract-bootstrap-theme/rules : (listof css-rule?) string? -> (hash/c string? string?)
-;;   Parse a pre-read rule list and return matching Bootstrap custom properties for selector.
+;; extract-bootstrap-theme/rules : css-stylesheet? string? -> (hash/c string? string?)
+;;   Reuse a pre-parsed stylesheet and return matching Bootstrap custom properties for selector.
 (define (extract-bootstrap-theme/rules rules selector)
-  (unless (regexp-match? selector-regexp selector)
-    (fail "unsupported selector ~s; use :root, [data-bs-theme=light], or [data-bs-theme=dark]"
-          selector))
+  (validate-bootstrap-selector! selector)
   (define props
     (collect-custom-properties rules selector))
   (when (zero? (hash-count props))
@@ -394,22 +248,22 @@
 (define (prop-ref* props key [fallback-key #f])
   (resolve-prop-value props key fallback-key))
 
-;; collect-selector-context : (hash/c string? string?) (listof css-rule?) (listof string?) -> (values hash? hash?)
+;; collect-selector-context : (hash/c string? string?) css-stylesheet? (listof string?) -> (values hash? hash?)
 ;;   Collect declarations and local custom properties for selectors.
 (define (collect-selector-context props rules selectors)
-  (define selector-set selectors)
   (define decls (make-hash))
   (define locals (make-hash))
-  (for ([rule (in-list rules)]
-        #:when (for/or ([selector (in-list selector-set)])
-                 (selector-pattern-matches? (css-rule-selector rule) selector)))
-    (for ([decl (in-list (css-rule-declarations rule))])
-      (if (string-prefix? (css-decl-name decl) "--")
-          (hash-set! locals (css-decl-name decl) (css-decl-value decl))
-          (hash-set! decls (css-decl-name decl) (css-decl-value decl)))))
+  (when (css-stylesheet? rules)
+    (for ([decl (in-list (css-find-declarations-in-selector-groups rules selectors))])
+      (hash-set! decls (css-declaration-name decl) (css-declaration-value decl)))
+    (for ([(key value)
+           (in-hash (css-collect-custom-properties-in-selector-groups
+                     rules
+                     selectors))])
+      (hash-set! locals key value)))
   (values decls locals))
 
-;; selector-style-ref : (hash/c string? string?) (listof css-rule?) (listof string?) string? [string?] -> (or/c string? #f)
+;; selector-style-ref : (hash/c string? string?) css-stylesheet? (listof string?) string? [string?] -> (or/c string? #f)
 ;;   Resolve one style property or custom property from matching selector rules.
 (define (selector-style-ref props rules selectors name [fallback #f])
   (define-values (decls locals)
@@ -523,7 +377,7 @@
           value)))
   (values width color))
 
-;; selector-box-side-ref : (hash/c string? string?) (listof css-rule?) (listof string?) string? symbol? [string?] -> (or/c string? #f)
+;; selector-box-side-ref : (hash/c string? string?) css-stylesheet? (listof string?) string? symbol? [string?] -> (or/c string? #f)
 ;;   Resolve a box longhand, falling back to the corresponding shorthand side.
 (define (selector-box-side-ref props rules selectors longhand side [fallback #f])
   (define direct
@@ -545,7 +399,7 @@
                  [(left) left])])
             fallback))))
 
-;; selector-border-width-ref : (hash/c string? string?) (listof css-rule?) (listof string?) string? string? [string?] -> (or/c string? #f)
+;; selector-border-width-ref : (hash/c string? string?) css-stylesheet? (listof string?) string? string? [string?] -> (or/c string? #f)
 ;;   Resolve a border-width, falling back to the corresponding shorthand.
 (define (selector-border-width-ref props rules selectors longhand shorthand [fallback #f])
   (define direct
@@ -558,7 +412,7 @@
               (or width fallback))
             fallback))))
 
-;; selector-border-color-ref : (hash/c string? string?) (listof css-rule?) (listof string?) string? string? [string?] -> (or/c string? #f)
+;; selector-border-color-ref : (hash/c string? string?) css-stylesheet? (listof string?) string? string? [string?] -> (or/c string? #f)
 ;;   Resolve a border-color, falling back to the corresponding shorthand.
 (define (selector-border-color-ref props rules selectors longhand shorthand [fallback #f])
   (define direct
@@ -571,42 +425,42 @@
               (or color fallback))
             fallback))))
 
-;; first-style-ref : (hash/c string? string?) (listof css-rule?) (listof (listof string?)) string? [string?] -> (or/c string? #f)
+;; first-style-ref : (hash/c string? string?) css-stylesheet? (listof (listof string?)) string? [string?] -> (or/c string? #f)
 ;;   Resolve the first matching style property across selector groups.
 (define (first-style-ref props rules selector-groups name [fallback #f])
   (or (for/or ([group (in-list selector-groups)])
         (selector-style-ref props rules group name))
       fallback))
 
-;; first-box-side-ref : (hash/c string? string?) (listof css-rule?) (listof (listof string?)) string? symbol? [string?] -> (or/c string? #f)
+;; first-box-side-ref : (hash/c string? string?) css-stylesheet? (listof (listof string?)) string? symbol? [string?] -> (or/c string? #f)
 ;;   Resolve the first matching box side across selector groups.
 (define (first-box-side-ref props rules selector-groups longhand side [fallback #f])
   (or (for/or ([group (in-list selector-groups)])
         (selector-box-side-ref props rules group longhand side))
       fallback))
 
-;; variant-style-ref : (hash/c string? string?) (listof css-rule?) string? string? [string?] -> (or/c string? #f)
+;; variant-style-ref : (hash/c string? string?) css-stylesheet? string? string? [string?] -> (or/c string? #f)
 ;;   Resolve one property/custom property from a component variant selector.
 (define (variant-style-ref props rules selector name [fallback #f])
   (first-style-ref props rules (list (list selector)) name fallback))
 
-;; variant-box-side-ref : (hash/c string? string?) (listof css-rule?) string? string? symbol? [string?] -> (or/c string? #f)
+;; variant-box-side-ref : (hash/c string? string?) css-stylesheet? string? string? symbol? [string?] -> (or/c string? #f)
 ;;   Resolve one box side from a component variant selector.
 (define (variant-box-side-ref props rules selector longhand side [fallback #f])
   (first-box-side-ref props rules (list (list selector)) longhand side fallback))
 
-;; variant-border-width-ref : (hash/c string? string?) (listof css-rule?) string? string? string? [string?] -> (or/c string? #f)
+;; variant-border-width-ref : (hash/c string? string?) css-stylesheet? string? string? string? [string?] -> (or/c string? #f)
 ;;   Resolve a border width from a component selector.
 (define (variant-border-width-ref props rules selector longhand shorthand [fallback #f])
   (selector-border-width-ref props rules (list selector) longhand shorthand fallback))
 
-;; variant-border-color-ref : (hash/c string? string?) (listof css-rule?) string? string? string? [string?] -> (or/c string? #f)
+;; variant-border-color-ref : (hash/c string? string?) css-stylesheet? string? string? string? [string?] -> (or/c string? #f)
 ;;   Resolve a border color from a component selector.
 (define (variant-border-color-ref props rules selector longhand shorthand [fallback #f])
   (selector-border-color-ref props rules (list selector) longhand shorthand fallback))
 
-;; extract-component-styles : (hash/c string? string?) (listof css-rule?) -> (hash/c symbol? string?)
-;;   Extract a small set of navigation-relevant component styles from Bootstrap rules.
+;; extract-component-styles : (hash/c string? string?) css-stylesheet? -> (hash/c symbol? string?)
+;;   Extract component-level Bootstrap styles that need more than root token mapping.
 (define (extract-component-styles props rules)
   (define nav-link-color
     (first-style-ref props rules
@@ -806,6 +660,169 @@
         (first-style-ref props rules
                          (list (list ".nav-pills .nav-link"))
                          "border-radius")))
+  (define dropdown-bg
+    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-bg")
+        (variant-style-ref props rules ".dropdown-menu" "background-color")))
+  (define dropdown-color
+    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-color")
+        (variant-style-ref props rules ".dropdown-item" "color")))
+  (define dropdown-link-color
+    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-link-color")
+        (first-style-ref props rules
+                         (list (list ".dropdown-menu .dropdown-item")
+                               (list ".dropdown-item"))
+                         "color")
+        dropdown-color))
+  (define dropdown-border-color
+    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-border-color")
+        (variant-border-color-ref props rules ".dropdown-menu" "border-color" "border")))
+  (define dropdown-border-width
+    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-border-width")
+        (variant-border-width-ref props rules ".dropdown-menu" "border-width" "border")))
+  (define dropdown-radius
+    (or (variant-style-ref props rules ".dropdown-menu" "border-radius")
+        (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-border-radius")))
+  (define dropdown-shadow
+    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-box-shadow")
+        (variant-style-ref props rules ".dropdown-menu" "box-shadow")))
+  (define dropdown-padding-y
+    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-padding-y")
+        (variant-box-side-ref props rules ".dropdown-menu" "padding-top" 'top)))
+  (define dropdown-header-color
+    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-header-color")
+        (variant-style-ref props rules ".dropdown-header" "color")))
+  (define dropdown-header-padding-x
+    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-header-padding-x")
+        (variant-box-side-ref props rules ".dropdown-header" "padding-left" 'left)))
+  (define dropdown-header-padding-y
+    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-header-padding-y")
+        (variant-box-side-ref props rules ".dropdown-header" "padding-top" 'top)))
+  (define dropdown-divider-bg
+    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-divider-bg")
+        (variant-border-color-ref props rules ".dropdown-divider" "border-top-color" "border-top")))
+  (define dropdown-item-padding-x
+    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-item-padding-x")
+        (variant-box-side-ref props rules ".dropdown-item" "padding-left" 'left)))
+  (define dropdown-item-padding-y
+    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-item-padding-y")
+        (variant-box-side-ref props rules ".dropdown-item" "padding-top" 'top)))
+  (define dropdown-item-font-size
+    (first-style-ref props rules
+                     (list (list ".dropdown-menu .dropdown-item")
+                           (list ".dropdown-item"))
+                     "font-size"))
+  (define dropdown-item-font-weight
+    (first-style-ref props rules
+                     (list (list ".dropdown-menu .dropdown-item")
+                           (list ".dropdown-item"))
+                     "font-weight"))
+  (define dropdown-item-text-transform
+    (first-style-ref props rules
+                     (list (list ".dropdown-menu .dropdown-item")
+                           (list ".dropdown-item"))
+                     "text-transform"))
+  (define dropdown-item-radius
+    (variant-style-ref props rules ".dropdown-item" "border-radius"))
+  (define dropdown-item-hover-bg
+    (first-style-ref props rules
+                     (list (list ".dropdown-item:hover")
+                           (list ".dropdown-item:focus"))
+                     "background-color"))
+  (define dropdown-item-hover-color
+    (first-style-ref props rules
+                     (list (list ".dropdown-item:hover")
+                           (list ".dropdown-item:focus"))
+                     "color"))
+  (define dropdown-item-active-bg
+    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-link-active-bg")
+        (first-style-ref props rules
+                         (list (list ".dropdown-item.active")
+                               (list ".dropdown-item:active"))
+                         "background-color")))
+  (define dropdown-item-active-color
+    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-link-active-color")
+        (first-style-ref props rules
+                         (list (list ".dropdown-item.active")
+                               (list ".dropdown-item:active"))
+                         "color")))
+  (define tooltip-bg
+    (or (variant-style-ref props rules ".tooltip" "--bs-tooltip-bg")
+        (variant-style-ref props rules ".tooltip-inner" "background-color")))
+  (define tooltip-color
+    (or (variant-style-ref props rules ".tooltip" "--bs-tooltip-color")
+        (variant-style-ref props rules ".tooltip-inner" "color")))
+  (define tooltip-font-size
+    (or (variant-style-ref props rules ".tooltip" "--bs-tooltip-font-size")
+        (variant-style-ref props rules ".tooltip" "font-size")
+        (variant-style-ref props rules ".tooltip-inner" "font-size")))
+  (define tooltip-radius
+    (or (variant-style-ref props rules ".tooltip-inner" "border-radius")
+        (variant-style-ref props rules ".tooltip" "--bs-tooltip-border-radius")))
+  (define tooltip-opacity
+    (or (variant-style-ref props rules ".tooltip" "--bs-tooltip-opacity")
+        (variant-style-ref props rules ".tooltip" "opacity")))
+  (define tooltip-padding-x
+    (or (variant-style-ref props rules ".tooltip" "--bs-tooltip-padding-x")
+        (variant-box-side-ref props rules ".tooltip-inner" "padding-left" 'left)))
+  (define tooltip-padding-y
+    (or (variant-style-ref props rules ".tooltip" "--bs-tooltip-padding-y")
+        (variant-box-side-ref props rules ".tooltip-inner" "padding-top" 'top)))
+  (define popover-bg
+    (or (variant-style-ref props rules ".popover" "--bs-popover-bg")
+        (variant-style-ref props rules ".popover" "background-color")))
+  (define popover-max-width
+    (or (variant-style-ref props rules ".popover" "--bs-popover-max-width")
+        (variant-style-ref props rules ".popover" "max-width")))
+  (define popover-font-size
+    (or (variant-style-ref props rules ".popover" "--bs-popover-font-size")
+        (variant-style-ref props rules ".popover" "font-size")))
+  (define popover-color
+    (or (variant-style-ref props rules ".popover" "--bs-popover-body-color")
+        (variant-style-ref props rules ".popover" "--bs-popover-color")
+        (variant-style-ref props rules ".popover-body" "color")
+        (variant-style-ref props rules ".popover" "color")))
+  (define popover-border-color
+    (or (variant-style-ref props rules ".popover" "--bs-popover-border-color")
+        (variant-border-color-ref props rules ".popover" "border-color" "border")))
+  (define popover-border-width
+    (or (variant-style-ref props rules ".popover" "--bs-popover-border-width")
+        (variant-border-width-ref props rules ".popover" "border-width" "border")))
+  (define popover-radius
+    (or (variant-style-ref props rules ".popover" "border-radius")
+        (variant-style-ref props rules ".popover" "--bs-popover-border-radius")))
+  (define popover-shadow
+    (or (variant-style-ref props rules ".popover" "--bs-popover-box-shadow")
+        (variant-style-ref props rules ".popover" "box-shadow")))
+  (define popover-arrow-width
+    (or (variant-style-ref props rules ".popover" "--bs-popover-arrow-width")
+        "1rem"))
+  (define popover-arrow-height
+    (or (variant-style-ref props rules ".popover" "--bs-popover-arrow-height")
+        "0.5rem"))
+  (define popover-header-bg
+    (or (variant-style-ref props rules ".popover" "--bs-popover-header-bg")
+        (variant-style-ref props rules ".popover-header" "background-color")))
+  (define popover-header-color
+    (or (variant-style-ref props rules ".popover" "--bs-popover-header-color")
+        (variant-style-ref props rules ".popover-header" "color")))
+  (define popover-header-padding-x
+    (or (variant-style-ref props rules ".popover" "--bs-popover-header-padding-x")
+        (variant-box-side-ref props rules ".popover-header" "padding-left" 'left)))
+  (define popover-header-padding-y
+    (or (variant-style-ref props rules ".popover" "--bs-popover-header-padding-y")
+        (variant-box-side-ref props rules ".popover-header" "padding-top" 'top)))
+  (define popover-body-padding-x
+    (or (variant-style-ref props rules ".popover" "--bs-popover-body-padding-x")
+        (variant-box-side-ref props rules ".popover-body" "padding-left" 'left)))
+  (define popover-body-padding-y
+    (or (variant-style-ref props rules ".popover" "--bs-popover-body-padding-y")
+        (variant-box-side-ref props rules ".popover-body" "padding-top" 'top)))
+  (define popover-title-font-size
+    (or (variant-style-ref props rules ".popover-header" "font-size")
+        (variant-style-ref props rules ".popover-header" "--bs-popover-header-font-size")))
+  (define popover-title-font-weight
+    (or (variant-style-ref props rules ".popover-header" "font-weight")
+        (variant-style-ref props rules "h3.popover-header" "font-weight")))
   (define btn-padding-x
     (or (variant-style-ref props rules ".btn" "--bs-btn-padding-x")
         (variant-box-side-ref props rules ".btn" "padding-left" 'left)))
@@ -813,19 +830,20 @@
     (or (variant-style-ref props rules ".btn" "--bs-btn-padding-y")
         (variant-box-side-ref props rules ".btn" "padding-top" 'top)))
   (define btn-font-size
-    (or (variant-style-ref props rules ".btn" "--bs-btn-font-size")
-        (variant-style-ref props rules ".btn" "font-size")))
+    (or (variant-style-ref props rules ".btn" "font-size")
+        (variant-style-ref props rules ".btn" "--bs-btn-font-size")))
   (define btn-font-weight
-    (or (variant-style-ref props rules ".btn" "--bs-btn-font-weight")
-        (variant-style-ref props rules ".btn" "font-weight")))
+    (or (variant-style-ref props rules ".btn" "font-weight")
+        (variant-style-ref props rules ".btn" "--bs-btn-font-weight")))
   (define btn-line-height
-    (or (variant-style-ref props rules ".btn" "--bs-btn-line-height")
-        (variant-style-ref props rules ".btn" "line-height")))
+    (or (variant-style-ref props rules ".btn" "line-height")
+        (variant-style-ref props rules ".btn" "--bs-btn-line-height")))
   (define btn-radius
     (or (variant-style-ref props rules ".btn" "border-radius")
         (variant-style-ref props rules "button" "border-radius")))
   (define btn-text-transform
-    (variant-style-ref props rules ".btn" "text-transform"))
+    (or (variant-style-ref props rules ".btn" "text-transform")
+        "none"))
   (define btn-secondary-bg
     (or (variant-style-ref props rules ".btn-secondary" "--bs-btn-bg")
         (variant-style-ref props rules ".btn-secondary" "background-color")))
@@ -871,11 +889,26 @@
   (define btn-outline-secondary-hover-color
     (or (variant-style-ref props rules ".btn-outline-secondary" "--bs-btn-hover-color")
         (variant-style-ref props rules ".btn-outline-secondary:hover" "color")))
+  (define btn-success-color
+    (or (variant-style-ref props rules ".btn-success" "--bs-btn-color")
+        (variant-style-ref props rules ".btn-success" "color")))
+  (define btn-info-color
+    (or (variant-style-ref props rules ".btn-info" "--bs-btn-color")
+        (variant-style-ref props rules ".btn-info" "color")))
+  (define btn-warning-color
+    (or (variant-style-ref props rules ".btn-warning" "--bs-btn-color")
+        (variant-style-ref props rules ".btn-warning" "color")))
+  (define btn-danger-color
+    (or (variant-style-ref props rules ".btn-danger" "--bs-btn-color")
+        (variant-style-ref props rules ".btn-danger" "color")))
   (define card-bg
     (or (variant-style-ref props rules ".card" "--bs-card-bg")
         (variant-style-ref props rules ".card" "background-color")))
   (define card-radius
     (variant-style-ref props rules ".card" "border-radius"))
+  (define card-shadow
+    (or (variant-style-ref props rules ".card" "--bs-card-box-shadow")
+        (variant-style-ref props rules ".card" "box-shadow")))
   (define card-border-color
     (or (variant-style-ref props rules ".card" "--bs-card-border-color")
         (variant-style-ref props rules ".card" "border-color")))
@@ -954,6 +987,15 @@
   (define accordion-button-bg
     (or (variant-style-ref props rules ".accordion" "--bs-accordion-btn-bg")
         (variant-style-ref props rules ".accordion-button" "background-color")))
+  (define accordion-icon
+    (variant-style-ref props rules ".accordion" "--bs-accordion-btn-icon"))
+  (define accordion-active-icon
+    (or (variant-style-ref props rules ".accordion" "--bs-accordion-btn-active-icon")
+        accordion-icon))
+  (define accordion-icon-width
+    (variant-style-ref props rules ".accordion" "--bs-accordion-btn-icon-width"))
+  (define accordion-icon-transform
+    (variant-style-ref props rules ".accordion" "--bs-accordion-btn-icon-transform"))
   (define accordion-active-color
     (or (variant-style-ref props rules ".accordion" "--bs-accordion-active-color")
         (variant-style-ref props rules ".accordion-button:not(.collapsed)" "color")))
@@ -1147,6 +1189,9 @@
   (define close-button-color
     (or (variant-style-ref props rules ".btn-close" "--bs-btn-close-color")
         (variant-style-ref props rules ".btn-close" "color")))
+  (define close-button-bg
+    (or (variant-style-ref props rules ".btn-close" "--bs-btn-close-bg")
+        (variant-style-ref props rules ".btn-close" "background-image")))
   (define close-button-opacity
     (or (variant-style-ref props rules ".btn-close" "--bs-btn-close-opacity")
         (variant-style-ref props rules ".btn-close" "opacity")))
@@ -1155,6 +1200,12 @@
         (variant-style-ref props rules ".btn-close:hover" "opacity")))
   (define close-button-radius
     (variant-style-ref props rules ".btn-close" "border-radius"))
+  (define modal-close-bg
+    (or (first-style-ref props rules
+                         (list (list ".modal .btn-close")
+                               (list ".modal-header .btn-close"))
+                         "background-image")
+        close-button-bg))
   (define alert-base-color-direct
     (variant-style-ref props rules ".alert" "color"))
   (define alert-base-color-var
@@ -1307,12 +1358,87 @@
     (or (variant-style-ref props rules ".form-control" "font-weight")
         (variant-style-ref props rules ".form-select" "font-weight")
         (hash-ref props "--bs-body-font-weight" #f)))
+  (define field-select-icon
+    (or (variant-style-ref props rules ".form-select" "--bs-form-select-bg-img")
+        (variant-style-ref props rules ".form-select" "background-image")))
+  (define field-select-padding-right
+    (variant-box-side-ref props rules ".form-select" "padding-right" 'right))
   (define field-focus-bg
     (or (variant-style-ref props rules ".form-control:focus" "background-color")
         (variant-style-ref props rules ".form-select:focus" "background-color")))
   (define field-focus-border-color
     (or (variant-style-ref props rules ".form-control:focus" "border-color")
         (variant-style-ref props rules ".form-select:focus" "border-color")))
+  (define input-group-addon-bg
+    (variant-style-ref props rules ".input-group-text" "background-color"))
+  (define input-group-addon-color
+    (variant-style-ref props rules ".input-group-text" "color"))
+  (define input-group-addon-border-color
+    (variant-border-color-ref props rules ".input-group-text" "border-color" "border"))
+  (define input-group-addon-padding-x
+    (variant-box-side-ref props rules ".input-group-text" "padding-left" 'left))
+  (define input-group-addon-padding-y
+    (variant-box-side-ref props rules ".input-group-text" "padding-top" 'top))
+  (define input-group-addon-font-size
+    (variant-style-ref props rules ".input-group-text" "font-size"))
+  (define input-group-addon-font-weight
+    (variant-style-ref props rules ".input-group-text" "font-weight"))
+  (define field-valid-color
+    (or (hash-ref props "--bs-form-valid-color" #f)
+        (variant-style-ref props rules ".valid-feedback" "color")))
+  (define field-valid-border-color
+    (or (hash-ref props "--bs-form-valid-border-color" #f)
+        (variant-style-ref props rules ".form-control.is-valid" "border-color")))
+  (define field-valid-icon
+    (variant-style-ref props rules ".form-control.is-valid" "background-image"))
+  (define field-invalid-color
+    (or (hash-ref props "--bs-form-invalid-color" #f)
+        (variant-style-ref props rules ".invalid-feedback" "color")))
+  (define field-invalid-border-color
+    (or (hash-ref props "--bs-form-invalid-border-color" #f)
+        (variant-style-ref props rules ".form-control.is-invalid" "border-color")))
+  (define field-invalid-icon
+    (variant-style-ref props rules ".form-control.is-invalid" "background-image"))
+  (define check-bg
+    (or (variant-style-ref props rules ".form-check-input" "--bs-form-check-bg")
+        (variant-style-ref props rules ".form-check-input" "background-color")))
+  (define check-border-color
+    (variant-border-color-ref props rules ".form-check-input" "border-color" "border"))
+  (define check-border-width
+    (variant-border-width-ref props rules ".form-check-input" "border-width" "border"))
+  (define check-size
+    (variant-style-ref props rules ".form-check-input" "width"))
+  (define check-height
+    (variant-style-ref props rules ".form-check-input" "height"))
+  (define check-radius
+    (or (variant-style-ref props rules ".form-check-input[type=checkbox]" "border-radius")
+        (variant-style-ref props rules ".form-check-input" "border-radius")))
+  (define check-focus-border-color
+    (variant-style-ref props rules ".form-check-input:focus" "border-color"))
+  (define check-focus-shadow
+    (variant-style-ref props rules ".form-check-input:focus" "box-shadow"))
+  (define check-checked-bg
+    (variant-style-ref props rules ".form-check-input:checked" "background-color"))
+  (define check-checked-border-color
+    (variant-style-ref props rules ".form-check-input:checked" "border-color"))
+  (define check-checked-icon
+    (or (variant-style-ref props rules ".form-check-input:checked[type=checkbox]" "--bs-form-check-bg-image")
+        (variant-style-ref props rules ".form-check-input:checked[type=checkbox]" "background-image")))
+  (define check-disabled-opacity
+    (variant-style-ref props rules ".form-check-input:disabled" "opacity"))
+  (define switch-width
+    (variant-style-ref props rules ".form-switch .form-check-input" "width"))
+  (define switch-radius
+    (variant-style-ref props rules ".form-switch .form-check-input" "border-radius"))
+  (define switch-bg-icon
+    (or (variant-style-ref props rules ".form-switch .form-check-input" "--bs-form-switch-bg")
+        (variant-style-ref props rules ".form-switch .form-check-input" "background-image")))
+  (define switch-focus-icon
+    (or (variant-style-ref props rules ".form-switch .form-check-input:focus" "--bs-form-switch-bg")
+        (variant-style-ref props rules ".form-switch .form-check-input:focus" "background-image")))
+  (define switch-checked-icon
+    (or (variant-style-ref props rules ".form-switch .form-check-input:checked" "--bs-form-switch-bg")
+        (variant-style-ref props rules ".form-switch .form-check-input:checked" "background-image")))
   (define modal-content-selectors
     (list ".modal" ".modal-content"))
   (define modal-header-selectors
@@ -1357,6 +1483,9 @@
     (selector-box-side-ref props rules modal-footer-selectors "padding-left" 'left))
   (define modal-footer-padding-y
     (selector-box-side-ref props rules modal-footer-selectors "padding-top" 'top))
+  (define modal-footer-gap
+    (or (selector-style-ref props rules modal-footer-selectors "--bs-modal-footer-gap")
+        (variant-style-ref props rules ".modal-footer > *" "margin")))
   (define modal-footer-border-color
     (or (selector-border-color-ref props rules modal-footer-selectors "border-top-color" "border-top")
         (selector-style-ref props rules modal-footer-selectors "--bs-modal-footer-border-color")))
@@ -1404,6 +1533,53 @@
         'pill-active-color pill-active-color
         'pill-active-bg pill-active-bg
         'pill-radius pill-radius
+        'dropdown-bg dropdown-bg
+        'dropdown-color dropdown-color
+        'dropdown-border-color dropdown-border-color
+        'dropdown-border-width dropdown-border-width
+        'dropdown-radius dropdown-radius
+        'dropdown-shadow dropdown-shadow
+        'dropdown-padding-y dropdown-padding-y
+        'dropdown-header-color dropdown-header-color
+        'dropdown-header-padding-x dropdown-header-padding-x
+        'dropdown-header-padding-y dropdown-header-padding-y
+        'dropdown-divider-bg dropdown-divider-bg
+        'dropdown-link-color dropdown-link-color
+        'dropdown-item-padding-x dropdown-item-padding-x
+        'dropdown-item-padding-y dropdown-item-padding-y
+        'dropdown-item-font-size dropdown-item-font-size
+        'dropdown-item-font-weight dropdown-item-font-weight
+        'dropdown-item-text-transform dropdown-item-text-transform
+        'dropdown-item-radius dropdown-item-radius
+        'dropdown-item-hover-bg dropdown-item-hover-bg
+        'dropdown-item-hover-color dropdown-item-hover-color
+        'dropdown-item-active-bg dropdown-item-active-bg
+        'dropdown-item-active-color dropdown-item-active-color
+        'tooltip-bg tooltip-bg
+        'tooltip-color tooltip-color
+        'tooltip-font-size tooltip-font-size
+        'tooltip-radius tooltip-radius
+        'tooltip-opacity tooltip-opacity
+        'tooltip-padding-x tooltip-padding-x
+        'tooltip-padding-y tooltip-padding-y
+        'popover-bg popover-bg
+        'popover-max-width popover-max-width
+        'popover-font-size popover-font-size
+        'popover-color popover-color
+        'popover-border-color popover-border-color
+        'popover-border-width popover-border-width
+        'popover-radius popover-radius
+        'popover-shadow popover-shadow
+        'popover-arrow-width popover-arrow-width
+        'popover-arrow-height popover-arrow-height
+        'popover-header-bg popover-header-bg
+        'popover-header-color popover-header-color
+        'popover-header-padding-x popover-header-padding-x
+        'popover-header-padding-y popover-header-padding-y
+        'popover-body-padding-x popover-body-padding-x
+        'popover-body-padding-y popover-body-padding-y
+        'popover-title-font-size popover-title-font-size
+        'popover-title-font-weight popover-title-font-weight
         'btn-padding-x btn-padding-x
         'btn-padding-y btn-padding-y
         'btn-font-size btn-font-size
@@ -1426,8 +1602,13 @@
         'btn-outline-secondary-hover-bg btn-outline-secondary-hover-bg
         'btn-outline-secondary-hover-border btn-outline-secondary-hover-border
         'btn-outline-secondary-hover-color btn-outline-secondary-hover-color
+        'btn-success-color btn-success-color
+        'btn-info-color btn-info-color
+        'btn-warning-color btn-warning-color
+        'btn-danger-color btn-danger-color
         'card-bg card-bg
         'card-radius card-radius
+        'card-shadow card-shadow
         'card-border-color card-border-color
         'card-cap-bg card-cap-bg
         'card-cap-color card-cap-color
@@ -1453,6 +1634,10 @@
         'accordion-button-padding-y accordion-button-padding-y
         'accordion-button-color accordion-button-color
         'accordion-button-bg accordion-button-bg
+        'accordion-icon accordion-icon
+        'accordion-active-icon accordion-active-icon
+        'accordion-icon-width accordion-icon-width
+        'accordion-icon-transform accordion-icon-transform
         'accordion-active-color accordion-active-color
         'accordion-active-bg accordion-active-bg
         'accordion-body-padding-x accordion-body-padding-x
@@ -1500,9 +1685,11 @@
         'toast-header-border-color toast-header-border-color
         'toast-body-padding toast-body-padding
         'close-button-color close-button-color
+        'close-button-bg close-button-bg
         'close-button-opacity close-button-opacity
         'close-button-hover-opacity close-button-hover-opacity
         'close-button-radius close-button-radius
+        'modal-close-bg modal-close-bg
         'alert-primary-bg alert-primary-bg
         'alert-primary-border alert-primary-border
         'alert-primary-color alert-primary-color
@@ -1561,8 +1748,40 @@
         'field-padding-y field-padding-y
         'field-font-size field-font-size
         'field-font-weight field-font-weight
+        'field-select-icon field-select-icon
+        'field-select-padding-right field-select-padding-right
         'field-focus-bg field-focus-bg
         'field-focus-border-color field-focus-border-color
+        'input-group-addon-bg input-group-addon-bg
+        'input-group-addon-color input-group-addon-color
+        'input-group-addon-border-color input-group-addon-border-color
+        'input-group-addon-padding-x input-group-addon-padding-x
+        'input-group-addon-padding-y input-group-addon-padding-y
+        'input-group-addon-font-size input-group-addon-font-size
+        'input-group-addon-font-weight input-group-addon-font-weight
+        'field-valid-color field-valid-color
+        'field-valid-border-color field-valid-border-color
+        'field-valid-icon field-valid-icon
+        'field-invalid-color field-invalid-color
+        'field-invalid-border-color field-invalid-border-color
+        'field-invalid-icon field-invalid-icon
+        'check-bg check-bg
+        'check-border-color check-border-color
+        'check-border-width check-border-width
+        'check-size check-size
+        'check-height check-height
+        'check-radius check-radius
+        'check-focus-border-color check-focus-border-color
+        'check-focus-shadow check-focus-shadow
+        'check-checked-bg check-checked-bg
+        'check-checked-border-color check-checked-border-color
+        'check-checked-icon check-checked-icon
+        'check-disabled-opacity check-disabled-opacity
+        'switch-width switch-width
+        'switch-radius switch-radius
+        'switch-bg-icon switch-bg-icon
+        'switch-focus-icon switch-focus-icon
+        'switch-checked-icon switch-checked-icon
         'modal-bg modal-bg
         'modal-color modal-color
         'modal-border-color modal-border-color
@@ -1577,6 +1796,7 @@
         'modal-body-padding-y modal-body-padding-y
         'modal-footer-padding-x modal-footer-padding-x
         'modal-footer-padding-y modal-footer-padding-y
+        'modal-footer-gap modal-footer-gap
         'modal-footer-border-color modal-footer-border-color
         'modal-footer-border-width modal-footer-border-width
         'modal-title-color modal-title-color
@@ -1584,9 +1804,9 @@
         'modal-title-font-weight modal-title-font-weight
         'modal-title-text-transform modal-title-text-transform))
 
-;; bootstrap-props->theme-model : (hash/c string? string?) [(listof css-rule?)] -> bootstrap-theme?
+;; bootstrap-props->theme-model : (hash/c string? string?) [(or/c css-stylesheet? #f)] -> bootstrap-theme?
 ;;   Normalize Bootstrap custom properties into a small semantic theme model.
-(define (bootstrap-props->theme-model props [rules '()])
+(define (bootstrap-props->theme-model props [rules #f])
   (bootstrap-theme
    (prop-ref* props "--bs-body-color")
    (prop-ref* props "--bs-body-bg")
@@ -1713,6 +1933,24 @@
                    (if (= count 4)
                        (parse-alpha-fragment (list-ref pieces 3))
                        1.0))))))
+
+;; bootstrap-rules->theme-model : css-stylesheet? [string?] -> bootstrap-theme?
+;;   Build a normalized theme model from a parsed Bootstrap stylesheet.
+(define (bootstrap-rules->theme-model rules [selector ":root"])
+  (bootstrap-props->theme-model
+   (extract-bootstrap-theme/rules rules selector)
+   rules))
+
+;; theme->token-map : bootstrap-theme? [boolean?] -> (hash/c string? string?)
+;;   Convert generated token lines into a lookup hash for tests and probes.
+(define (theme->token-map theme [boost? #f])
+  (for/hash ([entry (in-list (build-token-lines theme boost?))])
+    (values (car entry) (cdr entry))))
+
+;; bootstrap-rules->token-map : css-stylesheet? [string?] [boolean?] -> (hash/c string? string?)
+;;   Build a generated token lookup hash directly from a parsed stylesheet.
+(define (bootstrap-rules->token-map rules [selector ":root"] [boost? #f])
+  (theme->token-map (bootstrap-rules->theme-model rules selector) boost?))
 
 ;; parse-css-color : string? -> (or/c rgb? #f)
 ;;   Parse one CSS color string when supported.
@@ -2177,6 +2415,153 @@
   (define pill-radius
     (or (theme-component-ref theme 'pill-radius)
         (bootstrap-theme-radius-pill theme)))
+  (define menu-popup-bg
+    (or (theme-component-ref theme 'dropdown-bg)
+        popup-bg))
+  (define menu-popup-border-color
+    (or (theme-component-ref theme 'dropdown-border-color)
+        popup-border))
+  (define menu-popup-border-width
+    (or (theme-component-ref theme 'dropdown-border-width)
+        "1px"))
+  (define menu-popup-radius
+    (or (theme-component-ref theme 'dropdown-radius)
+        (bootstrap-theme-radius-md theme)))
+  (define menu-popup-shadow
+    (or (theme-component-ref theme 'dropdown-shadow)
+        "var(--we-shadow-md)"))
+  (define menu-popup-padding-y
+    (or (theme-component-ref theme 'dropdown-padding-y)
+        "0.5rem"))
+  (define menu-header-color
+    (or (theme-component-ref theme 'dropdown-header-color)
+        fg-muted))
+  (define menu-header-padding-x
+    (or (theme-component-ref theme 'dropdown-header-padding-x)
+        "1rem"))
+  (define menu-header-padding-y
+    (or (theme-component-ref theme 'dropdown-header-padding-y)
+        "0.5rem"))
+  (define menu-divider-color
+    (or (theme-component-ref theme 'dropdown-divider-bg)
+        separator))
+  (define menu-item-color
+    (or (theme-component-ref theme 'dropdown-link-color)
+        (theme-component-ref theme 'dropdown-color)
+        (bootstrap-theme-fg theme)))
+  (define menu-item-padding-x
+    (or (theme-component-ref theme 'dropdown-item-padding-x)
+        "1rem"))
+  (define menu-item-padding-y
+    (or (theme-component-ref theme 'dropdown-item-padding-y)
+        "0.35rem"))
+  (define menu-item-font-size
+    (or (theme-component-ref theme 'dropdown-item-font-size)
+        (bootstrap-theme-font-size-md theme)))
+  (define menu-item-font-weight
+    (or (theme-component-ref theme 'dropdown-item-font-weight)
+        (bootstrap-theme-font-weight-normal theme)))
+  (define menu-item-text-transform
+    (or (theme-component-ref theme 'dropdown-item-text-transform)
+        "none"))
+  (define menu-item-radius
+    (or (theme-component-ref theme 'dropdown-item-radius)
+        "0"))
+  (define menu-item-hover-bg
+    (or (theme-component-ref theme 'dropdown-item-hover-bg)
+        bg-hover))
+  (define menu-item-hover-fg
+    (or (theme-component-ref theme 'dropdown-item-hover-color)
+        menu-item-color))
+  (define menu-item-active-bg
+    (or (theme-component-ref theme 'dropdown-item-active-bg)
+        bg-selected))
+  (define menu-item-active-fg
+    (or (theme-component-ref theme 'dropdown-item-active-color)
+        (rgb->css emphasis-fg)))
+  (define tooltip-bg
+    (or (theme-component-ref theme 'tooltip-bg)
+        popup-bg))
+  (define tooltip-color
+    (or (theme-component-ref theme 'tooltip-color)
+        (derive-on-color (or (parse-css-color tooltip-bg)
+                             (rgb 26 31 43 1.0)))))
+  (define tooltip-font-size
+    (or (theme-component-ref theme 'tooltip-font-size)
+        (bootstrap-theme-font-size-sm theme)))
+  (define tooltip-radius
+    (or (theme-component-ref theme 'tooltip-radius)
+        (bootstrap-theme-radius-sm theme)))
+  (define tooltip-opacity
+    (or (theme-component-ref theme 'tooltip-opacity)
+        "0.9"))
+  (define tooltip-padding-x
+    (or (theme-component-ref theme 'tooltip-padding-x)
+        "0.5rem"))
+  (define tooltip-padding-y
+    (or (theme-component-ref theme 'tooltip-padding-y)
+        "0.25rem"))
+  (define tooltip-border-color
+    (or (theme-component-ref theme 'tooltip-border-color)
+        tooltip-bg))
+  (define tooltip-shadow
+    (or (theme-component-ref theme 'tooltip-shadow)
+        "none"))
+  (define tooltip-arrow-size "0.5rem")
+  (define popover-bg
+    (or (theme-component-ref theme 'popover-bg)
+        popup-bg))
+  (define popover-max-width
+    (or (theme-component-ref theme 'popover-max-width)
+        "18rem"))
+  (define popover-font-size
+    (or (theme-component-ref theme 'popover-font-size)
+        (bootstrap-theme-font-size-sm theme)))
+  (define popover-color
+    (or (theme-component-ref theme 'popover-color)
+        (bootstrap-theme-fg theme)))
+  (define popover-border-color
+    (or (theme-component-ref theme 'popover-border-color)
+        popup-border))
+  (define popover-border-width
+    (or (theme-component-ref theme 'popover-border-width)
+        "1px"))
+  (define popover-radius
+    (or (theme-component-ref theme 'popover-radius)
+        (bootstrap-theme-radius-lg theme)))
+  (define popover-shadow
+    (or (theme-component-ref theme 'popover-shadow)
+        "var(--we-shadow-md)"))
+  (define popover-arrow-width
+    (or (theme-component-ref theme 'popover-arrow-width)
+        "1rem"))
+  (define popover-arrow-height
+    (or (theme-component-ref theme 'popover-arrow-height)
+        "0.5rem"))
+  (define popover-header-bg
+    (or (theme-component-ref theme 'popover-header-bg)
+        (hash-ref surface-map 'surface-muted)))
+  (define popover-header-color
+    (or (theme-component-ref theme 'popover-header-color)
+        (rgb->css emphasis-fg)))
+  (define popover-header-padding-x
+    (or (theme-component-ref theme 'popover-header-padding-x)
+        "0.75rem"))
+  (define popover-header-padding-y
+    (or (theme-component-ref theme 'popover-header-padding-y)
+        "0.5rem"))
+  (define popover-body-padding-x
+    (or (theme-component-ref theme 'popover-body-padding-x)
+        "0.75rem"))
+  (define popover-body-padding-y
+    (or (theme-component-ref theme 'popover-body-padding-y)
+        "0.5rem"))
+  (define popover-title-font-size
+    (or (theme-component-ref theme 'popover-title-font-size)
+        (bootstrap-theme-font-size-lg theme)))
+  (define popover-title-font-weight
+    (or (theme-component-ref theme 'popover-title-font-weight)
+        (bootstrap-theme-font-weight-semibold theme)))
   (define button-padding-x
     (or (theme-component-ref theme 'btn-padding-x)
         "0.75rem"))
@@ -2246,12 +2631,27 @@
   (define outline-secondary-hover-border
     (or (theme-component-ref theme 'btn-outline-secondary-hover-border)
         button-secondary-border))
+  (define button-success-color
+    (or (theme-component-ref theme 'btn-success-color)
+        (bootstrap-theme-success theme)))
+  (define button-info-color
+    (or (theme-component-ref theme 'btn-info-color)
+        (bootstrap-theme-info theme)))
+  (define button-warning-color
+    (or (theme-component-ref theme 'btn-warning-color)
+        (bootstrap-theme-warning theme)))
+  (define button-danger-color
+    (or (theme-component-ref theme 'btn-danger-color)
+        (bootstrap-theme-danger theme)))
   (define card-bg
     (or (theme-component-ref theme 'card-bg)
         (hash-ref surface-map 'surface)))
   (define card-radius
     (or (theme-component-ref theme 'card-radius)
         "0"))
+  (define card-shadow
+    (or (theme-component-ref theme 'card-shadow)
+        "none"))
   (define card-border-color
     (or (theme-component-ref theme 'card-border-color)
         separator))
@@ -2327,6 +2727,18 @@
   (define accordion-button-bg
     (or (theme-component-ref theme 'accordion-button-bg)
         (hash-ref surface-map 'surface-subtle)))
+  (define accordion-icon
+    (or (theme-component-ref theme 'accordion-icon)
+        "none"))
+  (define accordion-active-icon
+    (or (theme-component-ref theme 'accordion-active-icon)
+        accordion-icon))
+  (define accordion-icon-width
+    (or (theme-component-ref theme 'accordion-icon-width)
+        "1rem"))
+  (define accordion-icon-transform
+    (or (theme-component-ref theme 'accordion-icon-transform)
+        "rotate(90deg)"))
   (define accordion-active-color
     (or (theme-component-ref theme 'accordion-active-color)
         accordion-button-color))
@@ -2686,6 +3098,96 @@
   (define field-focus-border-color
     (or (theme-component-ref theme 'field-focus-border-color)
         control-border-focus))
+  (define input-group-addon-bg
+    (or (theme-component-ref theme 'input-group-addon-bg)
+        (hash-ref surface-map 'surface-muted)))
+  (define input-group-addon-color
+    (or (theme-component-ref theme 'input-group-addon-color)
+        field-color))
+  (define input-group-addon-border-color
+    (or (theme-component-ref theme 'input-group-addon-border-color)
+        field-border-color))
+  (define input-group-addon-padding-x
+    (or (theme-component-ref theme 'input-group-addon-padding-x)
+        field-padding-x))
+  (define input-group-addon-padding-y
+    (or (theme-component-ref theme 'input-group-addon-padding-y)
+        field-padding-y))
+  (define input-group-addon-font-size
+    (or (theme-component-ref theme 'input-group-addon-font-size)
+        field-font-size))
+  (define input-group-addon-font-weight
+    (or (theme-component-ref theme 'input-group-addon-font-weight)
+        field-font-weight))
+  (define field-valid-color
+    (or (theme-component-ref theme 'field-valid-color)
+        (bootstrap-theme-success theme)))
+  (define field-valid-border-color
+    (or (theme-component-ref theme 'field-valid-border-color)
+        field-valid-color))
+  (define field-valid-icon
+    (or (theme-component-ref theme 'field-valid-icon)
+        "none"))
+  (define field-invalid-color
+    (or (theme-component-ref theme 'field-invalid-color)
+        (bootstrap-theme-danger theme)))
+  (define field-invalid-border-color
+    (or (theme-component-ref theme 'field-invalid-border-color)
+        field-invalid-color))
+  (define field-invalid-icon
+    (or (theme-component-ref theme 'field-invalid-icon)
+        "none"))
+  (define check-bg
+    (or (theme-component-ref theme 'check-bg)
+        field-bg))
+  (define check-border-color
+    (or (theme-component-ref theme 'check-border-color)
+        field-border-color))
+  (define check-border-width
+    (or (theme-component-ref theme 'check-border-width)
+        field-border-width))
+  (define check-size
+    (or (theme-component-ref theme 'check-size)
+        "1em"))
+  (define check-height
+    (or (theme-component-ref theme 'check-height)
+        check-size))
+  (define check-radius
+    (or (theme-component-ref theme 'check-radius)
+        "0.25em"))
+  (define check-focus-border-color
+    (or (theme-component-ref theme 'check-focus-border-color)
+        field-focus-border-color))
+  (define check-focus-shadow
+    (or (theme-component-ref theme 'check-focus-shadow)
+        "none"))
+  (define check-checked-bg
+    (or (theme-component-ref theme 'check-checked-bg)
+        (bootstrap-theme-primary theme)))
+  (define check-checked-border-color
+    (or (theme-component-ref theme 'check-checked-border-color)
+        check-checked-bg))
+  (define check-checked-icon
+    (or (theme-component-ref theme 'check-checked-icon)
+        "none"))
+  (define check-disabled-opacity
+    (or (theme-component-ref theme 'check-disabled-opacity)
+        "0.5"))
+  (define switch-width
+    (or (theme-component-ref theme 'switch-width)
+        "2em"))
+  (define switch-radius
+    (or (theme-component-ref theme 'switch-radius)
+        check-radius))
+  (define switch-bg-icon
+    (or (theme-component-ref theme 'switch-bg-icon)
+        "none"))
+  (define switch-focus-icon
+    (or (theme-component-ref theme 'switch-focus-icon)
+        switch-bg-icon))
+  (define switch-checked-icon
+    (or (theme-component-ref theme 'switch-checked-icon)
+        switch-bg-icon))
   (define dialog-bg
     (or (theme-component-ref theme 'modal-bg)
         popup-bg))
@@ -2728,6 +3230,9 @@
   (define dialog-footer-padding-y
     (or (theme-component-ref theme 'modal-footer-padding-y)
         "0.65rem"))
+  (define dialog-footer-gap
+    (or (theme-component-ref theme 'modal-footer-gap)
+        "0.5rem"))
   (define dialog-footer-border-color
     (or (theme-component-ref theme 'modal-footer-border-color)
         separator))
@@ -2745,6 +3250,10 @@
         (bootstrap-theme-font-weight-semibold theme)))
   (define dialog-title-text-transform
     (or (theme-component-ref theme 'modal-title-text-transform)
+        "none"))
+  (define dialog-close-icon
+    (or (theme-component-ref theme 'modal-close-bg)
+        (theme-component-ref theme 'close-button-bg)
         "none"))
   (define overlay
     (if dark? "rgba(2, 6, 12, 0.72)" "rgba(0, 0, 0, 0.45)"))
@@ -2816,8 +3325,27 @@
     (cons "--we-shadow-md" (bootstrap-theme-shadow-md theme))
     (cons "--we-shadow-lg" (bootstrap-theme-shadow-lg theme))
     (cons "--we-shadow" "var(--we-shadow-lg)")
-    (cons "--we-menu-item-hover-bg" bg-hover)
-    (cons "--we-menu-item-hover-fg" (rgb->css emphasis-fg))
+    (cons "--we-menu-popup-bg" menu-popup-bg)
+    (cons "--we-menu-popup-border-color" menu-popup-border-color)
+    (cons "--we-menu-popup-border-width" menu-popup-border-width)
+    (cons "--we-menu-popup-radius" menu-popup-radius)
+    (cons "--we-menu-popup-shadow" menu-popup-shadow)
+    (cons "--we-menu-popup-padding-y" menu-popup-padding-y)
+    (cons "--we-menu-header-color" menu-header-color)
+    (cons "--we-menu-header-padding-x" menu-header-padding-x)
+    (cons "--we-menu-header-padding-y" menu-header-padding-y)
+    (cons "--we-menu-divider-color" menu-divider-color)
+    (cons "--we-menu-item-color" menu-item-color)
+    (cons "--we-menu-item-padding-x" menu-item-padding-x)
+    (cons "--we-menu-item-padding-y" menu-item-padding-y)
+    (cons "--we-menu-item-font-size" menu-item-font-size)
+    (cons "--we-menu-item-font-weight" menu-item-font-weight)
+    (cons "--we-menu-item-text-transform" menu-item-text-transform)
+    (cons "--we-menu-item-radius" menu-item-radius)
+    (cons "--we-menu-item-hover-bg" menu-item-hover-bg)
+    (cons "--we-menu-item-hover-fg" menu-item-hover-fg)
+    (cons "--we-menu-item-active-bg" menu-item-active-bg)
+    (cons "--we-menu-item-active-fg" menu-item-active-fg)
     (cons "--we-tab-active-border" bg-selected)
     (cons "--we-navbar-bg" navbar-bg)
     (cons "--we-navbar-border" navbar-border)
@@ -2869,8 +3397,13 @@
     (cons "--we-button-outline-secondary-border" outline-secondary-border)
     (cons "--we-button-outline-secondary-hover-bg" outline-secondary-hover-bg)
     (cons "--we-button-outline-secondary-hover-border" outline-secondary-hover-border)
+    (cons "--we-button-success-color" button-success-color)
+    (cons "--we-button-info-color" button-info-color)
+    (cons "--we-button-warning-color" button-warning-color)
+    (cons "--we-button-danger-color" button-danger-color)
     (cons "--we-card-bg" card-bg)
     (cons "--we-card-radius" card-radius)
+    (cons "--we-card-shadow" card-shadow)
     (cons "--we-card-border-color" card-border-color)
     (cons "--we-card-cap-bg" card-cap-bg)
     (cons "--we-card-cap-color" card-cap-color)
@@ -2896,6 +3429,10 @@
     (cons "--we-accordion-button-padding-y" accordion-button-padding-y)
     (cons "--we-accordion-button-color" accordion-button-color)
     (cons "--we-accordion-button-bg" accordion-button-bg)
+    (cons "--we-accordion-icon" accordion-icon)
+    (cons "--we-accordion-active-icon" accordion-active-icon)
+    (cons "--we-accordion-icon-width" accordion-icon-width)
+    (cons "--we-accordion-icon-transform" accordion-icon-transform)
     (cons "--we-accordion-active-color" accordion-active-color)
     (cons "--we-accordion-active-bg" accordion-active-bg)
     (cons "--we-accordion-body-padding-x" accordion-body-padding-x)
@@ -2942,6 +3479,34 @@
     (cons "--we-toast-header-bg" toast-header-bg)
     (cons "--we-toast-header-border-color" toast-header-border-color)
     (cons "--we-toast-body-padding" toast-body-padding)
+    (cons "--we-tooltip-bg" tooltip-bg)
+    (cons "--we-tooltip-color" tooltip-color)
+    (cons "--we-tooltip-font-size" tooltip-font-size)
+    (cons "--we-tooltip-radius" tooltip-radius)
+    (cons "--we-tooltip-opacity" tooltip-opacity)
+    (cons "--we-tooltip-padding-x" tooltip-padding-x)
+    (cons "--we-tooltip-padding-y" tooltip-padding-y)
+    (cons "--we-tooltip-border-color" tooltip-border-color)
+    (cons "--we-tooltip-shadow" tooltip-shadow)
+    (cons "--we-tooltip-arrow-size" tooltip-arrow-size)
+    (cons "--we-popover-bg" popover-bg)
+    (cons "--we-popover-max-width" popover-max-width)
+    (cons "--we-popover-font-size" popover-font-size)
+    (cons "--we-popover-color" popover-color)
+    (cons "--we-popover-border-color" popover-border-color)
+    (cons "--we-popover-border-width" popover-border-width)
+    (cons "--we-popover-radius" popover-radius)
+    (cons "--we-popover-shadow" popover-shadow)
+    (cons "--we-popover-arrow-width" popover-arrow-width)
+    (cons "--we-popover-arrow-height" popover-arrow-height)
+    (cons "--we-popover-header-bg" popover-header-bg)
+    (cons "--we-popover-header-color" popover-header-color)
+    (cons "--we-popover-header-padding-x" popover-header-padding-x)
+    (cons "--we-popover-header-padding-y" popover-header-padding-y)
+    (cons "--we-popover-body-padding-x" popover-body-padding-x)
+    (cons "--we-popover-body-padding-y" popover-body-padding-y)
+    (cons "--we-popover-title-font-size" popover-title-font-size)
+    (cons "--we-popover-title-font-weight" popover-title-font-weight)
     (cons "--we-close-button-color" close-button-color)
     (cons "--we-close-button-opacity" close-button-opacity)
     (cons "--we-close-button-hover-opacity" close-button-hover-opacity)
@@ -3004,8 +3569,42 @@
     (cons "--we-field-padding-y" field-padding-y)
     (cons "--we-field-font-size" field-font-size)
     (cons "--we-field-font-weight" field-font-weight)
+    (cons "--we-field-select-icon" (or (theme-component-ref theme 'field-select-icon) "none"))
+    (cons "--we-field-select-padding-right"
+          (or (theme-component-ref theme 'field-select-padding-right)
+              "calc(var(--we-field-padding-x) * 3)"))
     (cons "--we-field-focus-bg" field-focus-bg)
     (cons "--we-field-focus-border-color" field-focus-border-color)
+    (cons "--we-input-group-addon-bg" input-group-addon-bg)
+    (cons "--we-input-group-addon-color" input-group-addon-color)
+    (cons "--we-input-group-addon-border-color" input-group-addon-border-color)
+    (cons "--we-input-group-addon-padding-x" input-group-addon-padding-x)
+    (cons "--we-input-group-addon-padding-y" input-group-addon-padding-y)
+    (cons "--we-input-group-addon-font-size" input-group-addon-font-size)
+    (cons "--we-input-group-addon-font-weight" input-group-addon-font-weight)
+    (cons "--we-field-valid-color" field-valid-color)
+    (cons "--we-field-valid-border-color" field-valid-border-color)
+    (cons "--we-field-valid-icon" field-valid-icon)
+    (cons "--we-field-invalid-color" field-invalid-color)
+    (cons "--we-field-invalid-border-color" field-invalid-border-color)
+    (cons "--we-field-invalid-icon" field-invalid-icon)
+    (cons "--we-check-bg" check-bg)
+    (cons "--we-check-border-color" check-border-color)
+    (cons "--we-check-border-width" check-border-width)
+    (cons "--we-check-size" check-size)
+    (cons "--we-check-height" check-height)
+    (cons "--we-check-radius" check-radius)
+    (cons "--we-check-focus-border-color" check-focus-border-color)
+    (cons "--we-check-focus-shadow" check-focus-shadow)
+    (cons "--we-check-checked-bg" check-checked-bg)
+    (cons "--we-check-checked-border-color" check-checked-border-color)
+    (cons "--we-check-checked-icon" check-checked-icon)
+    (cons "--we-check-disabled-opacity" check-disabled-opacity)
+    (cons "--we-switch-width" switch-width)
+    (cons "--we-switch-radius" switch-radius)
+    (cons "--we-switch-bg-icon" switch-bg-icon)
+    (cons "--we-switch-focus-icon" switch-focus-icon)
+    (cons "--we-switch-checked-icon" switch-checked-icon)
     (cons "--we-dialog-bg" dialog-bg)
     (cons "--we-dialog-color" dialog-color)
     (cons "--we-dialog-border-color" dialog-border-color)
@@ -3020,12 +3619,14 @@
     (cons "--we-dialog-body-padding-y" dialog-body-padding-y)
     (cons "--we-dialog-footer-padding-x" dialog-footer-padding-x)
     (cons "--we-dialog-footer-padding-y" dialog-footer-padding-y)
+    (cons "--we-dialog-footer-gap" dialog-footer-gap)
     (cons "--we-dialog-footer-border-color" dialog-footer-border-color)
     (cons "--we-dialog-footer-border-width" dialog-footer-border-width)
     (cons "--we-dialog-title-color" dialog-title-color)
     (cons "--we-dialog-title-font-size" dialog-title-font-size)
     (cons "--we-dialog-title-font-weight" dialog-title-font-weight)
     (cons "--we-dialog-title-text-transform" dialog-title-text-transform)
+    (cons "--we-dialog-close-icon" dialog-close-icon)
     (cons "--we-input-placeholder" placeholder)
     (cons "--we-surface" (hash-ref surface-map 'surface))
     (cons "--we-surface-raised" (hash-ref surface-map 'surface-raised))
@@ -3137,11 +3738,8 @@
 (define (write-generated-theme! input-path output-path theme-class selector boost?)
   (define source (file->string input-path))
   (define rules (read-css-rules source))
-  (define import-lines (extract-top-level-imports source))
-  (define theme
-    (bootstrap-props->theme-model
-     (extract-bootstrap-theme/rules rules selector)
-     rules))
+  (define import-lines (extract-top-level-imports/rules rules))
+  (define theme (bootstrap-rules->theme-model rules selector))
   (make-parent-directory* output-path)
   (call-with-output-file output-path
     (lambda (out)
@@ -3302,6 +3900,72 @@
      "  background-color: rgba(237, 238, 239, 0.977);\n"
      "}\n"))
 
+  (define overlay-bootstrap
+    (string-append
+     ":root {\n"
+     "  --bs-body-color: #55595c;\n"
+     "  --bs-body-bg: #ffffff;\n"
+     "  --bs-border-color: #e0e1e2;\n"
+     "}\n"
+     ".dropdown-menu {\n"
+     "  --bs-dropdown-bg: #ffffff;\n"
+     "  --bs-dropdown-color: #55595c;\n"
+     "  --bs-dropdown-border-color: rgba(0, 0, 0, 0.15);\n"
+     "  --bs-dropdown-border-width: 0;\n"
+     "  --bs-dropdown-border-radius: 0;\n"
+     "  --bs-dropdown-box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.175);\n"
+     "  --bs-dropdown-padding-y: 0.5rem;\n"
+     "  --bs-dropdown-header-color: #adb5bd;\n"
+     "  --bs-dropdown-header-padding-x: 1rem;\n"
+     "  --bs-dropdown-header-padding-y: 0.5rem;\n"
+     "  --bs-dropdown-divider-bg: #e9ecef;\n"
+     "  --bs-dropdown-item-padding-x: 1rem;\n"
+     "  --bs-dropdown-item-padding-y: 0.25rem;\n"
+     "  --bs-dropdown-link-active-bg: #1a1a1a;\n"
+     "  --bs-dropdown-link-active-color: #ffffff;\n"
+     "}\n"
+     ".dropdown-item {\n"
+     "  color: #55595c;\n"
+     "  font-size: 1rem;\n"
+     "  font-weight: 400;\n"
+     "  text-transform: uppercase;\n"
+     "}\n"
+     ".dropdown-item:hover {\n"
+     "  color: #1a1a1a;\n"
+     "  background-color: #f0f1f2;\n"
+     "}\n"
+     ".tooltip {\n"
+     "  --bs-tooltip-bg: #1a1a1a;\n"
+     "  --bs-tooltip-color: #ffffff;\n"
+     "  --bs-tooltip-font-size: 0.875rem;\n"
+     "  --bs-tooltip-padding-x: 0.75rem;\n"
+     "  --bs-tooltip-padding-y: 0.35rem;\n"
+     "  --bs-tooltip-border-radius: 0;\n"
+     "  --bs-tooltip-opacity: 1;\n"
+     "}\n"
+     ".popover {\n"
+     "  --bs-popover-bg: #ffffff;\n"
+     "  --bs-popover-max-width: 276px;\n"
+     "  --bs-popover-font-size: 0.875rem;\n"
+     "  --bs-popover-body-color: #55595c;\n"
+     "  --bs-popover-border-color: rgba(0, 0, 0, 0.2);\n"
+     "  --bs-popover-border-width: 0;\n"
+     "  --bs-popover-border-radius: 0;\n"
+     "  --bs-popover-box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);\n"
+     "  --bs-popover-arrow-width: 1rem;\n"
+     "  --bs-popover-arrow-height: 0.5rem;\n"
+     "  --bs-popover-header-bg: #f7f7f7;\n"
+     "  --bs-popover-header-color: #1a1a1a;\n"
+     "  --bs-popover-header-padding-x: 1rem;\n"
+     "  --bs-popover-header-padding-y: 0.5rem;\n"
+     "  --bs-popover-body-padding-x: 1rem;\n"
+     "  --bs-popover-body-padding-y: 0.5rem;\n"
+     "}\n"
+     ".popover-header {\n"
+     "  font-size: 1rem;\n"
+     "  font-weight: 600;\n"
+     "}\n"))
+
   (define button-card-bootstrap
     (string-append
      ":root {\n"
@@ -3345,6 +4009,18 @@
      "  --bs-btn-hover-bg: #f0f1f2;\n"
      "  --bs-btn-hover-border-color: #f0f1f2;\n"
      "}\n"
+     ".btn-success {\n"
+     "  --bs-btn-color: #fff;\n"
+     "}\n"
+     ".btn-info {\n"
+     "  --bs-btn-color: #fff;\n"
+     "}\n"
+     ".btn-warning {\n"
+     "  --bs-btn-color: #fff;\n"
+     "}\n"
+     ".btn-danger {\n"
+     "  --bs-btn-color: #fff;\n"
+     "}\n"
      ".card {\n"
       "  --bs-card-border-color: rgba(0, 0, 0, 0.125);\n"
       "  --bs-card-cap-padding-y: 0.5rem;\n"
@@ -3365,6 +4041,27 @@
      "}\n"
      ".badge.bg-secondary, .badge.bg-light {\n"
      "  color: #343a40;\n"
+     "}\n"))
+
+  (define sandstone-button-bootstrap
+    (string-append
+     ":root {\n"
+     "  --bs-body-color: #3e3f3a;\n"
+     "  --bs-body-bg: #ffffff;\n"
+     "}\n"
+     ".btn {\n"
+     "  --bs-btn-padding-x: 0.75rem;\n"
+     "  --bs-btn-padding-y: 0.375rem;\n"
+     "  --bs-btn-font-size: 1rem;\n"
+     "  --bs-btn-font-weight: 400;\n"
+     "  --bs-btn-line-height: 1.5;\n"
+     "  --bs-btn-border-radius: 0.375rem;\n"
+     "}\n"
+     ".sandstone, .btn {\n"
+     "  font-size: 13px;\n"
+     "  font-weight: 500;\n"
+     "  line-height: 22px;\n"
+     "  text-transform: uppercase;\n"
      "}\n"))
 
   (define list-table-bootstrap
@@ -3427,13 +4124,56 @@
      "  border-color: #1a1a1a;\n"
      "}\n"
      ".form-select {\n"
+     "  --bs-form-select-bg-img: url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2355595c' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='m2 5 6 6 6-6'/%3e%3c/svg%3e\");\n"
      "  color: #55595c;\n"
      "  background-color: #f0f1f2;\n"
      "  border: 0 solid #e0e1e2;\n"
      "  border-radius: 0;\n"
+     "  padding: 0.75rem 4.5rem 0.75rem 1.5rem;\n"
+     "  font-size: 1rem;\n"
+     "  font-weight: 300;\n"
+     "}\n"
+     ".input-group-text {\n"
      "  padding: 0.75rem 1.5rem;\n"
      "  font-size: 1rem;\n"
      "  font-weight: 300;\n"
+     "  color: #55595c;\n"
+     "  background-color: #e0e1e2;\n"
+     "  border: 0 solid #e0e1e2;\n"
+     "}\n"
+     ".form-check-input {\n"
+     "  --bs-form-check-bg: #f0f1f2;\n"
+     "  width: 1em;\n"
+     "  height: 1em;\n"
+     "  background-color: var(--bs-form-check-bg);\n"
+     "  border: 1px solid #e0e1e2;\n"
+     "}\n"
+     ".form-check-input:focus {\n"
+     "  border-color: #8d8d8d;\n"
+     "  box-shadow: 0 0 0 0.25rem rgba(26, 26, 26, 0.25);\n"
+     "}\n"
+     ".form-check-input:checked {\n"
+     "  background-color: #1a1a1a;\n"
+     "  border-color: #1a1a1a;\n"
+     "}\n"
+     ".form-check-input:checked[type=checkbox] {\n"
+     "  --bs-form-check-bg-image: url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3e%3cpath fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='3' d='m6 10 3 3 6-6'/%3e%3c/svg%3e\");\n"
+     "}\n"
+     ".form-check-input:disabled {\n"
+     "  opacity: 0.5;\n"
+     "}\n"
+     ".form-switch .form-check-input {\n"
+     "  --bs-form-switch-bg: url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='rgba%280, 0, 0, 0.25%29'/%3e%3c/svg%3e\");\n"
+     "  width: 2em;\n"
+     "  background-image: var(--bs-form-switch-bg);\n"
+     "  background-position: left center;\n"
+     "  border-radius: 0;\n"
+     "}\n"
+     ".form-switch .form-check-input:focus {\n"
+     "  --bs-form-switch-bg: url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%238d8d8d'/%3e%3c/svg%3e\");\n"
+     "}\n"
+     ".form-switch .form-check-input:checked {\n"
+     "  --bs-form-switch-bg: url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e\");\n"
      "}\n"
      ".modal-content {\n"
      "  color: #55595c;\n"
@@ -3460,6 +4200,29 @@
      ".modal-title {\n"
      "  color: #1a1a1a;\n"
      "  font-size: 1rem;\n"
+     "}\n"
+     ".btn-close {\n"
+     "  --bs-btn-close-color: #000;\n"
+     "  --bs-btn-close-bg: url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414'/%3e%3c/svg%3e\");\n"
+     "  --bs-btn-close-opacity: 0.5;\n"
+     "  --bs-btn-close-hover-opacity: 0.75;\n"
+     "}\n"
+     ".modal .btn-close {\n"
+     "  background-image: url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%2355595c'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414'/%3e%3c/svg%3e\");\n"
+     "}\n"
+     ".valid-feedback {\n"
+     "  color: var(--bs-form-valid-color);\n"
+     "}\n"
+     ".invalid-feedback {\n"
+     "  color: var(--bs-form-invalid-color);\n"
+     "}\n"
+     ".form-control.is-valid {\n"
+     "  border-color: var(--bs-form-valid-border-color);\n"
+     "  background-image: url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%234bbf73' d='M2.3 6.73.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1'/%3e%3c/svg%3e\");\n"
+     "}\n"
+     ".form-control.is-invalid {\n"
+     "  border-color: var(--bs-form-invalid-border-color);\n"
+     "  background-image: url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23d9534f'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23d9534f' stroke='none'/%3e%3c/svg%3e\");\n"
      "}\n"))
 
   (define accordion-bootstrap
@@ -3480,6 +4243,10 @@
      "  --bs-accordion-btn-padding-y: 1rem;\n"
      "  --bs-accordion-btn-color: var(--bs-body-color);\n"
      "  --bs-accordion-btn-bg: var(--bs-accordion-bg);\n"
+     "  --bs-accordion-btn-icon: url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%2355595c' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='m2 5 6 6 6-6'/%3e%3c/svg%3e\");\n"
+     "  --bs-accordion-btn-active-icon: url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%230a0a0a' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='m2 5 6 6 6-6'/%3e%3c/svg%3e\");\n"
+     "  --bs-accordion-btn-icon-width: 1.25rem;\n"
+     "  --bs-accordion-btn-icon-transform: rotate(-180deg);\n"
      "  --bs-accordion-body-padding-x: 1.25rem;\n"
      "  --bs-accordion-body-padding-y: 1rem;\n"
      "  --bs-accordion-active-color: var(--bs-primary-text-emphasis);\n"
@@ -3576,15 +4343,24 @@
      "}\n"
      ".btn-close {\n"
      "  --bs-btn-close-color: #000;\n"
+     "  --bs-btn-close-bg: url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23000'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414'/%3e%3c/svg%3e\");\n"
      "  --bs-btn-close-opacity: 0.5;\n"
      "  --bs-btn-close-hover-opacity: 0.75;\n"
+     "}\n"
+     ".modal .btn-close {\n"
+     "  background-image: url(\"data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%2355595c'%3e%3cpath d='M.293.293a1 1 0 0 1 1.414 0L8 6.586 14.293.293a1 1 0 1 1 1.414 1.414L9.414 8l6.293 6.293a1 1 0 0 1-1.414 1.414L8 9.414l-6.293 6.293a1 1 0 0 1-1.414-1.414L6.586 8 .293 1.707a1 1 0 0 1 0-1.414'/%3e%3c/svg%3e\");\n"
      "}\n"))
 
   (test-case "read-css-rules parses top-level declarations"
     (define rules (read-css-rules sample-bootstrap))
-    (check-equal? (length rules) 3)
-    (check-equal? (css-rule-selector (first rules)) ":root")
-    (check-equal? (css-decl-name (first (css-rule-declarations (first rules))))
+    (define style-rules
+      (filter css-style-rule? (css-stylesheet-rules rules)))
+    (check-equal? (length style-rules) 3)
+    (check-equal? (css-style-rule-raw-selector (first style-rules)) ":root")
+    (check-equal? (css-declaration-name
+                   (first (filter css-declaration?
+                                  (css-style-rule-block
+                                   (first style-rules)))))
                   "--bs-body-color"))
 
   (test-case "extract-bootstrap-theme matches requested selector only"
@@ -3693,12 +4469,8 @@
     (define theme
       (bootstrap-props->theme-model
        (extract-bootstrap-theme boost-bootstrap ":root")))
-    (define plain-map
-      (for/hash ([entry (in-list (build-token-lines theme))])
-        (values (car entry) (cdr entry))))
-    (define boosted-map
-      (for/hash ([entry (in-list (build-token-lines theme #t))])
-        (values (car entry) (cdr entry))))
+    (define plain-map (theme->token-map theme))
+    (define boosted-map (theme->token-map theme #t))
     (check-not-equal? (hash-ref plain-map "--we-primary-subtle")
                       (hash-ref boosted-map "--we-primary-subtle"))
     (check-not-equal? (hash-ref plain-map "--we-primary-border")
@@ -3706,13 +4478,7 @@
 
   (test-case "component rule extraction feeds navbar and tab tokens"
     (define rules (read-css-rules nav-bootstrap))
-    (define theme
-      (bootstrap-props->theme-model
-       (extract-bootstrap-theme/rules rules ":root")
-       rules))
-    (define token-map
-      (for/hash ([entry (in-list (build-token-lines theme))])
-        (values (car entry) (cdr entry))))
+    (define token-map (bootstrap-rules->token-map rules))
     (check-equal? (hash-ref token-map "--we-navbar-link-color")
                   "rgba(0, 0, 0, 0.3)")
     (check-equal? (hash-ref token-map "--we-nav-text-transform")
@@ -3722,17 +4488,13 @@
 
   (test-case "component rule extraction feeds button card and badge tokens"
     (define rules (read-css-rules button-card-bootstrap))
-    (define theme
-      (bootstrap-props->theme-model
-       (extract-bootstrap-theme/rules rules ":root")
-       rules))
-    (define token-map
-      (for/hash ([entry (in-list (build-token-lines theme))])
-        (values (car entry) (cdr entry))))
+    (define token-map (bootstrap-rules->token-map rules))
     (check-equal? (hash-ref token-map "--we-button-padding-x") "1.5rem")
     (check-equal? (hash-ref token-map "--we-button-text-transform") "uppercase")
     (check-equal? (hash-ref token-map "--we-button-radius") "0")
     (check-equal? (hash-ref token-map "--we-button-secondary-bg") "#fff")
+    (check-equal? (hash-ref token-map "--we-button-success-color") "#fff")
+    (check-equal? (hash-ref token-map "--we-button-danger-color") "#fff")
     (check-equal? (hash-ref token-map "--we-card-radius") "0")
     (check-equal? (hash-ref token-map "--we-card-cap-bg") "rgba(85, 89, 92, 0.03)")
     (check-equal? (hash-ref token-map "--we-badge-font-size") "0.75em")
@@ -3741,15 +4503,17 @@
     (check-equal? (hash-ref token-map "--we-badge-secondary-color") "#343a40")
     (check-equal? (hash-ref token-map "--we-badge-light-color") "#343a40"))
 
+  (test-case "late .btn selector typography overrides button token defaults"
+    (define rules (read-css-rules sandstone-button-bootstrap))
+    (define token-map (bootstrap-rules->token-map rules))
+    (check-equal? (hash-ref token-map "--we-button-font-size") "13px")
+    (check-equal? (hash-ref token-map "--we-button-font-weight") "500")
+    (check-equal? (hash-ref token-map "--we-button-line-height") "22px")
+    (check-equal? (hash-ref token-map "--we-button-text-transform") "uppercase"))
+
   (test-case "component rule extraction feeds list group and table tokens"
     (define rules (read-css-rules list-table-bootstrap))
-    (define theme
-      (bootstrap-props->theme-model
-       (extract-bootstrap-theme/rules rules ":root")
-       rules))
-    (define token-map
-      (for/hash ([entry (in-list (build-token-lines theme))])
-        (values (car entry) (cdr entry))))
+    (define token-map (bootstrap-rules->token-map rules))
     (check-equal? (hash-ref token-map "--we-list-group-active-bg") "#1a1a1a")
     (check-equal? (hash-ref token-map "--we-list-group-padding-x") "1rem")
     (check-equal? (hash-ref token-map "--we-table-border-color") "rgba(0, 0, 0, 0.05)")
@@ -3759,31 +4523,34 @@
 
   (test-case "component rule extraction feeds form and dialog tokens"
     (define rules (read-css-rules forms-modal-bootstrap))
-    (define theme
-      (bootstrap-props->theme-model
-       (extract-bootstrap-theme/rules rules ":root")
-       rules))
-    (define token-map
-      (for/hash ([entry (in-list (build-token-lines theme))])
-        (values (car entry) (cdr entry))))
+    (define token-map (bootstrap-rules->token-map rules))
     (check-equal? (hash-ref token-map "--we-field-bg") "#f0f1f2")
+    (check-equal? (hash-ref token-map "--we-input-group-addon-bg") "#e0e1e2")
+    (check-equal? (hash-ref token-map "--we-input-group-addon-font-weight") "300")
     (check-equal? (hash-ref token-map "--we-field-border-width") "0")
     (check-equal? (hash-ref token-map "--we-field-padding-x") "1.5rem")
     (check-equal? (hash-ref token-map "--we-field-font-weight") "300")
+    (check-equal? (hash-ref token-map "--we-field-valid-color") "#198754")
+    (check-equal? (hash-ref token-map "--we-field-invalid-color") "#dc3545")
+    (check-true (regexp-match? #px"^url\\(" (hash-ref token-map "--we-field-valid-icon")))
+    (check-true (regexp-match? #px"^url\\(" (hash-ref token-map "--we-field-invalid-icon")))
+    (check-true (regexp-match? #px"^url\\(" (hash-ref token-map "--we-field-select-icon")))
+    (check-equal? (hash-ref token-map "--we-field-select-padding-right") "4.5rem")
+    (check-equal? (hash-ref token-map "--we-check-size") "1em")
+    (check-equal? (hash-ref token-map "--we-check-checked-bg") "#1a1a1a")
+    (check-true (regexp-match? #px"^url\\(" (hash-ref token-map "--we-check-checked-icon")))
+    (check-equal? (hash-ref token-map "--we-switch-width") "2em")
+    (check-true (regexp-match? #px"^url\\(" (hash-ref token-map "--we-switch-bg-icon")))
     (check-equal? (hash-ref token-map "--we-dialog-border-color") "rgba(0, 0, 0, 0.2)")
     (check-equal? (hash-ref token-map "--we-dialog-header-padding-y") "1rem")
+    (check-equal? (hash-ref token-map "--we-dialog-footer-gap") "0.5rem")
     (check-equal? (hash-ref token-map "--we-dialog-title-color") "#1a1a1a")
-    (check-equal? (hash-ref token-map "--we-dialog-title-text-transform") "uppercase"))
+    (check-equal? (hash-ref token-map "--we-dialog-title-text-transform") "uppercase")
+    (check-true (regexp-match? #px"^url\\(" (hash-ref token-map "--we-dialog-close-icon"))))
 
   (test-case "component rule extraction feeds accordion tokens"
     (define rules (read-css-rules accordion-bootstrap))
-    (define theme
-      (bootstrap-props->theme-model
-       (extract-bootstrap-theme/rules rules ":root")
-       rules))
-    (define token-map
-      (for/hash ([entry (in-list (build-token-lines theme))])
-        (values (car entry) (cdr entry))))
+    (define token-map (bootstrap-rules->token-map rules))
     (check-equal? (hash-ref token-map "--we-accordion-bg") "#ffffff")
     (check-equal? (hash-ref token-map "--we-accordion-border-color") "#e0e1e2")
     (check-equal? (hash-ref token-map "--we-accordion-border-width") "1px")
@@ -3791,20 +4558,97 @@
     (check-equal? (hash-ref token-map "--we-accordion-button-padding-x") "1.25rem")
     (check-equal? (hash-ref token-map "--we-accordion-button-padding-y") "1rem")
     (check-equal? (hash-ref token-map "--we-accordion-button-color") "#55595c")
+    (check-equal? (hash-ref token-map "--we-accordion-icon-width") "1.25rem")
+    (check-true (string-prefix? (hash-ref token-map "--we-accordion-icon") "url("))
+    (check-equal? (hash-ref token-map "--we-accordion-icon-transform") "rotate(-180deg)")
     (check-equal? (hash-ref token-map "--we-accordion-active-bg") "#d1d1d1")
     (check-equal? (hash-ref token-map "--we-accordion-active-color") "#0a0a0a")
     (check-equal? (hash-ref token-map "--we-accordion-body-padding-x") "1.25rem")
     (check-equal? (hash-ref token-map "--we-accordion-body-padding-y") "1rem"))
 
+  (test-case "component rule extraction feeds dropdown tooltip and popover tokens"
+    (define rules (read-css-rules overlay-bootstrap))
+    (define token-map (bootstrap-rules->token-map rules))
+    (check-equal? (hash-ref token-map "--we-menu-popup-bg") "#ffffff")
+    (check-equal? (hash-ref token-map "--we-menu-popup-border-width") "0")
+    (check-equal? (hash-ref token-map "--we-menu-item-text-transform") "uppercase")
+    (check-equal? (hash-ref token-map "--we-menu-item-active-bg") "#1a1a1a")
+    (check-equal? (hash-ref token-map "--we-menu-item-active-fg") "#ffffff")
+    (check-equal? (hash-ref token-map "--we-tooltip-bg") "#1a1a1a")
+    (check-equal? (hash-ref token-map "--we-tooltip-color") "#ffffff")
+    (check-equal? (hash-ref token-map "--we-tooltip-radius") "0")
+    (check-equal? (hash-ref token-map "--we-popover-max-width") "276px")
+    (check-equal? (hash-ref token-map "--we-popover-font-size") "0.875rem")
+    (check-equal? (hash-ref token-map "--we-popover-arrow-width") "1rem")
+    (check-equal? (hash-ref token-map "--we-popover-arrow-height") "0.5rem")
+    (check-equal? (hash-ref token-map "--we-popover-header-bg") "#f7f7f7")
+    (check-equal? (hash-ref token-map "--we-popover-body-padding-x") "1rem")
+    (check-equal? (hash-ref token-map "--we-popover-title-font-weight") "600"))
+
+  (test-case "descendant selectors feed overlay typography tokens"
+    (define sandstone-overlay-bootstrap
+      (string-append
+       ":root {\n"
+       "  --bs-body-color: #3e3f3a;\n"
+       "  --bs-body-bg: #ffffff;\n"
+       "  --bs-dropdown-bg: #ffffff;\n"
+       "  --bs-dropdown-header-color: #8e8c84;\n"
+       "}\n"
+       ".sandstone, .tooltip, .dropdown-menu .dropdown-item {\n"
+       "  font-size: 13px;\n"
+       "  font-weight: 500;\n"
+       "  line-height: 22px;\n"
+       "  text-transform: uppercase;\n"
+       "}\n"
+       ".dropdown-header {\n"
+       "  font-size: 0.875rem;\n"
+       "  color: #8e8c84;\n"
+       "}\n"
+       ".tooltip {\n"
+       "  --bs-tooltip-bg: #1a1a1a;\n"
+       "  --bs-tooltip-color: #ffffff;\n"
+       "}\n"))
+    (define rules (read-css-rules sandstone-overlay-bootstrap))
+    (define token-map (bootstrap-rules->token-map rules))
+    (check-equal? (hash-ref token-map "--we-menu-item-font-size") "13px")
+    (check-equal? (hash-ref token-map "--we-menu-item-font-weight") "500")
+    (check-equal? (hash-ref token-map "--we-menu-item-text-transform") "uppercase")
+    (check-equal? (hash-ref token-map "--we-tooltip-font-size") "13px"))
+
+  (test-case "selector border radius overrides token border radius for overlays"
+    (define sketchy-overlay-bootstrap
+      (string-append
+       ":root {\n"
+       "  --bs-body-color: #333333;\n"
+       "  --bs-body-bg: #ffffff;\n"
+       "  --bs-border-radius: 25px;\n"
+       "}\n"
+       ".dropdown-menu {\n"
+       "  --bs-dropdown-border-radius: var(--bs-border-radius);\n"
+       "  border-radius: 555px 25px 25px 25px/25px 25px 25px 555px;\n"
+       "}\n"
+       ".tooltip {\n"
+       "  --bs-tooltip-border-radius: var(--bs-border-radius);\n"
+       "}\n"
+       ".tooltip-inner {\n"
+       "  border-radius: 255px 25px 225px 25px/25px 225px 25px 255px;\n"
+       "}\n"
+       ".popover {\n"
+       "  --bs-popover-border-radius: 35px;\n"
+       "  border-radius: 45px 85px 15px 25px/15px 10px 35px 555px;\n"
+       "}\n"))
+    (define rules (read-css-rules sketchy-overlay-bootstrap))
+    (define token-map (bootstrap-rules->token-map rules))
+    (check-equal? (hash-ref token-map "--we-menu-popup-radius")
+                  "555px 25px 25px 25px/25px 25px 25px 555px")
+    (check-equal? (hash-ref token-map "--we-tooltip-radius")
+                  "255px 25px 225px 25px/25px 225px 25px 255px")
+    (check-equal? (hash-ref token-map "--we-popover-radius")
+                  "45px 85px 15px 25px/15px 10px 35px 555px"))
+
   (test-case "component rule extraction feeds pagination and progress tokens"
     (define rules (read-css-rules pagination-progress-bootstrap))
-    (define theme
-      (bootstrap-props->theme-model
-       (extract-bootstrap-theme/rules rules ":root")
-       rules))
-    (define token-map
-      (for/hash ([entry (in-list (build-token-lines theme))])
-        (values (car entry) (cdr entry))))
+    (define token-map (bootstrap-rules->token-map rules))
     (check-equal? (hash-ref token-map "--we-pagination-padding-x") "0.75rem")
     (check-equal? (hash-ref token-map "--we-pagination-active-bg") "#1a1a1a")
     (check-equal? (hash-ref token-map "--we-pagination-disabled-bg") "#f0f1f2")
@@ -3823,13 +4667,7 @@
        ".list-group { border: 2px solid #333; border-radius: 45px 15px 35px 5px/15px 5px 15px 65px; }\n"
        ".list-group-item { border-radius: 255px 5px 225px 5px/25px 225px 25px 255px; }\n"))
     (define rules (read-css-rules css))
-    (define theme
-      (bootstrap-props->theme-model
-       (extract-bootstrap-theme/rules rules ":root")
-       rules))
-    (define token-map
-      (for/hash ([entry (in-list (build-token-lines theme))])
-        (values (car entry) (cdr entry))))
+    (define token-map (bootstrap-rules->token-map rules))
     (check-equal? (hash-ref token-map "--we-accordion-radius") "25px")
     (check-equal? (hash-ref token-map "--we-accordion-trigger-radius-top")
                   "calc(25px - (2px))")
@@ -3842,13 +4680,7 @@
 
   (test-case "component rule extraction feeds breadcrumb and toast tokens"
     (define rules (read-css-rules breadcrumb-toast-bootstrap))
-    (define theme
-      (bootstrap-props->theme-model
-       (extract-bootstrap-theme/rules rules ":root")
-       rules))
-    (define token-map
-      (for/hash ([entry (in-list (build-token-lines theme))])
-        (values (car entry) (cdr entry))))
+    (define token-map (bootstrap-rules->token-map rules))
     (check-equal? (hash-ref token-map "--we-breadcrumb-link-color") "#1a1a1a")
     (check-equal? (hash-ref token-map "--we-breadcrumb-active-color") "rgba(85, 89, 92, 0.75)")
     (check-equal? (hash-ref token-map "--we-toast-font-size") "0.875rem")
@@ -3879,13 +4711,7 @@
        "}\n"
        ".alert { color: #fff; }\n"))
     (define rules (read-css-rules css))
-    (define theme
-      (bootstrap-props->theme-model
-       (extract-bootstrap-theme/rules rules ":root")
-       rules))
-    (define token-map
-      (for/hash ([entry (in-list (build-token-lines theme))])
-        (values (car entry) (cdr entry))))
+    (define token-map (bootstrap-rules->token-map rules))
     (check-equal? (hash-ref token-map "--we-alert-warning-bg") "#f47c3c")
     (check-equal? (hash-ref token-map "--we-alert-warning-border") "#fbcbb1")
     (check-equal? (hash-ref token-map "--we-alert-warning-color") "#fff"))
