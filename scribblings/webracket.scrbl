@@ -12,11 +12,11 @@
 
 @include-section["command-line-tool.scrbl"]
 
-@include-section["Callback_Source_Map_Tool.scrbl"]
-
 @include-section["webracket-for-racket-programmers.scrbl"]
 
-@include-section["WebRacket_at_a_Glance.scrbl"]
+@include-section["console-bridge.scrbl"]
+
+@include-section["Callback_Source_Map_Tool.scrbl"]
 
 
 @;-------------------------------------------------------------------
@@ -207,3 +207,5 @@ See their respective documentation pages.
 @;-------------------------------------------------------------------
 
 @include-section["appendix-smoke-tests.scrbl"]
+
+@include-section["WebRacket_at_a_Glance.scrbl"]

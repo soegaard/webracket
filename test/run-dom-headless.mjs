@@ -3,6 +3,64 @@
 import { createRequire } from "node:module";
 import process from "node:process";
 
+// Return the page-specific smoke probe for browser fixtures that need one.
+async function runPageProbe(page, testPage) {
+  if (testPage !== "test-console-bridge-smoke.html") {
+    return;
+  }
+
+  await page.waitForFunction(() => typeof globalThis.WR === "function");
+
+  const probe = await page.evaluate(() => {
+    const names = globalThis.WR.names();
+    const initial = globalThis.WR.raw("x");
+    const add1Result = globalThis.WR.raw("add1*", 41);
+    const displayResult = globalThis.WR.raw("display", "bridge smoke");
+    const mutationResult = globalThis.WR.raw("set-x!", 99);
+    const mutated = globalThis.WR.raw("x");
+    const missing = globalThis.WR.raw("definitely-missing");
+
+    return {
+      hasWR: typeof globalThis.WR === "function",
+      names,
+      initial,
+      add1Result,
+      displayResult,
+      mutationResult,
+      mutated,
+      missing,
+    };
+  });
+
+  if (!probe.hasWR) {
+    throw new Error("window.WR was not installed");
+  }
+  if (!Array.isArray(probe.names) || !probe.names.includes("x") || !probe.names.includes("add1*")) {
+    throw new Error(`WR.names() missing expected bindings: ${JSON.stringify(probe.names)}`);
+  }
+  if (!probe.names.includes("display")) {
+    throw new Error(`WR.names() missing expected stdlib binding 'display': ${JSON.stringify(probe.names)}`);
+  }
+  if (!probe.initial?.ok || probe.initial.value !== 41) {
+    throw new Error(`WR.raw("x") returned ${JSON.stringify(probe.initial)}`);
+  }
+  if (!probe.add1Result?.ok || probe.add1Result.value !== 42) {
+    throw new Error(`WR.raw("add1*", 41) returned ${JSON.stringify(probe.add1Result)}`);
+  }
+  if (!probe.displayResult?.ok || probe.displayResult.value !== undefined) {
+    throw new Error(`WR.raw("display", ...) returned ${JSON.stringify(probe.displayResult)}`);
+  }
+  if (!probe.mutationResult?.ok || probe.mutationResult.value !== 99) {
+    throw new Error(`WR.raw("set-x!", 99) returned ${JSON.stringify(probe.mutationResult)}`);
+  }
+  if (!probe.mutated?.ok || probe.mutated.value !== 99) {
+    throw new Error(`WR.raw("x") after mutation returned ${JSON.stringify(probe.mutated)}`);
+  }
+  if (probe.missing?.ok || probe.missing?.kind !== "missing-binding") {
+    throw new Error(`WR.raw("definitely-missing") returned ${JSON.stringify(probe.missing)}`);
+  }
+}
+
 async function main() {
   const baseUrl = process.env.SMOKE_BASE_URL || "http://127.0.0.1:9989";
   const tests = (process.env.SMOKE_TESTS || "")
@@ -67,6 +125,8 @@ async function main() {
         if (pageErrors.length > 0) {
           throw pageErrors[0];
         }
+
+        await runPageProbe(page, testPage);
 
         const meaningful = consoleMessages.filter((text) => text.trim().length > 0);
         if (meaningful.length === 0) {

@@ -3,6 +3,7 @@
          current-ffi-imports-wat
          current-ffi-funcs-wat
          current-browser?
+         current-console-bridge?
          current-tree-shake?
          current-runtime-primitive-report-path
          current-runtime-timing-rows)
@@ -14,6 +15,7 @@
 (define current-ffi-imports-wat (make-parameter '())) ; list of s-exprs
 (define current-ffi-funcs-wat   (make-parameter '())) ; list of s-exprs
 (define current-browser?        (make-parameter #f))  ; boolean? browser mode flag
+(define current-console-bridge? (make-parameter #f))  ; boolean? install browser console bridge
 (define current-tree-shake?     (make-parameter #t))  ; boolean? tree shake runtime primitives
 (define current-runtime-primitive-report-path
   (make-parameter #f))                                 ; path-string? or #f

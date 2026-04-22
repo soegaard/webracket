@@ -1,0 +1,345 @@
+#lang scribble/manual
+
+@(require scribble-tools)
+
+@title[#:tag "console-bridge"]{The Browser Console Bridge}
+
+The browser console bridge lets a generated browser page expose selected
+WebRacket bindings to the browser's JavaScript console.
+
+In practice, it gives you a small helper named @tt{WR} in the page.
+You can then use the browser console to:
+
+@itemlist[
+  @item{look up a top-level WebRacket variable}
+  @item{call a top-level WebRacket function}
+  @item{inspect which names are available}
+  @item{debug a running page without editing the source file first}]
+
+This chapter explains what the bridge is, what it is for, how to enable
+it, and how to use it from the browser console.
+
+@section{What It Is}
+
+Normally, a WebRacket program runs inside WebAssembly, and the browser
+console runs JavaScript.
+
+Those are two different worlds:
+
+@itemlist[
+  @item{your WebRacket definitions live inside the compiled WebAssembly program}
+  @item{the browser console can only see ordinary JavaScript values}]
+
+The console bridge is a small browser-side helper that connects those
+two worlds.
+
+When the bridge is enabled, WebRacket installs a function named
+@tt{globalThis.WR}. In the browser console, that means you can write:
+
+@verbatim|{
+WR("x")
+WR("add1*", 41)
+WR.names()
+}|
+
+and the page asks the running WebRacket program to look up or call the
+corresponding binding.
+
+@section{What It Is For}
+
+The console bridge is mainly a debugging and exploration tool.
+
+It is useful when you want to:
+
+@itemlist[
+  @item{check the current value of a top-level variable}
+  @item{call a helper function in a running page}
+  @item{see whether a name from your program or the standard library is available}
+  @item{experiment from the console while developing browser code}]
+
+It is @bold{not} a general-purpose evaluator for arbitrary Racket
+source text.
+
+For example, this works:
+
+@verbatim|{
+WR("counter")
+WR("increment!", 1)
+}|
+
+But this does @bold{not} mean “evaluate a Racket expression from a
+string”:
+
+@verbatim|{
+WR("(+ 1 2)")
+}|
+
+That string is treated as a binding name, not as source code to read and
+evaluate.
+
+@section{How To Enable It}
+
+The bridge is off by default.
+
+To enable it, compile your browser program with
+@tt{--console-bridge}:
+
+@shellblock{
+racket webracket.rkt --browser --console-bridge counter.rkt
+}
+
+This generates the usual browser output files, such as:
+
+@itemlist[
+  @item{@tt{counter.html}}
+  @item{@tt{counter.wasm}}]
+
+When you open @tt{counter.html} in a browser, the page installs
+@tt{WR} in the browser console.
+
+@section{Complete Example}
+
+Here is a small complete example:
+
+@filebox["counter.rkt"
+@verbatim|{
+(define counter 0)
+
+(define (increment! amount)
+  (set! counter (+ counter amount))
+  counter)
+
+(define (current-counter)
+  counter)
+
+(display "counter page ready")
+}|]
+
+Compile it:
+
+@shellblock{
+racket webracket.rkt --browser --console-bridge counter.rkt
+}
+
+Serve the generated files from the directory where they were written:
+
+@shellblock{
+python3 -m http.server 8000
+}
+
+Then open @tt{http://127.0.0.1:8000/counter.html} in your browser.
+
+Open Developer Tools and switch to the @tt{Console} tab.
+
+At that point, the page is running and the console bridge is available.
+
+@section{Opening The Browser Console}
+
+If you have not used the browser console before, the general pattern is:
+
+@itemlist[
+  @item{open the generated page in your browser}
+  @item{open Developer Tools}
+  @item{choose the @tt{Console} tab}
+  @item{type calls such as @tt{WR("counter")} and press Enter}]
+
+In Chrome and other Chromium-based browsers, common shortcuts are:
+
+@itemlist[
+  @item{@tt{F12}}
+  @item{@tt{Ctrl+Shift+I} on Windows and Linux}
+  @item{@tt{Cmd+Option+I} on macOS}]
+
+If the page is open but @tt{WR} is missing, the usual cause is that the
+program was compiled without @tt{--console-bridge}.
+
+@section{Console Session}
+
+Here is an example of what a browser console session can look like.
+
+Look up a variable:
+
+@verbatim|{
+> WR("counter")
+0
+}|
+
+Call a function:
+
+@verbatim|{
+> WR("increment!", 5)
+5
+}|
+
+Read the variable again:
+
+@verbatim|{
+> WR("counter")
+5
+}|
+
+Call another helper:
+
+@verbatim|{
+> WR("current-counter")
+5
+}|
+
+List the exposed names:
+
+@verbatim|{
+> WR.names()
+["counter", "current-counter", "display", "increment!", ...]
+}|
+
+Read a value without printing it first:
+
+@verbatim|{
+> WR.value("counter")
+5
+}|
+
+Inspect the full result object:
+
+@verbatim|{
+> WR.raw("counter")
+{ ok: true, kind: "value", value: 5, printed: "5", error: false }
+}|
+
+Try a missing name:
+
+@verbatim|{
+> WR.raw("does-not-exist")
+{ ok: false, kind: "missing-binding", value: false, printed: "", error: "..." }
+}|
+
+The exact formatting of objects in the console depends on the browser,
+but the overall shape is the same.
+
+@section{The Four Main Operations}
+
+When the bridge is enabled, the browser page installs four main entry
+points:
+
+@subsection{@tt{WR(name, ...args)}}
+
+This is the main convenience form.
+
+If you give it just a name, it looks up that binding, prints the result
+to the console in WebRacket style, and returns a JavaScript value.
+
+If you give it a name plus extra arguments, it treats the named binding
+as a function, calls it, prints the result, and returns the converted
+JavaScript value.
+
+Examples:
+
+@verbatim|{
+WR("counter")
+WR("increment!", 1)
+}|
+
+@subsection{@tt{WR.value(name, ...args)}}
+
+This is the same lookup or call, but without the automatic console
+printing.
+
+Use it when you only want the returned JavaScript value.
+
+Example:
+
+@verbatim|{
+const n = WR.value("current-counter");
+}|
+
+@subsection{@tt{WR.raw(name, ...args)}}
+
+This returns a richer result object that shows whether the operation
+succeeded.
+
+It is useful for debugging failures or distinguishing a missing binding
+from a successful call.
+
+Typical fields are:
+
+@itemlist[
+  @item{@tt{ok}: whether the operation succeeded}
+  @item{@tt{kind}: a short result tag such as @tt{\"value\"} or @tt{\"missing-binding\"}}
+  @item{@tt{value}: the JavaScript value, when conversion succeeded}
+  @item{@tt{printed}: the WebRacket-style printed form}
+  @item{@tt{error}: error information when the operation failed}]
+
+@subsection{@tt{WR.names()}}
+
+This returns a JavaScript array of the names that the bridge exposes for
+the current page.
+
+Use it when you are not sure which bindings are available.
+
+@section{How Values Cross The Boundary}
+
+The console bridge sits between:
+
+@itemlist[
+  @item{WebRacket values inside WebAssembly}
+  @item{JavaScript values in the browser console}]
+
+When you call @tt{WR}, WebRacket converts the result to a form that the
+browser host can understand, and then the browser host converts that to
+an ordinary JavaScript value.
+
+So, for example:
+
+@itemlist[
+  @item{a WebRacket fixnum becomes a JavaScript number}
+  @item{a WebRacket string becomes a JavaScript string}
+  @item{a WebRacket vector becomes a JavaScript array}
+  @item{a missing binding becomes a structured error result}]
+
+The bridge also keeps a printed WebRacket-style representation so the
+console output is easier to read while debugging.
+
+@section{What Names Are Exposed}
+
+The bridge exposes top-level bindings from the compiled browser program.
+
+In practice, that means names such as:
+
+@itemlist[
+  @item{definitions from your source file}
+  @item{top-level bindings brought in by the standard library that are part of the compiled program}]
+
+Local variables are not exposed.
+
+So if you write:
+
+@filebox["example.rkt"
+@verbatim|{
+(define counter 0)
+
+(define (increment! amount)
+  (let ([temporary (* amount 2)])
+    (set! counter (+ counter temporary))
+    counter))
+}|]
+
+then @tt{counter} and @tt{increment!} may be available through
+@tt{WR}, but @tt{temporary} is not.
+
+@section{When To Use It}
+
+The console bridge is a good fit when:
+
+@itemlist[
+  @item{you are developing a browser page and want quick inspection from DevTools}
+  @item{you want to test a helper without recompiling for each tiny change}
+  @item{you want to understand the state of a running WebRacket page}]
+
+It is less appropriate when:
+
+@itemlist[
+  @item{you need a general REPL for arbitrary Racket expressions}
+  @item{you want to expose an application API to ordinary page JavaScript in production}
+  @item{you do not want the page to publish debugging hooks globally}]
+
+Because of that last point, the bridge is opt-in and disabled by default.

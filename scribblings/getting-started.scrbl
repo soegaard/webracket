@@ -68,18 +68,18 @@ Hello World page in the browser.
 Create a file named @tt{hello.rkt} with the following contents:
 
 @filebox["hello.rkt"
-@racketmod[webracket
-  (include-lib web-easy)
+@verbatim|{
+(include-lib web-easy)
 
-  (define hello-world-app
-    (window
-      (container
-        (h1 "Hello World")
-        (text "Have a nice day."))))
+(define hello-world-app
+  (window
+    (container
+      (h1 "Hello World")
+      (text "Have a nice day."))))
 
-  (mount-renderer!
-   (render hello-world-app))
-]]
+(mount-renderer!
+ (render hello-world-app))
+}|]
 
 
 @subsection{Step 2: Compile the program}
@@ -114,6 +114,10 @@ Open the address shown by @shell-code{raco static-web}, then load
 
 You should see a page containing the heading @tt{Hello World} and the
 text @tt{Have a nice day.}
+
+If you want to inspect or call selected WebRacket bindings from the
+browser's JavaScript console while a page is running, see
+@secref["console-bridge"].
 
 @subsection{What this program does}
 

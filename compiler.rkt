@@ -2,6 +2,7 @@
 (module+ test (require rackunit))
 (provide (all-defined-out))
 (require racket/set
+         racket/list
          syntax/id-set
          syntax/id-table)
 
@@ -3238,6 +3239,11 @@
 ; α-rename : LFE2 -> LFE2+
 (define (α-rename T)
   (define top-bindings (collect-top-level-bindings T))
+  (current-console-bridge-top-binding-names
+   (for/list ([x (in-list top-bindings)]
+              #:do [(define sym (syntax-e (variable-id x)))]
+              #:when (symbol? sym))
+     sym))
   (letv ((T ρ) (α-rename/pass1 T top-bindings))
     ; pass 2 patches the `provide` form to hold both variables
     ; before and after renaming.
@@ -3695,6 +3701,12 @@
   ; calling collect-assignable-variables and box-mutables in order
   ; (since  assignment-conversion has type T -> T)
   (define ms (collect-assignable-variables T))
+  (current-console-bridge-mutable-top-binding-names
+   (for/list ([x (in-list (id-set->list ms))]
+              #:do [(define sym (syntax-e (variable-id x)))]
+              #:when (and (symbol? sym)
+                          (member sym (current-console-bridge-top-binding-names))))
+     sym))
   (box-mutables T ms))
 
 (module+ test
@@ -4841,6 +4853,9 @@
   (reset-string-constants)
   (reset-bytes-constants)
   (reset-symbol-constants))
+
+(define (console-bridge-symbol-constant-name sym)
+  (string->symbol (~a "wr-top-level/" (symbol->string sym))))
 
 (define current-label-map (make-parameter '()))
 (define current-label-form-ht (make-parameter (make-hash)))
@@ -6432,6 +6447,37 @@
       (λ ()
         (generate-global-declarations-for-top-level-variables))))
 
+  (define console-bridge-bindings
+    (if (not (current-console-bridge?))
+        '()
+        (let* ([top-binding-names
+                (list->seteq (current-console-bridge-top-binding-names))]
+               [mutable-top-binding-names
+                (list->seteq (current-console-bridge-mutable-top-binding-names))]
+               [top-vars-by-name
+                (for/hasheq ([x (in-list (id-set->list top-vars))]
+                             #:do [(define sym (syntax-e (variable-id x)))]
+                             #:when (symbol? sym))
+                  (values sym x))]
+               [console-top-binding-names
+                (for/list ([sym (in-list (set->list top-binding-names))]
+                           #:when (hash-ref top-vars-by-name sym #f))
+                  sym)]
+               [exposed-names
+                (sort (remove-duplicates console-top-binding-names) symbol<?)])
+          (for/list ([sym (in-list exposed-names)])
+            (define const-name (console-bridge-symbol-constant-name sym))
+            (add-symbol-constant const-name sym)
+            (cond
+              [(hash-ref top-vars-by-name sym #f)
+               => (λ (x)
+                    (list 'top sym const-name x
+                          (set-member? mutable-top-binding-names sym)))]
+              [else
+               (error 'console-bridge-bindings
+                      "internal error: console bridge symbol without runtime binding: ~s"
+                      sym)])))))
+
   ; variables bound by let-values and others at the top-level
   ; are represented in the runtime as local variables of a function `entry`.
   (define entry-locals (*locals*))
@@ -6467,6 +6513,7 @@
              result                           ; variable that holds the result (in $entry)
              ; program specific
              (id-set->list top-vars)          ; top level variables (list of variables)
+             console-bridge-bindings          ; top-level bindings exposed through globalThis.WR
              top-level-variable-declarations  ; wasm code for declaring top-level variables
              entry-locals                     ; variables that are local to $entry
              ; general
@@ -6617,6 +6664,8 @@
 (define current-gen-timing-table  (make-parameter #f))
 (define current-pass-dump-dir     (make-parameter #f))
 (define current-pass-dump-limit   (make-parameter #f))
+(define current-console-bridge-top-binding-names (make-parameter '()))
+(define current-console-bridge-mutable-top-binding-names (make-parameter '()))
 
 (define (comp+ stx)
   (run (comp stx)))
@@ -6626,6 +6675,8 @@
   (reset-label-map!)
   (current-pass-timing-table #f)
   (current-gen-timing-table #f)
+  (current-console-bridge-top-binding-names '())
+  (current-console-bridge-mutable-top-binding-names '())
   (define dump-dir (current-pass-dump-dir))
   (define dump-limit (current-pass-dump-limit))
   (when dump-dir
@@ -6840,6 +6891,18 @@
     (check-not-false (member "callback-register" (module-func-exports mod '$callback-register)))
     (check-not-false (member "callback-accepts-argc" (module-func-exports mod '$callback-accepts-argc)))
     (check-true (pair? (assq 'summary report))))
+
+  (let ([mod (parameterize ([current-console-bridge? #t])
+               (comp #'(module console-bridge-exports webracket
+                         (define x 41)
+                         (define y 99)
+                         (define (f n) (+ n 1))
+                         (set! x 42)
+                         x)))])
+    (check-not-false (member "wr-ref"    (module-func-exports mod '$wr-ref)))
+    (check-not-false (member "wr-call"   (module-func-exports mod '$wr-call)))
+    (check-not-false (member "wr-names"  (module-func-exports mod '$wr-names)))
+    (check-not-false (member "wr-format" (module-func-exports mod '$wr-format))))
 
   (check-equal? (run-expr #'(append '(1) '(2 3) '(4)))
                 '(1 2 3 4))

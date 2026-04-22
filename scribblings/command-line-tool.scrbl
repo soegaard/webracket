@@ -88,6 +88,12 @@ Target browser host generation:
 racket webracket.rkt --browser program.rkt
 }
 
+Target browser host generation with the browser console bridge enabled:
+
+@shellblock{
+racket webracket.rkt --browser --console-bridge program.rkt
+}
+
 Compile without the standard library:
 
 @shellblock{
@@ -191,6 +197,8 @@ Debug and inspection options:
 @itemlist[
   @item{@tt{-v} / @tt{--verbose}: Verbose compiler messages.}
   @item{@tt{--list-primitives}: Print sorted primitive names and exit.}
+  @item{@tt{--console-bridge}: In browser mode, install @tt{globalThis.WR} so the browser console can inspect and call exposed WebRacket bindings.}
+  @item{@tt{--no-console-bridge}: Disable the browser console bridge (default).}
   @item{@tt{--label-map-forms}: Include source form payloads in @tt{.wasm.map.sexp} (default).}
   @item{@tt{--no-label-map-forms}: Omit source form payloads in @tt{.wasm.map.sexp}.}
   @item{@tt{--dump-passes <dir>}: Write per-pass dumps to @tt{<dir>}.}

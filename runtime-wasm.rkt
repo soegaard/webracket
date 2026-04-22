@@ -15,6 +15,7 @@
            dls tms entry-body result
            ; program specific
            top-vars
+           console-bridge-bindings
            top-level-variable-declarations
            entry-locals           
            ; general information
@@ -110,6 +111,16 @@
     (define ffi-primitive-name-set
       (for/hasheq ([f (in-list all-ffi-foreigns)])
         (values (foreign-racket-name f) #t)))
+
+    (define console-bridge-enabled? (pair? console-bridge-bindings))
+    (define console-bridge-primitive-names
+      (for/list ([binding (in-list console-bridge-bindings)]
+                 #:do [(define kind (first binding))]
+                 #:when (eq? kind 'primitive))
+        (second binding)))
+
+    (define (console-bridge-symbol-global const-name)
+      ($ (string->symbol (~a "symbol:" const-name))))
 
     (define (ffi-import-name f)
       (string->symbol (~a "$" (foreign-racket-name f) "/imported")))
@@ -411,7 +422,11 @@
       (define graph          (primitive-graph-ref analysis 'primitive-graph))
       (define runtime-roots  (primitive-graph-ref analysis 'runtime-root-primitives))
       (define program-roots
-        (sort (filter primitive->description (remove-duplicates used-primitives)) symbol<?))
+        (sort (filter primitive->description
+                      (remove-duplicates
+                       (append used-primitives
+                               console-bridge-primitive-names)))
+              symbol<?))
       (primitive-transitive-closure (append runtime-roots program-roots) graph))
 
     (define (primitive-refs-for-functions analysis function-names)
@@ -1697,6 +1712,7 @@
     (add-runtime-string-constant 'hash-less-struct-type-property-colon "#<struct-type-property:")
 
     (add-runtime-string-constant 'string?                    "string?")
+    (add-runtime-string-constant 'string-or-symbol?          "(or/c string? symbol?)")
     (add-runtime-string-constant 'symbol?                    "symbol?")
     (add-runtime-string-constant 'keyword?                   "keyword?")
     (add-runtime-string-constant 'list?                      "list?")
@@ -1708,6 +1724,14 @@
     (add-runtime-string-constant 'uncaught-exception         "uncaught exception: ")
     (add-runtime-string-constant 'callback:no-js-equivalent
                                  "The callback attempted to return a WebRacket value with no JavaScript equivalent (i.e. without a FASL encoding): ")
+    (add-runtime-symbol-constant 'wr-ref)
+    (add-runtime-string-constant 'wr-kind:value              "value")
+    (add-runtime-string-constant 'wr-kind:missing-binding    "missing-binding")
+    (add-runtime-string-constant 'wr-kind:not-procedure      "not-procedure")
+    (add-runtime-string-constant 'wr-kind:exception          "exception")
+    (add-runtime-string-constant 'wr-kind:bad-request        "bad-request")
+    (add-runtime-string-constant 'wr:bad-request             "invalid WebRacket console bridge request")
+    (add-runtime-string-constant 'wr:not-procedure           "top-level binding is not a procedure: ")
     (add-runtime-string-constant 'arity-at-least?            "arity-at-least?")
     
     (add-runtime-string-constant 'srcloc?                    "srcloc?")
@@ -33220,6 +33244,322 @@
                      (call $format/display (local.get $v)))
                (call $array-of-strings->string
                      (call $growable-array->array (local.get $out))))
+
+         ;;;
+         ;;; Browser Console Bridge (globalThis.WR)
+         ;;;
+
+         (func $wr-result->bridge-vector
+               (param $success? (ref eq))
+               (param $kind     (ref eq))
+               (param $value    (ref eq))
+               (param $printed  (ref eq))
+               (param $error    (ref eq))
+               (result          (ref $Vector))
+
+               (struct.new $Vector
+                           (i32.const 0)
+                           (i32.const 1)
+                           (array.new_fixed $Array 5
+                                            (local.get $success?)
+                                            (local.get $kind)
+                                            (local.get $value)
+                                            (local.get $printed)
+                                            (local.get $error))))
+
+         (func $wr-copy-result
+               (param $v (ref eq))
+               (result i32)
+
+               (global.set $result-bytes
+                           (call $s-exp->fasl (local.get $v) (global.get $false)))
+               (call $copy-bytes-to-memory
+                     (ref.cast (ref $Bytes) (global.get $result-bytes))
+                     (i32.const 0)))
+
+         (func $wr-bridge-error-message
+               (param $v (ref eq))
+               (result (ref eq))
+
+               (if (result (ref eq))
+                   (ref.eq (call $exn? (local.get $v)) (global.get $false))
+                   (then (call $format/display (local.get $v)))
+                   (else (call $exn-message (local.get $v)))))
+
+         (func $wr-success
+               (param $v (ref eq))
+               (result (ref $Vector))
+
+               (call $wr-result->bridge-vector
+                     (global.get $true)
+                     (global.get $string:wr-kind:value)
+                     (local.get $v)
+                     (call $format/display (local.get $v))
+                     (global.get $false)))
+
+         (func $wr-failure
+               (param $kind    (ref eq))
+               (param $printed (ref eq))
+               (param $error   (ref eq))
+               (result (ref $Vector))
+
+               (call $wr-result->bridge-vector
+                     (global.get $false)
+                     (local.get $kind)
+                     (global.get $false)
+                     (local.get $printed)
+                     (local.get $error)))
+
+         (func $wr-binding-value
+               (param $sym (ref $Symbol))
+               (result (ref eq) i32)
+
+               ,(let loop ([bindings console-bridge-bindings])
+                  (cond
+                    [(null? bindings)
+                     `(return (global.get $false) (i32.const 0))]
+                    [else
+                     (match-define (cons binding rest) bindings)
+                     (match binding
+                       [(list 'top _ const-name x mutable?)
+                        `(if (ref.eq (local.get $sym)
+                                     (global.get ,(console-bridge-symbol-global const-name)))
+                             (then
+                              (return
+                               ,(if mutable?
+                                    `(struct.get $Boxed $v
+                                                 (ref.cast (ref $Boxed)
+                                                           (struct.get $Boxed $v
+                                                                       (ref.cast (ref $Boxed)
+                                                                                 (global.get ,(Var x))))))
+                                    `(struct.get $Boxed $v
+                                                 (ref.cast (ref $Boxed)
+                                                           (global.get ,(Var x)))))
+                               (i32.const 1)))
+                             (else ,(loop rest)))]
+                       [(list 'primitive pr const-name _)
+                        `(if (ref.eq (local.get $sym)
+                                     (global.get ,(console-bridge-symbol-global const-name)))
+                             (then
+                              (return (global.get ,($ (prim: pr)))
+                                      (i32.const 1)))
+                             (else ,(loop rest)))])]))
+               (unreachable))
+
+         (func $wr-top-level-names
+               (result (ref $Vector))
+
+               (struct.new $Vector
+                           (i32.const 0)
+                           (i32.const 1)
+                           (array.new_fixed $Array
+                                            ,(length console-bridge-bindings)
+                                            ,@(for/list ([binding (in-list console-bridge-bindings)])
+                                                (match binding
+                                                  [(list 'top _ const-name _ _)
+                                                   `(call $symbol->string
+                                                          (global.get ,(console-bridge-symbol-global const-name)))]
+                                                  [(list 'primitive _ const-name _)
+                                                   `(call $symbol->string
+                                                          (global.get ,(console-bridge-symbol-global const-name)))])))))
+
+         (func $wr-name->symbol
+               (param $name (ref eq))
+               (result (ref $Symbol))
+
+               (if (ref.test (ref $Symbol) (local.get $name))
+                   (then
+                    (return (ref.cast (ref $Symbol) (local.get $name)))))
+               (if (ref.test (ref $String) (local.get $name))
+                   (then
+                    (return (ref.cast (ref $Symbol)
+                                      (call $string->symbol
+                                            (ref.cast (ref $String) (local.get $name)))))))
+               (call $raise-argument-error1
+                     (global.get $symbol:wr-ref)
+                     (global.get $string:string-or-symbol?)
+                     (local.get $name))
+               (unreachable))
+
+         (func $wr-ref (export "wr-ref")
+               (param $fasl i32)
+               (result i32)
+
+               (local $name            (ref eq))
+               (local $sym             (ref $Symbol))
+               (local $val             (ref eq))
+               (local $found?          i32)
+               (local $bridge          (ref $Vector))
+               (local $bridge-exn      (ref eq))
+               (local $bridge-sentinel (ref eq))
+               (local $len             i32)
+
+               (local.set $name (call $fasl-memory->s-exp (local.get $fasl)))
+               (local.set $sym  (call $wr-name->symbol (local.get $name)))
+               (call $wr-binding-value (local.get $sym))
+               (local.set $found?)
+               (local.set $val)
+
+               (local.set $bridge
+                          (if (result (ref $Vector))
+                              (i32.eqz (local.get $found?))
+                              (then
+                               (call $wr-failure
+                                     (global.get $string:wr-kind:missing-binding)
+                                     (global.get $false)
+                                     (call $string-append/2
+                                           (global.get $string:missing-binding)
+                                           (call $symbol->string (local.get $sym)))))
+                              (else
+                               (call $wr-success (local.get $val)))))
+
+               (local.set $bridge-sentinel
+                          (call $cons (global.get $false) (global.get $false)))
+               (local.set $bridge-exn
+                          (block $wr-ref-encode-failed (result (ref eq))
+                            (try_table (result (ref eq))
+                                       (catch $exn $wr-ref-encode-failed)
+                                       (global.set $result-bytes
+                                                   (call $s-exp->fasl
+                                                         (local.get $bridge)
+                                                         (global.get $false)))
+                                       (local.get $bridge-sentinel))))
+               (if (i32.eqz (ref.eq (local.get $bridge-exn) (local.get $bridge-sentinel)))
+                   (then
+                    (global.set $result-bytes
+                                (call $s-exp->fasl
+                                      (call $wr-failure
+                                            (global.get $string:wr-kind:exception)
+                                            (global.get $false)
+                                            (call $callback-non-fasl-return-message
+                                                  (if (result (ref eq))
+                                                      (i32.eqz (local.get $found?))
+                                                      (then (local.get $sym))
+                                                      (else (local.get $val)))))
+                                      (global.get $false)))))
+               (local.set $len
+                          (call $copy-bytes-to-memory
+                                (ref.cast (ref $Bytes) (global.get $result-bytes))
+                                (i32.const 0)))
+               (local.get $len))
+
+         (func $wr-call (export "wr-call")
+               (param $fasl i32)
+               (result i32)
+
+               (local $req             (ref $Vector))
+               (local $arr             (ref $Array))
+               (local $name            (ref eq))
+               (local $args-val        (ref eq))
+               (local $sym             (ref $Symbol))
+               (local $val             (ref eq))
+               (local $found?          i32)
+               (local $proc            (ref $Procedure))
+               (local $args            (ref $Args))
+               (local $res             (ref eq))
+               (local $bridge          (ref $Vector))
+               (local $bridge-exn      (ref eq))
+               (local $bridge-sentinel (ref eq))
+               (local $len             i32)
+
+               (local.set $req
+                          (ref.cast (ref $Vector)
+                                    (call $fasl-memory->s-exp (local.get $fasl))))
+               (local.set $arr      (struct.get $Vector $arr (local.get $req)))
+               (local.set $name     (array.get $Array (local.get $arr) (i32.const 0)))
+               (local.set $args-val (array.get $Array (local.get $arr) (i32.const 1)))
+               (local.set $sym      (call $wr-name->symbol (local.get $name)))
+               (call $wr-binding-value (local.get $sym))
+               (local.set $found?)
+               (local.set $val)
+               (local.set $res      (global.get $false))
+
+               (local.set $bridge
+                          (if (result (ref $Vector))
+                              (i32.eqz (local.get $found?))
+                              (then
+                               (call $wr-failure
+                                     (global.get $string:wr-kind:missing-binding)
+                                     (global.get $false)
+                                     (call $string-append/2
+                                           (global.get $string:missing-binding)
+                                           (call $symbol->string (local.get $sym)))))
+                              (else
+                               (if (result (ref $Vector))
+                                   (i32.eqz (ref.test (ref $Procedure) (local.get $val)))
+                                   (then
+                                    (call $wr-failure
+                                          (global.get $string:wr-kind:not-procedure)
+                                          (call $format/display (local.get $val))
+                                          (call $string-append/2
+                                                (global.get $string:wr:not-procedure)
+                                                (call $symbol->string (local.get $sym)))))
+                                   (else
+                                    (local.set $proc (ref.cast (ref $Procedure) (local.get $val)))
+                                    (local.set $args
+                                               (ref.cast (ref $Args)
+                                                         (struct.get $Vector $arr
+                                                                     (ref.cast (ref $Vector)
+                                                                               (local.get $args-val)))))
+                                    (local.set $res
+                                               (block $wr-call-raised (result (ref eq))
+                                                 (try_table (result (ref eq))
+                                                            (catch $exn $wr-call-raised)
+                                                            (call_ref $ProcedureInvoker
+                                                                      (local.get $proc)
+                                                                      (local.get $args)
+                                                                      (struct.get $Procedure $invoke
+                                                                                  (local.get $proc))))))
+                                    (if (result (ref $Vector))
+                                        (ref.eq (call $exn? (local.get $res)) (global.get $false))
+                                        (then
+                                         (call $wr-success (local.get $res)))
+                                        (else
+                                         (call $wr-failure
+                                               (global.get $string:wr-kind:exception)
+                                               (global.get $false)
+                                               (call $wr-bridge-error-message (local.get $res))))))))))
+
+               (local.set $bridge-sentinel
+                          (call $cons (global.get $false) (global.get $false)))
+               (local.set $bridge-exn
+                          (block $wr-call-encode-failed (result (ref eq))
+                            (try_table (result (ref eq))
+                                       (catch $exn $wr-call-encode-failed)
+                                       (global.set $result-bytes
+                                                   (call $s-exp->fasl
+                                                         (local.get $bridge)
+                                                         (global.get $false)))
+                                       (local.get $bridge-sentinel))))
+               (if (i32.eqz (ref.eq (local.get $bridge-exn) (local.get $bridge-sentinel)))
+                   (then
+                    (global.set $result-bytes
+                                (call $s-exp->fasl
+                                      (call $wr-failure
+                                            (global.get $string:wr-kind:exception)
+                                            (global.get $false)
+                                            (call $callback-non-fasl-return-message
+                                                  (local.get $res)))
+                                      (global.get $false)))))
+               (local.set $len
+                          (call $copy-bytes-to-memory
+                                (ref.cast (ref $Bytes) (global.get $result-bytes))
+                                (i32.const 0)))
+               (local.get $len))
+
+         (func $wr-names (export "wr-names")
+               (param $ignored i32)
+               (result i32)
+
+               (call $wr-copy-result (call $wr-top-level-names)))
+
+         (func $wr-format (export "wr-format")
+               (param $fasl i32)
+               (result i32)
+
+               (call $wr-copy-result
+                     (call $format/display
+                           (call $fasl-memory->s-exp (local.get $fasl)))))
 
          (func $callback-register (export "callback-register")
                (param $p (ref $Procedure))

@@ -27,6 +27,7 @@
 (define list-primitives? (make-parameter #f))
 (define tree-shake?     (make-parameter #t))
 (define tree-shake-report (make-parameter #f))
+ (define console-bridge? (make-parameter #f))
 
 (define browser         (make-parameter #f))
 (define nodejs          (make-parameter #t))   ; default
@@ -82,6 +83,10 @@
    [("--tree-shake-report") filename
                             "Write the runtime primitive report to <filename>"
                             (tree-shake-report filename)]
+   [("--console-bridge") "Install the browser console bridge as globalThis.WR"
+                         (console-bridge? #t)]
+   [("--no-console-bridge") "Do not install the browser console bridge (default)"
+                            (console-bridge? #f)]
    [("--stdlib")             "Include the standard library (default)"
                              (stdlib? #t)]
    [("--no-stdlib")          "Do not include the standard library"
@@ -140,6 +145,7 @@
                      #:node?         (nodejs)
                      #:tree-shake?   (tree-shake?)
                      #:tree-shake-report (tree-shake-report)
+                     #:console-bridge? (console-bridge?)
                      #:run-after?    (run-after)
                      #:ffi-files     (ffi-files)
                      #:stdlib?       (stdlib?)))
