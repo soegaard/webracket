@@ -92,6 +92,18 @@
       (λ ()
         (sort active-primitives symbol<?)))
 
+    (define active-described-primitives-sorted
+      (λ ()
+        (for/list ([pr (in-list (active-primitives-sorted))]
+                   #:unless (memq pr todo-handle-later)
+                   #:when (primitive->description pr))
+          pr)))
+
+    (define active-ffi-primitive-names
+      (λ ()
+        (for/list ([f (in-list active-ffi-foreigns)])
+          (foreign-racket-name f))))
+
     (define described-primitives
       (filter primitive->description all-primitives))
 
@@ -539,9 +551,7 @@
           #:exists 'replace)))
     
     (define (declare-primitives-as-globals)
-      (for/list ([pr (in-list (active-primitives-sorted))]
-                 #:do [(define desc (primitive->description pr))]
-                 #:when desc)
+      (for/list ([pr (in-list (active-described-primitives-sorted))])
         `(global ,($ (prim: pr)) (mut (ref eq)) ,(Imm (undefined)))))
 
     (define (declare-ffi-primitives-as-globals)
@@ -1274,9 +1284,8 @@
     (define todo-handle-later '())
 
     (define (initialize-primitives-as-globals)
-      (for/list ([pr (sort (remove* todo-handle-later active-primitives) symbol<?)]
-                 #:do [(define desc (primitive->description pr))]
-                 #:when desc)
+      (for/list ([pr (in-list (active-described-primitives-sorted))]
+                 #:do [(define desc (primitive->description pr))])
         (define ar    (primitive-description-arity desc))
         (define shape (primitive->shape pr desc))
         (define $name ($ (string->symbol (~a "symbol:" pr))))
@@ -1413,13 +1422,12 @@
     ;; String and symbol constants used in the runtime
     
     ; Names of each primitive
-    (for ([pr (in-list (sort (remove* todo-handle-later active-primitives) symbol<?))])
-      (when (primitive->description pr)
-        (add-runtime-symbol-constant pr)))
+    (for ([pr (in-list (active-described-primitives-sorted))])
+      (add-runtime-symbol-constant pr))
 
     (define (add-ffi-symbol-constants)
-      (for ([f (in-list active-ffi-foreigns)])
-        (add-runtime-symbol-constant (foreign-racket-name f))))
+      (for ([pr (in-list (active-ffi-primitive-names))])
+        (add-runtime-symbol-constant pr)))
 
     (add-ffi-symbol-constants)
 
@@ -34373,11 +34381,11 @@
               ,@(for/list ([shape (in-list primitive-shapes)])
                   `(ref.func ,($ (shape->invoker shape))))
               ;; Declare all primitives
-              ,@(for/list ([pr (in-list (sort (remove* todo-handle-later active-primitives) symbol<?))])
+              ,@(for/list ([pr (in-list (active-described-primitives-sorted))])
                   `(ref.func ,($ pr)))
               ;; Declare FFI-backed primitive wrappers.
-              ,@(for/list ([f (in-list active-ffi-foreigns)])
-                  `(ref.func ,($ (foreign-racket-name f)))))
+              ,@(for/list ([pr (in-list (active-ffi-primitive-names))])
+                  `(ref.func ,($ pr))))
 
          
         (func $struct-constructor/no-guard
