@@ -12,8 +12,14 @@
 (define (add1* n)
   (+ n 1))
 
+(define (current-x)
+  x)
+
 (define (set-x! n)
   (set! x n)
   x)
+
+(define (explode! _)
+  (error 'explode! "boom"))
 
 (display "console bridge ready")

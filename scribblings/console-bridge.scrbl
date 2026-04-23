@@ -39,6 +39,9 @@ When the bridge is enabled, WebRacket installs a function named
 @verbatim|{
 WR("x")
 WR("add1*", 41)
+WR.call("current-counter")
+WR.search("display")
+WR.help()
 WR.names()
 }|
 
@@ -115,6 +118,11 @@ Here is a small complete example:
 (display "counter page ready")
 }|]
 
+There is also a checked-in example in the repository:
+
+@itemlist[
+  @item{@filepath{examples/console-bridge/console-bridge.rkt}}]
+
 Compile it:
 
 @shellblock{
@@ -124,10 +132,11 @@ racket webracket.rkt --browser --console-bridge counter.rkt
 Serve the generated files from the directory where they were written:
 
 @shellblock{
-python3 -m http.server 8000
+raco static-web
 }
 
-Then open @tt{http://127.0.0.1:8000/counter.html} in your browser.
+Then open the URL printed by @tt{raco static-web} in your browser and
+visit @tt{counter.html}.
 
 Open Developer Tools and switch to the @tt{Console} tab.
 
@@ -178,11 +187,21 @@ Read the variable again:
 5
 }|
 
-Call another helper:
+Call a zero-argument function explicitly:
 
 @verbatim|{
-> WR("current-counter")
+> WR.call("current-counter")
 5
+}|
+
+Ask for a quick reminder:
+
+@verbatim|{
+> WR.help()
+WebRacket console bridge
+  WR(name, ...args)        Look up or call a binding and print the WebRacket result.
+  WR.value(name, ...args)  Return the converted JavaScript value without printing.
+  ...
 }|
 
 List the exposed names:
@@ -192,6 +211,24 @@ List the exposed names:
 ["counter", "current-counter", "display", "increment!", ...]
 }|
 
+Search the exposed names:
+
+@verbatim|{
+> WR.search("count")
+["counter", "current-counter"]
+}|
+
+Show richer binding metadata:
+
+@verbatim|{
+> WR.namesDetailed()
+[
+  { name: "counter", origin: "program", mutable: true, kind: "top-level", source: "/.../counter.rkt" },
+  { name: "display", origin: "stdlib", mutable: false, kind: "top-level", source: "/.../stdlib/..." },
+  ...
+]
+}|
+
 Read a value without printing it first:
 
 @verbatim|{
@@ -199,27 +236,68 @@ Read a value without printing it first:
 5
 }|
 
+Print the WebRacket representation explicitly:
+
+@verbatim|{
+> WR.write("counter")
+5
+}|
+
+Inspect the converted JavaScript value directly:
+
+@verbatim|{
+> WR.print("counter")
+5
+}|
+
 Inspect the full result object:
 
 @verbatim|{
 > WR.raw("counter")
-{ ok: true, kind: "value", value: 5, printed: "5", error: false }
+{
+  ok: true,
+  kind: "value",
+  value: 5,
+  printed: "5",
+  error: "",
+  message: "",
+  operation: "ref",
+  name: "counter",
+  args: []
+}
 }|
 
 Try a missing name:
 
 @verbatim|{
 > WR.raw("does-not-exist")
-{ ok: false, kind: "missing-binding", value: false, printed: "", error: "..." }
+{
+  ok: false,
+  kind: "missing-binding",
+  value: false,
+  printed: "",
+  error: "...",
+  message: "...",
+  operation: "ref",
+  name: "does-not-exist",
+  args: []
+}
+}|
+
+Format a JavaScript value with the WebRacket formatter:
+
+@verbatim|{
+> WR.format(["bridge", 7])
+"(bridge 7)"
 }|
 
 The exact formatting of objects in the console depends on the browser,
 but the overall shape is the same.
 
-@section{The Four Main Operations}
+@section{Console Bridge Operations}
 
-When the bridge is enabled, the browser page installs four main entry
-points:
+When the bridge is enabled, the browser page installs several console
+bridge entry points:
 
 @subsection{@tt{WR(name, ...args)}}
 
@@ -249,7 +327,24 @@ Use it when you only want the returned JavaScript value.
 Example:
 
 @verbatim|{
-const n = WR.value("current-counter");
+const n = WR.value("counter");
+}|
+
+@subsection{@tt{WR.call(name, ...args)}}
+
+This always performs a function call, even when you do not supply any
+arguments.
+
+That is useful for a zero-argument function, because:
+
+@itemlist[
+  @item{@tt{WR("current-counter")} looks up the binding}
+  @item{@tt{WR.call("current-counter")} invokes the function}]
+
+Example:
+
+@verbatim|{
+WR.call("current-counter")
 }|
 
 @subsection{@tt{WR.raw(name, ...args)}}
@@ -267,7 +362,10 @@ Typical fields are:
   @item{@tt{kind}: a short result tag such as @tt{\"value\"} or @tt{\"missing-binding\"}}
   @item{@tt{value}: the JavaScript value, when conversion succeeded}
   @item{@tt{printed}: the WebRacket-style printed form}
-  @item{@tt{error}: error information when the operation failed}]
+  @item{@tt{error}: error information when the operation failed}
+  @item{@tt{message}: the same failure in a form suitable for throwing as a JavaScript @tt{Error}}
+  @item{@tt{operation}: @tt{\"ref\"} for lookup or @tt{\"call\"} for a function call}
+  @item{@tt{name} and @tt{args}: the original bridge request}]
 
 @subsection{@tt{WR.names()}}
 
@@ -275,6 +373,72 @@ This returns a JavaScript array of the names that the bridge exposes for
 the current page.
 
 Use it when you are not sure which bindings are available.
+
+@subsection{@tt{WR.search(query)}}
+
+This searches the exposed binding names using a case-insensitive
+substring match.
+
+Use it when:
+
+@itemlist[
+  @item{you remember part of a name but not the whole name}
+  @item{@tt{WR.names()} returns too many bindings to scan comfortably}]
+
+Example:
+
+@verbatim|{
+WR.search("display")
+WR.search("ADD1")
+}|
+
+@subsection{@tt{WR.namesDetailed()}}
+
+This returns a JavaScript array of objects with a little more context
+for each exposed binding.
+
+Typical fields are:
+
+@itemlist[
+  @item{@tt{name}: the binding name}
+  @item{@tt{origin}: where the binding came from, such as @tt{\"program\"} or @tt{\"stdlib\"}}
+  @item{@tt{mutable}: whether the top-level binding is mutable}
+  @item{@tt{kind}: currently @tt{\"top-level\"}}
+  @item{@tt{source}: the source path when available}]
+
+Use it when @tt{WR.names()} is too flat and you want to understand why a
+binding is present.
+
+@subsection{@tt{WR.write(name, ...args)}}
+
+This behaves like @tt{WR(name, ...args)}, but it makes the intent
+explicit: print the WebRacket representation and return the converted
+JavaScript value.
+
+@subsection{@tt{WR.print(name, ...args)}}
+
+This also looks up or calls a binding, but it uses JavaScript console
+inspection for the converted value instead of the WebRacket printed
+representation.
+
+It is most useful for vectors, arrays, and structured data that you want
+to expand directly in DevTools.
+
+@subsection{@tt{WR.help()}}
+
+This prints a short usage summary in the console and returns that same
+text as a JavaScript string.
+
+@subsection{@tt{WR.format(value)}}
+
+This sends an ordinary JavaScript value through the bridge and asks
+WebRacket to format it.
+
+It is handy when you want to compare:
+
+@itemlist[
+  @item{the JavaScript console view of a value}
+  @item{the WebRacket printed view of the same value}]
 
 @section{How Values Cross The Boundary}
 
@@ -343,3 +507,31 @@ It is less appropriate when:
   @item{you do not want the page to publish debugging hooks globally}]
 
 Because of that last point, the bridge is opt-in and disabled by default.
+
+@section{Troubleshooting}
+
+If @tt{WR} is missing in the browser console, check these common causes:
+
+@itemlist[
+  @item{The page was compiled without @tt{--console-bridge}.}
+  @item{The page has not finished loading yet. Wait for the page to start, then try again.}
+  @item{You are serving an older generated @tt{.html} or @tt{.wasm} file than the one you just built.}
+  @item{The browser page failed to load the generated @tt{.wasm} file, so the runtime never finished installing the bridge.}]
+
+When the bridge is enabled successfully, the browser console prints a
+short banner telling you to try @tt{WR.help()} or @tt{WR.names()}.
+
+If a lookup fails, start with:
+
+@verbatim|{
+WR.raw("name-you-expect")
+WR.names()
+WR.namesDetailed()
+}|
+
+That usually tells you whether:
+
+@itemlist[
+  @item{the name is missing entirely}
+  @item{the binding exists under a different spelling}
+  @item{the binding came from your program or from the standard library}]

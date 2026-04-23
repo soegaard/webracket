@@ -858,7 +858,7 @@ function wr_invoke_fasl(exported, payload) {
 }
 
 // Decode the tagged bridge result vector into a JavaScript object.
-function wr_decode_result(raw) {
+function wr_decode_result(raw, operation, name, args) {
   if (!Array.isArray(raw) || raw.length < 5) {
     return {
       ok: false,
@@ -866,16 +866,85 @@ function wr_decode_result(raw) {
       value: undefined,
       printed: '',
       error: 'invalid WebRacket console bridge result',
+      message: 'invalid WebRacket console bridge result',
+      operation,
+      name,
+      args,
+      request: { operation, name, args },
     };
   }
   const [ok, kind, value, printed, error] = raw;
+  const message = !!ok
+    ? ''
+    : ((typeof error === 'string' && error.length > 0)
+      ? error
+      : `WebRacket console bridge error (${String(kind)})`);
   return {
     ok: !!ok,
     kind,
     value,
     printed: (typeof printed === 'string') ? printed : '',
     error: (typeof error === 'string') ? error : '',
+    message,
+    operation,
+    name,
+    args,
+    request: { operation, name, args },
   };
+}
+
+// Format a JavaScript value through the WebRacket formatter when available.
+function wr_format_value(exported, value) {
+  if (!exported) {
+    return String(value);
+  }
+  const formatted = wr_invoke_fasl(exported, value);
+  return (typeof formatted === 'string') ? formatted : String(formatted);
+}
+
+// Normalize detailed binding metadata returned by the Wasm bridge.
+function wr_decode_names_detailed(raw) {
+  if (!Array.isArray(raw)) {
+    return [];
+  }
+  return raw
+    .map((entry) => {
+      if (!Array.isArray(entry) || entry.length < 5) {
+        return {
+          name: String(entry),
+          origin: 'unknown',
+          mutable: false,
+          kind: 'top-level',
+          source: null,
+        };
+      }
+      const [name, origin, mutable, _kind, source] = entry;
+      return {
+        name: String(name),
+        origin: (typeof origin === 'string' && origin.length > 0) ? origin : 'unknown',
+        mutable: !!mutable,
+        kind: 'top-level',
+        source: (typeof source === 'string' && source.length > 0) ? source : null,
+      };
+    })
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+// Return a short usage summary for the browser console bridge.
+function wr_usage_text() {
+  return [
+    'WebRacket console bridge',
+    '  WR(name, ...args)        Look up or call a binding and print the WebRacket result.',
+    '  WR.call(name, ...args)   Always call the named binding, even with zero arguments.',
+    '  WR.value(name, ...args)  Return the converted JavaScript value without printing.',
+    '  WR.raw(name, ...args)    Return the full bridge result object.',
+    '  WR.write(name, ...args)  Print the WebRacket representation and return the value.',
+    '  WR.print(name, ...args)  Inspect the converted JavaScript value with console.dir.',
+    '  WR.names()               List exposed binding names.',
+    '  WR.search(query)         Search exposed binding names by case-insensitive substring.',
+    '  WR.namesDetailed()       List detailed binding metadata.',
+    '  WR.format(value)         Format any JS value with the WebRacket formatter.',
+  ].join('\\n');
 }
 
 // Install globalThis.WR for browser-side access to exported WebRacket bindings.
@@ -884,38 +953,83 @@ function install_console_bridge(exports) {
     return;
   }
 
-  const { wr_ref, wr_call, wr_names } = exports;
+  const { wr_ref, wr_call, wr_names, wr_names_detailed, wr_format } = exports;
   if (!(wr_ref && wr_call && wr_names)) {
     return;
   }
 
+  // Look up or call a binding and decode the tagged bridge result.
   function raw_lookup(name, args = []) {
+    const operation = (args.length === 0) ? 'ref' : 'call';
     const raw = (args.length === 0)
       ? wr_invoke_fasl(wr_ref, name)
       : wr_invoke_fasl(wr_call, [name, args]);
-    return wr_decode_result(raw);
+    return wr_decode_result(raw, operation, name, args);
+  }
+
+  // Call a binding explicitly, even when the argument list is empty.
+  function raw_call(name, args = []) {
+    const raw = wr_invoke_fasl(wr_call, [name, args]);
+    return wr_decode_result(raw, 'call', name, args);
   }
 
   // Throw a JavaScript Error for bridge failures and return successful results unchanged.
   function ensure_ok(result) {
     if (!result.ok) {
-      throw new Error(result.error || `WebRacket console bridge error (${String(result.kind)})`);
+      throw new Error(result.message);
     }
     return result;
   }
 
-  // Look up or call a WebRacket top-level binding, log its printed form, and return its JS value.
-  function WR(name, ...args) {
-    const result = ensure_ok(raw_lookup(name, args));
+  // Print a successful bridge result using the WebRacket formatter output.
+  function write_result(result) {
     console.log(result.printed);
     return result.value;
   }
 
+  // Look up or call a WebRacket top-level binding, log its printed form, and return its JS value.
+  function WR(name, ...args) {
+    return write_result(ensure_ok(raw_lookup(name, args)));
+  }
+
+  WR.call = (name, ...args) => write_result(ensure_ok(raw_call(name, args)));
   WR.value = (name, ...args) => ensure_ok(raw_lookup(name, args)).value;
   WR.raw = (name, ...args) => raw_lookup(name, args);
-  WR.names = () => wr_invoke_fasl(wr_names, null);
+  WR.write = (name, ...args) => write_result(ensure_ok(raw_lookup(name, args)));
+  WR.print = (name, ...args) => {
+    const result = ensure_ok(raw_lookup(name, args));
+    console.dir(result.value);
+    return result.value;
+  };
+  WR.names = () => {
+    const names = wr_invoke_fasl(wr_names, null);
+    return Array.isArray(names) ? names.slice().sort((a, b) => String(a).localeCompare(String(b))) : [];
+  };
+  WR.search = (query) => {
+    const needle = String(query ?? '').toLocaleLowerCase();
+    return WR.names().filter((name) => String(name).toLocaleLowerCase().includes(needle));
+  };
+  WR.namesDetailed = () => {
+    if (!wr_names_detailed) {
+      return WR.names().map((name) => ({
+        name: String(name),
+        origin: 'unknown',
+        mutable: false,
+        kind: 'top-level',
+        source: null,
+      }));
+    }
+    return wr_decode_names_detailed(wr_invoke_fasl(wr_names_detailed, null));
+  };
+  WR.format = (value) => wr_format_value(wr_format, value);
+  WR.help = () => {
+    const text = wr_usage_text();
+    console.log(text);
+    return text;
+  };
 
   globalThis.WR = WR;
+  console.info('WebRacket console bridge ready. Try WR.help() or WR.names().');
 }
 
 if (typeof WebAssembly.Tag === 'undefined' || typeof WebAssembly.Exception === 'undefined') {
@@ -3616,13 +3730,14 @@ const wasmModule
                                   ['wr-ref']: wr_ref,
                                   ['wr-call']: wr_call,
                                   ['wr-names']: wr_names,
+                                  ['wr-names-detailed']: wr_names_detailed,
                                   ['wr-format']: wr_format } = results.instance.exports;
                           callback_export = callback;
                           callback_accepts_argc_export = callback_accepts_argc;
                           callback_expected_arity_export = callback_expected_arity;
                           callback_name_export = callback_name;
                           callback_debug_id_export = callback_debug_id;
-                          install_console_bridge({ wr_ref, wr_call, wr_names, wr_format });
+                          install_console_bridge({ wr_ref, wr_call, wr_names, wr_names_detailed, wr_format });
                           var result;
                           try {
                             result = entry();
@@ -3713,6 +3828,12 @@ const wasmModule
   (check-true  (regexp-match? #rx"globalThis\\.WR" browser-runtime/bridge))
   (check-true  (regexp-match? #rx"console_bridge_enabled = true" browser-runtime/bridge))
   (check-true  (regexp-match? #rx"wr_ref" browser-runtime/bridge))
+  (check-true  (regexp-match? #rx"WR\\.help" browser-runtime/bridge))
+  (check-true  (regexp-match? #rx"WR\\.call" browser-runtime/bridge))
+  (check-true  (regexp-match? #rx"WR\\.search" browser-runtime/bridge))
+  (check-true  (regexp-match? #rx"WR\\.namesDetailed" browser-runtime/bridge))
+  (check-true  (regexp-match? #rx"request: \\{ operation, name, args \\}" browser-runtime/bridge))
+  (check-true  (regexp-match? #rx"WebRacket console bridge ready" browser-runtime/bridge))
   (check-false (regexp-match? #rx"console_bridge_enabled = true" browser-runtime/plain)))
 
 
