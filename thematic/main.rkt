@@ -314,29 +314,38 @@
                      ".nav-link")
                    "font-size"))
   (define nav-font-weight
-    (or (nav-style-ref ".navbar .nav-link" "font-weight")
-        (nav-style-ref ".nav-tabs .nav-link" "font-weight")
-        (nav-style-ref ".nav-pills .nav-link" "font-weight")
-        (nav-style-ref ".navbar" "font-weight")
+    (or (selector-ref* nav-style-ref
+                       '(".navbar .nav-link"
+                         ".nav-tabs .nav-link"
+                         ".nav-pills .nav-link"
+                         ".navbar")
+                       "font-weight")
         (nav-custom-ref ".nav" "--bs-nav-link-font-weight")
         (nav-custom-ref ".navbar-nav" "--bs-nav-link-font-weight")))
   (define nav-text-transform
-    (or (nav-style-ref ".navbar .nav-link" "text-transform")
-        (nav-style-ref ".nav-tabs .nav-link" "text-transform")
-        (nav-style-ref ".nav-pills .nav-link" "text-transform")
-        (nav-style-ref ".navbar" "text-transform")))
+    (selector-ref* nav-style-ref
+                   '(".navbar .nav-link"
+                     ".nav-tabs .nav-link"
+                     ".nav-pills .nav-link"
+                     ".navbar")
+                   "text-transform"))
   (define nav-link-padding-y
-    (or (nav-custom-ref ".navbar-nav" "--bs-nav-link-padding-y")
-        (nav-custom-ref ".nav" "--bs-nav-link-padding-y")
-        (nav-style-ref ".navbar-nav .nav-link" "padding-top")
-        (nav-style-ref ".nav-link" "padding-top")))
+    (or (selector-ref* nav-custom-ref
+                       '(".navbar-nav" ".nav")
+                       "--bs-nav-link-padding-y")
+        (selector-ref* nav-style-ref
+                       '(".navbar-nav .nav-link" ".nav-link")
+                       "padding-top")))
   (define nav-link-padding-x
-    (or (nav-custom-ref ".navbar" "--bs-navbar-nav-link-padding-x")
-        (nav-custom-ref ".nav" "--bs-navbar-nav-link-padding-x")
-        (nav-custom-ref ".nav" "--bs-nav-link-padding-x")
-        (nav-custom-ref ".navbar-nav" "--bs-nav-link-padding-x")
-        (nav-style-ref ".navbar-nav .nav-link" "padding-left")
-        (nav-style-ref ".nav-link" "padding-left")))
+    (or (selector-ref* nav-custom-ref
+                       '(".navbar" ".nav")
+                       "--bs-navbar-nav-link-padding-x")
+        (selector-ref* nav-custom-ref
+                       '(".nav" ".navbar-nav")
+                       "--bs-nav-link-padding-x")
+        (selector-ref* nav-style-ref
+                       '(".navbar-nav .nav-link" ".nav-link")
+                       "padding-left")))
   (define navbar-brand-size
     (or (nav-custom-ref ".navbar" "--bs-navbar-brand-font-size")
         (nav-style-ref ".navbar-brand" "font-size")))
@@ -1164,31 +1173,37 @@
   (define-values (dialog-style-ref dialog-custom-ref)
     (make-computed-selector-refs props rules))
   (define modal-bg
-    (or (dialog-style-ref ".modal-content" "background-color")
-        (dialog-style-ref ".modal" "background-color")
+    (or (selector-ref* dialog-style-ref
+                       '(".modal-content" ".modal")
+                       "background-color")
         (dialog-custom-ref ".modal-content" "--bs-modal-bg")
         (dialog-custom-ref ".modal" "--bs-modal-bg")))
   (define modal-color
-    (or (dialog-style-ref ".modal-content" "color")
-        (dialog-style-ref ".modal" "color")
+    (or (selector-ref* dialog-style-ref
+                       '(".modal-content" ".modal")
+                       "color")
         (dialog-custom-ref ".modal-content" "--bs-modal-color")
         (dialog-custom-ref ".modal" "--bs-modal-color")))
   (define modal-border-color
-    (or (dialog-style-ref ".modal-content" "border-color")
-        (dialog-style-ref ".modal" "border-color")
+    (or (selector-ref* dialog-style-ref
+                       '(".modal-content" ".modal")
+                       "border-color")
         (dialog-custom-ref ".modal-content" "--bs-modal-border-color")
         (dialog-custom-ref ".modal" "--bs-modal-border-color")))
   (define modal-border-width
-    (or (dialog-style-ref ".modal-content" "border-width")
-        (dialog-style-ref ".modal" "border-width")
+    (or (selector-ref* dialog-style-ref
+                       '(".modal-content" ".modal")
+                       "border-width")
         (dialog-custom-ref ".modal-content" "--bs-modal-border-width")
         (dialog-custom-ref ".modal" "--bs-modal-border-width")))
   (define modal-radius
-    (or (dialog-style-ref ".modal-content" "border-radius")
-        (dialog-style-ref ".modal" "border-radius")))
+    (selector-ref* dialog-style-ref
+                   '(".modal-content" ".modal")
+                   "border-radius"))
   (define modal-shadow
-    (or (dialog-style-ref ".modal-content" "box-shadow")
-        (dialog-style-ref ".modal" "box-shadow")))
+    (selector-ref* dialog-style-ref
+                   '(".modal-content" ".modal")
+                   "box-shadow"))
   (define modal-header-padding-x
     (or (dialog-style-ref ".modal-header" "padding-left")
         (dialog-style-ref ".modal" "padding-left")
