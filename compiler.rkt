@@ -2404,7 +2404,10 @@
     (define (variable* xs)             (map variable          (stx->list xs)))
     (define (RawRequireSpec* rsss)     (map RawRequireSpec    (stx->list rsss)))
     (define (RawProvideSpec* rpss)     (map RawProvideSpec    (stx->list rpss)))
-    (define (RawRootModulePath* rrmps) (map RawRootModulePath (stx->list rrmps))))
+    (define (RawRootModulePath* rrmps) (map RawRootModulePath (stx->list rrmps)))
+    (define (ensure-bound-set!-target! x)
+      (unless (identifier-binding x)
+        (raise-syntax-error 'parse "set!: assignment to unbound identifier" x))))
   
   
   (TopLevelForm : * (T) -> TopLevelForm ()
@@ -2626,7 +2629,8 @@
                                                       (set! xc tc) ...
                                                       0))))]))
                   (Expr* #'(e0 e1 ...))))))]
-        [(set! x:id e)                              `(set! ,E ,(variable #'x) ,(Expr #'e))]
+        [(set! x:id e)                              (ensure-bound-set!-target! #'x)
+                                                    `(set! ,E ,(variable #'x) ,(Expr #'e))]
         [(with-continuation-mark e0 e1 e2)          `(wcm ,E ,(Expr #'e0) ,(Expr #'e1) ,(Expr #'e2))]
         [(#%plain-app e0 e1 ...)                    `(app ,E ,(Expr #'e0) ,(Expr* #'(e1 ...)) ...)]
         [(#%top . x)                                `(top ,E ,(variable #'x))]
@@ -2658,7 +2662,17 @@
     (check-equal? (test #'(let-values ([(x y) 1] [(z) 2]) 3 4))
                   '(let-values ([(x y) '1] [(z) '2]) '3 '4))
     ; todo: insert test of letrec
-    (check-equal? (test #'(set! x 3)) '(set! x '3))
+    (check-equal? (test #'(let-values ([(x) 0]) (set! x 3) x))
+                  '(let-values ([(x) '0]) (set! x '3) x))
+    (check-exn exn:fail:syntax?
+               (λ ()
+                 (parse
+                  (topexpand #'(begin
+                                 (define (f)
+                                   (define term 1)
+                                   (set! *term* term)
+                                   0)
+                                 (f))))))
     (check-equal? (test #'(if 1 2 3)) '(if '1 '2 '3))
     (check-equal? (test #'(begin  1 2 3)) '(topbegin  '1 '2 '3))
     (check-equal? (test #'(begin0 1 2 3)) '(begin0 '1 '2 '3))
@@ -3724,7 +3738,8 @@
                (parse
                 (expand-syntax stx)))))))))))
     
-    (check-equal? (test #'(set! x 1)) '(set-boxed! x '1))
+    (check-equal? (test #'(let-values ([(x) 0]) (set! x 1) x))
+                  '(let-values (((x) (boxed '0))) (begin (set-boxed! x '1) (unboxed x))))
     (check-equal? (test #'(λ (x) (set! x 1) x))
                   '(#%expression
                     (λ (x)
@@ -6465,14 +6480,30 @@
                   sym)]
                [exposed-names
                 (sort (remove-duplicates console-top-binding-names) symbol<?)])
+          (add-string-constant 'wr-console-bridge-kind "top-level")
           (for/list ([sym (in-list exposed-names)])
             (define const-name (console-bridge-symbol-constant-name sym))
             (add-symbol-constant const-name sym)
             (cond
               [(hash-ref top-vars-by-name sym #f)
                => (λ (x)
+                    (define source-path
+                      (console-bridge-source->string
+                       (and (variable? x)
+                            (syntax-source (variable-id x)))))
+                    (define origin-kind
+                      (console-bridge-binding-origin-kind source-path))
+                    (define origin-kind-const-name
+                      (console-bridge-origin-kind-constant-name sym))
+                    (define source-path-const-name
+                      (console-bridge-source-path-constant-name sym))
+                    (add-string-constant origin-kind-const-name origin-kind)
+                    (when source-path
+                      (add-string-constant source-path-const-name source-path))
                     (list 'top sym const-name x
-                          (set-member? mutable-top-binding-names sym)))]
+                          (set-member? mutable-top-binding-names sym)
+                          origin-kind-const-name
+                          (and source-path source-path-const-name)))]
               [else
                (error 'console-bridge-bindings
                       "internal error: console bridge symbol without runtime binding: ~s"
@@ -6666,6 +6697,31 @@
 (define current-pass-dump-limit   (make-parameter #f))
 (define current-console-bridge-top-binding-names (make-parameter '()))
 (define current-console-bridge-mutable-top-binding-names (make-parameter '()))
+(define current-console-bridge-program-source-path (make-parameter #f))
+
+(define (console-bridge-source->string src)
+  (cond
+    [(path? src)
+     (path->string
+      (simplify-path (path->complete-path src)))]
+    [(string? src)
+     (path->string
+      (simplify-path (path->complete-path (string->path src))))]
+    [(symbol? src) (symbol->string src)]
+    [else          #f]))
+
+(define (console-bridge-binding-origin-kind source-path)
+  (cond
+    [(not source-path) "generated"]
+    [(regexp-match? #rx"/stdlib/" source-path) "stdlib"]
+    [(regexp-match? #rx"/libs/" source-path) "library"]
+    [else "program"]))
+
+(define (console-bridge-origin-kind-constant-name sym)
+  (string->symbol (~a "wr-origin-kind/" sym)))
+
+(define (console-bridge-source-path-constant-name sym)
+  (string->symbol (~a "wr-source-path/" sym)))
 
 (define (comp+ stx)
   (run (comp stx)))
@@ -6677,6 +6733,9 @@
   (current-gen-timing-table #f)
   (current-console-bridge-top-binding-names '())
   (current-console-bridge-mutable-top-binding-names '())
+  (current-console-bridge-program-source-path
+   (and (syntax? stx)
+        (console-bridge-source->string (syntax-source stx))))
   (define dump-dir (current-pass-dump-dir))
   (define dump-limit (current-pass-dump-limit))
   (when dump-dir
@@ -6902,6 +6961,7 @@
     (check-not-false (member "wr-ref"    (module-func-exports mod '$wr-ref)))
     (check-not-false (member "wr-call"   (module-func-exports mod '$wr-call)))
     (check-not-false (member "wr-names"  (module-func-exports mod '$wr-names)))
+    (check-not-false (member "wr-names-detailed" (module-func-exports mod '$wr-names-detailed)))
     (check-not-false (member "wr-format" (module-func-exports mod '$wr-format))))
 
   (check-equal? (run-expr #'(append '(1) '(2 3) '(4)))
