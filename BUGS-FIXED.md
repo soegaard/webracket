@@ -48,6 +48,52 @@ The runtime now matches Racket's correlated-object behavior for these cases:
 filters to symbol keys, and `correlated-property` stores `#f` as a real property
 value instead of treating it as a deletion sentinel.
 
+## Correlated syntax property keys and srcloc structs
+
+Status: fixed
+
+Minimal repros:
+
+```racket
+(define k1 (string-copy "k"))
+(define k2 (string-copy "k"))
+(define c0 (datum->correlated 'seed))
+(define c1 (correlated-property c0 k1 'v1))
+(define c2 (correlated-property c1 k2 'v2))
+(list (equal? k1 k2)
+      (eq? k1 k2)
+      (correlated-property c2 k1)
+      (correlated-property c2 k2))
+```
+
+```racket
+(define c (datum->correlated 'x (srcloc 'src 1 0 1 1)))
+(list (correlated-source c)
+      (correlated-line c)
+      (correlated-column c)
+      (correlated-position c)
+      (correlated-span c))
+```
+
+Real Racket:
+
+```text
+(#t #f v1 v2)
+(src 1 0 1 1)
+```
+
+Previous WebRacket behavior:
+
+```text
+(#t #f #f v2)
+datum->correlated: contract violation
+```
+
+The runtime now treats correlated-property keys as identity-sensitive when
+replacing an existing property, so equal but distinct non-symbol keys can
+coexist. `datum->correlated` also accepts `srcloc?` values and copies their
+fields through the same srcloc validation path used for vectors and lists.
+
 ## Top-level `set!` after definition is rejected
 
 Status: fixed

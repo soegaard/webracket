@@ -4473,8 +4473,10 @@
              (list
               (list "correlated basics"
                     (let* ([payload '(a b)]
-                           [srcloc  #(source 10 2 100 5)]
-                           [crlt    (datum->correlated payload srcloc)]
+                           [vector-loc #(source 10 2 100 5)]
+                           [crlt    (datum->correlated payload vector-loc)]
+                           [struct-loc (srcloc 'struct-source 11 3 101 6)]
+                           [crlt2   (datum->correlated 'struct-payload struct-loc)]
                            [bare    (datum->correlated 'plain)])
                       (list (equal? (correlated? crlt)         #t)
                             (equal? (correlated? payload)      #f)
@@ -4484,6 +4486,12 @@
                             (equal? (correlated-position crlt) 100)
                             (equal? (correlated-span crlt)     5)
                             (equal? (correlated-e crlt)        payload)
+                            (equal? (correlated-source crlt2)   'struct-source)
+                            (equal? (correlated-line crlt2)     11)
+                            (equal? (correlated-column crlt2)   3)
+                            (equal? (correlated-position crlt2) 101)
+                            (equal? (correlated-span crlt2)     6)
+                            (equal? (correlated-e crlt2)        'struct-payload)
                             (equal? (correlated-source bare)   #f)
                             (equal? (correlated-line bare)     #f)
                             (equal? (correlated-column bare)   #f)
@@ -4540,6 +4548,10 @@
                            [updated     (correlated-property with-tag 'tag 'new)]
                            [with-false   (correlated-property updated  'tag #f)]
                            [prop-source (datum->correlated 'copy #f with-tag)]
+                           [key1        (string-copy "k")]
+                           [key2        (string-copy "k")]
+                           [with-key1   (correlated-property base      key1 'v1)]
+                           [with-key2   (correlated-property with-key1 key2 'v2)]
                            [keys        (correlated-property-symbol-keys with-number)])
                       (and (equal? (correlated-property base        'tag) #f)
                            (equal? (correlated-property with-tag    'tag) 'value)
@@ -4547,6 +4559,10 @@
                            (equal? (correlated-property with-false  'tag) #f)
                            (equal? (correlated-property with-number 123)  'number)
                            (equal? (correlated-property prop-source 'tag) 'value)
+                           (equal? (equal? key1 key2)                    #t)
+                           (equal? (eq? key1 key2)                       #f)
+                           (equal? (correlated-property with-key2 key1)   'v1)
+                           (equal? (correlated-property with-key2 key2)   'v2)
                            (equal? (and (member 'tag (correlated-property-symbol-keys with-false)) #t) #t)
                            (equal? (and (member 'tag keys) #t)            #t)
                            (equal? (member 123 keys)                      #f)
