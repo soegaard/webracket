@@ -2404,10 +2404,7 @@
     (define (variable* xs)             (map variable          (stx->list xs)))
     (define (RawRequireSpec* rsss)     (map RawRequireSpec    (stx->list rsss)))
     (define (RawProvideSpec* rpss)     (map RawProvideSpec    (stx->list rpss)))
-    (define (RawRootModulePath* rrmps) (map RawRootModulePath (stx->list rrmps)))
-    (define (ensure-bound-set!-target! x)
-      (unless (identifier-binding x)
-        (raise-syntax-error 'parse "set!: assignment to unbound identifier" x))))
+    (define (RawRootModulePath* rrmps) (map RawRootModulePath (stx->list rrmps))))
   
   
   (TopLevelForm : * (T) -> TopLevelForm ()
@@ -2629,8 +2626,7 @@
                                                       (set! xc tc) ...
                                                       0))))]))
                   (Expr* #'(e0 e1 ...))))))]
-        [(set! x:id e)                              (ensure-bound-set!-target! #'x)
-                                                    `(set! ,E ,(variable #'x) ,(Expr #'e))]
+        [(set! x:id e)                              `(set! ,E ,(variable #'x) ,(Expr #'e))]
         [(with-continuation-mark e0 e1 e2)          `(wcm ,E ,(Expr #'e0) ,(Expr #'e1) ,(Expr #'e2))]
         [(#%plain-app e0 e1 ...)                    `(app ,E ,(Expr #'e0) ,(Expr* #'(e1 ...)) ...)]
         [(#%top . x)                                `(top ,E ,(variable #'x))]
@@ -2664,15 +2660,7 @@
     ; todo: insert test of letrec
     (check-equal? (test #'(let-values ([(x) 0]) (set! x 3) x))
                   '(let-values ([(x) '0]) (set! x '3) x))
-    (check-exn exn:fail:syntax?
-               (λ ()
-                 (parse
-                  (topexpand #'(begin
-                                 (define (f)
-                                   (define term 1)
-                                   (set! *term* term)
-                                   0)
-                                 (f))))))
+    (check-equal? (test #'(set! x 3)) '(set! x '3))
     (check-equal? (test #'(if 1 2 3)) '(if '1 '2 '3))
     (check-equal? (test #'(begin  1 2 3)) '(topbegin  '1 '2 '3))
     (check-equal? (test #'(begin0 1 2 3)) '(begin0 '1 '2 '3))
@@ -3455,13 +3443,14 @@
                                                       (values `(letrec-values
                                                                    ,s ([(,x ...) ,e] ...)
                                                                  ,e0) ρ-orig))))]
-    [(set! ,s ,x ,e)                            (let ([x (or (lookup ρ x) x)]) ; ignores unbound x
-                                                  ; note: If x is unbound, then a module-level
-                                                  ; assignment should give an error.
-                                                  ; A top-level assignment is ok.
-                                                  ; Compare: Racket compile
+    [(set! ,s ,x ,e)                            (define x* (lookup ρ x))
+                                                  (unless x*
+                                                    (raise-syntax-error
+                                                     'α-rename
+                                                     "set!: assignment to unbound identifier"
+                                                     (variable-id x)))
                                                   (letv ((e ρ) (Expr e ρ))
-                                                    (values `(set! ,s ,x ,e) ρ)))]
+                                                    (values `(set! ,s ,x* ,e) ρ))]
     [(wcm ,s ,e0 ,e1 ,e2)                       (letv ((e0 ρ) (Expr e0  ρ))
                                                   (letv ((e1 ρ) (Expr e1  ρ))
                                                     (letv ((e2 ρ) (Expr e2  ρ))
