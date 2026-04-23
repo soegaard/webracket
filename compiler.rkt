@@ -3304,6 +3304,13 @@
       (values x* (ρ-set ρ x x*)))
     (define (rename*          xs ρ) (map2* rename   xs ρ))
     (define (rename**        xss ρ) (map2* rename* xss ρ))
+    (define (top-binding? x)
+      (ormap (λ (top-binding) (id=? x top-binding)) top-bindings))
+    (define seen-top-bindings empty-set)
+    (define (seen-top-binding? x)
+      (set-in? x seen-top-bindings))
+    (define (remember-top-level! xs)
+      (set! seen-top-bindings (set-union seen-top-bindings (ids->id-set xs))))
     (define (TopLevelForm*    xs ρ) (map2* TopLevelForm xs ρ))
     (define (ModuleLevelForm* xs ρ) (map2* ModuleLevelForm xs ρ))
     (define (Formals*         fs ρ) (map2* Formals fs ρ))
@@ -3325,7 +3332,8 @@
     ; References to unbound variables within a module leads to an error.
     ; Outside modules, no errors will be signaled.
     ; Example: Try (if 1 2 x) in the repl.
-    (define inside-module? (make-parameter #f)))
+    (define inside-module? (make-parameter #f))
+    (define delayed-expression? (make-parameter #f)))
   
   (TopLevelForm : TopLevelForm (T ρ) -> TopLevelForm (ρ)
     [(topbegin ,s ,t ...)           (letv ((t ρ) (TopLevelForm* t ρ))
@@ -3364,6 +3372,7 @@
                                            ; they must map to themselves. 
                                            (let ((ρ (ρ-set* ρ x)))
                                              (letv ((e _) (Expr e ρ))
+                                                   (remember-top-level! x)
                                                    (values `(define-values ,s (,x ...) ,e) ρ)))])]
     [(define-syntaxes ,s (,x ...) ,e)   (error)])
   
@@ -3380,7 +3389,8 @@
   (Abstraction : Abstraction (AB ρ) -> Abstraction (ρ)
     [(λ ,s ,f ,e)                               (let ([ρ-orig ρ])
                                                   (letv ((f ρ) (Formals f ρ))
-                                                    (letv ((e ρ) (Expr e ρ))
+                                                    (letv ((e ρ) (parameterize ([delayed-expression? #t])
+                                                                  (Expr e ρ)))
                                                       (values `(λ ,s ,f ,e) ρ-orig))))])
   (Expr : Expr (E ρ) -> Expr (ρ)
     [,x                                         (let ([ρx (lookup ρ x)])
@@ -3449,6 +3459,14 @@
                                                      'α-rename
                                                      "set!: assignment to unbound identifier"
                                                      (variable-id x)))
+                                                  (when (and (not (inside-module?))
+                                                             (not (delayed-expression?))
+                                                             (top-binding? x*)
+                                                             (not (seen-top-binding? x*)))
+                                                    (raise-syntax-error
+                                                     'α-rename
+                                                     "set!: assignment disallowed; cannot set variable before its definition"
+                                                     (variable-id x)))
                                                   (letv ((e ρ) (Expr e ρ))
                                                     (values `(set! ,s ,x* ,e) ρ))]
     [(wcm ,s ,e0 ,e1 ,e2)                       (letv ((e0 ρ) (Expr e0  ρ))
@@ -3465,7 +3483,18 @@
     [(top ,s ,x)                              (values (or (and (variable? x) (ρ-ref ρ x))
                                                              `(top ,s ,x))
                                                          ρ)]
-    [(variable-reference ,s ,vrx)             (values E ρ)])
+    [(variable-reference ,s ,vrx)             (values `(variable-reference ,s ,(VariableReferenceId vrx ρ)) ρ)])
+
+  (VariableReferenceId : VariableReferenceId (VRX ρ) -> VariableReferenceId ()
+    [(anonymous ,s)       `(anonymous ,s)]
+    [(top ,s ,x)          `(top ,s ,(or (and (variable? x) (ρ-ref ρ x)) x))]
+    [(non-top ,s ,x)      (cond
+                            [(and (variable? x) (lookup ρ x))
+                             => (λ (x*)
+                                  (if (top-binding? x*)
+                                      `(top ,s ,x*)
+                                      `(non-top ,s ,x*)))]
+                            [else `(non-top ,s ,x)])])
   
   (let ([ρ0 (initial-ρ)])
     (letv ((T ρ) (TopLevelForm T ρ0))
