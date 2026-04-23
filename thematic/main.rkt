@@ -65,6 +65,10 @@
    "--bs-info" "#0dcaf0"
    "--bs-warning" "#ffc107"
    "--bs-danger" "#dc3545"
+   "--bs-form-valid-color" "#198754"
+   "--bs-form-valid-border-color" "#198754"
+   "--bs-form-invalid-color" "#dc3545"
+   "--bs-form-invalid-border-color" "#dc3545"
    "--bs-light" "#f8f9fa"
    "--bs-dark" "#212529"
    "--bs-body-font-family"
@@ -113,25 +117,6 @@
 (define (normalize-selector s)
   (string-trim (strip-css-comments s)))
 
-;; update-delimiter-depths : string? integer? integer? integer? -> (values integer? integer? integer?)
-;;   Update grouping depths based on delimiter text.
-(define (update-delimiter-depths text paren-depth bracket-depth brace-depth)
-  (cond
-    [(string=? text "(")
-     (values (add1 paren-depth) bracket-depth brace-depth)]
-    [(string=? text ")")
-     (values (max 0 (sub1 paren-depth)) bracket-depth brace-depth)]
-    [(string=? text "[")
-     (values paren-depth (add1 bracket-depth) brace-depth)]
-    [(string=? text "]")
-     (values paren-depth (max 0 (sub1 bracket-depth)) brace-depth)]
-    [(string=? text "{")
-     (values paren-depth bracket-depth (add1 brace-depth))]
-    [(string=? text "}")
-     (values paren-depth bracket-depth (max 0 (sub1 brace-depth)))]
-    [else
-     (values paren-depth bracket-depth brace-depth)]))
-
 ;; read-css-rules : string? -> css-stylesheet?
 ;;   Parse source into a CSS stylesheet AST.
 (define (read-css-rules source)
@@ -157,7 +142,11 @@
 ;; collect-custom-properties : css-stylesheet? string? -> (hash/c string? string?)
 ;;   Collect custom properties for selector from matching rules, later declarations win.
 (define (collect-custom-properties rules selector)
-  (css-collect-custom-properties-in-selector-group rules selector))
+  (css-compute-custom-properties-for-selector-group
+   rules
+   selector
+   #:resolve-vars? #t
+   #:defaults bootstrap-defaults))
 
 ;; validate-bootstrap-selector! : string? -> void?
 ;;   Check that selector is one of the supported Bootstrap theme roots.
@@ -246,52 +235,51 @@
 ;; prop-ref* : (hash/c string? string?) string? [string?] -> string?
 ;;   Read one Bootstrap property with optional fallback default.
 (define (prop-ref* props key [fallback-key #f])
-  (resolve-prop-value props key fallback-key))
+  (or (hash-ref props key #f)
+      (and fallback-key (hash-ref props fallback-key #f))))
 
-;; collect-selector-context : (hash/c string? string?) css-stylesheet? (listof string?) -> (values hash? hash?)
-;;   Collect declarations and local custom properties for selectors.
-(define (collect-selector-context props rules selectors)
-  (define decls (make-hash))
-  (define locals (make-hash))
-  (when (css-stylesheet? rules)
-    (for ([decl (in-list (css-find-declarations-in-selector-groups rules selectors))])
-      (hash-set! decls (css-declaration-name decl) (css-declaration-value decl)))
-    (for ([(key value)
-           (in-hash (css-collect-custom-properties-in-selector-groups
+;; selector-ref* : procedure? (listof string?) string? [string?] -> (or/c string? #f)
+;;   Try ref against selectors in order and return the first concrete value.
+(define (selector-ref* ref selectors name [fallback #f])
+  (for/or ([selector (in-list selectors)])
+    (ref selector name fallback)))
+
+;; make-computed-selector-refs : (hash/c string? string?) (or/c css-stylesheet? #f) -> (values procedure? procedure?)
+;;   Build cached exact-selector computed-style/custom-property lookup helpers.
+(define (make-computed-selector-refs props rules)
+  (cond
+    [(not (css-stylesheet? rules))
+     (values (lambda (_selector _name [fallback #f]) fallback)
+             (lambda (_selector _name [fallback #f]) fallback))]
+    [else
+     (define defaults
+       (for/fold ([env (hash-copy bootstrap-defaults)])
+                 ([(key value) (in-hash props)])
+         (hash-set! env key value)
+         env))
+     (define style-cache (make-hash))
+     (define custom-cache (make-hash))
+     (define (style-map selector)
+       (hash-ref! style-cache selector
+                  (lambda ()
+                    (css-compute-style-for-selector-group
                      rules
-                     selectors))])
-      (hash-set! locals key value)))
-  (values decls locals))
-
-;; selector-style-ref : (hash/c string? string?) css-stylesheet? (listof string?) string? [string?] -> (or/c string? #f)
-;;   Resolve one style property or custom property from matching selector rules.
-(define (selector-style-ref props rules selectors name [fallback #f])
-  (define-values (decls locals)
-    (collect-selector-context props rules selectors))
-  (define env (hash-copy props))
-  (for ([(key value) (in-hash locals)])
-    (hash-set! env key value))
-  (define raw
-    (cond
-      [(hash-has-key? decls name)
-       (hash-ref decls name)]
-      [(hash-has-key? locals name)
-       (hash-ref locals name)]
-      [fallback
-       fallback]
-      [else
-       #f]))
-  (and raw
-       (resolve-css-value
-        raw
-        (lambda (lookup-key)
-          (cond
-            [(hash-has-key? env lookup-key)
-             (hash-ref env lookup-key)]
-            [(hash-has-key? bootstrap-defaults lookup-key)
-             (hash-ref bootstrap-defaults lookup-key)]
-            [else
-             #f])))))
+                     selector
+                     #:resolve-vars? #t
+                     #:defaults defaults))))
+     (define (custom-map selector)
+       (hash-ref! custom-cache selector
+                  (lambda ()
+                    (css-compute-custom-properties-for-selector-group
+                     rules
+                     selector
+                     #:resolve-vars? #t
+                     #:defaults defaults))))
+     (define (computed-style-ref selector name [fallback #f])
+       (hash-ref (style-map selector) (string-downcase name) fallback))
+     (define (computed-custom-ref selector name [fallback #f])
+       (hash-ref (custom-map selector) name fallback))
+     (values computed-style-ref computed-custom-ref)]))
 
 ;; meaningful-css-value? : (or/c string? #f) -> boolean?
 ;;   Check whether a CSS value carries concrete styling information.
@@ -300,931 +288,651 @@
        (not (member (string-downcase (string-trim value))
                     '("initial" "inherit" "unset" "revert" "revert-layer" "currentcolor")))))
 
-;; split-css-space-list : string? -> (listof string?)
-;;   Split a CSS shorthand value on top-level whitespace.
-(define (split-css-space-list text)
-  (define parts '())
-  (define current '())
-  (define paren-depth 0)
-  (define bracket-depth 0)
-  (define brace-depth 0)
-  (define (flush-current!)
-    (define part
-      (string-trim (apply string-append (reverse current))))
-    (when (not (string=? part ""))
-      (set! parts (cons part parts)))
-    (set! current '()))
-  (for ([ch (in-string text)])
-    (define s (string ch))
-    (cond
-      [(and (char-whitespace? ch)
-            (zero? paren-depth)
-            (zero? bracket-depth)
-            (zero? brace-depth))
-       (flush-current!)]
-      [else
-       (set! current (cons s current))
-       (let-values ([(new-paren new-bracket new-brace)
-                     (update-delimiter-depths s paren-depth bracket-depth brace-depth)])
-         (set! paren-depth new-paren)
-         (set! bracket-depth new-bracket)
-         (set! brace-depth new-brace))]))
-  (flush-current!)
-  (reverse parts))
-
-;; expand-box-shorthand : string? -> (list/c string? string? string? string?)
-;;   Expand one CSS box shorthand into top right bottom left values.
-(define (expand-box-shorthand text)
-  (define values (split-css-space-list text))
-  (case (length values)
-    [(1)
-     (list (first values) (first values) (first values) (first values))]
-    [(2)
-     (list (first values) (second values) (first values) (second values))]
-    [(3)
-     (list (first values) (second values) (third values) (second values))]
-    [else
-     (take values 4)]))
-
-(define border-style-keywords
-  '("none" "hidden" "dotted" "dashed" "solid" "double" "groove" "ridge" "inset" "outset"))
-
-;; border-width-fragment? : string? -> boolean?
-;;   Check whether token looks like a CSS border-width fragment.
-(define (border-width-fragment? token)
-  (or (member (string-downcase token) '("thin" "medium" "thick" "0"))
-      (regexp-match? #px"^-?(?:\\d+(?:\\.\\d+)?|\\.\\d+)(?:[a-zA-Z%]+)?$" token)
-      (regexp-match? #px"^(?:calc|min|max|clamp)\\(" token)))
-
-;; border-style-fragment? : string? -> boolean?
-;;   Check whether token names a CSS border style.
-(define (border-style-fragment? token)
-  (member (string-downcase token) border-style-keywords))
-
-;; parse-border-shorthand : string? -> (values (or/c string? #f) (or/c string? #f))
-;;   Extract width and color fragments from a simple CSS border shorthand.
-(define (parse-border-shorthand text)
-  (define parts (split-css-space-list text))
-  (define width
-    (for/or ([value (in-list parts)]
-             #:when (border-width-fragment? value))
-      value))
-  (define color
-    (for/fold ([found #f]) ([value (in-list parts)])
-      (if (or (border-width-fragment? value)
-              (border-style-fragment? value))
-          found
-          value)))
-  (values width color))
-
-;; selector-box-side-ref : (hash/c string? string?) css-stylesheet? (listof string?) string? symbol? [string?] -> (or/c string? #f)
-;;   Resolve a box longhand, falling back to the corresponding shorthand side.
-(define (selector-box-side-ref props rules selectors longhand side [fallback #f])
-  (define direct
-    (selector-style-ref props rules selectors longhand))
-  (if direct
-      direct
-      (let ([shorthand
-             (selector-style-ref props rules selectors
-                                 (case side
-                                   [(top right bottom left) "padding"]
-                                   [else "padding"]))])
-        (if shorthand
-            (match (expand-box-shorthand shorthand)
-              [(list top right bottom left)
-               (case side
-                 [(top) top]
-                 [(right) right]
-                 [(bottom) bottom]
-                 [(left) left])])
-            fallback))))
-
-;; selector-border-width-ref : (hash/c string? string?) css-stylesheet? (listof string?) string? string? [string?] -> (or/c string? #f)
-;;   Resolve a border-width, falling back to the corresponding shorthand.
-(define (selector-border-width-ref props rules selectors longhand shorthand [fallback #f])
-  (define direct
-    (selector-style-ref props rules selectors longhand))
-  (if direct
-      direct
-      (let ([raw (selector-style-ref props rules selectors shorthand)])
-        (if raw
-            (let-values ([(width _color) (parse-border-shorthand raw)])
-              (or width fallback))
-            fallback))))
-
-;; selector-border-color-ref : (hash/c string? string?) css-stylesheet? (listof string?) string? string? [string?] -> (or/c string? #f)
-;;   Resolve a border-color, falling back to the corresponding shorthand.
-(define (selector-border-color-ref props rules selectors longhand shorthand [fallback #f])
-  (define direct
-    (selector-style-ref props rules selectors longhand))
-  (if direct
-      direct
-      (let ([raw (selector-style-ref props rules selectors shorthand)])
-        (if raw
-            (let-values ([(_width color) (parse-border-shorthand raw)])
-              (or color fallback))
-            fallback))))
-
-;; first-style-ref : (hash/c string? string?) css-stylesheet? (listof (listof string?)) string? [string?] -> (or/c string? #f)
-;;   Resolve the first matching style property across selector groups.
-(define (first-style-ref props rules selector-groups name [fallback #f])
-  (or (for/or ([group (in-list selector-groups)])
-        (selector-style-ref props rules group name))
-      fallback))
-
-;; first-box-side-ref : (hash/c string? string?) css-stylesheet? (listof (listof string?)) string? symbol? [string?] -> (or/c string? #f)
-;;   Resolve the first matching box side across selector groups.
-(define (first-box-side-ref props rules selector-groups longhand side [fallback #f])
-  (or (for/or ([group (in-list selector-groups)])
-        (selector-box-side-ref props rules group longhand side))
-      fallback))
-
-;; variant-style-ref : (hash/c string? string?) css-stylesheet? string? string? [string?] -> (or/c string? #f)
-;;   Resolve one property/custom property from a component variant selector.
-(define (variant-style-ref props rules selector name [fallback #f])
-  (first-style-ref props rules (list (list selector)) name fallback))
-
-;; variant-box-side-ref : (hash/c string? string?) css-stylesheet? string? string? symbol? [string?] -> (or/c string? #f)
-;;   Resolve one box side from a component variant selector.
-(define (variant-box-side-ref props rules selector longhand side [fallback #f])
-  (first-box-side-ref props rules (list (list selector)) longhand side fallback))
-
-;; variant-border-width-ref : (hash/c string? string?) css-stylesheet? string? string? string? [string?] -> (or/c string? #f)
-;;   Resolve a border width from a component selector.
-(define (variant-border-width-ref props rules selector longhand shorthand [fallback #f])
-  (selector-border-width-ref props rules (list selector) longhand shorthand fallback))
-
-;; variant-border-color-ref : (hash/c string? string?) css-stylesheet? string? string? string? [string?] -> (or/c string? #f)
-;;   Resolve a border color from a component selector.
-(define (variant-border-color-ref props rules selector longhand shorthand [fallback #f])
-  (selector-border-color-ref props rules (list selector) longhand shorthand fallback))
-
 ;; extract-component-styles : (hash/c string? string?) css-stylesheet? -> (hash/c symbol? string?)
 ;;   Extract component-level Bootstrap styles that need more than root token mapping.
 (define (extract-component-styles props rules)
+  (define-values (nav-style-ref nav-custom-ref)
+    (make-computed-selector-refs props rules))
   (define nav-link-color
-    (first-style-ref props rules
-                     (list (list ".navbar-nav")
-                           (list ".nav")
-                           (list ".nav-link"))
-                     "--bs-nav-link-color"))
+    (selector-ref* nav-custom-ref
+                   '(".navbar-nav" ".nav" ".nav-link")
+                   "--bs-nav-link-color"))
   (define nav-link-hover
-    (first-style-ref props rules
-                     (list (list ".navbar-nav")
-                           (list ".nav")
-                           (list ".nav-link:hover"))
-                     "--bs-nav-link-hover-color"))
+    (selector-ref* nav-custom-ref
+                   '(".navbar-nav" ".nav" ".nav-link:hover")
+                   "--bs-nav-link-hover-color"))
   (define nav-link-disabled
-    (first-style-ref props rules
-                     (list (list ".navbar-nav")
-                           (list ".nav")
-                           (list ".nav-link.disabled"))
-                     "--bs-nav-link-disabled-color"))
+    (selector-ref* nav-custom-ref
+                   '(".navbar-nav" ".nav" ".nav-link.disabled")
+                   "--bs-nav-link-disabled-color"))
   (define nav-font-size
-    (first-style-ref props rules
-                     (list (list ".navbar .nav-link")
-                           (list ".nav-tabs .nav-link")
-                           (list ".nav-pills .nav-link")
-                           (list ".navbar")
-                           (list ".nav-link"))
-                     "font-size"))
+    (selector-ref* nav-style-ref
+                   '(".navbar .nav-link"
+                     ".nav-tabs .nav-link"
+                     ".nav-pills .nav-link"
+                     ".navbar"
+                     ".nav-link")
+                   "font-size"))
   (define nav-font-weight
-    (or (first-style-ref props rules
-                         (list (list ".navbar .nav-link")
-                               (list ".nav-tabs .nav-link")
-                               (list ".nav-pills .nav-link")
-                               (list ".navbar"))
-                         "font-weight")
-        (first-style-ref props rules
-                         (list (list ".nav")
-                               (list ".navbar-nav"))
-                         "--bs-nav-link-font-weight")))
+    (or (nav-style-ref ".navbar .nav-link" "font-weight")
+        (nav-style-ref ".nav-tabs .nav-link" "font-weight")
+        (nav-style-ref ".nav-pills .nav-link" "font-weight")
+        (nav-style-ref ".navbar" "font-weight")
+        (nav-custom-ref ".nav" "--bs-nav-link-font-weight")
+        (nav-custom-ref ".navbar-nav" "--bs-nav-link-font-weight")))
   (define nav-text-transform
-    (first-style-ref props rules
-                     (list (list ".navbar .nav-link")
-                           (list ".nav-tabs .nav-link")
-                           (list ".nav-pills .nav-link")
-                           (list ".navbar"))
-                     "text-transform"))
+    (or (nav-style-ref ".navbar .nav-link" "text-transform")
+        (nav-style-ref ".nav-tabs .nav-link" "text-transform")
+        (nav-style-ref ".nav-pills .nav-link" "text-transform")
+        (nav-style-ref ".navbar" "text-transform")))
   (define nav-link-padding-y
-    (or (first-style-ref props rules
-                         (list (list ".navbar-nav")
-                               (list ".nav"))
-                         "--bs-nav-link-padding-y")
-        (first-style-ref props rules
-                         (list (list ".navbar-nav .nav-link")
-                               (list ".nav-link"))
-                         "padding-top")))
+    (or (nav-custom-ref ".navbar-nav" "--bs-nav-link-padding-y")
+        (nav-custom-ref ".nav" "--bs-nav-link-padding-y")
+        (nav-style-ref ".navbar-nav .nav-link" "padding-top")
+        (nav-style-ref ".nav-link" "padding-top")))
   (define nav-link-padding-x
-    (or (first-style-ref props rules
-                         (list (list ".navbar")
-                               (list ".nav"))
-                         "--bs-navbar-nav-link-padding-x")
-        (first-style-ref props rules
-                         (list (list ".nav")
-                               (list ".navbar-nav"))
-                         "--bs-nav-link-padding-x")
-        (first-style-ref props rules
-                         (list (list ".navbar-nav .nav-link")
-                               (list ".nav-link"))
-                         "padding-left")))
+    (or (nav-custom-ref ".navbar" "--bs-navbar-nav-link-padding-x")
+        (nav-custom-ref ".nav" "--bs-navbar-nav-link-padding-x")
+        (nav-custom-ref ".nav" "--bs-nav-link-padding-x")
+        (nav-custom-ref ".navbar-nav" "--bs-nav-link-padding-x")
+        (nav-style-ref ".navbar-nav .nav-link" "padding-left")
+        (nav-style-ref ".nav-link" "padding-left")))
   (define navbar-brand-size
-    (or (first-style-ref props rules
-                         (list (list ".navbar"))
-                         "--bs-navbar-brand-font-size")
-        (first-style-ref props rules
-                         (list (list ".navbar-brand"))
-                         "font-size")))
+    (or (nav-custom-ref ".navbar" "--bs-navbar-brand-font-size")
+        (nav-style-ref ".navbar-brand" "font-size")))
   (define navbar-brand-gap
-    (or (first-style-ref props rules
-                         (list (list ".navbar"))
-                         "--bs-navbar-brand-margin-end")
-        (first-style-ref props rules
-                         (list (list ".navbar-brand"))
-                         "margin-right")))
+    (or (nav-custom-ref ".navbar" "--bs-navbar-brand-margin-end")
+        (nav-style-ref ".navbar-brand" "margin-right")))
   (define navbar-brand-color
-    (or (first-style-ref props rules
-                         (list (list ".navbar"))
-                         "--bs-navbar-brand-color")
-        (first-style-ref props rules
-                         (list (list ".navbar-brand"))
-                         "color")))
+    (or (nav-custom-ref ".navbar" "--bs-navbar-brand-color")
+        (nav-style-ref ".navbar-brand" "color")))
   (define navbar-brand-hover
-    (or (first-style-ref props rules
-                         (list (list ".navbar"))
-                         "--bs-navbar-brand-hover-color")
-        (first-style-ref props rules
-                         (list (list ".navbar-brand:hover"))
-                         "color")))
+    (or (nav-custom-ref ".navbar" "--bs-navbar-brand-hover-color")
+        (nav-style-ref ".navbar-brand:hover" "color")))
   (define navbar-link-color
-    (or (first-style-ref props rules
-                         (list (list ".navbar"))
-                         "--bs-navbar-color")
+    (or (nav-custom-ref ".navbar" "--bs-navbar-color")
         nav-link-color))
   (define navbar-link-hover
-    (or (first-style-ref props rules
-                         (list (list ".navbar"))
-                         "--bs-navbar-hover-color")
+    (or (nav-custom-ref ".navbar" "--bs-navbar-hover-color")
         nav-link-hover))
   (define navbar-link-active
-    (or (first-style-ref props rules
-                         (list (list ".navbar"))
-                         "--bs-navbar-active-color")
-        (first-style-ref props rules
-                         (list (list ".navbar-nav .nav-link.active"))
-                         "color")
+    (or (nav-custom-ref ".navbar" "--bs-navbar-active-color")
+        (nav-style-ref ".navbar-nav .nav-link.active" "color")
         nav-link-hover))
   (define navbar-link-disabled
-    (or (first-style-ref props rules
-                         (list (list ".navbar"))
-                         "--bs-navbar-disabled-color")
+    (or (nav-custom-ref ".navbar" "--bs-navbar-disabled-color")
         nav-link-disabled))
   (define tab-border-color
-    (or (first-style-ref props rules
-                         (list (list ".nav-tabs"))
-                         "--bs-nav-tabs-border-color")
-        (first-style-ref props rules
-                         (list (list ".nav-tabs .nav-link"))
-                         "border-color")))
+    (or (nav-custom-ref ".nav-tabs" "--bs-nav-tabs-border-color")
+        (nav-style-ref ".nav-tabs .nav-link" "border-color")))
   (define tab-border-radius
-    (or (first-style-ref props rules
-                         (list (list ".nav-tabs"))
-                         "--bs-nav-tabs-border-radius")
-        (first-style-ref props rules
-                         (list (list ".nav-tabs .nav-link"))
-                         "border-radius")))
+    (or (nav-custom-ref ".nav-tabs" "--bs-nav-tabs-border-radius")
+        (nav-style-ref ".nav-tabs .nav-link" "border-radius")))
   (define tab-hover-border
-    (or (first-style-ref props rules
-                         (list (list ".nav-tabs"))
-                         "--bs-nav-tabs-link-hover-border-color")
-        (first-style-ref props rules
-                         (list (list ".nav-tabs .nav-link:hover"))
-                         "border-color")))
+    (or (nav-custom-ref ".nav-tabs" "--bs-nav-tabs-link-hover-border-color")
+        (nav-style-ref ".nav-tabs .nav-link:hover" "border-color")))
   (define tab-bg
-    (first-style-ref props rules
-                     (list (list ".nav-tabs .nav-link"))
-                     "background-color"))
+    (nav-style-ref ".nav-tabs .nav-link" "background-color"))
   (define tab-color
-    (or (first-style-ref props rules
-                         (list (list ".nav-tabs .nav-link"))
-                         "color")
+    (or (nav-style-ref ".nav-tabs .nav-link" "color")
         nav-link-color))
   (define tab-active-color
-    (or (first-style-ref props rules
-                         (list (list ".nav-tabs"))
-                         "--bs-nav-tabs-link-active-color")
-        (first-style-ref props rules
-                         (list (list ".nav-tabs .nav-link.active"))
-                         "color")))
+    (or (nav-custom-ref ".nav-tabs" "--bs-nav-tabs-link-active-color")
+        (nav-style-ref ".nav-tabs .nav-link.active" "color")))
   (define tab-active-bg
-    (or (first-style-ref props rules
-                         (list (list ".nav-tabs"))
-                         "--bs-nav-tabs-link-active-bg")
-        (first-style-ref props rules
-                         (list (list ".nav-tabs .nav-link.active"))
-                         "background-color")))
+    (or (nav-custom-ref ".nav-tabs" "--bs-nav-tabs-link-active-bg")
+        (nav-style-ref ".nav-tabs .nav-link.active" "background-color")))
   (define tab-active-border
-    (or (first-style-ref props rules
-                         (list (list ".nav-tabs"))
-                         "--bs-nav-tabs-link-active-border-color")
-        (first-style-ref props rules
-                         (list (list ".nav-tabs .nav-link.active"))
-                         "border-color")))
+    (or (nav-custom-ref ".nav-tabs" "--bs-nav-tabs-link-active-border-color")
+        (nav-style-ref ".nav-tabs .nav-link.active" "border-color")))
   (define pill-color
-    (or (first-style-ref props rules
-                         (list (list ".nav-pills .nav-link"))
-                         "color")
+    (or (nav-style-ref ".nav-pills .nav-link" "color")
         nav-link-color))
   (define pill-border
-    (first-style-ref props rules
-                     (list (list ".nav-pills .nav-link"))
-                     "border-color"))
+    (nav-style-ref ".nav-pills .nav-link" "border-color"))
   (define pill-active-color
-    (or (first-style-ref props rules
-                         (list (list ".nav-pills"))
-                         "--bs-nav-pills-link-active-color")
-        (first-style-ref props rules
-                         (list (list ".nav-pills .nav-link.active"))
-                         "color")))
+    (or (nav-custom-ref ".nav-pills" "--bs-nav-pills-link-active-color")
+        (nav-style-ref ".nav-pills .nav-link.active" "color")))
   (define pill-active-bg
-    (or (first-style-ref props rules
-                         (list (list ".nav-pills"))
-                         "--bs-nav-pills-link-active-bg")
-        (first-style-ref props rules
-                         (list (list ".nav-pills .nav-link.active"))
-                         "background-color")))
+    (or (nav-custom-ref ".nav-pills" "--bs-nav-pills-link-active-bg")
+        (nav-style-ref ".nav-pills .nav-link.active" "background-color")))
   (define pill-radius
-    (or (first-style-ref props rules
-                         (list (list ".nav-pills"))
-                         "--bs-nav-pills-border-radius")
-        (first-style-ref props rules
-                         (list (list ".nav-pills .nav-link"))
-                         "border-radius")))
+    (or (nav-custom-ref ".nav-pills" "--bs-nav-pills-border-radius")
+        (nav-style-ref ".nav-pills .nav-link" "border-radius")))
+  (define-values (computed-style-ref computed-custom-ref)
+    (make-computed-selector-refs props rules))
   (define dropdown-bg
-    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-bg")
-        (variant-style-ref props rules ".dropdown-menu" "background-color")))
+    (or (computed-custom-ref ".dropdown-menu" "--bs-dropdown-bg")
+        (computed-style-ref ".dropdown-menu" "background-color")))
   (define dropdown-color
-    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-color")
-        (variant-style-ref props rules ".dropdown-item" "color")))
+    (or (computed-custom-ref ".dropdown-menu" "--bs-dropdown-color")
+        (computed-style-ref ".dropdown-item" "color")))
   (define dropdown-link-color
-    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-link-color")
-        (first-style-ref props rules
-                         (list (list ".dropdown-menu .dropdown-item")
-                               (list ".dropdown-item"))
-                         "color")
+    (or (computed-custom-ref ".dropdown-menu" "--bs-dropdown-link-color")
+        (computed-style-ref ".dropdown-menu .dropdown-item" "color")
+        (computed-style-ref ".dropdown-item" "color")
         dropdown-color))
   (define dropdown-border-color
-    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-border-color")
-        (variant-border-color-ref props rules ".dropdown-menu" "border-color" "border")))
+    (or (computed-custom-ref ".dropdown-menu" "--bs-dropdown-border-color")
+        (computed-style-ref ".dropdown-menu" "border-color")))
   (define dropdown-border-width
-    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-border-width")
-        (variant-border-width-ref props rules ".dropdown-menu" "border-width" "border")))
+    (or (computed-custom-ref ".dropdown-menu" "--bs-dropdown-border-width")
+        (computed-style-ref ".dropdown-menu" "border-width")))
   (define dropdown-radius
-    (or (variant-style-ref props rules ".dropdown-menu" "border-radius")
-        (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-border-radius")))
+    (or (computed-style-ref ".dropdown-menu" "border-radius")
+        (computed-custom-ref ".dropdown-menu" "--bs-dropdown-border-radius")))
   (define dropdown-shadow
-    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-box-shadow")
-        (variant-style-ref props rules ".dropdown-menu" "box-shadow")))
+    (or (computed-custom-ref ".dropdown-menu" "--bs-dropdown-box-shadow")
+        (computed-style-ref ".dropdown-menu" "box-shadow")))
   (define dropdown-padding-y
-    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-padding-y")
-        (variant-box-side-ref props rules ".dropdown-menu" "padding-top" 'top)))
+    (or (computed-custom-ref ".dropdown-menu" "--bs-dropdown-padding-y")
+        (computed-style-ref ".dropdown-menu" "padding-top")))
   (define dropdown-header-color
-    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-header-color")
-        (variant-style-ref props rules ".dropdown-header" "color")))
+    (or (computed-custom-ref ".dropdown-menu" "--bs-dropdown-header-color")
+        (computed-style-ref ".dropdown-header" "color")))
   (define dropdown-header-padding-x
-    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-header-padding-x")
-        (variant-box-side-ref props rules ".dropdown-header" "padding-left" 'left)))
+    (or (computed-custom-ref ".dropdown-menu" "--bs-dropdown-header-padding-x")
+        (computed-style-ref ".dropdown-header" "padding-left")))
   (define dropdown-header-padding-y
-    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-header-padding-y")
-        (variant-box-side-ref props rules ".dropdown-header" "padding-top" 'top)))
+    (or (computed-custom-ref ".dropdown-menu" "--bs-dropdown-header-padding-y")
+        (computed-style-ref ".dropdown-header" "padding-top")))
   (define dropdown-divider-bg
-    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-divider-bg")
-        (variant-border-color-ref props rules ".dropdown-divider" "border-top-color" "border-top")))
+    (or (computed-custom-ref ".dropdown-menu" "--bs-dropdown-divider-bg")
+        (computed-style-ref ".dropdown-divider" "border-top-color")))
   (define dropdown-item-padding-x
-    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-item-padding-x")
-        (variant-box-side-ref props rules ".dropdown-item" "padding-left" 'left)))
+    (or (computed-custom-ref ".dropdown-menu" "--bs-dropdown-item-padding-x")
+        (computed-style-ref ".dropdown-item" "padding-left")))
   (define dropdown-item-padding-y
-    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-item-padding-y")
-        (variant-box-side-ref props rules ".dropdown-item" "padding-top" 'top)))
+    (or (computed-custom-ref ".dropdown-menu" "--bs-dropdown-item-padding-y")
+        (computed-style-ref ".dropdown-item" "padding-top")))
   (define dropdown-item-font-size
-    (first-style-ref props rules
-                     (list (list ".dropdown-menu .dropdown-item")
-                           (list ".dropdown-item"))
-                     "font-size"))
+    (or (computed-style-ref ".dropdown-menu .dropdown-item" "font-size")
+        (computed-style-ref ".dropdown-item" "font-size")))
   (define dropdown-item-font-weight
-    (first-style-ref props rules
-                     (list (list ".dropdown-menu .dropdown-item")
-                           (list ".dropdown-item"))
-                     "font-weight"))
+    (or (computed-style-ref ".dropdown-menu .dropdown-item" "font-weight")
+        (computed-style-ref ".dropdown-item" "font-weight")))
   (define dropdown-item-text-transform
-    (first-style-ref props rules
-                     (list (list ".dropdown-menu .dropdown-item")
-                           (list ".dropdown-item"))
-                     "text-transform"))
+    (or (computed-style-ref ".dropdown-menu .dropdown-item" "text-transform")
+        (computed-style-ref ".dropdown-item" "text-transform")))
   (define dropdown-item-radius
-    (variant-style-ref props rules ".dropdown-item" "border-radius"))
+    (computed-style-ref ".dropdown-item" "border-radius"))
   (define dropdown-item-hover-bg
-    (first-style-ref props rules
-                     (list (list ".dropdown-item:hover")
-                           (list ".dropdown-item:focus"))
-                     "background-color"))
+    (or (computed-style-ref ".dropdown-item:hover" "background-color")
+        (computed-style-ref ".dropdown-item:focus" "background-color")))
   (define dropdown-item-hover-color
-    (first-style-ref props rules
-                     (list (list ".dropdown-item:hover")
-                           (list ".dropdown-item:focus"))
-                     "color"))
+    (or (computed-style-ref ".dropdown-item:hover" "color")
+        (computed-style-ref ".dropdown-item:focus" "color")))
   (define dropdown-item-active-bg
-    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-link-active-bg")
-        (first-style-ref props rules
-                         (list (list ".dropdown-item.active")
-                               (list ".dropdown-item:active"))
-                         "background-color")))
+    (or (computed-custom-ref ".dropdown-menu" "--bs-dropdown-link-active-bg")
+        (computed-style-ref ".dropdown-item.active" "background-color")
+        (computed-style-ref ".dropdown-item:active" "background-color")))
   (define dropdown-item-active-color
-    (or (variant-style-ref props rules ".dropdown-menu" "--bs-dropdown-link-active-color")
-        (first-style-ref props rules
-                         (list (list ".dropdown-item.active")
-                               (list ".dropdown-item:active"))
-                         "color")))
+    (or (computed-custom-ref ".dropdown-menu" "--bs-dropdown-link-active-color")
+        (computed-style-ref ".dropdown-item.active" "color")
+        (computed-style-ref ".dropdown-item:active" "color")))
   (define tooltip-bg
-    (or (variant-style-ref props rules ".tooltip" "--bs-tooltip-bg")
-        (variant-style-ref props rules ".tooltip-inner" "background-color")))
+    (or (computed-custom-ref ".tooltip" "--bs-tooltip-bg")
+        (computed-style-ref ".tooltip-inner" "background-color")))
   (define tooltip-color
-    (or (variant-style-ref props rules ".tooltip" "--bs-tooltip-color")
-        (variant-style-ref props rules ".tooltip-inner" "color")))
+    (or (computed-custom-ref ".tooltip" "--bs-tooltip-color")
+        (computed-style-ref ".tooltip-inner" "color")))
   (define tooltip-font-size
-    (or (variant-style-ref props rules ".tooltip" "--bs-tooltip-font-size")
-        (variant-style-ref props rules ".tooltip" "font-size")
-        (variant-style-ref props rules ".tooltip-inner" "font-size")))
+    (or (computed-custom-ref ".tooltip" "--bs-tooltip-font-size")
+        (computed-style-ref ".tooltip" "font-size")
+        (computed-style-ref ".tooltip-inner" "font-size")))
   (define tooltip-radius
-    (or (variant-style-ref props rules ".tooltip-inner" "border-radius")
-        (variant-style-ref props rules ".tooltip" "--bs-tooltip-border-radius")))
+    (or (computed-style-ref ".tooltip-inner" "border-radius")
+        (computed-custom-ref ".tooltip" "--bs-tooltip-border-radius")))
   (define tooltip-opacity
-    (or (variant-style-ref props rules ".tooltip" "--bs-tooltip-opacity")
-        (variant-style-ref props rules ".tooltip" "opacity")))
+    (or (computed-custom-ref ".tooltip" "--bs-tooltip-opacity")
+        (computed-style-ref ".tooltip" "opacity")))
   (define tooltip-padding-x
-    (or (variant-style-ref props rules ".tooltip" "--bs-tooltip-padding-x")
-        (variant-box-side-ref props rules ".tooltip-inner" "padding-left" 'left)))
+    (or (computed-custom-ref ".tooltip" "--bs-tooltip-padding-x")
+        (computed-style-ref ".tooltip-inner" "padding-left")))
   (define tooltip-padding-y
-    (or (variant-style-ref props rules ".tooltip" "--bs-tooltip-padding-y")
-        (variant-box-side-ref props rules ".tooltip-inner" "padding-top" 'top)))
+    (or (computed-custom-ref ".tooltip" "--bs-tooltip-padding-y")
+        (computed-style-ref ".tooltip-inner" "padding-top")))
   (define popover-bg
-    (or (variant-style-ref props rules ".popover" "--bs-popover-bg")
-        (variant-style-ref props rules ".popover" "background-color")))
+    (or (computed-custom-ref ".popover" "--bs-popover-bg")
+        (computed-style-ref ".popover" "background-color")))
   (define popover-max-width
-    (or (variant-style-ref props rules ".popover" "--bs-popover-max-width")
-        (variant-style-ref props rules ".popover" "max-width")))
+    (or (computed-custom-ref ".popover" "--bs-popover-max-width")
+        (computed-style-ref ".popover" "max-width")))
   (define popover-font-size
-    (or (variant-style-ref props rules ".popover" "--bs-popover-font-size")
-        (variant-style-ref props rules ".popover" "font-size")))
+    (or (computed-custom-ref ".popover" "--bs-popover-font-size")
+        (computed-style-ref ".popover" "font-size")))
   (define popover-color
-    (or (variant-style-ref props rules ".popover" "--bs-popover-body-color")
-        (variant-style-ref props rules ".popover" "--bs-popover-color")
-        (variant-style-ref props rules ".popover-body" "color")
-        (variant-style-ref props rules ".popover" "color")))
+    (or (computed-custom-ref ".popover" "--bs-popover-body-color")
+        (computed-custom-ref ".popover" "--bs-popover-color")
+        (computed-style-ref ".popover-body" "color")
+        (computed-style-ref ".popover" "color")))
   (define popover-border-color
-    (or (variant-style-ref props rules ".popover" "--bs-popover-border-color")
-        (variant-border-color-ref props rules ".popover" "border-color" "border")))
+    (or (computed-custom-ref ".popover" "--bs-popover-border-color")
+        (computed-style-ref ".popover" "border-color")))
   (define popover-border-width
-    (or (variant-style-ref props rules ".popover" "--bs-popover-border-width")
-        (variant-border-width-ref props rules ".popover" "border-width" "border")))
+    (or (computed-custom-ref ".popover" "--bs-popover-border-width")
+        (computed-style-ref ".popover" "border-width")))
   (define popover-radius
-    (or (variant-style-ref props rules ".popover" "border-radius")
-        (variant-style-ref props rules ".popover" "--bs-popover-border-radius")))
+    (or (computed-style-ref ".popover" "border-radius")
+        (computed-custom-ref ".popover" "--bs-popover-border-radius")))
   (define popover-shadow
-    (or (variant-style-ref props rules ".popover" "--bs-popover-box-shadow")
-        (variant-style-ref props rules ".popover" "box-shadow")))
+    (or (computed-custom-ref ".popover" "--bs-popover-box-shadow")
+        (computed-style-ref ".popover" "box-shadow")))
   (define popover-arrow-width
-    (or (variant-style-ref props rules ".popover" "--bs-popover-arrow-width")
+    (or (computed-custom-ref ".popover" "--bs-popover-arrow-width")
         "1rem"))
   (define popover-arrow-height
-    (or (variant-style-ref props rules ".popover" "--bs-popover-arrow-height")
+    (or (computed-custom-ref ".popover" "--bs-popover-arrow-height")
         "0.5rem"))
   (define popover-header-bg
-    (or (variant-style-ref props rules ".popover" "--bs-popover-header-bg")
-        (variant-style-ref props rules ".popover-header" "background-color")))
+    (or (computed-custom-ref ".popover" "--bs-popover-header-bg")
+        (computed-style-ref ".popover-header" "background-color")))
   (define popover-header-color
-    (or (variant-style-ref props rules ".popover" "--bs-popover-header-color")
-        (variant-style-ref props rules ".popover-header" "color")))
+    (or (computed-custom-ref ".popover" "--bs-popover-header-color")
+        (computed-style-ref ".popover-header" "color")))
   (define popover-header-padding-x
-    (or (variant-style-ref props rules ".popover" "--bs-popover-header-padding-x")
-        (variant-box-side-ref props rules ".popover-header" "padding-left" 'left)))
+    (or (computed-custom-ref ".popover" "--bs-popover-header-padding-x")
+        (computed-style-ref ".popover-header" "padding-left")))
   (define popover-header-padding-y
-    (or (variant-style-ref props rules ".popover" "--bs-popover-header-padding-y")
-        (variant-box-side-ref props rules ".popover-header" "padding-top" 'top)))
+    (or (computed-custom-ref ".popover" "--bs-popover-header-padding-y")
+        (computed-style-ref ".popover-header" "padding-top")))
   (define popover-body-padding-x
-    (or (variant-style-ref props rules ".popover" "--bs-popover-body-padding-x")
-        (variant-box-side-ref props rules ".popover-body" "padding-left" 'left)))
+    (or (computed-custom-ref ".popover" "--bs-popover-body-padding-x")
+        (computed-style-ref ".popover-body" "padding-left")))
   (define popover-body-padding-y
-    (or (variant-style-ref props rules ".popover" "--bs-popover-body-padding-y")
-        (variant-box-side-ref props rules ".popover-body" "padding-top" 'top)))
+    (or (computed-custom-ref ".popover" "--bs-popover-body-padding-y")
+        (computed-style-ref ".popover-body" "padding-top")))
   (define popover-title-font-size
-    (or (variant-style-ref props rules ".popover-header" "font-size")
-        (variant-style-ref props rules ".popover-header" "--bs-popover-header-font-size")))
+    (or (computed-style-ref ".popover-header" "font-size")
+        (computed-custom-ref ".popover-header" "--bs-popover-header-font-size")))
   (define popover-title-font-weight
-    (or (variant-style-ref props rules ".popover-header" "font-weight")
-        (variant-style-ref props rules "h3.popover-header" "font-weight")))
+    (or (computed-style-ref ".popover-header" "font-weight")
+        (computed-style-ref "h3.popover-header" "font-weight")))
+  (define-values (button-style-ref button-custom-ref)
+    (make-computed-selector-refs props rules))
   (define btn-padding-x
-    (or (variant-style-ref props rules ".btn" "--bs-btn-padding-x")
-        (variant-box-side-ref props rules ".btn" "padding-left" 'left)))
+    (or (button-custom-ref ".btn" "--bs-btn-padding-x")
+        (button-style-ref ".btn" "padding-left")))
   (define btn-padding-y
-    (or (variant-style-ref props rules ".btn" "--bs-btn-padding-y")
-        (variant-box-side-ref props rules ".btn" "padding-top" 'top)))
+    (or (button-custom-ref ".btn" "--bs-btn-padding-y")
+        (button-style-ref ".btn" "padding-top")))
   (define btn-font-size
-    (or (variant-style-ref props rules ".btn" "font-size")
-        (variant-style-ref props rules ".btn" "--bs-btn-font-size")))
+    (or (button-style-ref ".btn" "font-size")
+        (button-custom-ref ".btn" "--bs-btn-font-size")))
   (define btn-font-weight
-    (or (variant-style-ref props rules ".btn" "font-weight")
-        (variant-style-ref props rules ".btn" "--bs-btn-font-weight")))
+    (or (button-style-ref ".btn" "font-weight")
+        (button-custom-ref ".btn" "--bs-btn-font-weight")))
   (define btn-line-height
-    (or (variant-style-ref props rules ".btn" "line-height")
-        (variant-style-ref props rules ".btn" "--bs-btn-line-height")))
+    (or (button-style-ref ".btn" "line-height")
+        (button-custom-ref ".btn" "--bs-btn-line-height")))
   (define btn-radius
-    (or (variant-style-ref props rules ".btn" "border-radius")
-        (variant-style-ref props rules "button" "border-radius")))
+    (or (button-style-ref ".btn" "border-radius")
+        (button-style-ref "button" "border-radius")))
   (define btn-text-transform
-    (or (variant-style-ref props rules ".btn" "text-transform")
+    (or (button-style-ref ".btn" "text-transform")
         "none"))
   (define btn-secondary-bg
-    (or (variant-style-ref props rules ".btn-secondary" "--bs-btn-bg")
-        (variant-style-ref props rules ".btn-secondary" "background-color")))
+    (or (button-custom-ref ".btn-secondary" "--bs-btn-bg")
+        (button-style-ref ".btn-secondary" "background-color")))
   (define btn-secondary-border
-    (or (variant-style-ref props rules ".btn-secondary" "--bs-btn-border-color")
-        (variant-style-ref props rules ".btn-secondary" "border-color")))
+    (or (button-custom-ref ".btn-secondary" "--bs-btn-border-color")
+        (button-style-ref ".btn-secondary" "border-color")))
   (define btn-secondary-color
-    (or (variant-style-ref props rules ".btn-secondary" "--bs-btn-color")
-        (variant-style-ref props rules ".btn-secondary" "color")))
+    (or (button-custom-ref ".btn-secondary" "--bs-btn-color")
+        (button-style-ref ".btn-secondary" "color")))
   (define btn-secondary-hover-bg
-    (or (variant-style-ref props rules ".btn-secondary" "--bs-btn-hover-bg")
-        (variant-style-ref props rules ".btn-secondary:hover" "background-color")))
+    (or (button-custom-ref ".btn-secondary" "--bs-btn-hover-bg")
+        (button-style-ref ".btn-secondary:hover" "background-color")))
   (define btn-secondary-hover-border
-    (or (variant-style-ref props rules ".btn-secondary" "--bs-btn-hover-border-color")
-        (variant-style-ref props rules ".btn-secondary:hover" "border-color")))
+    (or (button-custom-ref ".btn-secondary" "--bs-btn-hover-border-color")
+        (button-style-ref ".btn-secondary:hover" "border-color")))
   (define btn-light-bg
-    (or (variant-style-ref props rules ".btn-light" "--bs-btn-bg")
-        (variant-style-ref props rules ".btn-light" "background-color")))
+    (or (button-custom-ref ".btn-light" "--bs-btn-bg")
+        (button-style-ref ".btn-light" "background-color")))
   (define btn-light-border
-    (or (variant-style-ref props rules ".btn-light" "--bs-btn-border-color")
-        (variant-style-ref props rules ".btn-light" "border-color")))
+    (or (button-custom-ref ".btn-light" "--bs-btn-border-color")
+        (button-style-ref ".btn-light" "border-color")))
   (define btn-light-color
-    (or (variant-style-ref props rules ".btn-light" "--bs-btn-color")
-        (variant-style-ref props rules ".btn-light" "color")))
+    (or (button-custom-ref ".btn-light" "--bs-btn-color")
+        (button-style-ref ".btn-light" "color")))
   (define btn-light-hover-bg
-    (or (variant-style-ref props rules ".btn-light" "--bs-btn-hover-bg")
-        (variant-style-ref props rules ".btn-light:hover" "background-color")))
+    (or (button-custom-ref ".btn-light" "--bs-btn-hover-bg")
+        (button-style-ref ".btn-light:hover" "background-color")))
   (define btn-light-hover-border
-    (or (variant-style-ref props rules ".btn-light" "--bs-btn-hover-border-color")
-        (variant-style-ref props rules ".btn-light:hover" "border-color")))
+    (or (button-custom-ref ".btn-light" "--bs-btn-hover-border-color")
+        (button-style-ref ".btn-light:hover" "border-color")))
   (define btn-outline-secondary-color
-    (or (variant-style-ref props rules ".btn-outline-secondary" "--bs-btn-color")
-        (variant-style-ref props rules ".btn-outline-secondary" "color")))
+    (or (button-custom-ref ".btn-outline-secondary" "--bs-btn-color")
+        (button-style-ref ".btn-outline-secondary" "color")))
   (define btn-outline-secondary-border
-    (or (variant-style-ref props rules ".btn-outline-secondary" "--bs-btn-border-color")
-        (variant-style-ref props rules ".btn-outline-secondary" "border-color")))
+    (or (button-custom-ref ".btn-outline-secondary" "--bs-btn-border-color")
+        (button-style-ref ".btn-outline-secondary" "border-color")))
   (define btn-outline-secondary-hover-bg
-    (or (variant-style-ref props rules ".btn-outline-secondary" "--bs-btn-hover-bg")
-        (variant-style-ref props rules ".btn-outline-secondary:hover" "background-color")))
+    (or (button-custom-ref ".btn-outline-secondary" "--bs-btn-hover-bg")
+        (button-style-ref ".btn-outline-secondary:hover" "background-color")))
   (define btn-outline-secondary-hover-border
-    (or (variant-style-ref props rules ".btn-outline-secondary" "--bs-btn-hover-border-color")
-        (variant-style-ref props rules ".btn-outline-secondary:hover" "border-color")))
+    (or (button-custom-ref ".btn-outline-secondary" "--bs-btn-hover-border-color")
+        (button-style-ref ".btn-outline-secondary:hover" "border-color")))
   (define btn-outline-secondary-hover-color
-    (or (variant-style-ref props rules ".btn-outline-secondary" "--bs-btn-hover-color")
-        (variant-style-ref props rules ".btn-outline-secondary:hover" "color")))
+    (or (button-custom-ref ".btn-outline-secondary" "--bs-btn-hover-color")
+        (button-style-ref ".btn-outline-secondary:hover" "color")))
   (define btn-success-color
-    (or (variant-style-ref props rules ".btn-success" "--bs-btn-color")
-        (variant-style-ref props rules ".btn-success" "color")))
+    (or (button-custom-ref ".btn-success" "--bs-btn-color")
+        (button-style-ref ".btn-success" "color")))
   (define btn-info-color
-    (or (variant-style-ref props rules ".btn-info" "--bs-btn-color")
-        (variant-style-ref props rules ".btn-info" "color")))
+    (or (button-custom-ref ".btn-info" "--bs-btn-color")
+        (button-style-ref ".btn-info" "color")))
   (define btn-warning-color
-    (or (variant-style-ref props rules ".btn-warning" "--bs-btn-color")
-        (variant-style-ref props rules ".btn-warning" "color")))
+    (or (button-custom-ref ".btn-warning" "--bs-btn-color")
+        (button-style-ref ".btn-warning" "color")))
   (define btn-danger-color
-    (or (variant-style-ref props rules ".btn-danger" "--bs-btn-color")
-        (variant-style-ref props rules ".btn-danger" "color")))
+    (or (button-custom-ref ".btn-danger" "--bs-btn-color")
+        (button-style-ref ".btn-danger" "color")))
+  (define-values (surface-style-ref surface-custom-ref)
+    (make-computed-selector-refs props rules))
   (define card-bg
-    (or (variant-style-ref props rules ".card" "--bs-card-bg")
-        (variant-style-ref props rules ".card" "background-color")))
+    (or (surface-custom-ref ".card" "--bs-card-bg")
+        (surface-style-ref ".card" "background-color")))
   (define card-radius
-    (variant-style-ref props rules ".card" "border-radius"))
+    (surface-style-ref ".card" "border-radius"))
   (define card-shadow
-    (or (variant-style-ref props rules ".card" "--bs-card-box-shadow")
-        (variant-style-ref props rules ".card" "box-shadow")))
+    (or (surface-custom-ref ".card" "--bs-card-box-shadow")
+        (surface-style-ref ".card" "box-shadow")))
   (define card-border-color
-    (or (variant-style-ref props rules ".card" "--bs-card-border-color")
-        (variant-style-ref props rules ".card" "border-color")))
+    (or (surface-custom-ref ".card" "--bs-card-border-color")
+        (surface-style-ref ".card" "border-color")))
   (define card-cap-bg
-    (or (variant-style-ref props rules ".card" "--bs-card-cap-bg")
-        (variant-style-ref props rules ".card-header" "background-color")))
+    (or (surface-custom-ref ".card" "--bs-card-cap-bg")
+        (surface-style-ref ".card-header" "background-color")))
   (define card-cap-color
-    (or (variant-style-ref props rules ".card" "--bs-card-cap-color")
-        (variant-style-ref props rules ".card-header" "color")))
+    (or (surface-custom-ref ".card" "--bs-card-cap-color")
+        (surface-style-ref ".card-header" "color")))
   (define card-cap-padding-x
-    (or (variant-style-ref props rules ".card" "--bs-card-cap-padding-x")
-        (variant-box-side-ref props rules ".card-header" "padding-left" 'left)))
+    (or (surface-custom-ref ".card" "--bs-card-cap-padding-x")
+        (surface-style-ref ".card-header" "padding-left")))
   (define card-cap-padding-y
-    (or (variant-style-ref props rules ".card" "--bs-card-cap-padding-y")
-        (variant-box-side-ref props rules ".card-header" "padding-top" 'top)))
+    (or (surface-custom-ref ".card" "--bs-card-cap-padding-y")
+        (surface-style-ref ".card-header" "padding-top")))
   (define card-body-padding-x
-    (or (variant-style-ref props rules ".card" "--bs-card-spacer-x")
-        (variant-box-side-ref props rules ".card-body" "padding-left" 'left)))
+    (or (surface-custom-ref ".card" "--bs-card-spacer-x")
+        (surface-style-ref ".card-body" "padding-left")))
   (define card-body-padding-y
-    (or (variant-style-ref props rules ".card" "--bs-card-spacer-y")
-        (variant-box-side-ref props rules ".card-body" "padding-top" 'top)))
+    (or (surface-custom-ref ".card" "--bs-card-spacer-y")
+        (surface-style-ref ".card-body" "padding-top")))
   (define badge-padding-x
-    (or (variant-style-ref props rules ".badge" "--bs-badge-padding-x")
-        (variant-box-side-ref props rules ".badge" "padding-left" 'left)))
+    (or (surface-custom-ref ".badge" "--bs-badge-padding-x")
+        (surface-style-ref ".badge" "padding-left")))
   (define badge-padding-y
-    (or (variant-style-ref props rules ".badge" "--bs-badge-padding-y")
-        (variant-box-side-ref props rules ".badge" "padding-top" 'top)))
+    (or (surface-custom-ref ".badge" "--bs-badge-padding-y")
+        (surface-style-ref ".badge" "padding-top")))
   (define badge-font-size
-    (or (variant-style-ref props rules ".badge" "--bs-badge-font-size")
-        (variant-style-ref props rules ".badge" "font-size")))
+    (or (surface-custom-ref ".badge" "--bs-badge-font-size")
+        (surface-style-ref ".badge" "font-size")))
   (define badge-font-weight
-    (or (variant-style-ref props rules ".badge" "--bs-badge-font-weight")
-        (variant-style-ref props rules ".badge" "font-weight")))
+    (or (surface-custom-ref ".badge" "--bs-badge-font-weight")
+        (surface-style-ref ".badge" "font-weight")))
   (define badge-radius
-    (variant-style-ref props rules ".badge" "border-radius"))
+    (surface-style-ref ".badge" "border-radius"))
   (define badge-color
-    (or (variant-style-ref props rules ".badge" "--bs-badge-color")
-        (variant-style-ref props rules ".badge" "color")))
+    (or (surface-custom-ref ".badge" "--bs-badge-color")
+        (surface-style-ref ".badge" "color")))
   (define badge-secondary-color
-    (or (variant-style-ref props rules ".badge.bg-secondary, .badge.bg-light" "color")
-        (variant-style-ref props rules ".badge.bg-secondary" "color")))
+    (or (surface-style-ref ".badge.bg-secondary, .badge.bg-light" "color")
+        (surface-style-ref ".badge.bg-secondary" "color")))
   (define badge-light-color
-    (or (variant-style-ref props rules ".badge.bg-secondary, .badge.bg-light" "color")
-        (variant-style-ref props rules ".badge.bg-light" "color")))
+    (or (surface-style-ref ".badge.bg-secondary, .badge.bg-light" "color")
+        (surface-style-ref ".badge.bg-light" "color")))
+  (define-values (navmetric-style-ref navmetric-custom-ref)
+    (make-computed-selector-refs props rules))
   (define accordion-bg
-    (or (variant-style-ref props rules ".accordion" "--bs-accordion-bg")
-        (variant-style-ref props rules ".accordion-item" "background-color")))
+    (or (navmetric-custom-ref ".accordion" "--bs-accordion-bg")
+        (navmetric-style-ref ".accordion-item" "background-color")))
   (define accordion-border-color
-    (or (variant-style-ref props rules ".accordion" "--bs-accordion-border-color")
-        (variant-border-color-ref props rules ".accordion-item" "border-color" "border")))
+    (or (navmetric-custom-ref ".accordion" "--bs-accordion-border-color")
+        (navmetric-style-ref ".accordion-item" "border-color")))
   (define accordion-border-width
-    (or (variant-style-ref props rules ".accordion" "--bs-accordion-border-width")
-        (variant-border-width-ref props rules ".accordion-item" "border-width" "border")))
+    (or (navmetric-custom-ref ".accordion" "--bs-accordion-border-width")
+        (navmetric-style-ref ".accordion-item" "border-width")))
   (define accordion-radius
-    (or (variant-style-ref props rules ".accordion" "--bs-accordion-border-radius")
-        (variant-style-ref props rules ".accordion-item" "border-radius")))
+    (or (navmetric-custom-ref ".accordion" "--bs-accordion-border-radius")
+        (navmetric-style-ref ".accordion-item" "border-radius")))
   (define accordion-trigger-radius-top
-    (or (variant-style-ref props rules ".accordion" "--bs-accordion-inner-border-radius")
-        (first-style-ref props rules
-                         (list (list ".accordion-item:first-of-type > .accordion-header .accordion-button"))
-                         "border-top-left-radius")))
+    (or (navmetric-custom-ref ".accordion" "--bs-accordion-inner-border-radius")
+        (navmetric-style-ref ".accordion-item:first-of-type > .accordion-header .accordion-button"
+                             "border-top-left-radius")))
   (define accordion-trigger-radius-bottom
-    (or (variant-style-ref props rules ".accordion" "--bs-accordion-inner-border-radius")
-        (first-style-ref props rules
-                         (list (list ".accordion-item:last-of-type > .accordion-header .accordion-button.collapsed"))
-                         "border-bottom-left-radius")))
+    (or (navmetric-custom-ref ".accordion" "--bs-accordion-inner-border-radius")
+        (navmetric-style-ref ".accordion-item:last-of-type > .accordion-header .accordion-button.collapsed"
+                             "border-bottom-left-radius")))
   (define accordion-button-padding-x
-    (or (variant-style-ref props rules ".accordion" "--bs-accordion-btn-padding-x")
-        (variant-box-side-ref props rules ".accordion-button" "padding-left" 'left)))
+    (or (navmetric-custom-ref ".accordion" "--bs-accordion-btn-padding-x")
+        (navmetric-style-ref ".accordion-button" "padding-left")))
   (define accordion-button-padding-y
-    (or (variant-style-ref props rules ".accordion" "--bs-accordion-btn-padding-y")
-        (variant-box-side-ref props rules ".accordion-button" "padding-top" 'top)))
+    (or (navmetric-custom-ref ".accordion" "--bs-accordion-btn-padding-y")
+        (navmetric-style-ref ".accordion-button" "padding-top")))
   (define accordion-button-color
-    (or (variant-style-ref props rules ".accordion" "--bs-accordion-btn-color")
-        (variant-style-ref props rules ".accordion-button" "color")))
+    (or (navmetric-custom-ref ".accordion" "--bs-accordion-btn-color")
+        (navmetric-style-ref ".accordion-button" "color")))
   (define accordion-button-bg
-    (or (variant-style-ref props rules ".accordion" "--bs-accordion-btn-bg")
-        (variant-style-ref props rules ".accordion-button" "background-color")))
+    (or (navmetric-custom-ref ".accordion" "--bs-accordion-btn-bg")
+        (navmetric-style-ref ".accordion-button" "background-color")))
   (define accordion-icon
-    (variant-style-ref props rules ".accordion" "--bs-accordion-btn-icon"))
+    (navmetric-custom-ref ".accordion" "--bs-accordion-btn-icon"))
   (define accordion-active-icon
-    (or (variant-style-ref props rules ".accordion" "--bs-accordion-btn-active-icon")
+    (or (navmetric-custom-ref ".accordion" "--bs-accordion-btn-active-icon")
         accordion-icon))
   (define accordion-icon-width
-    (variant-style-ref props rules ".accordion" "--bs-accordion-btn-icon-width"))
+    (navmetric-custom-ref ".accordion" "--bs-accordion-btn-icon-width"))
   (define accordion-icon-transform
-    (variant-style-ref props rules ".accordion" "--bs-accordion-btn-icon-transform"))
+    (navmetric-custom-ref ".accordion" "--bs-accordion-btn-icon-transform"))
   (define accordion-active-color
-    (or (variant-style-ref props rules ".accordion" "--bs-accordion-active-color")
-        (variant-style-ref props rules ".accordion-button:not(.collapsed)" "color")))
+    (or (navmetric-custom-ref ".accordion" "--bs-accordion-active-color")
+        (navmetric-style-ref ".accordion-button:not(.collapsed)" "color")))
   (define accordion-active-bg
-    (or (variant-style-ref props rules ".accordion" "--bs-accordion-active-bg")
-        (variant-style-ref props rules ".accordion-button:not(.collapsed)" "background-color")))
+    (or (navmetric-custom-ref ".accordion" "--bs-accordion-active-bg")
+        (navmetric-style-ref ".accordion-button:not(.collapsed)" "background-color")))
   (define accordion-body-padding-x
-    (or (variant-style-ref props rules ".accordion" "--bs-accordion-body-padding-x")
-        (variant-box-side-ref props rules ".accordion-body" "padding-left" 'left)))
+    (or (navmetric-custom-ref ".accordion" "--bs-accordion-body-padding-x")
+        (navmetric-style-ref ".accordion-body" "padding-left")))
   (define accordion-body-padding-y
-    (or (variant-style-ref props rules ".accordion" "--bs-accordion-body-padding-y")
-        (variant-box-side-ref props rules ".accordion-body" "padding-top" 'top)))
+    (or (navmetric-custom-ref ".accordion" "--bs-accordion-body-padding-y")
+        (navmetric-style-ref ".accordion-body" "padding-top")))
   (define pagination-padding-x
-    (or (variant-style-ref props rules ".pagination" "--bs-pagination-padding-x")
-        (variant-box-side-ref props rules ".page-link" "padding-left" 'left)))
+    (or (navmetric-custom-ref ".pagination" "--bs-pagination-padding-x")
+        (navmetric-style-ref ".page-link" "padding-left")))
   (define pagination-padding-y
-    (or (variant-style-ref props rules ".pagination" "--bs-pagination-padding-y")
-        (variant-box-side-ref props rules ".page-link" "padding-top" 'top)))
+    (or (navmetric-custom-ref ".pagination" "--bs-pagination-padding-y")
+        (navmetric-style-ref ".page-link" "padding-top")))
   (define pagination-font-size
-    (or (variant-style-ref props rules ".pagination" "--bs-pagination-font-size")
-        (variant-style-ref props rules ".page-link" "font-size")))
+    (or (navmetric-custom-ref ".pagination" "--bs-pagination-font-size")
+        (navmetric-style-ref ".page-link" "font-size")))
   (define pagination-color
-    (or (variant-style-ref props rules ".pagination" "--bs-pagination-color")
-        (variant-style-ref props rules ".page-link" "color")))
+    (or (navmetric-custom-ref ".pagination" "--bs-pagination-color")
+        (navmetric-style-ref ".page-link" "color")))
   (define pagination-bg
-    (or (variant-style-ref props rules ".pagination" "--bs-pagination-bg")
-        (variant-style-ref props rules ".page-link" "background-color")))
+    (or (navmetric-custom-ref ".pagination" "--bs-pagination-bg")
+        (navmetric-style-ref ".page-link" "background-color")))
   (define pagination-border-width
-    (or (variant-style-ref props rules ".pagination" "--bs-pagination-border-width")
-        (variant-border-width-ref props rules ".page-link" "border-width" "border")))
+    (or (navmetric-custom-ref ".pagination" "--bs-pagination-border-width")
+        (navmetric-style-ref ".page-link" "border-width")))
   (define pagination-border-color
-    (or (variant-style-ref props rules ".pagination" "--bs-pagination-border-color")
-        (variant-border-color-ref props rules ".page-link" "border-color" "border")))
+    (or (navmetric-custom-ref ".pagination" "--bs-pagination-border-color")
+        (navmetric-style-ref ".page-link" "border-color")))
   (define pagination-radius-direct
-    (or (variant-style-ref props rules ".pagination .page-link" "border-radius")
-        (variant-style-ref props rules ".page-link" "border-radius")))
+    (or (navmetric-style-ref ".pagination .page-link" "border-radius")
+        (navmetric-style-ref ".page-link" "border-radius")))
   (define pagination-radius
     (and (meaningful-css-value? pagination-radius-direct)
          (not (regexp-match? css-var-regexp pagination-radius-direct))
          pagination-radius-direct))
   (define pagination-edge-radius
-    (or (variant-style-ref props rules ".pagination" "--bs-pagination-border-radius")
-        (first-style-ref props rules
-                         (list (list ".page-item:first-child .page-link"))
-                         "border-top-left-radius")))
+    (or (navmetric-custom-ref ".pagination" "--bs-pagination-border-radius")
+        (navmetric-style-ref ".page-item:first-child .page-link"
+                             "border-top-left-radius")))
   (define pagination-hover-color
-    (or (variant-style-ref props rules ".pagination" "--bs-pagination-hover-color")
-        (variant-style-ref props rules ".page-link:hover" "color")))
+    (or (navmetric-custom-ref ".pagination" "--bs-pagination-hover-color")
+        (navmetric-style-ref ".page-link:hover" "color")))
   (define pagination-hover-bg
-    (or (variant-style-ref props rules ".pagination" "--bs-pagination-hover-bg")
-        (variant-style-ref props rules ".page-link:hover" "background-color")))
+    (or (navmetric-custom-ref ".pagination" "--bs-pagination-hover-bg")
+        (navmetric-style-ref ".page-link:hover" "background-color")))
   (define pagination-hover-border-color
-    (or (variant-style-ref props rules ".pagination" "--bs-pagination-hover-border-color")
-        (variant-style-ref props rules ".page-link:hover" "border-color")))
+    (or (navmetric-custom-ref ".pagination" "--bs-pagination-hover-border-color")
+        (navmetric-style-ref ".page-link:hover" "border-color")))
   (define pagination-active-color
-    (or (variant-style-ref props rules ".pagination" "--bs-pagination-active-color")
-        (first-style-ref props rules
-                         (list (list ".page-link.active")
-                               (list ".active > .page-link"))
-                         "color")))
+    (or (navmetric-custom-ref ".pagination" "--bs-pagination-active-color")
+        (navmetric-style-ref ".page-link.active" "color")
+        (navmetric-style-ref ".active > .page-link" "color")))
   (define pagination-active-bg
-    (or (variant-style-ref props rules ".pagination" "--bs-pagination-active-bg")
-        (first-style-ref props rules
-                         (list (list ".page-link.active")
-                               (list ".active > .page-link"))
-                         "background-color")))
+    (or (navmetric-custom-ref ".pagination" "--bs-pagination-active-bg")
+        (navmetric-style-ref ".page-link.active" "background-color")
+        (navmetric-style-ref ".active > .page-link" "background-color")))
   (define pagination-active-border-color
-    (or (variant-style-ref props rules ".pagination" "--bs-pagination-active-border-color")
-        (first-style-ref props rules
-                         (list (list ".page-link.active")
-                               (list ".active > .page-link"))
-                         "border-color")))
+    (or (navmetric-custom-ref ".pagination" "--bs-pagination-active-border-color")
+        (navmetric-style-ref ".page-link.active" "border-color")
+        (navmetric-style-ref ".active > .page-link" "border-color")))
   (define pagination-disabled-color
-    (or (variant-style-ref props rules ".pagination" "--bs-pagination-disabled-color")
-        (first-style-ref props rules
-                         (list (list ".page-link.disabled")
-                               (list ".disabled > .page-link"))
-                         "color")))
+    (or (navmetric-custom-ref ".pagination" "--bs-pagination-disabled-color")
+        (navmetric-style-ref ".page-link.disabled" "color")
+        (navmetric-style-ref ".disabled > .page-link" "color")))
   (define pagination-disabled-bg
-    (or (variant-style-ref props rules ".pagination" "--bs-pagination-disabled-bg")
-        (first-style-ref props rules
-                         (list (list ".page-link.disabled")
-                               (list ".disabled > .page-link"))
-                         "background-color")))
+    (or (navmetric-custom-ref ".pagination" "--bs-pagination-disabled-bg")
+        (navmetric-style-ref ".page-link.disabled" "background-color")
+        (navmetric-style-ref ".disabled > .page-link" "background-color")))
   (define pagination-disabled-border-color
-    (or (variant-style-ref props rules ".pagination" "--bs-pagination-disabled-border-color")
-        (first-style-ref props rules
-                         (list (list ".page-link.disabled")
-                               (list ".disabled > .page-link"))
-                         "border-color")))
+    (or (navmetric-custom-ref ".pagination" "--bs-pagination-disabled-border-color")
+        (navmetric-style-ref ".page-link.disabled" "border-color")
+        (navmetric-style-ref ".disabled > .page-link" "border-color")))
   (define progress-height
-    (or (first-style-ref props rules
-                         (list (list ".progress")
-                               (list ".progress-stacked"))
-                         "--bs-progress-height")
-        (variant-style-ref props rules ".progress" "height")
-        (variant-style-ref props rules "progress" "height")))
+    (or (navmetric-custom-ref ".progress" "--bs-progress-height")
+        (navmetric-custom-ref ".progress-stacked" "--bs-progress-height")
+        (navmetric-style-ref ".progress" "height")
+        (navmetric-style-ref "progress" "height")))
   (define progress-font-size
-    (or (first-style-ref props rules
-                         (list (list ".progress")
-                               (list ".progress-stacked"))
-                         "--bs-progress-font-size")
-        (variant-style-ref props rules ".progress" "font-size")))
+    (or (navmetric-custom-ref ".progress" "--bs-progress-font-size")
+        (navmetric-custom-ref ".progress-stacked" "--bs-progress-font-size")
+        (navmetric-style-ref ".progress" "font-size")))
   (define progress-bg
-    (or (first-style-ref props rules
-                         (list (list ".progress")
-                               (list ".progress-stacked"))
-                         "--bs-progress-bg")
-        (variant-style-ref props rules ".progress" "background-color")
-        (variant-style-ref props rules "progress" "background-color")))
+    (or (navmetric-custom-ref ".progress" "--bs-progress-bg")
+        (navmetric-custom-ref ".progress-stacked" "--bs-progress-bg")
+        (navmetric-style-ref ".progress" "background-color")
+        (navmetric-style-ref "progress" "background-color")))
   (define progress-radius-direct
-    (variant-style-ref props rules ".progress" "border-radius"))
+    (navmetric-style-ref ".progress" "border-radius"))
   (define progress-radius
     (and (meaningful-css-value? progress-radius-direct)
          (not (regexp-match? css-var-regexp progress-radius-direct))
          progress-radius-direct))
   (define progress-box-shadow-direct
-    (variant-style-ref props rules ".progress" "box-shadow"))
+    (navmetric-style-ref ".progress" "box-shadow"))
   (define progress-box-shadow
     (and (meaningful-css-value? progress-box-shadow-direct)
          (not (regexp-match? css-var-regexp progress-box-shadow-direct))
          progress-box-shadow-direct))
   (define progress-bar-color
-    (or (first-style-ref props rules
-                         (list (list ".progress")
-                               (list ".progress-stacked"))
-                         "--bs-progress-bar-color")
-        (variant-style-ref props rules ".progress-bar" "color")))
+    (or (navmetric-custom-ref ".progress" "--bs-progress-bar-color")
+        (navmetric-custom-ref ".progress-stacked" "--bs-progress-bar-color")
+        (navmetric-style-ref ".progress-bar" "color")))
   (define progress-bar-bg
-    (or (first-style-ref props rules
-                         (list (list ".progress")
-                               (list ".progress-stacked"))
-                         "--bs-progress-bar-bg")
-        (variant-style-ref props rules ".progress-bar" "background-color")))
+    (or (navmetric-custom-ref ".progress" "--bs-progress-bar-bg")
+        (navmetric-custom-ref ".progress-stacked" "--bs-progress-bar-bg")
+        (navmetric-style-ref ".progress-bar" "background-color")))
   (define breadcrumb-divider-color
-    (or (variant-style-ref props rules ".breadcrumb" "--bs-breadcrumb-divider-color")
-        (variant-style-ref props rules ".breadcrumb-item + .breadcrumb-item::before" "color")))
+    (or (navmetric-custom-ref ".breadcrumb" "--bs-breadcrumb-divider-color")
+        (navmetric-style-ref ".breadcrumb-item + .breadcrumb-item::before" "color")))
   (define breadcrumb-item-padding-x
-    (or (variant-style-ref props rules ".breadcrumb" "--bs-breadcrumb-item-padding-x")
-        (variant-style-ref props rules ".breadcrumb-item + .breadcrumb-item" "padding-left")))
+    (or (navmetric-custom-ref ".breadcrumb" "--bs-breadcrumb-item-padding-x")
+        (navmetric-style-ref ".breadcrumb-item + .breadcrumb-item" "padding-left")))
   (define breadcrumb-active-color
-    (or (variant-style-ref props rules ".breadcrumb" "--bs-breadcrumb-item-active-color")
-        (variant-style-ref props rules ".breadcrumb-item.active" "color")))
+    (or (navmetric-custom-ref ".breadcrumb" "--bs-breadcrumb-item-active-color")
+        (navmetric-style-ref ".breadcrumb-item.active" "color")))
   (define breadcrumb-link-color
-    (or (variant-style-ref props rules ".breadcrumb-item a" "color")
+    (or (navmetric-style-ref ".breadcrumb-item a" "color")
         (hash-ref props "--bs-link-color" #f)))
+  (define-values (toast-style-ref toast-custom-ref)
+    (make-computed-selector-refs props rules))
   (define toast-padding-x
-    (or (variant-style-ref props rules ".toast" "--bs-toast-padding-x")
-        (variant-box-side-ref props rules ".toast-header" "padding-left" 'left)
-        (variant-box-side-ref props rules ".toast-body" "padding-left" 'left)))
+    (or (toast-custom-ref ".toast" "--bs-toast-padding-x")
+        (toast-style-ref ".toast-header" "padding-left")
+        (toast-style-ref ".toast-body" "padding-left")))
   (define toast-padding-y
-    (or (variant-style-ref props rules ".toast" "--bs-toast-padding-y")
-        (variant-box-side-ref props rules ".toast-header" "padding-top" 'top)))
+    (or (toast-custom-ref ".toast" "--bs-toast-padding-y")
+        (toast-style-ref ".toast-header" "padding-top")))
   (define toast-font-size
-    (or (variant-style-ref props rules ".toast" "--bs-toast-font-size")
-        (variant-style-ref props rules ".toast" "font-size")))
+    (or (toast-custom-ref ".toast" "--bs-toast-font-size")
+        (toast-style-ref ".toast" "font-size")))
   (define toast-color
-    (or (variant-style-ref props rules ".toast" "--bs-toast-color")
-        (variant-style-ref props rules ".toast" "color")
+    (or (toast-custom-ref ".toast" "--bs-toast-color")
+        (toast-style-ref ".toast" "color")
         (hash-ref props "--bs-body-color" #f)))
   (define toast-bg
-    (or (variant-style-ref props rules ".toast" "--bs-toast-bg")
-        (variant-style-ref props rules ".toast" "background-color")))
+    (or (toast-custom-ref ".toast" "--bs-toast-bg")
+        (toast-style-ref ".toast" "background-color")))
   (define toast-border-width
-    (or (variant-style-ref props rules ".toast" "--bs-toast-border-width")
-        (variant-border-width-ref props rules ".toast" "border-width" "border")))
+    (or (toast-custom-ref ".toast" "--bs-toast-border-width")
+        (toast-style-ref ".toast" "border-width")))
   (define toast-border-color
-    (or (variant-style-ref props rules ".toast" "--bs-toast-border-color")
-        (variant-border-color-ref props rules ".toast" "border-color" "border")))
+    (or (toast-custom-ref ".toast" "--bs-toast-border-color")
+        (toast-style-ref ".toast" "border-color")))
   (define toast-radius-direct
-    (variant-style-ref props rules ".toast" "border-radius"))
+    (toast-style-ref ".toast" "border-radius"))
   (define toast-radius
     (and (meaningful-css-value? toast-radius-direct)
          (not (regexp-match? css-var-regexp toast-radius-direct))
          toast-radius-direct))
   (define toast-shadow
-    (or (variant-style-ref props rules ".toast" "--bs-toast-box-shadow")
-        (variant-style-ref props rules ".toast" "box-shadow")))
+    (or (toast-custom-ref ".toast" "--bs-toast-box-shadow")
+        (toast-style-ref ".toast" "box-shadow")))
   (define toast-header-color
-    (or (variant-style-ref props rules ".toast" "--bs-toast-header-color")
-        (variant-style-ref props rules ".toast-header" "color")))
+    (or (toast-custom-ref ".toast" "--bs-toast-header-color")
+        (toast-style-ref ".toast-header" "color")))
   (define toast-header-bg
-    (or (variant-style-ref props rules ".toast" "--bs-toast-header-bg")
-        (variant-style-ref props rules ".toast-header" "background-color")))
+    (or (toast-custom-ref ".toast" "--bs-toast-header-bg")
+        (toast-style-ref ".toast-header" "background-color")))
   (define toast-header-border-color
-    (or (variant-style-ref props rules ".toast" "--bs-toast-header-border-color")
-        (variant-border-color-ref props rules ".toast-header" "border-bottom-color" "border-bottom")))
+    (or (toast-custom-ref ".toast" "--bs-toast-header-border-color")
+        (toast-style-ref ".toast-header" "border-bottom-color")))
   (define toast-body-padding
-    (or (variant-style-ref props rules ".toast-body" "padding")
+    (or (toast-style-ref ".toast-body" "padding")
         toast-padding-x))
   (define close-button-color
-    (or (variant-style-ref props rules ".btn-close" "--bs-btn-close-color")
-        (variant-style-ref props rules ".btn-close" "color")))
+    (or (toast-custom-ref ".btn-close" "--bs-btn-close-color")
+        (toast-style-ref ".btn-close" "color")))
   (define close-button-bg
-    (or (variant-style-ref props rules ".btn-close" "--bs-btn-close-bg")
-        (variant-style-ref props rules ".btn-close" "background-image")))
+    (or (toast-custom-ref ".btn-close" "--bs-btn-close-bg")
+        (toast-style-ref ".btn-close" "background-image")))
   (define close-button-opacity
-    (or (variant-style-ref props rules ".btn-close" "--bs-btn-close-opacity")
-        (variant-style-ref props rules ".btn-close" "opacity")))
+    (or (toast-custom-ref ".btn-close" "--bs-btn-close-opacity")
+        (toast-style-ref ".btn-close" "opacity")))
   (define close-button-hover-opacity
-    (or (variant-style-ref props rules ".btn-close" "--bs-btn-close-hover-opacity")
-        (variant-style-ref props rules ".btn-close:hover" "opacity")))
+    (or (toast-custom-ref ".btn-close" "--bs-btn-close-hover-opacity")
+        (toast-style-ref ".btn-close:hover" "opacity")))
   (define close-button-radius
-    (variant-style-ref props rules ".btn-close" "border-radius"))
+    (toast-style-ref ".btn-close" "border-radius"))
   (define modal-close-bg
-    (or (first-style-ref props rules
-                         (list (list ".modal .btn-close")
-                               (list ".modal-header .btn-close"))
-                         "background-image")
+    (or (toast-style-ref ".modal .btn-close" "background-image")
+        (toast-style-ref ".modal-header .btn-close" "background-image")
         close-button-bg))
+  (define-values (alert-style-ref alert-custom-ref)
+    (make-computed-selector-refs props rules))
   (define alert-base-color-direct
-    (variant-style-ref props rules ".alert" "color"))
+    (alert-style-ref ".alert" "color"))
   (define alert-base-color-var
-    (variant-style-ref props rules ".alert" "--bs-alert-color"))
+    (alert-custom-ref ".alert" "--bs-alert-color"))
   (define alert-base-color
     (or (and (meaningful-css-value? alert-base-color-direct)
              alert-base-color-direct)
         alert-base-color-var))
   (define (alert-tone-bg tone)
-    (or (variant-style-ref props rules (format ".alert-~a" tone) "background-color")
-        (variant-style-ref props rules (format ".alert-~a" tone) "--bs-alert-bg")))
+    (or (alert-style-ref (format ".alert-~a" tone) "background-color")
+        (alert-custom-ref (format ".alert-~a" tone) "--bs-alert-bg")))
   (define (alert-tone-border tone)
-    (or (variant-border-color-ref props rules (format ".alert-~a" tone) "border-color" "border")
-        (variant-style-ref props rules (format ".alert-~a" tone) "--bs-alert-border-color")))
+    (or (alert-style-ref (format ".alert-~a" tone) "border-color")
+        (alert-custom-ref (format ".alert-~a" tone) "--bs-alert-border-color")))
   (define (alert-tone-color tone)
     (define direct
-      (variant-style-ref props rules (format ".alert-~a" tone) "color"))
+      (alert-style-ref (format ".alert-~a" tone) "color"))
     (define via-var
-      (variant-style-ref props rules (format ".alert-~a" tone) "--bs-alert-color"))
+      (alert-custom-ref (format ".alert-~a" tone) "--bs-alert-color"))
     (or (and (meaningful-css-value? direct) direct)
         alert-base-color
         via-var))
@@ -1252,258 +960,293 @@
   (define alert-dark-bg (alert-tone-bg "dark"))
   (define alert-dark-border (alert-tone-border "dark"))
   (define alert-dark-color (alert-tone-color "dark"))
+  (define-values (list-table-style-ref list-table-custom-ref)
+    (make-computed-selector-refs props rules))
   (define list-group-bg
-    (or (variant-style-ref props rules ".list-group" "--bs-list-group-bg")
-        (variant-style-ref props rules ".list-group-item" "background-color")))
+    (or (list-table-custom-ref ".list-group" "--bs-list-group-bg")
+        (list-table-style-ref ".list-group-item" "background-color")))
   (define list-group-border-color
-    (or (variant-style-ref props rules ".list-group" "--bs-list-group-border-color")
-        (variant-style-ref props rules ".list-group-item" "border-color")))
+    (or (list-table-custom-ref ".list-group" "--bs-list-group-border-color")
+        (list-table-style-ref ".list-group-item" "border-color")))
   (define list-group-border-width
-    (variant-border-width-ref props rules ".list-group" "border-width" "border"))
+    (list-table-style-ref ".list-group" "border-width"))
   (define list-group-radius
-    (variant-style-ref props rules ".list-group" "border-radius"))
+    (list-table-style-ref ".list-group" "border-radius"))
   (define list-group-item-radius
-    (variant-style-ref props rules ".list-group-item" "border-radius"))
+    (list-table-style-ref ".list-group-item" "border-radius"))
   (define list-group-padding-x
-    (or (variant-style-ref props rules ".list-group" "--bs-list-group-item-padding-x")
-        (variant-box-side-ref props rules ".list-group-item" "padding-left" 'left)))
+    (or (list-table-custom-ref ".list-group" "--bs-list-group-item-padding-x")
+        (list-table-style-ref ".list-group-item" "padding-left")))
   (define list-group-padding-y
-    (or (variant-style-ref props rules ".list-group" "--bs-list-group-item-padding-y")
-        (variant-box-side-ref props rules ".list-group-item" "padding-top" 'top)))
+    (or (list-table-custom-ref ".list-group" "--bs-list-group-item-padding-y")
+        (list-table-style-ref ".list-group-item" "padding-top")))
   (define list-group-color
-    (or (variant-style-ref props rules ".list-group" "--bs-list-group-color")
-        (variant-style-ref props rules ".list-group-item" "color")))
+    (or (list-table-custom-ref ".list-group" "--bs-list-group-color")
+        (list-table-style-ref ".list-group-item" "color")))
   (define list-group-active-bg
-    (or (variant-style-ref props rules ".list-group" "--bs-list-group-active-bg")
-        (variant-style-ref props rules ".list-group-item.active" "background-color")))
+    (or (list-table-custom-ref ".list-group" "--bs-list-group-active-bg")
+        (list-table-style-ref ".list-group-item.active" "background-color")))
   (define list-group-active-color
-    (or (variant-style-ref props rules ".list-group" "--bs-list-group-active-color")
-        (variant-style-ref props rules ".list-group-item.active" "color")))
+    (or (list-table-custom-ref ".list-group" "--bs-list-group-active-color")
+        (list-table-style-ref ".list-group-item.active" "color")))
   (define list-group-active-border
-    (or (variant-style-ref props rules ".list-group" "--bs-list-group-active-border-color")
-        (variant-style-ref props rules ".list-group-item.active" "border-color")))
+    (or (list-table-custom-ref ".list-group" "--bs-list-group-active-border-color")
+        (list-table-style-ref ".list-group-item.active" "border-color")))
   (define table-bg
-    (or (variant-style-ref props rules ".table" "--bs-table-bg")
-        (variant-style-ref props rules ".table" "background-color")))
+    (or (list-table-custom-ref ".table" "--bs-table-bg")
+        (list-table-style-ref ".table" "background-color")))
   (define table-border-color
-    (or (variant-style-ref props rules ".table" "--bs-table-border-color")
-        (variant-style-ref props rules ".table" "border-color")))
+    (or (list-table-custom-ref ".table" "--bs-table-border-color")
+        (list-table-style-ref ".table" "border-color")))
   (define table-color
-    (or (variant-style-ref props rules ".table" "--bs-table-color")
-        (variant-style-ref props rules ".table" "color")))
+    (or (list-table-custom-ref ".table" "--bs-table-color")
+        (list-table-style-ref ".table" "color")))
   (define table-striped-bg
-    (or (variant-style-ref props rules ".table" "--bs-table-striped-bg")
-        (variant-style-ref props rules ".table-striped > tbody > tr:nth-of-type(odd) > *" "background-color")))
+    (or (list-table-custom-ref ".table" "--bs-table-striped-bg")
+        (list-table-style-ref ".table-striped > tbody > tr:nth-of-type(odd) > *" "background-color")))
   (define table-hover-bg
-    (or (variant-style-ref props rules ".table" "--bs-table-hover-bg")
-        (variant-style-ref props rules ".table-hover > tbody > tr:hover > *" "background-color")))
+    (or (list-table-custom-ref ".table" "--bs-table-hover-bg")
+        (list-table-style-ref ".table-hover > tbody > tr:hover > *" "background-color")))
   (define table-active-bg
-    (or (variant-style-ref props rules ".table" "--bs-table-active-bg")
-        (variant-style-ref props rules ".table-active" "background-color")))
+    (or (list-table-custom-ref ".table" "--bs-table-active-bg")
+        (list-table-style-ref ".table-active" "background-color")))
   (define table-cell-padding-x
-    (or (variant-style-ref props rules ".table" "--bs-table-cell-padding-x")
-        (variant-box-side-ref props rules ".table th" "padding-left" 'left)
-        (variant-box-side-ref props rules ".table td" "padding-left" 'left)))
+    (or (list-table-custom-ref ".table" "--bs-table-cell-padding-x")
+        (list-table-style-ref ".table th" "padding-left")
+        (list-table-style-ref ".table td" "padding-left")))
   (define table-cell-padding-y
-    (or (variant-style-ref props rules ".table" "--bs-table-cell-padding-y")
-        (variant-box-side-ref props rules ".table th" "padding-top" 'top)
-        (variant-box-side-ref props rules ".table td" "padding-top" 'top)))
+    (or (list-table-custom-ref ".table" "--bs-table-cell-padding-y")
+        (list-table-style-ref ".table th" "padding-top")
+        (list-table-style-ref ".table td" "padding-top")))
   (define table-border-width
-    (or (variant-style-ref props rules ".table > :not(caption) > * > *" "border-bottom-width")
-        (variant-style-ref props rules ".table td" "border-bottom-width")
-        (variant-style-ref props rules ".table th" "border-bottom-width")))
+    (or (list-table-style-ref ".table > :not(caption) > * > *" "border-bottom-width")
+        (list-table-style-ref ".table td" "border-bottom-width")
+        (list-table-style-ref ".table th" "border-bottom-width")))
   (define table-header-color
-    (let ([header-color (variant-style-ref props rules ".table th" "color")])
+    (let ([header-color (list-table-style-ref ".table th" "color")])
       (if (meaningful-css-value? header-color)
           header-color
           table-color)))
   (define table-header-font-size
-    (or (variant-style-ref props rules "th" "font-size")
-        (variant-style-ref props rules ".table th" "font-size")))
+    (or (list-table-style-ref "th" "font-size")
+        (list-table-style-ref ".table th" "font-size")))
   (define table-header-font-weight
-    (or (variant-style-ref props rules ".table th" "font-weight")
-        (variant-style-ref props rules "th" "font-weight")))
+    (or (list-table-style-ref ".table th" "font-weight")
+        (list-table-style-ref "th" "font-weight")))
   (define table-header-text-transform
-    (or (variant-style-ref props rules "th" "text-transform")
-        (variant-style-ref props rules ".table th" "text-transform")))
+    (or (list-table-style-ref "th" "text-transform")
+        (list-table-style-ref ".table th" "text-transform")))
   (define table-body-font-weight
-    (or (variant-style-ref props rules ".table td" "font-weight")
+    (or (list-table-style-ref ".table td" "font-weight")
         (hash-ref props "--bs-body-font-weight" #f)
-        (variant-style-ref props rules "body" "font-weight")))
+        (list-table-style-ref "body" "font-weight")))
+  (define-values (field-style-ref field-custom-ref)
+    (make-computed-selector-refs props rules))
   (define field-bg
-    (or (variant-style-ref props rules ".form-control" "background-color")
-        (variant-style-ref props rules ".form-select" "background-color")))
+    (selector-ref* field-style-ref
+                   '(".form-control" ".form-select")
+                   "background-color"))
   (define field-color
-    (or (variant-style-ref props rules ".form-control" "color")
-        (variant-style-ref props rules ".form-select" "color")))
+    (selector-ref* field-style-ref
+                   '(".form-control" ".form-select")
+                   "color"))
   (define field-border-color
-    (or (variant-border-color-ref props rules ".form-control" "border-color" "border")
-        (variant-border-color-ref props rules ".form-select" "border-color" "border")))
+    (selector-ref* field-style-ref
+                   '(".form-control" ".form-select")
+                   "border-color"))
   (define field-border-width
-    (or (variant-border-width-ref props rules ".form-control" "border-width" "border")
-        (variant-border-width-ref props rules ".form-select" "border-width" "border")))
+    (selector-ref* field-style-ref
+                   '(".form-control" ".form-select")
+                   "border-width"))
   (define field-radius
-    (or (variant-style-ref props rules ".form-control" "border-radius")
-        (variant-style-ref props rules ".form-select" "border-radius")))
+    (selector-ref* field-style-ref
+                   '(".form-control" ".form-select")
+                   "border-radius"))
   (define field-padding-x
-    (or (variant-box-side-ref props rules ".form-control" "padding-left" 'left)
-        (variant-box-side-ref props rules ".form-select" "padding-left" 'left)))
+    (selector-ref* field-style-ref
+                   '(".form-control" ".form-select")
+                   "padding-left"))
   (define field-padding-y
-    (or (variant-box-side-ref props rules ".form-control" "padding-top" 'top)
-        (variant-box-side-ref props rules ".form-select" "padding-top" 'top)))
+    (selector-ref* field-style-ref
+                   '(".form-control" ".form-select")
+                   "padding-top"))
   (define field-font-size
-    (or (variant-style-ref props rules ".form-control" "font-size")
-        (variant-style-ref props rules ".form-select" "font-size")))
+    (selector-ref* field-style-ref
+                   '(".form-control" ".form-select")
+                   "font-size"))
   (define field-font-weight
-    (or (variant-style-ref props rules ".form-control" "font-weight")
-        (variant-style-ref props rules ".form-select" "font-weight")
+    (or (field-style-ref ".form-control" "font-weight")
+        (field-style-ref ".form-select" "font-weight")
         (hash-ref props "--bs-body-font-weight" #f)))
   (define field-select-icon
-    (or (variant-style-ref props rules ".form-select" "--bs-form-select-bg-img")
-        (variant-style-ref props rules ".form-select" "background-image")))
+    (or (field-custom-ref ".form-select" "--bs-form-select-bg-img")
+        (field-style-ref ".form-select" "background-image")))
   (define field-select-padding-right
-    (variant-box-side-ref props rules ".form-select" "padding-right" 'right))
+    (field-style-ref ".form-select" "padding-right"))
   (define field-focus-bg
-    (or (variant-style-ref props rules ".form-control:focus" "background-color")
-        (variant-style-ref props rules ".form-select:focus" "background-color")))
+    (or (field-style-ref ".form-control:focus" "background-color")
+        (field-style-ref ".form-select:focus" "background-color")))
   (define field-focus-border-color
-    (or (variant-style-ref props rules ".form-control:focus" "border-color")
-        (variant-style-ref props rules ".form-select:focus" "border-color")))
+    (or (field-style-ref ".form-control:focus" "border-color")
+        (field-style-ref ".form-select:focus" "border-color")))
   (define input-group-addon-bg
-    (variant-style-ref props rules ".input-group-text" "background-color"))
+    (field-style-ref ".input-group-text" "background-color"))
   (define input-group-addon-color
-    (variant-style-ref props rules ".input-group-text" "color"))
+    (field-style-ref ".input-group-text" "color"))
   (define input-group-addon-border-color
-    (variant-border-color-ref props rules ".input-group-text" "border-color" "border"))
+    (field-style-ref ".input-group-text" "border-color"))
   (define input-group-addon-padding-x
-    (variant-box-side-ref props rules ".input-group-text" "padding-left" 'left))
+    (field-style-ref ".input-group-text" "padding-left"))
   (define input-group-addon-padding-y
-    (variant-box-side-ref props rules ".input-group-text" "padding-top" 'top))
+    (field-style-ref ".input-group-text" "padding-top"))
   (define input-group-addon-font-size
-    (variant-style-ref props rules ".input-group-text" "font-size"))
+    (field-style-ref ".input-group-text" "font-size"))
   (define input-group-addon-font-weight
-    (variant-style-ref props rules ".input-group-text" "font-weight"))
+    (field-style-ref ".input-group-text" "font-weight"))
   (define field-valid-color
     (or (hash-ref props "--bs-form-valid-color" #f)
-        (variant-style-ref props rules ".valid-feedback" "color")))
+        (field-style-ref ".valid-feedback" "color")))
   (define field-valid-border-color
     (or (hash-ref props "--bs-form-valid-border-color" #f)
-        (variant-style-ref props rules ".form-control.is-valid" "border-color")))
+        (field-style-ref ".form-control.is-valid" "border-color")))
   (define field-valid-icon
-    (variant-style-ref props rules ".form-control.is-valid" "background-image"))
+    (field-style-ref ".form-control.is-valid" "background-image"))
   (define field-invalid-color
     (or (hash-ref props "--bs-form-invalid-color" #f)
-        (variant-style-ref props rules ".invalid-feedback" "color")))
+        (field-style-ref ".invalid-feedback" "color")))
   (define field-invalid-border-color
     (or (hash-ref props "--bs-form-invalid-border-color" #f)
-        (variant-style-ref props rules ".form-control.is-invalid" "border-color")))
+        (field-style-ref ".form-control.is-invalid" "border-color")))
   (define field-invalid-icon
-    (variant-style-ref props rules ".form-control.is-invalid" "background-image"))
+    (field-style-ref ".form-control.is-invalid" "background-image"))
+  (define-values (check-style-ref check-custom-ref)
+    (make-computed-selector-refs props rules))
   (define check-bg
-    (or (variant-style-ref props rules ".form-check-input" "--bs-form-check-bg")
-        (variant-style-ref props rules ".form-check-input" "background-color")))
+    (or (check-custom-ref ".form-check-input" "--bs-form-check-bg")
+        (check-style-ref ".form-check-input" "background-color")))
   (define check-border-color
-    (variant-border-color-ref props rules ".form-check-input" "border-color" "border"))
+    (check-style-ref ".form-check-input" "border-color"))
   (define check-border-width
-    (variant-border-width-ref props rules ".form-check-input" "border-width" "border"))
+    (check-style-ref ".form-check-input" "border-width"))
   (define check-size
-    (variant-style-ref props rules ".form-check-input" "width"))
+    (check-style-ref ".form-check-input" "width"))
   (define check-height
-    (variant-style-ref props rules ".form-check-input" "height"))
+    (check-style-ref ".form-check-input" "height"))
   (define check-radius
-    (or (variant-style-ref props rules ".form-check-input[type=checkbox]" "border-radius")
-        (variant-style-ref props rules ".form-check-input" "border-radius")))
+    (or (check-style-ref ".form-check-input[type=checkbox]" "border-radius")
+        (check-style-ref ".form-check-input" "border-radius")))
   (define check-focus-border-color
-    (variant-style-ref props rules ".form-check-input:focus" "border-color"))
+    (check-style-ref ".form-check-input:focus" "border-color"))
   (define check-focus-shadow
-    (variant-style-ref props rules ".form-check-input:focus" "box-shadow"))
+    (check-style-ref ".form-check-input:focus" "box-shadow"))
   (define check-checked-bg
-    (variant-style-ref props rules ".form-check-input:checked" "background-color"))
+    (check-style-ref ".form-check-input:checked" "background-color"))
   (define check-checked-border-color
-    (variant-style-ref props rules ".form-check-input:checked" "border-color"))
+    (check-style-ref ".form-check-input:checked" "border-color"))
   (define check-checked-icon
-    (or (variant-style-ref props rules ".form-check-input:checked[type=checkbox]" "--bs-form-check-bg-image")
-        (variant-style-ref props rules ".form-check-input:checked[type=checkbox]" "background-image")))
+    (or (check-custom-ref ".form-check-input:checked[type=checkbox]" "--bs-form-check-bg-image")
+        (check-style-ref ".form-check-input:checked[type=checkbox]" "background-image")))
   (define check-disabled-opacity
-    (variant-style-ref props rules ".form-check-input:disabled" "opacity"))
+    (check-style-ref ".form-check-input:disabled" "opacity"))
   (define switch-width
-    (variant-style-ref props rules ".form-switch .form-check-input" "width"))
+    (check-style-ref ".form-switch .form-check-input" "width"))
   (define switch-radius
-    (variant-style-ref props rules ".form-switch .form-check-input" "border-radius"))
+    (check-style-ref ".form-switch .form-check-input" "border-radius"))
   (define switch-bg-icon
-    (or (variant-style-ref props rules ".form-switch .form-check-input" "--bs-form-switch-bg")
-        (variant-style-ref props rules ".form-switch .form-check-input" "background-image")))
+    (or (check-custom-ref ".form-switch .form-check-input" "--bs-form-switch-bg")
+        (check-style-ref ".form-switch .form-check-input" "background-image")))
   (define switch-focus-icon
-    (or (variant-style-ref props rules ".form-switch .form-check-input:focus" "--bs-form-switch-bg")
-        (variant-style-ref props rules ".form-switch .form-check-input:focus" "background-image")))
+    (or (check-custom-ref ".form-switch .form-check-input:focus" "--bs-form-switch-bg")
+        (check-style-ref ".form-switch .form-check-input:focus" "background-image")))
   (define switch-checked-icon
-    (or (variant-style-ref props rules ".form-switch .form-check-input:checked" "--bs-form-switch-bg")
-        (variant-style-ref props rules ".form-switch .form-check-input:checked" "background-image")))
-  (define modal-content-selectors
-    (list ".modal" ".modal-content"))
-  (define modal-header-selectors
-    (list ".modal" ".modal-header"))
-  (define modal-body-selectors
-    (list ".modal" ".modal-body"))
-  (define modal-footer-selectors
-    (list ".modal" ".modal-footer"))
+    (or (check-custom-ref ".form-switch .form-check-input:checked" "--bs-form-switch-bg")
+        (check-style-ref ".form-switch .form-check-input:checked" "background-image")))
+  (define-values (dialog-style-ref dialog-custom-ref)
+    (make-computed-selector-refs props rules))
   (define modal-bg
-    (or (selector-style-ref props rules modal-content-selectors "background-color")
-        (selector-style-ref props rules modal-content-selectors "--bs-modal-bg")))
+    (or (dialog-style-ref ".modal-content" "background-color")
+        (dialog-style-ref ".modal" "background-color")
+        (dialog-custom-ref ".modal-content" "--bs-modal-bg")
+        (dialog-custom-ref ".modal" "--bs-modal-bg")))
   (define modal-color
-    (or (selector-style-ref props rules modal-content-selectors "color")
-        (selector-style-ref props rules modal-content-selectors "--bs-modal-color")))
+    (or (dialog-style-ref ".modal-content" "color")
+        (dialog-style-ref ".modal" "color")
+        (dialog-custom-ref ".modal-content" "--bs-modal-color")
+        (dialog-custom-ref ".modal" "--bs-modal-color")))
   (define modal-border-color
-    (or (selector-border-color-ref props rules modal-content-selectors "border-color" "border")
-        (selector-style-ref props rules modal-content-selectors "--bs-modal-border-color")))
+    (or (dialog-style-ref ".modal-content" "border-color")
+        (dialog-style-ref ".modal" "border-color")
+        (dialog-custom-ref ".modal-content" "--bs-modal-border-color")
+        (dialog-custom-ref ".modal" "--bs-modal-border-color")))
   (define modal-border-width
-    (or (selector-border-width-ref props rules modal-content-selectors "border-width" "border")
-        (selector-style-ref props rules modal-content-selectors "--bs-modal-border-width")))
+    (or (dialog-style-ref ".modal-content" "border-width")
+        (dialog-style-ref ".modal" "border-width")
+        (dialog-custom-ref ".modal-content" "--bs-modal-border-width")
+        (dialog-custom-ref ".modal" "--bs-modal-border-width")))
   (define modal-radius
-    (selector-style-ref props rules modal-content-selectors "border-radius"))
+    (or (dialog-style-ref ".modal-content" "border-radius")
+        (dialog-style-ref ".modal" "border-radius")))
   (define modal-shadow
-    (selector-style-ref props rules modal-content-selectors "box-shadow"))
+    (or (dialog-style-ref ".modal-content" "box-shadow")
+        (dialog-style-ref ".modal" "box-shadow")))
   (define modal-header-padding-x
-    (or (selector-box-side-ref props rules modal-header-selectors "padding-left" 'left)
-        (selector-style-ref props rules modal-header-selectors "--bs-modal-header-padding-x")))
+    (or (dialog-style-ref ".modal-header" "padding-left")
+        (dialog-style-ref ".modal" "padding-left")
+        (dialog-custom-ref ".modal-header" "--bs-modal-header-padding-x")
+        (dialog-custom-ref ".modal" "--bs-modal-header-padding-x")))
   (define modal-header-padding-y
-    (or (selector-box-side-ref props rules modal-header-selectors "padding-top" 'top)
-        (selector-style-ref props rules modal-header-selectors "--bs-modal-header-padding-y")))
+    (or (dialog-style-ref ".modal-header" "padding-top")
+        (dialog-style-ref ".modal" "padding-top")
+        (dialog-custom-ref ".modal-header" "--bs-modal-header-padding-y")
+        (dialog-custom-ref ".modal" "--bs-modal-header-padding-y")))
   (define modal-header-border-color
-    (or (selector-border-color-ref props rules modal-header-selectors "border-bottom-color" "border-bottom")
-        (selector-style-ref props rules modal-header-selectors "--bs-modal-header-border-color")))
+    (or (dialog-style-ref ".modal-header" "border-bottom-color")
+        (dialog-style-ref ".modal" "border-bottom-color")
+        (dialog-custom-ref ".modal-header" "--bs-modal-header-border-color")
+        (dialog-custom-ref ".modal" "--bs-modal-header-border-color")))
   (define modal-header-border-width
-    (or (selector-border-width-ref props rules modal-header-selectors "border-bottom-width" "border-bottom")
-        (selector-style-ref props rules modal-header-selectors "--bs-modal-header-border-width")))
+    (or (dialog-style-ref ".modal-header" "border-bottom-width")
+        (dialog-style-ref ".modal" "border-bottom-width")
+        (dialog-custom-ref ".modal-header" "--bs-modal-header-border-width")
+        (dialog-custom-ref ".modal" "--bs-modal-header-border-width")))
   (define modal-body-padding-x
-    (selector-box-side-ref props rules modal-body-selectors "padding-left" 'left))
+    (or (dialog-style-ref ".modal-body" "padding-left")
+        (dialog-style-ref ".modal" "padding-left")))
   (define modal-body-padding-y
-    (selector-box-side-ref props rules modal-body-selectors "padding-top" 'top))
+    (or (dialog-style-ref ".modal-body" "padding-top")
+        (dialog-style-ref ".modal" "padding-top")))
   (define modal-footer-padding-x
-    (selector-box-side-ref props rules modal-footer-selectors "padding-left" 'left))
+    (or (dialog-style-ref ".modal-footer" "padding-left")
+        (dialog-style-ref ".modal" "padding-left")))
   (define modal-footer-padding-y
-    (selector-box-side-ref props rules modal-footer-selectors "padding-top" 'top))
+    (or (dialog-style-ref ".modal-footer" "padding-top")
+        (dialog-style-ref ".modal" "padding-top")))
   (define modal-footer-gap
-    (or (selector-style-ref props rules modal-footer-selectors "--bs-modal-footer-gap")
-        (variant-style-ref props rules ".modal-footer > *" "margin")))
+    (or (dialog-custom-ref ".modal-footer" "--bs-modal-footer-gap")
+        (dialog-custom-ref ".modal" "--bs-modal-footer-gap")
+        (dialog-style-ref ".modal-footer > *" "margin")))
   (define modal-footer-border-color
-    (or (selector-border-color-ref props rules modal-footer-selectors "border-top-color" "border-top")
-        (selector-style-ref props rules modal-footer-selectors "--bs-modal-footer-border-color")))
+    (or (dialog-style-ref ".modal-footer" "border-top-color")
+        (dialog-style-ref ".modal" "border-top-color")
+        (dialog-custom-ref ".modal-footer" "--bs-modal-footer-border-color")
+        (dialog-custom-ref ".modal" "--bs-modal-footer-border-color")))
   (define modal-footer-border-width
-    (or (selector-border-width-ref props rules modal-footer-selectors "border-top-width" "border-top")
-        (selector-style-ref props rules modal-footer-selectors "--bs-modal-footer-border-width")))
+    (or (dialog-style-ref ".modal-footer" "border-top-width")
+        (dialog-style-ref ".modal" "border-top-width")
+        (dialog-custom-ref ".modal-footer" "--bs-modal-footer-border-width")
+        (dialog-custom-ref ".modal" "--bs-modal-footer-border-width")))
   (define modal-title-color
-    (let ([title-color (variant-style-ref props rules ".modal-title" "color")])
+    (let ([title-color (dialog-style-ref ".modal-title" "color")])
       (and (meaningful-css-value? title-color) title-color)))
   (define modal-title-font-size
-    (or (variant-style-ref props rules ".modal-title" "font-size")
-        (variant-style-ref props rules "h5" "font-size")))
+    (or (dialog-style-ref ".modal-title" "font-size")
+        (dialog-style-ref "h5" "font-size")))
   (define modal-title-font-weight
-    (or (variant-style-ref props rules ".modal-title" "font-weight")
-        (variant-style-ref props rules "h5" "font-weight")))
+    (or (dialog-style-ref ".modal-title" "font-weight")
+        (dialog-style-ref "h5" "font-weight")))
   (define modal-title-text-transform
-    (or (variant-style-ref props rules ".modal-title" "text-transform")
-        (variant-style-ref props rules "h5" "text-transform")))
+    (or (dialog-style-ref ".modal-title" "text-transform")
+        (dialog-style-ref "h5" "text-transform")))
   (hash 'nav-link-color nav-link-color
         'nav-link-hover nav-link-hover
         'nav-link-disabled nav-link-disabled
@@ -1827,7 +1570,13 @@
    "1.15rem"
    (prop-ref* props "--bs-body-line-height")
    (or (hash-ref props "--bs-body-font-weight" #f)
-       (variant-style-ref props rules "body" "font-weight")
+       (and rules
+            (hash-ref (css-compute-style-for-selector-group rules
+                                                            "body"
+                                                            #:resolve-vars? #t
+                                                            #:defaults props)
+                      "font-weight"
+                      #f))
        "400")
    "600"
    "700"
