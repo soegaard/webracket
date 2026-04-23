@@ -418,8 +418,9 @@
         (computed-style-ref ".dropdown-item" "color")))
   (define dropdown-link-color
     (or (computed-custom-ref ".dropdown-menu" "--bs-dropdown-link-color")
-        (computed-style-ref ".dropdown-menu .dropdown-item" "color")
-        (computed-style-ref ".dropdown-item" "color")
+        (selector-ref* computed-style-ref
+                       '(".dropdown-menu .dropdown-item" ".dropdown-item")
+                       "color")
         dropdown-color))
   (define dropdown-border-color
     (or (computed-custom-ref ".dropdown-menu" "--bs-dropdown-border-color")
@@ -455,30 +456,37 @@
     (or (computed-custom-ref ".dropdown-menu" "--bs-dropdown-item-padding-y")
         (computed-style-ref ".dropdown-item" "padding-top")))
   (define dropdown-item-font-size
-    (or (computed-style-ref ".dropdown-menu .dropdown-item" "font-size")
-        (computed-style-ref ".dropdown-item" "font-size")))
+    (selector-ref* computed-style-ref
+                   '(".dropdown-menu .dropdown-item" ".dropdown-item")
+                   "font-size"))
   (define dropdown-item-font-weight
-    (or (computed-style-ref ".dropdown-menu .dropdown-item" "font-weight")
-        (computed-style-ref ".dropdown-item" "font-weight")))
+    (selector-ref* computed-style-ref
+                   '(".dropdown-menu .dropdown-item" ".dropdown-item")
+                   "font-weight"))
   (define dropdown-item-text-transform
-    (or (computed-style-ref ".dropdown-menu .dropdown-item" "text-transform")
-        (computed-style-ref ".dropdown-item" "text-transform")))
+    (selector-ref* computed-style-ref
+                   '(".dropdown-menu .dropdown-item" ".dropdown-item")
+                   "text-transform"))
   (define dropdown-item-radius
     (computed-style-ref ".dropdown-item" "border-radius"))
   (define dropdown-item-hover-bg
-    (or (computed-style-ref ".dropdown-item:hover" "background-color")
-        (computed-style-ref ".dropdown-item:focus" "background-color")))
+    (selector-ref* computed-style-ref
+                   '(".dropdown-item:hover" ".dropdown-item:focus")
+                   "background-color"))
   (define dropdown-item-hover-color
-    (or (computed-style-ref ".dropdown-item:hover" "color")
-        (computed-style-ref ".dropdown-item:focus" "color")))
+    (selector-ref* computed-style-ref
+                   '(".dropdown-item:hover" ".dropdown-item:focus")
+                   "color"))
   (define dropdown-item-active-bg
     (or (computed-custom-ref ".dropdown-menu" "--bs-dropdown-link-active-bg")
-        (computed-style-ref ".dropdown-item.active" "background-color")
-        (computed-style-ref ".dropdown-item:active" "background-color")))
+        (selector-ref* computed-style-ref
+                       '(".dropdown-item.active" ".dropdown-item:active")
+                       "background-color")))
   (define dropdown-item-active-color
     (or (computed-custom-ref ".dropdown-menu" "--bs-dropdown-link-active-color")
-        (computed-style-ref ".dropdown-item.active" "color")
-        (computed-style-ref ".dropdown-item:active" "color")))
+        (selector-ref* computed-style-ref
+                       '(".dropdown-item.active" ".dropdown-item:active")
+                       "color")))
   (define tooltip-bg
     (or (computed-custom-ref ".tooltip" "--bs-tooltip-bg")
         (computed-style-ref ".tooltip-inner" "background-color")))
