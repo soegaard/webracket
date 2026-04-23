@@ -162,3 +162,43 @@ code, and uses a separate internal `initialize-boxed!` primitive for compiler
 initialization writes. Mixed lambda/complex `letrec-values` forms now keep
 source-order placeholder initialization instead of initializing later lambda
 clauses before earlier complex RHSs run.
+
+## Byte-string literals are mutable
+
+Status: fixed
+
+Minimal repro:
+
+```racket
+(define b #"a")
+(bytes-set! b 0 98)
+b
+```
+
+Real Racket:
+
+```text
+bytes-set!: contract violation
+  expected: (and/c bytes? (not/c immutable?))
+```
+
+Previous WebRacket behavior:
+
+```text
+#"b"
+```
+
+String literals correctly reject `string-set!`, but byte-string literals are
+constructed as mutable bytes. Quoted bytes should be immutable in Racket.
+
+Current WebRacket behavior:
+
+```text
+RuntimeError: unreachable
+at raise-expected-mutable-bytes
+at bytes-set!
+```
+
+The runtime now represents quoted byte strings as immutable `$Bytes`; the
+basic suite also checks that `#"ab"` satisfies `immutable-bytes?` and not
+`mutable-bytes?`.
