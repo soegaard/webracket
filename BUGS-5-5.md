@@ -30,7 +30,7 @@ bindings introduced by earlier forms are available.
 
 ## Top-level reference before definition is not checked
 
-Status: open
+Status: fixed
 
 Minimal repro:
 
@@ -85,6 +85,23 @@ x
 
 Real Racket reports an undefined-before-definition error. Current WebRacket
 prints `#<undefined>`.
+
+It also appears in top-level assignment RHSs:
+
+```racket
+(define x 0)
+(set! x y)
+(define y 2)
+x
+```
+
+Real Racket reports that `y` is undefined before definition. Current WebRacket
+stores `#<undefined>` in `x`.
+
+The fix records top-level bindings that are referenced before their definition
+has been evaluated. Reads of those bindings check for `$undefined` at runtime,
+including reads in effect position; ordinary top-level reads stay on the fast
+path.
 
 ## `letrec-values` placeholder reads produce `0`
 

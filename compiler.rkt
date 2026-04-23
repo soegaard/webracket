@@ -338,6 +338,16 @@
 (define (unparse-variable x)
   (syntax->datum (variable-id x)))
 
+(define current-top-symbols-needing-defined-check (make-parameter (make-hasheq)))
+
+(define (record-top-symbol-needing-defined-check! x)
+  (define sym (syntax-e (variable-id x)))
+  (hash-set! (current-top-symbols-needing-defined-check) sym #t))
+
+(define (top-symbol-needs-defined-check? x)
+  (hash-has-key? (current-top-symbols-needing-defined-check)
+                 (syntax-e (variable-id x))))
+
 ;;; Quick and dirty sets of variables represented as free-id sets
 (define (variable=? x y) (free-identifier=? (variable-id x) (variable-id y)))
 
@@ -3241,6 +3251,7 @@
 ; α-rename : LFE2 -> LFE2+
 (define (α-rename T)
   (define top-bindings (collect-top-level-bindings T))
+  (current-top-symbols-needing-defined-check (make-hasheq))
   (current-console-bridge-top-binding-names
    (for/list ([x (in-list top-bindings)]
               #:do [(define sym (syntax-e (variable-id x)))]
@@ -3396,6 +3407,11 @@
     [,x                                         (let ([ρx (lookup ρ x)])
                                                   (cond
                                                     [ρx
+                                                     ;; A top-level read before the binding is seen must check
+                                                     ;; for $undefined at runtime, but later reads stay fast.
+                                                     (when (and (top-binding? ρx)
+                                                                (not (seen-top-binding? ρx)))
+                                                       (record-top-symbol-needing-defined-check! ρx))
                                                      (values `,ρx ρ)]
                                                     [else
                                                      (unless (variable? x)
@@ -3480,9 +3496,15 @@
     ; Until full namespace lookup is implemented, normalize known top refs
     ; to the collected top-level binding so forward and non-forward refs
     ; share one variable path.
-    [(top ,s ,x)                              (values (or (and (variable? x) (ρ-ref ρ x))
-                                                             `(top ,s ,x))
-                                                         ρ)]
+    [(top ,s ,x)                              (cond
+                                                [(and (variable? x) (ρ-ref ρ x))
+                                                 => (λ (x*)
+                                                      (when (and (top-binding? x*)
+                                                                 (not (seen-top-binding? x*)))
+                                                        (record-top-symbol-needing-defined-check! x*))
+                                                      (values x* ρ))]
+                                                [else
+                                                 (values `(top ,s ,x) ρ)])]
     [(variable-reference ,s ,vrx)             (values `(variable-reference ,s ,(VariableReferenceId vrx ρ)) ρ)])
 
   (VariableReferenceId : VariableReferenceId (VRX ρ) -> VariableReferenceId ()
@@ -4987,6 +5009,21 @@
     (define (global-variable? v)
       ; a global (wasm) varible is unboxed
       (non-literal-constant? (syntax-e (variable-id v))))
+    (define (top-reference-symbol-expr v)
+      (define sym (syntax-e (variable-id v)))
+      (define name (console-bridge-symbol-constant-name sym))
+      (add-symbol-constant name sym)
+      `(global.get ,(string->symbol (~a "$symbol:" name))))
+    (define (CheckedTopReference v)
+      (define val (emit-fresh-local 'top-val '(ref eq)))
+      `(block (result (ref eq))
+        (local.set ,(LocalVar val)
+                   (struct.get $Boxed $v
+                               (ref.cast (ref $Boxed) (global.get ,(TopVar v)))))
+        (if (ref.eq (local.get ,(LocalVar val)) (global.get $undefined))
+            (then
+             (drop (call $raise-unbound-variable-reference ,(top-reference-symbol-expr v)))))
+        (local.get ,(LocalVar val))))
     (define (classify v)
       #;(displayln (list 'clas v))
       #;(when (symbol? v) (error 'classify "got: ~a" v))
@@ -5023,7 +5060,10 @@
       ;   global refers to a Web Assembly global variable
       (case (classify v)
         ; [(top)        `(global.get ,(TopVar v))]   ; unboxed
-        [(top)        `(struct.get $Boxed $v (ref.cast (ref $Boxed) (global.get ,(TopVar v))))]
+        [(top)        (if (top-symbol-needs-defined-check? v)
+                          (CheckedTopReference v)
+                          `(struct.get $Boxed $v
+                                       (ref.cast (ref $Boxed) (global.get ,(TopVar v)))))]
         [(global)     `(global.get ,($ (syntax-e (variable-id v))))]
         [(local)      `(local.get  ,(LocalVar v))]
         [(module)     `(module.get ,(ModuleVar v))]
@@ -5386,7 +5426,13 @@
   (CExpr2 : CExpr (ce dd cd) -> * ()
     ;; All Complex Expressions are translated to statements
     [,ae                     (match dd
-                               ['<effect>  `(nop)]
+                               ;; Effect-position atomics are usually dropped, but
+                               ;; risky top-level reads must still run so they can raise.
+                               ['<effect>  (if (and (variable? ae)
+                                                     (top-variable? ae)
+                                                     (top-symbol-needs-defined-check? ae))
+                                                `(drop ,(AExpr2 ae <value>))
+                                                `(nop))]
                                ['<value>   (match cd ; ClosureAllocation needs the dest
                                              ['<return> `(return ,(AExpr2 ae dd))]
                                              [_                   (AExpr2 ae dd)])]
