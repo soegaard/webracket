@@ -1,5 +1,53 @@
 # BUGS FIXED
 
+## Correlated syntax edge cases
+
+Status: fixed
+
+Minimal repros:
+
+```racket
+(define inner (datum->correlated 'x))
+(define converted (correlated->datum (box inner)))
+(correlated? (unbox converted))
+```
+
+```racket
+(define c
+  (correlated-property
+   (correlated-property (datum->correlated 'seed) 'tag 'value)
+   123
+   'number))
+(correlated-property-symbol-keys c)
+```
+
+```racket
+(define c (correlated-property (datum->correlated 'seed) 'tag #f))
+(list (correlated-property c 'tag)
+      (correlated-property-symbol-keys c))
+```
+
+Real Racket:
+
+```text
+#t
+(tag)
+(#f (tag))
+```
+
+Previous WebRacket behavior:
+
+```text
+false
+(tag 123)
+(false null)
+```
+
+The runtime now matches Racket's correlated-object behavior for these cases:
+`correlated->datum` preserves boxes like vectors, `correlated-property-symbol-keys`
+filters to symbol keys, and `correlated-property` stores `#f` as a real property
+value instead of treating it as a deletion sentinel.
+
 ## Top-level `set!` after definition is rejected
 
 Status: fixed

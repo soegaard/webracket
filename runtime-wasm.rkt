@@ -39589,18 +39589,6 @@
                (local $cdr-raw    (ref eq))
                (local $car-datum  (ref eq))
                (local $cdr-datum  (ref eq))
-               (local $vec        (ref $Vector))
-               (local $arr        (ref $Array))
-               (local $new-arr    (ref $Array))
-               (local $len        i32)
-               (local $i          i32)
-               (local $elem       (ref eq))
-               (local $elem-datum (ref eq))
-               (local $hash       i32)
-               (local $immutable  i32)
-               (local $box        (ref $Box))
-               (local $box-val    (ref eq))
-
                (if (ref.eq (call $correlated? (local.get $v)) (global.get $true))
                    (then
                     (local.set $fields (call $correlated-unwrap (local.get $who) (local.get $v)))
@@ -39624,15 +39612,9 @@
 
                (if (ref.test (ref $Box) (local.get $v))
                    (then
-                    (local.set $box (ref.cast (ref $Box) (local.get $v)))
-                    (local.set $box-val (struct.get $Box $v (local.get $box)))
-                    (local.set $box-val (call $correlated->datum/convert (local.get $who) (local.get $box-val)))
-                    (local.set $hash (struct.get $Box $hash (local.get $box)))
-                    (local.set $immutable (struct.get $Box $immutable (local.get $box)))
-                    (return (struct.new $Box
-                                        (local.get $hash)
-                                        (local.get $immutable)
-                                        (local.get $box-val)))))
+                    ;; Match Racket's behavior: boxes are preserved like vectors,
+                    ;; including any correlated value inside the box.
+                    (return (local.get $v))))
 
                (local.get $v))
 
@@ -39834,11 +39816,9 @@
                                         (local.get $entry-val)))
                             (br $loop)))
 
-               (if (ref.eq (local.get $val-arg) (global.get $false))
-                   (then (nop))
-                   (else (drop (call $hash-set! (local.get $new-props)
-                                     (local.get $key)
-                                     (local.get $val-arg)))))
+               (drop (call $hash-set! (local.get $new-props)
+                           (local.get $key)
+                           (local.get $val-arg)))
 
                (call $correlated/make
                      (local.get $source)
@@ -39877,11 +39857,13 @@
                                                         (struct.get $Pair $a (local.get $pair))))
                             (local.set $list (struct.get $Pair $d (local.get $pair)))
                             (local.set $key (struct.get $Pair $a (local.get $entry)))
-                            (local.set $acc
-                                       (struct.new $Pair
-                                                   (i32.const 0)
-                                                   (local.get $key)
-                                                   (local.get $acc)))
+                            (if (ref.test (ref $Symbol) (local.get $key))
+                                (then
+                                 (local.set $acc
+                                            (struct.new $Pair
+                                                        (i32.const 0)
+                                                        (local.get $key)
+                                                        (local.get $acc)))))
                             (br $loop)))
                (local.get $acc))
          
