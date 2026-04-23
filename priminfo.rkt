@@ -52,6 +52,7 @@
     make-void
     
     set-boxed!          ; assignment boxes
+    initialize-boxed!   ; letrec initialization boxes
     boxed
     unboxed
 

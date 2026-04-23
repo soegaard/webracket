@@ -26031,10 +26031,17 @@
                (struct.new $Boxed (local.get $v)))
 
          (func $unboxed (type $Prim1) (param $b (ref eq))  (result (ref eq))
-               (struct.get $Boxed $v
-                           (block $ok (result (ref $Boxed))
-                             (br_on_cast $ok (ref eq) (ref $Boxed) (local.get $b))
-                             (unreachable))))
+               (local $B (ref $Boxed))
+               (local $v (ref eq))
+               (local.set $B
+                          (block $ok (result (ref $Boxed))
+                            (br_on_cast $ok (ref eq) (ref $Boxed) (local.get $b))
+                            (unreachable)))
+               (local.set $v (struct.get $Boxed $v (local.get $B)))
+               ;; Safe code must not observe letrec's internal placeholder.
+               (if (ref.eq (local.get $v) (global.get $unsafe-undefined))
+                   (then (unreachable)))
+               (local.get $v))
 
          (func $set-boxed! (type $Prim2)
                ; todo: make this return no values
@@ -26049,9 +26056,22 @@
                           (block $ok (result (ref $Boxed))
                                  (br_on_cast $ok (ref eq) (ref $Boxed) (local.get $b))
                                  (return (global.get $error))))
+               (if (ref.eq (struct.get $Boxed $v (local.get $B)) (global.get $unsafe-undefined))
+                   (then (unreachable)))
                ; 2. Set the contents
                (struct.set $Boxed $v (local.get $B) (local.get $v))
                ; 3. Return `void`
+               (global.get $void))
+
+         (func $initialize-boxed! (type $Prim2)
+               (param $b (ref eq)) (param $v (ref eq))
+               (result (ref eq))
+               (local $B (ref $Boxed))
+               (local.set $B
+                          (block $ok (result (ref $Boxed))
+                                 (br_on_cast $ok (ref eq) (ref $Boxed) (local.get $b))
+                                 (return (global.get $error))))
+               (struct.set $Boxed $v (local.get $B) (local.get $v))
                (global.get $void))
 
 

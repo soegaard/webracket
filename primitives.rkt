@@ -1107,6 +1107,7 @@
 (struct boxed (x) #:transparent #:mutable)
 (define (unboxed b)      (boxed-x b))
 (define (set-boxed! b x) (set-boxed-x! b x))
+(define (initialize-boxed! b x) (set-boxed-x! b x))
 
 (define (make-empty-hash)    (make-hash))
 (define (make-empty-hasheq)  (make-hasheq))

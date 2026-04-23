@@ -340,6 +340,8 @@
 
 (define current-top-symbols-needing-defined-check (make-parameter (make-hasheq)))
 
+(define letrec-initialization-set-key 'webracket:letrec-initialization-set?)
+
 (define (record-top-symbol-needing-defined-check! x)
   (define sym (syntax-e (variable-id x)))
   (hash-set! (current-top-symbols-needing-defined-check) sym #t))
@@ -1403,6 +1405,7 @@
   boxed      ; used by assignment elimination
   unboxed    ; used by assignment elimination
   set-boxed! ; used by assignment elimination
+  initialize-boxed! ; used by letrec-values initialization after assignment elimination
   boxed?
 
   box? box box-immutable unbox set-box! 
@@ -2595,7 +2598,7 @@
         ;; Temporarily expand letrec such that letrec only binds lambdas
         [(letrec-values ([(x ...) e] ...) e0 e1 ...)
          ;    (letrec-values ([(x ...) ce] ...) e)
-         ; => (let ([x undefined] ... ...)
+         ; => (let ([x unsafe-undefined] ... ...)
          ;      (letrec ([xl le] ...)
          ;        (let-values ([(t ...) ce])
          ;           (set! x t) ...)
@@ -2607,34 +2610,53 @@
          (define (lambda-clause? stx)
            (syntax-parse stx #:literal-sets (kernel-literals) [[(x) (#%plain-lambda . _)] #t] [_ #f]))
          (define clauses (syntax->list #'([(x ...) e] ...)))
-         ; partition clauses into lambda clauses and complex clauses
-         (define-values (lambda-clauses complex-clauses) (partition lambda-clause? clauses))
+         ; Partition clauses into lambda clauses and complex clauses.
+         ; If any RHS is complex, keep all clauses in source order as
+         ; placeholder-backed initializations so later lambdas are not
+         ; initialized before earlier RHSs run.
+         (define-values (raw-lambda-clauses raw-complex-clauses)
+           (partition lambda-clause? clauses))
+         (define-values (lambda-clauses complex-clauses)
+           (if (null? raw-complex-clauses)
+               (values raw-lambda-clauses '())
+               (values '() clauses)))
          (define/with-syntax ([(xl)     le] ...) lambda-clauses)  ; xl (an x bound to lambda)
          (define/with-syntax ([(xc ...) ce] ...) complex-clauses) ; xc (an x bound to a complex expression)
          (let* ([xc* (variable* (syntax->list #'(xc ... ...)))]
-                [0s  (map (λ(_) `(quote ,E ,(datum E 0))) xc*)]
+                [uds (map (λ(_) `(quote ,E ,(datum E datum:unsafe-undefined))) xc*)]
                 [xl  (variable* (syntax->list #'(xl ...)))]
                 [le  (Expr* #'(le ...))])
            (define (build-begin s . Es)
              (match (append* Es)
                [(list E0)        E0]
                [(list E0 E1 ...) `(begin ,s ,E0 ,E1 ...)]))
-           `(let-values ,E ([(,xc*) ,0s] ...)      ; declare as undefined
+           `(let-values ,E ([(,xc*) ,uds] ...)     ; declare as unsafe-undefined
               (letrec-values ,E ([(,xl) ,le] ...)  ; fix lambda expressions
                 ,(build-begin
                   E (for/list ([complex complex-clauses])
                       (syntax-parse complex
                         [[()       ce]  (Expr #'(let-values ([() ce]) 0))]
                         [[(xc)     ce]  (with-syntax ([tc (car (generate-temporaries #'(xc)))])
-                                          (Expr #'(let-values ([(tc) ce])
+                                          (define init-set
+                                            (syntax-property #'(set! xc tc)
+                                                             letrec-initialization-set-key
+                                                             #t))
+                                          (Expr #`(let-values ([(tc) ce])
                                                     (begin
-                                                      (set! xc tc)
+                                                      #,init-set
                                                       0))))]
                         [[(xc ...) ce]  (with-syntax ([(tc ...) (generate-temporaries #'(xc ...))])
-                                          (Expr #'(let-values ([(tc ...) ce])
-                                                    (begin
-                                                      (set! xc tc) ...
-                                                      0))))]))
+                                          (define init-sets
+                                            (for/list ([x (in-list (syntax->list #'(xc ...)))]
+                                                       [t (in-list (syntax->list #'(tc ...)))])
+                                              (syntax-property #`(set! #,x #,t)
+                                                               letrec-initialization-set-key
+                                                               #t)))
+                                          (with-syntax ([(init-set ...) init-sets])
+                                            (Expr #'(let-values ([(tc ...) ce])
+                                                      (begin
+                                                        init-set ...
+                                                        0)))))]))
                   (Expr* #'(e0 e1 ...))))))]
         [(set! x:id e)                              `(set! ,E ,(variable #'x) ,(Expr #'e))]
         [(with-continuation-mark e0 e1 e2)          `(wcm ,E ,(Expr #'e0) ,(Expr #'e1) ,(Expr #'e2))]
@@ -3701,6 +3723,9 @@
     (define (Boxed e)   (with-output-language (LFE2+ Expr) `(app ,h ,(var:boxed)   ,e)))
     (define (Unboxed e) (with-output-language (LFE2+ Expr) `(app ,h ,(var:unboxed) ,e)))
     (define (Undefined) (with-output-language (LFE2+ Expr) `(quote ,h ,datum:undefined)))
+    (define (letrec-initialization-set? s)
+      (and (syntax? s)
+           (syntax-property s letrec-initialization-set-key)))
     (define (LambdaBody s f fs e)
       ; fs are the variables to be bound in the body e
       (with-output-language (LFE2+ Expr)
@@ -3738,7 +3763,10 @@
   (Expr : Expr (E) -> Expr ()
     ; variable reference, set! and all binding forms must be rewritten
     [,x                       (if (set-in? x ms) (Unboxed x) x)]
-    [(set! ,s ,x ,[e])        `(app ,h ,(var:set-boxed!) ,x ,e)]
+    [(set! ,s ,x ,[e])        `(app ,h ,(if (letrec-initialization-set? s)
+                                            (var:initialize-boxed!)
+                                            (var:set-boxed!))
+                                      ,x ,e)]
     [,ab                      (Abstraction ab)]
     [(case-lambda ,s ,ab ...) (let ([ab (map Abstraction ab)])
                                 `(case-lambda ,s ,ab ...))]

@@ -105,7 +105,7 @@ path.
 
 ## `letrec-values` placeholder reads produce `0`
 
-Status: open
+Status: fixed
 
 Minimal repro:
 
@@ -155,3 +155,10 @@ are first introduced with literal `0` placeholders:
 See the `letrec-values` rewrite in `compiler.rkt`. Premature references
 therefore read the placeholder as a real value instead of triggering
 Racket's uninitialized-binding error.
+
+The fix uses `unsafe-undefined` for generated `letrec-values` placeholders,
+guards `unboxed` and user `set-boxed!` so the placeholder cannot leak from safe
+code, and uses a separate internal `initialize-boxed!` primitive for compiler
+initialization writes. Mixed lambda/complex `letrec-values` forms now keep
+source-order placeholder initialization instead of initializing later lambda
+clauses before earlier complex RHSs run.
