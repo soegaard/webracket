@@ -2595,69 +2595,13 @@
                                                      (define es  (Expr* #'(e ...)))
                                                      `(let-values ,E ([(,xss ...) ,es] ...)
                                                         ,(Expr #'e0) ,(Expr* #'(e1 ...)) ...))]
-        ;; Temporarily expand letrec such that letrec only binds lambdas
         [(letrec-values ([(x ...) e] ...) e0 e1 ...)
-         ;    (letrec-values ([(x ...) ce] ...) e)
-         ; => (let ([x unsafe-undefined] ... ...)
-         ;      (letrec ([xl le] ...)
-         ;        (let-values ([(t ...) ce])
-         ;           (set! x t) ...)
-         ;        ...
-         ;        e)
-         ; where x is divided into xl.
-         ; Note: Now the code generator doesn't have to deal with multiple values
-         ;       returned from e.
-         (define (lambda-clause? stx)
-           (syntax-parse stx #:literal-sets (kernel-literals) [[(x) (#%plain-lambda . _)] #t] [_ #f]))
-         (define clauses (syntax->list #'([(x ...) e] ...)))
-         ; Partition clauses into lambda clauses and complex clauses.
-         ; If any RHS is complex, keep all clauses in source order as
-         ; placeholder-backed initializations so later lambdas are not
-         ; initialized before earlier RHSs run.
-         (define-values (raw-lambda-clauses raw-complex-clauses)
-           (partition lambda-clause? clauses))
-         (define-values (lambda-clauses complex-clauses)
-           (if (null? raw-complex-clauses)
-               (values raw-lambda-clauses '())
-               (values '() clauses)))
-         (define/with-syntax ([(xl)     le] ...) lambda-clauses)  ; xl (an x bound to lambda)
-         (define/with-syntax ([(xc ...) ce] ...) complex-clauses) ; xc (an x bound to a complex expression)
-         (let* ([xc* (variable* (syntax->list #'(xc ... ...)))]
-                [uds (map (λ(_) `(quote ,E ,(datum E datum:unsafe-undefined))) xc*)]
-                [xl  (variable* (syntax->list #'(xl ...)))]
-                [le  (Expr* #'(le ...))])
-           (define (build-begin s . Es)
-             (match (append* Es)
-               [(list E0)        E0]
-               [(list E0 E1 ...) `(begin ,s ,E0 ,E1 ...)]))
-           `(let-values ,E ([(,xc*) ,uds] ...)     ; declare as unsafe-undefined
-              (letrec-values ,E ([(,xl) ,le] ...)  ; fix lambda expressions
-                ,(build-begin
-                  E (for/list ([complex complex-clauses])
-                      (syntax-parse complex
-                        [[()       ce]  (Expr #'(let-values ([() ce]) 0))]
-                        [[(xc)     ce]  (with-syntax ([tc (car (generate-temporaries #'(xc)))])
-                                          (define init-set
-                                            (syntax-property #'(set! xc tc)
-                                                             letrec-initialization-set-key
-                                                             #t))
-                                          (Expr #`(let-values ([(tc) ce])
-                                                    (begin
-                                                      #,init-set
-                                                      0))))]
-                        [[(xc ...) ce]  (with-syntax ([(tc ...) (generate-temporaries #'(xc ...))])
-                                          (define init-sets
-                                            (for/list ([x (in-list (syntax->list #'(xc ...)))]
-                                                       [t (in-list (syntax->list #'(tc ...)))])
-                                              (syntax-property #`(set! #,x #,t)
-                                                               letrec-initialization-set-key
-                                                               #t)))
-                                          (with-syntax ([(init-set ...) init-sets])
-                                            (Expr #'(let-values ([(tc ...) ce])
-                                                      (begin
-                                                        init-set ...
-                                                        0)))))]))
-                  (Expr* #'(e0 e1 ...))))))]
+         (let ()
+           (define xss (map variable*
+                            (syntax->list #'((x ...) ...))))
+           (define es  (Expr* #'(e ...)))
+           `(letrec-values ,E ([(,xss ...) ,es] ...)
+              ,(Expr #'e0) ,(Expr* #'(e1 ...)) ...))]
         [(set! x:id e)                              `(set! ,E ,(variable #'x) ,(Expr #'e))]
         [(with-continuation-mark e0 e1 e2)          `(wcm ,E ,(Expr #'e0) ,(Expr #'e1) ,(Expr #'e2))]
         [(#%plain-app e0 e1 ...)                    `(app ,E ,(Expr #'e0) ,(Expr* #'(e1 ...)) ...)]
@@ -2917,6 +2861,94 @@
             [e1 (cdr es)])
        `(letrec-values ,s ([(,x** ...) ,e*] ...) ,e0 ,e1 ...))]
     ))
+
+;;;
+;;; LOWER LETREC VALUES
+;;;
+
+;; Lower complex letrec-values only after infer-names has seen the original
+;; binding shape. Otherwise generated temporaries become the inferred names.
+(define-pass lower-letrec-values : LFE (T) -> LFE ()
+  (definitions
+    (define h #'lower-letrec-values)
+    (define (lambda-clause? xs e)
+      (and (= (length xs) 1)
+           (nanopass-case (LFE Expr) e
+             [(λ ,s ,f ,e0 ,e1 ...) #t]
+             [else #f])))
+    (define (fresh-variable-like x)
+      (variable (car (generate-temporaries (list (variable-id x))))))
+    (define (Unsafe-Undefined)
+      (with-output-language (LFE Expr)
+        `(quote ,h ,(datum h datum:unsafe-undefined))))
+    (define (Zero)
+      (with-output-language (LFE Expr)
+        `(quote ,h ,(datum h 0))))
+    (define (Begin s es)
+      (with-output-language (LFE Expr)
+        (match es
+          [(list e)          `,e]
+          [(list e0 e1 ...)  `(begin ,s ,e0 ,e1 ...)])))
+    (define (init-set-syntax s)
+      (if (syntax? s)
+          (syntax-property s letrec-initialization-set-key #t)
+          s))
+    (define (InitSet s x t)
+      (with-output-language (LFE Expr)
+        `(set! ,(init-set-syntax s) ,x ,t)))
+    (define (InitializeClause s xs e)
+      (with-output-language (LFE Expr)
+        (match xs
+          ['()
+           `(let-values ,s ([() ,e]) ,(Zero))]
+          [(list x)
+           (define t (fresh-variable-like x))
+           `(let-values ,s ([(,t) ,e])
+              (begin ,s ,(InitSet s x t) ,(Zero)))]
+          [_
+           (define ts (map fresh-variable-like xs))
+           (define init-sets
+             (for/list ([x (in-list xs)]
+                        [t (in-list ts)])
+               (InitSet s x t)))
+           `(let-values ,s ([(,ts ...) ,e])
+              ,(Begin s (append init-sets (list (Zero)))))]))))
+
+  (TopLevelForm        : TopLevelForm        (T) -> TopLevelForm        ())
+  (ModuleLevelForm     : ModuleLevelForm     (M) -> ModuleLevelForm     ())
+  (GeneralTopLevelForm : GeneralTopLevelForm (G) -> GeneralTopLevelForm ())
+  (Formals             : Formals             (F) -> Formals             ())
+
+  (Expr : Expr (E) -> Expr ()
+    [(letrec-values ,s ([(,x ...) ,[e]] ...) ,[e0] ,[e1] ...)
+     (define clauses (map list x e))
+     (define-values (raw-lambda-clauses raw-complex-clauses)
+       (partition (match-lambda [(list xs rhs) (lambda-clause? xs rhs)])
+                  clauses))
+     (define-values (lambda-clauses complex-clauses)
+       (if (null? raw-complex-clauses)
+           (values raw-lambda-clauses '())
+           (values '() clauses)))
+     (with-output-language (LFE Expr)
+       (if (null? complex-clauses)
+           `(letrec-values ,s ([(,x ...) ,e] ...) ,e0 ,e1 ...)
+           (let ()
+             (define placeholder-clauses
+               (for*/list ([clause (in-list complex-clauses)]
+                           [x      (in-list (first clause))])
+                 (list x (Unsafe-Undefined))))
+             (define lambda-bindings
+               (for/list ([clause (in-list lambda-clauses)])
+                 (list (first (first clause)) (second clause))))
+             (define init-exprs
+               (for/list ([clause (in-list complex-clauses)])
+                 (InitializeClause s (first clause) (second clause))))
+             (define body (Begin s (append init-exprs (cons e0 e1))))
+             `(let-values ,s ([(,(map first placeholder-clauses))
+                               ,(map second placeholder-clauses)] ...)
+                (letrec-values ,s ([(,(map first lambda-bindings))
+                                    ,(map second lambda-bindings)] ...)
+                  ,body)))))]))
 
 ;;;
 ;;; QUOTATIONS
@@ -4227,9 +4259,11 @@
              (α-rename
               (explicit-case-lambda
                (explicit-begin
-                (flatten-topbegin
-                 (parse
-                  (expand-syntax stx)))))))))))))
+                (lower-letrec-values
+                 (infer-names
+                  (flatten-topbegin
+                   (parse
+                    (expand-syntax stx)))))))))))))))
     (check-equal? (test #'1) ''1)
     (check-equal? (test #'(+ 2 3)) '(primapp + '2 '3))
     (check-equal? (test #'(+ 2 (* 4 5)))
@@ -4248,14 +4282,13 @@
                                                           (primapp + t.2 '1))))))
                        (closedapp (λ (z) (primapp + x y)) '5))))
     (check-equal? (test #'(letrec ([fact (λ (n) (if (= n 0) 1 (* n (fact (- n 1)))))]) (fact 5)))
-                  '(let-values ()
-                     (letrec-values (((fact)
-                                      (λ (n)
-                                        (let-values (((t.1) (primapp = n '0)))
-                                          (if t.1 '1 (let-values (((t.2) (primapp - n '1)))
-                                                       (let-values (((t.3) (app fact t.2)))
-                                                         (primapp * n t.3))))))))
-                       (app fact '5))))
+                  '(letrec-values (((fact)
+                                     (λ (n)
+                                       (let-values (((t.1) (primapp = n '0)))
+                                         (if t.1 '1 (let-values (((t.2) (primapp - n '1)))
+                                                      (let-values (((t.3) (app fact t.2)))
+                                                        (primapp * n t.3))))))))
+                     (app fact '5)))
     (check-equal? (test #'(module t webracket (fx+ 1 (fx+ 2 3))))
                   '(module t webracket
                      (#%plain-module-begin
@@ -6892,7 +6925,10 @@
   (define in  (time-pass "infer-names"          (λ () (infer-names ft))
                          (λ (v) (count-unparsed unparse-LFE v))
                          (λ (v) (unparse-all (unparse-LFE v)))))
-  (define cq  (time-pass "convert-quotations"   (λ () (convert-quotations in))
+  (define lr  (time-pass "lower-letrec-values"  (λ () (lower-letrec-values in))
+                         (λ (v) (count-unparsed unparse-LFE v))
+                         (λ (v) (unparse-all (unparse-LFE v)))))
+  (define cq  (time-pass "convert-quotations"   (λ () (convert-quotations lr))
                          (λ (v) (count-unparsed unparse-LFE v))
                          (λ (v) (unparse-all (unparse-LFE v)))))
   (define eb  (time-pass "explicit-begin"       (λ () (explicit-begin cq))
@@ -6955,11 +6991,12 @@
           (explicit-case-lambda
            (explicit-begin
             (convert-quotations
-             (infer-names
-              (flatten-topbegin
-               (parse
-                (unexpand
-                 (topexpand stx)))))))))))))))))
+             (lower-letrec-values
+              (infer-names
+               (flatten-topbegin
+                (parse
+                 (unexpand
+                  (topexpand stx))))))))))))))))))
 
 (module+ test
   (define (module-has-top-level-form? mod head name)
@@ -7059,6 +7096,14 @@
   (check-equal? (run-expr #'(append '(1) '(2 3) '(4)))
                 '(1 2 3 4))
 
+  (check-true
+   (regexp-match?
+    #rx"#<procedure:f>"
+    (with-output-to-string
+      (λ ()
+        (run (comp #'(letrec-values ([(f) (begin 0 (lambda () 1))])
+                       f)))))))
+
   (let-values ([(mod report)
                 (compile/primitive-report/ffi
                  #'(module tree-shake-ffi-console-unused webracket
@@ -7082,11 +7127,12 @@
           (explicit-case-lambda
            (explicit-begin
             (convert-quotations
-             (infer-names
-              (flatten-topbegin
-               (parse
-                (unexpand
-                 (topexpand stx)))))))))))))))
+             (lower-letrec-values
+              (infer-names
+               (flatten-topbegin
+                (parse
+                 (unexpand
+                  (topexpand stx))))))))))))))))
 
 (define (comp--- stx)
   (reset-counter!)
@@ -7098,11 +7144,12 @@
        (explicit-case-lambda
         (explicit-begin
          (convert-quotations
-          (infer-names
-           (flatten-topbegin
-            (parse
-             (unexpand
-              (topexpand stx))))))))))))))
+          (lower-letrec-values
+           (infer-names
+            (flatten-topbegin
+             (parse
+              (unexpand
+               (topexpand stx)))))))))))))))
 
 (define (test stx)
   (reset-counter!)
@@ -7118,11 +7165,12 @@
            (explicit-case-lambda
             (explicit-begin
              (convert-quotations
-              (infer-names
-               (flatten-topbegin
-                (parse
-                 (unexpand
-                  (topexpand stx))))))))))))))))))
+              (lower-letrec-values
+               (infer-names
+                (flatten-topbegin
+                 (parse
+                  (unexpand
+                   (topexpand stx)))))))))))))))))))
 
 (define (test- stx)
   (reset-counter!)
@@ -7138,11 +7186,12 @@
          (explicit-case-lambda
           (explicit-begin
            (convert-quotations
-            (infer-names
-             (flatten-topbegin
-              (parse
-               (unexpand
-                (topexpand stx))))))))))))))))))
+            (lower-letrec-values
+             (infer-names
+              (flatten-topbegin
+               (parse
+                (unexpand
+                 (topexpand stx)))))))))))))))))))
 
 
 
