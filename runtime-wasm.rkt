@@ -13481,6 +13481,9 @@
                (if (ref.test (ref $Bytes) (local.get $a))
                    (then (local.set $b (ref.cast (ref $Bytes) (local.get $a))))
                    (else (call $raise-check-bytes (local.get $a))))
+               ;; Byte literals and bytes->immutable-bytes results must reject mutation.
+               (if (i32.eq (struct.get $Bytes $immutable (local.get $b)) (i32.const 1))
+                   (then (call $raise-expected-mutable-bytes (local.get $a)) (unreachable)))
                ;; 2. Decode and check fixnum index $i
                (if (ref.test (ref i31) (local.get $i))
                    (then
