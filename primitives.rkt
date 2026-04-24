@@ -9,7 +9,14 @@
          racket/hash
          racket/include
          racket/keyword
-         racket/linklet
+         (except-in racket/linklet
+                    linklet-body-reserved-symbol?
+                    linklet-bundle?
+                    hash->linklet-bundle
+                    linklet-bundle->hash
+                    linklet-directory?
+                    hash->linklet-directory
+                    linklet-directory->hash)
          racket/list
          racket/math
          racket/mpair         
@@ -963,6 +970,13 @@
  instance-variable-value
 
  linklet?
+ linklet-body-reserved-symbol?
+ linklet-bundle?
+ hash->linklet-bundle
+ linklet-bundle->hash
+ linklet-directory?
+ hash->linklet-directory
+ linklet-directory->hash
  make-compiled-linklet     ; not in Full Racket
  linklet-name              ; not in Full Racket
  linklet-import-variables
@@ -1596,6 +1610,80 @@
 
 (define (instance-variable-box instance symbol can-create?)
   (error 'linklet-name "not in full Racket"))
+
+(define reserved-linklet-body-symbols
+  (let ([ht (make-hasheq)])
+    (for ([sym '(lambda
+                 case-lambda
+                 let-values
+                 letrec-values
+                 if
+                 begin
+                 begin0
+                 begin-unsafe
+                 set!
+                 quote
+                 with-continuation-mark
+                 #%variable-reference)])
+      (hash-set! ht sym #t))
+    ht))
+
+(define (linklet-body-reserved-symbol? sym)
+  (unless (symbol? sym)
+    (raise-argument-error 'linklet-body-reserved-symbol? "symbol?" sym))
+  (or (hash-ref reserved-linklet-body-symbols sym #f)
+      (and (namespace-variable-value sym #t (lambda () #f))
+           #t)))
+
+(struct webracket-linklet-bundle (content))
+(struct webracket-linklet-directory (content))
+
+(define (valid-linklet-bundle-key? key)
+  (or (symbol? key)
+      (fixnum? key)))
+
+(define (hash->linklet-bundle content)
+  (unless (and (hash? content) (hash-eq? content) (mutable-hash? content))
+    (raise-argument-error 'hash->linklet-bundle "mutable hasheq?" content))
+  (for ([(key _value) (in-hash content)])
+    (unless (valid-linklet-bundle-key? key)
+      (raise-argument-error 'hash->linklet-bundle "(or/c symbol? fixnum?)" key)))
+  (webracket-linklet-bundle content))
+
+(define (linklet-bundle? v)
+  (webracket-linklet-bundle? v))
+
+(define (linklet-bundle->hash bundle)
+  (unless (linklet-bundle? bundle)
+    (raise-argument-error 'linklet-bundle->hash "linklet-bundle?" bundle))
+  (webracket-linklet-bundle-content bundle))
+
+(define (valid-linklet-directory-key? key)
+  (or (symbol? key)
+      (not key)))
+
+(define (hash->linklet-directory content)
+  (unless (and (hash? content) (hash-eq? content) (mutable-hash? content))
+    (raise-argument-error 'hash->linklet-directory "mutable hasheq?" content))
+  (for ([(key value) (in-hash content)])
+    (cond
+      [(not (valid-linklet-directory-key? key))
+       (raise-argument-error 'hash->linklet-directory "(or/c symbol? #f)" key)]
+      [(not key)
+       (unless (linklet-bundle? value)
+         (raise-argument-error 'hash->linklet-directory "linklet-bundle?" value))]
+      [else
+       (unless (linklet-directory? value)
+         (raise-argument-error 'hash->linklet-directory "linklet-directory?" value))]))
+  (webracket-linklet-directory content))
+
+(define (linklet-directory? v)
+  (webracket-linklet-directory? v))
+
+(define (linklet-directory->hash directory)
+  (unless (linklet-directory? directory)
+    (raise-argument-error 'linklet-directory->hash "linklet-directory?" directory))
+  (webracket-linklet-directory-content directory))
 
 ;;;
 ;;; Iteration for mutable hash tables

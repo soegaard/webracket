@@ -1914,6 +1914,13 @@
   instance-variable-box      ; internal in full Racket
 
   linklet?
+  linklet-body-reserved-symbol?
+  linklet-bundle?
+  hash->linklet-bundle
+  linklet-bundle->hash
+  linklet-directory?
+  hash->linklet-directory
+  linklet-directory->hash
   make-compiled-linklet
   linklet-name
   linklet-import-variables

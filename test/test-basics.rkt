@@ -4601,6 +4601,42 @@
                            (equal? (linklet-import-variables cl) '())
                            (equal? (linklet-export-variables cl) '()))))
 
+              (list "linklet body reserved symbols"
+                    (and (equal? (linklet-body-reserved-symbol? 'lambda) #t)
+                         (equal? (linklet-body-reserved-symbol? '+) #t)
+                         (equal? (linklet-body-reserved-symbol? 'quote-syntax) #f)
+                         (equal? (linklet-body-reserved-symbol? 'ordinary-user-name) #f)))
+
+              (list "linklet bundle mutable-hash wrapper"
+                    (let* ([proc    (lambda args (void))]
+                           [cl      (make-compiled-linklet 'bundle-demo '() '() proc)]
+                           [content (make-hasheq)]
+                           [_       (hash-set! content 'main cl)]
+                           [bundle  (hash->linklet-bundle content)]
+                           [back    (linklet-bundle->hash bundle)]
+                           [_       (hash-set! content 0 'metadata)])
+                      (and (equal? (linklet-bundle? bundle) #t)
+                           (equal? (linklet-bundle? content) #f)
+                           (equal? (eq? back content) #t)
+                           (equal? (hash-ref back 'main) cl)
+                           (equal? (hash-ref back 0) 'metadata))))
+
+              (list "linklet directory mutable-hash wrapper"
+                    (let* ([bundle-content (make-hasheq)]
+                           [bundle         (hash->linklet-bundle bundle-content)]
+                           [nested-content (make-hasheq)]
+                           [nested         (hash->linklet-directory nested-content)]
+                           [content        (make-hasheq)]
+                           [_              (hash-set! content #f bundle)]
+                           [_              (hash-set! content 'sub nested)]
+                           [directory      (hash->linklet-directory content)]
+                           [back           (linklet-directory->hash directory)])
+                      (and (equal? (linklet-directory? directory) #t)
+                           (equal? (linklet-directory? content) #f)
+                           (equal? (eq? back content) #t)
+                           (equal? (linklet-bundle? (hash-ref back #f)) #t)
+                           (equal? (linklet-directory? (hash-ref back 'sub)) #t))))
+
               (list "instantiate-linklet/fresh-instance"
                     (let* ([compiled (make-compiled-linklet
                                       'fresh-linklet

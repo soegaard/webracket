@@ -1446,6 +1446,30 @@
 
     (add-ffi-symbol-constants)
 
+    (define linklet-body-core-reserved-symbols
+      '(lambda
+        case-lambda
+        let-values
+        letrec-values
+        if
+        begin
+        begin0
+        begin-unsafe
+        set!
+        quote
+        with-continuation-mark
+        #%variable-reference))
+
+    (for-each add-runtime-symbol-constant
+              (remove-duplicates (append linklet-body-core-reserved-symbols all-primitives)
+                                 eq?))
+
+    (define linklet-body-reserved-symbols
+      (sort (remove-duplicates
+             (append linklet-body-core-reserved-symbols all-primitives)
+             eq?)
+            symbol<?))
+
     (let ()
       ; TODO: remove primitives from this list
       (define symbols
@@ -1550,6 +1574,13 @@
           instance-unset-variable!
           make-instance
           link
+          linklet-body-reserved-symbol?
+          linklet-bundle?
+          hash->linklet-bundle
+          linklet-bundle->hash
+          linklet-directory?
+          hash->linklet-directory
+          linklet-directory->hash
           
           syntax
           make-syntax
@@ -1762,6 +1793,11 @@
 
     (add-runtime-string-constant 'linklet?                      "linklet?")
     (add-runtime-string-constant 'compiled-linklet?             "compiled-linklet?")
+    (add-runtime-string-constant 'linklet-bundle?               "linklet-bundle?")
+    (add-runtime-string-constant 'linklet-directory?            "linklet-directory?")
+    (add-runtime-string-constant 'mutable-hasheq?               "mutable hasheq?")
+    (add-runtime-string-constant 'linklet-bundle-key?           "(or/c symbol? fixnum?)")
+    (add-runtime-string-constant 'linklet-directory-key?        "(or/c symbol? #f)")
     (add-runtime-string-constant 'listof-symbol?                "(listof symbol?)")
     (add-runtime-string-constant 'listof-listof-symbol?         "(listof (listof symbol?))")
     (add-runtime-string-constant 'listof-instance?              "(listof instance?)")
@@ -2432,6 +2468,20 @@
                        (field $exports     (ref eq))    ; (listof symbol?)
                        (field $proc        (ref eq))    ; takes self instance plus instance arguments
                        )))
+
+          ;; WebRacket currently stores mutable hasheq tables directly in
+          ;; linklet bundle/directory wrappers.
+          (type $LinkletBundle
+                (sub $Heap
+                     (struct
+                       (field $hash    (mut i32))
+                       (field $content (ref $HashEqMutable)))))
+
+          (type $LinkletDirectory
+                (sub $Heap
+                     (struct
+                       (field $hash    (mut i32))
+                       (field $content (ref $HashEqMutable)))))
 
           (type $UnquotedPrintingString
                 (sub $Heap
@@ -38804,6 +38854,162 @@
                    (ref.test (ref $Linklet) (local.get $v))
                    (then (global.get $true))
                    (else (global.get $false))))
+
+         (func $linklet-body-reserved-symbol? (type $Prim1)
+               (param $sym (ref eq))
+               (result     (ref eq))
+
+               (if (i32.eqz (ref.test (ref $Symbol) (local.get $sym)))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:linklet-body-reserved-symbol?)
+                               (global.get $string:symbol?)
+                               (local.get $sym))
+                         (unreachable)))
+               ,@(for/list ([sym (in-list linklet-body-reserved-symbols)])
+                   `(if (ref.eq (local.get $sym)
+                                (global.get ,($ (string->symbol (~a "symbol:" sym)))))
+                        (then (return (global.get $true)))))
+               (global.get $false))
+
+         (func $linklet-bundle? (type $Prim1)
+               ,@(make-predicate-body '$LinkletBundle))
+
+         (func $hash->linklet-bundle (type $Prim1)
+               (param $content (ref eq))
+               (result         (ref eq))
+
+               (local $ht    (ref $HashEqMutable))
+               (local $pairs (ref eq))
+               (local $node  (ref eq))
+               (local $pair  (ref $Pair))
+               (local $entry (ref $Pair))
+               (local $key   (ref eq))
+
+               (if (i32.eqz (ref.test (ref $HashEqMutable) (local.get $content)))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:hash->linklet-bundle)
+                               (global.get $string:mutable-hasheq?)
+                               (local.get $content))
+                         (unreachable)))
+               (local.set $ht (ref.cast (ref $HashEqMutable) (local.get $content)))
+
+               (local.set $pairs (call $hash->list (local.get $content) (global.get $false)))
+               (local.set $node (local.get $pairs))
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $node) (global.get $null)))
+                            (local.set $pair (ref.cast (ref $Pair) (local.get $node)))
+                            (local.set $entry (ref.cast (ref $Pair)
+                                                        (struct.get $Pair $a (local.get $pair))))
+                            (local.set $key (struct.get $Pair $a (local.get $entry)))
+                            (if (i32.eqz
+                                 (i32.or (ref.test (ref $Symbol) (local.get $key))
+                                         (ref.eq (call $fixnum? (local.get $key))
+                                                 (global.get $true))))
+                                (then (call $raise-argument-error1
+                                            (global.get $symbol:hash->linklet-bundle)
+                                            (global.get $string:linklet-bundle-key?)
+                                            (local.get $key))
+                                      (unreachable)))
+                            (local.set $node (struct.get $Pair $d (local.get $pair)))
+                            (br $loop)))
+
+               (ref.cast (ref eq)
+                         (struct.new $LinkletBundle
+                                     (i32.const 0)
+                                     (local.get $ht))))
+
+         (func $linklet-bundle->hash (type $Prim1)
+               (param $bundle (ref eq))
+               (result        (ref eq))
+
+               (if (i32.eqz (ref.test (ref $LinkletBundle) (local.get $bundle)))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:linklet-bundle->hash)
+                               (global.get $string:linklet-bundle?)
+                               (local.get $bundle))
+                         (unreachable)))
+               (ref.cast (ref eq)
+                         (struct.get $LinkletBundle $content
+                                     (ref.cast (ref $LinkletBundle) (local.get $bundle)))))
+
+         (func $linklet-directory? (type $Prim1)
+               ,@(make-predicate-body '$LinkletDirectory))
+
+         (func $hash->linklet-directory (type $Prim1)
+               (param $content (ref eq))
+               (result         (ref eq))
+
+               (local $ht    (ref $HashEqMutable))
+               (local $pairs (ref eq))
+               (local $node  (ref eq))
+               (local $pair  (ref $Pair))
+               (local $entry (ref $Pair))
+               (local $key   (ref eq))
+               (local $val   (ref eq))
+
+               (if (i32.eqz (ref.test (ref $HashEqMutable) (local.get $content)))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:hash->linklet-directory)
+                               (global.get $string:mutable-hasheq?)
+                               (local.get $content))
+                         (unreachable)))
+               (local.set $ht (ref.cast (ref $HashEqMutable) (local.get $content)))
+
+               (local.set $pairs (call $hash->list (local.get $content) (global.get $false)))
+               (local.set $node (local.get $pairs))
+               (block $done
+                      (loop $loop
+                            (br_if $done (ref.eq (local.get $node) (global.get $null)))
+                            (local.set $pair (ref.cast (ref $Pair) (local.get $node)))
+                            (local.set $entry (ref.cast (ref $Pair)
+                                                        (struct.get $Pair $a (local.get $pair))))
+                            (local.set $key (struct.get $Pair $a (local.get $entry)))
+                            (local.set $val (struct.get $Pair $d (local.get $entry)))
+                            (if (i32.eqz
+                                 (i32.or (ref.test (ref $Symbol) (local.get $key))
+                                         (ref.eq (local.get $key) (global.get $false))))
+                                (then (call $raise-argument-error1
+                                            (global.get $symbol:hash->linklet-directory)
+                                            (global.get $string:linklet-directory-key?)
+                                            (local.get $key))
+                                      (unreachable)))
+                            (if (ref.eq (local.get $key) (global.get $false))
+                                (then
+                                 (if (i32.eqz (ref.test (ref $LinkletBundle) (local.get $val)))
+                                     (then (call $raise-argument-error1
+                                                 (global.get $symbol:hash->linklet-directory)
+                                                 (global.get $string:linklet-bundle?)
+                                                 (local.get $val))
+                                           (unreachable))))
+                                (else
+                                 (if (i32.eqz (ref.test (ref $LinkletDirectory) (local.get $val)))
+                                     (then (call $raise-argument-error1
+                                                 (global.get $symbol:hash->linklet-directory)
+                                                 (global.get $string:linklet-directory?)
+                                                 (local.get $val))
+                                           (unreachable)))))
+                            (local.set $node (struct.get $Pair $d (local.get $pair)))
+                            (br $loop)))
+
+               (ref.cast (ref eq)
+                         (struct.new $LinkletDirectory
+                                     (i32.const 0)
+                                     (local.get $ht))))
+
+         (func $linklet-directory->hash (type $Prim1)
+               (param $directory (ref eq))
+               (result           (ref eq))
+
+               (if (i32.eqz (ref.test (ref $LinkletDirectory) (local.get $directory)))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:linklet-directory->hash)
+                               (global.get $string:linklet-directory?)
+                               (local.get $directory))
+                         (unreachable)))
+               (ref.cast (ref eq)
+                         (struct.get $LinkletDirectory $content
+                                     (ref.cast (ref $LinkletDirectory) (local.get $directory)))))
 
          (func $make-compiled-linklet (type $Prim4)
                (param $name     (ref eq)) ;; #f or symbol
