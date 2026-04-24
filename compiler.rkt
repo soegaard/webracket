@@ -2047,6 +2047,7 @@
   simple-form-path
   normalize-path
   find-relative-path
+  shrink-path-wrt
   path-only
 
   ;; 15.2 Filesystem

@@ -1039,6 +1039,7 @@
  simple-form-path
  normalize-path
  find-relative-path
+ shrink-path-wrt
  path-only
 
  ;; 15.2 Filesystem
@@ -1925,6 +1926,9 @@
 
 (define (find-relative-path base path)
   (error 'find-relative-path "only available in compiled WebRacket"))
+
+(define (shrink-path-wrt path other-paths)
+  (error 'shrink-path-wrt "only available in compiled WebRacket"))
 
 (define (webracket-vfs-write-file path bytes)
   (error 'webracket-vfs-write-file "only available in compiled WebRacket"))

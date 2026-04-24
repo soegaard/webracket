@@ -1887,6 +1887,7 @@
     (add-runtime-string-constant  'path?                     "path?")
     (add-runtime-string-constant  'path-for-some-system?     "path-for-some-system?")
     (add-runtime-string-constant  'path-element?             "path-element?")
+    (add-runtime-string-constant  'listof-path?              "(listof path?)")
 
     ;; Byte Strings    
     (add-runtime-bytes-constant  'empty                     #"")
@@ -45799,6 +45800,112 @@
                                                (ref.cast (ref $Path) (local.get $b))))
                              (global.get $true)))
 
+               (func $path-parts-suffix-diff-size
+                     (param $a (ref eq)) ;; reversed path parts
+                     (param $b (ref eq)) ;; reversed path parts
+                     (result   i32)
+
+                     (local $a-node (ref $Pair))
+                     (local $b-node (ref $Pair))
+                     (local $size   i32)
+
+                     (local.set $size (i32.const 1))
+                     (block $done
+                            (loop $loop
+                                  (br_if $done (ref.eq (local.get $a) (global.get $null)))
+                                  (br_if $done (ref.eq (local.get $b) (global.get $null)))
+                                  (local.set $a-node (ref.cast (ref $Pair) (local.get $a)))
+                                  (local.set $b-node (ref.cast (ref $Pair) (local.get $b)))
+                                  (br_if $done
+                                         (i32.eqz
+                                          (call $path-part-equal?
+                                                (struct.get $Pair $a (local.get $a-node))
+                                                (struct.get $Pair $a (local.get $b-node)))))
+                                  (local.set $a (struct.get $Pair $d (local.get $a-node)))
+                                  (local.set $b (struct.get $Pair $d (local.get $b-node)))
+                                  (local.set $size (i32.add (local.get $size) (i32.const 1)))
+                                  (br $loop)))
+                     (local.get $size))
+
+               (func $path-parts-equal?
+                     (param $a (ref eq)) ;; reversed path parts
+                     (param $b (ref eq)) ;; reversed path parts
+                     (result   i32)
+
+                     (local $a-node (ref $Pair))
+                     (local $b-node (ref $Pair))
+
+                     (block $done
+                            (loop $loop
+                                  (if (ref.eq (local.get $a) (global.get $null))
+                                      (then
+                                       (return
+                                        (if (result i32)
+                                            (ref.eq (local.get $b) (global.get $null))
+                                            (then (i32.const 1))
+                                            (else (i32.const 0))))))
+                                  (if (ref.eq (local.get $b) (global.get $null))
+                                      (then (return (i32.const 0))))
+                                  (local.set $a-node (ref.cast (ref $Pair) (local.get $a)))
+                                  (local.set $b-node (ref.cast (ref $Pair) (local.get $b)))
+                                  (if (i32.eqz
+                                       (call $path-part-equal?
+                                             (struct.get $Pair $a (local.get $a-node))
+                                             (struct.get $Pair $a (local.get $b-node))))
+                                      (then (return (i32.const 0))))
+                                  (local.set $a (struct.get $Pair $d (local.get $a-node)))
+                                  (local.set $b (struct.get $Pair $d (local.get $b-node)))
+                                  (br $loop)))
+                     (i32.const 1))
+
+               (func $build-path-from-reversed-prefix
+                     (param $who       (ref eq)) ;; symbol?
+                     (param $conv      (ref eq)) ;; (or/c 'unix 'windows)
+                     (param $parts-rev (ref eq)) ;; reversed path parts
+                     (param $size      i32)
+                     (result           (ref eq))
+
+                     (local $i      i32)
+                     (local $prefix (ref eq))
+                     (local $node   (ref $Pair))
+                     (local $result (ref eq))
+
+                     (local.set $i (i32.const 0))
+                     (local.set $prefix (global.get $null))
+                     (block $take-done
+                            (loop $take-loop
+                                  (br_if $take-done (i32.ge_u (local.get $i) (local.get $size)))
+                                  (br_if $take-done (ref.eq (local.get $parts-rev) (global.get $null)))
+                                  (local.set $node (ref.cast (ref $Pair) (local.get $parts-rev)))
+                                  (local.set $prefix
+                                             (struct.new $Pair
+                                                         (i32.const 0)
+                                                         (struct.get $Pair $a (local.get $node))
+                                                         (local.get $prefix)))
+                                  (local.set $parts-rev (struct.get $Pair $d (local.get $node)))
+                                  (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                  (br $take-loop)))
+                     (local.set $node (ref.cast (ref $Pair) (local.get $prefix)))
+                     (local.set $result
+                                (call $path-part->path/convention
+                                      (local.get $who)
+                                      (local.get $conv)
+                                      (struct.get $Pair $a (local.get $node))))
+                     (local.set $prefix (struct.get $Pair $d (local.get $node)))
+                     (block $build-done
+                            (loop $build-loop
+                                  (br_if $build-done (ref.eq (local.get $prefix) (global.get $null)))
+                                  (local.set $node (ref.cast (ref $Pair) (local.get $prefix)))
+                                  (local.set $result
+                                             (call $path-join-bytes/convention
+                                                   (local.get $who)
+                                                   (local.get $conv)
+                                                   (local.get $result)
+                                                   (struct.get $Pair $a (local.get $node))))
+                                  (local.set $prefix (struct.get $Pair $d (local.get $node)))
+                                  (br $build-loop)))
+                     (local.get $result))
+
                ;; find-relative-path : (or/c path-string? path-for-some-system?) (or/c path-string? path-for-some-system?) -> path-for-some-system?
                ;;   Core two-argument behavior with default keyword options; keyword arguments are not supported yet.
                (func $find-relative-path (type $Prim2)
@@ -45900,6 +46007,78 @@
                            (global.get $symbol:find-relative-path)
                            (local.get $conv)
                            (global.get $symbol:same)))
+
+               ;; shrink-path-wrt : path? (listof path?) -> (or/c #f path?)
+               ;;   Return the shortest suffix that distinguishes path from the non-identical other paths.
+               (func $shrink-path-wrt (type $Prim2)
+                     (param $path-raw  (ref eq)) ;; path?
+                     (param $others    (ref eq)) ;; listof path?
+                     (result           (ref eq))
+
+                     (local $path      (ref $Path))
+                     (local $other     (ref $Path))
+                     (local $conv      (ref eq))
+                     (local $path-rev  (ref eq))
+                     (local $other-rev (ref eq))
+                     (local $node      (ref $Pair))
+                     (local $diff      i32)
+                     (local $size      i32)
+                     (local $any?      i32)
+
+                     (if (i32.eqz (ref.test (ref $Path) (local.get $path-raw)))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (local.set $path (ref.cast (ref $Path) (local.get $path-raw)))
+                     (local.set $conv (struct.get $Path $convention (local.get $path)))
+                     (if (i32.eqz (ref.eq (local.get $conv) (global.get $system-path-convention)))
+                         (then (call $raise-argument-error1
+                                     (global.get $symbol:shrink-path-wrt)
+                                     (global.get $string:path?)
+                                     (local.get $path-raw))
+                               (unreachable)))
+                     (local.set $path-rev (call $reverse (call $explode-path (local.get $path))))
+                     (local.set $size (i32.const 1))
+                     (local.set $any? (i32.const 0))
+                     (block $done
+                            (loop $loop
+                                  (br_if $done (ref.eq (local.get $others) (global.get $null)))
+                                  (local.set $node (ref.cast (ref $Pair) (local.get $others)))
+                                  (if (i32.eqz (ref.test (ref $Path) (struct.get $Pair $a (local.get $node))))
+                                      (then (call $raise-argument-error1
+                                                  (global.get $symbol:shrink-path-wrt)
+                                                  (global.get $string:listof-path?)
+                                                  (local.get $others))
+                                            (unreachable)))
+                                  (local.set $other (ref.cast (ref $Path) (struct.get $Pair $a (local.get $node))))
+                                  (if (i32.eqz (ref.eq (struct.get $Path $convention (local.get $other))
+                                                       (global.get $system-path-convention)))
+                                      (then (call $raise-argument-error1
+                                                  (global.get $symbol:shrink-path-wrt)
+                                                  (global.get $string:listof-path?)
+                                                  (local.get $others))
+                                            (unreachable)))
+                                  (local.set $other-rev
+                                             (call $reverse (call $explode-path (local.get $other))))
+                                  (if (i32.eqz (call $path-parts-equal?
+                                                     (local.get $path-rev)
+                                                     (local.get $other-rev)))
+                                      (then
+                                       (local.set $any? (i32.const 1))
+                                       (local.set $diff
+                                                  (call $path-parts-suffix-diff-size
+                                                        (local.get $other-rev)
+                                                        (local.get $path-rev)))
+                                       (if (i32.gt_u (local.get $diff) (local.get $size))
+                                           (then (local.set $size (local.get $diff))))))
+                                  (local.set $others (struct.get $Pair $d (local.get $node)))
+                                  (br $loop)))
+                     (if (i32.eqz (local.get $any?))
+                         (then (return (global.get $false))))
+                     (call $build-path-from-reversed-prefix
+                           (global.get $symbol:shrink-path-wrt)
+                           (local.get $conv)
+                           (local.get $path-rev)
+                           (local.get $size)))
 
                ;; normal-case-path : (or/c path-string? path-for-some-system?) -> path-for-some-system?
                ;;   Return Unix paths unchanged; for Windows, lowercase ASCII letters and use backslash separators.

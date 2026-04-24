@@ -5147,6 +5147,30 @@
                                  "a/b")
                          (equal? (path->string (find-relative-path "/a/b" "/a/b/c"))
                                  "c")))
+              (list "shrink-path-wrt"
+                    (and (equal? (shrink-path-wrt (build-path "x.rkt") '()) #f)
+                         (equal? (shrink-path-wrt (build-path "x.rkt")
+                                                  (list (build-path "x.rkt")))
+                                 #f)
+                         (equal? (path->string
+                                  (shrink-path-wrt
+                                   (build-path "x.rkt")
+                                   (list (build-path "x.rkt")
+                                         (build-path "y.rkt"))))
+                                 "x.rkt")
+                         (equal? (path->string
+                                  (shrink-path-wrt
+                                   (build-path "a" "x.rkt")
+                                   (list (build-path "a" "x.rkt")
+                                         (build-path "b" "x.rkt"))))
+                                 "a/x.rkt")
+                         (equal? (path->string
+                                  (shrink-path-wrt
+                                   (build-path "d" "a" "x.rkt")
+                                   (list (build-path "b" "x.rkt")
+                                         (build-path "c" "a" "x.rkt")
+                                         (build-path "d" "a" "x.rkt"))))
+                                 "d/a/x.rkt")))
               (list "path-only"
                     (and (equal? (path->string (path-only "a/b")) "a/")
                          (equal? (path-only "a") #f)
