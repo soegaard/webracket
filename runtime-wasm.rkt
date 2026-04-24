@@ -1881,6 +1881,7 @@
     (add-runtime-string-constant  'fx-overflow:and           " and ")
 
     (add-runtime-string-constant  'expected-fixnum:got       "expected fixnum, got: ")
+    (add-runtime-string-constant  'path-for-some-system?     "path-for-some-system?")
     (add-runtime-string-constant  'path-element?             "path-element?")
 
     ;; Byte Strings    
@@ -44841,6 +44842,30 @@
                      (local.set $path (ref.cast (ref $Path) (local.get $path-raw)))
                      (call $bytes->string/utf-8/checked
                            (struct.get $Path $bytes (local.get $path))))
+
+               ;; path-convention-type : path-for-some-system? -> (or/c 'unix 'windows)
+               ;;   Return the stored convention symbol for a represented path.
+               (func $path-convention-type (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path-for-some-system?
+                     (result          (ref eq)) ;; symbol?
+
+                     (local $path (ref $Path))
+
+                     (if (i32.eqz (ref.test (ref $Path) (local.get $path-raw)))
+                         (then (call $raise-argument-error1
+                                     (global.get $symbol:path-convention-type)
+                                     (global.get $string:path-for-some-system?)
+                                     (local.get $path-raw))
+                               (unreachable)))
+                     (local.set $path (ref.cast (ref $Path) (local.get $path-raw)))
+                     (struct.get $Path $convention (local.get $path)))
+
+               ;; system-path-convention-type : -> (or/c 'unix 'windows)
+               ;;   Return the active system path convention symbol.
+               (func $system-path-convention-type (type $Prim0)
+                     (result (ref eq)) ;; symbol?
+
+                     (global.get $system-path-convention))
 
                (func $raise-bytes->path:nul (param $bstr (ref eq))
                      (call $js-log (local.get $bstr))

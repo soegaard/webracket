@@ -2008,6 +2008,8 @@
   path->bytes
   path->string
   some-system-path->string
+  path-convention-type
+  system-path-convention-type
   bytes->path
   string->path-element
   bytes->path-element
