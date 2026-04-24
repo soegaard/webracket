@@ -5083,7 +5083,29 @@
                     (and (equal? (path->string (build-path "/app" "main.rkt"))
                                  "/app/main.rkt")
                          (equal? (path->string (build-path "/app/" "data" "notes.txt"))
-                                 "/app/data/notes.txt")))))
+                                 "/app/data/notes.txt")))
+              (list "build-path/convention-type"
+                    (and (equal? (some-system-path->string
+                                  (build-path/convention-type 'unix 'same))
+                                 ".")
+                         (equal? (some-system-path->string
+                                  (build-path/convention-type 'unix 'up))
+                                 "..")
+                         (equal? (some-system-path->string
+                                  (build-path/convention-type 'unix "a" 'up))
+                                 "a/..")
+                         (equal? (some-system-path->string
+                                  (build-path/convention-type
+                                   'windows
+                                   (bytes->path #"a" 'windows)
+                                   'up))
+                                 "a\\..")
+                         (equal? (some-system-path->string
+                                  (build-path/convention-type
+                                   'windows
+                                   (bytes->path #"a" 'windows)
+                                   (bytes->path #"b" 'windows)))
+                                 "a\\b")))))
        (list "15.2 Filesystem"
              (list
               (list "webracket-vfs-write-file"

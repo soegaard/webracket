@@ -1013,6 +1013,7 @@
  relative-path?
  complete-path?
  build-path
+ build-path/convention-type
  current-directory
  path->complete-path
  path->directory-path

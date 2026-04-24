@@ -936,6 +936,7 @@
         [(+ * unsafe-fx+ unsafe-fx* cartesian-product string-append-immutable gcd lcm) 0]
         [else 1])))
    (make-inline-specs '(= < > <= >=) 'variadic-args 1 #f 1)
+   (make-inline-specs '(build-path/convention-type) 'variadic 2 #f 2)
    (append
     (make-inline-specs
      '(unsafe-fxnot
@@ -2018,6 +2019,7 @@
   relative-path?
   complete-path?
   build-path
+  build-path/convention-type
   current-directory
   path->complete-path
   path->directory-path

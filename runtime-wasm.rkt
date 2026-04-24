@@ -1891,6 +1891,9 @@
     (add-runtime-bytes-constant  'empty                     #"")
     (add-runtime-bytes-constant  'non-empty                 #"_")
     (add-runtime-bytes-constant  'slash                     #"/")
+    (add-runtime-bytes-constant  'backslash                 #"\\")
+    (add-runtime-bytes-constant  'dot                       #".")
+    (add-runtime-bytes-constant  'dot-dot                   #"..")
     (add-runtime-bytes-constant  'app-dir                   #"/app/")
 
 
@@ -45227,6 +45230,168 @@
                                   (local.set $node (ref.cast (ref $Pair) (local.get $rest)))
                                   (local.set $next (struct.get $Pair $a (local.get $node)))
                                   (local.set $result (call $path-join-bytes (local.get $result) (local.get $next)))
+                                  (local.set $rest (struct.get $Pair $d (local.get $node)))
+                                  (br $loop)))
+                     (local.get $result))
+
+               (func $path-part->path/convention
+                     (param $who      (ref eq)) ;; symbol?
+                     (param $conv     (ref eq)) ;; (or/c 'unix 'windows)
+                     (param $part-raw (ref eq)) ;; path-string?, path-for-some-system?, 'up, or 'same
+                     (result          (ref $Path))
+
+                     (local $path (ref $Path))
+                     (local $str  (ref $String))
+
+                     (if (ref.eq (local.get $part-raw) (global.get $symbol:same))
+                         (then
+                          (return
+                           (ref.cast (ref $Path)
+                                     (call $bytes->path
+                                           (global.get $bytes:dot)
+                                           (local.get $conv))))))
+                     (if (ref.eq (local.get $part-raw) (global.get $symbol:up))
+                         (then
+                          (return
+                           (ref.cast (ref $Path)
+                                     (call $bytes->path
+                                           (global.get $bytes:dot-dot)
+                                           (local.get $conv))))))
+                     (if (ref.test (ref $Path) (local.get $part-raw))
+                         (then
+                          (local.set $path (ref.cast (ref $Path) (local.get $part-raw)))
+                          (if (i32.eqz (ref.eq (struct.get $Path $convention (local.get $path))
+                                               (local.get $conv)))
+                              (then (call $raise-argument-error1
+                                          (local.get $who)
+                                          (global.get $string:path-for-some-system?)
+                                          (local.get $part-raw))
+                                    (unreachable)))
+                          (return (local.get $path))))
+                     (if (i32.eqz (ref.test (ref $String) (local.get $part-raw)))
+                         (then (call $raise-path-expected (local.get $part-raw))
+                               (unreachable)))
+                     (local.set $str (ref.cast (ref $String) (local.get $part-raw)))
+                     (if (i32.eqz (ref.eq (call $non-empty-string-without-nuls (local.get $str))
+                                          (global.get $true)))
+                         (then (call $raise-path-expected (local.get $part-raw))
+                               (unreachable)))
+                     (local.set $path (ref.cast (ref $Path) (call $string->path (local.get $str))))
+                     (if (i32.eqz (ref.eq (struct.get $Path $convention (local.get $path))
+                                          (local.get $conv)))
+                         (then (call $raise-argument-error1
+                                     (local.get $who)
+                                     (global.get $string:path-for-some-system?)
+                                     (local.get $part-raw))
+                               (unreachable)))
+                     (local.get $path))
+
+               (func $path-join-bytes/convention
+                     (param $who      (ref eq)) ;; symbol?
+                     (param $conv     (ref eq)) ;; (or/c 'unix 'windows)
+                     (param $base-raw (ref eq)) ;; path-string?, path-for-some-system?, 'up, or 'same
+                     (param $rel-raw  (ref eq)) ;; relative path-string?, path-for-some-system?, 'up, or 'same
+                     (result          (ref eq)) ;; path-for-some-system?
+
+                     (local $base      (ref $Path))
+                     (local $rel       (ref $Path))
+                     (local $base-bs   (ref $Bytes))
+                     (local $rel-bs    (ref $Bytes))
+                     (local $sep-bs    (ref $Bytes))
+                     (local $base-arr  (ref $I8Array))
+                     (local $rel-arr   (ref $I8Array))
+                     (local $base-len  i32)
+                     (local $rel-len   i32)
+                     (local $need-sep  i32)
+                     (local $joined    (ref eq))
+
+                     (local.set $base
+                                (call $path-part->path/convention
+                                      (local.get $who)
+                                      (local.get $conv)
+                                      (local.get $base-raw)))
+                     (local.set $rel
+                                (call $path-part->path/convention
+                                      (local.get $who)
+                                      (local.get $conv)
+                                      (local.get $rel-raw)))
+                     (local.set $rel-bs (struct.get $Path $bytes (local.get $rel)))
+                     (if (call $path-bytes-absolute? (local.get $rel-bs))
+                         (then (call $raise-path-expected (local.get $rel-raw))
+                               (unreachable)))
+                     (local.set $base-bs (struct.get $Path $bytes (local.get $base)))
+                     (local.set $sep-bs
+                                (if (result (ref $Bytes))
+                                    (ref.eq (local.get $conv) (global.get $symbol:windows))
+                                    (then (ref.cast (ref $Bytes) (global.get $bytes:backslash)))
+                                    (else (ref.cast (ref $Bytes) (global.get $bytes:slash)))))
+                     (local.set $base-arr (struct.get $Bytes $bs (local.get $base-bs)))
+                     (local.set $rel-arr (struct.get $Bytes $bs (local.get $rel-bs)))
+                     (local.set $base-len (array.len (local.get $base-arr)))
+                     (local.set $rel-len (array.len (local.get $rel-arr)))
+                     (local.set $need-sep (i32.const 1))
+                     (if (i32.eqz (local.get $base-len))
+                         (then (local.set $need-sep (i32.const 0))))
+                     (if (i32.eqz (local.get $rel-len))
+                         (then (local.set $need-sep (i32.const 0))))
+                     (if (local.get $base-len)
+                         (then
+                          (if (call $path-byte-separator?
+                                    (array.get_u $I8Array
+                                                 (local.get $base-arr)
+                                                 (i32.sub (local.get $base-len) (i32.const 1)))
+                                    (local.get $conv))
+                              (then (local.set $need-sep (i32.const 0))))))
+                     (local.set $joined
+                                (if (result (ref eq))
+                                    (local.get $need-sep)
+                                    (then (call $bytes-append/2
+                                                (call $bytes-append/2
+                                                      (local.get $base-bs)
+                                                      (local.get $sep-bs))
+                                                (local.get $rel-bs)))
+                                    (else (call $bytes-append/2
+                                                (local.get $base-bs)
+                                                (local.get $rel-bs)))))
+                     (call $bytes->path (local.get $joined) (local.get $conv)))
+
+               ;; build-path/convention-type : (or/c 'unix 'windows) path-part ... -> path-for-some-system?
+               ;;   Build a path under an explicit convention; supports 'same and 'up path elements.
+               (func $build-path/convention-type (type $Prim>=2)
+                     (param $type-raw (ref eq)) ;; (or/c 'unix 'windows)
+                     (param $first    (ref eq)) ;; path part
+                     (param $rest     (ref eq)) ;; list of additional path parts
+                     (result          (ref eq))
+
+                     (local $node   (ref $Pair))
+                     (local $type   (ref $Symbol))
+                     (local $result (ref eq))
+                     (local $next   (ref eq))
+
+                     (if (i32.eqz (ref.test (ref $Symbol) (local.get $type-raw)))
+                         (then (call $raise-check-symbol (local.get $type-raw))
+                               (unreachable)))
+                     (local.set $type (ref.cast (ref $Symbol) (local.get $type-raw)))
+                     (if (i32.eqz (ref.eq (call $unix-or-windows (local.get $type))
+                                          (global.get $true)))
+                         (then (call $raise-bytes->path:bad-type (local.get $type-raw))
+                               (unreachable)))
+                     (local.set $result
+                                (call $path-part->path/convention
+                                      (global.get $symbol:build-path/convention-type)
+                                      (local.get $type-raw)
+                                      (local.get $first)))
+                     (block $done
+                            (loop $loop
+                                  (br_if $done (ref.eq (local.get $rest) (global.get $null)))
+                                  (local.set $node (ref.cast (ref $Pair) (local.get $rest)))
+                                  (local.set $next (struct.get $Pair $a (local.get $node)))
+                                  (local.set $result
+                                             (call $path-join-bytes/convention
+                                                   (global.get $symbol:build-path/convention-type)
+                                                   (local.get $type-raw)
+                                                   (local.get $result)
+                                                   (local.get $next)))
                                   (local.set $rest (struct.get $Pair $d (local.get $node)))
                                   (br $loop)))
                      (local.get $result))
