@@ -45581,12 +45581,13 @@
                      (local.set $ext-len (array.len (local.get $ext-arr)))
                      (if (i32.eqz (local.get $ext-len))
                          (then (return (global.get $false))))
-                     (if (i32.and (local.get $path-len)
-                                  (i32.eq (array.get_u $I8Array
-                                                       (local.get $path-arr)
-                                                       (i32.sub (local.get $path-len) (i32.const 1)))
-                                          (i32.const 47)))
-                         (then (return (global.get $false))))
+                     (if (local.get $path-len)
+                         (then
+                          (if (i32.eq (array.get_u $I8Array
+                                                   (local.get $path-arr)
+                                                   (i32.sub (local.get $path-len) (i32.const 1)))
+                                      (i32.const 47))
+                              (then (return (global.get $false))))))
                      (local.set $elem-start (call $path-final-element-start (local.get $path-bs)))
                      (local.set $elem-len (i32.sub (local.get $path-len) (local.get $elem-start)))
                      (if (i32.ge_u (local.get $ext-len) (local.get $elem-len))
@@ -45607,6 +45608,57 @@
                                   (local.set $i (i32.add (local.get $i) (i32.const 1)))
                                   (br $loop)))
                      (global.get $true))
+
+               ;; file-name-from-path : path-string? -> (or/c path? #f)
+               ;;   Return the final path element, or #f for syntactic directories.
+               (func $file-name-from-path (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (result          (ref eq))
+
+                     (local $path       (ref $Path))
+                     (local $path-bs    (ref $Bytes))
+                     (local $arr        (ref $I8Array))
+                     (local $len        i32)
+                     (local $elem-start i32)
+                     (local $elem-len   i32)
+
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:file-name-from-path)
+                                      (local.get $path-raw)))
+                     (local.set $path-bs (struct.get $Path $bytes (local.get $path)))
+                     (local.set $arr (struct.get $Bytes $bs (local.get $path-bs)))
+                     (local.set $len (array.len (local.get $arr)))
+                     (if (local.get $len)
+                         (then
+                          (if (i32.eq (array.get_u $I8Array
+                                                   (local.get $arr)
+                                                   (i32.sub (local.get $len) (i32.const 1)))
+                                      (i32.const 47))
+                              (then (return (global.get $false))))))
+                     (local.set $elem-start (call $path-final-element-start (local.get $path-bs)))
+                     (local.set $elem-len (i32.sub (local.get $len) (local.get $elem-start)))
+                     (if (i32.eq (local.get $elem-len) (i32.const 1))
+                         (then
+                          (if (i32.eq (array.get_u $I8Array (local.get $arr) (local.get $elem-start))
+                                      (i32.const 46))
+                              (then (return (global.get $false))))))
+                     (if (i32.eq (local.get $elem-len) (i32.const 2))
+                         (then
+                          (if (i32.and
+                               (i32.eq (array.get_u $I8Array (local.get $arr) (local.get $elem-start))
+                                       (i32.const 46))
+                               (i32.eq (array.get_u $I8Array
+                                                    (local.get $arr)
+                                                    (i32.add (local.get $elem-start) (i32.const 1)))
+                                       (i32.const 46)))
+                              (then (return (global.get $false))))))
+                     (call $bytes->path
+                           (call $bytes-slice/unchecked
+                                 (local.get $path-bs)
+                                 (local.get $elem-start)
+                                 (local.get $len))
+                           (global.get $missing)))
 
                (func $vfs-path-stat-kind
                      (param $who      (ref eq)) ;; symbol? (currently for diagnostics)

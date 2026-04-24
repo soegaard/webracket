@@ -2017,6 +2017,7 @@
   path-get-extension
   filename-extension
   path-has-extension?
+  file-name-from-path
 
   ;; 15.2 Filesystem
   file-exists?

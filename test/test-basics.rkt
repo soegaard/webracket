@@ -4955,6 +4955,15 @@
                          (equal? (path-has-extension? "x/compiled/y_rkt.zo" #"_rkt.zo") #t)
                          (equal? (path-has-extension? "x/y/" #"y") #f)
                          (equal? (path-has-extension? "x/y" #"y") #f)))
+              (list "file-name-from-path"
+                    (and (equal? (path->string (file-name-from-path "a/b")) "b")
+                         (equal? (path->string (file-name-from-path "a")) "a")
+                         (equal? (file-name-from-path "a/") #f)
+                         (equal? (file-name-from-path "/") #f)
+                         (equal? (path->string (file-name-from-path "../x")) "x")
+                         (equal? (file-name-from-path "..") #f)
+                         (equal? (file-name-from-path ".") #f)
+                         (equal? (file-name-from-path "a/..") #f)))
               (list "build-path"
                     (and (equal? (path->string (build-path "/app" "main.rkt"))
                                  "/app/main.rkt")
