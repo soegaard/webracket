@@ -1012,6 +1012,7 @@
        string->number
        floating-point-bytes->real
        log
+       atan
        assoc
        group-by
        member
@@ -1075,7 +1076,7 @@
          [(bytes->string/utf-8 bytes->string/latin-1 bytes-utf-8-length) 4]
          [(string->number datum->syntax) 5]
          [(floating-point-bytes->real) 4]
-         [(log struct->vector) 2]
+         [(log atan struct->vector) 2]
          [(assoc group-by member remove remove* index-of indexes-of
                  list-prefix? take-common-prefix drop-common-prefix split-common-prefix) 3]
          [(read-bytes! read-bytes-avail! read-bytes-avail!* read-string!

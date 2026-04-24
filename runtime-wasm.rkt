@@ -9513,7 +9513,6 @@
                        (tan  $js-math-tan  0      0)    ;  tan(0) = 0
                        (asin $js-math-asin 0      0)    ; asin(0) = 0
                        (acos $js-math-acos 2      0)    ; acos(1) = 0
-                       (atan $js-math-atan 0      0)    ; atan(0) = 0
                        (sinh  $js-math-sinh  0      0) ;  sinh(0) = 0
                        (cosh  $js-math-cosh  0      2) ;  cosh(0) = 1
                        (tanh  $js-math-tanh  0      0) ;  tanh(0) = 0
@@ -9563,6 +9562,63 @@
 
                      (call $raise-expected-number (local.get $x))
                      (unreachable))))
+
+        (func $atan (type $Prim12)
+              (param $y (ref eq))
+              (param $x (ref eq))
+              (result   (ref eq))
+
+              (local $bits i32)
+              (local $y/f64 f64)
+              (local $x/f64 f64)
+              (local $y-exact i32)
+
+              ;; Decode y. In the one-argument case this is the ordinary
+              ;; unary atan input; with x present, Racket computes atan2(y, x).
+              (if (ref.test (ref i31) (local.get $y))
+                  (then
+                   (local.set $bits (i31.get_s (ref.cast (ref i31) (local.get $y))))
+                   (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
+                       (then (local.set $y/f64
+                                        (f64.convert_i32_s
+                                         (i32.shr_s (local.get $bits) (i32.const 1))))
+                             (local.set $y-exact (i32.const 1)))
+                       (else (call $raise-expected-number (local.get $y)) (unreachable))))
+                  (else
+                   (if (ref.test (ref $Flonum) (local.get $y))
+                       (then (local.set $y/f64
+                                        (struct.get $Flonum $v
+                                                    (ref.cast (ref $Flonum) (local.get $y)))))
+                       (else (call $raise-expected-number (local.get $y)) (unreachable)))))
+
+              (if (ref.eq (local.get $x) (global.get $missing))
+                  (then
+                   (if (i32.and (local.get $y-exact)
+                                (f64.eq (local.get $y/f64) (f64.const 0.0)))
+                       (then (return ,(Imm 0))))
+                   (return (struct.new $Flonum
+                                       (i32.const 0)
+                                       (call $js-math-atan (local.get $y/f64))))))
+
+              ;; Decode x for the two-argument case.
+              (if (ref.test (ref i31) (local.get $x))
+                  (then
+                   (local.set $bits (i31.get_s (ref.cast (ref i31) (local.get $x))))
+                   (if (i32.eqz (i32.and (local.get $bits) (i32.const 1)))
+                       (then (local.set $x/f64
+                                        (f64.convert_i32_s
+                                         (i32.shr_s (local.get $bits) (i32.const 1)))))
+                       (else (call $raise-expected-number (local.get $x)) (unreachable))))
+                  (else
+                   (if (ref.test (ref $Flonum) (local.get $x))
+                       (then (local.set $x/f64
+                                        (struct.get $Flonum $v
+                                                    (ref.cast (ref $Flonum) (local.get $x)))))
+                       (else (call $raise-expected-number (local.get $x)) (unreachable)))))
+
+              (struct.new $Flonum
+                          (i32.const 0)
+                          (call $js-math-atan2 (local.get $y/f64) (local.get $x/f64))))
 
         ;; Angle conversion functions
         ,@(let ([ops '((degrees->radians 0.017453292519943295)

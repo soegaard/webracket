@@ -704,7 +704,8 @@
                                (equal? (acos 1.) 0.)))
                     (list "atan"
                           (and (equal? (atan 0) 0)
-                               (equal? (atan 0.) 0.)))
+                               (equal? (atan 0.) 0.)
+                               (< (abs (- (atan 0 -1) 3.141592653589793)) 1e-12)))
                     (list "sinh"
                           (and (equal? (sinh 0) 0)
                                (equal? (sinh 0.) 0.)))
