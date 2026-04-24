@@ -1027,6 +1027,7 @@
  path-has-extension?
  file-name-from-path
  split-path
+ explode-path
  path-element?
  path-element->bytes
  path-element->string

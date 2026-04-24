@@ -46057,6 +46057,108 @@
 
                ;; path-element? : any/c -> boolean?
                ;;   Recognize single-element path values for any represented path convention.
+               ;; explode-path : (or/c path-string? path-for-some-system?) -> (listof (or/c path-for-some-system? 'up 'same))
+               ;;   Return the non-empty syntactic path elements as a list.
+               (func $explode-path (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path-string? or path-for-some-system?
+                     (result          (ref eq))
+
+                     (local $path       (ref $Path))
+                     (local $path-bs    (ref $Bytes))
+                     (local $arr        (ref $I8Array))
+                     (local $conv       (ref eq))
+                     (local $acc        (ref eq))
+                     (local $part       (ref eq))
+                     (local $len        i32)
+                     (local $start      i32)
+                     (local $i          i32)
+                     (local $part-len   i32)
+                     (local $b          i32)
+
+                     (local.set $path (ref.cast (ref $Path) (global.get $current-directory-path)))
+                     (local.set $acc (global.get $null))
+                     (if (ref.test (ref $Path) (local.get $path-raw))
+                         (then
+                          (local.set $path (ref.cast (ref $Path) (local.get $path-raw))))
+                         (else
+                          (local.set $path
+                                     (call $path-string->path/checked
+                                           (global.get $symbol:explode-path)
+                                           (local.get $path-raw)))))
+                     (local.set $conv (struct.get $Path $convention (local.get $path)))
+                     (local.set $path-bs (struct.get $Path $bytes (local.get $path)))
+                     (local.set $arr (struct.get $Bytes $bs (local.get $path-bs)))
+                     (local.set $len (array.len (local.get $arr)))
+                     (local.set $start (i32.const 0))
+                     (local.set $i (i32.const 0))
+                     (if (local.get $len)
+                         (then
+                          (if (call $path-byte-separator?
+                                    (array.get_u $I8Array (local.get $arr) (i32.const 0))
+                                    (local.get $conv))
+                              (then
+                               (local.set $acc
+                                          (struct.new $Pair
+                                                      (i32.const 0)
+                                                      (call $bytes->path
+                                                            (call $bytes-slice/unchecked
+                                                                  (local.get $path-bs)
+                                                                  (i32.const 0)
+                                                                  (i32.const 1))
+                                                            (local.get $conv))
+                                                      (local.get $acc)))
+                               (local.set $start (i32.const 1))
+                               (local.set $i (i32.const 1))))))
+                     (block $done
+                            (loop $loop
+                                  (if (i32.lt_u (local.get $i) (local.get $len))
+                                      (then
+                                       (local.set $b (array.get_u $I8Array (local.get $arr) (local.get $i)))
+                                       (if (i32.eqz (call $path-byte-separator? (local.get $b) (local.get $conv)))
+                                           (then
+                                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                            (br $loop)))))
+                                  (local.set $part-len (i32.sub (local.get $i) (local.get $start)))
+                                  (if (local.get $part-len)
+                                      (then
+                                       (local.set $part
+                                                  (call $bytes->path
+                                                        (call $bytes-slice/unchecked
+                                                              (local.get $path-bs)
+                                                              (local.get $start)
+                                                              (local.get $i))
+                                                        (local.get $conv)))
+                                       (if (i32.eq (local.get $part-len) (i32.const 1))
+                                           (then
+                                            (if (i32.eq (array.get_u $I8Array
+                                                                     (local.get $arr)
+                                                                     (local.get $start))
+                                                        (i32.const 46))
+                                                (then (local.set $part (global.get $symbol:same))))))
+                                       (if (i32.eq (local.get $part-len) (i32.const 2))
+                                           (then
+                                            (if (i32.and
+                                                 (i32.eq (array.get_u $I8Array
+                                                                      (local.get $arr)
+                                                                      (local.get $start))
+                                                         (i32.const 46))
+                                                 (i32.eq (array.get_u $I8Array
+                                                                      (local.get $arr)
+                                                                      (i32.add (local.get $start) (i32.const 1)))
+                                                         (i32.const 46)))
+                                                (then (local.set $part (global.get $symbol:up))))))
+                                       (local.set $acc
+                                                  (struct.new $Pair
+                                                              (i32.const 0)
+                                                              (local.get $part)
+                                                              (local.get $acc)))))
+                                  (if (i32.ge_u (local.get $i) (local.get $len))
+                                      (then (br $done)))
+                                  (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                  (local.set $start (local.get $i))
+                                  (br $loop)))
+                     (call $reverse (local.get $acc)))
+
                (func $path-element? (type $Prim1)
                      (param $v (ref eq)) ;; any/c
                      (result   (ref eq))
