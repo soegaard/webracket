@@ -1881,6 +1881,7 @@
     (add-runtime-string-constant  'fx-overflow:and           " and ")
 
     (add-runtime-string-constant  'expected-fixnum:got       "expected fixnum, got: ")
+    (add-runtime-string-constant  'path-element?             "path-element?")
 
     ;; Byte Strings    
     (add-runtime-bytes-constant  'empty                     #"")
@@ -45849,6 +45850,69 @@
                                        (i32.const 46)))
                               (then (return (global.get $false))))))
                      (global.get $true))
+
+               (func $path-element-trimmed-bytes/checked
+                     (param $who      (ref eq)) ;; symbol?
+                     (param $path-raw (ref eq)) ;; path-element?
+                     (result          (ref $Bytes))
+
+                     (local $path    (ref $Path))
+                     (local $bytes   (ref $Bytes))
+                     (local $arr     (ref $I8Array))
+                     (local $conv    (ref eq))
+                     (local $len     i32)
+                     (local $end     i32)
+
+                     (if (i32.eqz (ref.test (ref $Path) (local.get $path-raw)))
+                         (then (call $raise-argument-error1
+                                     (local.get $who)
+                                     (global.get $string:path-element?)
+                                     (local.get $path-raw))
+                               (unreachable)))
+                     (if (i32.eqz (ref.eq (call $path-element? (local.get $path-raw))
+                                          (global.get $true)))
+                         (then (call $raise-argument-error1
+                                     (local.get $who)
+                                     (global.get $string:path-element?)
+                                     (local.get $path-raw))
+                               (unreachable)))
+                     (local.set $path (ref.cast (ref $Path) (local.get $path-raw)))
+                     (local.set $bytes (struct.get $Path $bytes (local.get $path)))
+                     (local.set $arr (struct.get $Bytes $bs (local.get $bytes)))
+                     (local.set $conv (struct.get $Path $convention (local.get $path)))
+                     (local.set $len (array.len (local.get $arr)))
+                     (local.set $end (local.get $len))
+                     (if (call $path-byte-separator?
+                               (array.get_u $I8Array
+                                            (local.get $arr)
+                                            (i32.sub (local.get $len) (i32.const 1)))
+                               (local.get $conv))
+                         (then (local.set $end (i32.sub (local.get $len) (i32.const 1)))))
+                     (call $bytes-slice/unchecked
+                           (local.get $bytes)
+                           (i32.const 0)
+                           (local.get $end)))
+
+               ;; path-element->bytes : path-element? -> bytes?
+               ;;   Convert a path element to bytes, without a trailing separator.
+               (func $path-element->bytes (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path-element?
+                     (result          (ref eq)) ;; bytes?
+
+                     (call $path-element-trimmed-bytes/checked
+                           (global.get $symbol:path-element->bytes)
+                           (local.get $path-raw)))
+
+               ;; path-element->string : path-element? -> string?
+               ;;   Convert a path element to a UTF-8 string, without a trailing separator.
+               (func $path-element->string (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path-element?
+                     (result          (ref eq)) ;; string?
+
+                     (call $bytes->string/utf-8/checked
+                           (call $path-element-trimmed-bytes/checked
+                                 (global.get $symbol:path-element->string)
+                                 (local.get $path-raw))))
 
                ;; path-only : path-string? -> (or/c path? #f)
                ;;   Return a path without its final element, or #f for single non-directory elements.

@@ -1022,6 +1022,8 @@
  path-has-extension?
  file-name-from-path
  path-element?
+ path-element->bytes
+ path-element->string
  path-only
 
  ;; 15.2 Filesystem

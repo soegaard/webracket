@@ -4982,6 +4982,19 @@
                          (equal? (path-element? (string->some-system-path "a" 'windows)) #t)
                          (equal? (path-element? (string->some-system-path "a\\b" 'windows)) #f)
                          (equal? (path-element? "a") #f)))
+              (list "path-element accessors"
+                    (let ([unix     (string->path "a")]
+                          [unix-dir (string->path "a/")]
+                          [win      (string->some-system-path "a\\" 'windows)])
+                      (and (equal? (path-element->string unix) "a")
+                           (equal? (path-element->bytes unix) #"a")
+                           (equal? (path-element->string unix-dir) "a")
+                           (equal? (path-element->bytes unix-dir) #"a")
+                           (equal? (path-element->string win) "a")
+                           (equal? (path-element->bytes win) #"a")
+                           (with-handlers ([exn:fail:contract? (lambda (_ex) #t)])
+                             (path-element->string (string->path "a/b"))
+                             #f))))
               (list "path-only"
                     (and (equal? (path->string (path-only "a/b")) "a/")
                          (equal? (path-only "a") #f)
