@@ -5015,6 +5015,13 @@
                                  "x/y.tar.rkt")
                          (equal? (path->string (path-add-suffix "x/y.tar.gz" #".rkt"))
                                  "x/y.tar_gz.rkt")))
+              (list "reroot-path"
+                    (and (equal? (path->string (reroot-path "/home/caprica/baltar" "/earth"))
+                                 "/earth/home/caprica/baltar")
+                         (equal? (path->string (reroot-path "/" "/earth"))
+                                 "/earth")
+                         (equal? (path->string (reroot-path "a/b" "/earth"))
+                                 "/earth/tmp/a/b")))
               (list "path-get-extension"
                     (and (equal? (path-get-extension "x/y.rkt") #".rkt")
                          (equal? (path-get-extension "x/y") #f)

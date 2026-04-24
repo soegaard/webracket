@@ -1025,6 +1025,7 @@
  path-add-extension
  path-replace-suffix
  path-add-suffix
+ reroot-path
  path-get-extension
  filename-extension
  path-has-extension?

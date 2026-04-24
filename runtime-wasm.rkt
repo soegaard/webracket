@@ -45760,6 +45760,64 @@
                            (call $i8array->immutable-bytes (local.get $dst))
                            (local.get $conv)))
 
+               ;; reroot-path : (or/c path-string? path-for-some-system?) (or/c path-string? path-for-some-system?) -> path-for-some-system?
+               ;;   Append the complete, cleansed, case-normalized path elements under root-path.
+               ;;   Windows drive and UNC rerooting are not modeled beyond the represented path elements.
+               (func $reroot-path (type $Prim2)
+                     (param $path-raw (ref eq)) ;; path-string? or path-for-some-system?
+                     (param $root-raw (ref eq)) ;; path-string? or path-for-some-system?
+                     (result          (ref eq))
+
+                     (local $root   (ref $Path))
+                     (local $conv   (ref eq))
+                     (local $parts  (ref eq))
+                     (local $node   (ref $Pair))
+                     (local $part   (ref eq))
+                     (local $result (ref eq))
+
+                     (local.set $root (ref.cast (ref $Path) (global.get $current-directory-path)))
+                     (if (ref.test (ref $Path) (local.get $root-raw))
+                         (then
+                          (local.set $root (ref.cast (ref $Path) (local.get $root-raw))))
+                         (else
+                          (local.set $root
+                                     (call $path-string->path/checked
+                                           (global.get $symbol:reroot-path)
+                                           (local.get $root-raw)))))
+                     (local.set $conv (struct.get $Path $convention (local.get $root)))
+                     (local.set $result (local.get $root))
+                     (local.set $parts
+                                (call $explode-path
+                                      (call $normal-case-path
+                                            (call $cleanse-path
+                                                  (call $path->complete-path
+                                                        (local.get $path-raw)
+                                                        (global.get $missing))))))
+                     (if (i32.eqz (ref.eq (local.get $parts) (global.get $null)))
+                         (then
+                          (local.set $node (ref.cast (ref $Pair) (local.get $parts)))
+                          (local.set $part (struct.get $Pair $a (local.get $node)))
+                          (if (ref.test (ref $Path) (local.get $part))
+                              (then
+                               (if (call $path-root-element?
+                                         (ref.cast (ref $Path) (local.get $part)))
+                                   (then
+                                    (local.set $parts (struct.get $Pair $d (local.get $node)))))))))
+                     (block $done
+                            (loop $loop
+                                  (br_if $done (ref.eq (local.get $parts) (global.get $null)))
+                                  (local.set $node (ref.cast (ref $Pair) (local.get $parts)))
+                                  (local.set $part (struct.get $Pair $a (local.get $node)))
+                                  (local.set $result
+                                             (call $path-join-bytes/convention
+                                                   (global.get $symbol:reroot-path)
+                                                   (local.get $conv)
+                                                   (local.get $result)
+                                                   (local.get $part)))
+                                  (local.set $parts (struct.get $Pair $d (local.get $node)))
+                                  (br $loop)))
+                     (local.get $result))
+
                (func $string-or-bytes->bytes/checked
                      (param $who (ref eq)) ;; symbol?
                      (param $v   (ref eq)) ;; (or/c string? bytes?)
