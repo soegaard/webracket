@@ -47321,11 +47321,12 @@
                                     (unreachable)))))
                      (global.get $false))
 
-               ;; directory-list : [path-string?] -> (listof path?)
-               ;;   Return sorted VFS directory entries as path elements; #:build? is not implemented yet.
-               (func $directory-list (type $Prim01)
-                     (param $path-raw (ref eq)) ;; optional path-string?, default = (current-directory)
-                     (result          (ref eq))
+               ;; directory-list : [path-string?] [any/c] -> (listof path?)
+               ;;   Keywordless form of Racket's #:build? option; default #f.
+               (func $directory-list (type $Prim02)
+                     (param $path-raw  (ref eq)) ;; optional path-string?, default = (current-directory)
+                     (param $build-raw (ref eq)) ;; optional any/c, default = #f
+                     (result           (ref eq))
 
                      (local $path      (ref $Path))
                      (local $path-bs   (ref $Bytes))
@@ -47333,15 +47334,23 @@
                      (local $names     (ref $Vector))
                      (local $arr       (ref $Array))
                      (local $entry     (ref eq))
+                     (local $entry-path (ref eq))
                      (local $path-len  i32)
                      (local $fasl-len  i32)
                      (local $i         i32)
+                     (local $build?    i32)
                      (local $xs        (ref eq))
 
                      (if (ref.eq (local.get $path-raw) (global.get $missing))
                          (then (local.set $path-raw
                                           (call $current-directory
                                                 (global.get $missing)))))
+                     (local.set $build?
+                                (i32.and
+                                 (i32.eqz (ref.eq (local.get $build-raw)
+                                                  (global.get $missing)))
+                                 (i32.eqz (ref.eq (local.get $build-raw)
+                                                  (global.get $false)))))
                      (local.set $path
                                 (call $path-string->path/checked
                                       (global.get $symbol:directory-list)
@@ -47406,10 +47415,22 @@
                                       (then (call $raise-vfs-file-error
                                                   (global.get $string:vfs:directory-list-failed))
                                             (unreachable)))
+                                  (local.set $entry-path
+                                             (call $string->path
+                                                   (ref.cast (ref $String)
+                                                             (local.get $entry))))
+                                  (if (local.get $build?)
+                                      (then
+                                       (local.set $entry-path
+                                                  (call $path-join-bytes/convention
+                                                        (global.get $symbol:directory-list)
+                                                        (struct.get $Path $convention (local.get $path))
+                                                        (local.get $path)
+                                                        (local.get $entry-path)))))
                                   (local.set $xs
                                              (struct.new $Pair
                                                          (i32.const 0)
-                                                         (call $string->path (local.get $entry))
+                                                         (local.get $entry-path)
                                                          (local.get $xs)))
                                   (br_if $done (i32.eqz (local.get $i)))
                                   (local.set $i (i32.sub (local.get $i) (i32.const 1)))

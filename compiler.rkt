@@ -1135,7 +1135,6 @@
        char-ready?
        read-byte
        read-char
-       directory-list
        newline
        flush-output
        current-input-port
@@ -1149,6 +1148,9 @@
      'optional 6 7)
     (make-inline-specs
      '(read-line peek-byte peek-char)
+     'optional 0 2)
+    (make-inline-specs
+     '(directory-list)
      'optional 0 2)
     (make-inline-specs
      '(file-or-directory-modify-seconds)

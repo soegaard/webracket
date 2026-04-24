@@ -1901,7 +1901,8 @@
 (define directory-list
   (case-lambda
     [() (error 'directory-list "only available in compiled WebRacket")]
-    [(path) (error 'directory-list "only available in compiled WebRacket")]))
+    [(path) (error 'directory-list "only available in compiled WebRacket")]
+    [(path build?) (error 'directory-list "only available in compiled WebRacket")]))
 
 (define (filesystem-root-list)
   (error 'filesystem-root-list "only available in compiled WebRacket"))

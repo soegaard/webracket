@@ -5267,6 +5267,11 @@
                                   (begin
                                     (make-directory "/app/empty-list-dir")
                                     (equal? (directory-list "/app/empty-list-dir") '()))
+                                  (equal? (map path->string
+                                               (directory-list "/app/list-dir" #t))
+                                          '("/app/list-dir/a.txt"
+                                            "/app/list-dir/m.txt"
+                                            "/app/list-dir/z-dir"))
                                   (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
                                                    (lambda (_ex) #t)])
                                     (directory-list "/app/main.rkt")
