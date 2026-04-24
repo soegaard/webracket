@@ -95,6 +95,119 @@ var callback_expected_arity_export;
 var callback_name_export;
 var callback_debug_id_export;
 
+class WebRacketMemoryBackend {
+  constructor(entries = {}) {
+    this.files = new Map();
+    this.dirs = new Set(['/']);
+    for (const [path, bytes] of Object.entries(entries)) {
+      this.writeFile(path, bytes);
+    }
+  }
+
+  normalize(path) {
+    if (!path || path === '/') return '/';
+    return '/' + String(path).replace(/^\/+/, '').replace(/\/+$/, '');
+  }
+
+  parentDirs(path) {
+    const parts = this.normalize(path).split('/').filter(Boolean);
+    let cur = '/';
+    const dirs = [cur];
+    for (let i = 0; i < parts.length - 1; i++) {
+      cur = cur === '/' ? `/${parts[i]}` : `${cur}/${parts[i]}`;
+      dirs.push(cur);
+    }
+    return dirs;
+  }
+
+  mkdir(path) {
+    this.dirs.add(this.normalize(path));
+  }
+
+  writeFile(path, bytes) {
+    const p = this.normalize(path);
+    for (const dir of this.parentDirs(p)) this.dirs.add(dir);
+    this.files.set(p, bytes instanceof Uint8Array ? bytes : new TextEncoder().encode(String(bytes)));
+  }
+
+  stat(path) {
+    const p = this.normalize(path);
+    if (this.files.has(p)) return { type: 'file', size: this.files.get(p).length, mtime: 0 };
+    if (this.dirs.has(p)) return { type: 'directory', size: 0, mtime: 0 };
+    return { type: 'missing', size: 0, mtime: 0 };
+  }
+
+  readFile(path) {
+    const p = this.normalize(path);
+    if (!this.files.has(p)) throw new Error(`VFS file not found: ${path}`);
+    return this.files.get(p);
+  }
+
+  listDir(path) {
+    const p = this.normalize(path);
+    if (!this.dirs.has(p)) throw new Error(`VFS directory not found: ${path}`);
+    const prefix = p === '/' ? '/' : `${p}/`;
+    const names = new Set();
+    for (const file of this.files.keys()) {
+      if (file.startsWith(prefix)) names.add(file.slice(prefix.length).split('/')[0]);
+    }
+    for (const dir of this.dirs) {
+      if (dir !== p && dir.startsWith(prefix)) names.add(dir.slice(prefix.length).split('/')[0]);
+    }
+    return [...names].filter(Boolean).sort();
+  }
+}
+
+class WebRacketVFS {
+  constructor() {
+    this.mounts = new Map();
+    this.mount('/tmp', new WebRacketMemoryBackend());
+    this.mount('/app', new WebRacketMemoryBackend());
+  }
+
+  normalize(path) {
+    const s = String(path || '/');
+    return s.startsWith('/') ? s.replace(/\/+$/, '') || '/' : `/${s}`.replace(/\/+$/, '') || '/';
+  }
+
+  mount(mountPoint, backend) {
+    this.mounts.set(this.normalize(mountPoint), backend);
+  }
+
+  resolve(path) {
+    const p = this.normalize(path);
+    let best = null;
+    for (const mountPoint of this.mounts.keys()) {
+      if (p === mountPoint || p.startsWith(`${mountPoint}/`)) {
+        if (best === null || mountPoint.length > best.length) best = mountPoint;
+      }
+    }
+    if (best === null) throw new Error(`VFS path is not mounted: ${path}`);
+    const rel = p === best ? '/' : p.slice(best.length);
+    return [this.mounts.get(best), rel || '/'];
+  }
+
+  stat(path) {
+    const [backend, rel] = this.resolve(path);
+    return backend.stat(rel);
+  }
+
+  readFile(path) {
+    const [backend, rel] = this.resolve(path);
+    return backend.readFile(rel);
+  }
+
+  listDir(path) {
+    const [backend, rel] = this.resolve(path);
+    return backend.listDir(rel);
+  }
+}
+
+const webracketVFS = new WebRacketVFS();
+globalThis.WebRacketVFS = WebRacketVFS;
+globalThis.WebRacketMemoryBackend = WebRacketMemoryBackend;
+globalThis.webracketVFS = webracketVFS;
+
 function read_u32(arr, i) {
   return ((arr[i] << 24) | (arr[i + 1] << 16) |
           (arr[i + 2] << 8)  | arr[i + 3]) >>> 0;

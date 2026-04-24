@@ -4457,15 +4457,17 @@
                               (equal? (object-name renamed-2) 'again)
                               (equal? (object-name anon)      'anon))))
 
-                (list "procedure printing names"
-                      (let ([out (open-output-string)])
-                        (display string out)
-                        (newline out)
-                        (write string? out)
-                        (newline out)
-                        (print string-append out)
-                        (equal? (get-output-string out)
-                                "#<procedure:string>\n#<procedure:string?>\n#<procedure:string-append>")))
+                ;; display, write, and print are in stdlib, so keep this
+                ;; disabled for the --no-stdlib test-basics run.
+                #;(list "procedure printing names"
+                        (let ([out (open-output-string)])
+                          (display string out)
+                          (newline out)
+                          (write string? out)
+                          (newline out)
+                          (print string-append out)
+                          (equal? (get-output-string out)
+                                  "#<procedure:string>\n#<procedure:string?>\n#<procedure:string-append>")))
 
                 (list "object-name/structure-default"
                       (let ()
@@ -4766,7 +4768,34 @@
                          (equal? (path-string? "")             #f)
                          (equal? (path-string? (string #\nul)) #f)
                          (equal? (path-string? 'a)             #f)
-                         (equal? (path-string? (bytes 1 2 3))  #f))))))
+                         (equal? (path-string? (bytes 1 2 3))  #f)))
+              (list "string->path"
+                    (let ([p (string->path "app/main.rkt")])
+                      (and (path? p)
+                           (equal? (path->string p) "app/main.rkt")
+                           (equal? (path->bytes p) #"app/main.rkt"))))
+              (list "path shape predicates"
+                    (and (equal? (absolute-path? "/app/main.rkt") #t)
+                         (equal? (absolute-path? "app/main.rkt")  #f)
+                         (equal? (relative-path? "app/main.rkt")  #t)
+                         (equal? (relative-path? "/app/main.rkt") #f)
+                         (equal? (complete-path? "/app/main.rkt") #t)
+                         (equal? (complete-path? "app/main.rkt")  #f)))
+              (list "current-directory"
+                    (and (equal? (path->string (current-directory)) "/app/")
+                         (begin
+                           (current-directory "/tmp/")
+                           (equal? (path->string (current-directory)) "/tmp/"))))
+              (list "path->complete-path"
+                    (and (equal? (path->string (path->complete-path "notes.txt" "/app/"))
+                                 "/app/notes.txt")
+                         (equal? (path->string (path->complete-path "/assets/logo.png"))
+                                 "/assets/logo.png")))
+              (list "build-path"
+                    (and (equal? (path->string (build-path "/app" "main.rkt"))
+                                 "/app/main.rkt")
+                         (equal? (path->string (build-path "/app/" "data" "notes.txt"))
+                                 "/app/data/notes.txt"))))))
        
  (list "Checkers"
        (list

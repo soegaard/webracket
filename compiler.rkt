@@ -1119,7 +1119,8 @@
        char-ready?
        read-byte
        read-char
-       newline)
+       newline
+       current-directory)
      'optional 0 1)
     (make-inline-specs
      '(raise-read-error
@@ -1128,6 +1129,9 @@
     (make-inline-specs
      '(read-line peek-byte peek-char)
      'optional 0 2))
+   (make-inline-specs
+    '(build-path)
+    'variadic 1 #f 1)
    (append
     (make-inline-specs/by-name
      '(raise
@@ -1144,6 +1148,7 @@
        instantiate-linklet
        string-join
        string->bytes/utf-8
+       path->complete-path
        bytes->path
          datum->correlated
          correlated-property
@@ -1174,7 +1179,7 @@
        (case name
          [(raise number->string
                  struct-type-property-predicate-procedure? hash->list hash-keys
-                 hash-values string-join bytes->path) 2]
+                 hash-values string-join bytes->path path->complete-path) 2]
          [(procedure-arity-includes?) 3]
          [(procedure-reduce-arity) 4]
          [(string->bytes/utf-8) 4]
@@ -1193,7 +1198,7 @@
          [(string-replace) 'true]
          [(struct->list) 'symbol:error]
          [(string-join) 'string:space]
-         [(procedure-reduce-arity bytes->path datum->correlated correlated-property
+         [(procedure-reduce-arity bytes->path path->complete-path datum->correlated correlated-property
                        inclusive-range inclusive-range-proc) 'missing]
          [else 'false])))
    (make-inline-specs/by-name
@@ -1940,9 +1945,16 @@
   path?
   path-for-some-system?
   path-string?
+  string->path
   path->bytes
   path->string
   bytes->path
+  absolute-path?
+  relative-path?
+  complete-path?
+  build-path
+  current-directory
+  path->complete-path
   
   ;; 17. Unsafe Operations
   unsafe-fx+ unsafe-fx- unsafe-fx* unsafe-fl/

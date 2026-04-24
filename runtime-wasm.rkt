@@ -1846,6 +1846,8 @@
     ;; Byte Strings    
     (add-runtime-bytes-constant  'empty                     #"")
     (add-runtime-bytes-constant  'non-empty                 #"_")
+    (add-runtime-bytes-constant  'slash                     #"/")
+    (add-runtime-bytes-constant  'app-dir                   #"/app/")
 
 
     ;;;
@@ -20774,7 +20776,11 @@
                     (i32.ne (i32.and (i31.get_u (ref.cast (ref i31) (local.get $n-raw))) (i32.const 1))
                             (i32.const 0)))
                    (then (call $raise-argument-error (local.get $n-raw)))) ;; customize this if needed
-               (local.set $n (i32.shr_u (i31.get_u (ref.cast (ref i31) (local.get $n-raw))) (i32.const 1)))
+               (local.set $n (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $n-raw))) (i32.const 1)))
+               ;; Negative counts must fail before allocation; unsigned decoding
+               ;; would otherwise turn them into huge positive counts.
+               (if (i32.lt_s (local.get $n) (i32.const 0))
+                   (then (call $raise-argument-error (local.get $n-raw))))
                (call $make-list/checked (local.get $n) (local.get $v)))
 
          (func $make-list/checked
@@ -20885,55 +20891,71 @@
               (local $start-is-fl  i32)
               (local $end-is-fl    i32)
               (local $step-is-fl   i32)
+              (local $start-val    (ref eq))
+              (local $end-val      (ref eq))
+              (local $step-val     (ref eq))
+
+              ;; First-class calls use $missing for omitted optional arguments.
+              ;; Normalize (range end) into (range 0 end 1) before validation.
+              (local.set $start-val (global.get $missing))
+              (local.set $end-val   (global.get $missing))
+              (local.set $step-val  (global.get $missing))
+              (if (ref.eq (local.get $end-raw) (global.get $missing))
+                  (then (local.set $start-val (ref.i31 (i32.const 0)))
+                        (local.set $end-val   (local.get $start-raw))
+                        (local.set $step-val  (global.get $missing)))
+                  (else (local.set $start-val (local.get $start-raw))
+                        (local.set $end-val   (local.get $end-raw))
+                        (local.set $step-val  (local.get $step-raw))))
 
               ;; start (optional, defaults to 0)
-              (if (ref.eq (local.get $start-raw) (global.get $missing))
+              (if (ref.eq (local.get $start-val) (global.get $missing))
                   (then (local.set $start-i32 (i32.const 0)))
-                  (else (if (call $fl?/i32 (local.get $start-raw))
+                  (else (if (call $fl?/i32 (local.get $start-val))
                             (then (local.set $use-fl (i32.const 1))
                                   (local.set $start-is-fl (i32.const 1))
-                                  (local.set $start-f64 (struct.get $Flonum $v (ref.cast (ref $Flonum) (local.get $start-raw)))))
-                            (else (if (call $fx?/i32 (local.get $start-raw))
+                                  (local.set $start-f64 (struct.get $Flonum $v (ref.cast (ref $Flonum) (local.get $start-val)))))
+                            (else (if (call $fx?/i32 (local.get $start-val))
                                       (then (local.set $start-i32
-                                                      (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $start-raw))) (i32.const 1))))
-                                      (else (call $raise-argument-error (local.get $start-raw))
+                                                      (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $start-val))) (i32.const 1))))
+                                      (else (call $raise-argument-error (local.get $start-val))
                                             (unreachable)))))))
 
               ;; end
-              (if (call $fl?/i32 (local.get $end-raw))
+              (if (call $fl?/i32 (local.get $end-val))
                   (then (local.set $use-fl (i32.const 1))
                         (local.set $end-is-fl (i32.const 1))
-                        (local.set $end-f64 (struct.get $Flonum $v (ref.cast (ref $Flonum) (local.get $end-raw)))))
-                  (else (if (call $fx?/i32 (local.get $end-raw))
+                        (local.set $end-f64 (struct.get $Flonum $v (ref.cast (ref $Flonum) (local.get $end-val)))))
+                  (else (if (call $fx?/i32 (local.get $end-val))
                             (then (local.set $end-i32
-                                            (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $end-raw))) (i32.const 1))))
-                            (else (call $raise-argument-error (local.get $end-raw))
+                                            (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $end-val))) (i32.const 1))))
+                            (else (call $raise-argument-error (local.get $end-val))
                                   (unreachable)))))
 
               ;; step (optional, defaults to 1)
-              (if (ref.eq (local.get $step-raw) (global.get $missing))
+              (if (ref.eq (local.get $step-val) (global.get $missing))
                   (then (if (i32.eqz (local.get $use-fl))
                             (then (local.set $step-i32 (i32.const 1)))
                             (else (local.set $step-is-fl (i32.const 1))
                                   (local.set $step-f64 (f64.const 1.0)))))
-                  (else (if (call $fl?/i32 (local.get $step-raw))
+                  (else (if (call $fl?/i32 (local.get $step-val))
                             (then (local.set $use-fl (i32.const 1))
                                   (local.set $step-is-fl (i32.const 1))
-                                  (local.set $step-f64 (struct.get $Flonum $v (ref.cast (ref $Flonum) (local.get $step-raw)))))
-                            (else (if (call $fx?/i32 (local.get $step-raw))
+                                  (local.set $step-f64 (struct.get $Flonum $v (ref.cast (ref $Flonum) (local.get $step-val)))))
+                            (else (if (call $fx?/i32 (local.get $step-val))
                                       (then (local.set $step-i32
-                                                      (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $step-raw))) (i32.const 1))))
-                                      (else (call $raise-argument-error (local.get $step-raw))
+                                                      (i32.shr_s (i31.get_s (ref.cast (ref i31) (local.get $step-val))) (i32.const 1))))
+                                      (else (call $raise-argument-error (local.get $step-val))
                                             (unreachable)))))))
 
               ;; step must be non-zero when provided
-              (if (i32.eqz (ref.eq (local.get $step-raw) (global.get $missing)))
+              (if (i32.eqz (ref.eq (local.get $step-val) (global.get $missing)))
                   (then (if (i32.eqz (local.get $use-fl))
                             (then (if (i32.eq (local.get $step-i32) (i32.const 0))
-                                      (then (call $raise-argument-error (local.get $step-raw))
+                                      (then (call $raise-argument-error (local.get $step-val))
                                             (unreachable))))
                             (else (if (f64.eq (local.get $step-f64) (f64.const 0))
-                                      (then (call $raise-argument-error (local.get $step-raw))
+                                      (then (call $raise-argument-error (local.get $step-val))
                                             (unreachable)))))))
 
               ;; decide variant
@@ -44354,6 +44376,245 @@
                                  (i32.const 0)
                                  (local.get $bytes)
                                  (local.get $conv)))
+
+               (func $string->path (type $Prim1)
+                     (param $str-raw (ref eq)) ;; string?
+                     (result         (ref eq)) ;; path?
+
+                     (local $str   (ref $String))
+                     (local $bytes (ref eq))
+
+                     (if (i32.eqz (ref.test (ref $String) (local.get $str-raw)))
+                         (then (call $raise-check-string (local.get $str-raw))
+                               (unreachable)))
+                     (local.set $str (ref.cast (ref $String) (local.get $str-raw)))
+                     (if (i32.eqz (ref.eq (call $non-empty-string-without-nuls (local.get $str))
+                                          (global.get $true)))
+                         (then (call $raise-path-expected (local.get $str-raw))
+                               (unreachable)))
+                     (local.set $bytes
+                                (call $string->bytes/utf-8
+                                      (local.get $str)
+                                      (global.get $false)
+                                      (global.get $false)
+                                      (global.get $false)))
+                     (call $bytes->path (local.get $bytes) (global.get $missing)))
+
+               (func $path-string->path/checked
+                     (param $who      (ref eq)) ;; symbol? (currently for diagnostics)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (result          (ref $Path))
+
+                     (local $path (ref $Path))
+                     (local $conv (ref eq))
+                     (local $str  (ref $String))
+
+                     (if (ref.test (ref $Path) (local.get $path-raw))
+                         (then
+                          (local.set $path (ref.cast (ref $Path) (local.get $path-raw)))
+                          (local.set $conv (struct.get $Path $convention (local.get $path)))
+                          (if (i32.eqz (ref.eq (local.get $conv) (global.get $system-path-convention)))
+                              (then (call $raise-path-expected (local.get $path-raw))
+                                    (unreachable)))
+                          (return (local.get $path))))
+
+                     (if (i32.eqz (ref.test (ref $String) (local.get $path-raw)))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (local.set $str (ref.cast (ref $String) (local.get $path-raw)))
+                     (if (i32.eqz (ref.eq (call $non-empty-string-without-nuls (local.get $str))
+                                          (global.get $true)))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (ref.cast (ref $Path) (call $string->path (local.get $str))))
+
+               (func $path-bytes-absolute?
+                     (param $bytes (ref $Bytes))
+                     (result i32)
+
+                     (local $arr (ref $I8Array))
+                     (local $len i32)
+
+                     (local.set $arr (struct.get $Bytes $bs (local.get $bytes)))
+                     (local.set $len (array.len (local.get $arr)))
+                     (if (i32.eqz (local.get $len))
+                         (then (return (i32.const 0))))
+                     (i32.eq (array.get_u $I8Array (local.get $arr) (i32.const 0))
+                             (i32.const 47)))
+
+               (func $absolute-path? (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path? string? or path-for-some-system?
+                     (result          (ref eq))
+
+                     (local $path  (ref null $Path))
+                     (local $bytes (ref $Bytes))
+                     (local $str   (ref $String))
+
+                     (if (ref.test (ref $Path) (local.get $path-raw))
+                         (then
+                          (local.set $path (ref.cast (ref $Path) (local.get $path-raw)))
+                          (local.set $bytes (struct.get $Path $bytes (local.get $path)))
+                          (return (if (result (ref eq))
+                                      (call $path-bytes-absolute? (local.get $bytes))
+                                      (then (global.get $true))
+                                      (else (global.get $false))))))
+                     (if (i32.eqz (ref.test (ref $String) (local.get $path-raw)))
+                         (then (return (global.get $false))))
+                     (local.set $str (ref.cast (ref $String) (local.get $path-raw)))
+                     (if (i32.eqz (ref.eq (call $non-empty-string-without-nuls (local.get $str))
+                                          (global.get $true)))
+                         (then (return (global.get $false))))
+                     (local.set $bytes
+                                (ref.cast (ref $Bytes)
+                                          (call $string->bytes/utf-8
+                                                (local.get $str)
+                                                (global.get $false)
+                                                (global.get $false)
+                                                (global.get $false))))
+                     (if (result (ref eq))
+                         (call $path-bytes-absolute? (local.get $bytes))
+                         (then (global.get $true))
+                         (else (global.get $false))))
+
+               (func $relative-path? (type $Prim1)
+                     (param $path-raw (ref eq))
+                     (result          (ref eq))
+
+                     (local $abs? (ref eq))
+
+                     (local.set $abs? (call $absolute-path? (local.get $path-raw)))
+                     (if (result (ref eq))
+                         (ref.eq (local.get $abs?) (global.get $true))
+                         (then (global.get $false))
+                         (else
+                          (if (result (ref eq))
+                              (ref.eq (call $path-string? (local.get $path-raw)) (global.get $true))
+                              (then (global.get $true))
+                              (else (global.get $false))))))
+
+               (func $complete-path? (type $Prim1)
+                     (param $path-raw (ref eq))
+                     (result          (ref eq))
+                     ;; In the initial browser/Unix path model, complete and
+                     ;; absolute paths are the same.
+                     (call $absolute-path? (local.get $path-raw)))
+
+               (func $path-join-bytes
+                     (param $base-raw (ref eq)) ;; path-string?
+                     (param $rel-raw  (ref eq)) ;; path-string?
+                     (result          (ref eq)) ;; path?
+
+                     (local $base      (ref $Path))
+                     (local $rel       (ref $Path))
+                     (local $base-bs   (ref $Bytes))
+                     (local $rel-bs    (ref $Bytes))
+                     (local $base-arr  (ref $I8Array))
+                     (local $rel-arr   (ref $I8Array))
+                     (local $base-len  i32)
+                     (local $rel-len   i32)
+                     (local $need-sep  i32)
+                     (local $joined    (ref eq))
+
+                     (local.set $base (call $path-string->path/checked
+                                           (global.get $symbol:build-path)
+                                           (local.get $base-raw)))
+                     (local.set $rel (call $path-string->path/checked
+                                          (global.get $symbol:build-path)
+                                          (local.get $rel-raw)))
+                     (local.set $rel-bs (struct.get $Path $bytes (local.get $rel)))
+                     (if (call $path-bytes-absolute? (local.get $rel-bs))
+                         (then (call $raise-path-expected (local.get $rel-raw))
+                               (unreachable)))
+                     (local.set $base-bs (struct.get $Path $bytes (local.get $base)))
+                     (local.set $base-arr (struct.get $Bytes $bs (local.get $base-bs)))
+                     (local.set $rel-arr (struct.get $Bytes $bs (local.get $rel-bs)))
+                     (local.set $base-len (array.len (local.get $base-arr)))
+                     (local.set $rel-len (array.len (local.get $rel-arr)))
+                     (local.set $need-sep (i32.const 1))
+                     (if (i32.eqz (local.get $base-len))
+                         (then (local.set $need-sep (i32.const 0))))
+                     (if (i32.eqz (local.get $rel-len))
+                         (then (local.set $need-sep (i32.const 0))))
+                     (if (i32.and (local.get $base-len)
+                                  (i32.eq (array.get_u $I8Array
+                                                       (local.get $base-arr)
+                                                       (i32.sub (local.get $base-len) (i32.const 1)))
+                                          (i32.const 47)))
+                         (then (local.set $need-sep (i32.const 0))))
+                     (local.set $joined
+                                (if (result (ref eq))
+                                    (local.get $need-sep)
+                                    (then (call $bytes-append/2
+                                                (call $bytes-append/2 (local.get $base-bs)
+                                                      (global.get $bytes:slash))
+                                                (local.get $rel-bs)))
+                                    (else (call $bytes-append/2
+                                                (local.get $base-bs)
+                                                (local.get $rel-bs)))))
+                     (call $bytes->path (local.get $joined) (global.get $missing)))
+
+               (func $build-path (type $Prim>=1)
+                     (param $first (ref eq)) ;; path-string?
+                     (param $rest  (ref eq)) ;; list of additional path-string?s
+                     (result       (ref eq))
+
+                     (local $node   (ref $Pair))
+                     (local $result (ref eq))
+                     (local $next   (ref eq))
+
+                     (local.set $result
+                                (call $path-string->path/checked
+                                      (global.get $symbol:build-path)
+                                      (local.get $first)))
+                     (block $done
+                            (loop $loop
+                                  (br_if $done (ref.eq (local.get $rest) (global.get $null)))
+                                  (local.set $node (ref.cast (ref $Pair) (local.get $rest)))
+                                  (local.set $next (struct.get $Pair $a (local.get $node)))
+                                  (local.set $result (call $path-join-bytes (local.get $result) (local.get $next)))
+                                  (local.set $rest (struct.get $Pair $d (local.get $node)))
+                                  (br $loop)))
+                     (local.get $result))
+
+               (func $current-directory (type $Prim01)
+                     (param $path-raw (ref eq)) ;; optional path-string?
+                     (result          (ref eq))
+
+                     (local $path (ref $Path))
+
+                     (if (ref.eq (local.get $path-raw) (global.get $missing))
+                         (then (return (global.get $current-directory-path))))
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:current-directory)
+                                      (local.get $path-raw)))
+                     (if (i32.eqz (call $path-bytes-absolute?
+                                        (struct.get $Path $bytes (local.get $path))))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (global.set $current-directory-path (local.get $path))
+                     (global.get $void))
+
+               (func $path->complete-path (type $Prim12)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (param $base-raw (ref eq)) ;; optional path-string?, default current-directory
+                     (result          (ref eq)) ;; path?
+
+                     (local $path (ref $Path))
+                     (local $base (ref eq))
+
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:path->complete-path)
+                                      (local.get $path-raw)))
+                     (if (call $path-bytes-absolute? (struct.get $Path $bytes (local.get $path)))
+                         (then (return (local.get $path))))
+                     (local.set $base
+                                (if (result (ref eq))
+                                    (ref.eq (local.get $base-raw) (global.get $missing))
+                                    (then (global.get $current-directory-path))
+                                    (else (local.get $base-raw))))
+                     (call $path-join-bytes (local.get $base) (local.get $path)))
                
                ;;;
                ;;; FFI
@@ -44398,6 +44659,7 @@
                ;;    into the linear memory, where the host can read it.
 
                (global $system-path-convention   (mut (ref eq)) (ref.i31 (i32.const 0)))
+               (global $current-directory-path   (mut (ref eq)) (ref.i31 (i32.const 0)))
                (global $result-bytes             (mut (ref eq)) (ref.i31 (i32.const 0)))
 
                ;; Struct-type properties provided by the runtime
@@ -44590,6 +44852,10 @@
 
                      ;; Default to the host platform's path convention (currently Unix)
                      (global.set $system-path-convention (global.get $symbol:unix))
+                     (global.set $current-directory-path
+                                 (call $bytes->path
+                                       (global.get $bytes:app-dir)
+                                       (global.get $missing)))
 
                      (global.set $char-general-category-symbols
                                  (array.new_fixed $Array 30

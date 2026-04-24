@@ -990,9 +990,16 @@
  path?
  path-for-some-system?
  path-string?
+ string->path
  path->bytes
  path->string
  bytes->path
+ absolute-path?
+ relative-path?
+ complete-path?
+ build-path
+ current-directory
+ path->complete-path
 
  ;; 17. Unsafe Operations
  unsafe-fx+ unsafe-fx- unsafe-fx* unsafe-fl/
