@@ -1018,6 +1018,7 @@
  path->complete-path
  path->directory-path
  cleanse-path
+ simplify-path
  resolve-path
  normal-case-path
  path-replace-extension

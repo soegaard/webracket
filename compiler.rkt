@@ -1114,6 +1114,7 @@
        read-bytes
        open-input-file
        read-string
+       simplify-path
        make-directory)
      'optional 1 2)
     (make-inline-specs
@@ -2024,6 +2025,7 @@
   path->complete-path
   path->directory-path
   cleanse-path
+  simplify-path
   resolve-path
   normal-case-path
   path-replace-extension

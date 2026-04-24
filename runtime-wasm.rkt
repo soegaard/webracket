@@ -45540,6 +45540,137 @@
                            (global.get $symbol:resolve-path)
                            (local.get $path-raw)))
 
+               (func $path-root-element?
+                     (param $path (ref $Path))
+                     (result      i32)
+
+                     (local $bytes (ref $Bytes))
+                     (local $arr   (ref $I8Array))
+                     (local $conv  (ref eq))
+
+                     (local.set $conv (struct.get $Path $convention (local.get $path)))
+                     (local.set $bytes (struct.get $Path $bytes (local.get $path)))
+                     (local.set $arr (struct.get $Bytes $bs (local.get $bytes)))
+                     (if (i32.ne (array.len (local.get $arr)) (i32.const 1))
+                         (then (return (i32.const 0))))
+                     (call $path-byte-separator?
+                           (array.get_u $I8Array (local.get $arr) (i32.const 0))
+                           (local.get $conv)))
+
+               ;; simplify-path : (or/c path-string? path-for-some-system?) [boolean?] -> path-for-some-system?
+               ;;   Syntactically remove redundant separators, "." elements, and cancellable ".." elements.
+               ;;   The optional use-filesystem? argument defaults to #t but is currently ignored:
+               ;;   WebRacket does not model filesystem or link resolution here yet.
+               (func $simplify-path (type $Prim12)
+                     (param $path-raw        (ref eq)) ;; path-string? or path-for-some-system?
+                     (param $use-filesystem? (ref eq)) ;; boolean?, optional default #t; currently ignored
+                     (result                 (ref eq))
+
+                     (local $path     (ref $Path))
+                     (local $path-bs  (ref $Bytes))
+                     (local $conv     (ref eq))
+                     (local $parts    (ref eq))
+                     (local $stack    (ref eq))
+                     (local $ordered  (ref eq))
+                     (local $node     (ref $Pair))
+                     (local $top-node (ref $Pair))
+                     (local $part     (ref eq))
+                     (local $top      (ref eq))
+                     (local $result   (ref eq))
+                     (local $dir?     i32)
+
+                     (local.set $path (ref.cast (ref $Path) (global.get $current-directory-path)))
+                     (if (ref.test (ref $Path) (local.get $path-raw))
+                         (then
+                          (local.set $path (ref.cast (ref $Path) (local.get $path-raw))))
+                         (else
+                          (local.set $path
+                                     (call $path-string->path/checked
+                                           (global.get $symbol:simplify-path)
+                                           (local.get $path-raw)))))
+                     (local.set $conv (struct.get $Path $convention (local.get $path)))
+                     (local.set $path-bs (struct.get $Path $bytes (local.get $path)))
+                     (local.set $dir? (call $path-syntactic-directory?
+                                            (local.get $path-bs)
+                                            (local.get $conv)))
+                     (local.set $parts (call $explode-path (local.get $path)))
+                     (local.set $stack (global.get $null))
+                     (block $done
+                            (loop $loop
+                                  (br_if $done (ref.eq (local.get $parts) (global.get $null)))
+                                  (local.set $node (ref.cast (ref $Pair) (local.get $parts)))
+                                  (local.set $part (struct.get $Pair $a (local.get $node)))
+                                  (if (ref.eq (local.get $part) (global.get $symbol:same))
+                                      (then
+                                       (local.set $parts (struct.get $Pair $d (local.get $node)))
+                                       (br $loop)))
+                                  (if (ref.eq (local.get $part) (global.get $symbol:up))
+                                      (then
+                                       (if (ref.eq (local.get $stack) (global.get $null))
+                                           (then
+                                            (local.set $stack
+                                                       (struct.new $Pair
+                                                                   (i32.const 0)
+                                                                   (local.get $part)
+                                                                   (local.get $stack))))
+                                           (else
+                                            (local.set $top-node (ref.cast (ref $Pair) (local.get $stack)))
+                                            (local.set $top (struct.get $Pair $a (local.get $top-node)))
+                                            (if (ref.test (ref $Path) (local.get $top))
+                                                (then
+                                                 (if (call $path-root-element?
+                                                           (ref.cast (ref $Path) (local.get $top)))
+                                                     (then)
+                                                     (else
+                                                      (local.set $stack
+                                                                 (struct.get $Pair $d (local.get $top-node))))))
+                                                (else
+                                                 (local.set $stack
+                                                            (struct.new $Pair
+                                                                        (i32.const 0)
+                                                                        (local.get $part)
+                                                                        (local.get $stack))))))))
+                                      (else
+                                       (local.set $stack
+                                                  (struct.new $Pair
+                                                              (i32.const 0)
+                                                              (local.get $part)
+                                                              (local.get $stack)))))
+                                  (local.set $parts (struct.get $Pair $d (local.get $node)))
+                                  (br $loop)))
+                     (local.set $ordered (call $reverse (local.get $stack)))
+                     (local.set $result
+                                (call $path-part->path/convention
+                                      (global.get $symbol:simplify-path)
+                                      (local.get $conv)
+                                      (global.get $symbol:same)))
+                     (if (ref.eq (local.get $ordered) (global.get $null))
+                         (then)
+                         (else
+                          (local.set $node (ref.cast (ref $Pair) (local.get $ordered)))
+                          (local.set $result
+                                     (call $path-part->path/convention
+                                           (global.get $symbol:simplify-path)
+                                           (local.get $conv)
+                                           (struct.get $Pair $a (local.get $node))))
+                          (local.set $ordered (struct.get $Pair $d (local.get $node)))
+                          (block $build-done
+                                 (loop $build-loop
+                                       (br_if $build-done
+                                              (ref.eq (local.get $ordered) (global.get $null)))
+                                       (local.set $node (ref.cast (ref $Pair) (local.get $ordered)))
+                                       (local.set $result
+                                                  (call $path-join-bytes/convention
+                                                        (global.get $symbol:simplify-path)
+                                                        (local.get $conv)
+                                                        (local.get $result)
+                                                        (struct.get $Pair $a (local.get $node))))
+                                       (local.set $ordered (struct.get $Pair $d (local.get $node)))
+                                       (br $build-loop)))))
+                     (if (local.get $dir?)
+                         (then (return (call $path->directory-path (local.get $result)))))
+                     (local.get $result))
+
                ;; normal-case-path : (or/c path-string? path-for-some-system?) -> path-for-some-system?
                ;;   Return Unix paths unchanged; for Windows, lowercase ASCII letters and use backslash separators.
                (func $normal-case-path (type $Prim1)
