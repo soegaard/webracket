@@ -1132,6 +1132,7 @@
        char-ready?
        read-byte
        read-char
+       directory-list
        newline
        flush-output
        current-input-port
@@ -1990,6 +1991,7 @@
   ;; 15.2 Filesystem
   file-exists?
   directory-exists?
+  directory-list
   file-size
   delete-file
   make-directory

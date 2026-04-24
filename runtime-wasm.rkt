@@ -1773,6 +1773,7 @@
     (add-runtime-string-constant 'vfs:delete-file-failed     "delete-file: VFS path does not refer to a file")
     (add-runtime-string-constant 'vfs:delete-directory-failed "delete-directory: VFS path does not refer to an empty directory")
     (add-runtime-string-constant 'vfs:make-directory-failed  "make-directory: VFS directory creation failed")
+    (add-runtime-string-constant 'vfs:directory-list-failed  "directory-list: VFS path does not refer to a directory")
     (add-runtime-string-constant 'uncaught-exception         "uncaught exception: ")
     (add-runtime-string-constant 'callback:no-js-equivalent
                                  "The callback attempted to return a WebRacket value with no JavaScript equivalent (i.e. without a FASL encoding): ")
@@ -2583,6 +2584,9 @@
          (func $js-vfs-make-directory
                (import "primitives" "vfs_make_directory")
                (param i32) (param i32) (result i32))
+         (func $js-vfs-list-directory
+               (import "primitives" "vfs_list_directory")
+               (param i32) (param i32) (param i32) (param i32) (result i32))
 
          (func $char-upcase/ucs
                (import "primitives" "char_upcase")
@@ -45114,6 +45118,101 @@
                                  (i32.const 2))
                          (then (global.get $true))
                          (else (global.get $false))))
+
+               ;; directory-list : [path-string?] -> (listof path?)
+               ;;   Return sorted VFS directory entries as path elements; #:build? is not implemented yet.
+               (func $directory-list (type $Prim01)
+                     (param $path-raw (ref eq)) ;; optional path-string?, default = (current-directory)
+                     (result          (ref eq))
+
+                     (local $path      (ref $Path))
+                     (local $path-bs   (ref $Bytes))
+                     (local $names-raw (ref eq))
+                     (local $names     (ref $Vector))
+                     (local $arr       (ref $Array))
+                     (local $entry     (ref eq))
+                     (local $path-len  i32)
+                     (local $fasl-len  i32)
+                     (local $i         i32)
+                     (local $xs        (ref eq))
+
+                     (if (ref.eq (local.get $path-raw) (global.get $missing))
+                         (then (local.set $path-raw
+                                          (call $current-directory
+                                                (global.get $missing)))))
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:directory-list)
+                                      (local.get $path-raw)))
+                     (local.set $path-bs (struct.get $Path $bytes (local.get $path)))
+                     (local.set $path-len
+                                (array.len
+                                 (struct.get $Bytes $bs (local.get $path-bs))))
+                     (if (i32.gt_u (local.get $path-len)
+                                   (global.get $memory-map:vfs-path-buffer-length))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-path-buffer-base)
+                                (global.get $memory-map:vfs-path-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-file-buffer-base)
+                                (global.get $memory-map:vfs-file-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (local.set $path-len
+                                (call $copy-bytes-to-memory
+                                      (local.get $path-bs)
+                                      (global.get $memory-map:vfs-path-buffer-base)))
+                     (local.set $fasl-len
+                                (call $js-vfs-list-directory
+                                      (global.get $memory-map:vfs-path-buffer-base)
+                                      (local.get $path-len)
+                                      (global.get $memory-map:vfs-file-buffer-base)
+                                      (global.get $memory-map:vfs-file-buffer-length)))
+                     (if (i32.lt_s (local.get $fasl-len) (i32.const -1))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (if (i32.lt_s (local.get $fasl-len) (i32.const 0))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:directory-list-failed))
+                               (unreachable)))
+                     (local.set $names-raw
+                                (call $fasl-memory->s-exp
+                                      (global.get $memory-map:vfs-file-buffer-base)))
+                     (if (i32.eqz (ref.test (ref $Vector) (local.get $names-raw)))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:directory-list-failed))
+                               (unreachable)))
+                     (local.set $names (ref.cast (ref $Vector) (local.get $names-raw)))
+                     (local.set $arr (struct.get $Vector $arr (local.get $names)))
+                     (if (i32.eqz (array.len (local.get $arr)))
+                         (then (return (global.get $null))))
+                     (local.set $xs (global.get $null))
+                     (local.set $i (i32.sub (array.len (local.get $arr)) (i32.const 1)))
+                     (block $done
+                            (loop $build
+                                  (local.set $entry
+                                             (array.get $Array
+                                                        (local.get $arr)
+                                                        (local.get $i)))
+                                  (if (i32.eqz (ref.test (ref $String) (local.get $entry)))
+                                      (then (call $raise-vfs-file-error
+                                                  (global.get $string:vfs:directory-list-failed))
+                                            (unreachable)))
+                                  (local.set $xs
+                                             (struct.new $Pair
+                                                         (i32.const 0)
+                                                         (call $string->path (local.get $entry))
+                                                         (local.get $xs)))
+                                  (br_if $done (i32.eqz (local.get $i)))
+                                  (local.set $i (i32.sub (local.get $i) (i32.const 1)))
+                                  (br $build)))
+                     (local.get $xs))
 
                (func $file-size (type $Prim1)
                      (param $path-raw (ref eq)) ;; path-string?

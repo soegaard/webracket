@@ -4912,6 +4912,32 @@
                     (and (equal? (directory-exists? "/app") #t)
                          (equal? (directory-exists? "/app/data") #t)
                          (equal? (directory-exists? "/app/main.rkt") #f)))
+              (list "directory-list"
+                    (let ([original (current-directory)])
+                      (make-directory "/app/list-dir")
+                      (make-directory "/app/list-dir/z-dir")
+                      (webracket-vfs-write-file "/app/list-dir/a.txt" #"a")
+                      (webracket-vfs-write-file "/app/list-dir/m.txt" #"m")
+                      (let ([result
+                             (and (equal? (map path->string (directory-list "/app/list-dir"))
+                                          '("a.txt" "m.txt" "z-dir"))
+                                  (begin
+                                    (current-directory "/app/list-dir/")
+                                    (equal? (map path->string (directory-list))
+                                            '("a.txt" "m.txt" "z-dir")))
+                                  (begin
+                                    (make-directory "/app/empty-list-dir")
+                                    (equal? (directory-list "/app/empty-list-dir") '()))
+                                  (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                                   (lambda (_ex) #t)])
+                                    (directory-list "/app/main.rkt")
+                                    #f)
+                                  (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                                   (lambda (_ex) #t)])
+                                    (directory-list "/app/missing-list-dir")
+                                    #f))])
+                        (current-directory original)
+                        result)))
               (list "make-directory"
                     (and (void? (make-directory "/app/newdir"))
                          (equal? (directory-exists? "/app/newdir") #t)

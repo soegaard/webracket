@@ -1013,6 +1013,7 @@
  ;; 15.2 Filesystem
  file-exists?
  directory-exists?
+ directory-list
  file-size
  delete-file
  make-directory
@@ -1809,6 +1810,11 @@
 
 (define (delete-directory path)
   (error 'delete-directory "only available in compiled WebRacket"))
+
+(define directory-list
+  (case-lambda
+    [() (error 'directory-list "only available in compiled WebRacket")]
+    [(path) (error 'directory-list "only available in compiled WebRacket")]))
 
 (define (call-with-input-file path proc)
   (error 'call-with-input-file "only available in compiled WebRacket"))

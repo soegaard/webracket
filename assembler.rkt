@@ -1335,6 +1335,17 @@ var imports = {
           return -1;
         }
       }),
+      'vfs_list_directory': ((pathStart, pathLen, outStart, outMax) => {
+        try {
+          const names = webracketVFS.listDir(vfs_path_from_memory(pathStart, pathLen));
+          const bytes = js_value_to_fasl(names);
+          if (bytes.length > outMax) return -2;
+          new Uint8Array(memory.buffer).set(bytes, outStart);
+          return bytes.length;
+        } catch (_) {
+          return -1;
+        }
+      }),
       'register_external': (obj => { externals.push(obj); return externals.length - 1; }),
       'lookup_external':   (idx => externals[idx]),
       'external_number_to_f64': (obj =>
