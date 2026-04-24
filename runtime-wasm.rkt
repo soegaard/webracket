@@ -45293,6 +45293,27 @@
                                   (br $dot-loop)))
                      (local.get $len))
 
+               (func $path-final-element-start
+                     (param $path-bs (ref $Bytes))
+                     (result         i32)
+
+                     (local $arr (ref $I8Array))
+                     (local $i   i32)
+                     (local $idx i32)
+
+                     (local.set $arr (struct.get $Bytes $bs (local.get $path-bs)))
+                     (local.set $i (array.len (local.get $arr)))
+                     (block $done
+                            (loop $loop
+                                  (br_if $done (i32.eqz (local.get $i)))
+                                  (local.set $idx (i32.sub (local.get $i) (i32.const 1)))
+                                  (if (i32.eq (array.get_u $I8Array (local.get $arr) (local.get $idx))
+                                              (i32.const 47))
+                                      (then (return (local.get $i))))
+                                  (local.set $i (local.get $idx))
+                                  (br $loop)))
+                     (i32.const 0))
+
                ;; path-replace-extension : path-string? (or/c string? bytes?) -> path?
                ;;   Replace the final Unix/browser path-element extension.
                (func $path-replace-extension (type $Prim2)
@@ -45525,6 +45546,67 @@
                            (local.get $path-bs)
                            (i32.add (local.get $boundary) (i32.const 1))
                            (local.get $len)))
+
+               ;; path-has-extension? : path-string? (or/c string? bytes?) -> boolean?
+               ;;   Check whether the final path element ends with ext but is not exactly ext.
+               (func $path-has-extension? (type $Prim2)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (param $ext-raw  (ref eq)) ;; (or/c string? bytes?)
+                     (result          (ref eq))
+
+                     (local $path       (ref $Path))
+                     (local $path-bs    (ref $Bytes))
+                     (local $ext-bs     (ref $Bytes))
+                     (local $path-arr   (ref $I8Array))
+                     (local $ext-arr    (ref $I8Array))
+                     (local $path-len   i32)
+                     (local $ext-len    i32)
+                     (local $elem-start i32)
+                     (local $elem-len   i32)
+                     (local $offset     i32)
+                     (local $i          i32)
+
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:path-has-extension?)
+                                      (local.get $path-raw)))
+                     (local.set $path-bs (struct.get $Path $bytes (local.get $path)))
+                     (local.set $ext-bs
+                                (call $string-or-bytes->bytes/checked
+                                      (global.get $symbol:path-has-extension?)
+                                      (local.get $ext-raw)))
+                     (local.set $path-arr (struct.get $Bytes $bs (local.get $path-bs)))
+                     (local.set $ext-arr (struct.get $Bytes $bs (local.get $ext-bs)))
+                     (local.set $path-len (array.len (local.get $path-arr)))
+                     (local.set $ext-len (array.len (local.get $ext-arr)))
+                     (if (i32.eqz (local.get $ext-len))
+                         (then (return (global.get $false))))
+                     (if (i32.and (local.get $path-len)
+                                  (i32.eq (array.get_u $I8Array
+                                                       (local.get $path-arr)
+                                                       (i32.sub (local.get $path-len) (i32.const 1)))
+                                          (i32.const 47)))
+                         (then (return (global.get $false))))
+                     (local.set $elem-start (call $path-final-element-start (local.get $path-bs)))
+                     (local.set $elem-len (i32.sub (local.get $path-len) (local.get $elem-start)))
+                     (if (i32.ge_u (local.get $ext-len) (local.get $elem-len))
+                         (then (return (global.get $false))))
+                     (local.set $offset (i32.sub (local.get $path-len) (local.get $ext-len)))
+                     (local.set $i (i32.const 0))
+                     (block $done
+                            (loop $loop
+                                  (br_if $done (i32.ge_u (local.get $i) (local.get $ext-len)))
+                                  (if (i32.ne
+                                       (array.get_u $I8Array
+                                                    (local.get $path-arr)
+                                                    (i32.add (local.get $offset) (local.get $i)))
+                                       (array.get_u $I8Array
+                                                    (local.get $ext-arr)
+                                                    (local.get $i)))
+                                      (then (return (global.get $false))))
+                                  (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                  (br $loop)))
+                     (global.get $true))
 
                (func $vfs-path-stat-kind
                      (param $who      (ref eq)) ;; symbol? (currently for diagnostics)

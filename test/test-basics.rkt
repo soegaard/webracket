@@ -4947,6 +4947,14 @@
                          (equal? (filename-extension "x/y.tar.gz") #"gz")
                          (equal? (filename-extension "x/.racketrc") #"racketrc")
                          (equal? (filename-extension "x/y/") #f)))
+              (list "path-has-extension?"
+                    (and (equal? (path-has-extension? "x/y.rkt" #".rkt") #t)
+                         (equal? (path-has-extension? "x/y.ss" #".rkt") #f)
+                         (equal? (path-has-extension? "x/y" #".rkt") #f)
+                         (equal? (path-has-extension? "x/.racketrc" #".racketrc") #f)
+                         (equal? (path-has-extension? "x/compiled/y_rkt.zo" #"_rkt.zo") #t)
+                         (equal? (path-has-extension? "x/y/" #"y") #f)
+                         (equal? (path-has-extension? "x/y" #"y") #f)))
               (list "build-path"
                     (and (equal? (path->string (build-path "/app" "main.rkt"))
                                  "/app/main.rkt")

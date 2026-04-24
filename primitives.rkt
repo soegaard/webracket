@@ -1017,6 +1017,7 @@
  path-add-suffix
  path-get-extension
  filename-extension
+ path-has-extension?
 
  ;; 15.2 Filesystem
  file-exists?
