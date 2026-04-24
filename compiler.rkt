@@ -1151,6 +1151,9 @@
      '(file-or-directory-modify-seconds)
      'optional 1 2)
     (make-inline-specs
+     '(file-or-directory-permissions)
+     'optional 1 2)
+    (make-inline-specs
      '(copy-file rename-file-or-directory)
      'optional 2 3))
    (make-inline-specs
@@ -2005,6 +2008,7 @@
   rename-file-or-directory
   copy-file
   file-or-directory-modify-seconds
+  file-or-directory-permissions
   file->bytes
   file->string
   open-input-file

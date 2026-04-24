@@ -1021,6 +1021,7 @@
  rename-file-or-directory
  copy-file
  file-or-directory-modify-seconds
+ file-or-directory-permissions
  file->bytes
  file->string
  open-input-file
@@ -1828,6 +1829,11 @@
   (case-lambda
     [(path) (error 'file-or-directory-modify-seconds "only available in compiled WebRacket")]
     [(path secs-n) (error 'file-or-directory-modify-seconds "only available in compiled WebRacket")]))
+
+(define file-or-directory-permissions
+  (case-lambda
+    [(path) (error 'file-or-directory-permissions "only available in compiled WebRacket")]
+    [(path mode) (error 'file-or-directory-permissions "only available in compiled WebRacket")]))
 
 (define directory-list
   (case-lambda

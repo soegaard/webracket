@@ -1536,6 +1536,10 @@
           return-linefeed
           any
           any-one
+          read
+          write
+          execute
+          bits
 
           srcloc
           make-srcloc
@@ -1777,6 +1781,8 @@
     (add-runtime-string-constant 'vfs:rename-failed          "rename-file-or-directory: VFS rename failed")
     (add-runtime-string-constant 'vfs:copy-file-failed       "copy-file: VFS copy failed")
     (add-runtime-string-constant 'vfs:modify-seconds-failed  "file-or-directory-modify-seconds: VFS path does not exist")
+    (add-runtime-string-constant 'vfs:permissions-failed     "file-or-directory-permissions: VFS path does not exist")
+    (add-runtime-string-constant 'permissions-mode           "(or/c #f 'bits (integer-in 0 65535))")
     (add-runtime-string-constant 'uncaught-exception         "uncaught exception: ")
     (add-runtime-string-constant 'callback:no-js-equivalent
                                  "The callback attempted to return a WebRacket value with no JavaScript equivalent (i.e. without a FASL encoding): ")
@@ -2598,6 +2604,9 @@
                (param i32) (param i32) (param i32) (param i32) (param i32) (result i32))
          (func $js-vfs-modify-seconds
                (import "primitives" "vfs_modify_seconds")
+               (param i32) (param i32) (param i32) (param i32) (result i32))
+         (func $js-vfs-permissions
+               (import "primitives" "vfs_permissions")
                (param i32) (param i32) (param i32) (param i32) (result i32))
 
          (func $char-upcase/ucs
@@ -45777,6 +45786,104 @@
                          (i32.eqz (local.get $has-secs))
                          (then (ref.i31 (i32.shl (local.get $mtime) (i32.const 1))))
                          (else (global.get $void))))
+
+               ;; file-or-directory-permissions : path-string? [(or/c #f 'bits (integer-in 0 65535))] -> (or/c list? fixnum? void?)
+               ;;   Get or set VFS permission bits; default mode returns '(read write execute)-style permissions.
+               (func $file-or-directory-permissions (type $Prim12)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (param $mode-raw (ref eq)) ;; optional (or/c #f 'bits (integer-in 0 65535)), default = #f
+                     (result          (ref eq))
+
+                     (local $path      (ref $Path))
+                     (local $bytes     (ref $Bytes))
+                     (local $len       i32)
+                     (local $set-mode? i32)
+                     (local $bits-mode? i32)
+                     (local $mode      i32)
+                     (local $bits      i32)
+                     (local $perms     (ref eq))
+
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:file-or-directory-permissions)
+                                      (local.get $path-raw)))
+                     (local.set $bytes (struct.get $Path $bytes (local.get $path)))
+                     (local.set $len
+                                (array.len
+                                 (struct.get $Bytes $bs (local.get $bytes))))
+                     (if (i32.gt_u (local.get $len)
+                                   (global.get $memory-map:vfs-path-buffer-length))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-path-buffer-base)
+                                (global.get $memory-map:vfs-path-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (if (ref.eq (local.get $mode-raw) (global.get $missing))
+                         (then (local.set $set-mode? (i32.const 0)))
+                         (else
+                          (if (ref.eq (local.get $mode-raw) (global.get $false))
+                              (then (local.set $set-mode? (i32.const 0)))
+                              (else
+                               (if (ref.eq (local.get $mode-raw) (global.get $symbol:bits))
+                                   (then (local.set $set-mode? (i32.const 0))
+                                         (local.set $bits-mode? (i32.const 1)))
+                                   (else
+                                    (if (ref.eq (call $exact-nonnegative-integer? (local.get $mode-raw))
+                                                (global.get $false))
+                                        (then (call $raise-argument-error1
+                                                    (global.get $symbol:file-or-directory-permissions)
+                                                    (global.get $string:permissions-mode)
+                                                    (local.get $mode-raw))
+                                              (unreachable)))
+                                    (local.set $mode
+                                               (i32.shr_s
+                                                (i31.get_s
+                                                 (ref.cast (ref i31) (local.get $mode-raw)))
+                                                (i32.const 1)))
+                                    (if (i32.gt_u (local.get $mode) (i32.const 65535))
+                                        (then (call $raise-argument-error1
+                                                    (global.get $symbol:file-or-directory-permissions)
+                                                    (global.get $string:permissions-mode)
+                                                    (local.get $mode-raw))
+                                              (unreachable)))
+                                    (local.set $set-mode? (i32.const 1))))))))
+                     (local.set $len (call $copy-bytes-to-memory
+                                           (local.get $bytes)
+                                           (global.get $memory-map:vfs-path-buffer-base)))
+                     (local.set $bits
+                                (call $js-vfs-permissions
+                                      (global.get $memory-map:vfs-path-buffer-base)
+                                      (local.get $len)
+                                      (local.get $set-mode?)
+                                      (local.get $mode)))
+                     (if (i32.lt_s (local.get $bits) (i32.const 0))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:permissions-failed))
+                               (unreachable)))
+                     (if (local.get $set-mode?)
+                         (then (return (global.get $void))))
+                     (if (local.get $bits-mode?)
+                         (then (return (ref.i31 (i32.shl (local.get $bits) (i32.const 1))))))
+                     (local.set $perms (global.get $null))
+                     (if (i32.ne (i32.and (local.get $bits) (i32.const #o100)) (i32.const 0))
+                         (then (local.set $perms
+                                          (call $cons
+                                                (global.get $symbol:execute)
+                                                (local.get $perms)))))
+                     (if (i32.ne (i32.and (local.get $bits) (i32.const #o200)) (i32.const 0))
+                         (then (local.set $perms
+                                          (call $cons
+                                                (global.get $symbol:write)
+                                                (local.get $perms)))))
+                     (if (i32.ne (i32.and (local.get $bits) (i32.const #o400)) (i32.const 0))
+                         (then (local.set $perms
+                                          (call $cons
+                                                (global.get $symbol:read)
+                                                (local.get $perms)))))
+                     (local.get $perms))
 
                (func $open-output-file (type $Prim1)
                      (param $path-raw (ref eq)) ;; path-string?
