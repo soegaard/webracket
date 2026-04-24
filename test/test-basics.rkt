@@ -5006,6 +5006,52 @@
                              (port-closed? saved-port)
                              (equal? (file->string "/app/data/call-out.txt")
                                      "called")))))
+              (list "call-with-input-file*"
+                    (let ([saved-port #f])
+                      (let ([result
+                             (call-with-input-file* "/app/data/notes.txt"
+                               (lambda (port)
+                                 (set! saved-port port)
+                                 (read-string 6 port)))])
+                        (and (equal? result "notes\n")
+                             (input-port? saved-port)
+                             (port-closed? saved-port)))))
+              (list "call-with-input-file*/exception"
+                    (let ([saved-port #f])
+                      (and (with-handlers ([symbol? (lambda (_ex) #t)])
+                             (call-with-input-file* "/app/data/notes.txt"
+                               (lambda (port)
+                                 (set! saved-port port)
+                                 (raise 'boom)))
+                             #f)
+                           (input-port? saved-port)
+                           (port-closed? saved-port))))
+              (list "call-with-output-file*"
+                    (let ([saved-port #f])
+                      (let ([result
+                             (call-with-output-file* "/app/data/call-star-out.txt"
+                               (lambda (port)
+                                 (set! saved-port port)
+                                 (write-string "star" port)
+                                 'done))])
+                        (and (equal? result 'done)
+                             (output-port? saved-port)
+                             (port-closed? saved-port)
+                             (equal? (file->string "/app/data/call-star-out.txt")
+                                     "star")))))
+              (list "call-with-output-file*/exception"
+                    (let ([saved-port #f])
+                      (and (with-handlers ([symbol? (lambda (_ex) #t)])
+                             (call-with-output-file* "/app/data/call-star-error.txt"
+                               (lambda (port)
+                                 (set! saved-port port)
+                                 (write-string "star-error" port)
+                                 (raise 'boom)))
+                             #f)
+                           (output-port? saved-port)
+                           (port-closed? saved-port)
+                           (equal? (file->string "/app/data/call-star-error.txt")
+                                   "star-error"))))
               (list "with-input-from-file"
                     (let* ([original (current-input-port)]
                            [during   #f]

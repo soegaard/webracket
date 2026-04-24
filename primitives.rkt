@@ -1020,6 +1020,8 @@
  open-output-file
  call-with-input-file
  call-with-output-file
+ call-with-input-file*
+ call-with-output-file*
  with-input-from-file
  with-output-to-file
  webracket-vfs-write-file
@@ -1799,6 +1801,12 @@
 
 (define (call-with-output-file path proc)
   (error 'call-with-output-file "only available in compiled WebRacket"))
+
+(define (call-with-input-file* path proc)
+  (error 'call-with-input-file* "only available in compiled WebRacket"))
+
+(define (call-with-output-file* path proc)
+  (error 'call-with-output-file* "only available in compiled WebRacket"))
 
 (define (with-input-from-file path thunk)
   (error 'with-input-from-file "only available in compiled WebRacket"))

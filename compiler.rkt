@@ -1000,6 +1000,8 @@
        unsafe-fxmodulo
        call-with-input-file
        call-with-output-file
+       call-with-input-file*
+       call-with-output-file*
        with-input-from-file
        with-output-to-file
        instance-unset-variable!
@@ -1994,6 +1996,8 @@
   open-output-file
   call-with-input-file
   call-with-output-file
+  call-with-input-file*
+  call-with-output-file*
   with-input-from-file
   with-output-to-file
   webracket-vfs-write-file

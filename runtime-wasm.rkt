@@ -45418,19 +45418,17 @@
                      (drop (call $close-output-port (local.get $port)))
                      (local.get $res))
 
-               ;; $with-input-from-file : path-string? procedure? -> any
-               ;;   Install a VFS input file as the current input port while thunk runs.
-               ;;   The #:mode keyword is not implemented yet.
-               (func $with-input-from-file (type $Prim2)
-                     (param $path-raw (ref eq)) ;; path-string?
-                     (param $thunk    (ref eq)) ;; procedure?
-                     (result          (ref eq))
+               ;; $call-with-current-input-port/thunk : input-port? procedure? -> any
+               ;;   Install port as the current input port while thunk runs, then restore it.
+               (func $call-with-current-input-port/thunk
+                     (param $port  (ref eq)) ;; input-port?
+                     (param $thunk (ref eq)) ;; procedure?
+                     (result       (ref eq))
 
                      (local $f       (ref $Procedure))
                      (local $finv    (ref $ProcedureInvoker))
                      (local $args    (ref $Args))
                      (local $old     (ref eq))
-                     (local $port    (ref eq))
                      (local $res     (ref eq))
                      (local $exn-val (ref eq))
 
@@ -45444,12 +45442,7 @@
                      (local.set $old
                                 (call $current-input-port
                                       (global.get $missing)))
-                     (local.set $port
-                                (call $open-input-file
-                                      (local.get $path-raw)
-                                      (global.get $missing)))
                      (drop (call $current-input-port (local.get $port)))
-
                      (local.set $res
                                 (block $done (result (ref eq))
                                        (block $handler-block (result (ref eq))
@@ -45462,26 +45455,22 @@
                                                          (br $done)))
                                        (local.set $exn-val)
                                        (drop (call $current-input-port (local.get $old)))
-                                       (drop (call $close-input-port (local.get $port)))
                                        (throw $exn (local.get $exn-val))
                                        (unreachable)))
                      (drop (call $current-input-port (local.get $old)))
-                     (drop (call $close-input-port (local.get $port)))
                      (local.get $res))
 
-               ;; $with-output-to-file : path-string? procedure? -> any
-               ;;   Install a VFS output file as the current output port while thunk runs.
-               ;;   Keyword options such as #:exists are not implemented yet.
-               (func $with-output-to-file (type $Prim2)
-                     (param $path-raw (ref eq)) ;; path-string?
-                     (param $thunk    (ref eq)) ;; procedure?
-                     (result          (ref eq))
+               ;; $call-with-current-output-port/thunk : output-port? procedure? -> any
+               ;;   Install port as the current output port while thunk runs, then restore it.
+               (func $call-with-current-output-port/thunk
+                     (param $port  (ref eq)) ;; output-port?
+                     (param $thunk (ref eq)) ;; procedure?
+                     (result       (ref eq))
 
                      (local $f       (ref $Procedure))
                      (local $finv    (ref $ProcedureInvoker))
                      (local $args    (ref $Args))
                      (local $old     (ref eq))
-                     (local $port    (ref eq))
                      (local $res     (ref eq))
                      (local $exn-val (ref eq))
 
@@ -45495,11 +45484,7 @@
                      (local.set $old
                                 (call $current-output-port
                                       (global.get $missing)))
-                     (local.set $port
-                                (call $open-output-file
-                                      (local.get $path-raw)))
                      (drop (call $current-output-port (local.get $port)))
-
                      (local.set $res
                                 (block $done (result (ref eq))
                                        (block $handler-block (result (ref eq))
@@ -45512,10 +45497,158 @@
                                                          (br $done)))
                                        (local.set $exn-val)
                                        (drop (call $current-output-port (local.get $old)))
-                                       (drop (call $close-output-port (local.get $port)))
                                        (throw $exn (local.get $exn-val))
                                        (unreachable)))
                      (drop (call $current-output-port (local.get $old)))
+                     (local.get $res))
+
+               ;; $call-with-input-file* : path-string? procedure? -> any
+               ;;   Open a VFS file, pass its input port to proc, and close it on return or exception.
+               ;;   The #:mode keyword is not implemented yet.
+               (func $call-with-input-file* (type $Prim2)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (param $proc     (ref eq)) ;; procedure?
+                     (result          (ref eq))
+
+                     (local $f       (ref $Procedure))
+                     (local $finv    (ref $ProcedureInvoker))
+                     (local $port    (ref eq))
+                     (local $args    (ref $Args))
+                     (local $res     (ref eq))
+                     (local $exn-val (ref eq))
+
+                     (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                         (then (call $raise-argument-error:procedure-expected
+                                     (local.get $proc))
+                               (unreachable)))
+                     (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+                     (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+                     (local.set $port
+                                (call $open-input-file
+                                      (local.get $path-raw)
+                                      (global.get $missing)))
+                     (local.set $args (array.new_fixed $Args 1 (local.get $port)))
+                     (local.set $res
+                                (block $done (result (ref eq))
+                                       (block $handler-block (result (ref eq))
+                                              (try_table (result (ref eq))
+                                                         (catch $exn $handler-block)
+                                                         (call_ref $ProcedureInvoker
+                                                                   (local.get $f)
+                                                                   (local.get $args)
+                                                                   (local.get $finv))
+                                                         (br $done)))
+                                       (local.set $exn-val)
+                                       (drop (call $close-input-port (local.get $port)))
+                                       (throw $exn (local.get $exn-val))
+                                       (unreachable)))
+                     (drop (call $close-input-port (local.get $port)))
+                     (local.get $res))
+
+               ;; $call-with-output-file* : path-string? procedure? -> any
+               ;;   Open a VFS file, pass its output port to proc, and close it on return or exception.
+               ;;   Keyword options such as #:exists are not implemented yet.
+               (func $call-with-output-file* (type $Prim2)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (param $proc     (ref eq)) ;; procedure?
+                     (result          (ref eq))
+
+                     (local $f       (ref $Procedure))
+                     (local $finv    (ref $ProcedureInvoker))
+                     (local $port    (ref eq))
+                     (local $args    (ref $Args))
+                     (local $res     (ref eq))
+                     (local $exn-val (ref eq))
+
+                     (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                         (then (call $raise-argument-error:procedure-expected
+                                     (local.get $proc))
+                               (unreachable)))
+                     (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+                     (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+                     (local.set $port
+                                (call $open-output-file
+                                      (local.get $path-raw)))
+                     (local.set $args (array.new_fixed $Args 1 (local.get $port)))
+                     (local.set $res
+                                (block $done (result (ref eq))
+                                       (block $handler-block (result (ref eq))
+                                              (try_table (result (ref eq))
+                                                         (catch $exn $handler-block)
+                                                         (call_ref $ProcedureInvoker
+                                                                   (local.get $f)
+                                                                   (local.get $args)
+                                                                   (local.get $finv))
+                                                         (br $done)))
+                                       (local.set $exn-val)
+                                       (drop (call $close-output-port (local.get $port)))
+                                       (throw $exn (local.get $exn-val))
+                                       (unreachable)))
+                     (drop (call $close-output-port (local.get $port)))
+                     (local.get $res))
+
+               ;; $with-input-from-file : path-string? procedure? -> any
+               ;;   Install a VFS input file as the current input port while thunk runs.
+               ;;   The #:mode keyword is not implemented yet.
+               (func $with-input-from-file (type $Prim2)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (param $thunk    (ref eq)) ;; procedure?
+                     (result          (ref eq))
+
+                     (local $port    (ref eq))
+                     (local $res     (ref eq))
+                     (local $exn-val (ref eq))
+
+                     (local.set $port
+                                (call $open-input-file
+                                      (local.get $path-raw)
+                                      (global.get $missing)))
+
+                     (local.set $res
+                                (block $done (result (ref eq))
+                                       (block $handler-block (result (ref eq))
+                                              (try_table (result (ref eq))
+                                                         (catch $exn $handler-block)
+                                                         (call $call-with-current-input-port/thunk
+                                                               (local.get $port)
+                                                               (local.get $thunk))
+                                                         (br $done)))
+                                       (local.set $exn-val)
+                                       (drop (call $close-input-port (local.get $port)))
+                                       (throw $exn (local.get $exn-val))
+                                       (unreachable)))
+                     (drop (call $close-input-port (local.get $port)))
+                     (local.get $res))
+
+               ;; $with-output-to-file : path-string? procedure? -> any
+               ;;   Install a VFS output file as the current output port while thunk runs.
+               ;;   Keyword options such as #:exists are not implemented yet.
+               (func $with-output-to-file (type $Prim2)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (param $thunk    (ref eq)) ;; procedure?
+                     (result          (ref eq))
+
+                     (local $port    (ref eq))
+                     (local $res     (ref eq))
+                     (local $exn-val (ref eq))
+
+                     (local.set $port
+                                (call $open-output-file
+                                      (local.get $path-raw)))
+
+                     (local.set $res
+                                (block $done (result (ref eq))
+                                       (block $handler-block (result (ref eq))
+                                              (try_table (result (ref eq))
+                                                         (catch $exn $handler-block)
+                                                         (call $call-with-current-output-port/thunk
+                                                               (local.get $port)
+                                                               (local.get $thunk))
+                                                         (br $done)))
+                                       (local.set $exn-val)
+                                       (drop (call $close-output-port (local.get $port)))
+                                       (throw $exn (local.get $exn-val))
+                                       (unreachable)))
                      (drop (call $close-output-port (local.get $port)))
                      (local.get $res))
                
