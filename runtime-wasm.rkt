@@ -45305,6 +45305,54 @@
                            (global.get $symbol:resolve-path)
                            (local.get $path-raw)))
 
+               ;; normal-case-path : (or/c path-string? path-for-some-system?) -> path-for-some-system?
+               ;;   Return Unix paths unchanged; for Windows, lowercase ASCII letters and use backslash separators.
+               (func $normal-case-path (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path-string? or path-for-some-system?
+                     (result          (ref eq))
+
+                     (local $path    (ref $Path))
+                     (local $bytes   (ref $Bytes))
+                     (local $src     (ref $I8Array))
+                     (local $dst     (ref $I8Array))
+                     (local $conv    (ref eq))
+                     (local $len     i32)
+                     (local $i       i32)
+                     (local $b       i32)
+
+                     (local.set $path (ref.cast (ref $Path) (global.get $current-directory-path)))
+                     (if (ref.test (ref $Path) (local.get $path-raw))
+                         (then
+                          (local.set $path (ref.cast (ref $Path) (local.get $path-raw))))
+                         (else
+                          (local.set $path
+                                     (call $path-string->path/checked
+                                           (global.get $symbol:normal-case-path)
+                                           (local.get $path-raw)))))
+                     (local.set $conv (struct.get $Path $convention (local.get $path)))
+                     (local.set $bytes (struct.get $Path $bytes (local.get $path)))
+                     (if (i32.eqz (ref.eq (local.get $conv) (global.get $symbol:windows)))
+                         (then (return (local.get $path))))
+                     (local.set $src (struct.get $Bytes $bs (local.get $bytes)))
+                     (local.set $len (array.len (local.get $src)))
+                     (local.set $dst (array.new $I8Array (i32.const 0) (local.get $len)))
+                     (local.set $i (i32.const 0))
+                     (block $done
+                            (loop $loop
+                                  (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                                  (local.set $b (array.get_u $I8Array (local.get $src) (local.get $i)))
+                                  (if (i32.eq (local.get $b) (i32.const 47))
+                                      (then (local.set $b (i32.const 92))))
+                                  (if (i32.and (i32.ge_u (local.get $b) (i32.const 65))
+                                               (i32.le_u (local.get $b) (i32.const 90)))
+                                      (then (local.set $b (i32.add (local.get $b) (i32.const 32)))))
+                                  (array.set $I8Array (local.get $dst) (local.get $i) (local.get $b))
+                                  (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                  (br $loop)))
+                     (call $bytes->path
+                           (call $i8array->immutable-bytes (local.get $dst))
+                           (local.get $conv)))
+
                (func $string-or-bytes->bytes/checked
                      (param $who (ref eq)) ;; symbol?
                      (param $v   (ref eq)) ;; (or/c string? bytes?)

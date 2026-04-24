@@ -1017,6 +1017,7 @@
  path->complete-path
  path->directory-path
  resolve-path
+ normal-case-path
  path-replace-extension
  path-add-extension
  path-replace-suffix

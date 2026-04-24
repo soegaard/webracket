@@ -4931,6 +4931,14 @@
                                  "/app/main.rkt")
                          (equal? (path->string (resolve-path "relative.txt"))
                                  "relative.txt")))
+              (list "normal-case-path"
+                    (let ([win-path (string->some-system-path "A/B/C.rkt" 'windows)])
+                      (and (equal? (path->string (normal-case-path "A/B/C.rkt"))
+                                   "A/B/C.rkt")
+                           (equal? (some-system-path->string (normal-case-path win-path))
+                                   "a\\b\\c.rkt")
+                           (equal? (path-convention-type (normal-case-path win-path))
+                                   'windows))))
               (list "path-replace-extension"
                     (and (equal? (path->string (path-replace-extension "x/y.ss" #".rkt"))
                                  "x/y.rkt")
