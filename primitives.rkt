@@ -1017,6 +1017,7 @@
  current-directory
  path->complete-path
  path->directory-path
+ cleanse-path
  resolve-path
  normal-case-path
  path-replace-extension

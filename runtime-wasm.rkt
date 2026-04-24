@@ -45477,6 +45477,59 @@
                            (call $bytes-append/2 (local.get $bytes) (local.get $sep))
                            (local.get $conv)))
 
+               ;; cleanse-path : (or/c path-string? path-for-some-system?) -> path-for-some-system?
+               ;;   Remove redundant consecutive separators without consulting the filesystem.
+               (func $cleanse-path (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path-string? or path-for-some-system?
+                     (result          (ref eq))
+
+                     (local $path      (ref $Path))
+                     (local $bytes     (ref $Bytes))
+                     (local $arr       (ref $I8Array))
+                     (local $out       (ref $GrowableBytes))
+                     (local $conv      (ref eq))
+                     (local $len       i32)
+                     (local $i         i32)
+                     (local $b         i32)
+                     (local $prev-sep? i32)
+                     (local $sep?      i32)
+
+                     (local.set $path (ref.cast (ref $Path) (global.get $current-directory-path)))
+                     (if (ref.test (ref $Path) (local.get $path-raw))
+                         (then
+                          (local.set $path (ref.cast (ref $Path) (local.get $path-raw))))
+                         (else
+                          (local.set $path
+                                     (call $path-string->path/checked
+                                           (global.get $symbol:cleanse-path)
+                                           (local.get $path-raw)))))
+                     (local.set $conv (struct.get $Path $convention (local.get $path)))
+                     (local.set $bytes (struct.get $Path $bytes (local.get $path)))
+                     (local.set $arr (struct.get $Bytes $bs (local.get $bytes)))
+                     (local.set $len (array.len (local.get $arr)))
+                     (local.set $out (call $make-growable-bytes (local.get $len)))
+                     (local.set $i (i32.const 0))
+                     (local.set $prev-sep? (i32.const 0))
+                     (block $done
+                            (loop $loop
+                                  (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                                  (local.set $b (array.get_u $I8Array (local.get $arr) (local.get $i)))
+                                  (local.set $sep?
+                                             (call $path-byte-separator?
+                                                   (local.get $b)
+                                                   (local.get $conv)))
+                                  (if (i32.and (local.get $sep?) (local.get $prev-sep?))
+                                      (then
+                                       (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                       (br $loop)))
+                                  (call $growable-bytes-add! (local.get $out) (local.get $b))
+                                  (local.set $prev-sep? (local.get $sep?))
+                                  (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                  (br $loop)))
+                     (call $bytes->path
+                           (call $growable-bytes->bytes (local.get $out))
+                           (local.get $conv)))
+
                ;; resolve-path : path-string? -> path?
                ;;   Return the validated VFS path; soft links and full cleansing are not modeled yet.
                (func $resolve-path (type $Prim1)

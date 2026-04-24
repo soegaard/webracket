@@ -4930,6 +4930,23 @@
                                   (path->directory-path
                                    (string->some-system-path "a\\b" 'windows)))
                                  "a\\b\\")))
+              (list "cleanse-path"
+                    (and (equal? (path->string (cleanse-path "tiny//dancer"))
+                                 "tiny/dancer")
+                         (equal? (path->string (cleanse-path "a///b/"))
+                                 "a/b/")
+                         (equal? (path->string (cleanse-path "//a"))
+                                 "/a")
+                         (equal? (path->string (cleanse-path "a/./b"))
+                                 "a/./b")
+                         (equal? (some-system-path->string
+                                  (cleanse-path
+                                   (string->some-system-path "a\\\\b" 'windows)))
+                                 "a\\b")
+                         (equal? (some-system-path->string
+                                  (cleanse-path
+                                   (string->some-system-path "a//b/" 'windows)))
+                                 "a/b/")))
               (list "resolve-path"
                     (and (equal? (path->string (resolve-path "/app/main.rkt"))
                                  "/app/main.rkt")
