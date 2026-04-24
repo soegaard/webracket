@@ -4831,7 +4831,14 @@
                                      (list line col pos)))])
                       (and (equal? (loc) '(1 0 1))
                            (equal? (read-string 6 port) "notes\n")
-                           (equal? (loc) '(2 0 7))))))))
+                           (equal? (loc) '(2 0 7)))))
+              (list "call-with-input-file"
+                    (call-with-input-file "/app/data/notes.txt"
+                      (lambda (port)
+                        (and (input-port? port)
+                             (equal? (object-name port) "/app/data/notes.txt")
+                             (equal? (read-string 6 port) "notes\n")
+                             (eof-object? (read-byte port)))))))))
        
  (list "Checkers"
        (list

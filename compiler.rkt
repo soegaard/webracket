@@ -994,6 +994,7 @@
        unsafe-fxquotient
        unsafe-fxremainder
        unsafe-fxmodulo
+       call-with-input-file
        instance-unset-variable!
        bytes-join)
      'fixed 2 2))
@@ -1964,6 +1965,7 @@
   file->bytes
   file->string
   open-input-file
+  call-with-input-file
   webracket-vfs-write-file
   
   ;; 17. Unsafe Operations

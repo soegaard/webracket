@@ -44963,6 +44963,35 @@
                      (call $open-input-bytes
                            (local.get $file-bs)
                            (local.get $path-raw)))
+
+               ;; $call-with-input-file : path-string? procedure? -> any
+               ;;   Open a VFS file, pass its input port to proc, and return proc's result.
+               ;;   The #:mode keyword and close-on-return behavior are not implemented yet.
+               (func $call-with-input-file (type $Prim2)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (param $proc     (ref eq)) ;; procedure?
+                     (result          (ref eq))
+
+                     (local $f    (ref $Procedure))
+                     (local $finv (ref $ProcedureInvoker))
+                     (local $port (ref eq))
+                     (local $args (ref $Args))
+
+                     (local.set $port
+                                (call $open-input-file
+                                      (local.get $path-raw)
+                                      (global.get $missing)))
+                     (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                         (then (call $raise-argument-error:procedure-expected
+                                     (local.get $proc))
+                               (unreachable)))
+                     (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+                     (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+                     (local.set $args (array.new_fixed $Args 1 (local.get $port)))
+                     (call_ref $ProcedureInvoker
+                               (local.get $f)
+                               (local.get $args)
+                               (local.get $finv)))
                
                ;;;
                ;;; FFI
