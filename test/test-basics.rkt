@@ -4552,6 +4552,10 @@
                            [key2        (string-copy "k")]
                            [with-key1   (correlated-property base      key1 'v1)]
                            [with-key2   (correlated-property with-key1 key2 'v2)]
+                           [ordered      (correlated-property
+                                          (correlated-property base 'a 1)
+                                          'b
+                                          2)]
                            [keys        (correlated-property-symbol-keys with-number)])
                       (and (equal? (correlated-property base        'tag) #f)
                            (equal? (correlated-property with-tag    'tag) 'value)
@@ -4563,6 +4567,10 @@
                            (equal? (eq? key1 key2)                       #f)
                            (equal? (correlated-property with-key2 key1)   'v1)
                            (equal? (correlated-property with-key2 key2)   'v2)
+                           (let ([ordered-keys (correlated-property-symbol-keys ordered)])
+                             (and (equal? (length ordered-keys) 2)
+                                  (equal? (and (member 'a ordered-keys) #t) #t)
+                                  (equal? (and (member 'b ordered-keys) #t) #t)))
                            (equal? (and (member 'tag (correlated-property-symbol-keys with-false)) #t) #t)
                            (equal? (and (member 'tag keys) #t)            #t)
                            (equal? (member 123 keys)                      #f)

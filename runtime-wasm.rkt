@@ -40083,7 +40083,7 @@
                                                         (local.get $key)
                                                         (local.get $acc)))))
                             (br $loop)))
-               (local.get $acc))
+               (call $reverse (local.get $acc)))
          
          ;;;
          ;;; 17. UNSAFE OPERATIONS
