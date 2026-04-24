@@ -4439,6 +4439,16 @@
                               (equal? (object-name renamed-2) 'again)
                               (equal? (object-name anon)      'anon))))
 
+                (list "procedure printing names"
+                      (let ([out (open-output-string)])
+                        (display string out)
+                        (newline out)
+                        (write string? out)
+                        (newline out)
+                        (print string-append out)
+                        (equal? (get-output-string out)
+                                "#<procedure:string>\n#<procedure:string?>\n#<procedure:string-append>")))
+
                 (list "object-name/structure-default"
                       (let ()
                         (struct plain (value))

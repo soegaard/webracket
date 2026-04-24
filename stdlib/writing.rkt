@@ -331,6 +331,15 @@
     (emit "#<syntax ")
     (write-value (syntax-e stx))
     (emit ">"))
+
+  (define (write-procedure proc)
+    (define name (object-name proc))
+    (if name
+        (begin
+          (emit "#<procedure:")
+          (emit (symbol->string name))
+          (emit ">"))
+        (emit "#<procedure>")))
   
 
   (define (write-value v)
@@ -366,7 +375,7 @@
                               (emit ">"))))]
       [(box? v)       (emit "#&")
                       (write-value (unbox v))]
-      [(procedure? v) (emit "#<procedure>")]
+      [(procedure? v) (write-procedure v)]
 
       [(unquoted-printing-string? v) (emit (unquoted-printing-string-value v))]
       
@@ -496,6 +505,15 @@
     (display-value (syntax-e stx))
     (emit ">"))
 
+  (define (display-procedure proc)
+    (define name (object-name proc))
+    (if name
+        (begin
+          (emit "#<procedure:")
+          (emit (symbol->string name))
+          (emit ">"))
+        (emit "#<procedure>")))
+
   (define (display-value v)
     (cond
       [(boolean? v)    (emit (if v "#t" "#f"))]
@@ -530,7 +548,7 @@
                               (emit ">"))))]
       [(box? v)       (emit "#&")
                       (display-value (unbox v))]
-      [(procedure? v) (emit "#<procedure>")]
+      [(procedure? v) (display-procedure v)]
       [(external? v)  (emit "#<external>")]
       [(unquoted-printing-string? v) (emit (unquoted-printing-string-value v))]
       ; If you see `(boxed ...)` something went wrong...
@@ -741,6 +759,15 @@
         (define (print-boolean v)
           (emit (if v "#t" "#f")))
 
+        (define (print-procedure proc)
+          (define name (object-name proc))
+          (if name
+              (begin
+                (emit "#<procedure:")
+                (emit (symbol->string name))
+                (emit ">"))
+              (emit "#<procedure>")))
+
         (define (print-value v depth)
           (cond
             [(boolean? v)    (print-boolean v)]
@@ -769,7 +796,7 @@
                                     (emit ">"))))]
             [(box? v)       (emit "#&")
                              (print-value (unbox v) depth)]
-            [(procedure? v) (emit "#<procedure>")]
+            [(procedure? v) (print-procedure v)]
             [(eq? v undefined)        (emit "#<undefined>")]
             [(eq? v unsafe-undefined) (emit "#<unsafe-undefined>")]
             [else           (emit "#<unknown>")])
