@@ -44915,6 +44915,83 @@
                                       (global.get $false)))
                      (call $bytes->path (local.get $bytes) (global.get $missing)))
 
+               ;; string->path-element : string? [any/c] -> (or/c path-element? #f)
+               ;;   Convert a string to a path element; optional false-on-non-element? defaults to #f.
+               (func $string->path-element (type $Prim12)
+                     (param $str-raw               (ref eq)) ;; string?
+                     (param $false-on-non-element? (ref eq)) ;; any/c, optional default #f
+                     (result                       (ref eq))
+
+                     (local $str  (ref $String))
+                     (local $path (ref eq))
+
+                     (if (i32.eqz (ref.test (ref $String) (local.get $str-raw)))
+                         (then (call $raise-check-string (local.get $str-raw))
+                               (unreachable)))
+                     (if (ref.eq (local.get $false-on-non-element?) (global.get $missing))
+                         (then (local.set $false-on-non-element? (global.get $false))))
+                     (local.set $str (ref.cast (ref $String) (local.get $str-raw)))
+                     (if (i32.eqz (ref.eq (call $non-empty-string-without-nuls (local.get $str))
+                                          (global.get $true)))
+                         (then
+                          (if (ref.eq (local.get $false-on-non-element?) (global.get $false))
+                              (then (call $raise-argument-error1
+                                          (global.get $symbol:string->path-element)
+                                          (global.get $string:path-element?)
+                                          (local.get $str-raw))
+                                    (unreachable))
+                              (else (return (global.get $false))))))
+                     (local.set $path (call $string->path (local.get $str)))
+                     (if (ref.eq (call $path-element? (local.get $path)) (global.get $true))
+                         (then (return (local.get $path))))
+                     (if (result (ref eq))
+                         (ref.eq (local.get $false-on-non-element?) (global.get $false))
+                         (then (call $raise-argument-error1
+                                     (global.get $symbol:string->path-element)
+                                     (global.get $string:path-element?)
+                                     (local.get $str-raw))
+                               (unreachable))
+                         (else (global.get $false))))
+
+               ;; bytes->path-element : bytes? [(or/c 'unix 'windows)] [any/c] -> (or/c path-element? #f)
+               ;;   Convert bytes to a path element; optional type defaults to the system convention, and false-on-non-element? defaults to #f.
+               (func $bytes->path-element (type $Prim3)
+                     (param $bstr-raw              (ref eq)) ;; bytes?
+                     (param $type-raw              (ref eq)) ;; (or/c 'unix 'windows), optional default system
+                     (param $false-on-non-element? (ref eq)) ;; any/c, optional default #f
+                     (result                       (ref eq))
+
+                     (local $bytes (ref $Bytes))
+                     (local $path  (ref eq))
+
+                     (if (i32.eqz (ref.test (ref $Bytes) (local.get $bstr-raw)))
+                         (then (call $raise-check-bytes (local.get $bstr-raw))
+                               (unreachable)))
+                     (if (ref.eq (local.get $false-on-non-element?) (global.get $missing))
+                         (then (local.set $false-on-non-element? (global.get $false))))
+                     (local.set $bytes (ref.cast (ref $Bytes) (local.get $bstr-raw)))
+                     (if (i32.eqz (ref.eq (call $non-empty-bytes-without-nuls (local.get $bytes))
+                                          (global.get $true)))
+                         (then
+                          (if (ref.eq (local.get $false-on-non-element?) (global.get $false))
+                              (then (call $raise-argument-error1
+                                          (global.get $symbol:bytes->path-element)
+                                          (global.get $string:path-element?)
+                                          (local.get $bstr-raw))
+                                    (unreachable))
+                              (else (return (global.get $false))))))
+                     (local.set $path (call $bytes->path (local.get $bstr-raw) (local.get $type-raw)))
+                     (if (ref.eq (call $path-element? (local.get $path)) (global.get $true))
+                         (then (return (local.get $path))))
+                     (if (result (ref eq))
+                         (ref.eq (local.get $false-on-non-element?) (global.get $false))
+                         (then (call $raise-argument-error1
+                                     (global.get $symbol:bytes->path-element)
+                                     (global.get $string:path-element?)
+                                     (local.get $bstr-raw))
+                               (unreachable))
+                         (else (global.get $false))))
+
                ;; string->some-system-path : string? (or/c 'unix 'windows) -> path-for-some-system?
                ;;   Encode a string as UTF-8 path bytes for an explicit convention.
                (func $string->some-system-path (type $Prim2)

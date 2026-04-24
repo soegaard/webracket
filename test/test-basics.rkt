@@ -4884,6 +4884,18 @@
                            (equal? (some-system-path->string unix-path) "hello")
                            (equal? (some-system-path->string win-path) "c:\\tmp\\file.txt")
                            (equal? (path->bytes win-path) #"c:\\tmp\\file.txt"))))
+              (list "path-element conversions"
+                    (and (equal? (path-element->string (string->path-element "a")) "a")
+                         (equal? (path-element->bytes (bytes->path-element #"a")) #"a")
+                         (equal? (path-element->string (bytes->path-element #"a\\" 'windows)) "a")
+                         (equal? (string->path-element "a/b" #t) #f)
+                         (equal? (bytes->path-element #"a/b" 'unix #t) #f)
+                         (with-handlers ([exn:fail:contract? (lambda (_ex) #t)])
+                           (string->path-element "a/b")
+                           #f)
+                         (with-handlers ([exn:fail:contract? (lambda (_ex) #t)])
+                           (bytes->path-element #"a/b")
+                           #f)))
               (list "path shape predicates"
                     (and (equal? (absolute-path? "/app/main.rkt") #t)
                          (equal? (absolute-path? "app/main.rkt")  #f)

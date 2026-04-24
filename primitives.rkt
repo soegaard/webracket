@@ -1004,6 +1004,8 @@
  path->string
  some-system-path->string
  bytes->path
+ string->path-element
+ bytes->path-element
  string->some-system-path
  absolute-path?
  relative-path?

@@ -1189,6 +1189,8 @@
        string->bytes/utf-8
        path->complete-path
        bytes->path
+       string->path-element
+       bytes->path-element
          datum->correlated
          correlated-property
          inclusive-range
@@ -1204,7 +1206,8 @@
        (case name
          [(raise hash->list hash-keys hash-values
                  string-join string->bytes/utf-8 bytes->path
-                 datum->correlated struct-type-property-predicate-procedure?) 1]
+                 string->path-element bytes->path-element datum->correlated
+                 struct-type-property-predicate-procedure?) 1]
          [(procedure-arity-includes? procedure-reduce-arity) 2]
          [(number->string) 1]
          [(hash-for-each hash-map hash-map/copy correlated-property) 2]
@@ -1219,6 +1222,8 @@
          [(raise number->string
                  struct-type-property-predicate-procedure? hash->list hash-keys
                  hash-values string-join bytes->path path->complete-path) 2]
+         [(string->path-element) 2]
+         [(bytes->path-element) 3]
          [(procedure-arity-includes?) 3]
          [(procedure-reduce-arity) 4]
          [(string->bytes/utf-8) 4]
@@ -1237,7 +1242,8 @@
          [(string-replace) 'true]
          [(struct->list) 'symbol:error]
          [(string-join) 'string:space]
-         [(procedure-reduce-arity bytes->path path->complete-path datum->correlated correlated-property
+         [(procedure-reduce-arity bytes->path path->complete-path string->path-element
+                       bytes->path-element datum->correlated correlated-property
                        inclusive-range inclusive-range-proc) 'missing]
          [else 'false])))
    (make-inline-specs/by-name
@@ -2003,6 +2009,8 @@
   path->string
   some-system-path->string
   bytes->path
+  string->path-element
+  bytes->path-element
   string->some-system-path
   absolute-path?
   relative-path?
