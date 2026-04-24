@@ -4925,7 +4925,11 @@
                          (equal? (path->string (path->directory-path "/app/data/"))
                                  "/app/data/")
                          (equal? (path->string (path->directory-path "relative"))
-                                 "relative/")))
+                                 "relative/")
+                         (equal? (some-system-path->string
+                                  (path->directory-path
+                                   (string->some-system-path "a\\b" 'windows)))
+                                 "a\\b\\")))
               (list "resolve-path"
                     (and (equal? (path->string (resolve-path "/app/main.rkt"))
                                  "/app/main.rkt")

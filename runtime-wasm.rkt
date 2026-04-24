@@ -45436,32 +45436,46 @@
                                     (else (local.get $base-raw))))
                      (call $path-join-bytes (local.get $base) (local.get $path)))
 
-               ;; path->directory-path : path-string? -> path?
-               ;;   Ensure a Unix/browser path syntactically ends in a directory separator.
+               ;; path->directory-path : (or/c path-string? path-for-some-system?) -> path-for-some-system?
+               ;;   Ensure a path syntactically ends in a convention-specific directory separator.
                (func $path->directory-path (type $Prim1)
-                     (param $path-raw (ref eq)) ;; path-string?
+                     (param $path-raw (ref eq)) ;; path-string? or path-for-some-system?
                      (result          (ref eq))
 
                      (local $path  (ref $Path))
                      (local $bytes (ref $Bytes))
                      (local $arr   (ref $I8Array))
+                     (local $conv  (ref eq))
+                     (local $sep   (ref $Bytes))
                      (local $len   i32)
 
-                     (local.set $path
-                                (call $path-string->path/checked
-                                      (global.get $symbol:path->directory-path)
-                                      (local.get $path-raw)))
+                     (local.set $path (ref.cast (ref $Path) (global.get $current-directory-path)))
+                     (if (ref.test (ref $Path) (local.get $path-raw))
+                         (then
+                          (local.set $path (ref.cast (ref $Path) (local.get $path-raw))))
+                         (else
+                          (local.set $path
+                                     (call $path-string->path/checked
+                                           (global.get $symbol:path->directory-path)
+                                           (local.get $path-raw)))))
+                     (local.set $conv (struct.get $Path $convention (local.get $path)))
                      (local.set $bytes (struct.get $Path $bytes (local.get $path)))
                      (local.set $arr (struct.get $Bytes $bs (local.get $bytes)))
                      (local.set $len (array.len (local.get $arr)))
-                     (if (i32.eq (array.get_u $I8Array
-                                              (local.get $arr)
-                                              (i32.sub (local.get $len) (i32.const 1)))
-                                 (i32.const 47))
+                     (if (call $path-byte-separator?
+                               (array.get_u $I8Array
+                                            (local.get $arr)
+                                            (i32.sub (local.get $len) (i32.const 1)))
+                               (local.get $conv))
                          (then (return (local.get $path))))
+                     (local.set $sep
+                                (if (result (ref $Bytes))
+                                    (ref.eq (local.get $conv) (global.get $symbol:windows))
+                                    (then (ref.cast (ref $Bytes) (global.get $bytes:backslash)))
+                                    (else (ref.cast (ref $Bytes) (global.get $bytes:slash)))))
                      (call $bytes->path
-                           (call $bytes-append/2 (local.get $bytes) (global.get $bytes:slash))
-                           (global.get $missing)))
+                           (call $bytes-append/2 (local.get $bytes) (local.get $sep))
+                           (local.get $conv)))
 
                ;; resolve-path : path-string? -> path?
                ;;   Return the validated VFS path; soft links and full cleansing are not modeled yet.
