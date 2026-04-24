@@ -2001,7 +2001,9 @@
   string->path
   path->bytes
   path->string
+  some-system-path->string
   bytes->path
+  string->some-system-path
   absolute-path?
   relative-path?
   complete-path?

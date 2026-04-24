@@ -4875,6 +4875,15 @@
                       (and (path? p)
                            (equal? (path->string p) "app/main.rkt")
                            (equal? (path->bytes p) #"app/main.rkt"))))
+              (list "some-system path conversions"
+                    (let ([unix-path (string->some-system-path "hello" 'unix)]
+                          [win-path  (string->some-system-path "c:\\tmp\\file.txt" 'windows)])
+                      (and (path? unix-path)
+                           (equal? (path? win-path) #f)
+                           (path-for-some-system? win-path)
+                           (equal? (some-system-path->string unix-path) "hello")
+                           (equal? (some-system-path->string win-path) "c:\\tmp\\file.txt")
+                           (equal? (path->bytes win-path) #"c:\\tmp\\file.txt"))))
               (list "path shape predicates"
                     (and (equal? (absolute-path? "/app/main.rkt") #t)
                          (equal? (absolute-path? "app/main.rkt")  #f)

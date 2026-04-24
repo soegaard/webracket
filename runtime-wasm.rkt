@@ -44826,6 +44826,21 @@
                      (local.set $bytes (struct.get $Path $bytes (local.get $path)))
                      (call $bytes->string/utf-8/checked (local.get $bytes)))
 
+               ;; some-system-path->string : path-for-some-system? -> string?
+               ;;   Convert any represented path convention through UTF-8 path bytes.
+               (func $some-system-path->string (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path-for-some-system?
+                     (result          (ref eq)) ;; string?
+
+                     (local $path (ref $Path))
+
+                     (if (i32.eqz (ref.test (ref $Path) (local.get $path-raw)))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (local.set $path (ref.cast (ref $Path) (local.get $path-raw)))
+                     (call $bytes->string/utf-8/checked
+                           (struct.get $Path $bytes (local.get $path))))
+
                (func $raise-bytes->path:nul (param $bstr (ref eq))
                      (call $js-log (local.get $bstr))
                      (unreachable))
@@ -44898,6 +44913,41 @@
                                       (global.get $false)
                                       (global.get $false)))
                      (call $bytes->path (local.get $bytes) (global.get $missing)))
+
+               ;; string->some-system-path : string? (or/c 'unix 'windows) -> path-for-some-system?
+               ;;   Encode a string as UTF-8 path bytes for an explicit convention.
+               (func $string->some-system-path (type $Prim2)
+                     (param $str-raw  (ref eq)) ;; string?
+                     (param $kind-raw (ref eq)) ;; (or/c 'unix 'windows)
+                     (result          (ref eq))
+
+                     (local $str   (ref $String))
+                     (local $bytes (ref eq))
+                     (local $kind  (ref $Symbol))
+
+                     (if (i32.eqz (ref.test (ref $String) (local.get $str-raw)))
+                         (then (call $raise-check-string (local.get $str-raw))
+                               (unreachable)))
+                     (if (i32.eqz (ref.test (ref $Symbol) (local.get $kind-raw)))
+                         (then (call $raise-check-symbol (local.get $kind-raw))
+                               (unreachable)))
+                     (local.set $str (ref.cast (ref $String) (local.get $str-raw)))
+                     (local.set $kind (ref.cast (ref $Symbol) (local.get $kind-raw)))
+                     (if (i32.eqz (ref.eq (call $non-empty-string-without-nuls (local.get $str))
+                                          (global.get $true)))
+                         (then (call $raise-path-expected (local.get $str-raw))
+                               (unreachable)))
+                     (if (i32.eqz (ref.eq (call $unix-or-windows (local.get $kind))
+                                          (global.get $true)))
+                         (then (call $raise-bytes->path:bad-type (local.get $kind-raw))
+                               (unreachable)))
+                     (local.set $bytes
+                                (call $string->bytes/utf-8
+                                      (local.get $str)
+                                      (global.get $false)
+                                      (global.get $false)
+                                      (global.get $false)))
+                     (call $bytes->path (local.get $bytes) (local.get $kind-raw)))
 
                (func $path-string->path/checked
                      (param $who      (ref eq)) ;; symbol? (currently for diagnostics)
