@@ -38743,6 +38743,18 @@
                                     (local.get $extra))
                               (unreachable)))))
 
+               ;; The optional mode is accepted for compatibility; constant
+               ;; enforcement still requires per-variable metadata.
+               (if (i32.eqz
+                    (i32.or (ref.eq (local.get $mode) (global.get $false))
+                            (i32.or (ref.eq (local.get $mode) (global.get $symbol:constant))
+                                    (ref.eq (local.get $mode) (global.get $symbol:consistent)))))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:instance-set-variable-value!)
+                               (global.get $string:instance-mode?)
+                               (local.get $mode))
+                         (unreachable)))
+
                (local.set $box
                           (ref.cast (ref $Box)
                                     (call $instance-variable-box
