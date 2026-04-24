@@ -4955,6 +4955,19 @@
                                           (lambda (_ex) #t)])
                            (make-directory "/app/missing-parent/child")
                            #f)))
+              (list "make-directory*"
+                    (and (void? (make-directory* "/app/mkdir-star/a/b/c"))
+                         (equal? (directory-exists? "/app/mkdir-star") #t)
+                         (equal? (directory-exists? "/app/mkdir-star/a/b/c") #t)
+                         (void? (make-directory* "/app/mkdir-star/a/b/c"))
+                         (void? (make-directory* "/app/"))
+                         (begin
+                           (webracket-vfs-write-file "/app/mkdir-star-file" #"file")
+                           #t)
+                         (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                          (lambda (_ex) #t)])
+                           (make-directory* "/app/mkdir-star-file/child")
+                           #f)))
               (list "delete-directory"
                     (and (void? (make-directory "/app/delete-dir"))
                          (void? (make-directory "/app/delete-dir/child"))

@@ -2010,6 +2010,7 @@
   file-size
   delete-file
   make-directory
+  make-directory*
   delete-directory
   rename-file-or-directory
   copy-file

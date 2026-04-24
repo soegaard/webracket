@@ -1017,6 +1017,7 @@
  file-size
  delete-file
  make-directory
+ make-directory*
  delete-directory
  rename-file-or-directory
  copy-file
@@ -1813,6 +1814,9 @@
   (case-lambda
     [(path) (error 'make-directory "only available in compiled WebRacket")]
     [(path permissions) (error 'make-directory "only available in compiled WebRacket")]))
+
+(define (make-directory* path)
+  (error 'make-directory* "only available in compiled WebRacket"))
 
 (define (delete-directory path)
   (error 'delete-directory "only available in compiled WebRacket"))
