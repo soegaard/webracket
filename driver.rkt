@@ -155,39 +155,13 @@
       (include-lib->ffi-filename lib-name)))
   (remove-duplicates inferred))
 
-;; print-top-level-results : syntax? -> syntax?
-;;   Rewrite user top-level expressions to print their values like racket.
-(define (print-top-level-results stx)
-  (define (head-symbol form)
-    (define datum (syntax-e form))
-    (and (pair? datum)
-         (let ([head (car datum)])
-           (and (identifier? head) (syntax-e head)))))
-  (define (top-level-begin-form? form)
-    (eq? (head-symbol form) 'begin))
-  (define (definition-like-top-level-form? form)
-    (memq (head-symbol form)
-          '(define define-values define-syntax define-syntaxes
-             require #%require include include/reader include-lib)))
-  (define (wrap-form form)
-    (cond
-      [(top-level-begin-form? form)
-       (define inner-forms (cdr (syntax->list form)))
-       #`(begin #,@(map wrap-form inner-forms))]
-      [(definition-like-top-level-form? form)
-       form]
-      [else
-       #`(call-with-values
-          (lambda () #,form)
-          (lambda wr-top-level-results
-            (for-each
-             (lambda (wr-top-level-result)
-               (unless (void? wr-top-level-result)
-                 (print wr-top-level-result (current-output-port) 0)
-                 (write-char #\newline (current-output-port))))
-             wr-top-level-results)
-            (void)))]))
-  (wrap-form stx))
+;; add-print-top-level-results-sentinel : syntax? -> syntax?
+;;   Insert a compiler-private definition immediately before user forms.
+(define (add-print-top-level-results-sentinel stx)
+  (define sentinel-id (datum->syntax stx print-top-level-results-sentinel-symbol stx))
+  #`(begin
+      (define #,sentinel-id (void))
+      #,stx))
 
 ;; default-ffi-files : (listof path-string?) boolean? -> (listof path-string?)
 ;;   Return the default FFI files that are always loaded unless the caller
@@ -286,7 +260,7 @@
   (define t-read-source-end (now-ms))
   (define stx-for-compile
     (if print-top-level-results?
-        (print-top-level-results stx)
+        (add-print-top-level-results-sentinel stx)
         stx))
 
   ; 2. Handle ffi-files.
@@ -334,7 +308,7 @@
       [stdlib?
        #`(begin
            (include/reader "stdlib/stdlib.rkt" read-syntax/skip-first-line)
-           #,stx-for-compile)] ; stx is a begin form      
+           #,stx-for-compile)] ; stx is a begin form
       [else
        stx-for-compile]))
   (define t-add-stdlib-end (now-ms))
@@ -396,7 +370,8 @@
     (with-handlers (#;[exn:fail? (λ (e)
                                  (error 'drive-compilation
                                         (~a "compile failed: " (exn-message e))))])
-      (parameterize ([current-browser? browser?])
+      (parameterize ([current-browser? browser?]
+                     [current-print-top-level-results? print-top-level-results?])
         (comp stx-with-stdlib))))
   (define t-compile-end (now-ms))
 

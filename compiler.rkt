@@ -339,6 +339,9 @@
   (syntax->datum (variable-id x)))
 
 (define current-top-symbols-needing-defined-check (make-parameter (make-hasheq)))
+(define current-print-top-level-results? (make-parameter #f))
+(define print-top-level-results-sentinel-symbol
+  'webracket-print-top-level-results-sentinel)
 
 (define letrec-initialization-set-key 'webracket:letrec-initialization-set?)
 
@@ -2622,6 +2625,131 @@
   
   ; start parsing
   (TopLevelForm stx))
+
+;; print-top-level-results : LFE -> LFE
+;;   Wrap parsed user top-level expressions so `-r` prints results like Racket.
+(define-pass print-top-level-results : LFE (T) -> LFE ()
+  (definitions
+    (define wr-top-level-results (variable #'wr-top-level-results))
+    (define wr-top-level-result  (variable #'wr-top-level-result))
+    (define wr-print             (variable #'print))
+    (define wr-current-output-port (variable #'current-output-port))
+    (define wr-result-syntax     #'print-top-level-results)
+
+    (define (wrap-top-level-result s e)
+      (with-output-language (LFE Expr)
+        `(app ,s
+              ,(var:call-with-values)
+              (λ ,s (formals ())
+                ,e)
+              (λ ,s (formals ,wr-top-level-results)
+                (app ,s
+                     ,(var:for-each)
+                     (λ ,s (formals (,wr-top-level-result))
+                       (if ,s
+                           (app ,s ,(var:void?) ,wr-top-level-result)
+                           (app ,s ,(var:void))
+                           (begin ,s
+                             (app ,s
+                                  ,wr-print
+                                  ,wr-top-level-result
+                                  (app ,s ,wr-current-output-port)
+                                  (quote ,s ,(datum s 0)))
+                             (app ,s
+                                  ,(var:write-char)
+                                  (quote ,s ,(datum s #\newline))
+                                  (app ,s ,wr-current-output-port))
+                             (app ,s ,(var:void)))))
+                     ,wr-top-level-results)
+                (app ,s ,(var:void))))))
+
+    (define (ignored-define-syntaxes-expression? e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (equal? (datum-value d) "define-syntaxes is ignored")]
+        [else #f]))
+
+    (define (wrap-user-general-top-level-form g)
+      (nanopass-case (LFE GeneralTopLevelForm) g
+        [(define-values ,s (,x ...) ,e)
+         (GeneralTopLevelForm g)]
+        [(define-syntaxes ,s (,x ...) ,e)
+         (GeneralTopLevelForm g)]
+        [(#%require ,s ,rrs ...)
+         (GeneralTopLevelForm g)]
+        [,e
+         (if (ignored-define-syntaxes-expression? e)
+             (GeneralTopLevelForm g)
+             (with-output-language (LFE GeneralTopLevelForm)
+               `,(wrap-top-level-result wr-result-syntax e)))]))
+
+    (define (sentinel-definition? g)
+      (nanopass-case (LFE GeneralTopLevelForm) g
+        [(define-values ,s (,x) ,e)
+         (eq? (syntax-e (variable-id x))
+              print-top-level-results-sentinel-symbol)]
+        [else #f]))
+
+    (define (wrap-user-top-level-form t)
+      (nanopass-case (LFE TopLevelForm) t
+        [(topbegin ,s ,t ...)
+         (with-output-language (LFE TopLevelForm)
+           `(topbegin ,s ,(map wrap-user-top-level-form t) ...))]
+        [(#%expression ,s ,e)
+         (with-output-language (LFE TopLevelForm)
+           `(#%expression ,s ,(wrap-top-level-result s e)))]
+        [,g (wrap-user-general-top-level-form g)]
+        [else (TopLevelForm t)]))
+
+    (define (process-top-level-forms ts)
+      (let loop ([ts ts] [wrap? #f])
+        (cond
+          [(null? ts) '()]
+          [else
+           (define t (car ts))
+           (nanopass-case (LFE TopLevelForm) t
+             [,g
+              (if (sentinel-definition? g)
+                  (loop (cdr ts) #t)
+                  (cons (if wrap?
+                            (wrap-user-top-level-form t)
+                            (TopLevelForm t))
+                        (loop (cdr ts) wrap?)))]
+             [else
+              (cons (if wrap?
+                        (wrap-user-top-level-form t)
+                        (TopLevelForm t))
+                    (loop (cdr ts) wrap?))])]))))
+
+  (TopLevelForm : TopLevelForm (T) -> TopLevelForm ()
+    [(topbegin ,s ,t ...)
+     `(topbegin ,s ,(process-top-level-forms t) ...)]
+    [(#%expression ,s ,e)
+     `(#%expression ,s ,(Expr e))]
+    [(topmodule ,s ,mn ,mp ,mf ...)
+     `(topmodule ,s ,mn ,mp ,(map ModuleLevelForm mf) ...)]
+    [(begin-for-syntax ,s ,t ...)
+     `(begin-for-syntax ,s ,(map TopLevelForm t) ...)]
+    [,g
+     (GeneralTopLevelForm g)])
+
+  (ModuleLevelForm : ModuleLevelForm (M) -> ModuleLevelForm ()
+    [(#%provide ,rps ...)
+     `(#%provide ,rps ...)]
+    [,g
+     (GeneralTopLevelForm g)])
+
+  (GeneralTopLevelForm : GeneralTopLevelForm (G) -> GeneralTopLevelForm ()
+    [(define-values ,s (,x ...) ,e)
+     `(define-values ,s (,x ...) ,(Expr e))]
+    [(define-syntaxes ,s (,x ...) ,e)
+     `(define-syntaxes ,s (,x ...) ,(Expr e))]
+    [(#%require ,s ,rrs ...)
+     `(#%require ,s ,rrs ...)]
+    [,e
+     (Expr e)])
+
+  (Expr : Expr (e) -> Expr ()))
 
 
 (define (unparse-all x)
@@ -5219,11 +5347,17 @@
       v)
     ;; quoted strings
     (define quoted-string-counter 0)
+    (define quoted-strings-ht (make-hash))
     (define (add-quoted-string string)
-      (define name (string->symbol (~a "quoted-string" quoted-string-counter)))
-      (set! quoted-string-counter (+ quoted-string-counter 1))
-      (add-string-constant name string)
-      name)
+      (cond
+        [(hash-ref quoted-strings-ht string #f)
+         => values]
+        [else
+         (define name (string->symbol (~a "quoted-string" quoted-string-counter)))
+         (hash-set! quoted-strings-ht string name)
+         (set! quoted-string-counter (+ quoted-string-counter 1))
+         (add-string-constant name string)
+         name]))
     ;; quoted bytes
     (define quoted-bytes-counter 0)
     (define (add-quoted-bytes bytes)
@@ -6925,7 +7059,13 @@
   (define u   (time-pass "unexpand"             (λ () (unexpand t))
                          #f
                          (λ (v) (if (syntax? v) (syntax->datum v) v))))
-  (define p   (time-pass "parse"                (λ () (parse u))
+  (define p0  (time-pass "parse"                (λ () (parse u))
+                         (λ (v) (count-unparsed unparse-LFE v))
+                         (λ (v) (unparse-all (unparse-LFE v)))))
+  (define p   (time-pass "print-top-level-results"
+                         (λ () (if (current-print-top-level-results?)
+                                   (print-top-level-results p0)
+                                   p0))
                          (λ (v) (count-unparsed unparse-LFE v))
                          (λ (v) (unparse-all (unparse-LFE v)))))
   (define ft  (time-pass "flatten-topbegin"     (λ () (flatten-topbegin p))

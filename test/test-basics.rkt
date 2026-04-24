@@ -2135,8 +2135,7 @@
                          (equal? (memq 'b '(a b c))   '(b c))
                          (equal? (memq 'b '(a b . c)) '(b . c))
                          (equal? (memq 'a '(b c d))   #f)
-                         ; depends on interning string literals
-                         #;(equal? (memq  "apple" '( "apple"))         '("apple"))
+                         (equal? (memq  "apple" '( "apple"))         '("apple"))
                          ; depends on interning byte string literals
                          #;(equal? (memq #"apple" '(#"apple"))         '(#"apple"))
                          (equal? (memq (list->string (string->list "apple"))
