@@ -1022,6 +1022,7 @@
  copy-file
  file-or-directory-modify-seconds
  file-or-directory-permissions
+ file-or-directory-stat
  file->bytes
  file->string
  open-input-file
@@ -1834,6 +1835,11 @@
   (case-lambda
     [(path) (error 'file-or-directory-permissions "only available in compiled WebRacket")]
     [(path mode) (error 'file-or-directory-permissions "only available in compiled WebRacket")]))
+
+(define file-or-directory-stat
+  (case-lambda
+    [(path) (error 'file-or-directory-stat "only available in compiled WebRacket")]
+    [(path as-link?) (error 'file-or-directory-stat "only available in compiled WebRacket")]))
 
 (define directory-list
   (case-lambda

@@ -1782,7 +1782,9 @@
     (add-runtime-string-constant 'vfs:copy-file-failed       "copy-file: VFS copy failed")
     (add-runtime-string-constant 'vfs:modify-seconds-failed  "file-or-directory-modify-seconds: VFS path does not exist")
     (add-runtime-string-constant 'vfs:permissions-failed     "file-or-directory-permissions: VFS path does not exist")
+    (add-runtime-string-constant 'vfs:stat-failed            "file-or-directory-stat: VFS path does not exist")
     (add-runtime-string-constant 'permissions-mode           "(or/c #f 'bits (integer-in 0 65535))")
+    (add-runtime-string-constant 'boolean?                   "boolean?")
     (add-runtime-string-constant 'uncaught-exception         "uncaught exception: ")
     (add-runtime-string-constant 'callback:no-js-equivalent
                                  "The callback attempted to return a WebRacket value with no JavaScript equivalent (i.e. without a FASL encoding): ")
@@ -2578,6 +2580,9 @@
          (func $js-vfs-file-size
                (import "primitives" "vfs_file_size")
                (param i32) (param i32) (result i32))
+         (func $js-vfs-stat
+               (import "primitives" "vfs_stat")
+               (param i32) (param i32) (param i32) (param i32) (result i32))
          (func $js-vfs-read-file
                (import "primitives" "vfs_read_file")
                (param i32) (param i32) (param i32) (param i32) (result i32))
@@ -45234,6 +45239,110 @@
                                   (local.set $i (i32.sub (local.get $i) (i32.const 1)))
                                   (br $build)))
                      (local.get $xs))
+
+               ;; file-or-directory-stat : path-string? [boolean?] -> hash-eq?
+               ;;   Return VFS stat metadata; as-link? is accepted but links are not modeled yet.
+               (func $file-or-directory-stat (type $Prim12)
+                     (param $path-raw    (ref eq)) ;; path-string?
+                     (param $as-link-raw (ref eq)) ;; optional boolean?, default = #f
+                     (result             (ref eq))
+
+                     (local $path      (ref $Path))
+                     (local $path-bs   (ref $Bytes))
+                     (local $items-raw (ref eq))
+                     (local $items     (ref $Vector))
+                     (local $arr       (ref $Array))
+                     (local $ht        (ref eq))
+                     (local $path-len  i32)
+                     (local $fasl-len  i32)
+                     (local $i         i32)
+
+                     (if (i32.eqz
+                          (i32.or
+                           (ref.eq (local.get $as-link-raw) (global.get $missing))
+                           (i32.or
+                            (ref.eq (local.get $as-link-raw) (global.get $false))
+                            (ref.eq (local.get $as-link-raw) (global.get $true)))))
+                         (then (call $raise-argument-error1
+                                     (global.get $symbol:file-or-directory-stat)
+                                     (global.get $string:boolean?)
+                                     (local.get $as-link-raw))
+                               (unreachable)))
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:file-or-directory-stat)
+                                      (local.get $path-raw)))
+                     (local.set $path-bs (struct.get $Path $bytes (local.get $path)))
+                     (local.set $path-len
+                                (array.len
+                                 (struct.get $Bytes $bs (local.get $path-bs))))
+                     (if (i32.gt_u (local.get $path-len)
+                                   (global.get $memory-map:vfs-path-buffer-length))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-path-buffer-base)
+                                (global.get $memory-map:vfs-path-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-file-buffer-base)
+                                (global.get $memory-map:vfs-file-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (local.set $path-len
+                                (call $copy-bytes-to-memory
+                                      (local.get $path-bs)
+                                      (global.get $memory-map:vfs-path-buffer-base)))
+                     (local.set $fasl-len
+                                (call $js-vfs-stat
+                                      (global.get $memory-map:vfs-path-buffer-base)
+                                      (local.get $path-len)
+                                      (global.get $memory-map:vfs-file-buffer-base)
+                                      (global.get $memory-map:vfs-file-buffer-length)))
+                     (if (i32.lt_s (local.get $fasl-len) (i32.const -1))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (if (i32.lt_s (local.get $fasl-len) (i32.const 0))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:stat-failed))
+                               (unreachable)))
+                     (local.set $items-raw
+                                (call $fasl-memory->s-exp
+                                      (global.get $memory-map:vfs-file-buffer-base)))
+                     (if (i32.eqz (ref.test (ref $Vector) (local.get $items-raw)))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:stat-failed))
+                               (unreachable)))
+                     (local.set $items (ref.cast (ref $Vector) (local.get $items-raw)))
+                     (local.set $arr (struct.get $Vector $arr (local.get $items)))
+                     (if (i32.ne
+                          (i32.and (array.len (local.get $arr)) (i32.const 1))
+                          (i32.const 0))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:stat-failed))
+                               (unreachable)))
+                     (local.set $ht (call $make-empty-hasheq))
+                     (local.set $i (i32.const 0))
+                     (block $done
+                            (loop $build
+                                  (br_if $done
+                                         (i32.ge_u (local.get $i)
+                                                   (array.len (local.get $arr))))
+                                  (drop
+                                   (call $hash-set!
+                                         (local.get $ht)
+                                         (array.get $Array
+                                                    (local.get $arr)
+                                                    (local.get $i))
+                                         (array.get $Array
+                                                    (local.get $arr)
+                                                    (i32.add (local.get $i) (i32.const 1)))))
+                                  (local.set $i (i32.add (local.get $i) (i32.const 2)))
+                                  (br $build)))
+                     (local.get $ht))
 
                (func $file-size (type $Prim1)
                      (param $path-raw (ref eq)) ;; path-string?

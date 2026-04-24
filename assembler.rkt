@@ -260,8 +260,22 @@ class WebRacketMemoryBackend {
 
   stat(path) {
     const p = this.normalize(path);
-    if (this.files.has(p)) return { type: 'file', size: this.files.get(p).length, mtime: this.fileMtimes.get(p) || 0 };
-    if (this.dirs.has(p)) return { type: 'directory', size: 0, mtime: this.dirMtimes.get(p) || 0 };
+    if (this.files.has(p)) {
+      return {
+        type: 'file',
+        size: this.files.get(p).length,
+        mtime: this.fileMtimes.get(p) || 0,
+        mode: this.fileModes.get(p) ?? 0o666
+      };
+    }
+    if (this.dirs.has(p)) {
+      return {
+        type: 'directory',
+        size: 0,
+        mtime: this.dirMtimes.get(p) || 0,
+        mode: this.dirModes.get(p) ?? 0o777
+      };
+    }
     return { type: 'missing', size: 0, mtime: 0 };
   }
 
@@ -1423,6 +1437,39 @@ var imports = {
         try {
           const stat = webracketVFS.stat(vfs_path_from_memory(start, len));
           return stat.type === 'file' ? stat.size : -1;
+        } catch (_) {
+          return -1;
+        }
+      }),
+      'vfs_stat': ((pathStart, pathLen, outStart, outMax) => {
+        try {
+          const stat = webracketVFS.stat(vfs_path_from_memory(pathStart, pathLen));
+          if (stat.type === 'missing') return -1;
+          const mtime = stat.mtime || 0;
+          const payload = [
+            Symbol.for('device-id'), 0,
+            Symbol.for('inode'), 0,
+            Symbol.for('mode'), stat.mode || 0,
+            Symbol.for('hardlink-count'), 1,
+            Symbol.for('user-id'), 0,
+            Symbol.for('group-id'), 0,
+            Symbol.for('device-id-for-special-file'), 0,
+            Symbol.for('size'), stat.size || 0,
+            Symbol.for('block-size'), 0,
+            Symbol.for('block-count'), 0,
+            Symbol.for('access-time-seconds'), mtime,
+            Symbol.for('modify-time-seconds'), mtime,
+            Symbol.for('change-time-seconds'), mtime,
+            Symbol.for('creation-time-seconds'), mtime,
+            Symbol.for('access-time-nanoseconds'), 0,
+            Symbol.for('modify-time-nanoseconds'), 0,
+            Symbol.for('change-time-nanoseconds'), 0,
+            Symbol.for('creation-time-nanoseconds'), 0
+          ];
+          const bytes = js_value_to_fasl(payload);
+          if (bytes.length > outMax) return -2;
+          new Uint8Array(memory.buffer).set(bytes, outStart);
+          return bytes.length;
         } catch (_) {
           return -1;
         }
