@@ -4795,7 +4795,19 @@
                     (and (equal? (path->string (build-path "/app" "main.rkt"))
                                  "/app/main.rkt")
                          (equal? (path->string (build-path "/app/" "data" "notes.txt"))
-                                 "/app/data/notes.txt"))))))
+                                 "/app/data/notes.txt")))))
+       (list "15.2 Filesystem"
+             (list
+              (list "file-exists?"
+                    (and (equal? (file-exists? "/app/main.rkt") #t)
+                         (equal? (file-exists? "/app") #f)
+                         (equal? (file-exists? "/app/missing.rkt") #f)))
+              (list "directory-exists?"
+                    (and (equal? (directory-exists? "/app") #t)
+                         (equal? (directory-exists? "/app/data") #t)
+                         (equal? (directory-exists? "/app/main.rkt") #f)))
+              (list "file-size"
+                    (equal? (file-size "/app/data/notes.txt") 6)))))
        
  (list "Checkers"
        (list

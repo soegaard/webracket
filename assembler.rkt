@@ -162,7 +162,10 @@ class WebRacketVFS {
   constructor() {
     this.mounts = new Map();
     this.mount('/tmp', new WebRacketMemoryBackend());
-    this.mount('/app', new WebRacketMemoryBackend());
+    this.mount('/app', new WebRacketMemoryBackend({
+      '/main.rkt': '',
+      '/data/notes.txt': 'notes\n'
+    }));
   }
 
   normalize(path) {
@@ -207,6 +210,11 @@ const webracketVFS = new WebRacketVFS();
 globalThis.WebRacketVFS = WebRacketVFS;
 globalThis.WebRacketMemoryBackend = WebRacketMemoryBackend;
 globalThis.webracketVFS = webracketVFS;
+
+function vfs_path_from_memory(start, len) {
+  const bytes = new Uint8Array(memory.buffer).slice(start, start + len);
+  return new TextDecoder().decode(bytes);
+}
 
 function read_u32(arr, i) {
   return ((arr[i] << 24) | (arr[i + 1] << 16) |
@@ -1206,6 +1214,24 @@ var imports = {
         const bytes = new Uint8Array(memory.buffer).slice(start, start + len);
         const [v] = fasl_to_js_value(bytes);
         console.log(v);
+      }),
+      'vfs_stat_kind': ((start, len) => {
+        try {
+          const stat = webracketVFS.stat(vfs_path_from_memory(start, len));
+          if (stat.type === 'file') return 1;
+          if (stat.type === 'directory') return 2;
+          return 0;
+        } catch (_) {
+          return 0;
+        }
+      }),
+      'vfs_file_size': ((start, len) => {
+        try {
+          const stat = webracketVFS.stat(vfs_path_from_memory(start, len));
+          return stat.type === 'file' ? stat.size : -1;
+        } catch (_) {
+          return -1;
+        }
       }),
       'register_external': (obj => { externals.push(obj); return externals.length - 1; }),
       'lookup_external':   (idx => externals[idx]),

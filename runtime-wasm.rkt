@@ -2524,6 +2524,12 @@
          (func $js_print_fasl
                (import "primitives" "js_print_fasl")
                (param i32) (param i32))
+         (func $js-vfs-stat-kind
+               (import "primitives" "vfs_stat_kind")
+               (param i32) (param i32) (result i32))
+         (func $js-vfs-file-size
+               (import "primitives" "vfs_file_size")
+               (param i32) (param i32) (result i32))
 
          (func $char-upcase/ucs
                (import "primitives" "char_upcase")
@@ -44615,6 +44621,74 @@
                                     (then (global.get $current-directory-path))
                                     (else (local.get $base-raw))))
                      (call $path-join-bytes (local.get $base) (local.get $path)))
+
+               (func $vfs-path-stat-kind
+                     (param $who      (ref eq)) ;; symbol? (currently for diagnostics)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (result          i32)      ;; 0 missing, 1 file, 2 directory
+
+                     (local $path  (ref $Path))
+                     (local $bytes (ref $Bytes))
+                     (local $len   i32)
+
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (local.get $who)
+                                      (local.get $path-raw)))
+                     (local.set $bytes (struct.get $Path $bytes (local.get $path)))
+                     (local.set $len (call $copy-bytes-to-memory
+                                           (local.get $bytes)
+                                           (i32.const 0)))
+                     (call $js-vfs-stat-kind (i32.const 0) (local.get $len)))
+
+               (func $file-exists? (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (result          (ref eq))
+
+                     (if (result (ref eq))
+                         (i32.eq (call $vfs-path-stat-kind
+                                       (global.get $symbol:file-exists?)
+                                       (local.get $path-raw))
+                                 (i32.const 1))
+                         (then (global.get $true))
+                         (else (global.get $false))))
+
+               (func $directory-exists? (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (result          (ref eq))
+
+                     (if (result (ref eq))
+                         (i32.eq (call $vfs-path-stat-kind
+                                       (global.get $symbol:directory-exists?)
+                                       (local.get $path-raw))
+                                 (i32.const 2))
+                         (then (global.get $true))
+                         (else (global.get $false))))
+
+               (func $file-size (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (result          (ref eq))
+
+                     (local $path (ref $Path))
+                     (local $bytes (ref $Bytes))
+                     (local $len  i32)
+                     (local $size i32)
+
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:file-size)
+                                      (local.get $path-raw)))
+                     (local.set $bytes (struct.get $Path $bytes (local.get $path)))
+                     (local.set $len (call $copy-bytes-to-memory
+                                           (local.get $bytes)
+                                           (i32.const 0)))
+                     (local.set $size (call $js-vfs-file-size
+                                            (i32.const 0)
+                                            (local.get $len)))
+                     (if (i32.lt_s (local.get $size) (i32.const 0))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (ref.i31 (i32.shl (local.get $size) (i32.const 1))))
                
                ;;;
                ;;; FFI

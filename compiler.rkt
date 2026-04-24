@@ -1955,6 +1955,11 @@
   build-path
   current-directory
   path->complete-path
+
+  ;; 15.2 Filesystem
+  file-exists?
+  directory-exists?
+  file-size
   
   ;; 17. Unsafe Operations
   unsafe-fx+ unsafe-fx- unsafe-fx* unsafe-fl/
