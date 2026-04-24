@@ -1778,6 +1778,7 @@
     (add-runtime-string-constant 'vfs:delete-directory-failed "delete-directory: VFS path does not refer to an empty directory")
     (add-runtime-string-constant 'vfs:make-directory-failed  "make-directory: VFS directory creation failed")
     (add-runtime-string-constant 'vfs:make-directory*-failed "make-directory*: VFS directory creation failed")
+    (add-runtime-string-constant 'vfs:make-parent-directory*-failed "make-parent-directory*: VFS directory creation failed")
     (add-runtime-string-constant 'vfs:directory-list-failed  "directory-list: VFS path does not refer to a directory")
     (add-runtime-string-constant 'vfs:rename-failed          "rename-file-or-directory: VFS rename failed")
     (add-runtime-string-constant 'vfs:copy-file-failed       "copy-file: VFS copy failed")
@@ -2602,6 +2603,9 @@
                (param i32) (param i32) (result i32))
          (func $js-vfs-make-directory*
                (import "primitives" "vfs_make_directory_star")
+               (param i32) (param i32) (result i32))
+         (func $js-vfs-make-parent-directory*
+               (import "primitives" "vfs_make_parent_directory_star")
                (param i32) (param i32) (result i32))
          (func $js-vfs-list-directory
                (import "primitives" "vfs_list_directory")
@@ -45716,6 +45720,49 @@
                      (if (i32.lt_s (local.get $status) (i32.const 0))
                          (then (call $raise-vfs-file-error
                                      (global.get $string:vfs:make-directory*-failed))
+                               (unreachable)))
+                     (global.get $void))
+
+               ;; make-parent-directory* : path-string? -> void?
+               ;;   Create a VFS path's explicit parent directories.
+               (func $make-parent-directory* (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (result          (ref eq))
+
+                     (local $path     (ref $Path))
+                     (local $path-bs  (ref $Bytes))
+                     (local $path-len i32)
+                     (local $status   i32)
+
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:make-parent-directory*)
+                                      (local.get $path-raw)))
+                     (local.set $path-bs (struct.get $Path $bytes (local.get $path)))
+                     (local.set $path-len
+                                (array.len
+                                 (struct.get $Bytes $bs (local.get $path-bs))))
+                     (if (i32.gt_u (local.get $path-len)
+                                   (global.get $memory-map:vfs-path-buffer-length))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-path-buffer-base)
+                                (global.get $memory-map:vfs-path-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (local.set $path-len
+                                (call $copy-bytes-to-memory
+                                      (local.get $path-bs)
+                                      (global.get $memory-map:vfs-path-buffer-base)))
+                     (local.set $status
+                                (call $js-vfs-make-parent-directory*
+                                      (global.get $memory-map:vfs-path-buffer-base)
+                                      (local.get $path-len)))
+                     (if (i32.lt_s (local.get $status) (i32.const 0))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:make-parent-directory*-failed))
                                (unreachable)))
                      (global.get $void))
 

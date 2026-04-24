@@ -410,6 +410,15 @@ class WebRacketVFS {
     backend.mkdirp(rel);
   }
 
+  makeParentDirectory(path) {
+    const p = this.normalize(path);
+    if (p === '/') return;
+    const slash = p.lastIndexOf('/');
+    const parent = slash <= 0 ? '/' : p.slice(0, slash);
+    if (parent === '/') return;
+    this.mkdirp(parent);
+  }
+
   deleteFile(path) {
     const [backend, rel] = this.resolve(path);
     backend.deleteFile(rel);
@@ -1570,6 +1579,14 @@ var imports = {
       'vfs_make_directory_star': ((pathStart, pathLen) => {
         try {
           webracketVFS.mkdirp(vfs_path_from_memory(pathStart, pathLen));
+          return 0;
+        } catch (_) {
+          return -1;
+        }
+      }),
+      'vfs_make_parent_directory_star': ((pathStart, pathLen) => {
+        try {
+          webracketVFS.makeParentDirectory(vfs_path_from_memory(pathStart, pathLen));
           return 0;
         } catch (_) {
           return -1;

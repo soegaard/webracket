@@ -1018,6 +1018,7 @@
  delete-file
  make-directory
  make-directory*
+ make-parent-directory*
  delete-directory
  rename-file-or-directory
  copy-file
@@ -1817,6 +1818,9 @@
 
 (define (make-directory* path)
   (error 'make-directory* "only available in compiled WebRacket"))
+
+(define (make-parent-directory* path)
+  (error 'make-parent-directory* "only available in compiled WebRacket"))
 
 (define (delete-directory path)
   (error 'delete-directory "only available in compiled WebRacket"))

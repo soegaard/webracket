@@ -2011,6 +2011,7 @@
   delete-file
   make-directory
   make-directory*
+  make-parent-directory*
   delete-directory
   rename-file-or-directory
   copy-file
