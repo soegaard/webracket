@@ -1970,7 +1970,10 @@
                          (equal? (foldl (λ (a b acc) (cons (cons a b) acc))
                                         '()
                                         '(a b c) '(x y z))
-                                 '((c . z) (b . y) (a . x)))))
+                                 '((c . z) (b . y) (a . x)))
+                         (with-handlers ([exn:fail:contract? (λ (ex) #t)])
+                           (foldl 'list 0 10)
+                           #f)))
               (list "foldr"
                     (and (equal? (foldr cons '() '(1 2 3 4)) '(1 2 3 4))
                          (equal? (foldr + 0 '(1 2 3 4)) 10)

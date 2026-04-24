@@ -1506,6 +1506,7 @@
           object-name
           prop:procedure
           procedure
+          pair
           prop:checked-procedure
           checked-procedure
           prop:impersonator-of
@@ -1746,6 +1747,7 @@
     (add-runtime-string-constant 'string-or-symbol?          "(or/c string? symbol?)")
     (add-runtime-string-constant 'symbol?                    "symbol?")
     (add-runtime-string-constant 'keyword?                   "keyword?")
+    (add-runtime-string-constant 'pair?                      "pair?")
     (add-runtime-string-constant 'list?                      "list?")
     (add-runtime-string-constant 'vector?                    "vector?")
     (add-runtime-string-constant 'mpair-or-null              "(or/c mpair? null?)")
@@ -1753,6 +1755,7 @@
     (add-runtime-string-constant 'real?                      "real?")
     (add-runtime-string-constant 'exact-nonnegative-integer? "exact-nonnegative-integer?")
     (add-runtime-string-constant 'procedure-arity?           "procedure-arity?")
+    (add-runtime-string-constant 'valid-argument             "valid argument")
     (add-runtime-string-constant 'uncaught-exception         "uncaught exception: ")
     (add-runtime-string-constant 'callback:no-js-equivalent
                                  "The callback attempted to return a WebRacket value with no JavaScript equivalent (i.e. without a FASL encoding): ")
@@ -1820,6 +1823,7 @@
                                                 "(or/c exact-nonnegative-integer? #f) "
                                                 "(or/c exact-positive-integer? #f) "
                                                 "(or/c exact-nonnegative-integer? #f)))"))
+    (add-runtime-string-constant  'procedure? "procedure?")
 
     (add-runtime-string-constant  'arity-error:start
                                   ": arity mismatch;\n the expected number of arguments does not match the given number\n  expected: ")
@@ -2817,10 +2821,30 @@
                (param $who      (ref eq))      ;; symbol
                (param $expected (ref eq))      ;; expected description
                (param $got      (ref eq))      ;; received value
-               
-               (call $js-log (local.get $who))
-               (call $js-log (local.get $expected))
-               (call $js-log (local.get $got))
+
+               (local $out     (ref $GrowableArray))
+               (local $message (ref $String))
+
+               (local.set $out
+                          (call $make-growable-array (i32.const 5)))
+               (call $growable-array-add! (local.get $out)
+                     (call $format/display (local.get $who)))
+               (call $growable-array-add! (local.get $out)
+                     (global.get $string:contract-violation:prefix))
+               (call $growable-array-add! (local.get $out)
+                     (ref.cast (ref $String) (local.get $expected)))
+               (call $growable-array-add! (local.get $out)
+                     (global.get $string:arity-error:given))
+               (call $growable-array-add! (local.get $out)
+                     (call $format/display (local.get $got)))
+               (local.set $message
+                          (call $growable-array-of-strings->string (local.get $out)))
+
+               (call $raise
+                     (call $exn:fail:contract/make
+                           (local.get $message)
+                           (call $current-continuation-marks (global.get $missing)))
+                     (global.get $true))
                (unreachable))
 
          ;; Unquoted printing strings wrap a string but should display without
@@ -18738,7 +18762,13 @@
                              (global.get $false)))    ;; d = null
          
         ;; Pair related exceptions
-         (func $raise-pair-expected (param $x (ref eq)) (unreachable))
+         (func $raise-pair-expected
+               (param $x (ref eq))
+
+               (call $raise-argument-error1
+                     (global.get $symbol:pair)
+                     (global.get $string:pair?)
+                     (local.get $x)))
          (func $raise-bad-list-ref-index
                (param $xs  (ref $Pair)) (param $i   i32) (param $len i32)
                (unreachable))
@@ -21305,7 +21335,13 @@
              (append (gen-argminmax 'argmax '$</2)
                      (gen-argminmax 'argmin '$>/2)))
 
-         (func $raise-argument-error  (param $x (ref eq)) (unreachable))
+         (func $raise-argument-error
+               (param $x (ref eq))
+
+               (call $raise-argument-error1
+                     (global.get $symbol:error)
+                     (global.get $string:valid-argument)
+                     (local.get $x)))
          (func $raise-expected-fixnum (param $x (ref eq)) (unreachable))
          
          (func $list-from-range
@@ -36887,11 +36923,17 @@
                                 (struct.get $PrimitiveProcedure $result-arity
                                             (ref.cast (ref $PrimitiveProcedure) (local.get $proc)))))))
                ;; Step 6: Not a supported procedure type
-               (call $raise-argument-error:procedure-expected)
+               (call $raise-argument-error:procedure-expected (local.get $proc))
                (unreachable))
          
          
-         (func $raise-argument-error:procedure-expected (unreachable))
+         (func $raise-argument-error:procedure-expected
+               (param $got (ref eq))
+
+               (call $raise-argument-error1
+                     (global.get $symbol:procedure)
+                     (global.get $string:procedure?)
+                     (local.get $got)))
 
          
          ;; Support for the arity-at-least structure used by procedure-arity.
@@ -41451,7 +41493,7 @@
 
                ;; Step 1: type check and cast
                (if (i32.eqz (ref.test (ref $Procedure) (local.get $v)))
-                   (then (call $raise-argument-error:procedure-expected)))
+                   (then (call $raise-argument-error:procedure-expected (local.get $v))))
                (local.set $p (ref.cast (ref $Procedure) (local.get $v)))
                ;; Step 2: extract fields
                (local.set $name      (struct.get $Procedure $name (local.get $p)))
