@@ -1771,6 +1771,7 @@
     (add-runtime-string-constant 'vfs:read-file-failed       "VFS file read failed")
     (add-runtime-string-constant 'vfs:write-file-failed      "VFS file write failed")
     (add-runtime-string-constant 'vfs:delete-file-failed     "delete-file: VFS path does not refer to a file")
+    (add-runtime-string-constant 'vfs:make-directory-failed  "make-directory: VFS directory creation failed")
     (add-runtime-string-constant 'uncaught-exception         "uncaught exception: ")
     (add-runtime-string-constant 'callback:no-js-equivalent
                                  "The callback attempted to return a WebRacket value with no JavaScript equivalent (i.e. without a FASL encoding): ")
@@ -2574,6 +2575,9 @@
                (param i32) (param i32) (param i32) (param i32) (result i32))
          (func $js-vfs-delete-file
                (import "primitives" "vfs_delete_file")
+               (param i32) (param i32) (result i32))
+         (func $js-vfs-make-directory
+               (import "primitives" "vfs_make_directory")
                (param i32) (param i32) (result i32))
 
          (func $char-upcase/ucs
@@ -45340,6 +45344,50 @@
                      (if (i32.lt_s (local.get $status) (i32.const 0))
                          (then (call $raise-vfs-file-error
                                      (global.get $string:vfs:delete-file-failed))
+                               (unreachable)))
+                     (global.get $void))
+
+               ;; make-directory : path-string? [integer?] -> void?
+               ;;   Create a VFS directory; optional permissions default to #o777 and are ignored.
+               (func $make-directory (type $Prim12)
+                     (param $path-raw        (ref eq)) ;; path-string?
+                     (param $permissions-raw (ref eq)) ;; optional exact-integer?, default = #o777; ignored
+                     (result                 (ref eq))
+
+                     (local $path     (ref $Path))
+                     (local $path-bs  (ref $Bytes))
+                     (local $path-len i32)
+                     (local $status   i32)
+
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:make-directory)
+                                      (local.get $path-raw)))
+                     (local.set $path-bs (struct.get $Path $bytes (local.get $path)))
+                     (local.set $path-len
+                                (array.len
+                                 (struct.get $Bytes $bs (local.get $path-bs))))
+                     (if (i32.gt_u (local.get $path-len)
+                                   (global.get $memory-map:vfs-path-buffer-length))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-path-buffer-base)
+                                (global.get $memory-map:vfs-path-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (local.set $path-len
+                                (call $copy-bytes-to-memory
+                                      (local.get $path-bs)
+                                      (global.get $memory-map:vfs-path-buffer-base)))
+                     (local.set $status
+                                (call $js-vfs-make-directory
+                                      (global.get $memory-map:vfs-path-buffer-base)
+                                      (local.get $path-len)))
+                     (if (i32.lt_s (local.get $status) (i32.const 0))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:make-directory-failed))
                                (unreachable)))
                      (global.get $void))
 

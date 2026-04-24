@@ -1112,7 +1112,8 @@
        open-input-bytes
        read-bytes
        open-input-file
-       read-string)
+       read-string
+       make-directory)
      'optional 1 2)
     (make-inline-specs
      '(open-output-bytes
@@ -1991,6 +1992,7 @@
   directory-exists?
   file-size
   delete-file
+  make-directory
   file->bytes
   file->string
   open-input-file

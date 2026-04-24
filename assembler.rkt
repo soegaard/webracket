@@ -131,7 +131,11 @@ class WebRacketMemoryBackend {
   }
 
   mkdir(path) {
-    this.dirs.add(this.normalize(path));
+    const p = this.normalize(path);
+    if (this.files.has(p) || this.dirs.has(p)) throw new Error(`VFS path already exists: ${path}`);
+    const parent = this.parentDirs(p).at(-1) || '/';
+    if (!this.dirs.has(parent)) throw new Error(`VFS parent directory not found: ${path}`);
+    this.dirs.add(p);
   }
 
   writeFile(path, bytes) {
@@ -216,6 +220,11 @@ class WebRacketVFS {
   writeFile(path, bytes) {
     const [backend, rel] = this.resolve(path);
     backend.writeFile(rel, bytes);
+  }
+
+  mkdir(path) {
+    const [backend, rel] = this.resolve(path);
+    backend.mkdir(rel);
   }
 
   deleteFile(path) {
@@ -1287,6 +1296,14 @@ var imports = {
       'vfs_delete_file': ((pathStart, pathLen) => {
         try {
           webracketVFS.deleteFile(vfs_path_from_memory(pathStart, pathLen));
+          return 0;
+        } catch (_) {
+          return -1;
+        }
+      }),
+      'vfs_make_directory': ((pathStart, pathLen) => {
+        try {
+          webracketVFS.mkdir(vfs_path_from_memory(pathStart, pathLen));
           return 0;
         } catch (_) {
           return -1;
