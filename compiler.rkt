@@ -2628,6 +2628,9 @@
 
 ;; print-top-level-results : LFE -> LFE
 ;;   Wrap parsed user top-level expressions so `-r` prints results like Racket.
+;;   The driver inserts a sentinel before user code, and this pass wraps only
+;;   top-level expressions after that sentinel. It skips definitions, requires,
+;;   and void results.
 (define-pass print-top-level-results : LFE (T) -> LFE ()
   (definitions
     (define wr-top-level-results (variable #'wr-top-level-results))
