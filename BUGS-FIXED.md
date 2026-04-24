@@ -1,5 +1,38 @@
 # BUGS FIXED
 
+## `datum->correlated` wraps an already-correlated datum
+
+Status: fixed
+
+Minimal repro:
+
+```racket
+(define c (datum->correlated 'inner))
+(define d (datum->correlated c))
+
+(js-log (eq? c d))
+(js-log (correlated-e d))
+```
+
+Real Racket:
+
+```text
+#t
+inner
+```
+
+Previous WebRacket behavior:
+
+```text
+false
+#(struct correlated #f #f #f #f #f inner #hash())
+```
+
+`datum->correlated` is implemented in terms of Racket's `datum->syntax`,
+which returns an already-correlated datum unchanged. The runtime now returns
+the input immediately in that case, ignoring supplied srcloc/property
+arguments just like Racket.
+
 ## Correlated syntax edge cases
 
 Status: fixed

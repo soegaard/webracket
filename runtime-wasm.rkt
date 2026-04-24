@@ -39852,6 +39852,11 @@
                (local $props        (ref eq))
                (local $prop-val     (ref eq))
 
+               ;; `datum->correlated` mirrors `datum->syntax`: correlated
+               ;; input is returned unchanged, even if srcloc/prop are given.
+               (if (ref.eq (call $correlated? (local.get $v)) (global.get $true))
+                   (then (return (local.get $v))))
+
                (local.set $who      (global.get $symbol:datum->correlated))
                (local.set $source   (global.get $false))
                (local.set $line     (global.get $false))

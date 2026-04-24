@@ -4477,7 +4477,11 @@
                            [crlt    (datum->correlated payload vector-loc)]
                            [struct-loc (srcloc 'struct-source 11 3 101 6)]
                            [crlt2   (datum->correlated 'struct-payload struct-loc)]
-                           [bare    (datum->correlated 'plain)])
+                           [bare    (datum->correlated 'plain)]
+                           [again   (datum->correlated
+                                     crlt
+                                     #(ignored-source 1 0 1 1)
+                                     (correlated-property bare 'ignored 'property))])
                       (list (equal? (correlated? crlt)         #t)
                             (equal? (correlated? payload)      #f)
                             (equal? (correlated-source crlt)   'source)
@@ -4496,7 +4500,11 @@
                             (equal? (correlated-line bare)     #f)
                             (equal? (correlated-column bare)   #f)
                             (equal? (correlated-position bare) #f)
-                            (equal? (correlated-span bare)     #f))))
+                            (equal? (correlated-span bare)     #f)
+                            (equal? (eq? again crlt)           #t)
+                            (equal? (correlated-e again)       payload)
+                            (equal? (correlated-source again)  'source)
+                            (equal? (correlated-property again 'ignored) #f))))
 
               (list "correlated->datum"
                     (let* ([inner     (datum->correlated 'x #(src 1 0 1 1))]
