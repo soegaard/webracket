@@ -2,39 +2,6 @@
 
 ## LINKLETS
 
-### Instance variable modes are ignored
-
-Status: open.
-
-Minimal repro:
-
-```racket
-(define i (make-instance 'i #f 'constant 'x 1))
-(instance-set-variable-value! i 'x 2)
-(js-log (instance-variable-value i 'x))
-```
-
-Real Racket:
-
-```text
-x: cannot modify a constant
-```
-
-Current WebRacket behavior:
-
-```text
-2
-```
-
-`make-instance` and `instance-set-variable-value!` accept a mode argument,
-where `'constant` and `'consistent` should make a variable constant. Later
-`instance-set-variable-value!` and `instance-unset-variable!` calls must reject
-changes to an existing constant variable.
-
-The runtime currently stores instance variables as `Symbol -> Box`, so the
-mode is parsed but not represented. Fixing this likely needs an instance
-variable record with both the value box and the mode/constant flag.
-
 ### Uninitialized linklet exports are treated as missing
 
 Status: open.
@@ -70,43 +37,6 @@ WebRacket's `make-compiled-linklet` helper records the export list, but
 `instantiate-linklet` does not populate missing exports in a fresh instance
 with an uninitialized binding. This makes exported-but-unset variables
 indistinguishable from variables that were never exported.
-
-### Instantiated linklet exports are mutable through the instance API
-
-Status: open.
-
-Minimal repro:
-
-```racket
-(define l
-  (make-compiled-linklet
-   'l
-   '()
-   '(x)
-   (lambda (self)
-     (instance-set-variable-value! self 'x 1))))
-
-(define i (instantiate-linklet l '()))
-(instance-set-variable-value! i 'x 2)
-(js-log (instance-variable-value i 'x))
-```
-
-Real Racket rejects mutating a variable exported by an instantiated linklet:
-
-```text
-x: cannot modify a constant
-```
-
-Current WebRacket behavior:
-
-```text
-2
-```
-
-This is related to the missing instance-variable mode representation. Real
-linklet instantiation makes exported bindings constant from the instance API,
-but the WebRacket helper linklet body currently writes ordinary mutable
-instance variables.
 
 ## Quoted hash literals are mutable
 

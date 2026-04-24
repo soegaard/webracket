@@ -1789,6 +1789,7 @@
     (add-runtime-string-constant 'missing-variable-value        "missing variable value")
     (add-runtime-string-constant 'missing-binding               "missing binding:")
     (add-runtime-string-constant 'instance-variable-not-found   "instance variable not found:")
+    (add-runtime-string-constant 'cannot-modify-constant        "cannot modify a constant")
     (add-runtime-string-constant 'at-most-one-optional-argument "expected at most one optional argument")
 
     (add-runtime-string-constant 'linklet?                      "linklet?")
@@ -2446,7 +2447,8 @@
                        (field $hash      (mut i32))
                        (field $name      (ref eq))                      ;; any value for debugging
                        (field $data      (ref eq))                      ;; any value (e.g., namespace)
-                       (field $variables (mut (ref $HashEqMutable)))))) ;; hasheq: Symbol → Box
+                       (field $variables (mut (ref $HashEqMutable)))    ;; hasheq: Symbol → Box
+                       (field $constants (mut (ref $HashEqMutable)))))) ;; hasheq: Symbol → #t
 
           (type $Linklet
                 (sub $Heap
@@ -38453,6 +38455,13 @@
                (call $js-log (local.get $sym))
                (unreachable))
 
+         (func $raise-instance-variable-constant
+               (param $sym (ref eq))   ;; constant symbol
+
+               (call $js-log (local.get $sym))
+               (call $js-log (global.get $string:cannot-modify-constant))
+               (unreachable))
+
          (func $raise-instance-optional-argument
                (param $who  (ref eq))  ;; symbol naming the primitive
                (param $rest (ref eq))  ;; unexpected arguments
@@ -38511,6 +38520,7 @@
                (local $value    (ref eq))
                (local $inst     (ref $Instance))
                (local $vars     (ref $HashEqMutable))
+               (local $constants (ref $HashEqMutable))
                (local $box      (ref $Box))
 
                (local.set $data (global.get $false))    ;; optional data defaults to #f
@@ -38540,8 +38550,7 @@
                          (local.set $mode (struct.get $Pair $a (local.get $pair)))
                          (local.set $content (struct.get $Pair $d (local.get $pair)))))))
 
-               ;; Racket validates the mode even though WebRacket currently stores
-               ;; only mutable instance variables.
+               ;; Racket accepts only the three linklet instance modes here.
                (if (i32.eqz
                     (i32.or (ref.eq (local.get $mode) (global.get $false))
                             (i32.or (ref.eq (local.get $mode) (global.get $symbol:constant))
@@ -38554,11 +38563,13 @@
 
                ;; Allocate the instance and its variable table.
                (local.set $vars (ref.cast (ref $HashEqMutable) (call $make-empty-hasheq)))
+               (local.set $constants (ref.cast (ref $HashEqMutable) (call $make-empty-hasheq)))
                (local.set $inst (struct.new $Instance
                                             (i32.const 0)
                                             (local.get $name)
                                             (local.get $data)
-                                            (local.get $vars)))
+                                            (local.get $vars)
+                                            (local.get $constants)))
 
                ;; Populate variables from the remaining content list.
                (local.set $node (local.get $content))
@@ -38598,6 +38609,11 @@
                             (call $set-box!
                                   (ref.cast (ref eq) (local.get $box))
                                   (local.get $value))
+                            (if (i32.eqz (ref.eq (local.get $mode) (global.get $false)))
+                                (then (call $hasheq-set!/mutable/checked
+                                            (local.get $constants)
+                                            (local.get $sym-val)
+                                            (global.get $true))))
                             (br $loop)))
                (ref.cast (ref eq) (local.get $inst)))
 
@@ -38713,6 +38729,9 @@
                (local $mode     (ref eq))
                (local $pair     (ref $Pair))
                (local $extra    (ref eq))
+               (local $instance (ref $Instance))
+               (local $constants (ref $HashEqMutable))
+               (local $constant? (ref eq))
                (local $box      (ref $Box))
 
                (if (i32.eqz (ref.test (ref $Instance) (local.get $inst)))
@@ -38744,8 +38763,7 @@
                                     (local.get $extra))
                               (unreachable)))))
 
-               ;; The optional mode is accepted for compatibility; constant
-               ;; enforcement still requires per-variable metadata.
+               ;; Racket accepts only the three linklet instance modes here.
                (if (i32.eqz
                     (i32.or (ref.eq (local.get $mode) (global.get $false))
                             (i32.or (ref.eq (local.get $mode) (global.get $symbol:constant))
@@ -38754,6 +38772,17 @@
                                (global.get $symbol:instance-set-variable-value!)
                                (global.get $string:instance-mode?)
                                (local.get $mode))
+                         (unreachable)))
+
+               (local.set $instance (ref.cast (ref $Instance) (local.get $inst)))
+               (local.set $constants (struct.get $Instance $constants (local.get $instance)))
+               (local.set $constant?
+                          (call $hasheq-ref
+                                (ref.cast (ref eq) (local.get $constants))
+                                (local.get $sym)
+                                (global.get $false)))
+               (if (i32.eqz (ref.eq (local.get $constant?) (global.get $false)))
+                   (then (call $raise-instance-variable-constant (local.get $sym))
                          (unreachable)))
 
                (local.set $box
@@ -38765,6 +38794,11 @@
                (drop (call $set-box!
                            (ref.cast (ref eq) (local.get $box))
                            (local.get $val)))
+               (if (i32.eqz (ref.eq (local.get $mode) (global.get $false)))
+                   (then (call $hasheq-set!/mutable/checked
+                               (local.get $constants)
+                               (local.get $sym)
+                               (global.get $true))))
                (global.get $void))
 
          (func $instance-unset-variable! (type $Prim2)
@@ -39398,6 +39432,11 @@
                (local $expected-imports  (ref eq))
                (local $expected-import   (ref $Pair))
                (local $import-symbol     (ref eq))
+               (local $exports-node      (ref eq))
+               (local $exports-pair      (ref $Pair))
+               (local $export-symbol     (ref eq))
+               (local $target-plain      (ref $Instance))
+               (local $target-constants  (ref $HashEqMutable))
                (local $proc              (ref $Procedure))
                (local $inv               (ref $ProcedureInvoker))
                (local $args              (ref $Args))
@@ -39572,6 +39611,29 @@
                                     (local.get $proc)
                                     (local.get $args)
                                     (local.get $inv)))
+
+               ;; Exported bindings are constant from the instance API after
+               ;; instantiation, even though the linklet body initializes them.
+               (local.set $target-plain (ref.cast (ref $Instance) (local.get $target-instance)))
+               (local.set $target-constants
+                          (struct.get $Instance $constants (local.get $target-plain)))
+               (local.set $exports-node
+                          (struct.get $Linklet $exports (local.get $compiled)))
+               (block $exports-done
+                      (loop $exports-loop
+                            (br_if $exports-done
+                                   (ref.eq (local.get $exports-node) (global.get $null)))
+                            (local.set $exports-pair
+                                       (ref.cast (ref $Pair) (local.get $exports-node)))
+                            (local.set $export-symbol
+                                       (struct.get $Pair $a (local.get $exports-pair)))
+                            (call $hasheq-set!/mutable/checked
+                                  (local.get $target-constants)
+                                  (local.get $export-symbol)
+                                  (global.get $true))
+                            (local.set $exports-node
+                                       (struct.get $Pair $d (local.get $exports-pair)))
+                            (br $exports-loop)))
 
                (if (result (ref eq))
                    (i32.eq (local.get $return-instance) (i32.const 1))

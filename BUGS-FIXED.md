@@ -493,6 +493,73 @@ instance before invoking the linklet body. It uses `instance-variable-box`
 with creation disabled, so missing imported bindings fail instead of being
 silently accepted.
 
+## Instance variable modes are ignored
+
+Status: fixed
+
+Minimal repro:
+
+```racket
+(define i (make-instance 'i #f 'constant 'x 1))
+(instance-set-variable-value! i 'x 2)
+(js-log (instance-variable-value i 'x))
+```
+
+Real Racket:
+
+```text
+x: cannot modify a constant
+```
+
+Previous WebRacket behavior:
+
+```text
+2
+```
+
+The fix keeps the existing instance variable table as `Symbol -> Box` and adds
+a parallel per-instance constants table. `make-instance` and
+`instance-set-variable-value!` mark variables constant when the mode is
+`'constant` or `'consistent`; later writes to those names fail. As in Racket,
+`instance-unset-variable!` can unset the value but does not clear the constant
+marker.
+
+## Instantiated linklet exports are mutable through the instance API
+
+Status: fixed
+
+Minimal repro:
+
+```racket
+(define l
+  (make-compiled-linklet
+   'l
+   '()
+   '(x)
+   (lambda (self)
+     (instance-set-variable-value! self 'x 1))))
+
+(define i (instantiate-linklet l '()))
+(instance-set-variable-value! i 'x 2)
+(js-log (instance-variable-value i 'x))
+```
+
+Real Racket rejects mutating a variable exported by an instantiated linklet:
+
+```text
+x: cannot modify a constant
+```
+
+Previous WebRacket behavior:
+
+```text
+2
+```
+
+The fix marks the compiled linklet's exported symbols constant on the target
+instance after the linklet body has run, so the body can initialize exports
+but later instance API writes are rejected.
+
 ## Byte-string literals are mutable
 
 Status: fixed
