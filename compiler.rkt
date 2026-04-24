@@ -1100,6 +1100,7 @@
        open-input-string
        open-input-bytes
        read-bytes
+       open-input-file
        read-string)
      'optional 1 2)
     (make-inline-specs
@@ -1960,6 +1961,7 @@
   file-exists?
   directory-exists?
   file-size
+  open-input-file
   
   ;; 17. Unsafe Operations
   unsafe-fx+ unsafe-fx- unsafe-fx* unsafe-fl/

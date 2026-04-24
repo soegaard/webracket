@@ -1005,6 +1005,7 @@
  file-exists?
  directory-exists?
  file-size
+ open-input-file
 
  ;; 17. Unsafe Operations
  unsafe-fx+ unsafe-fx- unsafe-fx* unsafe-fl/
@@ -1761,6 +1762,11 @@
 ;;;
 ;;; Number Formatting
 ;;;
+
+(define open-input-file
+  (case-lambda
+    [(path) (error 'open-input-file "only available in compiled WebRacket")]
+    [(path mode) (error 'open-input-file "only available in compiled WebRacket")]))
 
 (define (~r/precision x prec)
   (~r x #:precision prec))

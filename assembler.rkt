@@ -1233,6 +1233,15 @@ var imports = {
           return -1;
         }
       }),
+      'vfs_read_file': ((pathStart, pathLen, outStart) => {
+        try {
+          const bytes = webracketVFS.readFile(vfs_path_from_memory(pathStart, pathLen));
+          new Uint8Array(memory.buffer).set(bytes, outStart);
+          return bytes.length;
+        } catch (_) {
+          return -1;
+        }
+      }),
       'register_external': (obj => { externals.push(obj); return externals.length - 1; }),
       'lookup_external':   (idx => externals[idx]),
       'external_number_to_f64': (obj =>

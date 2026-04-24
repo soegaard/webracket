@@ -4807,7 +4807,20 @@
                          (equal? (directory-exists? "/app/data") #t)
                          (equal? (directory-exists? "/app/main.rkt") #f)))
               (list "file-size"
-                    (equal? (file-size "/app/data/notes.txt") 6)))))
+                    (equal? (file-size "/app/data/notes.txt") 6))
+              (list "open-input-file"
+                    (let ([port (open-input-file "/app/data/notes.txt")])
+                      (and (input-port? port)
+                           (equal? (read-string 6 port) "notes\n")
+                           (eof-object? (read-byte port)))))
+              (list "open-input-file/location"
+                    (let* ([port (open-input-file "/app/data/notes.txt")]
+                           [loc  (lambda ()
+                                   (let-values ([(line col pos) (port-next-location port)])
+                                     (list line col pos)))])
+                      (and (equal? (loc) '(1 0 1))
+                           (equal? (read-string 6 port) "notes\n")
+                           (equal? (loc) '(2 0 7))))))))
        
  (list "Checkers"
        (list

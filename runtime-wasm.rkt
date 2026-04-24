@@ -2530,6 +2530,9 @@
          (func $js-vfs-file-size
                (import "primitives" "vfs_file_size")
                (param i32) (param i32) (result i32))
+         (func $js-vfs-read-file
+               (import "primitives" "vfs_read_file")
+               (param i32) (param i32) (param i32) (result i32))
 
          (func $char-upcase/ucs
                (import "primitives" "char_upcase")
@@ -33377,6 +33380,32 @@
                             (br $copy)))
                ;; 4) Return number of bytes copied
                (local.get $len))
+
+         (func $memory-range->immutable-bytes
+               ;; Copy linear memory into an immutable byte string.
+               (param $ptr i32) ;; source address in linear memory
+               (param $len i32) ;; byte count
+               (result (ref $Bytes))
+
+               (local $arr (ref $I8Array))
+               (local $i   i32)
+
+               (local.set $arr (array.new_default $I8Array (local.get $len)))
+               (local.set $i (i32.const 0))
+               (block $done
+                      (loop $copy
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                            (array.set $I8Array
+                                       (local.get $arr)
+                                       (local.get $i)
+                                       (i32.load8_u
+                                        (i32.add (local.get $ptr) (local.get $i))))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $copy)))
+               (struct.new $Bytes
+                           (i32.const 0)  ;; hash
+                           (i32.const 1)  ;; immutable
+                           (local.get $arr)))
          
          #;(func $copy_bytes_to_memory
                (export "copy_bytes_to_memory")
@@ -44689,6 +44718,41 @@
                          (then (call $raise-path-expected (local.get $path-raw))
                                (unreachable)))
                      (ref.i31 (i32.shl (local.get $size) (i32.const 1))))
+
+               (func $open-input-file (type $Prim12)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (param $mode-raw (ref eq)) ;; optional mode flag, currently ignored
+                     (result          (ref eq))
+
+                     (local $path      (ref $Path))
+                     (local $path-bs   (ref $Bytes))
+                     (local $path-len  i32)
+                     (local $file-len  i32)
+                     (local $file-bs   (ref $Bytes))
+
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:open-input-file)
+                                      (local.get $path-raw)))
+                     (local.set $path-bs (struct.get $Path $bytes (local.get $path)))
+                     (local.set $path-len (call $copy-bytes-to-memory
+                                                (local.get $path-bs)
+                                                (i32.const 0)))
+                     (local.set $file-len
+                                (call $js-vfs-read-file
+                                      (i32.const 0)
+                                      (local.get $path-len)
+                                      (i32.const 4096)))
+                     (if (i32.lt_s (local.get $file-len) (i32.const 0))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (local.set $file-bs
+                                (call $memory-range->immutable-bytes
+                                      (i32.const 4096)
+                                      (local.get $file-len)))
+                     (call $open-input-bytes
+                           (local.get $file-bs)
+                           (local.get $path)))
                
                ;;;
                ;;; FFI
