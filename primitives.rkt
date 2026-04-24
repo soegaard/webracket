@@ -1003,6 +1003,7 @@
  path->bytes
  path->string
  some-system-path->string
+ path<?
  path-convention-type
  system-path-convention-type
  bytes->path

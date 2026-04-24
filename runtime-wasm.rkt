@@ -1884,6 +1884,7 @@
     (add-runtime-string-constant  'fx-overflow:and           " and ")
 
     (add-runtime-string-constant  'expected-fixnum:got       "expected fixnum, got: ")
+    (add-runtime-string-constant  'path?                     "path?")
     (add-runtime-string-constant  'path-for-some-system?     "path-for-some-system?")
     (add-runtime-string-constant  'path-element?             "path-element?")
 
@@ -44833,6 +44834,61 @@
 
                      (local.set $bytes (struct.get $Path $bytes (local.get $path)))
                      (call $bytes->string/utf-8/checked (local.get $bytes)))
+
+               (func $path->bytes/current/checked
+                     (param $who      (ref eq)) ;; symbol?
+                     (param $path-raw (ref eq)) ;; path?
+                     (result          (ref $Bytes))
+
+                     (local $path (ref $Path))
+
+                     (if (i32.eqz (ref.test (ref $Path) (local.get $path-raw)))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (local.set $path (ref.cast (ref $Path) (local.get $path-raw)))
+                     (if (i32.eqz (ref.eq (struct.get $Path $convention (local.get $path))
+                                          (global.get $system-path-convention)))
+                         (then (call $raise-argument-error1
+                                     (local.get $who)
+                                     (global.get $string:path?)
+                                     (local.get $path-raw))
+                               (unreachable)))
+                     (struct.get $Path $bytes (local.get $path)))
+
+               ;; path<? : path? path? ... -> boolean?
+               ;;   Compare current-system paths by their byte-string encodings.
+               (func $path<? (type $Prim>=1)
+                     (param $first (ref eq)) ;; path?
+                     (param $rest  (ref eq)) ;; listof path?
+                     (result       (ref eq))
+
+                     (local $prev (ref $Bytes))
+                     (local $curr (ref $Bytes))
+                     (local $node (ref $Pair))
+                     (local $next (ref eq))
+
+                     (local.set $prev
+                                (call $path->bytes/current/checked
+                                      (global.get $symbol:path<?)
+                                      (local.get $first)))
+                     (block $done
+                            (loop $loop
+                                  (br_if $done (ref.eq (local.get $rest) (global.get $null)))
+                                  (local.set $node (ref.cast (ref $Pair) (local.get $rest)))
+                                  (local.set $next (struct.get $Pair $a (local.get $node)))
+                                  (local.set $curr
+                                             (call $path->bytes/current/checked
+                                                   (global.get $symbol:path<?)
+                                                   (local.get $next)))
+                                  (if (ref.eq (call $bytes<?/2/checked
+                                                    (local.get $prev)
+                                                    (local.get $curr))
+                                              (global.get $false))
+                                      (then (return (global.get $false))))
+                                  (local.set $prev (local.get $curr))
+                                  (local.set $rest (struct.get $Pair $d (local.get $node)))
+                                  (br $loop)))
+                     (global.get $true))
 
                ;; some-system-path->string : path-for-some-system? -> string?
                ;;   Convert any represented path convention through UTF-8 path bytes.

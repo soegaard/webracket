@@ -893,7 +893,7 @@
     ;; Variadic
     ;; - names
     '(list*
-      symbol<? keyword<?
+      symbol<? keyword<? path<?
       string=? string<?  string<=?  string>?  string>=?  string-ci=?
       string-ci<?  string-ci<=?  string-ci>?  string-ci>=?
       + * - /
@@ -917,7 +917,7 @@
              fxmin fxmax unsafe-fxmin unsafe-fxmax
              append* string-append* bytes-append* list*) 1]
         [(unsafe-fxand unsafe-fxior unsafe-fxxor) 1]
-        [(symbol<? keyword<?
+        [(symbol<? keyword<? path<?
                    string=? string<? string<=? string>? string>=?
                    string-ci=? string-ci<? string-ci<=? string-ci>? string-ci>=?) 1]
         [(apply) 2]
@@ -2011,6 +2011,7 @@
   path->bytes
   path->string
   some-system-path->string
+  path<?
   path-convention-type
   system-path-convention-type
   bytes->path

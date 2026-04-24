@@ -4890,6 +4890,12 @@
                            (with-handlers ([exn:fail? (lambda (_ex) #t)])
                              (path-convention-type "hello")
                              #f))))
+              (list "path<?"
+                    (and (equal? (path<? (string->path "a")) #t)
+                         (equal? (path<? (string->path "a") (string->path "b")) #t)
+                         (equal? (path<? (string->path "a") (string->path "b") (string->path "c")) #t)
+                         (equal? (path<? (string->path "a") (string->path "a")) #f)
+                         (equal? (path<? (string->path "b") (string->path "a")) #f)))
               (list "path-element conversions"
                     (and (equal? (path-element->string (string->path-element "a")) "a")
                          (equal? (path-element->bytes (bytes->path-element #"a")) #"a")
