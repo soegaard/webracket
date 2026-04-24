@@ -1827,6 +1827,8 @@
   procedure-arity
   procedure-arity-mask
   procedure-arity-includes?
+  arity-at-least
+  make-arity-at-least
   arity-at-least?
   arity-at-least-value
 

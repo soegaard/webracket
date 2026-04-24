@@ -36915,6 +36915,27 @@
                                      (local.get $std)
                                      (local.get $fields))))
 
+         (func $make-arity-at-least (type $Prim1)
+               (param $value (ref eq)) ; exact-nonnegative-integer?
+               (result (ref eq))
+
+               (if (ref.eq (call $exact-nonnegative-integer? (local.get $value)) (global.get $false))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:make-arity-at-least)
+                               (global.get $string:exact-nonnegative-integer?)
+                               (local.get $value))
+                         (unreachable)))
+               (call $arity-at-least/make
+                     (i32.shr_s
+                      (i31.get_s (ref.cast (ref i31) (local.get $value)))
+                      (i32.const 1))))
+
+         (func $arity-at-least (type $Prim1)
+               (param $value (ref eq)) ; exact-nonnegative-integer?
+               (result (ref eq))
+
+               (return_call $make-arity-at-least (local.get $value)))
+
          (func $raise-argument-error:arity-at-least-expected
                (param $who (ref eq))
                (param $got (ref eq))

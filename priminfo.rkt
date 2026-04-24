@@ -107,6 +107,16 @@
                          #f
                          #f))
 
+(define (arity-at-least-description name)
+  (primitive-description name
+                         1
+                         1
+                         '()
+                         '()
+                         #t
+                         #f
+                         'racket/primitive))
+
 (define procedure->external-description
   (primitive-description 'procedure->external
                          1
@@ -188,6 +198,8 @@
   (cond
     [(eq? sym-or-primitive 'js-log)                  js-log-description]
     [(eq? sym-or-primitive 'make-void)               make-void-description]
+    [(eq? sym-or-primitive 'arity-at-least)          (arity-at-least-description 'arity-at-least)]
+    [(eq? sym-or-primitive 'make-arity-at-least)     (arity-at-least-description 'make-arity-at-least)]
     [(eq? sym-or-primitive 'procedure->external)     procedure->external-description]
     [(eq? sym-or-primitive 'external-number->flonum) external-number->flonum-description]
     [(eq? sym-or-primitive 'external-string->string) external-string->string-description]
