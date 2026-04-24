@@ -140,6 +140,12 @@ class WebRacketMemoryBackend {
     this.files.set(p, bytes instanceof Uint8Array ? bytes : new TextEncoder().encode(String(bytes)));
   }
 
+  deleteFile(path) {
+    const p = this.normalize(path);
+    if (!this.files.has(p)) throw new Error(`VFS file not found: ${path}`);
+    this.files.delete(p);
+  }
+
   stat(path) {
     const p = this.normalize(path);
     if (this.files.has(p)) return { type: 'file', size: this.files.get(p).length, mtime: 0 };
@@ -210,6 +216,11 @@ class WebRacketVFS {
   writeFile(path, bytes) {
     const [backend, rel] = this.resolve(path);
     backend.writeFile(rel, bytes);
+  }
+
+  deleteFile(path) {
+    const [backend, rel] = this.resolve(path);
+    backend.deleteFile(rel);
   }
 
   listDir(path) {
@@ -1268,6 +1279,14 @@ var imports = {
         try {
           const bytes = new Uint8Array(memory.buffer).slice(bytesStart, bytesStart + bytesLen);
           webracketVFS.writeFile(vfs_path_from_memory(pathStart, pathLen), bytes);
+          return 0;
+        } catch (_) {
+          return -1;
+        }
+      }),
+      'vfs_delete_file': ((pathStart, pathLen) => {
+        try {
+          webracketVFS.deleteFile(vfs_path_from_memory(pathStart, pathLen));
           return 0;
         } catch (_) {
           return -1;

@@ -1014,6 +1014,7 @@
  file-exists?
  directory-exists?
  file-size
+ delete-file
  file->bytes
  file->string
  open-input-file
@@ -1795,6 +1796,9 @@
 
 (define (file->string path)
   (error 'file->string "only available in compiled WebRacket"))
+
+(define (delete-file path)
+  (error 'delete-file "only available in compiled WebRacket"))
 
 (define (call-with-input-file path proc)
   (error 'call-with-input-file "only available in compiled WebRacket"))

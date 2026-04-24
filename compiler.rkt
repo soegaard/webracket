@@ -1990,6 +1990,7 @@
   file-exists?
   directory-exists?
   file-size
+  delete-file
   file->bytes
   file->string
   open-input-file

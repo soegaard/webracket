@@ -4918,6 +4918,20 @@
                                           (lambda (_ex) #t)])
                            (file-size "/app/data/missing.txt")
                            #f)))
+              (list "delete-file"
+                    (begin
+                      (webracket-vfs-write-file "/app/data/delete-me.txt" #"gone")
+                      (and (file-exists? "/app/data/delete-me.txt")
+                           (void? (delete-file "/app/data/delete-me.txt"))
+                           (equal? (file-exists? "/app/data/delete-me.txt") #f)
+                           (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                            (lambda (_ex) #t)])
+                             (delete-file "/app/data/delete-me.txt")
+                             #f)
+                           (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                            (lambda (_ex) #t)])
+                             (delete-file "/app/data")
+                             #f))))
               (list "file->bytes"
                     (and (equal? (file->bytes "/app/data/notes.txt") #"notes\n")
                          (equal? (file->bytes "/app/data/more.txt") #"more")

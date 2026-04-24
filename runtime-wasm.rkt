@@ -1770,6 +1770,7 @@
     (add-runtime-string-constant 'vfs:file-size-failed       "file-size: VFS path does not refer to a file")
     (add-runtime-string-constant 'vfs:read-file-failed       "VFS file read failed")
     (add-runtime-string-constant 'vfs:write-file-failed      "VFS file write failed")
+    (add-runtime-string-constant 'vfs:delete-file-failed     "delete-file: VFS path does not refer to a file")
     (add-runtime-string-constant 'uncaught-exception         "uncaught exception: ")
     (add-runtime-string-constant 'callback:no-js-equivalent
                                  "The callback attempted to return a WebRacket value with no JavaScript equivalent (i.e. without a FASL encoding): ")
@@ -2571,6 +2572,9 @@
          (func $js-vfs-write-file
                (import "primitives" "vfs_write_file")
                (param i32) (param i32) (param i32) (param i32) (result i32))
+         (func $js-vfs-delete-file
+               (import "primitives" "vfs_delete_file")
+               (param i32) (param i32) (result i32))
 
          (func $char-upcase/ucs
                (import "primitives" "char_upcase")
@@ -45293,6 +45297,49 @@
                      (if (i32.lt_s (local.get $status) (i32.const 0))
                          (then (call $raise-vfs-file-error
                                      (global.get $string:vfs:write-file-failed))
+                               (unreachable)))
+                     (global.get $void))
+
+               ;; delete-file : path-string? -> void?
+               ;;   Delete an existing VFS file; directories and missing paths fail.
+               (func $delete-file (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (result          (ref eq))
+
+                     (local $path     (ref $Path))
+                     (local $path-bs  (ref $Bytes))
+                     (local $path-len i32)
+                     (local $status   i32)
+
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:delete-file)
+                                      (local.get $path-raw)))
+                     (local.set $path-bs (struct.get $Path $bytes (local.get $path)))
+                     (local.set $path-len
+                                (array.len
+                                 (struct.get $Bytes $bs (local.get $path-bs))))
+                     (if (i32.gt_u (local.get $path-len)
+                                   (global.get $memory-map:vfs-path-buffer-length))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-path-buffer-base)
+                                (global.get $memory-map:vfs-path-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (local.set $path-len
+                                (call $copy-bytes-to-memory
+                                      (local.get $path-bs)
+                                      (global.get $memory-map:vfs-path-buffer-base)))
+                     (local.set $status
+                                (call $js-vfs-delete-file
+                                      (global.get $memory-map:vfs-path-buffer-base)
+                                      (local.get $path-len)))
+                     (if (i32.lt_s (local.get $status) (i32.const 0))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:delete-file-failed))
                                (unreachable)))
                      (global.get $void))
 
