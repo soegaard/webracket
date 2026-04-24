@@ -5163,7 +5163,15 @@
                     (and (equal? (path->string (build-path "/app" "main.rkt"))
                                  "/app/main.rkt")
                          (equal? (path->string (build-path "/app/" "data" "notes.txt"))
-                                 "/app/data/notes.txt")))
+                                 "/app/data/notes.txt")
+                         (equal? (path->string (build-path 'same))
+                                 ".")
+                         (equal? (path->string (build-path 'up))
+                                 "..")
+                         (equal? (path->string (build-path "a" 'up))
+                                 "a/..")
+                         (equal? (path->string (build-path 'up "a"))
+                                 "../a")))
               (list "build-path/convention-type"
                     (and (equal? (some-system-path->string
                                   (build-path/convention-type 'unix 'same))

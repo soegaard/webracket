@@ -45268,24 +45268,37 @@
                      (call $bytes->path (local.get $joined) (global.get $missing)))
 
                (func $build-path (type $Prim>=1)
-                     (param $first (ref eq)) ;; path-string?
-                     (param $rest  (ref eq)) ;; list of additional path-string?s
+                     (param $first (ref eq)) ;; path part
+                     (param $rest  (ref eq)) ;; list of additional path parts
                      (result       (ref eq))
 
+                     (local $first-path (ref $Path))
+                     (local $conv   (ref eq))
                      (local $node   (ref $Pair))
                      (local $result (ref eq))
                      (local $next   (ref eq))
 
+                     (local.set $conv (global.get $system-path-convention))
+                     (if (ref.test (ref $Path) (local.get $first))
+                         (then
+                          (local.set $first-path (ref.cast (ref $Path) (local.get $first)))
+                          (local.set $conv (struct.get $Path $convention (local.get $first-path)))))
                      (local.set $result
-                                (call $path-string->path/checked
+                                (call $path-part->path/convention
                                       (global.get $symbol:build-path)
+                                      (local.get $conv)
                                       (local.get $first)))
                      (block $done
                             (loop $loop
                                   (br_if $done (ref.eq (local.get $rest) (global.get $null)))
                                   (local.set $node (ref.cast (ref $Pair) (local.get $rest)))
                                   (local.set $next (struct.get $Pair $a (local.get $node)))
-                                  (local.set $result (call $path-join-bytes (local.get $result) (local.get $next)))
+                                  (local.set $result
+                                             (call $path-join-bytes/convention
+                                                   (global.get $symbol:build-path)
+                                                   (local.get $conv)
+                                                   (local.get $result)
+                                                   (local.get $next)))
                                   (local.set $rest (struct.get $Pair $d (local.get $node)))
                                   (br $loop)))
                      (local.get $result))
