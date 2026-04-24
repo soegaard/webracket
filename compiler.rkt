@@ -2021,6 +2021,7 @@
   path-has-extension?
   file-name-from-path
   path-element?
+  path-only
 
   ;; 15.2 Filesystem
   file-exists?

@@ -4982,6 +4982,18 @@
                          (equal? (path-element? (string->some-system-path "a" 'windows)) #t)
                          (equal? (path-element? (string->some-system-path "a\\b" 'windows)) #f)
                          (equal? (path-element? "a") #f)))
+              (list "path-only"
+                    (and (equal? (path->string (path-only "a/b")) "a/")
+                         (equal? (path-only "a") #f)
+                         (equal? (path->string (path-only "a/")) "a/")
+                         (equal? (path->string (path-only "/")) "/")
+                         (equal? (path->string (path-only "../x")) "../")
+                         (equal? (path->string (path-only "..")) "..")
+                         (equal? (path->string (path-only "a/..")) "a/..")
+                         (equal? (path->string (path-only "/a/b")) "/a/")
+                         (equal? (some-system-path->string
+                                  (path-only (string->some-system-path "a\\b" 'windows)))
+                                 "a\\")))
               (list "build-path"
                     (and (equal? (path->string (build-path "/app" "main.rkt"))
                                  "/app/main.rkt")
