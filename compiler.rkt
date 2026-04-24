@@ -1048,6 +1048,7 @@
        peek-bytes
        peek-string
        progress-evt?
+       write-byte
        write-char
        write-bytes
        write-string
@@ -1073,7 +1074,7 @@
                  ) 2]
          [(hash-update!) 3]
          [(random flrandom unsafe-flrandom) 0]
-         [(progress-evt? write-char) 1]
+        [(progress-evt? write-byte write-char) 1]
          [(write-bytes write-string) 1]
          [else 1]))
      (λ (name)
@@ -1128,6 +1129,9 @@
        read-char
        newline
        flush-output
+       current-input-port
+       current-output-port
+       current-error-port
        current-directory)
      'optional 0 1)
     (make-inline-specs
@@ -1741,6 +1745,12 @@
   input-port?
   output-port?  
   port-closed?
+  current-input-port
+  current-output-port
+  current-error-port
+  reset-current-input-port!
+  reset-current-output-port!
+  reset-current-error-port!
   close-input-port
   close-output-port
   flush-output

@@ -3391,6 +3391,21 @@
                               (write-byte 65 port)
                               #f))))
 
+               (list "current-output-port/runtime"
+                     (let ([original (current-output-port)]
+                           [port     (open-output-string)])
+                       (and (output-port? original)
+                            (void? (current-output-port port))
+                            (eq? (current-output-port) port)
+                            (void? (write-byte 65))
+                            (void? (write-char #\B))
+                            (equal? (write-bytes #"CD") 2)
+                            (equal? (write-string "EF") 2)
+                            (void? (newline))
+                            (void? (flush-output))
+                            (equal? (get-output-string port) "ABCDEF\n")
+                            (void? (current-output-port original)))))
+
                (list "close-input-port/custom-close-order"
                      (let ([port #f])
                        (let ([closed-during-close #t]

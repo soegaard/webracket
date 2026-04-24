@@ -17,8 +17,7 @@
        (let* ([original (current-output-port)]
               [port     (open-output-string)])
          (current-output-port port)
-         #;(write-string "ok")  ; todo - make this work
-         (write-string "ok" port)
+         (write-string "ok")
          (let ([after (current-output-port)]
                [text  (get-output-string port)])
            (current-output-port original)
@@ -28,14 +27,33 @@
        (let* ([original (current-output-port)]
               [port     (open-output-string)])
          (current-output-port port)
-         #;(write-string "x") ; todo - make this work
-         (write-string "x" port)         
+         (write-string "x")
          (reset-current-output-port!)
          (let* ([after (current-output-port)]
                 [text  (get-output-string after)])
            (current-output-port original)
            (and (not (eq? after port))
                 (string=? text ""))))
+
+       (let* ([original (current-output-port)]
+              [port     (open-output-string)])
+         (current-output-port port)
+         (write-string "flush" port)
+         (let ([flushed (flush-output)]
+               [text    (get-output-string port)])
+           (current-output-port original)
+           (and (void? flushed)
+                (string=? text "flush"))))
+
+       (let* ([original (current-output-port)]
+              [port     (open-output-string)])
+         (current-output-port port)
+         (write-byte 65)
+         (write-char #\B)
+         (write-bytes #"CD")
+         (let ([text (get-output-string port)])
+           (current-output-port original)
+           (string=? text "ABCD")))
 
        (let* ([original (current-error-port)]
               [port     (open-output-string)])
@@ -383,4 +401,3 @@
  
  )
       
-

@@ -30667,6 +30667,86 @@
               (struct.set $InputPort $closed (local.get $port) (i32.const 1))
               (global.get $void))
 
+        ;; current-input-port : [input-port?] -> input-port? or void?
+        ;;   Get or set the runtime current input port.
+        (func $current-input-port (type $Prim01)
+              (param $p (ref eq)) ;; optional input-port?
+              (result   (ref eq))
+
+              (if (ref.eq (local.get $p) (global.get $missing))
+                  (then (return (global.get $current-input-port-value))))
+              (if (i32.eqz (ref.test (ref $InputPort) (local.get $p)))
+                  (then (call $raise-argument-error1
+                              (global.get $symbol:current-input-port)
+                              (global.get $string:input-port?)
+                              (local.get $p))
+                        (unreachable)))
+              (global.set $current-input-port-value (local.get $p))
+              (global.get $void))
+
+        ;; current-output-port : [output-port?] -> output-port? or void?
+        ;;   Get or set the runtime current output port.
+        (func $current-output-port (type $Prim01)
+              (param $p (ref eq)) ;; optional output-port?
+              (result   (ref eq))
+
+              (if (ref.eq (local.get $p) (global.get $missing))
+                  (then (return (global.get $current-output-port-value))))
+              (if (i32.eqz (ref.test (ref $OutputPort) (local.get $p)))
+                  (then (call $raise-argument-error1
+                              (global.get $symbol:current-output-port)
+                              (global.get $string:output-port?)
+                              (local.get $p))
+                        (unreachable)))
+              (global.set $current-output-port-value (local.get $p))
+              (global.get $void))
+
+        ;; current-error-port : [output-port?] -> output-port? or void?
+        ;;   Get or set the runtime current error port.
+        (func $current-error-port (type $Prim01)
+              (param $p (ref eq)) ;; optional output-port?
+              (result   (ref eq))
+
+              (if (ref.eq (local.get $p) (global.get $missing))
+                  (then (return (global.get $current-error-port-value))))
+              (if (i32.eqz (ref.test (ref $OutputPort) (local.get $p)))
+                  (then (call $raise-argument-error1
+                              (global.get $symbol:current-error-port)
+                              (global.get $string:output-port?)
+                              (local.get $p))
+                        (unreachable)))
+              (global.set $current-error-port-value (local.get $p))
+              (global.get $void))
+
+        ;; reset-current-input-port! : -> void?
+        ;;   Reset the runtime current input port to an empty string port.
+        (func $reset-current-input-port! (type $Prim0)
+              (result (ref eq))
+
+              (global.set $current-input-port-value
+                          (call $open-input-string
+                                (global.get $string:empty)
+                                (global.get $missing)))
+              (global.get $void))
+
+        ;; reset-current-output-port! : -> void?
+        ;;   Reset the runtime current output port to a fresh output string port.
+        (func $reset-current-output-port! (type $Prim0)
+              (result (ref eq))
+
+              (global.set $current-output-port-value
+                          (call $open-output-string (global.get $missing)))
+              (global.get $void))
+
+        ;; reset-current-error-port! : -> void?
+        ;;   Reset the runtime current error port to a fresh output string port.
+        (func $reset-current-error-port! (type $Prim0)
+              (result (ref eq))
+
+              (global.set $current-error-port-value
+                          (call $open-output-string (global.get $missing)))
+              (global.get $void))
+
         ;; flush-output : [output-port?] -> void?
         ;;   Flush a VFS output file port; string and bytes output ports are no-ops.
         (func $flush-output (type $Prim01)
@@ -30676,14 +30756,9 @@
               (local $port      (ref $OutputPort))
               (local $file-port (ref $OutputFilePort))
 
-              ;; First version: the current-output-port default is left until
-              ;; runtime primitives can consult parameter-like stdlib state.
               (if (ref.eq (local.get $p) (global.get $missing))
-                  (then (call $raise-argument-error1
-                              (global.get $symbol:flush-output)
-                              (global.get $string:output-port?)
-                              (local.get $p))
-                        (unreachable)))
+                  (then (local.set $p (call $current-output-port
+                                            (global.get $missing)))))
               (if (i32.eqz (ref.test (ref $OutputPort) (local.get $p)))
                   (then (call $raise-argument-error1
                               (global.get $symbol:flush-output)
@@ -33219,9 +33294,9 @@
          ;;         (field $idx   i32)          ; the current index into the string
          ;;         (field $loc   (ref $Location)))) ; the current location
          
-         (func $write-byte (type $Prim2)
+         (func $write-byte (type $Prim12)
                (param $byte (ref eq))
-               (param $out  (ref eq))
+               (param $out  (ref eq)) ;; optional output-port?, default = current-output-port
                (result      (ref eq))
                
                (local $b         i32)
@@ -33250,6 +33325,9 @@
                                                   (i32.const 1))))
                    (else (return (global.get $false))))
                ;; 2. Cast output to $OutputStringPort
+               (if (ref.eq (local.get $out) (global.get $missing))
+                   (then (local.set $out (call $current-output-port
+                                               (global.get $missing)))))
                (if (ref.test (ref $OutputStringPort) (local.get $out))
                    (then (local.set $sp (ref.cast (ref $OutputStringPort) (local.get $out))))
                    (else (return (global.get $false))))
@@ -33380,6 +33458,9 @@
                (local $byte i32)
                (local $res  (ref eq))
 
+               (if (ref.eq (local.get $out) (global.get $missing))
+                   (then (local.set $out (call $current-output-port
+                                               (global.get $missing)))))
                ;; Decode the character argument to a Unicode scalar value.
                (local.set $cp (call $char->integer/i32 (local.get $char)))
 
@@ -33502,9 +33583,9 @@
 
                (local $res (ref eq))
 
-               ; TODO : Handle current output port
-               #;(if (ref.eq (local.get $out) (global.get $missing))
-                   (local.set $out (call $current-output-port)))
+               (if (ref.eq (local.get $out) (global.get $missing))
+                   (then (local.set $out (call $current-output-port
+                                               (global.get $missing)))))
                
                ;; Delegate to write-char with the newline character.
                (call $write-char ,(Imm #\newline) (local.get $out)))
@@ -33537,6 +33618,9 @@
                (local.set $arr (struct.get $Bytes $bs (local.get $bs)))
                (local.set $len (call $i8array-length (local.get $arr)))
                ;; --- Determine output port ---
+               (if (ref.eq (local.get $out) (global.get $missing))
+                   (then (local.set $out (call $current-output-port
+                                               (global.get $missing)))))
                (if (i32.eqz (ref.test (ref $OutputStringPort) (local.get $out)))
                    (then (call $raise-check-string-port (local.get $out)) (unreachable)))
                ;; --- Decode optional start index ---
@@ -33610,6 +33694,9 @@
                (local.set $arr (struct.get $String $codepoints (local.get $s)))
                (local.set $len (call $i32array-length (local.get $arr)))
                ;; --- Determine output port ---
+               (if (ref.eq (local.get $out) (global.get $missing))
+                   (then (local.set $out (call $current-output-port
+                                               (global.get $missing)))))
                (if (i32.eqz (ref.test (ref $OutputStringPort) (local.get $out)))
                    (then (call $raise-check-string-port (local.get $out)) (unreachable)))
                ;; --- Decode optional start index ---
@@ -45435,6 +45522,9 @@
 
                (global $system-path-convention   (mut (ref eq)) (ref.i31 (i32.const 0)))
                (global $current-directory-path   (mut (ref eq)) (ref.i31 (i32.const 0)))
+               (global $current-input-port-value  (mut (ref eq)) (ref.i31 (i32.const 0)))
+               (global $current-output-port-value (mut (ref eq)) (ref.i31 (i32.const 0)))
+               (global $current-error-port-value  (mut (ref eq)) (ref.i31 (i32.const 0)))
                (global $result-bytes             (mut (ref eq)) (ref.i31 (i32.const 0)))
 
                ;; Struct-type properties provided by the runtime
@@ -45631,6 +45721,9 @@
                                  (call $bytes->path
                                        (global.get $bytes:app-dir)
                                        (global.get $missing)))
+                     (drop (call $reset-current-input-port!))
+                     (drop (call $reset-current-output-port!))
+                     (drop (call $reset-current-error-port!))
 
                      (global.set $char-general-category-symbols
                                  (array.new_fixed $Array 30
