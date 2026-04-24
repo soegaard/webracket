@@ -45364,6 +45364,19 @@
                                   (br $loop)))
                      (i32.const 0))
 
+               (func $path-byte-separator?
+                     (param $b    i32)
+                     (param $conv (ref eq))
+                     (result      i32)
+
+                     (if (i32.eq (local.get $b) (i32.const 47))
+                         (then (return (i32.const 1))))
+                     (if (ref.eq (local.get $conv) (global.get $symbol:windows))
+                         (then
+                          (if (i32.eq (local.get $b) (i32.const 92))
+                              (then (return (i32.const 1))))))
+                     (i32.const 0))
+
                ;; path-replace-extension : path-string? (or/c string? bytes?) -> path?
                ;;   Replace the final Unix/browser path-element extension.
                (func $path-replace-extension (type $Prim2)
@@ -45709,6 +45722,68 @@
                                  (local.get $elem-start)
                                  (local.get $len))
                            (global.get $missing)))
+
+               ;; path-element? : any/c -> boolean?
+               ;;   Recognize single-element path values for any represented path convention.
+               (func $path-element? (type $Prim1)
+                     (param $v (ref eq)) ;; any/c
+                     (result   (ref eq))
+
+                     (local $path      (ref $Path))
+                     (local $path-bs   (ref $Bytes))
+                     (local $arr       (ref $I8Array))
+                     (local $conv      (ref eq))
+                     (local $len       i32)
+                     (local $elem-len  i32)
+                     (local $i         i32)
+                     (local $b         i32)
+
+                     (if (i32.eqz (ref.test (ref $Path) (local.get $v)))
+                         (then (return (global.get $false))))
+                     (local.set $path (ref.cast (ref $Path) (local.get $v)))
+                     (local.set $path-bs (struct.get $Path $bytes (local.get $path)))
+                     (local.set $arr (struct.get $Bytes $bs (local.get $path-bs)))
+                     (local.set $conv (struct.get $Path $convention (local.get $path)))
+                     (local.set $len (array.len (local.get $arr)))
+                     (local.set $elem-len (local.get $len))
+                     (if (i32.eqz (local.get $elem-len))
+                         (then (return (global.get $false))))
+                     (if (call $path-byte-separator?
+                               (array.get_u $I8Array (local.get $arr) (i32.const 0))
+                               (local.get $conv))
+                         (then (return (global.get $false))))
+                     (if (call $path-byte-separator?
+                               (array.get_u $I8Array
+                                            (local.get $arr)
+                                            (i32.sub (local.get $elem-len) (i32.const 1)))
+                               (local.get $conv))
+                         (then (local.set $elem-len
+                                          (i32.sub (local.get $elem-len) (i32.const 1)))))
+                     (if (i32.eqz (local.get $elem-len))
+                         (then (return (global.get $false))))
+                     (local.set $i (i32.const 0))
+                     (block $done
+                            (loop $loop
+                                  (br_if $done (i32.ge_u (local.get $i) (local.get $elem-len)))
+                                  (local.set $b (array.get_u $I8Array (local.get $arr) (local.get $i)))
+                                  (if (call $path-byte-separator? (local.get $b) (local.get $conv))
+                                      (then (return (global.get $false))))
+                                  (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                  (br $loop)))
+                     (if (i32.eq (local.get $elem-len) (i32.const 1))
+                         (then
+                          (if (i32.eq (array.get_u $I8Array (local.get $arr) (i32.const 0))
+                                      (i32.const 46))
+                              (then (return (global.get $false))))))
+                     (if (i32.eq (local.get $elem-len) (i32.const 2))
+                         (then
+                          (if (i32.and
+                               (i32.eq (array.get_u $I8Array (local.get $arr) (i32.const 0))
+                                       (i32.const 46))
+                               (i32.eq (array.get_u $I8Array (local.get $arr) (i32.const 1))
+                                       (i32.const 46)))
+                              (then (return (global.get $false))))))
+                     (global.get $true))
 
                (func $vfs-path-stat-kind
                      (param $who      (ref eq)) ;; symbol? (currently for diagnostics)

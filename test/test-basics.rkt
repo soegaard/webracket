@@ -4973,6 +4973,15 @@
                          (equal? (file-name-from-path "..") #f)
                          (equal? (file-name-from-path ".") #f)
                          (equal? (file-name-from-path "a/..") #f)))
+              (list "path-element?"
+                    (and (equal? (path-element? (string->path "a")) #t)
+                         (equal? (path-element? (string->path "a/")) #t)
+                         (equal? (path-element? (string->path "a/b")) #f)
+                         (equal? (path-element? (string->path ".")) #f)
+                         (equal? (path-element? (string->path "..")) #f)
+                         (equal? (path-element? (string->some-system-path "a" 'windows)) #t)
+                         (equal? (path-element? (string->some-system-path "a\\b" 'windows)) #f)
+                         (equal? (path-element? "a") #f)))
               (list "build-path"
                     (and (equal? (path->string (build-path "/app" "main.rkt"))
                                  "/app/main.rkt")

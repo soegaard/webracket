@@ -1021,6 +1021,7 @@
  filename-extension
  path-has-extension?
  file-name-from-path
+ path-element?
 
  ;; 15.2 Filesystem
  file-exists?
