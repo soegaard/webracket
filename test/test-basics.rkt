@@ -3364,6 +3364,12 @@
                (list "port-closed?/close-input-port"
                      (let ([port (open-input-string "x")])
                        (and (equal? (port-closed? port) #f)
+                            (with-handlers ([exn:fail:contract? (lambda (_ex) #t)])
+                              (port-closed? 42)
+                              #f)
+                            (with-handlers ([exn:fail:contract? (lambda (_ex) #t)])
+                              (close-input-port 42)
+                              #f)
                             (void? (close-input-port port))
                             (equal? (port-closed? port) #t)
                             (with-handlers ([exn:fail? (lambda (_ex) #t)])
@@ -3376,11 +3382,32 @@
                (list "port-closed?/close-output-port"
                      (let ([port (open-output-string)])
                        (and (equal? (port-closed? port) #f)
+                            (with-handlers ([exn:fail:contract? (lambda (_ex) #t)])
+                              (close-output-port 42)
+                              #f)
                             (void? (close-output-port port))
                             (equal? (port-closed? port) #t)
                             (with-handlers ([exn:fail? (lambda (_ex) #t)])
                               (write-byte 65 port)
                               #f))))
+
+               (list "close-input-port/custom-close-order"
+                     (let ([port #f])
+                       (let ([closed-during-close #t]
+                             [close-count 0])
+                         (set! port
+                               (make-input-port
+                                'custom-close-order
+                                (lambda (dest) eof)
+                                #f
+                                (lambda ()
+                                  (set! close-count (add1 close-count))
+                                  (set! closed-during-close (port-closed? port)))))
+                         (and (void? (close-input-port port))
+                              (equal? closed-during-close #f)
+                              (equal? (port-closed? port) #t)
+                              (void? (close-input-port port))
+                              (equal? close-count 1)))))
 
                (list "make-input-port/read-in-proc"
                     (let* ([data (bytes 80 81 82)]

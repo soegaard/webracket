@@ -1750,6 +1750,9 @@
     (add-runtime-string-constant 'pair?                      "pair?")
     (add-runtime-string-constant 'list?                      "list?")
     (add-runtime-string-constant 'vector?                    "vector?")
+    (add-runtime-string-constant 'port?                      "port?")
+    (add-runtime-string-constant 'input-port?                "input-port?")
+    (add-runtime-string-constant 'output-port?               "output-port?")
     (add-runtime-string-constant 'mpair-or-null              "(or/c mpair? null?)")
     (add-runtime-string-constant 'catch*-matching-lengths    "same number of handlers as predicates")
     (add-runtime-string-constant 'real?                      "real?")
@@ -30464,7 +30467,7 @@
         (func $input-port? (type $Prim1)
               ,@(make-predicate-body '$InputPort))
 
-         (func $output-port? (type $Prim1)
+        (func $output-port? (type $Prim1)
               ,@(make-predicate-body '$OutputPort))
 
         (func $port-closed? (type $Prim1)
@@ -30474,7 +30477,11 @@
               (local $port (ref $Port))
 
               (if (i32.eqz (ref.test (ref $Port) (local.get $p)))
-                  (then (return (global.get $false))))
+                  (then (call $raise-argument-error1
+                              (global.get $symbol:port-closed?)
+                              (global.get $string:port?)
+                              (local.get $p))
+                        (unreachable)))
               (local.set $port (ref.cast (ref $Port) (local.get $p)))
               (if (result (ref eq))
                   (struct.get $Port $closed (local.get $port))
@@ -30482,7 +30489,7 @@
                   (else (global.get $false))))
 
         ;; close-input-port : input-port? -> void?
-        ;;   Mark an input port closed; for custom ports, call the close thunk once.
+        ;;   Call a custom input port's close thunk once, then mark the port closed.
         (func $close-input-port (type $Prim1)
               (param $p (ref eq)) ;; input-port?
               (result   (ref eq))
@@ -30495,11 +30502,14 @@
               (local $args       (ref $Args))
 
               (if (i32.eqz (ref.test (ref $InputPort) (local.get $p)))
-                  (then (return (global.get $void))))
+                  (then (call $raise-argument-error1
+                              (global.get $symbol:close-input-port)
+                              (global.get $string:input-port?)
+                              (local.get $p))
+                        (unreachable)))
               (local.set $port (ref.cast (ref $InputPort) (local.get $p)))
               (if (struct.get $InputPort $closed (local.get $port))
                   (then (return (global.get $void))))
-              (struct.set $InputPort $closed (local.get $port) (i32.const 1))
               (if (ref.test (ref $CustomInputPort) (local.get $p))
                   (then
                    (local.set $custom (ref.cast (ref $CustomInputPort) (local.get $p)))
@@ -30517,6 +30527,7 @@
                                         (local.get $f)
                                         (local.get $args)
                                         (local.get $finv)))))))
+              (struct.set $InputPort $closed (local.get $port) (i32.const 1))
               (global.get $void))
 
         ;; close-output-port : output-port? -> void?
@@ -30528,7 +30539,11 @@
               (local $port (ref $OutputPort))
 
               (if (i32.eqz (ref.test (ref $OutputPort) (local.get $p)))
-                  (then (return (global.get $void))))
+                  (then (call $raise-argument-error1
+                              (global.get $symbol:close-output-port)
+                              (global.get $string:output-port?)
+                              (local.get $p))
+                        (unreachable)))
               (local.set $port (ref.cast (ref $OutputPort) (local.get $p)))
               (struct.set $OutputPort $closed (local.get $port) (i32.const 1))
               (global.get $void))
@@ -45091,7 +45106,7 @@
 
                ;; $call-with-input-file : path-string? procedure? -> any
                ;;   Open a VFS file, pass its input port to proc, and return proc's result.
-               ;;   The #:mode keyword and close-on-return behavior are not implemented yet.
+               ;;   The #:mode keyword is not implemented yet.
                (func $call-with-input-file (type $Prim2)
                      (param $path-raw (ref eq)) ;; path-string?
                      (param $proc     (ref eq)) ;; procedure?
