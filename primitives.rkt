@@ -1924,8 +1924,16 @@
 (define (with-output-to-file path thunk)
   (error 'with-output-to-file "only available in compiled WebRacket"))
 
-(define (find-relative-path base path)
-  (error 'find-relative-path "only available in compiled WebRacket"))
+(define find-relative-path
+  (case-lambda
+    [(base path)
+     (error 'find-relative-path "only available in compiled WebRacket")]
+    [(base path more-than-root?)
+     (error 'find-relative-path "only available in compiled WebRacket")]
+    [(base path more-than-root? more-than-same?)
+     (error 'find-relative-path "only available in compiled WebRacket")]
+    [(base path more-than-root? more-than-same? normalize-case?)
+     (error 'find-relative-path "only available in compiled WebRacket")]))
 
 (define (shrink-path-wrt path other-paths)
   (error 'shrink-path-wrt "only available in compiled WebRacket"))

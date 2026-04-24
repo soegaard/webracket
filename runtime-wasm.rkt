@@ -45906,12 +45906,16 @@
                                   (br $build-loop)))
                      (local.get $result))
 
-               ;; find-relative-path : (or/c path-string? path-for-some-system?) (or/c path-string? path-for-some-system?) -> path-for-some-system?
-               ;;   Core two-argument behavior with default keyword options; keyword arguments are not supported yet.
-               (func $find-relative-path (type $Prim2)
-                     (param $base-raw (ref eq)) ;; simplified path-string? or path-for-some-system?
-                     (param $path-raw (ref eq)) ;; simplified path-string? or path-for-some-system?
-                     (result          (ref eq))
+               ;; find-relative-path : (or/c path-string? path-for-some-system?) (or/c path-string? path-for-some-system?) [any/c] [any/c] [any/c] -> path-string?
+               ;;   Keywordless form of Racket's #:more-than-root? (default #f),
+               ;;   #:more-than-same? (default #t), and #:normalize-case? (default #t).
+               (func $find-relative-path (type $Prim25)
+                     (param $base-raw            (ref eq)) ;; path-string? or path-for-some-system?
+                     (param $path-raw            (ref eq)) ;; path-string? or path-for-some-system?
+                     (param $more-than-root-raw  (ref eq)) ;; optional any/c, default #f
+                     (param $more-than-same-raw  (ref eq)) ;; optional any/c, default #t
+                     (param $normalize-case-raw  (ref eq)) ;; optional any/c, default #t
+                     (result                     (ref eq))
 
                      (local $base-path (ref $Path))
                      (local $path      (ref $Path))
@@ -45923,6 +45927,12 @@
                      (local $part      (ref eq))
                      (local $result    (ref eq))
                      (local $has?      i32)
+                     (local $common-count       i32)
+                     (local $common-root?       i32)
+                     (local $more-than-root?    i32)
+                     (local $more-than-same?    i32)
+                     (local $normalize-case?    i32)
+                     (local $original-result    (ref eq))
 
                      (local.set $base-path
                                 (call $path-string->path/checked
@@ -45940,8 +45950,41 @@
                                      (global.get $string:path-for-some-system?)
                                      (local.get $path-raw))
                                (unreachable)))
-                     (local.set $base (call $explode-path (call $normal-case-path (local.get $base-path))))
-                     (local.set $target (call $explode-path (call $normal-case-path (local.get $path))))
+                     (local.set $more-than-root?
+                                (i32.and
+                                 (i32.eqz (ref.eq (local.get $more-than-root-raw)
+                                                  (global.get $missing)))
+                                 (i32.eqz (ref.eq (local.get $more-than-root-raw)
+                                                  (global.get $false)))))
+                     (local.set $more-than-same?
+                                (i32.or
+                                 (ref.eq (local.get $more-than-same-raw)
+                                         (global.get $missing))
+                                 (i32.eqz (ref.eq (local.get $more-than-same-raw)
+                                                  (global.get $false)))))
+                     (local.set $normalize-case?
+                                (i32.or
+                                 (ref.eq (local.get $normalize-case-raw)
+                                         (global.get $missing))
+                                 (i32.eqz (ref.eq (local.get $normalize-case-raw)
+                                                  (global.get $false)))))
+                     (local.set $original-result
+                                (if (result (ref eq))
+                                    (ref.test (ref $String) (local.get $path-raw))
+                                    (then (local.get $path-raw))
+                                    (else (local.get $path))))
+                     (local.set $base
+                                (call $explode-path
+                                      (if (result (ref eq))
+                                          (local.get $normalize-case?)
+                                          (then (call $normal-case-path (local.get $base-path)))
+                                          (else (local.get $base-path)))))
+                     (local.set $target
+                                (call $explode-path
+                                      (if (result (ref eq))
+                                          (local.get $normalize-case?)
+                                          (then (call $normal-case-path (local.get $path)))
+                                          (else (local.get $path)))))
                      (block $common-done
                             (loop $common-loop
                                   (br_if $common-done (ref.eq (local.get $base) (global.get $null)))
@@ -45953,9 +45996,32 @@
                                           (call $path-part-equal?
                                                 (struct.get $Pair $a (local.get $base-node))
                                                 (struct.get $Pair $a (local.get $path-node)))))
+                                  (local.set $part (struct.get $Pair $a (local.get $base-node)))
+                                  (if (i32.and (i32.eqz (local.get $common-count))
+                                               (ref.test (ref $Path) (local.get $part)))
+                                      (then
+                                       (local.set $common-root?
+                                                  (call $path-bytes-absolute?
+                                                        (struct.get $Path $bytes
+                                                                    (ref.cast (ref $Path)
+                                                                              (local.get $part)))))))
+                                  (local.set $common-count
+                                             (i32.add (local.get $common-count) (i32.const 1)))
                                   (local.set $base (struct.get $Pair $d (local.get $base-node)))
                                   (local.set $target (struct.get $Pair $d (local.get $path-node)))
                                   (br $common-loop)))
+                     (if (i32.and
+                          (i32.and (local.get $more-than-root?)
+                                   (i32.and (local.get $common-root?)
+                                            (i32.eq (local.get $common-count) (i32.const 1))))
+                          (i32.and (i32.eqz (ref.eq (local.get $base) (global.get $null)))
+                                   (i32.eqz (ref.eq (local.get $target) (global.get $null)))))
+                         (then (return (local.get $original-result))))
+                     (if (i32.and
+                          (i32.and (local.get $more-than-same?)
+                                   (ref.eq (local.get $base) (global.get $null)))
+                          (ref.eq (local.get $target) (global.get $null)))
+                         (then (return (local.get $original-result))))
                      (local.set $has? (i32.const 0))
                      (local.set $result (global.get $symbol:same))
                      (block $base-done

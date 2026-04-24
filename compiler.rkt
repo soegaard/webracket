@@ -1169,6 +1169,9 @@
      '(path-add-extension)
      'optional 2 3)
     (make-inline-specs
+     '(find-relative-path)
+     'optional 2 5)
+    (make-inline-specs
      '(copy-file rename-file-or-directory)
      'optional 2 3))
    (make-inline-specs
