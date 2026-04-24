@@ -1011,6 +1011,8 @@
  path->complete-path
  path->directory-path
  resolve-path
+ path-replace-extension
+ path-add-extension
 
  ;; 15.2 Filesystem
  file-exists?

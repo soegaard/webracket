@@ -1163,6 +1163,9 @@
      '(file-or-directory-type)
      'optional 1 2)
     (make-inline-specs
+     '(path-add-extension)
+     'optional 2 3)
+    (make-inline-specs
      '(copy-file rename-file-or-directory)
      'optional 2 3))
    (make-inline-specs
@@ -2007,6 +2010,8 @@
   path->complete-path
   path->directory-path
   resolve-path
+  path-replace-extension
+  path-add-extension
 
   ;; 15.2 Filesystem
   file-exists?

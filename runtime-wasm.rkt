@@ -1793,6 +1793,7 @@
     (add-runtime-string-constant 'vfs:type-failed            "file-or-directory-type: VFS path does not exist")
     (add-runtime-string-constant 'vfs:identity-failed        "file-or-directory-identity: VFS path does not exist")
     (add-runtime-string-constant 'permissions-mode           "(or/c #f 'bits (integer-in 0 65535))")
+    (add-runtime-string-constant 'string-or-bytes            "(or/c string? bytes?)")
     (add-runtime-string-constant 'boolean?                   "boolean?")
     (add-runtime-string-constant 'uncaught-exception         "uncaught exception: ")
     (add-runtime-string-constant 'callback:no-js-equivalent
@@ -45150,6 +45151,190 @@
                      (call $path-string->path/checked
                            (global.get $symbol:resolve-path)
                            (local.get $path-raw)))
+
+               (func $string-or-bytes->bytes/checked
+                     (param $who (ref eq)) ;; symbol?
+                     (param $v   (ref eq)) ;; (or/c string? bytes?)
+                     (result     (ref $Bytes))
+
+                     (if (ref.test (ref $Bytes) (local.get $v))
+                         (then (return (ref.cast (ref $Bytes) (local.get $v)))))
+                     (if (ref.test (ref $String) (local.get $v))
+                         (then
+                          (return
+                           (ref.cast (ref $Bytes)
+                                     (call $string->bytes/utf-8
+                                           (ref.cast (ref $String) (local.get $v))
+                                           (global.get $false)
+                                           (global.get $false)
+                                           (global.get $false))))))
+                     (call $raise-argument-error1
+                           (local.get $who)
+                           (global.get $string:string-or-bytes)
+                           (local.get $v))
+                     (unreachable))
+
+               (func $bytes-slice/unchecked
+                     (param $bytes (ref $Bytes))
+                     (param $start i32)
+                     (param $end   i32)
+                     (result       (ref $Bytes))
+
+                     (struct.new $Bytes
+                                 (i32.const 0)
+                                 (i32.const 0)
+                                 (call $i8array-copy
+                                       (struct.get $Bytes $bs (local.get $bytes))
+                                       (local.get $start)
+                                       (local.get $end))))
+
+               (func $path-extension-start
+                     (param $path-bs (ref $Bytes))
+                     (result         i32)
+
+                     (local $arr        (ref $I8Array))
+                     (local $len        i32)
+                     (local $elem-start i32)
+                     (local $i          i32)
+                     (local $idx        i32)
+
+                     (local.set $arr (struct.get $Bytes $bs (local.get $path-bs)))
+                     (local.set $len (array.len (local.get $arr)))
+                     (local.set $elem-start (i32.const 0))
+                     (local.set $i (local.get $len))
+                     (block $slash-done
+                            (loop $slash-loop
+                                  (br_if $slash-done (i32.eqz (local.get $i)))
+                                  (local.set $idx (i32.sub (local.get $i) (i32.const 1)))
+                                  (if (i32.eq (array.get_u $I8Array (local.get $arr) (local.get $idx))
+                                              (i32.const 47))
+                                      (then
+                                       (local.set $elem-start (local.get $i))
+                                       (br $slash-done)))
+                                  (local.set $i (local.get $idx))
+                                  (br $slash-loop)))
+
+                     (if (i32.eq (local.get $elem-start) (local.get $len))
+                         (then (return (local.get $len))))
+                     (if (i32.eq (i32.sub (local.get $len) (local.get $elem-start))
+                                 (i32.const 2))
+                         (then
+                          (if (i32.and
+                               (i32.eq (array.get_u $I8Array (local.get $arr) (local.get $elem-start))
+                                       (i32.const 46))
+                               (i32.eq (array.get_u $I8Array
+                                                    (local.get $arr)
+                                                    (i32.add (local.get $elem-start) (i32.const 1)))
+                                       (i32.const 46)))
+                              (then (return (local.get $len))))))
+                     (local.set $i (local.get $len))
+                     (block $dot-done
+                            (loop $dot-loop
+                                  (br_if $dot-done (i32.le_u (local.get $i) (local.get $elem-start)))
+                                  (local.set $idx (i32.sub (local.get $i) (i32.const 1)))
+                                  (if (i32.eq (array.get_u $I8Array (local.get $arr) (local.get $idx))
+                                              (i32.const 46))
+                                      (then
+                                       (if (i32.gt_u (local.get $idx) (local.get $elem-start))
+                                           (then (return (local.get $idx)))
+                                           (else (return (local.get $len))))))
+                                  (local.set $i (local.get $idx))
+                                  (br $dot-loop)))
+                     (local.get $len))
+
+               ;; path-replace-extension : path-string? (or/c string? bytes?) -> path?
+               ;;   Replace the final Unix/browser path-element extension.
+               (func $path-replace-extension (type $Prim2)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (param $ext-raw  (ref eq)) ;; (or/c string? bytes?)
+                     (result          (ref eq))
+
+                     (local $path     (ref $Path))
+                     (local $path-bs  (ref $Bytes))
+                     (local $ext-bs   (ref $Bytes))
+                     (local $boundary i32)
+
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:path-replace-extension)
+                                      (local.get $path-raw)))
+                     (local.set $path-bs (struct.get $Path $bytes (local.get $path)))
+                     (local.set $ext-bs
+                                (call $string-or-bytes->bytes/checked
+                                      (global.get $symbol:path-replace-extension)
+                                      (local.get $ext-raw)))
+                     (local.set $boundary (call $path-extension-start (local.get $path-bs)))
+                     (call $bytes->path
+                           (call $bytes-append/2
+                                 (call $bytes-slice/unchecked
+                                       (local.get $path-bs)
+                                       (i32.const 0)
+                                       (local.get $boundary))
+                                 (local.get $ext-bs))
+                           (global.get $missing)))
+
+               ;; path-add-extension : path-string? (or/c string? bytes?) [(or/c string? bytes?)] -> path?
+               ;;   Add an extension, preserving an existing extension via sep; default sep = #"_".
+               (func $path-add-extension (type $Prim23)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (param $ext-raw  (ref eq)) ;; (or/c string? bytes?)
+                     (param $sep-raw  (ref eq)) ;; optional (or/c string? bytes?), default = #"_"
+                     (result          (ref eq))
+
+                     (local $path      (ref $Path))
+                     (local $path-bs   (ref $Bytes))
+                     (local $ext-bs    (ref $Bytes))
+                     (local $sep-bs    (ref $Bytes))
+                     (local $prefix-bs (ref $Bytes))
+                     (local $suffix-bs (ref $Bytes))
+                     (local $boundary  i32)
+                     (local $len       i32)
+
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:path-add-extension)
+                                      (local.get $path-raw)))
+                     (local.set $path-bs (struct.get $Path $bytes (local.get $path)))
+                     (local.set $ext-bs
+                                (call $string-or-bytes->bytes/checked
+                                      (global.get $symbol:path-add-extension)
+                                      (local.get $ext-raw)))
+                     (local.set $sep-bs
+                                (if (result (ref $Bytes))
+                                    (ref.eq (local.get $sep-raw) (global.get $missing))
+                                    (then (ref.cast (ref $Bytes) (global.get $bytes:non-empty)))
+                                    (else (call $string-or-bytes->bytes/checked
+                                                (global.get $symbol:path-add-extension)
+                                                (local.get $sep-raw)))))
+                     (local.set $len
+                                (array.len
+                                 (struct.get $Bytes $bs (local.get $path-bs))))
+                     (local.set $boundary (call $path-extension-start (local.get $path-bs)))
+                     (if (i32.eq (local.get $boundary) (local.get $len))
+                         (then
+                          (return
+                           (call $bytes->path
+                                 (call $bytes-append/2 (local.get $path-bs) (local.get $ext-bs))
+                                 (global.get $missing)))))
+                     (local.set $prefix-bs
+                                (call $bytes-slice/unchecked
+                                      (local.get $path-bs)
+                                      (i32.const 0)
+                                      (local.get $boundary)))
+                     (local.set $suffix-bs
+                                (call $bytes-slice/unchecked
+                                      (local.get $path-bs)
+                                      (i32.add (local.get $boundary) (i32.const 1))
+                                      (local.get $len)))
+                     (call $bytes->path
+                           (call $bytes-append/2
+                                 (call $bytes-append/2
+                                       (call $bytes-append/2
+                                             (local.get $prefix-bs)
+                                             (local.get $sep-bs))
+                                       (local.get $suffix-bs))
+                                 (local.get $ext-bs))
+                           (global.get $missing)))
 
                (func $vfs-path-stat-kind
                      (param $who      (ref eq)) ;; symbol? (currently for diagnostics)
