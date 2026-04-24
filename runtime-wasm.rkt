@@ -45094,15 +45094,20 @@
                      (param $mode-raw (ref eq)) ;; optional mode flag, currently ignored
                      (result          (ref eq))
 
+                     (local $path      (ref $Path))
                      (local $file-bs   (ref $Bytes))
 
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:open-input-file)
+                                      (local.get $path-raw)))
                      (local.set $file-bs
                                 (call $vfs-read-file-bytes
                                       (global.get $symbol:open-input-file)
                                       (local.get $path-raw)))
                      (call $open-input-bytes
                            (local.get $file-bs)
-                           (local.get $path-raw)))
+                           (local.get $path)))
 
                ;; $call-with-input-file : path-string? procedure? -> any
                ;;   Open a VFS file, pass its input port to proc, and return proc's result.

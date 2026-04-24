@@ -4870,6 +4870,9 @@
               (list "open-input-file"
                     (let ([port (open-input-file "/app/data/notes.txt")])
                       (and (input-port? port)
+                           (path? (object-name port))
+                           (equal? (path->string (object-name port))
+                                   "/app/data/notes.txt")
                            (equal? (read-string 6 port) "notes\n")
                            (eof-object? (read-byte port)))))
               (list "open-input-file/location"
@@ -4887,7 +4890,9 @@
                                (lambda (port)
                                  (set! saved-port port)
                                  (and (input-port? port)
-                                      (equal? (object-name port) "/app/data/notes.txt")
+                                      (path? (object-name port))
+                                      (equal? (path->string (object-name port))
+                                              "/app/data/notes.txt")
                                       (equal? (read-string 6 port) "notes\n")
                                       (eof-object? (read-byte port)))))])
                         (and result
