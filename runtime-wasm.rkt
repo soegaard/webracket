@@ -45472,6 +45472,60 @@
                                  (local.get $ext-bs))
                            (global.get $missing)))
 
+               ;; path-get-extension : path-string? -> (or/c bytes? #f)
+               ;;   Return the final path-element extension including the dot, or #f.
+               (func $path-get-extension (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (result          (ref eq))
+
+                     (local $path     (ref $Path))
+                     (local $path-bs  (ref $Bytes))
+                     (local $boundary i32)
+                     (local $len      i32)
+
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:path-get-extension)
+                                      (local.get $path-raw)))
+                     (local.set $path-bs (struct.get $Path $bytes (local.get $path)))
+                     (local.set $len
+                                (array.len
+                                 (struct.get $Bytes $bs (local.get $path-bs))))
+                     (local.set $boundary (call $path-extension-start (local.get $path-bs)))
+                     (if (i32.eq (local.get $boundary) (local.get $len))
+                         (then (return (global.get $false))))
+                     (call $bytes-slice/unchecked
+                           (local.get $path-bs)
+                           (local.get $boundary)
+                           (local.get $len)))
+
+               ;; filename-extension : path-string? -> (or/c bytes? #f)
+               ;;   Deprecated variant of path-get-extension that omits the dot and counts leading dots.
+               (func $filename-extension (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (result          (ref eq))
+
+                     (local $path     (ref $Path))
+                     (local $path-bs  (ref $Bytes))
+                     (local $boundary i32)
+                     (local $len      i32)
+
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:filename-extension)
+                                      (local.get $path-raw)))
+                     (local.set $path-bs (struct.get $Path $bytes (local.get $path)))
+                     (local.set $len
+                                (array.len
+                                 (struct.get $Bytes $bs (local.get $path-bs))))
+                     (local.set $boundary (call $path-suffix-start (local.get $path-bs)))
+                     (if (i32.eq (local.get $boundary) (local.get $len))
+                         (then (return (global.get $false))))
+                     (call $bytes-slice/unchecked
+                           (local.get $path-bs)
+                           (i32.add (local.get $boundary) (i32.const 1))
+                           (local.get $len)))
+
                (func $vfs-path-stat-kind
                      (param $who      (ref eq)) ;; symbol? (currently for diagnostics)
                      (param $path-raw (ref eq)) ;; path-string?
