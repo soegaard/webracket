@@ -1034,6 +1034,7 @@
  path-element?
  path-element->bytes
  path-element->string
+ simple-form-path
  path-only
 
  ;; 15.2 Filesystem

@@ -5112,6 +5112,12 @@
                            (with-handlers ([exn:fail:contract? (lambda (_ex) #t)])
                              (path-element->string (string->path "a/b"))
                              #f))))
+              (list "simple-form-path"
+                    (and (equal? (path->string (simple-form-path "a/../b"))
+                                 "/tmp/b")
+                         (equal? (path->string (simple-form-path "./x"))
+                                 "/tmp/x")
+                         (complete-path? (simple-form-path "x"))))
               (list "path-only"
                     (and (equal? (path->string (path-only "a/b")) "a/")
                          (equal? (path-only "a") #f)

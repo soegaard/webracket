@@ -45671,6 +45671,18 @@
                          (then (return (call $path->directory-path (local.get $result)))))
                      (local.get $result))
 
+               ;; simple-form-path : path-string? -> path?
+               ;;   Complete a path, then simplify it syntactically.
+               (func $simple-form-path (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (result          (ref eq))
+
+                     (call $simplify-path
+                           (call $path->complete-path
+                                 (local.get $path-raw)
+                                 (global.get $missing))
+                           (global.get $true)))
+
                ;; normal-case-path : (or/c path-string? path-for-some-system?) -> path-for-some-system?
                ;;   Return Unix paths unchanged; for Windows, lowercase ASCII letters and use backslash separators.
                (func $normal-case-path (type $Prim1)
