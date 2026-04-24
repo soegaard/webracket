@@ -1961,6 +1961,8 @@
   file-exists?
   directory-exists?
   file-size
+  file->bytes
+  file->string
   open-input-file
   webracket-vfs-write-file
   

@@ -4813,6 +4813,12 @@
                          (equal? (directory-exists? "/app/main.rkt") #f)))
               (list "file-size"
                     (equal? (file-size "/app/data/notes.txt") 6))
+              (list "file->bytes"
+                    (and (equal? (file->bytes "/app/data/notes.txt") #"notes\n")
+                         (equal? (file->bytes "/app/data/more.txt") #"more")))
+              (list "file->string"
+                    (and (equal? (file->string "/app/data/notes.txt") "notes\n")
+                         (equal? (file->string "/app/data/more.txt") "more")))
               (list "open-input-file"
                     (let ([port (open-input-file "/app/data/notes.txt")])
                       (and (input-port? port)

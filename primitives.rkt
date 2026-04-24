@@ -1005,6 +1005,8 @@
  file-exists?
  directory-exists?
  file-size
+ file->bytes
+ file->string
  open-input-file
  webracket-vfs-write-file
 
@@ -1768,6 +1770,12 @@
   (case-lambda
     [(path) (error 'open-input-file "only available in compiled WebRacket")]
     [(path mode) (error 'open-input-file "only available in compiled WebRacket")]))
+
+(define (file->bytes path)
+  (error 'file->bytes "only available in compiled WebRacket"))
+
+(define (file->string path)
+  (error 'file->string "only available in compiled WebRacket"))
 
 (define (webracket-vfs-write-file path bytes)
   (error 'webracket-vfs-write-file "only available in compiled WebRacket"))
