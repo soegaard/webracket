@@ -1146,7 +1146,10 @@
      'optional 6 7)
     (make-inline-specs
      '(read-line peek-byte peek-char)
-     'optional 0 2))
+     'optional 0 2)
+    (make-inline-specs
+     '(rename-file-or-directory)
+     'optional 2 3))
    (make-inline-specs
     '(build-path)
     'variadic 1 #f 1)
@@ -1996,6 +1999,7 @@
   delete-file
   make-directory
   delete-directory
+  rename-file-or-directory
   file->bytes
   file->string
   open-input-file

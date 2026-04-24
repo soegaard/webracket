@@ -1774,6 +1774,7 @@
     (add-runtime-string-constant 'vfs:delete-directory-failed "delete-directory: VFS path does not refer to an empty directory")
     (add-runtime-string-constant 'vfs:make-directory-failed  "make-directory: VFS directory creation failed")
     (add-runtime-string-constant 'vfs:directory-list-failed  "directory-list: VFS path does not refer to a directory")
+    (add-runtime-string-constant 'vfs:rename-failed          "rename-file-or-directory: VFS rename failed")
     (add-runtime-string-constant 'uncaught-exception         "uncaught exception: ")
     (add-runtime-string-constant 'callback:no-js-equivalent
                                  "The callback attempted to return a WebRacket value with no JavaScript equivalent (i.e. without a FASL encoding): ")
@@ -2587,6 +2588,9 @@
          (func $js-vfs-list-directory
                (import "primitives" "vfs_list_directory")
                (param i32) (param i32) (param i32) (param i32) (result i32))
+         (func $js-vfs-rename
+               (import "primitives" "vfs_rename")
+               (param i32) (param i32) (param i32) (param i32) (param i32) (result i32))
 
          (func $char-upcase/ucs
                (import "primitives" "char_upcase")
@@ -45534,6 +45538,86 @@
                      (if (i32.lt_s (local.get $status) (i32.const 0))
                          (then (call $raise-vfs-file-error
                                      (global.get $string:vfs:delete-directory-failed))
+                               (unreachable)))
+                     (global.get $void))
+
+               ;; rename-file-or-directory : path-string? path-string? [any/c] -> void?
+               ;;   Rename a VFS file or directory within the same mounted backend.
+               (func $rename-file-or-directory (type $Prim23)
+                     (param $old-raw       (ref eq)) ;; path-string?
+                     (param $new-raw       (ref eq)) ;; path-string?
+                     (param $exists-ok-raw (ref eq)) ;; optional any/c, default = #f
+                     (result               (ref eq))
+
+                     (local $old      (ref $Path))
+                     (local $new      (ref $Path))
+                     (local $old-bs   (ref $Bytes))
+                     (local $new-bs   (ref $Bytes))
+                     (local $old-len  i32)
+                     (local $new-len  i32)
+                     (local $exists?  i32)
+                     (local $status   i32)
+
+                     (local.set $old
+                                (call $path-string->path/checked
+                                      (global.get $symbol:rename-file-or-directory)
+                                      (local.get $old-raw)))
+                     (local.set $new
+                                (call $path-string->path/checked
+                                      (global.get $symbol:rename-file-or-directory)
+                                      (local.get $new-raw)))
+                     (local.set $old-bs (struct.get $Path $bytes (local.get $old)))
+                     (local.set $new-bs (struct.get $Path $bytes (local.get $new)))
+                     (local.set $old-len
+                                (array.len
+                                 (struct.get $Bytes $bs (local.get $old-bs))))
+                     (local.set $new-len
+                                (array.len
+                                 (struct.get $Bytes $bs (local.get $new-bs))))
+                     (if (i32.gt_u (local.get $old-len)
+                                   (global.get $memory-map:vfs-path-buffer-length))
+                         (then (call $raise-path-expected (local.get $old-raw))
+                               (unreachable)))
+                     (if (i32.gt_u (local.get $new-len)
+                                   (global.get $memory-map:vfs-file-buffer-length))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-path-buffer-base)
+                                (global.get $memory-map:vfs-path-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-file-buffer-base)
+                                (global.get $memory-map:vfs-file-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (local.set $old-len
+                                (call $copy-bytes-to-memory
+                                      (local.get $old-bs)
+                                      (global.get $memory-map:vfs-path-buffer-base)))
+                     (local.set $new-len
+                                (call $copy-bytes-to-memory
+                                      (local.get $new-bs)
+                                      (global.get $memory-map:vfs-file-buffer-base)))
+                     (local.set $exists?
+                                (if (result i32)
+                                    (ref.eq (local.get $exists-ok-raw) (global.get $missing))
+                                    (then (i32.const 0))
+                                    (else (i32.eqz (ref.eq (local.get $exists-ok-raw)
+                                                           (global.get $false))))))
+                     (local.set $status
+                                (call $js-vfs-rename
+                                      (global.get $memory-map:vfs-path-buffer-base)
+                                      (local.get $old-len)
+                                      (global.get $memory-map:vfs-file-buffer-base)
+                                      (local.get $new-len)
+                                      (local.get $exists?)))
+                     (if (i32.lt_s (local.get $status) (i32.const 0))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:rename-failed))
                                (unreachable)))
                      (global.get $void))
 

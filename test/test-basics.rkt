@@ -4974,6 +4974,40 @@
                                           (lambda (_ex) #t)])
                            (delete-directory "/app/main.rkt")
                            #f)))
+              (list "rename-file-or-directory"
+                    (begin
+                      (webracket-vfs-write-file "/app/data/rename-source.txt" #"source")
+                      (webracket-vfs-write-file "/app/data/rename-target.txt" #"target")
+                      (make-directory "/app/rename-dir")
+                      (webracket-vfs-write-file "/app/rename-dir/inside.txt" #"inside")
+                      (and (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                            (lambda (_ex) #t)])
+                             (rename-file-or-directory "/app/data/rename-source.txt"
+                                                       "/app/data/rename-target.txt")
+                             #f)
+                           (void? (rename-file-or-directory "/app/data/rename-source.txt"
+                                                            "/app/data/renamed.txt"))
+                           (equal? (file-exists? "/app/data/rename-source.txt") #f)
+                           (equal? (file->string "/app/data/renamed.txt") "source")
+                           (void? (rename-file-or-directory "/app/data/renamed.txt"
+                                                            "/app/data/rename-target.txt"
+                                                            #t))
+                           (equal? (file->string "/app/data/rename-target.txt") "source")
+                           (void? (rename-file-or-directory "/app/rename-dir"
+                                                            "/app/renamed-dir"))
+                           (equal? (directory-exists? "/app/rename-dir") #f)
+                           (equal? (file->string "/app/renamed-dir/inside.txt") "inside")
+                           (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                            (lambda (_ex) #t)])
+                             (rename-file-or-directory "/app/missing-rename.txt"
+                                                       "/app/data/nope.txt")
+                             #f)
+                           (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                            (lambda (_ex) #t)])
+                             (rename-file-or-directory "/app/renamed-dir"
+                                                       "/app/data/rename-target.txt"
+                                                       #t)
+                             #f))))
               (list "file-size"
                     (and (equal? (file-size "/app/data/notes.txt") 6)
                          (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))

@@ -1018,6 +1018,7 @@
  delete-file
  make-directory
  delete-directory
+ rename-file-or-directory
  file->bytes
  file->string
  open-input-file
@@ -1810,6 +1811,11 @@
 
 (define (delete-directory path)
   (error 'delete-directory "only available in compiled WebRacket"))
+
+(define rename-file-or-directory
+  (case-lambda
+    [(old new) (error 'rename-file-or-directory "only available in compiled WebRacket")]
+    [(old new exists-ok?) (error 'rename-file-or-directory "only available in compiled WebRacket")]))
 
 (define directory-list
   (case-lambda
