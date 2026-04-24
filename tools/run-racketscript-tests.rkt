@@ -21,6 +21,7 @@
 (define limit          (make-parameter #f))
 (define verbose?       (make-parameter #f))
 (define keep-going?    (make-parameter #t))
+(define job-count      (make-parameter 8))
 (define use-stdlib?    (make-parameter #t))
 (define flush-output-port? (make-parameter #t))
 (define print-top-level-results? (make-parameter #t))
@@ -196,6 +197,51 @@
       (hash-ref counts status 0)))
   (zero? bad-count))
 
+(define (run-tests/sequential test-files)
+  (define results '())
+  (for ([source (in-list test-files)])
+    (define result (run-one source))
+    (set! results (cons result results))
+    (print-result result)
+    (when (and (not (keep-going?)) (not (eq? (test-result-status result) 'pass)))
+      (exit (if (summarize (reverse results)) 0 1))))
+  (reverse results))
+
+(define (run-tests/parallel test-files)
+  (define total (length test-files))
+  (define workers (min (job-count) total))
+  (define jobs    (make-channel))
+  (define results (make-channel))
+  (define done    (gensym 'done))
+  (define result-vector (make-vector total #f))
+
+  (for ([worker (in-range workers)])
+    (thread
+     (lambda ()
+       (let loop ()
+         (match (channel-get jobs)
+           [(== done) (void)]
+           [(cons index source)
+            (channel-put results (cons index (run-one source)))
+            (loop)])))))
+
+  (thread
+   (lambda ()
+     (for ([source (in-list test-files)]
+           [index  (in-naturals)])
+       (channel-put jobs (cons index source)))
+     (for ([worker (in-range workers)])
+       (channel-put jobs done))))
+
+  (for ([index (in-range total)])
+    (match-define (cons result-index result) (channel-get results))
+    (vector-set! result-vector result-index result))
+
+  (define ordered-results (vector->list result-vector))
+  (for ([result (in-list ordered-results)])
+    (print-result result))
+  ordered-results)
+
 (define specs
   (command-line
    #:program "run-racketscript-tests"
@@ -212,6 +258,12 @@
     (unless (and (exact-nonnegative-integer? maybe-n))
       (raise-user-error 'run-racketscript-tests "--limit expects a nonnegative integer"))
     (limit maybe-n)]
+   [("--jobs" "-j") n
+    "Run n tests in parallel; default 8"
+    (define maybe-n (string->number n))
+    (unless (and (exact-positive-integer? maybe-n))
+      (raise-user-error 'run-racketscript-tests "--jobs expects a positive integer"))
+    (job-count maybe-n)]
    [("--stdlib")
     "Compile rewritten tests with WebRacket stdlib"
     (use-stdlib? #t)]
@@ -253,12 +305,9 @@
 
 (make-directory* (work-dir))
 
-(define results '())
-(for ([source (in-list test-files)])
-  (define result (run-one source))
-  (set! results (cons result results))
-  (print-result result)
-  (when (and (not (keep-going?)) (not (eq? (test-result-status result) 'pass)))
-    (exit (if (summarize (reverse results)) 0 1))))
+(define results
+  (if (or (= (job-count) 1) (not (keep-going?)))
+      (run-tests/sequential test-files)
+      (run-tests/parallel test-files)))
 
-(exit (if (summarize (reverse results)) 0 1))
+(exit (if (summarize results) 0 1))
