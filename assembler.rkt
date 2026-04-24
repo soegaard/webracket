@@ -150,6 +150,19 @@ class WebRacketMemoryBackend {
     this.files.delete(p);
   }
 
+  deleteDirectory(path) {
+    const p = this.normalize(path);
+    if (p === '/' || !this.dirs.has(p)) throw new Error(`VFS directory not found: ${path}`);
+    const prefix = `${p}/`;
+    for (const file of this.files.keys()) {
+      if (file.startsWith(prefix)) throw new Error(`VFS directory is not empty: ${path}`);
+    }
+    for (const dir of this.dirs) {
+      if (dir !== p && dir.startsWith(prefix)) throw new Error(`VFS directory is not empty: ${path}`);
+    }
+    this.dirs.delete(p);
+  }
+
   stat(path) {
     const p = this.normalize(path);
     if (this.files.has(p)) return { type: 'file', size: this.files.get(p).length, mtime: 0 };
@@ -230,6 +243,11 @@ class WebRacketVFS {
   deleteFile(path) {
     const [backend, rel] = this.resolve(path);
     backend.deleteFile(rel);
+  }
+
+  deleteDirectory(path) {
+    const [backend, rel] = this.resolve(path);
+    backend.deleteDirectory(rel);
   }
 
   listDir(path) {
@@ -1296,6 +1314,14 @@ var imports = {
       'vfs_delete_file': ((pathStart, pathLen) => {
         try {
           webracketVFS.deleteFile(vfs_path_from_memory(pathStart, pathLen));
+          return 0;
+        } catch (_) {
+          return -1;
+        }
+      }),
+      'vfs_delete_directory': ((pathStart, pathLen) => {
+        try {
+          webracketVFS.deleteDirectory(vfs_path_from_memory(pathStart, pathLen));
           return 0;
         } catch (_) {
           return -1;

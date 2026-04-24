@@ -1993,6 +1993,7 @@
   file-size
   delete-file
   make-directory
+  delete-directory
   file->bytes
   file->string
   open-input-file

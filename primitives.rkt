@@ -1016,6 +1016,7 @@
  file-size
  delete-file
  make-directory
+ delete-directory
  file->bytes
  file->string
  open-input-file
@@ -1805,6 +1806,9 @@
   (case-lambda
     [(path) (error 'make-directory "only available in compiled WebRacket")]
     [(path permissions) (error 'make-directory "only available in compiled WebRacket")]))
+
+(define (delete-directory path)
+  (error 'delete-directory "only available in compiled WebRacket"))
 
 (define (call-with-input-file path proc)
   (error 'call-with-input-file "only available in compiled WebRacket"))
