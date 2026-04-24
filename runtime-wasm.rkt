@@ -2533,6 +2533,9 @@
          (func $js-vfs-read-file
                (import "primitives" "vfs_read_file")
                (param i32) (param i32) (param i32) (param i32) (result i32))
+         (func $js-vfs-write-file
+               (import "primitives" "vfs_write_file")
+               (param i32) (param i32) (param i32) (param i32) (result i32))
 
          (func $char-upcase/ucs
                (import "primitives" "char_upcase")
@@ -44794,6 +44797,72 @@
                          (then (call $raise-path-expected (local.get $path-raw))
                                (unreachable)))
                      (ref.i31 (i32.shl (local.get $size) (i32.const 1))))
+
+               (func $webracket-vfs-write-file (type $Prim2)
+                     (param $path-raw  (ref eq)) ;; path-string?
+                     (param $bytes-raw (ref eq)) ;; bytes?
+                     (result           (ref eq))
+
+                     (local $path      (ref $Path))
+                     (local $path-bs   (ref $Bytes))
+                     (local $path-len  i32)
+                     (local $bytes     (ref $Bytes))
+                     (local $bytes-len i32)
+                     (local $status    i32)
+
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:webracket-vfs-write-file)
+                                      (local.get $path-raw)))
+                     (if (i32.eqz (ref.test (ref $Bytes) (local.get $bytes-raw)))
+                         (then (call $raise-check-bytes (local.get $bytes-raw))
+                               (unreachable)))
+                     (local.set $bytes (ref.cast (ref $Bytes) (local.get $bytes-raw)))
+                     (local.set $path-bs (struct.get $Path $bytes (local.get $path)))
+                     (local.set $path-len
+                                (array.len
+                                 (struct.get $Bytes $bs (local.get $path-bs))))
+                     (local.set $bytes-len
+                                (array.len
+                                 (struct.get $Bytes $bs (local.get $bytes))))
+                     (if (i32.gt_u (local.get $path-len)
+                                   (global.get $memory-map:vfs-path-buffer-length))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (if (i32.gt_u (local.get $bytes-len)
+                                   (global.get $memory-map:vfs-file-buffer-length))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-path-buffer-base)
+                                (global.get $memory-map:vfs-path-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-file-buffer-base)
+                                (global.get $memory-map:vfs-file-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (local.set $path-len
+                                (call $copy-bytes-to-memory
+                                      (local.get $path-bs)
+                                      (global.get $memory-map:vfs-path-buffer-base)))
+                     (local.set $bytes-len
+                                (call $copy-bytes-to-memory
+                                      (local.get $bytes)
+                                      (global.get $memory-map:vfs-file-buffer-base)))
+                     (local.set $status
+                                (call $js-vfs-write-file
+                                      (global.get $memory-map:vfs-path-buffer-base)
+                                      (local.get $path-len)
+                                      (global.get $memory-map:vfs-file-buffer-base)
+                                      (local.get $bytes-len)))
+                     (if (i32.lt_s (local.get $status) (i32.const 0))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (global.get $void))
 
                (func $open-input-file (type $Prim12)
                      (param $path-raw (ref eq)) ;; path-string?

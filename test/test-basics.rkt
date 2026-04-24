@@ -4798,6 +4798,11 @@
                                  "/app/data/notes.txt")))))
        (list "15.2 Filesystem"
              (list
+              (list "webracket-vfs-write-file"
+                    (begin
+                      (webracket-vfs-write-file "/app/main.rkt" #"")
+                      (webracket-vfs-write-file "/app/data/notes.txt" #"notes\n")
+                      (void? (webracket-vfs-write-file "/app/data/more.txt" #"more"))))
               (list "file-exists?"
                     (and (equal? (file-exists? "/app/main.rkt") #t)
                          (equal? (file-exists? "/app") #f)

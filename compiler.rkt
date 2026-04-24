@@ -1962,6 +1962,7 @@
   directory-exists?
   file-size
   open-input-file
+  webracket-vfs-write-file
   
   ;; 17. Unsafe Operations
   unsafe-fx+ unsafe-fx- unsafe-fx* unsafe-fl/

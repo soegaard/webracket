@@ -172,10 +172,7 @@ class WebRacketVFS {
   constructor() {
     this.mounts = new Map();
     this.mount('/tmp', new WebRacketMemoryBackend());
-    this.mount('/app', new WebRacketMemoryBackend({
-      '/main.rkt': '',
-      '/data/notes.txt': 'notes\n'
-    }));
+    this.mount('/app', new WebRacketMemoryBackend());
   }
 
   normalize(path) {
@@ -208,6 +205,11 @@ class WebRacketVFS {
   readFile(path) {
     const [backend, rel] = this.resolve(path);
     return backend.readFile(rel);
+  }
+
+  writeFile(path, bytes) {
+    const [backend, rel] = this.resolve(path);
+    backend.writeFile(rel, bytes);
   }
 
   listDir(path) {
@@ -1258,6 +1260,15 @@ var imports = {
           if (bytes.length > outMax) return -2;
           new Uint8Array(memory.buffer).set(bytes, outStart);
           return bytes.length;
+        } catch (_) {
+          return -1;
+        }
+      }),
+      'vfs_write_file': ((pathStart, pathLen, bytesStart, bytesLen) => {
+        try {
+          const bytes = new Uint8Array(memory.buffer).slice(bytesStart, bytesStart + bytesLen);
+          webracketVFS.writeFile(vfs_path_from_memory(pathStart, pathLen), bytes);
+          return 0;
         } catch (_) {
           return -1;
         }

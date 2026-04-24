@@ -1006,6 +1006,7 @@
  directory-exists?
  file-size
  open-input-file
+ webracket-vfs-write-file
 
  ;; 17. Unsafe Operations
  unsafe-fx+ unsafe-fx- unsafe-fx* unsafe-fl/
@@ -1767,6 +1768,9 @@
   (case-lambda
     [(path) (error 'open-input-file "only available in compiled WebRacket")]
     [(path mode) (error 'open-input-file "only available in compiled WebRacket")]))
+
+(define (webracket-vfs-write-file path bytes)
+  (error 'webracket-vfs-write-file "only available in compiled WebRacket"))
 
 (define (~r/precision x prec)
   (~r x #:precision prec))
