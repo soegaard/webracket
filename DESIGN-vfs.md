@@ -85,7 +85,7 @@ Defer:
 - subprocess/device/fifo behavior
 - current-user/home/preference directory discovery
 - full errno-specific exception compatibility
-- output file ports beyond a simple memory backend
+- full output file `#:exists` mode compatibility
 - async file APIs
 - direct reuse of Emscripten's JS `FS`
 
@@ -264,6 +264,7 @@ Initial imports can be conceptually:
 ```text
 vfs_stat(path)       -> kind and size
 vfs_read_file(path)  -> immutable bytes
+vfs_write_file(path, bytes) -> status
 vfs_list_dir(path)   -> list/vector of path-element bytes or strings
 ```
 
@@ -292,6 +293,10 @@ Initial Racket-compatible filesystem primitives:
 - `file-size`
 - `directory-list`
 - `open-input-file`
+- `open-output-file`
+- `call-with-input-file`
+- `call-with-output-file`
+- `flush-output`
 - `file->bytes`
 - `file->string`
 
@@ -339,6 +344,30 @@ The conservative choice is:
 
 That keeps `file-stream-port?` meaningful without duplicating the location
 rules.
+
+## File Output Ports
+
+The first output-file implementation uses a buffered byte-backed output port.
+Writes go into the same growable byte buffer used by output string/byte ports.
+`flush-output` copies the written prefix and sends it to the JS VFS through
+`vfs_write_file` without closing the port. `close-output-port` flushes the
+same buffer, then marks the port closed.
+
+For the first implementation:
+
+1. `open-output-file` validates and completes the path.
+2. The runtime constructs an `$OutputFilePort` whose object name is the cleansed
+   path.
+3. `write-byte`, `write-bytes`, `write-char`, and `write-string` reuse the
+   existing output-port machinery.
+4. `flush-output` writes the current buffered bytes to the JS VFS.
+5. `close-output-port` flushes the buffered bytes and then closes the port.
+6. `call-with-output-file` closes the port after the procedure returns.
+
+Keyword options are not implemented yet. Until WebRacket supports keywords,
+`open-output-file` accepts one positional path argument, and
+`call-with-output-file` accepts `(path proc)`. The memory backend currently
+creates or replaces files on each flush.
 
 ## Location Tracking
 
@@ -500,7 +529,9 @@ Prefer implementing these in terms of ports when practical.
 
 Add output-file support on the memory backend:
 
-- `open-output-file`
+- `open-output-file` with buffered close-time writes
+- `call-with-output-file`
+- `flush-output`
 - basic `#:exists` modes
 - `delete-file`
 - `make-directory`

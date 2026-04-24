@@ -884,6 +884,7 @@
  port-closed?
  close-input-port
  close-output-port
+ flush-output
 
  call-with-output-string
  make-input-port
@@ -1016,7 +1017,9 @@
  file->bytes
  file->string
  open-input-file
+ open-output-file
  call-with-input-file
+ call-with-output-file
  webracket-vfs-write-file
 
  ;; 17. Unsafe Operations
@@ -1780,6 +1783,9 @@
     [(path) (error 'open-input-file "only available in compiled WebRacket")]
     [(path mode) (error 'open-input-file "only available in compiled WebRacket")]))
 
+(define (open-output-file path)
+  (error 'open-output-file "only available in compiled WebRacket"))
+
 (define (file->bytes path)
   (error 'file->bytes "only available in compiled WebRacket"))
 
@@ -1788,6 +1794,9 @@
 
 (define (call-with-input-file path proc)
   (error 'call-with-input-file "only available in compiled WebRacket"))
+
+(define (call-with-output-file path proc)
+  (error 'call-with-output-file "only available in compiled WebRacket"))
 
 (define (webracket-vfs-write-file path bytes)
   (error 'webracket-vfs-write-file "only available in compiled WebRacket"))

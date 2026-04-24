@@ -999,6 +999,7 @@
        unsafe-fxremainder
        unsafe-fxmodulo
        call-with-input-file
+       call-with-output-file
        instance-unset-variable!
        bytes-join)
      'fixed 2 2))
@@ -1126,6 +1127,7 @@
        read-byte
        read-char
        newline
+       flush-output
        current-directory)
      'optional 0 1)
     (make-inline-specs
@@ -1741,6 +1743,7 @@
   port-closed?
   close-input-port
   close-output-port
+  flush-output
   string-port?
   
   open-input-bytes
@@ -1976,7 +1979,9 @@
   file->bytes
   file->string
   open-input-file
+  open-output-file
   call-with-input-file
+  call-with-output-file
   webracket-vfs-write-file
   
   ;; 17. Unsafe Operations

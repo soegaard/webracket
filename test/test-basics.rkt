@@ -4038,6 +4038,16 @@
                       (and (void? (newline port))
                            (equal? (get-output-string port) "\n"))))
 
+              (list "flush-output/string-port"
+                    (let ([port (open-output-string)])
+                      (and (equal? (write-string "abc" port) 3)
+                           (void? (flush-output port))
+                           (equal? (get-output-string port) "abc")
+                           (void? (close-output-port port))
+                           (with-handlers ([exn:fail? (lambda (_ex) #t)])
+                             (flush-output port)
+                             #f))))
+
               (list "write-bytes/basic"
                     (let* ([port (open-output-bytes)]
                            [data (bytes 65 66 67)]
@@ -4912,6 +4922,31 @@
                                      (lambda (_ex) #t)])
                       (open-input-file "/app/data/missing.txt")
                       #f))
+              (list "open-output-file"
+                    (let ([port (open-output-file "/app/data/out.txt")])
+                      (and (output-port? port)
+                           (path? (object-name port))
+                           (equal? (path->string (object-name port))
+                                   "/app/data/out.txt")
+                           (equal? (write-string "out\n" port) 4)
+                           (void? (write-byte 65 port))
+                           (void? (close-output-port port))
+                           (void? (close-output-port port))
+                           (equal? (file->bytes "/app/data/out.txt") #"out\nA")
+                           (equal? (file-size "/app/data/out.txt") 5)
+                           (with-handlers ([exn:fail? (lambda (_ex) #t)])
+                             (write-byte 66 port)
+                             #f))))
+              (list "flush-output/open-output-file"
+                    (let ([port (open-output-file "/app/data/flushed.txt")])
+                      (and (equal? (write-string "first" port) 5)
+                           (void? (flush-output port))
+                           (equal? (file->string "/app/data/flushed.txt") "first")
+                           (equal? (write-string "!" port) 1)
+                           (void? (flush-output port))
+                           (equal? (file->string "/app/data/flushed.txt") "first!")
+                           (void? (close-output-port port))
+                           (equal? (file->string "/app/data/flushed.txt") "first!"))))
               (list "call-with-input-file"
                     (let ([saved-port #f])
                       (let ([result
@@ -4925,7 +4960,21 @@
                                       (equal? (read-string 6 port) "notes\n")
                                       (eof-object? (read-byte port)))))])
                         (and result
-                             (port-closed? saved-port))))))))
+                             (port-closed? saved-port)))))
+              (list "call-with-output-file"
+                    (let ([saved-port #f])
+                      (let ([result
+                             (call-with-output-file "/app/data/call-out.txt"
+                               (lambda (port)
+                                 (set! saved-port port)
+                                 (and (output-port? port)
+                                      (equal? (write-string "called" port) 6)
+                                      'done)))])
+                        (and (equal? result 'done)
+                             (output-port? saved-port)
+                             (port-closed? saved-port)
+                             (equal? (file->string "/app/data/call-out.txt")
+                                     "called"))))))))
        
  (list "Checkers"
        (list

@@ -1766,8 +1766,10 @@
     (add-runtime-string-constant 'read-byte:input-port-closed "read-byte: input port is closed")
     (add-runtime-string-constant 'peek-byte:input-port-closed "peek-byte: input port is closed")
     (add-runtime-string-constant 'write-byte:output-port-closed "write-byte: output port is closed")
+    (add-runtime-string-constant 'flush-output:output-port-closed "flush-output: output port is closed")
     (add-runtime-string-constant 'vfs:file-size-failed       "file-size: VFS path does not refer to a file")
     (add-runtime-string-constant 'vfs:read-file-failed       "VFS file read failed")
+    (add-runtime-string-constant 'vfs:write-file-failed      "VFS file write failed")
     (add-runtime-string-constant 'uncaught-exception         "uncaught exception: ")
     (add-runtime-string-constant 'callback:no-js-equivalent
                                  "The callback attempted to return a WebRacket value with no JavaScript equivalent (i.e. without a FASL encoding): ")
@@ -2297,6 +2299,21 @@
                        (field $utf8-len    (mut i32))     ;; 0 = idle, 1-4 = number of bytes expected
                        (field $utf8-left   (mut i32))     ;; number of continuation bytes still needed
                        (field $utf8-bytes  (mut i32)))))  ;; current byte count seen (for column fix)
+
+          (type $OutputFilePort
+                (sub $OutputStringPort
+                     (struct
+                       (field $hash  (mut i32))
+                       (field $name  (mut (ref eq)))
+                       (field $closed (mut i32))
+                       (field $bytes (mut (ref $Bytes)))
+                       (field $len   (mut i32))
+                       (field $idx   (mut i32))
+                       (field $loc   (mut (ref $Location)))
+                       (field $utf8-len    (mut i32))
+                       (field $utf8-left   (mut i32))
+                       (field $utf8-bytes  (mut i32))
+                       (field $path        (ref $Path)))))
 
           (type $CustomInputPort
                 (sub $InputPort
@@ -30650,8 +30667,44 @@
               (struct.set $InputPort $closed (local.get $port) (i32.const 1))
               (global.get $void))
 
+        ;; flush-output : [output-port?] -> void?
+        ;;   Flush a VFS output file port; string and bytes output ports are no-ops.
+        (func $flush-output (type $Prim01)
+              (param $p (ref eq)) ;; optional output-port?, default = current output port
+              (result   (ref eq))
+
+              (local $port      (ref $OutputPort))
+              (local $file-port (ref $OutputFilePort))
+
+              ;; First version: the current-output-port default is left until
+              ;; runtime primitives can consult parameter-like stdlib state.
+              (if (ref.eq (local.get $p) (global.get $missing))
+                  (then (call $raise-argument-error1
+                              (global.get $symbol:flush-output)
+                              (global.get $string:output-port?)
+                              (local.get $p))
+                        (unreachable)))
+              (if (i32.eqz (ref.test (ref $OutputPort) (local.get $p)))
+                  (then (call $raise-argument-error1
+                              (global.get $symbol:flush-output)
+                              (global.get $string:output-port?)
+                              (local.get $p))
+                        (unreachable)))
+              (local.set $port (ref.cast (ref $OutputPort) (local.get $p)))
+              (if (struct.get $OutputPort $closed (local.get $port))
+                  (then (call $raise-output-port-closed
+                              (global.get $string:flush-output:output-port-closed))
+                        (unreachable)))
+              (if (ref.test (ref $OutputFilePort) (local.get $p))
+                  (then
+                   (local.set $file-port (ref.cast (ref $OutputFilePort) (local.get $p)))
+                   (drop (call $webracket-vfs-write-file
+                               (struct.get $OutputFilePort $path (local.get $file-port))
+                               (call $get-output-bytes (local.get $p))))))
+              (global.get $void))
+
         ;; close-output-port : output-port? -> void?
-        ;;   Mark an output port closed.
+        ;;   Flush a VFS file output port if needed, then mark the port closed.
         (func $close-output-port (type $Prim1)
               (param $p (ref eq)) ;; output-port?
               (result   (ref eq))
@@ -30665,6 +30718,9 @@
                               (local.get $p))
                         (unreachable)))
               (local.set $port (ref.cast (ref $OutputPort) (local.get $p)))
+              (if (struct.get $OutputPort $closed (local.get $port))
+                  (then (return (global.get $void))))
+              (drop (call $flush-output (local.get $p)))
               (struct.set $OutputPort $closed (local.get $port) (i32.const 1))
               (global.get $void))
         
@@ -45208,9 +45264,47 @@
                                       (global.get $memory-map:vfs-file-buffer-base)
                                       (local.get $bytes-len)))
                      (if (i32.lt_s (local.get $status) (i32.const 0))
-                         (then (call $raise-path-expected (local.get $path-raw))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:write-file-failed))
                                (unreachable)))
                      (global.get $void))
+
+               (func $open-output-file (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (result          (ref eq))
+
+                     (local $path (ref $Path))
+                     (local $bs   (ref $Bytes))
+                     (local $loc  (ref $Location))
+
+                     ;; First version: binary mode only; keyword options such as
+                     ;; #:exists are left until WebRacket supports keywords.
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:open-output-file)
+                                      (local.get $path-raw)))
+                     (local.set $bs
+                                (struct.new $Bytes
+                                            (i32.const 0)
+                                            (i32.const 0)
+                                            (call $i8make-array
+                                                  (i32.const 32)
+                                                  (i32.const 0))))
+                     (local.set $loc
+                                (ref.cast (ref $Location)
+                                          (call $make-initial-location)))
+                     (struct.new $OutputFilePort
+                                 (i32.const 0)        ;; $hash
+                                 (local.get $path)    ;; $name
+                                 (i32.const 0)        ;; $closed
+                                 (local.get $bs)      ;; $bytes
+                                 (i32.const 32)       ;; $len
+                                 (i32.const 0)        ;; $idx
+                                 (local.get $loc)     ;; $loc
+                                 (i32.const 0)        ;; $utf8-len
+                                 (i32.const 0)        ;; $utf8-left
+                                 (i32.const 0)        ;; $utf8-bytes
+                                 (local.get $path)))  ;; $path
 
                (func $open-input-file (type $Prim12)
                      (param $path-raw (ref eq)) ;; path-string?
@@ -45263,6 +45357,38 @@
                                           (local.get $args)
                                           (local.get $finv)))
                      (drop (call $close-input-port (local.get $port)))
+                     (local.get $res))
+
+               ;; $call-with-output-file : path-string? procedure? -> any
+               ;;   Open a VFS output file, pass its output port to proc, close it,
+               ;;   and return proc's result. Keyword options are not implemented yet.
+               (func $call-with-output-file (type $Prim2)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (param $proc     (ref eq)) ;; procedure?
+                     (result          (ref eq))
+
+                     (local $f    (ref $Procedure))
+                     (local $finv (ref $ProcedureInvoker))
+                     (local $port (ref eq))
+                     (local $args (ref $Args))
+                     (local $res  (ref eq))
+
+                     (local.set $port
+                                (call $open-output-file
+                                      (local.get $path-raw)))
+                     (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                         (then (call $raise-argument-error:procedure-expected
+                                     (local.get $proc))
+                               (unreachable)))
+                     (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
+                     (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
+                     (local.set $args (array.new_fixed $Args 1 (local.get $port)))
+                     (local.set $res
+                                (call_ref $ProcedureInvoker
+                                          (local.get $f)
+                                          (local.get $args)
+                                          (local.get $finv)))
+                     (drop (call $close-output-port (local.get $port)))
                      (local.get $res))
                
                ;;;
