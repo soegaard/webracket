@@ -4912,6 +4912,18 @@
                     (and (equal? (directory-exists? "/app") #t)
                          (equal? (directory-exists? "/app/data") #t)
                          (equal? (directory-exists? "/app/main.rkt") #f)))
+              (list "link-exists?"
+                    (and (equal? (link-exists? "/app/main.rkt") #f)
+                         (equal? (link-exists? "/app/data") #f)
+                         (equal? (link-exists? "/app/missing-link") #f)))
+              (list "file-or-directory-type"
+                    (and (equal? (file-or-directory-type "/app/main.rkt") 'file)
+                         (equal? (file-or-directory-type "/app/data") 'directory)
+                         (equal? (file-or-directory-type "/app/missing-type") #f)
+                         (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                          (lambda (_ex) #t)])
+                           (file-or-directory-type "/app/missing-type" #t)
+                           #f)))
               (list "directory-list"
                     (let ([original (current-directory)])
                       (make-directory "/app/list-dir")

@@ -1540,6 +1540,8 @@
           write
           execute
           bits
+          file
+          directory
 
           srcloc
           make-srcloc
@@ -1788,6 +1790,7 @@
     (add-runtime-string-constant 'vfs:modify-seconds-failed  "file-or-directory-modify-seconds: VFS path does not exist")
     (add-runtime-string-constant 'vfs:permissions-failed     "file-or-directory-permissions: VFS path does not exist")
     (add-runtime-string-constant 'vfs:stat-failed            "file-or-directory-stat: VFS path does not exist")
+    (add-runtime-string-constant 'vfs:type-failed            "file-or-directory-type: VFS path does not exist")
     (add-runtime-string-constant 'vfs:identity-failed        "file-or-directory-identity: VFS path does not exist")
     (add-runtime-string-constant 'permissions-mode           "(or/c #f 'bits (integer-in 0 65535))")
     (add-runtime-string-constant 'boolean?                   "boolean?")
@@ -45168,6 +45171,42 @@
                                  (i32.const 2))
                          (then (global.get $true))
                          (else (global.get $false))))
+
+               ;; link-exists? : path-string? -> boolean?
+               ;;   Return #f in the current VFS model; links are not modeled yet.
+               (func $link-exists? (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (result          (ref eq))
+
+                     (drop (call $path-string->path/checked
+                                 (global.get $symbol:link-exists?)
+                                 (local.get $path-raw)))
+                     (global.get $false))
+
+               ;; file-or-directory-type : path-string? [any/c] -> (or/c 'file 'directory #f)
+               ;;   Report the VFS path kind; links are not modeled yet.
+               (func $file-or-directory-type (type $Prim12)
+                     (param $path-raw       (ref eq)) ;; path-string?
+                     (param $must-exist-raw (ref eq)) ;; optional any/c, default = #f
+                     (result                (ref eq))
+
+                     (local $kind i32)
+
+                     (local.set $kind
+                                (call $vfs-path-stat-kind
+                                      (global.get $symbol:file-or-directory-type)
+                                      (local.get $path-raw)))
+                     (if (i32.eq (local.get $kind) (i32.const 1))
+                         (then (return (global.get $symbol:file))))
+                     (if (i32.eq (local.get $kind) (i32.const 2))
+                         (then (return (global.get $symbol:directory))))
+                     (if (i32.eqz (ref.eq (local.get $must-exist-raw) (global.get $false)))
+                         (then
+                          (if (i32.eqz (ref.eq (local.get $must-exist-raw) (global.get $missing)))
+                              (then (call $raise-vfs-file-error
+                                          (global.get $string:vfs:type-failed))
+                                    (unreachable)))))
+                     (global.get $false))
 
                ;; directory-list : [path-string?] -> (listof path?)
                ;;   Return sorted VFS directory entries as path elements; #:build? is not implemented yet.

@@ -1160,6 +1160,9 @@
      '(file-or-directory-identity)
      'optional 1 2)
     (make-inline-specs
+     '(file-or-directory-type)
+     'optional 1 2)
+    (make-inline-specs
      '(copy-file rename-file-or-directory)
      'optional 2 3))
    (make-inline-specs
@@ -2006,6 +2009,8 @@
   ;; 15.2 Filesystem
   file-exists?
   directory-exists?
+  link-exists?
+  file-or-directory-type
   directory-list
   filesystem-root-list
   file-size

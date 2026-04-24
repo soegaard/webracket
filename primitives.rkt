@@ -1013,6 +1013,8 @@
  ;; 15.2 Filesystem
  file-exists?
  directory-exists?
+ link-exists?
+ file-or-directory-type
  directory-list
  filesystem-root-list
  file-size
