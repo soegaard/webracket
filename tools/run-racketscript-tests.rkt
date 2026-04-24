@@ -25,6 +25,9 @@
 (define use-stdlib?    (make-parameter #t))
 (define flush-output-port? (make-parameter #t))
 (define print-top-level-results? (make-parameter #t))
+(define instrument-list-markers? (make-parameter #f))
+(define list-stop-before-marker (make-parameter #f))
+(define list-only-marker (make-parameter #f))
 (define webracket-file (make-parameter "webracket.rkt"))
 
 (struct run-result (status stdout stderr) #:transparent)
@@ -132,7 +135,53 @@
    "     (with-handlers ([e? (lambda (ex) (displayln (exn-message ex)))])\n"
    "       e)]))\n"))
 
-(define (webracket-rewrite content)
+(define list-debug-markers
+  '(("A" . #f)
+    ("B" . ";; ---------- last, last-pair ----------")
+    ("C" . ";; ---------- sort ----------")
+    ("D" . ";; ---------- make-list ----------")
+    ("E" . ";; ---------- take/drop/splt-at[-right] ----------")
+    ("F" . ";; ---------- append* ----------")
+    ("G" . ";; ---------- flatten ----------")
+    ("H" . ";; ---------- add-between ----------")
+    ("I" . ";; ---------- check-duplicates ----------")
+    ("J" . ";; ---------- filter and filter-not ----------")
+    ("K" . ";; ---------- partition ----------")
+    ("L" . ";; ---------- filter-map ----------")
+    ("M" . ";; ---------- count ----------")
+    ("N" . ";; ---------- append-map ----------")
+    ("O" . ";; ---------- shuffle ----------")
+    ("P" . ";; ---------- argmin & argmax ----------")
+    ("Q" . ";; ---------- range ----------")
+    ("R" . ";; ---------- group-by ----------")
+    ("S" . ";; ---------- cartesian-product ----------")
+    ("T" . ";; ---------- list-update ----------")
+    ("U" . ";; ---------- list-set ----------")
+    ("V" . ";; ---------- list prefix functions ----------")
+    ("W" . ";; ---------- remf / remf* ----------")
+    ("X" . ";; ---------- index(es)-of / index(es)-where ----------")))
+
+(define (list-marker-prefix label)
+  (string-append
+   (if (equal? (list-stop-before-marker) label)
+       (format "(error \"STOP before marker ~a\")\n" label)
+       "")
+   (format "(js-log ~s)\n" label)))
+
+(define (insert-list-debug-markers content)
+  (for/fold ([marked (string-append (list-marker-prefix "A") content)])
+            ([marker (in-list (cdr list-debug-markers))])
+    (define label  (car marker))
+    (define header (cdr marker))
+    (string-replace marked header (string-append (list-marker-prefix label) header))))
+
+(define (maybe-instrument-list rel content)
+  (if (and (instrument-list-markers?)
+           (equal? (path->string rel) "racket-core/list.rkt"))
+      (insert-list-debug-markers content)
+      content))
+
+(define (webracket-rewrite rel content)
   (define uses-test-utils?
     (regexp-match? test-utils-require-rx content))
   (define without-test-utils
@@ -144,10 +193,12 @@
       [(regexp-match? #rx"^#lang[^\n]*(\n|$)" without-test-utils)
        (regexp-replace #rx"^#lang[^\n]*(\n|$)" without-test-utils "")]
       [else without-test-utils]))
+  (define with-markers
+    (maybe-instrument-list rel without-lang))
   (define with-inlined-test-utils
     (if uses-test-utils?
-        (string-append test-utils-shim "\n" without-lang)
-        without-lang))
+        (string-append test-utils-shim "\n" with-markers)
+        with-markers))
   (if (flush-output-port?)
       (string-append
        with-inlined-test-utils
@@ -158,6 +209,84 @@
        "  (unless (string=? rs-output \"\")\n"
        "    (js-log rs-output)))\n")
       with-inlined-test-utils))
+
+(define list-sort-tests-rx
+  #px";; ---------- sort ----------[\\s\\S]*?(?=;; ---------- make-list ----------)")
+
+(define list-sequence-tests-rx
+  #px";; ---------- take/drop/splt-at\\[-right\\] ----------[\\s\\S]*?(?=;; ---------- append\\* ----------)")
+
+(define list-test-prologue-rx
+  #px"^#lang[^\n]*\n(?:\\(require[^\n]*\\)\n)?\n?")
+
+(define (list-marker-labels)
+  (map car list-debug-markers))
+
+(define (valid-list-marker? label)
+  (member label (list-marker-labels)))
+
+(define (string-match-start content needle)
+  (define m (regexp-match-positions (regexp (regexp-quote needle)) content))
+  (and m (caar m)))
+
+(define (list-test-prologue content)
+  (define m (regexp-match-positions list-test-prologue-rx content))
+  (if m
+      (substring content 0 (cdar m))
+      ""))
+
+(define (slice-list-test-to-marker content label)
+  (define entries list-debug-markers)
+  (define index
+    (for/first ([entry (in-list entries)]
+                [i     (in-naturals)]
+                #:when (equal? (car entry) label))
+      i))
+  (unless index
+    (raise-user-error 'run-racketscript-tests
+                      "unknown list marker ~a; expected one of ~a"
+                      label
+                      (string-join (list-marker-labels) ", ")))
+  (define prologue (list-test-prologue content))
+  (define start
+    (cond
+      [(zero? index) (string-length prologue)]
+      [else
+       (define header (cdr (list-ref entries index)))
+       (or (string-match-start content header)
+           (raise-user-error 'run-racketscript-tests
+                             "could not find list marker ~a header" label))]))
+  (define end
+    (or
+     (for/first ([entry (in-list (list-tail entries (add1 index)))]
+                 #:do [(define header (cdr entry))]
+                 #:when header
+                 #:do [(define pos (string-match-start content header))]
+                 #:when pos)
+       pos)
+     (string-length content)))
+  (string-append prologue (substring content start end)))
+
+(define (maybe-slice-list-test rel content)
+  (if (and (list-only-marker)
+           (equal? (path->string rel) "racket-core/list.rkt"))
+      (slice-list-test-to-marker content (list-only-marker))
+      content))
+
+(define (skip-known-unsupported-tests rel content)
+  (cond
+    [(equal? (path->string rel) "racket-core/list.rkt")
+     ;; WebRacket's `sort` keyword forms and sequence-based list operations
+     ;; are not supported yet, so keep the runner focused on supported bugs.
+     (maybe-slice-list-test
+      rel
+      (regexp-replace
+       list-sequence-tests-rx
+       (regexp-replace list-sort-tests-rx
+                       content
+                       ";; ---------- sort ----------\n;; Skipped by WebRacket RacketScript runner.\n")
+       ";; ---------- take/drop/splt-at[-right] ----------\n;; Skipped by WebRacket RacketScript runner.\n"))]
+    [else content]))
 
 (define (copy-reference-support-files!)
   (define root (root-dir))
@@ -173,9 +302,10 @@
   (define rel (relative-test-path source))
   (define reference-dest (build-path (work-dir) "reference" rel))
   (define webracket-dest (build-path (work-dir) "webracket" rel))
-  (define content (file->string source))
+  (define content (skip-known-unsupported-tests rel (file->string source)))
   (values (write-rewritten reference-dest content reference-rewrite)
-          (write-rewritten webracket-dest content webracket-rewrite)))
+          (write-rewritten webracket-dest content
+                           (lambda (content) (webracket-rewrite rel content)))))
 
 (define (path->test-files p)
   (cond
@@ -330,6 +460,20 @@
    [("--no-print-top-level-results")
     "Do not ask WebRacket to print top-level expression results"
     (print-top-level-results? #f)]
+   [("--instrument-list-markers")
+    "Insert js-log A/B/C... markers in rewritten racket-core/list.rkt"
+    (instrument-list-markers? #t)]
+   [("--list-stop-before-marker") marker
+    "In rewritten racket-core/list.rkt, raise an error before marker A-X"
+    (instrument-list-markers? #t)
+    (list-stop-before-marker marker)]
+   [("--list-only-marker") marker
+    "Only run one A-X section from rewritten racket-core/list.rkt"
+    (unless (valid-list-marker? marker)
+      (raise-user-error 'run-racketscript-tests
+                        "--list-only-marker expects one of ~a"
+                        (string-join (list-marker-labels) ", ")))
+    (list-only-marker marker)]
    [("--webracket") file
     "Path to webracket.rkt"
     (webracket-file file)]

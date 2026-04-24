@@ -20159,7 +20159,7 @@
                      (return (local.get $elem)))
                (unreachable))
          
-         (func $index-of (type $Prim3)
+         (func $index-of (type $Prim23)
                (param $xs     (ref eq))  ;; list
                (param $v      (ref eq))  ;; value to find
                (param $same?  (ref eq))  ;; optional comparator, default equal?
