@@ -113,6 +113,9 @@ class WebRacketMemoryBackend {
     this.dirMtimes = new Map([['/', 0]]);
     this.fileModes = new Map();
     this.dirModes = new Map([['/', 0o777]]);
+    this.fileIds = new Map();
+    this.dirIds = new Map([['/', 1]]);
+    this.nextId = 2;
     for (const [path, bytes] of Object.entries(entries)) {
       this.writeFile(path, bytes);
     }
@@ -142,6 +145,7 @@ class WebRacketMemoryBackend {
     this.dirs.add(p);
     this.dirMtimes.set(p, 0);
     this.dirModes.set(p, 0o777);
+    this.dirIds.set(p, this.nextId++);
   }
 
   writeFile(path, bytes) {
@@ -150,10 +154,12 @@ class WebRacketMemoryBackend {
       this.dirs.add(dir);
       if (!this.dirMtimes.has(dir)) this.dirMtimes.set(dir, 0);
       if (!this.dirModes.has(dir)) this.dirModes.set(dir, 0o777);
+      if (!this.dirIds.has(dir)) this.dirIds.set(dir, this.nextId++);
     }
     this.files.set(p, bytes instanceof Uint8Array ? bytes : new TextEncoder().encode(String(bytes)));
     this.fileMtimes.set(p, 0);
     this.fileModes.set(p, 0o666);
+    this.fileIds.set(p, this.nextId++);
   }
 
   deleteFile(path) {
@@ -162,6 +168,7 @@ class WebRacketMemoryBackend {
     this.files.delete(p);
     this.fileMtimes.delete(p);
     this.fileModes.delete(p);
+    this.fileIds.delete(p);
   }
 
   deleteDirectory(path) {
@@ -177,6 +184,7 @@ class WebRacketMemoryBackend {
     this.dirs.delete(p);
     this.dirMtimes.delete(p);
     this.dirModes.delete(p);
+    this.dirIds.delete(p);
   }
 
   rename(oldPath, newPath, existsOk = false) {
@@ -197,15 +205,19 @@ class WebRacketMemoryBackend {
       const bytes = this.files.get(oldP);
       const mtime = this.fileMtimes.get(oldP) || 0;
       const mode = this.fileModes.get(oldP) ?? 0o666;
+      const id = this.fileIds.get(oldP) || this.nextId++;
       if (newIsFile) this.files.delete(newP);
       if (newIsFile) this.fileMtimes.delete(newP);
       if (newIsFile) this.fileModes.delete(newP);
+      if (newIsFile) this.fileIds.delete(newP);
       this.files.delete(oldP);
       this.fileMtimes.delete(oldP);
       this.fileModes.delete(oldP);
+      this.fileIds.delete(oldP);
       this.files.set(newP, bytes);
       this.fileMtimes.set(newP, mtime);
       this.fileModes.set(newP, mode);
+      this.fileIds.set(newP, id);
       return;
     }
     if (newIsFile) throw new Error(`VFS cannot replace file with directory: ${newPath}`);
@@ -215,33 +227,37 @@ class WebRacketMemoryBackend {
     const oldPrefix = `${oldP}/`;
     for (const dir of this.dirs) {
       if (dir === oldP || dir.startsWith(oldPrefix)) {
-        dirUpdates.push([dir, newP + dir.slice(oldP.length), this.dirMtimes.get(dir) || 0, this.dirModes.get(dir) ?? 0o777]);
+        dirUpdates.push([dir, newP + dir.slice(oldP.length), this.dirMtimes.get(dir) || 0, this.dirModes.get(dir) ?? 0o777, this.dirIds.get(dir) || this.nextId++]);
       }
     }
     for (const [file, bytes] of this.files) {
       if (file.startsWith(oldPrefix)) {
-        fileUpdates.push([file, newP + file.slice(oldP.length), bytes, this.fileMtimes.get(file) || 0, this.fileModes.get(file) ?? 0o666]);
+        fileUpdates.push([file, newP + file.slice(oldP.length), bytes, this.fileMtimes.get(file) || 0, this.fileModes.get(file) ?? 0o666, this.fileIds.get(file) || this.nextId++]);
       }
     }
     for (const [from] of dirUpdates) {
       this.dirs.delete(from);
       this.dirMtimes.delete(from);
       this.dirModes.delete(from);
+      this.dirIds.delete(from);
     }
     for (const [from] of fileUpdates) {
       this.files.delete(from);
       this.fileMtimes.delete(from);
       this.fileModes.delete(from);
+      this.fileIds.delete(from);
     }
-    for (const [, to, mtime, mode] of dirUpdates) {
+    for (const [, to, mtime, mode, id] of dirUpdates) {
       this.dirs.add(to);
       this.dirMtimes.set(to, mtime);
       this.dirModes.set(to, mode);
+      this.dirIds.set(to, id);
     }
-    for (const [, to, bytes, mtime, mode] of fileUpdates) {
+    for (const [, to, bytes, mtime, mode, id] of fileUpdates) {
       this.files.set(to, bytes);
       this.fileMtimes.set(to, mtime);
       this.fileModes.set(to, mode);
+      this.fileIds.set(to, id);
     }
   }
 
@@ -256,6 +272,7 @@ class WebRacketMemoryBackend {
     this.files.set(destP, new Uint8Array(this.files.get(srcP)));
     this.fileMtimes.set(destP, this.fileMtimes.get(srcP) || 0);
     this.fileModes.set(destP, this.fileModes.get(srcP) ?? 0o666);
+    this.fileIds.set(destP, this.nextId++);
   }
 
   stat(path) {
@@ -265,7 +282,8 @@ class WebRacketMemoryBackend {
         type: 'file',
         size: this.files.get(p).length,
         mtime: this.fileMtimes.get(p) || 0,
-        mode: this.fileModes.get(p) ?? 0o666
+        mode: this.fileModes.get(p) ?? 0o666,
+        identity: this.fileIds.get(p) || 0
       };
     }
     if (this.dirs.has(p)) {
@@ -273,7 +291,8 @@ class WebRacketMemoryBackend {
         type: 'directory',
         size: 0,
         mtime: this.dirMtimes.get(p) || 0,
-        mode: this.dirModes.get(p) ?? 0o777
+        mode: this.dirModes.get(p) ?? 0o777,
+        identity: this.dirIds.get(p) || 0
       };
     }
     return { type: 'missing', size: 0, mtime: 0 };
@@ -293,6 +312,13 @@ class WebRacketMemoryBackend {
     if (modes === null) throw new Error(`VFS path not found: ${path}`);
     if (mode !== undefined) modes.set(p, mode & 0xffff);
     return modes.get(p) ?? (this.files.has(p) ? 0o666 : 0o777);
+  }
+
+  identity(path) {
+    const p = this.normalize(path);
+    const id = this.files.has(p) ? this.fileIds.get(p) : this.dirs.has(p) ? this.dirIds.get(p) : null;
+    if (id === null || id === undefined) throw new Error(`VFS path not found: ${path}`);
+    return id;
   }
 
   readFile(path) {
@@ -397,6 +423,11 @@ class WebRacketVFS {
   permissions(path, mode = undefined) {
     const [backend, rel] = this.resolve(path);
     return backend.permissions(rel, mode);
+  }
+
+  identity(path) {
+    const [backend, rel] = this.resolve(path);
+    return backend.identity(rel);
   }
 
   listDir(path) {
@@ -1448,7 +1479,7 @@ var imports = {
           const mtime = stat.mtime || 0;
           const payload = [
             Symbol.for('device-id'), 0,
-            Symbol.for('inode'), 0,
+            Symbol.for('inode'), stat.identity || 0,
             Symbol.for('mode'), stat.mode || 0,
             Symbol.for('hardlink-count'), 1,
             Symbol.for('user-id'), 0,
@@ -1564,6 +1595,13 @@ var imports = {
           return webracketVFS.permissions(
             vfs_path_from_memory(pathStart, pathLen),
             setMode !== 0 ? mode : undefined);
+        } catch (_) {
+          return -1;
+        }
+      }),
+      'vfs_identity': ((pathStart, pathLen) => {
+        try {
+          return webracketVFS.identity(vfs_path_from_memory(pathStart, pathLen));
         } catch (_) {
           return -1;
         }

@@ -1783,6 +1783,7 @@
     (add-runtime-string-constant 'vfs:modify-seconds-failed  "file-or-directory-modify-seconds: VFS path does not exist")
     (add-runtime-string-constant 'vfs:permissions-failed     "file-or-directory-permissions: VFS path does not exist")
     (add-runtime-string-constant 'vfs:stat-failed            "file-or-directory-stat: VFS path does not exist")
+    (add-runtime-string-constant 'vfs:identity-failed        "file-or-directory-identity: VFS path does not exist")
     (add-runtime-string-constant 'permissions-mode           "(or/c #f 'bits (integer-in 0 65535))")
     (add-runtime-string-constant 'boolean?                   "boolean?")
     (add-runtime-string-constant 'uncaught-exception         "uncaught exception: ")
@@ -2613,6 +2614,9 @@
          (func $js-vfs-permissions
                (import "primitives" "vfs_permissions")
                (param i32) (param i32) (param i32) (param i32) (result i32))
+         (func $js-vfs-identity
+               (import "primitives" "vfs_identity")
+               (param i32) (param i32) (result i32))
 
          (func $char-upcase/ucs
                (import "primitives" "char_upcase")
@@ -45343,6 +45347,50 @@
                                   (local.set $i (i32.add (local.get $i) (i32.const 2)))
                                   (br $build)))
                      (local.get $ht))
+
+               ;; file-or-directory-identity : path-string? [any/c] -> exact-positive-integer?
+               ;;   Return a stable VFS identity; as-link? is accepted but links are not modeled yet.
+               (func $file-or-directory-identity (type $Prim12)
+                     (param $path-raw    (ref eq)) ;; path-string?
+                     (param $as-link-raw (ref eq)) ;; optional any/c, default = #f
+                     (result             (ref eq))
+
+                     (local $path     (ref $Path))
+                     (local $path-bs  (ref $Bytes))
+                     (local $path-len i32)
+                     (local $id       i32)
+
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:file-or-directory-identity)
+                                      (local.get $path-raw)))
+                     (local.set $path-bs (struct.get $Path $bytes (local.get $path)))
+                     (local.set $path-len
+                                (array.len
+                                 (struct.get $Bytes $bs (local.get $path-bs))))
+                     (if (i32.gt_u (local.get $path-len)
+                                   (global.get $memory-map:vfs-path-buffer-length))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-path-buffer-base)
+                                (global.get $memory-map:vfs-path-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (local.set $path-len
+                                (call $copy-bytes-to-memory
+                                      (local.get $path-bs)
+                                      (global.get $memory-map:vfs-path-buffer-base)))
+                     (local.set $id
+                                (call $js-vfs-identity
+                                      (global.get $memory-map:vfs-path-buffer-base)
+                                      (local.get $path-len)))
+                     (if (i32.le_s (local.get $id) (i32.const 0))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:identity-failed))
+                               (unreachable)))
+                     (ref.i31 (i32.shl (local.get $id) (i32.const 1))))
 
                (func $file-size (type $Prim1)
                      (param $path-raw (ref eq)) ;; path-string?

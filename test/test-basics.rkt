@@ -5119,6 +5119,28 @@
                                               (lambda (_ex) #t)])
                                (file-or-directory-stat "/app/data/stat.txt" 'not-boolean)
                                #f)))))
+              (list "file-or-directory-identity"
+                    (begin
+                      (webracket-vfs-write-file "/app/data/identity.txt" #"id")
+                      (let ([original (file-or-directory-identity "/app/data/identity.txt")]
+                            [dir-id   (file-or-directory-identity "/app/data" #t)])
+                        (rename-file-or-directory "/app/data/identity.txt"
+                                                  "/app/data/identity-renamed.txt")
+                        (copy-file "/app/data/identity-renamed.txt"
+                                   "/app/data/identity-copy.txt")
+                        (and (exact-positive-integer? original)
+                             (exact-positive-integer? dir-id)
+                             (equal? (file-or-directory-identity "/app/data/identity-renamed.txt")
+                                     original)
+                             (not (equal? (file-or-directory-identity "/app/data/identity-copy.txt")
+                                          original))
+                             (equal? (hash-ref (file-or-directory-stat "/app/data/identity-renamed.txt")
+                                               'inode)
+                                     original)
+                             (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                              (lambda (_ex) #t)])
+                               (file-or-directory-identity "/app/data/missing-identity.txt")
+                               #f)))))
               (list "file-size"
                     (and (equal? (file-size "/app/data/notes.txt") 6)
                          (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
