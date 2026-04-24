@@ -5005,7 +5005,59 @@
                              (output-port? saved-port)
                              (port-closed? saved-port)
                              (equal? (file->string "/app/data/call-out.txt")
-                                     "called"))))))))
+                                     "called")))))
+              (list "with-input-from-file"
+                    (let* ([original (current-input-port)]
+                           [during   #f]
+                           [result   (with-input-from-file "/app/data/notes.txt"
+                                       (lambda ()
+                                         (set! during (current-input-port))
+                                         (read-string 6)))])
+                      (and (equal? result "notes\n")
+                           (input-port? during)
+                           (port-closed? during)
+                           (eq? (current-input-port) original))))
+              (list "with-input-from-file/exception"
+                    (let ([original (current-input-port)]
+                          [during   #f])
+                      (and (with-handlers ([symbol? (lambda (_ex) #t)])
+                             (with-input-from-file "/app/data/notes.txt"
+                               (lambda ()
+                                 (set! during (current-input-port))
+                                 (raise 'boom)))
+                             #f)
+                           (input-port? during)
+                           (port-closed? during)
+                           (eq? (current-input-port) original))))
+              (list "with-output-to-file"
+                    (let* ([original (current-output-port)]
+                           [during   #f]
+                           [result   (with-output-to-file "/app/data/with-out.txt"
+                                       (lambda ()
+                                         (set! during (current-output-port))
+                                         (write-string "with")
+                                         'ok))])
+                      (and (equal? result 'ok)
+                           (output-port? during)
+                           (port-closed? during)
+                           (eq? (current-output-port) original)
+                           (equal? (file->string "/app/data/with-out.txt")
+                                   "with"))))
+              (list "with-output-to-file/exception"
+                    (let ([original (current-output-port)]
+                          [during   #f])
+                      (and (with-handlers ([symbol? (lambda (_ex) #t)])
+                             (with-output-to-file "/app/data/with-error.txt"
+                               (lambda ()
+                                 (set! during (current-output-port))
+                                 (write-string "saved")
+                                 (raise 'boom)))
+                             #f)
+                           (output-port? during)
+                           (port-closed? during)
+                           (eq? (current-output-port) original)
+                           (equal? (file->string "/app/data/with-error.txt")
+                                   "saved")))))))
        
  (list "Checkers"
        (list

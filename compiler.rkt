@@ -1000,6 +1000,8 @@
        unsafe-fxmodulo
        call-with-input-file
        call-with-output-file
+       with-input-from-file
+       with-output-to-file
        instance-unset-variable!
        bytes-join)
      'fixed 2 2))
@@ -1992,6 +1994,8 @@
   open-output-file
   call-with-input-file
   call-with-output-file
+  with-input-from-file
+  with-output-to-file
   webracket-vfs-write-file
   
   ;; 17. Unsafe Operations

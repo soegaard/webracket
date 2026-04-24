@@ -1020,6 +1020,8 @@
  open-output-file
  call-with-input-file
  call-with-output-file
+ with-input-from-file
+ with-output-to-file
  webracket-vfs-write-file
 
  ;; 17. Unsafe Operations
@@ -1797,6 +1799,12 @@
 
 (define (call-with-output-file path proc)
   (error 'call-with-output-file "only available in compiled WebRacket"))
+
+(define (with-input-from-file path thunk)
+  (error 'with-input-from-file "only available in compiled WebRacket"))
+
+(define (with-output-to-file path thunk)
+  (error 'with-output-to-file "only available in compiled WebRacket"))
 
 (define (webracket-vfs-write-file path bytes)
   (error 'webracket-vfs-write-file "only available in compiled WebRacket"))
