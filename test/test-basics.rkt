@@ -3365,13 +3365,22 @@
                      (let ([port (open-input-string "x")])
                        (and (equal? (port-closed? port) #f)
                             (void? (close-input-port port))
-                            (equal? (port-closed? port) #t))))
+                            (equal? (port-closed? port) #t)
+                            (with-handlers ([exn:fail? (lambda (_ex) #t)])
+                              (read-byte port)
+                              #f)
+                            (with-handlers ([exn:fail? (lambda (_ex) #t)])
+                              (peek-byte port)
+                              #f))))
 
                (list "port-closed?/close-output-port"
                      (let ([port (open-output-string)])
                        (and (equal? (port-closed? port) #f)
                             (void? (close-output-port port))
-                            (equal? (port-closed? port) #t))))
+                            (equal? (port-closed? port) #t)
+                            (with-handlers ([exn:fail? (lambda (_ex) #t)])
+                              (write-byte 65 port)
+                              #f))))
 
                (list "make-input-port/read-in-proc"
                     (let* ([data (bytes 80 81 82)]

@@ -1756,6 +1756,9 @@
     (add-runtime-string-constant 'exact-nonnegative-integer? "exact-nonnegative-integer?")
     (add-runtime-string-constant 'procedure-arity?           "procedure-arity?")
     (add-runtime-string-constant 'valid-argument             "valid argument")
+    (add-runtime-string-constant 'read-byte:input-port-closed "read-byte: input port is closed")
+    (add-runtime-string-constant 'peek-byte:input-port-closed "peek-byte: input port is closed")
+    (add-runtime-string-constant 'write-byte:output-port-closed "write-byte: output port is closed")
     (add-runtime-string-constant 'uncaught-exception         "uncaught exception: ")
     (add-runtime-string-constant 'callback:no-js-equivalent
                                  "The callback attempted to return a WebRacket value with no JavaScript equivalent (i.e. without a FASL encoding): ")
@@ -2829,6 +2832,32 @@
                           (call $linear-memory->string
                                 (call $js-external-string->string
                                       (local.get $host))))
+               (drop (call $raise
+                           (call $make-exn:fail
+                                 (local.get $message)
+                                 (call $current-continuation-marks
+                                       (global.get $missing)))
+                           (global.get $true)))
+               (unreachable))
+
+         ;; raise-input-port-closed : string? -> none
+         ;;   Raise an exn:fail for an operation on a closed input port.
+         (func $raise-input-port-closed
+               (param $message (ref eq))
+
+               (drop (call $raise
+                           (call $make-exn:fail
+                                 (local.get $message)
+                                 (call $current-continuation-marks
+                                       (global.get $missing)))
+                           (global.get $true)))
+               (unreachable))
+
+         ;; raise-output-port-closed : string? -> none
+         ;;   Raise an exn:fail for an operation on a closed output port.
+         (func $raise-output-port-closed
+               (param $message (ref eq))
+
                (drop (call $raise
                            (call $make-exn:fail
                                  (local.get $message)
@@ -30934,6 +30963,10 @@
                (local $count     i32)
                (local $byte      i32)
          
+               (if (struct.get $CustomInputPort $closed (local.get $port))
+                   (then (call $raise-input-port-closed
+                               (global.get $string:read-byte:input-port-closed))
+                         (unreachable)))
                (local.set $delegate (struct.get $CustomInputPort $read-proc (local.get $port)))
                ;; Delegate to another input port when provided.
                (if (ref.test (ref $InputPort) (local.get $delegate))
@@ -31042,6 +31075,10 @@
                (local $count     i32)
                (local $byte      i32)
 
+               (if (struct.get $CustomInputPort $closed (local.get $port))
+                   (then (call $raise-input-port-closed
+                               (global.get $string:peek-byte:input-port-closed))
+                         (unreachable)))
                ;; Normalize skip argument for procedure-based handlers.
                (local.set $skip-count (i32.const 0))
                (local.set $skip-arg (local.get $skip))
@@ -31185,6 +31222,10 @@
                        (then (return (call $read-byte/custom
                                             (ref.cast (ref $CustomInputPort) (local.get $in)))))
                        (else (return (global.get $false))))))
+              (if (struct.get $InputStringPort $closed (local.get $sp))
+                  (then (call $raise-input-port-closed
+                              (global.get $string:read-byte:input-port-closed))
+                        (unreachable)))
               
               (local.set $idx   (struct.get $InputStringPort $idx (local.get $sp)))
               (local.set $limit (struct.get $InputStringPort $len (local.get $sp)))
@@ -32607,6 +32648,10 @@
                                              (ref.cast (ref $CustomInputPort) (local.get $in))
                                              (local.get $skip-arg))))
                         (else (return (global.get $false))))))
+               (if (struct.get $InputStringPort $closed (local.get $sp))
+                   (then (call $raise-input-port-closed
+                               (global.get $string:peek-byte:input-port-closed))
+                         (unreachable)))
 
                (local.set $idx       (struct.get $InputStringPort $idx (local.get $sp)))
                (local.set $limit     (struct.get $InputStringPort $len (local.get $sp)))
@@ -33017,6 +33062,10 @@
                (if (ref.test (ref $OutputStringPort) (local.get $out))
                    (then (local.set $sp (ref.cast (ref $OutputStringPort) (local.get $out))))
                    (else (return (global.get $false))))
+               (if (struct.get $OutputStringPort $closed (local.get $sp))
+                   (then (call $raise-output-port-closed
+                               (global.get $string:write-byte:output-port-closed))
+                         (unreachable)))
                ;; 3. Get buffer and current index
                (local.set $bs  (struct.get $OutputStringPort $bytes (local.get $sp)))
                (local.set $idx (struct.get $OutputStringPort $idx   (local.get $sp)))
