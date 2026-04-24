@@ -876,6 +876,9 @@
  port?
  input-port?
  output-port?
+ port-closed?
+ close-input-port
+ close-output-port
 
  call-with-output-string
  make-input-port

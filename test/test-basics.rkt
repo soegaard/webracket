@@ -3361,6 +3361,18 @@
                             (equal? (output-port? (open-input-string "x")) #f)
                             (equal? (output-port? #f) #f))))
 
+               (list "port-closed?/close-input-port"
+                     (let ([port (open-input-string "x")])
+                       (and (equal? (port-closed? port) #f)
+                            (void? (close-input-port port))
+                            (equal? (port-closed? port) #t))))
+
+               (list "port-closed?/close-output-port"
+                     (let ([port (open-output-string)])
+                       (and (equal? (port-closed? port) #f)
+                            (void? (close-output-port port))
+                            (equal? (port-closed? port) #t))))
+
                (list "make-input-port/read-in-proc"
                     (let* ([data (bytes 80 81 82)]
                            [index 0]
@@ -4833,12 +4845,17 @@
                            (equal? (read-string 6 port) "notes\n")
                            (equal? (loc) '(2 0 7)))))
               (list "call-with-input-file"
-                    (call-with-input-file "/app/data/notes.txt"
-                      (lambda (port)
-                        (and (input-port? port)
-                             (equal? (object-name port) "/app/data/notes.txt")
-                             (equal? (read-string 6 port) "notes\n")
-                             (eof-object? (read-byte port)))))))))
+                    (let ([saved-port #f])
+                      (let ([result
+                             (call-with-input-file "/app/data/notes.txt"
+                               (lambda (port)
+                                 (set! saved-port port)
+                                 (and (input-port? port)
+                                      (equal? (object-name port) "/app/data/notes.txt")
+                                      (equal? (read-string 6 port) "notes\n")
+                                      (eof-object? (read-byte port)))))])
+                        (and result
+                             (port-closed? saved-port))))))))
        
  (list "Checkers"
        (list

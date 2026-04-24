@@ -2226,6 +2226,7 @@
                      (struct
                        (field $hash  (mut i32))
                        (field $name  (mut (ref eq))) ; the port name (string) [the object-name]
+                       (field $closed (mut i32))      ; 0 = open, 1 = closed
                        ; buffer (if used):
                        (field $bytes (mut (ref $Bytes)))        ; the byte string (bytes)
                        (field $len   (mut i32))                 ; the length of the string
@@ -2238,6 +2239,7 @@
                      (struct
                        (field $hash  (mut i32))
                        (field $name  (mut (ref eq)))            ; the port name (string) [the object-name]
+                       (field $closed (mut i32))                 ; 0 = open, 1 = closed
                        (field $bytes (mut (ref $Bytes)))        ; the byte string (bytes)
                        (field $len   (mut i32))                 ; the length of the string
                        (field $idx   (mut i32))                 ; the current index into the byte string
@@ -2248,6 +2250,7 @@
                      (struct
                        (field $hash  (mut i32))
                        (field $name  (mut (ref eq)))            ; the port name (string) [the object-name]
+                       (field $closed (mut i32))                 ; 0 = open, 1 = closed
                        (field $bytes (mut (ref $Bytes)))        ; the byte string (bytes)
                        (field $len   (mut i32))                 ; the length of the string
                        (field $idx   (mut i32))                 ; the current index into the byte string
@@ -2258,6 +2261,7 @@
                      (struct
                        (field $hash  (mut i32))
                        (field $name  (mut (ref eq)))            ; the port name   (string)
+                       (field $closed (mut i32))                 ; 0 = open, 1 = closed
                        (field $bytes (mut (ref $Bytes)))        ; the byte string (bytes)
                        (field $len   (mut i32))                 ; the length of the string
                        (field $idx   (mut i32))                 ; the current index into the byte string
@@ -2272,6 +2276,7 @@
                      (struct
                        (field $hash  (mut i32))
                        (field $name  (mut (ref eq)))         ; the port name   (string)
+                       (field $closed (mut i32))              ; 0 = open, 1 = closed
                        (field $bytes (mut (ref $Bytes)))     ; the byte string (bytes)
                        (field $len   (mut i32))              ; the length of the string
                        (field $idx   (mut i32))              ; the current index into the string
@@ -2286,6 +2291,7 @@
                      (struct
                        (field $hash  (mut i32))
                        (field $name  (mut (ref eq)))                 ; the port name   (any/c)
+                       (field $closed (mut i32))                      ; 0 = open, 1 = closed
                        (field $bytes (mut (ref $Bytes)))             ; scratch buffer  (bytes)
                        (field $len   (mut i32))                      ; unused length placeholder
                        (field $idx   (mut i32))                      ; unused index placeholder
@@ -30429,8 +30435,74 @@
         (func $input-port? (type $Prim1)
               ,@(make-predicate-body '$InputPort))
 
-        (func $output-port? (type $Prim1)
+         (func $output-port? (type $Prim1)
               ,@(make-predicate-body '$OutputPort))
+
+        (func $port-closed? (type $Prim1)
+              (param $p (ref eq)) ;; port?
+              (result   (ref eq))
+
+              (local $port (ref $Port))
+
+              (if (i32.eqz (ref.test (ref $Port) (local.get $p)))
+                  (then (return (global.get $false))))
+              (local.set $port (ref.cast (ref $Port) (local.get $p)))
+              (if (result (ref eq))
+                  (struct.get $Port $closed (local.get $port))
+                  (then (global.get $true))
+                  (else (global.get $false))))
+
+        ;; close-input-port : input-port? -> void?
+        ;;   Mark an input port closed; for custom ports, call the close thunk once.
+        (func $close-input-port (type $Prim1)
+              (param $p (ref eq)) ;; input-port?
+              (result   (ref eq))
+
+              (local $port       (ref $InputPort))
+              (local $custom     (ref $CustomInputPort))
+              (local $close-proc (ref eq))
+              (local $f          (ref $Procedure))
+              (local $finv       (ref $ProcedureInvoker))
+              (local $args       (ref $Args))
+
+              (if (i32.eqz (ref.test (ref $InputPort) (local.get $p)))
+                  (then (return (global.get $void))))
+              (local.set $port (ref.cast (ref $InputPort) (local.get $p)))
+              (if (struct.get $InputPort $closed (local.get $port))
+                  (then (return (global.get $void))))
+              (struct.set $InputPort $closed (local.get $port) (i32.const 1))
+              (if (ref.test (ref $CustomInputPort) (local.get $p))
+                  (then
+                   (local.set $custom (ref.cast (ref $CustomInputPort) (local.get $p)))
+                   (local.set $close-proc
+                              (struct.get $CustomInputPort $close-proc
+                                          (local.get $custom)))
+                   (if (ref.test (ref $Procedure) (local.get $close-proc))
+                       (then
+                        (local.set $f (ref.cast (ref $Procedure)
+                                                (local.get $close-proc)))
+                        (local.set $finv
+                                   (struct.get $Procedure $invoke (local.get $f)))
+                        (local.set $args (array.new_fixed $Args 0))
+                        (drop (call_ref $ProcedureInvoker
+                                        (local.get $f)
+                                        (local.get $args)
+                                        (local.get $finv)))))))
+              (global.get $void))
+
+        ;; close-output-port : output-port? -> void?
+        ;;   Mark an output port closed.
+        (func $close-output-port (type $Prim1)
+              (param $p (ref eq)) ;; output-port?
+              (result   (ref eq))
+
+              (local $port (ref $OutputPort))
+
+              (if (i32.eqz (ref.test (ref $OutputPort) (local.get $p)))
+                  (then (return (global.get $void))))
+              (local.set $port (ref.cast (ref $OutputPort) (local.get $p)))
+              (struct.set $OutputPort $closed (local.get $port) (i32.const 1))
+              (global.get $void))
         
         ;; Note:
         ;;   WebRacket's current string ports always track line and column
@@ -30524,6 +30596,7 @@
                (struct.new $InputStringPort
                            (i32.const 0)         ;; $hash
                            (local.get $name-val) ;; $name
+                           (i32.const 0)         ;; $closed
                            (local.get $port-bs)  ;; $bytes
                            (local.get $len)      ;; $len
                            (i32.const 0)         ;; $idx
@@ -30569,6 +30642,7 @@
                (struct.new $InputStringPort
                            (i32.const 0)          ;; $hash
                            (local.get $name-val)  ;; $name
+                           (i32.const 0)          ;; $closed
                            (local.get $bytes)     ;; $bytes
                            (local.get $len)       ;; $len (byte length)
                            (i32.const 0)          ;; $idx
@@ -30605,6 +30679,7 @@
                           (struct.new $OutputStringPort
                                       (i32.const 0)                 ;; $hash
                                       (local.get $name-val)         ;; $name  : (ref eq)
+                                      (i32.const 0)                 ;; $closed
                                       (local.get $bs)               ;; $bytes : (ref $Bytes)
                                       (i32.const 32)                ;; $len   : i32
                                       (i32.const 0)                 ;; $idx   : i32
@@ -30771,6 +30846,7 @@
                (struct.new $CustomInputPort
                            (i32.const 0)              ;; $hash
                            (local.get $name)          ;; $name
+                           (i32.const 0)              ;; $closed
                            (local.get $bytes)         ;; $bytes (scratch buffer)
                            (i32.const 0)              ;; $len placeholder
                            (i32.const 0)              ;; $idx placeholder
@@ -44976,6 +45052,7 @@
                      (local $finv (ref $ProcedureInvoker))
                      (local $port (ref eq))
                      (local $args (ref $Args))
+                     (local $res  (ref eq))
 
                      (local.set $port
                                 (call $open-input-file
@@ -44988,10 +45065,13 @@
                      (local.set $f    (ref.cast (ref $Procedure) (local.get $proc)))
                      (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
                      (local.set $args (array.new_fixed $Args 1 (local.get $port)))
-                     (call_ref $ProcedureInvoker
-                               (local.get $f)
-                               (local.get $args)
-                               (local.get $finv)))
+                     (local.set $res
+                                (call_ref $ProcedureInvoker
+                                          (local.get $f)
+                                          (local.get $args)
+                                          (local.get $finv)))
+                     (drop (call $close-input-port (local.get $port)))
+                     (local.get $res))
                
                ;;;
                ;;; FFI

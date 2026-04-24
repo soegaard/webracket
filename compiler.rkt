@@ -945,6 +945,9 @@
        get-output-bytes
        get-output-string
        call-with-output-string
+       port-closed?
+       close-input-port
+       close-output-port
        struct-type-property?
        struct-type-property-accessor-procedure?
        struct-type-authentic?
@@ -1730,6 +1733,9 @@
   port?
   input-port?
   output-port?  
+  port-closed?
+  close-input-port
+  close-output-port
   string-port?
   
   open-input-bytes
