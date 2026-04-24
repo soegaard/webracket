@@ -1776,6 +1776,7 @@
     (add-runtime-string-constant 'vfs:directory-list-failed  "directory-list: VFS path does not refer to a directory")
     (add-runtime-string-constant 'vfs:rename-failed          "rename-file-or-directory: VFS rename failed")
     (add-runtime-string-constant 'vfs:copy-file-failed       "copy-file: VFS copy failed")
+    (add-runtime-string-constant 'vfs:modify-seconds-failed  "file-or-directory-modify-seconds: VFS path does not exist")
     (add-runtime-string-constant 'uncaught-exception         "uncaught exception: ")
     (add-runtime-string-constant 'callback:no-js-equivalent
                                  "The callback attempted to return a WebRacket value with no JavaScript equivalent (i.e. without a FASL encoding): ")
@@ -2595,6 +2596,9 @@
          (func $js-vfs-copy-file
                (import "primitives" "vfs_copy_file")
                (param i32) (param i32) (param i32) (param i32) (param i32) (result i32))
+         (func $js-vfs-modify-seconds
+               (import "primitives" "vfs_modify_seconds")
+               (param i32) (param i32) (param i32) (param i32) (result i32))
 
          (func $char-upcase/ucs
                (import "primitives" "char_upcase")
@@ -45704,6 +45708,75 @@
                                      (global.get $string:vfs:copy-file-failed))
                                (unreachable)))
                      (global.get $void))
+
+               ;; file-or-directory-modify-seconds : path-string? [(or/c exact-nonnegative-integer? #f)] -> (or/c exact-nonnegative-integer? void?)
+               ;;   Get or set the VFS modification time; fail-thunk and negative seconds are not supported yet.
+               (func $file-or-directory-modify-seconds (type $Prim12)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (param $secs-raw (ref eq)) ;; optional (or/c exact-nonnegative-integer? #f), default = #f
+                     (result          (ref eq))
+
+                     (local $path     (ref $Path))
+                     (local $bytes    (ref $Bytes))
+                     (local $len      i32)
+                     (local $has-secs i32)
+                     (local $secs     i32)
+                     (local $mtime    i32)
+
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:file-or-directory-modify-seconds)
+                                      (local.get $path-raw)))
+                     (local.set $bytes (struct.get $Path $bytes (local.get $path)))
+                     (local.set $len
+                                (array.len
+                                 (struct.get $Bytes $bs (local.get $bytes))))
+                     (if (i32.gt_u (local.get $len)
+                                   (global.get $memory-map:vfs-path-buffer-length))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-path-buffer-base)
+                                (global.get $memory-map:vfs-path-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (if (ref.eq (local.get $secs-raw) (global.get $missing))
+                         (then (local.set $has-secs (i32.const 0)))
+                         (else
+                          (if (ref.eq (local.get $secs-raw) (global.get $false))
+                              (then (local.set $has-secs (i32.const 0)))
+                              (else
+                               (if (ref.eq (call $exact-nonnegative-integer? (local.get $secs-raw))
+                                           (global.get $false))
+                                   (then (call $raise-argument-error1
+                                               (global.get $symbol:file-or-directory-modify-seconds)
+                                               (global.get $string:exact-nonnegative-integer?)
+                                               (local.get $secs-raw))
+                                         (unreachable)))
+                               (local.set $has-secs (i32.const 1))
+                               (local.set $secs
+                                          (i32.shr_s
+                                           (i31.get_s
+                                            (ref.cast (ref i31) (local.get $secs-raw)))
+                                           (i32.const 1)))))))
+                     (local.set $len (call $copy-bytes-to-memory
+                                           (local.get $bytes)
+                                           (global.get $memory-map:vfs-path-buffer-base)))
+                     (local.set $mtime
+                                (call $js-vfs-modify-seconds
+                                      (global.get $memory-map:vfs-path-buffer-base)
+                                      (local.get $len)
+                                      (local.get $has-secs)
+                                      (local.get $secs)))
+                     (if (i32.lt_s (local.get $mtime) (i32.const 0))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:modify-seconds-failed))
+                               (unreachable)))
+                     (if (result (ref eq))
+                         (i32.eqz (local.get $has-secs))
+                         (then (ref.i31 (i32.shl (local.get $mtime) (i32.const 1))))
+                         (else (global.get $void))))
 
                (func $open-output-file (type $Prim1)
                      (param $path-raw (ref eq)) ;; path-string?

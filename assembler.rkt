@@ -109,6 +109,8 @@ class WebRacketMemoryBackend {
   constructor(entries = {}) {
     this.files = new Map();
     this.dirs = new Set(['/']);
+    this.fileMtimes = new Map();
+    this.dirMtimes = new Map([['/', 0]]);
     for (const [path, bytes] of Object.entries(entries)) {
       this.writeFile(path, bytes);
     }
@@ -136,18 +138,24 @@ class WebRacketMemoryBackend {
     const parent = this.parentDirs(p).at(-1) || '/';
     if (!this.dirs.has(parent)) throw new Error(`VFS parent directory not found: ${path}`);
     this.dirs.add(p);
+    this.dirMtimes.set(p, 0);
   }
 
   writeFile(path, bytes) {
     const p = this.normalize(path);
-    for (const dir of this.parentDirs(p)) this.dirs.add(dir);
+    for (const dir of this.parentDirs(p)) {
+      this.dirs.add(dir);
+      if (!this.dirMtimes.has(dir)) this.dirMtimes.set(dir, 0);
+    }
     this.files.set(p, bytes instanceof Uint8Array ? bytes : new TextEncoder().encode(String(bytes)));
+    this.fileMtimes.set(p, 0);
   }
 
   deleteFile(path) {
     const p = this.normalize(path);
     if (!this.files.has(p)) throw new Error(`VFS file not found: ${path}`);
     this.files.delete(p);
+    this.fileMtimes.delete(p);
   }
 
   deleteDirectory(path) {
@@ -161,6 +169,7 @@ class WebRacketMemoryBackend {
       if (dir !== p && dir.startsWith(prefix)) throw new Error(`VFS directory is not empty: ${path}`);
     }
     this.dirs.delete(p);
+    this.dirMtimes.delete(p);
   }
 
   rename(oldPath, newPath, existsOk = false) {
@@ -179,9 +188,13 @@ class WebRacketMemoryBackend {
     if (oldIsFile) {
       if (newIsDir) throw new Error(`VFS cannot replace directory with file: ${newPath}`);
       const bytes = this.files.get(oldP);
+      const mtime = this.fileMtimes.get(oldP) || 0;
       if (newIsFile) this.files.delete(newP);
+      if (newIsFile) this.fileMtimes.delete(newP);
       this.files.delete(oldP);
+      this.fileMtimes.delete(oldP);
       this.files.set(newP, bytes);
+      this.fileMtimes.set(newP, mtime);
       return;
     }
     if (newIsFile) throw new Error(`VFS cannot replace file with directory: ${newPath}`);
@@ -191,18 +204,30 @@ class WebRacketMemoryBackend {
     const oldPrefix = `${oldP}/`;
     for (const dir of this.dirs) {
       if (dir === oldP || dir.startsWith(oldPrefix)) {
-        dirUpdates.push([dir, newP + dir.slice(oldP.length)]);
+        dirUpdates.push([dir, newP + dir.slice(oldP.length), this.dirMtimes.get(dir) || 0]);
       }
     }
     for (const [file, bytes] of this.files) {
       if (file.startsWith(oldPrefix)) {
-        fileUpdates.push([file, newP + file.slice(oldP.length), bytes]);
+        fileUpdates.push([file, newP + file.slice(oldP.length), bytes, this.fileMtimes.get(file) || 0]);
       }
     }
-    for (const [from] of dirUpdates) this.dirs.delete(from);
-    for (const [from] of fileUpdates) this.files.delete(from);
-    for (const [, to] of dirUpdates) this.dirs.add(to);
-    for (const [, to, bytes] of fileUpdates) this.files.set(to, bytes);
+    for (const [from] of dirUpdates) {
+      this.dirs.delete(from);
+      this.dirMtimes.delete(from);
+    }
+    for (const [from] of fileUpdates) {
+      this.files.delete(from);
+      this.fileMtimes.delete(from);
+    }
+    for (const [, to, mtime] of dirUpdates) {
+      this.dirs.add(to);
+      this.dirMtimes.set(to, mtime);
+    }
+    for (const [, to, bytes, mtime] of fileUpdates) {
+      this.files.set(to, bytes);
+      this.fileMtimes.set(to, mtime);
+    }
   }
 
   copyFile(srcPath, destPath, existsOk = false) {
@@ -214,13 +239,22 @@ class WebRacketMemoryBackend {
     const parent = this.parentDirs(destP).at(-1) || '/';
     if (!this.dirs.has(parent)) throw new Error(`VFS parent directory not found: ${destPath}`);
     this.files.set(destP, new Uint8Array(this.files.get(srcP)));
+    this.fileMtimes.set(destP, this.fileMtimes.get(srcP) || 0);
   }
 
   stat(path) {
     const p = this.normalize(path);
-    if (this.files.has(p)) return { type: 'file', size: this.files.get(p).length, mtime: 0 };
-    if (this.dirs.has(p)) return { type: 'directory', size: 0, mtime: 0 };
+    if (this.files.has(p)) return { type: 'file', size: this.files.get(p).length, mtime: this.fileMtimes.get(p) || 0 };
+    if (this.dirs.has(p)) return { type: 'directory', size: 0, mtime: this.dirMtimes.get(p) || 0 };
     return { type: 'missing', size: 0, mtime: 0 };
+  }
+
+  modifySeconds(path, secs = undefined) {
+    const p = this.normalize(path);
+    const mtimes = this.files.has(p) ? this.fileMtimes : this.dirs.has(p) ? this.dirMtimes : null;
+    if (mtimes === null) throw new Error(`VFS path not found: ${path}`);
+    if (secs !== undefined) mtimes.set(p, secs);
+    return mtimes.get(p) || 0;
   }
 
   readFile(path) {
@@ -315,6 +349,11 @@ class WebRacketVFS {
     const [destBackend, destRel] = this.resolve(destPath);
     if (srcBackend !== destBackend) throw new Error(`VFS cross-backend copy is not supported: ${srcPath}`);
     srcBackend.copyFile(srcRel, destRel, existsOk);
+  }
+
+  modifySeconds(path, secs = undefined) {
+    const [backend, rel] = this.resolve(path);
+    return backend.modifySeconds(rel, secs);
   }
 
   listDir(path) {
@@ -1431,6 +1470,15 @@ var imports = {
             vfs_path_from_memory(destStart, destLen),
             existsOk !== 0);
           return 0;
+        } catch (_) {
+          return -1;
+        }
+      }),
+      'vfs_modify_seconds': ((pathStart, pathLen, hasSecs, secs) => {
+        try {
+          return webracketVFS.modifySeconds(
+            vfs_path_from_memory(pathStart, pathLen),
+            hasSecs !== 0 ? secs : undefined);
         } catch (_) {
           return -1;
         }

@@ -1148,6 +1148,9 @@
      '(read-line peek-byte peek-char)
      'optional 0 2)
     (make-inline-specs
+     '(file-or-directory-modify-seconds)
+     'optional 1 2)
+    (make-inline-specs
      '(copy-file rename-file-or-directory)
      'optional 2 3))
    (make-inline-specs
@@ -2001,6 +2004,7 @@
   delete-directory
   rename-file-or-directory
   copy-file
+  file-or-directory-modify-seconds
   file->bytes
   file->string
   open-input-file

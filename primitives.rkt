@@ -1020,6 +1020,7 @@
  delete-directory
  rename-file-or-directory
  copy-file
+ file-or-directory-modify-seconds
  file->bytes
  file->string
  open-input-file
@@ -1822,6 +1823,11 @@
   (case-lambda
     [(src dest) (error 'copy-file "only available in compiled WebRacket")]
     [(src dest exists-ok?) (error 'copy-file "only available in compiled WebRacket")]))
+
+(define file-or-directory-modify-seconds
+  (case-lambda
+    [(path) (error 'file-or-directory-modify-seconds "only available in compiled WebRacket")]
+    [(path secs-n) (error 'file-or-directory-modify-seconds "only available in compiled WebRacket")]))
 
 (define directory-list
   (case-lambda

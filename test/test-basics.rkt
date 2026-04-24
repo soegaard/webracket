@@ -5036,6 +5036,29 @@
                              (copy-file "/app/data"
                                         "/app/data/copy-dir-source.txt")
                              #f))))
+              (list "file-or-directory-modify-seconds"
+                    (begin
+                      (webracket-vfs-write-file "/app/data/mtime.txt" #"time")
+                      (make-directory "/app/mtime-dir")
+                      (and (equal? (file-or-directory-modify-seconds "/app/data/mtime.txt") 0)
+                           (void? (file-or-directory-modify-seconds "/app/data/mtime.txt" 123))
+                           (equal? (file-or-directory-modify-seconds "/app/data/mtime.txt") 123)
+                           (void? (file-or-directory-modify-seconds "/app/mtime-dir" 456))
+                           (equal? (file-or-directory-modify-seconds "/app/mtime-dir" #f) 456)
+                           (void? (copy-file "/app/data/mtime.txt"
+                                             "/app/data/mtime-copy.txt"))
+                           (equal? (file-or-directory-modify-seconds "/app/data/mtime-copy.txt") 123)
+                           (void? (rename-file-or-directory "/app/data/mtime-copy.txt"
+                                                            "/app/data/mtime-renamed.txt"))
+                           (equal? (file-or-directory-modify-seconds "/app/data/mtime-renamed.txt") 123)
+                           (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                            (lambda (_ex) #t)])
+                             (file-or-directory-modify-seconds "/app/data/missing-mtime.txt")
+                             #f)
+                           (with-handlers ([(lambda (ex) (exn:fail:contract? ex))
+                                            (lambda (_ex) #t)])
+                             (file-or-directory-modify-seconds "/app/data/mtime.txt" -1)
+                             #f))))
               (list "file-size"
                     (and (equal? (file-size "/app/data/notes.txt") 6)
                          (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
