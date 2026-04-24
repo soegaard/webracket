@@ -1780,6 +1780,7 @@
     (add-runtime-string-constant 'vfs:make-directory*-failed "make-directory*: VFS directory creation failed")
     (add-runtime-string-constant 'vfs:make-parent-directory*-failed "make-parent-directory*: VFS directory creation failed")
     (add-runtime-string-constant 'vfs:directory-list-failed  "directory-list: VFS path does not refer to a directory")
+    (add-runtime-string-constant 'vfs:root-list-failed       "filesystem-root-list: VFS root list failed")
     (add-runtime-string-constant 'vfs:rename-failed          "rename-file-or-directory: VFS rename failed")
     (add-runtime-string-constant 'vfs:copy-file-failed       "copy-file: VFS copy failed")
     (add-runtime-string-constant 'vfs:modify-seconds-failed  "file-or-directory-modify-seconds: VFS path does not exist")
@@ -2610,6 +2611,9 @@
          (func $js-vfs-list-directory
                (import "primitives" "vfs_list_directory")
                (param i32) (param i32) (param i32) (param i32) (result i32))
+         (func $js-vfs-root-list
+               (import "primitives" "vfs_root_list")
+               (param i32) (param i32) (result i32))
          (func $js-vfs-rename
                (import "primitives" "vfs_rename")
                (param i32) (param i32) (param i32) (param i32) (param i32) (result i32))
@@ -45241,6 +45245,69 @@
                                   (if (i32.eqz (ref.test (ref $String) (local.get $entry)))
                                       (then (call $raise-vfs-file-error
                                                   (global.get $string:vfs:directory-list-failed))
+                                            (unreachable)))
+                                  (local.set $xs
+                                             (struct.new $Pair
+                                                         (i32.const 0)
+                                                         (call $string->path (local.get $entry))
+                                                         (local.get $xs)))
+                                  (br_if $done (i32.eqz (local.get $i)))
+                                  (local.set $i (i32.sub (local.get $i) (i32.const 1)))
+                                  (br $build)))
+                     (local.get $xs))
+
+               ;; filesystem-root-list : -> (listof path?)
+               ;;   Return the mounted VFS roots as directory paths.
+               (func $filesystem-root-list (type $Prim0)
+                     (result (ref eq))
+
+                     (local $roots-raw (ref eq))
+                     (local $roots     (ref $Vector))
+                     (local $arr       (ref $Array))
+                     (local $entry     (ref eq))
+                     (local $fasl-len  i32)
+                     (local $i         i32)
+                     (local $xs        (ref eq))
+
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-file-buffer-base)
+                                (global.get $memory-map:vfs-file-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (local.set $fasl-len
+                                (call $js-vfs-root-list
+                                      (global.get $memory-map:vfs-file-buffer-base)
+                                      (global.get $memory-map:vfs-file-buffer-length)))
+                     (if (i32.lt_s (local.get $fasl-len) (i32.const -1))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (if (i32.lt_s (local.get $fasl-len) (i32.const 0))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:root-list-failed))
+                               (unreachable)))
+                     (local.set $roots-raw
+                                (call $fasl-memory->s-exp
+                                      (global.get $memory-map:vfs-file-buffer-base)))
+                     (if (i32.eqz (ref.test (ref $Vector) (local.get $roots-raw)))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:root-list-failed))
+                               (unreachable)))
+                     (local.set $roots (ref.cast (ref $Vector) (local.get $roots-raw)))
+                     (local.set $arr (struct.get $Vector $arr (local.get $roots)))
+                     (if (i32.eqz (array.len (local.get $arr)))
+                         (then (return (global.get $null))))
+                     (local.set $xs (global.get $null))
+                     (local.set $i (i32.sub (array.len (local.get $arr)) (i32.const 1)))
+                     (block $done
+                            (loop $build
+                                  (local.set $entry
+                                             (array.get $Array
+                                                        (local.get $arr)
+                                                        (local.get $i)))
+                                  (if (i32.eqz (ref.test (ref $String) (local.get $entry)))
+                                      (then (call $raise-vfs-file-error
+                                                  (global.get $string:vfs:root-list-failed))
                                             (unreachable)))
                                   (local.set $xs
                                              (struct.new $Pair

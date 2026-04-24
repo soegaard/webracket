@@ -2007,6 +2007,7 @@
   file-exists?
   directory-exists?
   directory-list
+  filesystem-root-list
   file-size
   delete-file
   make-directory

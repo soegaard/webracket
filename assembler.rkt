@@ -372,6 +372,10 @@ class WebRacketVFS {
     this.mounts.set(this.normalize(mountPoint), backend);
   }
 
+  rootList() {
+    return [...this.mounts.keys()].sort().map((p) => p === '/' ? '/' : `${p}/`);
+  }
+
   resolve(path) {
     const p = this.normalize(path);
     let best = null;
@@ -1588,6 +1592,16 @@ var imports = {
         try {
           webracketVFS.makeParentDirectory(vfs_path_from_memory(pathStart, pathLen));
           return 0;
+        } catch (_) {
+          return -1;
+        }
+      }),
+      'vfs_root_list': ((outStart, outMax) => {
+        try {
+          const bytes = js_value_to_fasl(webracketVFS.rootList());
+          if (bytes.length > outMax) return -2;
+          new Uint8Array(memory.buffer).set(bytes, outStart);
+          return bytes.length;
         } catch (_) {
           return -1;
         }

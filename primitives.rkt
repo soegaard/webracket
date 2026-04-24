@@ -1014,6 +1014,7 @@
  file-exists?
  directory-exists?
  directory-list
+ filesystem-root-list
  file-size
  delete-file
  make-directory
@@ -1859,6 +1860,9 @@
   (case-lambda
     [() (error 'directory-list "only available in compiled WebRacket")]
     [(path) (error 'directory-list "only available in compiled WebRacket")]))
+
+(define (filesystem-root-list)
+  (error 'filesystem-root-list "only available in compiled WebRacket"))
 
 (define (call-with-input-file path proc)
   (error 'call-with-input-file "only available in compiled WebRacket"))

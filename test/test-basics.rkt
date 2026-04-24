@@ -4938,6 +4938,9 @@
                                     #f))])
                         (current-directory original)
                         result)))
+              (list "filesystem-root-list"
+                    (equal? (map path->string (filesystem-root-list))
+                            '("/app/" "/tmp/")))
               (list "make-directory"
                     (and (void? (make-directory "/app/newdir"))
                          (equal? (directory-exists? "/app/newdir") #t)
