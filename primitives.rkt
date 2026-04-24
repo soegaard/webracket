@@ -1021,6 +1021,7 @@
  make-directory*
  make-parent-directory*
  delete-directory
+ delete-directory/files
  rename-file-or-directory
  copy-file
  file-or-directory-modify-seconds
@@ -1825,6 +1826,9 @@
 
 (define (delete-directory path)
   (error 'delete-directory "only available in compiled WebRacket"))
+
+(define (delete-directory/files path)
+  (error 'delete-directory/files "only available in compiled WebRacket"))
 
 (define rename-file-or-directory
   (case-lambda

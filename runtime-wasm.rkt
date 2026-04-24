@@ -1776,6 +1776,7 @@
     (add-runtime-string-constant 'vfs:write-file-failed      "VFS file write failed")
     (add-runtime-string-constant 'vfs:delete-file-failed     "delete-file: VFS path does not refer to a file")
     (add-runtime-string-constant 'vfs:delete-directory-failed "delete-directory: VFS path does not refer to an empty directory")
+    (add-runtime-string-constant 'vfs:delete-directory/files-failed "delete-directory/files: VFS recursive delete failed")
     (add-runtime-string-constant 'vfs:make-directory-failed  "make-directory: VFS directory creation failed")
     (add-runtime-string-constant 'vfs:make-directory*-failed "make-directory*: VFS directory creation failed")
     (add-runtime-string-constant 'vfs:make-parent-directory*-failed "make-parent-directory*: VFS directory creation failed")
@@ -2598,6 +2599,9 @@
                (param i32) (param i32) (result i32))
          (func $js-vfs-delete-directory
                (import "primitives" "vfs_delete_directory")
+               (param i32) (param i32) (result i32))
+         (func $js-vfs-delete-directory/files
+               (import "primitives" "vfs_delete_directory_files")
                (param i32) (param i32) (result i32))
          (func $js-vfs-make-directory
                (import "primitives" "vfs_make_directory")
@@ -45873,6 +45877,49 @@
                      (if (i32.lt_s (local.get $status) (i32.const 0))
                          (then (call $raise-vfs-file-error
                                      (global.get $string:vfs:delete-directory-failed))
+                               (unreachable)))
+                     (global.get $void))
+
+               ;; delete-directory/files : path-string? -> void?
+               ;;   Recursively delete a VFS file or directory; #:must-exist? is not supported yet.
+               (func $delete-directory/files (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (result          (ref eq))
+
+                     (local $path     (ref $Path))
+                     (local $path-bs  (ref $Bytes))
+                     (local $path-len i32)
+                     (local $status   i32)
+
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:delete-directory/files)
+                                      (local.get $path-raw)))
+                     (local.set $path-bs (struct.get $Path $bytes (local.get $path)))
+                     (local.set $path-len
+                                (array.len
+                                 (struct.get $Bytes $bs (local.get $path-bs))))
+                     (if (i32.gt_u (local.get $path-len)
+                                   (global.get $memory-map:vfs-path-buffer-length))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-path-buffer-base)
+                                (global.get $memory-map:vfs-path-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (local.set $path-len
+                                (call $copy-bytes-to-memory
+                                      (local.get $path-bs)
+                                      (global.get $memory-map:vfs-path-buffer-base)))
+                     (local.set $status
+                                (call $js-vfs-delete-directory/files
+                                      (global.get $memory-map:vfs-path-buffer-base)
+                                      (local.get $path-len)))
+                     (if (i32.lt_s (local.get $status) (i32.const 0))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:delete-directory/files-failed))
                                (unreachable)))
                      (global.get $void))
 

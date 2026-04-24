@@ -5004,6 +5004,23 @@
                                           (lambda (_ex) #t)])
                            (delete-directory "/app/main.rkt")
                            #f)))
+              (list "delete-directory/files"
+                    (begin
+                      (make-directory* "/app/delete-tree/a/b")
+                      (webracket-vfs-write-file "/app/delete-tree/root.txt" #"root")
+                      (webracket-vfs-write-file "/app/delete-tree/a/b/leaf.txt" #"leaf")
+                      (webracket-vfs-write-file "/app/delete-tree/a/side.txt" #"side")
+                      (webracket-vfs-write-file "/app/delete-tree-file.txt" #"file")
+                      (and (void? (delete-directory/files "/app/delete-tree"))
+                           (equal? (directory-exists? "/app/delete-tree") #f)
+                           (equal? (file-exists? "/app/delete-tree/root.txt") #f)
+                           (equal? (file-exists? "/app/delete-tree/a/b/leaf.txt") #f)
+                           (void? (delete-directory/files "/app/delete-tree-file.txt"))
+                           (equal? (file-exists? "/app/delete-tree-file.txt") #f)
+                           (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                            (lambda (_ex) #t)])
+                             (delete-directory/files "/app/delete-tree-missing")
+                             #f))))
               (list "rename-file-or-directory"
                     (begin
                       (webracket-vfs-write-file "/app/data/rename-source.txt" #"source")

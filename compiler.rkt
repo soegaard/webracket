@@ -2014,6 +2014,7 @@
   make-directory*
   make-parent-directory*
   delete-directory
+  delete-directory/files
   rename-file-or-directory
   copy-file
   file-or-directory-modify-seconds
