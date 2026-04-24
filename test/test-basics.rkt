@@ -5083,6 +5083,37 @@
                              (copy-file "/app/data"
                                         "/app/data/copy-dir-source.txt")
                              #f))))
+              (list "copy-directory/files"
+                    (begin
+                      (make-directory* "/app/copy-tree/a/b")
+                      (webracket-vfs-write-file "/app/copy-tree/root.txt" #"root")
+                      (webracket-vfs-write-file "/app/copy-tree/a/b/leaf.txt" #"leaf")
+                      (webracket-vfs-write-file "/app/copy-tree/a/side.txt" #"side")
+                      (webracket-vfs-write-file "/app/copy-tree-file.txt" #"file")
+                      (and (void? (copy-directory/files "/app/copy-tree"
+                                                        "/app/copied-tree"))
+                           (equal? (file->string "/app/copied-tree/root.txt") "root")
+                           (equal? (file->string "/app/copied-tree/a/b/leaf.txt") "leaf")
+                           (equal? (file->string "/app/copied-tree/a/side.txt") "side")
+                           (equal? (file->string "/app/copy-tree/a/side.txt") "side")
+                           (void? (copy-directory/files "/app/copy-tree-file.txt"
+                                                        "/app/copied-tree-file.txt"))
+                           (equal? (file->string "/app/copied-tree-file.txt") "file")
+                           (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                            (lambda (_ex) #t)])
+                             (copy-directory/files "/app/copy-tree"
+                                                   "/app/copied-tree")
+                             #f)
+                           (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                            (lambda (_ex) #t)])
+                             (copy-directory/files "/app/copy-tree"
+                                                   "/app/copy-tree/inside")
+                             #f)
+                           (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                            (lambda (_ex) #t)])
+                             (copy-directory/files "/app/missing-copy-tree"
+                                                   "/app/nope")
+                             #f))))
               (list "file-or-directory-modify-seconds"
                     (begin
                       (webracket-vfs-write-file "/app/data/mtime.txt" #"time")

@@ -1024,6 +1024,7 @@
  delete-directory/files
  rename-file-or-directory
  copy-file
+ copy-directory/files
  file-or-directory-modify-seconds
  file-or-directory-permissions
  file-or-directory-stat
@@ -1839,6 +1840,9 @@
   (case-lambda
     [(src dest) (error 'copy-file "only available in compiled WebRacket")]
     [(src dest exists-ok?) (error 'copy-file "only available in compiled WebRacket")]))
+
+(define (copy-directory/files src dest)
+  (error 'copy-directory/files "only available in compiled WebRacket"))
 
 (define file-or-directory-modify-seconds
   (case-lambda

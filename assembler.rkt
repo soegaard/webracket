@@ -306,6 +306,46 @@ class WebRacketMemoryBackend {
     this.fileIds.set(destP, this.nextId++);
   }
 
+  copyTree(srcPath, destPath) {
+    const srcP = this.normalize(srcPath);
+    const destP = this.normalize(destPath);
+    if (this.files.has(srcP)) {
+      this.copyFile(srcP, destP, false);
+      return;
+    }
+    if (srcP === '/' || !this.dirs.has(srcP)) throw new Error(`VFS source directory not found: ${srcPath}`);
+    if (this.files.has(destP) || this.dirs.has(destP)) throw new Error(`VFS destination exists: ${destPath}`);
+    if (destP.startsWith(`${srcP}/`)) throw new Error(`VFS cannot copy directory into itself: ${srcPath}`);
+    const parent = this.parentDirs(destP).at(-1) || '/';
+    if (!this.dirs.has(parent)) throw new Error(`VFS parent directory not found: ${destPath}`);
+    const dirUpdates = [];
+    const fileUpdates = [];
+    const srcPrefix = `${srcP}/`;
+    for (const dir of this.dirs) {
+      if (dir === srcP || dir.startsWith(srcPrefix)) {
+        dirUpdates.push([destP + dir.slice(srcP.length), this.dirMtimes.get(dir) || 0, this.dirModes.get(dir) ?? 0o777]);
+      }
+    }
+    for (const [file, bytes] of this.files) {
+      if (file.startsWith(srcPrefix)) {
+        fileUpdates.push([destP + file.slice(srcP.length), bytes, this.fileMtimes.get(file) || 0, this.fileModes.get(file) ?? 0o666]);
+      }
+    }
+    dirUpdates.sort((a, b) => a[0].length - b[0].length);
+    for (const [dir, mtime, mode] of dirUpdates) {
+      this.dirs.add(dir);
+      this.dirMtimes.set(dir, mtime);
+      this.dirModes.set(dir, mode);
+      this.dirIds.set(dir, this.nextId++);
+    }
+    for (const [file, bytes, mtime, mode] of fileUpdates) {
+      this.files.set(file, new Uint8Array(bytes));
+      this.fileMtimes.set(file, mtime);
+      this.fileModes.set(file, mode);
+      this.fileIds.set(file, this.nextId++);
+    }
+  }
+
   stat(path) {
     const p = this.normalize(path);
     if (this.files.has(p)) {
@@ -467,6 +507,13 @@ class WebRacketVFS {
     const [destBackend, destRel] = this.resolve(destPath);
     if (srcBackend !== destBackend) throw new Error(`VFS cross-backend copy is not supported: ${srcPath}`);
     srcBackend.copyFile(srcRel, destRel, existsOk);
+  }
+
+  copyTree(srcPath, destPath) {
+    const [srcBackend, srcRel] = this.resolve(srcPath);
+    const [destBackend, destRel] = this.resolve(destPath);
+    if (srcBackend !== destBackend) throw new Error(`VFS cross-backend copy is not supported: ${srcPath}`);
+    srcBackend.copyTree(srcRel, destRel);
   }
 
   modifySeconds(path, secs = undefined) {
@@ -1664,6 +1711,16 @@ var imports = {
             vfs_path_from_memory(srcStart, srcLen),
             vfs_path_from_memory(destStart, destLen),
             existsOk !== 0);
+          return 0;
+        } catch (_) {
+          return -1;
+        }
+      }),
+      'vfs_copy_directory_files': ((srcStart, srcLen, destStart, destLen) => {
+        try {
+          webracketVFS.copyTree(
+            vfs_path_from_memory(srcStart, srcLen),
+            vfs_path_from_memory(destStart, destLen));
           return 0;
         } catch (_) {
           return -1;

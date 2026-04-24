@@ -2017,6 +2017,7 @@
   delete-directory/files
   rename-file-or-directory
   copy-file
+  copy-directory/files
   file-or-directory-modify-seconds
   file-or-directory-permissions
   file-or-directory-stat

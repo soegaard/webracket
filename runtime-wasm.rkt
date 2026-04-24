@@ -1784,6 +1784,7 @@
     (add-runtime-string-constant 'vfs:root-list-failed       "filesystem-root-list: VFS root list failed")
     (add-runtime-string-constant 'vfs:rename-failed          "rename-file-or-directory: VFS rename failed")
     (add-runtime-string-constant 'vfs:copy-file-failed       "copy-file: VFS copy failed")
+    (add-runtime-string-constant 'vfs:copy-directory/files-failed "copy-directory/files: VFS recursive copy failed")
     (add-runtime-string-constant 'vfs:modify-seconds-failed  "file-or-directory-modify-seconds: VFS path does not exist")
     (add-runtime-string-constant 'vfs:permissions-failed     "file-or-directory-permissions: VFS path does not exist")
     (add-runtime-string-constant 'vfs:stat-failed            "file-or-directory-stat: VFS path does not exist")
@@ -2624,6 +2625,9 @@
          (func $js-vfs-copy-file
                (import "primitives" "vfs_copy_file")
                (param i32) (param i32) (param i32) (param i32) (param i32) (result i32))
+         (func $js-vfs-copy-directory/files
+               (import "primitives" "vfs_copy_directory_files")
+               (param i32) (param i32) (param i32) (param i32) (result i32))
          (func $js-vfs-modify-seconds
                (import "primitives" "vfs_modify_seconds")
                (param i32) (param i32) (param i32) (param i32) (result i32))
@@ -46000,6 +46004,77 @@
                      (if (i32.lt_s (local.get $status) (i32.const 0))
                          (then (call $raise-vfs-file-error
                                      (global.get $string:vfs:rename-failed))
+                               (unreachable)))
+                     (global.get $void))
+
+               ;; copy-directory/files : path-string? path-string? -> void?
+               ;;   Recursively copy a VFS file or directory; keyword options are not supported yet.
+               (func $copy-directory/files (type $Prim2)
+                     (param $src-raw  (ref eq)) ;; path-string?
+                     (param $dest-raw (ref eq)) ;; path-string?
+                     (result          (ref eq))
+
+                     (local $src      (ref $Path))
+                     (local $dest     (ref $Path))
+                     (local $src-bs   (ref $Bytes))
+                     (local $dest-bs  (ref $Bytes))
+                     (local $src-len  i32)
+                     (local $dest-len i32)
+                     (local $status   i32)
+
+                     (local.set $src
+                                (call $path-string->path/checked
+                                      (global.get $symbol:copy-directory/files)
+                                      (local.get $src-raw)))
+                     (local.set $dest
+                                (call $path-string->path/checked
+                                      (global.get $symbol:copy-directory/files)
+                                      (local.get $dest-raw)))
+                     (local.set $src-bs (struct.get $Path $bytes (local.get $src)))
+                     (local.set $dest-bs (struct.get $Path $bytes (local.get $dest)))
+                     (local.set $src-len
+                                (array.len
+                                 (struct.get $Bytes $bs (local.get $src-bs))))
+                     (local.set $dest-len
+                                (array.len
+                                 (struct.get $Bytes $bs (local.get $dest-bs))))
+                     (if (i32.gt_u (local.get $src-len)
+                                   (global.get $memory-map:vfs-path-buffer-length))
+                         (then (call $raise-path-expected (local.get $src-raw))
+                               (unreachable)))
+                     (if (i32.gt_u (local.get $dest-len)
+                                   (global.get $memory-map:vfs-file-buffer-length))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-path-buffer-base)
+                                (global.get $memory-map:vfs-path-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-file-buffer-base)
+                                (global.get $memory-map:vfs-file-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (local.set $src-len
+                                (call $copy-bytes-to-memory
+                                      (local.get $src-bs)
+                                      (global.get $memory-map:vfs-path-buffer-base)))
+                     (local.set $dest-len
+                                (call $copy-bytes-to-memory
+                                      (local.get $dest-bs)
+                                      (global.get $memory-map:vfs-file-buffer-base)))
+                     (local.set $status
+                                (call $js-vfs-copy-directory/files
+                                      (global.get $memory-map:vfs-path-buffer-base)
+                                      (local.get $src-len)
+                                      (global.get $memory-map:vfs-file-buffer-base)
+                                      (local.get $dest-len)))
+                     (if (i32.lt_s (local.get $status) (i32.const 0))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:copy-directory/files-failed))
                                (unreachable)))
                      (global.get $void))
 
