@@ -999,9 +999,6 @@
        unsafe-fxquotient
        unsafe-fxremainder
        unsafe-fxmodulo
-       call-with-input-file
-       call-with-input-file*
-       with-input-from-file
        instance-unset-variable!
        bytes-join)
      'fixed 2 2))
@@ -1109,12 +1106,19 @@
        open-input-string
        open-input-bytes
        read-bytes
-       open-input-file
        read-string
        normalize-path
        simplify-path
        make-directory)
      'optional 1 2)
+    (make-inline-specs
+     '(open-input-file)
+     'optional 1 3)
+    (make-inline-specs
+     '(call-with-input-file
+       call-with-input-file*
+       with-input-from-file)
+     'optional 2 3)
     (make-inline-specs
      '(open-output-file)
      'optional 1 3)

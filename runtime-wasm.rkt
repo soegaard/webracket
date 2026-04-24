@@ -1802,6 +1802,7 @@
     (add-runtime-string-constant 'vfs:type-failed            "file-or-directory-type: VFS path does not exist")
     (add-runtime-string-constant 'vfs:identity-failed        "file-or-directory-identity: VFS path does not exist")
     (add-runtime-string-constant 'permissions-mode           "(or/c #f 'bits (integer-in 0 65535))")
+    (add-runtime-string-constant 'input-file-mode-flag       "(or/c 'binary 'text)")
     (add-runtime-string-constant 'output-file-mode-flag      "(or/c 'binary 'text)")
     (add-runtime-string-constant 'output-file-exists-flag    "(or/c 'error 'append 'replace 'truncate 'must-truncate 'truncate/replace)")
     (add-runtime-string-constant 'string-or-bytes            "(or/c string? bytes?)")
@@ -48632,18 +48633,36 @@
                                  (i32.const 0)        ;; $utf8-bytes
                                  (local.get $path)))  ;; $path
 
-               (func $open-input-file (type $Prim12)
-                     (param $path-raw (ref eq)) ;; path-string?
-                     (param $mode-raw (ref eq)) ;; optional mode flag, currently ignored
-                     (result          (ref eq))
+               ;; open-input-file : path-string? [(or/c 'binary 'text)] [any/c] -> input-port?
+               ;;   Keywordless form of Racket's #:mode and #:for-module? options.
+               ;;   Text mode is accepted but currently behaves like binary mode.
+               (func $open-input-file (type $Prim13)
+                     (param $path-raw       (ref eq)) ;; path-string?
+                     (param $mode-raw       (ref eq)) ;; optional (or/c 'binary 'text), default = 'binary
+                     (param $for-module-raw (ref eq)) ;; optional any/c, default = #f; currently ignored
+                     (result                (ref eq))
 
                      (local $path      (ref $Path))
                      (local $file-bs   (ref $Bytes))
+                     (local $mode      (ref eq))
 
                      (local.set $path
                                 (call $path-string->path/checked
                                       (global.get $symbol:open-input-file)
                                       (local.get $path-raw)))
+                     (local.set $mode
+                                (if (result (ref eq))
+                                    (ref.eq (local.get $mode-raw) (global.get $missing))
+                                    (then (global.get $symbol:binary))
+                                    (else (local.get $mode-raw))))
+                     (if (i32.eqz
+                          (i32.or (ref.eq (local.get $mode) (global.get $symbol:binary))
+                                  (ref.eq (local.get $mode) (global.get $symbol:text))))
+                         (then (call $raise-argument-error1
+                                     (global.get $symbol:open-input-file)
+                                     (global.get $string:input-file-mode-flag)
+                                     (local.get $mode-raw))
+                               (unreachable)))
                      (local.set $file-bs
                                 (call $vfs-read-file-bytes
                                       (global.get $symbol:open-input-file)
@@ -48652,12 +48671,12 @@
                            (local.get $file-bs)
                            (local.get $path)))
 
-               ;; $call-with-input-file : path-string? procedure? -> any
+               ;; $call-with-input-file : path-string? procedure? [(or/c 'binary 'text)] -> any
                ;;   Open a VFS file, pass its input port to proc, and return proc's result.
-               ;;   The #:mode keyword is not implemented yet.
-               (func $call-with-input-file (type $Prim2)
+               (func $call-with-input-file (type $Prim23)
                      (param $path-raw (ref eq)) ;; path-string?
                      (param $proc     (ref eq)) ;; procedure?
+                     (param $mode-raw (ref eq)) ;; optional (or/c 'binary 'text), default = 'binary
                      (result          (ref eq))
 
                      (local $f    (ref $Procedure))
@@ -48669,6 +48688,7 @@
                      (local.set $port
                                 (call $open-input-file
                                       (local.get $path-raw)
+                                      (local.get $mode-raw)
                                       (global.get $missing)))
                      (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
                          (then (call $raise-argument-error:procedure-expected
@@ -48805,12 +48825,12 @@
                      (drop (call $current-output-port (local.get $old)))
                      (local.get $res))
 
-               ;; $call-with-input-file* : path-string? procedure? -> any
+               ;; $call-with-input-file* : path-string? procedure? [(or/c 'binary 'text)] -> any
                ;;   Open a VFS file, pass its input port to proc, and close it on return or exception.
-               ;;   The #:mode keyword is not implemented yet.
-               (func $call-with-input-file* (type $Prim2)
+               (func $call-with-input-file* (type $Prim23)
                      (param $path-raw (ref eq)) ;; path-string?
                      (param $proc     (ref eq)) ;; procedure?
+                     (param $mode-raw (ref eq)) ;; optional (or/c 'binary 'text), default = 'binary
                      (result          (ref eq))
 
                      (local $f       (ref $Procedure))
@@ -48829,6 +48849,7 @@
                      (local.set $port
                                 (call $open-input-file
                                       (local.get $path-raw)
+                                      (local.get $mode-raw)
                                       (global.get $missing)))
                      (local.set $args (array.new_fixed $Args 1 (local.get $port)))
                      (local.set $res
@@ -48893,12 +48914,12 @@
                      (drop (call $close-output-port (local.get $port)))
                      (local.get $res))
 
-               ;; $with-input-from-file : path-string? procedure? -> any
+               ;; $with-input-from-file : path-string? procedure? [(or/c 'binary 'text)] -> any
                ;;   Install a VFS input file as the current input port while thunk runs.
-               ;;   The #:mode keyword is not implemented yet.
-               (func $with-input-from-file (type $Prim2)
+               (func $with-input-from-file (type $Prim23)
                      (param $path-raw (ref eq)) ;; path-string?
                      (param $thunk    (ref eq)) ;; procedure?
+                     (param $mode-raw (ref eq)) ;; optional (or/c 'binary 'text), default = 'binary
                      (result          (ref eq))
 
                      (local $port    (ref eq))
@@ -48908,6 +48929,7 @@
                      (local.set $port
                                 (call $open-input-file
                                       (local.get $path-raw)
+                                      (local.get $mode-raw)
                                       (global.get $missing)))
 
                      (local.set $res

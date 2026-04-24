@@ -1834,7 +1834,8 @@
 (define open-input-file
   (case-lambda
     [(path) (error 'open-input-file "only available in compiled WebRacket")]
-    [(path mode) (error 'open-input-file "only available in compiled WebRacket")]))
+    [(path mode) (error 'open-input-file "only available in compiled WebRacket")]
+    [(path mode for-module?) (error 'open-input-file "only available in compiled WebRacket")]))
 
 (define open-output-file
   (case-lambda
@@ -1910,8 +1911,10 @@
 (define (filesystem-root-list)
   (error 'filesystem-root-list "only available in compiled WebRacket"))
 
-(define (call-with-input-file path proc)
-  (error 'call-with-input-file "only available in compiled WebRacket"))
+(define call-with-input-file
+  (case-lambda
+    [(path proc) (error 'call-with-input-file "only available in compiled WebRacket")]
+    [(path proc mode) (error 'call-with-input-file "only available in compiled WebRacket")]))
 
 (define call-with-output-file
   (case-lambda
@@ -1919,8 +1922,10 @@
     [(path proc mode) (error 'call-with-output-file "only available in compiled WebRacket")]
     [(path proc mode exists) (error 'call-with-output-file "only available in compiled WebRacket")]))
 
-(define (call-with-input-file* path proc)
-  (error 'call-with-input-file* "only available in compiled WebRacket"))
+(define call-with-input-file*
+  (case-lambda
+    [(path proc) (error 'call-with-input-file* "only available in compiled WebRacket")]
+    [(path proc mode) (error 'call-with-input-file* "only available in compiled WebRacket")]))
 
 (define call-with-output-file*
   (case-lambda
@@ -1928,8 +1933,10 @@
     [(path proc mode) (error 'call-with-output-file* "only available in compiled WebRacket")]
     [(path proc mode exists) (error 'call-with-output-file* "only available in compiled WebRacket")]))
 
-(define (with-input-from-file path thunk)
-  (error 'with-input-from-file "only available in compiled WebRacket"))
+(define with-input-from-file
+  (case-lambda
+    [(path thunk) (error 'with-input-from-file "only available in compiled WebRacket")]
+    [(path thunk mode) (error 'with-input-from-file "only available in compiled WebRacket")]))
 
 (define with-output-to-file
   (case-lambda

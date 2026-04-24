@@ -5605,6 +5605,14 @@
                                    "/app/data/notes.txt")
                            (equal? (read-string 6 port) "notes\n")
                            (eof-object? (read-byte port)))))
+              (list "open-input-file/mode"
+                    (and (let ([port (open-input-file "/app/data/notes.txt" 'text)])
+                           (equal? (read-string 6 port) "notes\n"))
+                         (let ([port (open-input-file "/app/data/notes.txt" 'binary #t)])
+                           (equal? (read-string 6 port) "notes\n"))
+                         (with-handlers ([exn:fail:contract? (lambda (_ex) #t)])
+                           (open-input-file "/app/data/notes.txt" 'update)
+                           #f)))
               (list "open-input-file/location"
                     (let* ([port (open-input-file "/app/data/notes.txt")]
                            [loc  (lambda ()
@@ -5682,6 +5690,12 @@
                                       (eof-object? (read-byte port)))))])
                         (and result
                              (port-closed? saved-port)))))
+              (list "call-with-input-file/mode"
+                    (equal? (call-with-input-file "/app/data/notes.txt"
+                              (lambda (port)
+                                (read-string 6 port))
+                              'text)
+                            "notes\n"))
               (list "call-with-output-file"
                     (let ([saved-port #f])
                       (let ([result
@@ -5727,6 +5741,12 @@
                         (and (equal? result "notes\n")
                              (input-port? saved-port)
                              (port-closed? saved-port)))))
+              (list "call-with-input-file*/mode"
+                    (equal? (call-with-input-file* "/app/data/notes.txt"
+                              (lambda (port)
+                                (read-string 6 port))
+                              'text)
+                            "notes\n"))
               (list "call-with-input-file*/exception"
                     (let ([saved-port #f])
                       (and (with-handlers ([symbol? (lambda (_ex) #t)])
@@ -5784,6 +5804,12 @@
                            (input-port? during)
                            (port-closed? during)
                            (eq? (current-input-port) original))))
+              (list "with-input-from-file/mode"
+                    (equal? (with-input-from-file "/app/data/notes.txt"
+                              (lambda ()
+                                (read-string 6))
+                              'text)
+                            "notes\n"))
               (list "with-input-from-file/exception"
                     (let ([original (current-input-port)]
                           [during   #f])
