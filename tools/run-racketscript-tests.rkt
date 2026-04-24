@@ -99,23 +99,44 @@
     [else content]))
 
 (define (webracket-rewrite content)
+  (define without-test-utils
+    (regexp-replace* #rx"\\(require +\"\\.\\./test-utils\\.rkt\"\\)\n?" content ""))
+  (define test-utils-shim
+    (and (regexp-match? #rx"\\(require +\"\\.\\./test-utils\\.rkt\"\\)" content)
+         ;; arithmatic.rkt only needs this helper macro from test-utils.rkt.
+         ;; Inline a tiny shim instead of the module/provide-heavy helper file.
+         "(define-syntax run-if-version\n  (syntax-rules ()\n    [(_ v test ...) (begin test ...)]))\n"))
   (define without-lang
     (cond
-      [(regexp-match? #rx"^#lang[^\n]*(\n|$)" content)
-       (regexp-replace #rx"^#lang[^\n]*(\n|$)" content "")]
-      [else content]))
+      [(regexp-match? #rx"^#lang[^\n]*(\n|$)" without-test-utils)
+       (regexp-replace #rx"^#lang[^\n]*(\n|$)" without-test-utils "")]
+      [else without-test-utils]))
+  (define with-inlined-test-utils
+    (if test-utils-shim
+        (string-append test-utils-shim "\n" without-lang)
+        without-lang))
   (if (flush-output-port?)
       (string-append
-       without-lang
+       with-inlined-test-utils
        "\n"
        ;; WebRacket writes display/write output to the current output string
        ;; port. Flush it through js-log so the host runner can compare stdout.
        "(let ([rs-output (get-output-string (current-output-port))])\n"
        "  (unless (string=? rs-output \"\")\n"
        "    (js-log rs-output)))\n")
-      without-lang))
+      with-inlined-test-utils))
+
+(define (copy-reference-support-files!)
+  (define root (root-dir))
+  (when root
+    (define test-utils (build-path root "test-utils.rkt"))
+    (when (file-exists? test-utils)
+      (define dest (build-path (work-dir) "reference" "test-utils.rkt"))
+      (make-directory* (or (path-only dest) (work-dir)))
+      (copy-file test-utils dest #t))))
 
 (define (materialize-source source)
+  (copy-reference-support-files!)
   (define rel (relative-test-path source))
   (define reference-dest (build-path (work-dir) "reference" rel))
   (define webracket-dest (build-path (work-dir) "webracket" rel))
