@@ -1827,6 +1827,9 @@
     (add-runtime-symbol-constant 'datum->correlated)
     (add-runtime-symbol-constant 'correlated-property)
     (add-runtime-symbol-constant 'correlated-property-symbol-keys)
+    (add-runtime-symbol-constant 'relative)
+    (add-runtime-symbol-constant 'up)
+    (add-runtime-symbol-constant 'same)
 
     (add-runtime-string-constant 'instance?                     "instance?")
     (add-runtime-string-constant 'missing-variable-value        "missing variable value")
@@ -45938,6 +45941,119 @@
                                  (local.get $elem-start)
                                  (local.get $len))
                            (global.get $missing)))
+
+               ;; split-path : (or/c path-string? path-for-some-system?) -> (values (or/c path-for-some-system? 'relative #f) (or/c path-for-some-system? 'up 'same) boolean?)
+               ;;   Syntactically split a path into base, name, and must-be-directory? values.
+               (func $split-path (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path-string? or path-for-some-system?
+                     (result          (ref eq))
+
+                     (local $path       (ref $Path))
+                     (local $path-bs    (ref $Bytes))
+                     (local $arr        (ref $I8Array))
+                     (local $conv       (ref eq))
+                     (local $base       (ref eq))
+                     (local $name       (ref eq))
+                     (local $dir?       (ref eq))
+                     (local $len        i32)
+                     (local $end        i32)
+                     (local $elem-start i32)
+                     (local $elem-len   i32)
+                     (local $i          i32)
+                     (local $idx        i32)
+
+                     (local.set $path (ref.cast (ref $Path) (global.get $current-directory-path)))
+                     (if (ref.test (ref $Path) (local.get $path-raw))
+                         (then
+                          (local.set $path (ref.cast (ref $Path) (local.get $path-raw))))
+                         (else
+                          (local.set $path
+                                     (call $path-string->path/checked
+                                           (global.get $symbol:split-path)
+                                           (local.get $path-raw)))))
+                     (local.set $conv (struct.get $Path $convention (local.get $path)))
+                     (local.set $path-bs (struct.get $Path $bytes (local.get $path)))
+                     (local.set $arr (struct.get $Bytes $bs (local.get $path-bs)))
+                     (local.set $len (array.len (local.get $arr)))
+                     (local.set $end (local.get $len))
+                     (local.set $dir? (global.get $false))
+                     (if (call $path-syntactic-directory? (local.get $path-bs) (local.get $conv))
+                         (then (local.set $dir? (global.get $true))))
+                     ;; Simple root path: base is #f and name is the root path.
+                     (if (i32.eq (local.get $len) (i32.const 1))
+                         (then
+                          (if (call $path-byte-separator?
+                                    (array.get_u $I8Array (local.get $arr) (i32.const 0))
+                                    (local.get $conv))
+                              (then
+                               (return (array.new_fixed $Values 3
+                                                         (global.get $false)
+                                                         (local.get $path)
+                                                         (global.get $true)))))))
+                     ;; Ignore one trailing separator when selecting the final element.
+                     (if (local.get $len)
+                         (then
+                          (if (call $path-byte-separator?
+                                    (array.get_u $I8Array
+                                                 (local.get $arr)
+                                                 (i32.sub (local.get $len) (i32.const 1)))
+                                    (local.get $conv))
+                              (then (local.set $end (i32.sub (local.get $len) (i32.const 1)))))))
+                     (local.set $elem-start (i32.const 0))
+                     (local.set $i (local.get $end))
+                     (block $done
+                            (loop $loop
+                                  (br_if $done (i32.eqz (local.get $i)))
+                                  (local.set $idx (i32.sub (local.get $i) (i32.const 1)))
+                                  (if (call $path-byte-separator?
+                                            (array.get_u $I8Array (local.get $arr) (local.get $idx))
+                                            (local.get $conv))
+                                      (then (local.set $elem-start (local.get $i))
+                                            (br $done)))
+                                  (local.set $i (local.get $idx))
+                                  (br $loop)))
+                     (local.set $elem-len (i32.sub (local.get $end) (local.get $elem-start)))
+                     (local.set $base
+                                (if (result (ref eq))
+                                    (i32.eqz (local.get $elem-start))
+                                    (then (global.get $symbol:relative))
+                                    (else
+                                     (call $bytes->path
+                                           (call $bytes-slice/unchecked
+                                                 (local.get $path-bs)
+                                                 (i32.const 0)
+                                                 (local.get $elem-start))
+                                           (local.get $conv)))))
+                     (local.set $name
+                                (call $bytes->path
+                                      (call $bytes-slice/unchecked
+                                            (local.get $path-bs)
+                                            (local.get $elem-start)
+                                            (local.get $end))
+                                      (local.get $conv)))
+                     (if (i32.eq (local.get $elem-len) (i32.const 1))
+                         (then
+                          (if (i32.eq (array.get_u $I8Array
+                                                   (local.get $arr)
+                                                   (local.get $elem-start))
+                                      (i32.const 46))
+                              (then (local.set $name (global.get $symbol:same))))))
+                     (if (i32.eq (local.get $elem-len) (i32.const 2))
+                         (then
+                          (if (i32.and
+                               (i32.eq (array.get_u $I8Array
+                                                    (local.get $arr)
+                                                    (local.get $elem-start))
+                                       (i32.const 46))
+                               (i32.eq (array.get_u $I8Array
+                                                    (local.get $arr)
+                                                    (i32.add (local.get $elem-start) (i32.const 1)))
+                                       (i32.const 46)))
+                              (then (local.set $name (global.get $symbol:up))))))
+                     (array.new_fixed $Values 3
+                                      (local.get $base)
+                                      (local.get $name)
+                                      (local.get $dir?)))
 
                ;; path-element? : any/c -> boolean?
                ;;   Recognize single-element path values for any represented path convention.
