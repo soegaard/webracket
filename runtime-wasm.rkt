@@ -1802,7 +1802,10 @@
     (add-runtime-string-constant 'listof-listof-symbol?         "(listof (listof symbol?))")
     (add-runtime-string-constant 'listof-instance?              "(listof instance?)")
     (add-runtime-string-constant 'symbol-or-false               "(or/c symbol? #f)")
+    (add-runtime-string-constant 'instance-mode?                "(or/c #f 'constant 'consistent)")
     (add-runtime-string-constant 'instance-or-false             "(or/c instance? #f)")
+    (add-runtime-symbol-constant 'constant)
+    (add-runtime-symbol-constant 'consistent)
     (add-runtime-string-constant 'instantiate-linklet:import-count
                                  "the number of import instances does not match the expected number of imports")
     
@@ -38536,6 +38539,18 @@
                          (local.set $mode (struct.get $Pair $a (local.get $pair)))
                          (local.set $content (struct.get $Pair $d (local.get $pair)))))))
 
+               ;; Racket validates the mode even though WebRacket currently stores
+               ;; only mutable instance variables.
+               (if (i32.eqz
+                    (i32.or (ref.eq (local.get $mode) (global.get $false))
+                            (i32.or (ref.eq (local.get $mode) (global.get $symbol:constant))
+                                    (ref.eq (local.get $mode) (global.get $symbol:consistent)))))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:make-instance)
+                               (global.get $string:instance-mode?)
+                               (local.get $mode))
+                         (unreachable)))
+
                ;; Allocate the instance and its variable table.
                (local.set $vars (ref.cast (ref $HashEqMutable) (call $make-empty-hasheq)))
                (local.set $inst (struct.new $Instance
@@ -39852,11 +39867,6 @@
                (local $props        (ref eq))
                (local $prop-val     (ref eq))
 
-               ;; `datum->correlated` mirrors `datum->syntax`: correlated
-               ;; input is returned unchanged, even if srcloc/prop are given.
-               (if (ref.eq (call $correlated? (local.get $v)) (global.get $true))
-                   (then (return (local.get $v))))
-
                (local.set $who      (global.get $symbol:datum->correlated))
                (local.set $source   (global.get $false))
                (local.set $line     (global.get $false))
@@ -39968,6 +39978,11 @@
                                (global.get $string:correlated-or-false)
                                (local.get $prop-val))
                          (unreachable)))))
+
+               ;; `datum->correlated` mirrors `datum->syntax`: optional
+               ;; arguments are validated, but correlated input is unchanged.
+               (if (ref.eq (call $correlated? (local.get $v)) (global.get $true))
+                   (then (return (local.get $v))))
 
                (call $correlated-build
                      (local.get $who)
