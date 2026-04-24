@@ -3406,6 +3406,22 @@
                             (equal? (get-output-string port) "ABCDEF\n")
                             (void? (current-output-port original)))))
 
+               (list "current-input-port/runtime"
+                     (let ([original (current-input-port)]
+                           [port     (open-input-string "ABCD\nEF")])
+                       (and (input-port? original)
+                            (void? (current-input-port port))
+                            (eq? (current-input-port) port)
+                            (equal? (peek-byte) 65)
+                            (equal? (peek-char) #\A)
+                            (equal? (read-byte) 65)
+                            (equal? (read-char) #\B)
+                            (equal? (read-bytes 2) #"CD")
+                            (equal? (read-line) "")
+                            (equal? (read-string 2) "EF")
+                            (eof-object? (read-byte))
+                            (void? (current-input-port original)))))
+
                (list "close-input-port/custom-close-order"
                      (let ([port #f])
                        (let ([closed-during-close #t]

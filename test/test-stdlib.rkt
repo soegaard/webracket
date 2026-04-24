@@ -80,8 +80,7 @@
               [port     (open-input-string "hi")])
          (current-input-port port)
          (let ([after (current-input-port)]
-               #;[first (read-char)] ; todo - make this work
-               [first (read-char port)])
+               [first (read-char)])
            (current-input-port original)
            (and (eq? after port)
                 (char=? first #\h))))

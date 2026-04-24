@@ -31448,10 +31448,6 @@
                (local.set $byte   (array.get_u $I8Array (local.get $arr) (i32.const 0)))
                (ref.i31 (i32.shl (local.get $byte) (i32.const 1))))
          
-         (func $read-byte:one-argument-is-not-yet-supported (unreachable))
-         
-         ;; NOTE: The optional input-port argument currently needs to be
-         ;;       supplied explicitly until (current-input-port) exists.
          (func $read-byte (type $Prim01)
               (param $in (ref eq)) ;; optional input-port?, default = (current-input-port)
               (result    (ref eq))
@@ -31476,10 +31472,9 @@
               (local $left      i32)
               (local $seen      i32)
 
-              ;; Require an explicit string port argument for now.
               (if (ref.eq (local.get $in) (global.get $missing))
-                  (then (call $read-byte:one-argument-is-not-yet-supported)
-                        (unreachable)))
+                  (then (local.set $in (call $current-input-port
+                                             (global.get $missing)))))
               ;; Ensure the input is a string port.
               (if (ref.test (ref $InputStringPort) (local.get $in))
                   (then (local.set $sp (ref.cast (ref $InputStringPort) (local.get $in))))
@@ -31589,10 +31584,6 @@
               (ref.i31 (i32.shl (local.get $byte) (i32.const 1))))
 
 
-         (func $read-char:one-argument-is-not-yet-supported (unreachable))
-
-         ;; NOTE: The optional input-port argument currently needs to be
-         ;;       supplied explicitly until (current-input-port) exists.
          (func $read-char (type $Prim01)
                (param $in (ref eq)) ;; optional input-port?, default = (current-input-port)
                (result    (ref eq))
@@ -31606,10 +31597,9 @@
                (local $cp           i32)
                (local $cont         i32)
 
-               ;; Require an explicit string port argument for now.
                (if (ref.eq (local.get $in) (global.get $missing))
-                   (then (call $read-char:one-argument-is-not-yet-supported)
-                         (unreachable)))
+                   (then (local.set $in (call $current-input-port
+                                              (global.get $missing)))))
                ;; Ensure the input is an input port.
                (if (i32.eqz (ref.test (ref $InputPort) (local.get $in)))
                    (then (return (global.get $false))))
@@ -31685,10 +31675,6 @@
                                 (i32.const ,char-tag))))
 
 
-         (func $read-bytes!:one-argument-is-not-yet-supported (unreachable))
-         
-         ;; NOTE: The optional input-port argument currently needs to be
-         ;;       supplied explicitly until (current-input-port) exists.
          (func $read-bytes! (type $Prim14)
                (param $bstr  (ref eq)) ;; bytes?
                (param $in    (ref eq)) ;; input-port?               (optional, default = (current-input-port))
@@ -31718,8 +31704,8 @@
                (local.set $len (call $i8array-length (local.get $arr)))
                ;; --- Determine input port ---
                (if (ref.eq (local.get $in) (global.get $missing))
-                   (then (call $read-bytes!:one-argument-is-not-yet-supported)
-                         (unreachable)))
+                   (then (local.set $in (call $current-input-port
+                                              (global.get $missing)))))
                (if (i32.eqz (ref.test (ref $InputPort) (local.get $in)))
                    (then (call $raise-check-string-port (local.get $in)) (unreachable)))
                ;; --- Decode optional start index ---
@@ -31805,10 +31791,6 @@
 
 
 
-         (func $read-string!:one-argument-is-not-yet-supported (unreachable))
-
-         ;; NOTE: The optional input-port argument currently needs to be
-         ;;       supplied explicitly until (current-input-port) exists.
          (func $read-string! (type $Prim14)
                (param $str   (ref eq)) ;; string?
                (param $in    (ref eq)) ;; input-port?                (optional, default = (current-input-port))
@@ -31839,8 +31821,8 @@
                (local.set $len (call $i32array-length (local.get $arr)))
                ;; --- Determine input port ---
                (if (ref.eq (local.get $in) (global.get $missing))
-                   (then (call $read-string!:one-argument-is-not-yet-supported)
-                         (unreachable)))
+                   (then (local.set $in (call $current-input-port
+                                              (global.get $missing)))))
                (if (i32.eqz (ref.test (ref $InputPort) (local.get $in)))
                    (then (call $raise-check-string-port (local.get $in)) (unreachable)))
                ;; --- Decode optional start index ---
@@ -31896,8 +31878,6 @@
                (ref.i31 (i32.shl (local.get $i) (i32.const 1))))
 
 
-         (func $read-bytes:one-argument-is-not-yet-supported (unreachable))
-
          ;; Like Racket's read-bytes, but currently only string ports are supported
          (func $read-bytes (type $Prim12)
                (param $amt (ref eq)) ;; exact-nonnegative-integer?
@@ -31927,8 +31907,8 @@
 
                ;; --- Determine input port ---
                (if (ref.eq (local.get $in) (global.get $missing))
-                   (then (call $read-bytes:one-argument-is-not-yet-supported)
-                         (unreachable)))
+                   (then (local.set $in (call $current-input-port
+                                              (global.get $missing)))))
                (if (i32.eqz (ref.test (ref $InputPort) (local.get $in)))
                    (then (call $raise-check-string-port (local.get $in)) (unreachable)))
 
@@ -31976,8 +31956,6 @@
                (local.get $buf))
                   
 
-         (func $read-string:one-argument-is-not-yet-supported (unreachable))
-
          ;; Like Racket's read-string, but currently only string ports are supported
          (func $read-string (type $Prim12)
                (param $amt (ref eq)) ;; exact-nonnegative-integer?
@@ -32007,8 +31985,8 @@
 
                ;; --- Determine input port ---
                (if (ref.eq (local.get $in) (global.get $missing))
-                   (then (call $read-string:one-argument-is-not-yet-supported)
-                         (unreachable)))
+                   (then (local.set $in (call $current-input-port
+                                              (global.get $missing)))))
                (if (i32.eqz (ref.test (ref $InputPort) (local.get $in)))
                    (then (call $raise-check-string-port (local.get $in)) (unreachable)))
 
@@ -32051,10 +32029,6 @@
 
                (local.get $buf))
 
-         (func $byte-ready?:one-argument-is-not-yet-supported (unreachable))
-
-         ;; NOTE: The optional input-port argument currently needs to be
-         ;;       supplied explicitly until (current-input-port) exists.
          (func $byte-ready? (type $Prim01)
                (param $in (ref eq)) ;; input-port? (optional, default = (current-input-port))
                (result    (ref eq))
@@ -32063,10 +32037,9 @@
                (local $idx i32)
                (local $len i32)
 
-               ;; Require an explicit string port argument for now.
                (if (ref.eq (local.get $in) (global.get $missing))
-                   (then (call $byte-ready?:one-argument-is-not-yet-supported)
-                         (unreachable)))
+                   (then (local.set $in (call $current-input-port
+                                              (global.get $missing)))))
                ;; Ensure the input is a string port.
                (if (ref.test (ref $InputStringPort) (local.get $in))
                    (then (local.set $sp (ref.cast (ref $InputStringPort) (local.get $in))))
@@ -32080,10 +32053,6 @@
                    (then (global.get $true))
                    (else (global.get $false))))
 
-         (func $char-ready?:one-argument-is-not-yet-supported (unreachable))
-
-         ;; NOTE: The optional input-port argument currently needs to be
-         ;;       supplied explicitly until (current-input-port) exists.
          (func $char-ready? (type $Prim01)
                (param $in (ref eq)) ;; input-port? (optional, default = (current-input-port))
                (result    (ref eq))
@@ -32103,10 +32072,9 @@
                (local $scan      i32)
                (local $cont      i32)
 
-               ;; Require an explicit string port argument for now.
                (if (ref.eq (local.get $in) (global.get $missing))
-                   (then (call $char-ready?:one-argument-is-not-yet-supported)
-                         (unreachable)))
+                   (then (local.set $in (call $current-input-port
+                                              (global.get $missing)))))
                ;; Ensure the input is a string port.
                (if (ref.test (ref $InputStringPort) (local.get $in))
                    (then (local.set $sp (ref.cast (ref $InputStringPort) (local.get $in))))
@@ -32180,9 +32148,6 @@
                              (then (return (global.get $false))))))
 
                (global.get $true))
-
-
-         (func $read-line:no-argument-is-not-yet-supported (unreachable))
 
          (func $raise-read-line:bad-mode (param $mode (ref eq)) (unreachable))
 
@@ -32291,8 +32256,6 @@
                (local.set $res (call $i32growable-array->immutable-string (local.get $buf)))
                (local.get $res))
 
-               ;; NOTE: String and custom input ports are supported, and the optional input-port
-               ;;       argument must be supplied explicitly until (current-input-port) exists.
          (func $read-line (type $Prim02)
                (param $in   (ref eq)) ;; optional input-port?, default = (current-input-port)
                (param $mode (ref eq)) ;; optional read-line-mode?, default = 'linefeed
@@ -32316,10 +32279,9 @@
                (local $len       i32)
                (local $next-byte i32)
 
-               ;; Require an explicit input port for now.
                (if (ref.eq (local.get $in) (global.get $missing))
-                   (then (call $read-line:no-argument-is-not-yet-supported)
-                         (unreachable)))
+                   (then (local.set $in (call $current-input-port
+                                              (global.get $missing)))))
 
                ;; Determine the mode symbol, defaulting to 'linefeed.
                (local.set $mode-val
@@ -32440,10 +32402,6 @@
                (local.set $res (call $i32growable-array->immutable-string (local.get $buf)))
                (local.get $res))
 
-         (func $peek-bytes!:two-arguments-are-not-yet-supported (unreachable))
-
-         ;; NOTE: The optional input-port argument currently needs to be
-         ;;       supplied explicitly until (current-input-port) exists.
          (func $peek-bytes! (type $Prim25)
                (param $bstr  (ref eq)) ;; bytes?
                (param $skip  (ref eq)) ;; exact-nonnegative-integer?
@@ -32491,8 +32449,8 @@
 
                ;; --- Determine input port ---
                (if (ref.eq (local.get $in) (global.get $missing))
-                   (then (call $peek-bytes!:two-arguments-are-not-yet-supported)
-                         (unreachable)))
+                   (then (local.set $in (call $current-input-port
+                                              (global.get $missing)))))
                (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
                    (then (call $raise-check-string-port (local.get $in)) (unreachable)))
                (local.set $sp (ref.cast (ref $InputStringPort) (local.get $in)))
@@ -32654,10 +32612,6 @@
                      (local.get $bstr)
                      (local.get $rest)))
          
-         (func $peek-string!:two-arguments-are-not-yet-supported (unreachable))
-
-         ;; NOTE: The optional input-port argument currently needs to be
-         ;;       supplied explicitly until (current-input-port) exists.
          (func $peek-string! (type $Prim25)
                (param $str   (ref eq)) ;; string?
                (param $skip  (ref eq)) ;; exact-nonnegative-integer?
@@ -32709,8 +32663,8 @@
 
                ;; --- Determine input port ---
                (if (ref.eq (local.get $in) (global.get $missing))
-                   (then (call $peek-string!:two-arguments-are-not-yet-supported)
-                         (unreachable)))
+                   (then (local.set $in (call $current-input-port
+                                              (global.get $missing)))))
                (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
                    (then (call $raise-check-string-port (local.get $in)) (unreachable)))
                (local.set $sp (ref.cast (ref $InputStringPort) (local.get $in)))
@@ -32865,10 +32819,6 @@
                (ref.i31 (i32.shl (local.get $written) (i32.const 1))))
          
 
-         (func $peek-byte:no-argument-is-not-yet-supported (unreachable))
-
-         ;; NOTE: The optional input-port argument currently needs to be
-         ;;       supplied explicitly until (current-input-port) exists.
          (func $peek-byte (type $Prim02)
                (param $in   (ref eq)) ;; input-port?                (optional, default = (current-input-port))
                (param $skip (ref eq)) ;; exact-nonnegative-integer? (optional, default = 0)
@@ -32885,10 +32835,9 @@
                (local $byte       i32)
                (local $skip-arg   (ref eq))
 
-               ;; Require an explicit string port argument for now.
                (if (ref.eq (local.get $in) (global.get $missing))
-                   (then (call $peek-byte:no-argument-is-not-yet-supported)
-                         (unreachable)))
+                   (then (local.set $in (call $current-input-port
+                                              (global.get $missing)))))
 
                ;; Decode optional skip amount, defaulting to 0.
                (local.set $skip-count (i32.const 0))
@@ -32932,10 +32881,6 @@
 
                (ref.i31 (i32.shl (local.get $byte) (i32.const 1))))
 
-         (func $peek-char:no-argument-is-not-yet-supported (unreachable))
-
-         ;; NOTE: The optional input-port argument currently needs to be
-         ;;       supplied explicitly until (current-input-port) exists.
          (func $peek-char (type $Prim02)
                (param $in   (ref eq)) ;; input-port?                (optional, default = (current-input-port))
                (param $skip (ref eq)) ;; exact-nonnegative-integer? (optional, default = 0)
@@ -32956,10 +32901,9 @@
                (local $cp           i32)
                (local $cont         i32)
 
-               ;; Require an explicit string port argument for now.
                (if (ref.eq (local.get $in) (global.get $missing))
-                   (then (call $peek-char:no-argument-is-not-yet-supported)
-                         (unreachable)))
+                   (then (local.set $in (call $current-input-port
+                                              (global.get $missing)))))
                ;; Ensure the input is a string port.
                (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
                    (then (return (global.get $false))))
@@ -33084,8 +33028,6 @@
                                 (i32.const ,char-tag))))
 
 
-         (func $peek-bytes:two-arguments-are-not-yet-supported (unreachable))
-
          ;; Like Racket's peek-bytes, but currently only string ports are supported.
          ;; The optional skip argument defaults to 0.
          (func $peek-bytes (type $Prim23)
@@ -33129,8 +33071,8 @@
 
                ;; --- Determine input port ---
                (if (ref.eq (local.get $in) (global.get $missing))
-                   (then (call $peek-bytes:two-arguments-are-not-yet-supported)
-                         (unreachable)))
+                   (then (local.set $in (call $current-input-port
+                                              (global.get $missing)))))
                (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
                    (then (call $raise-check-string-port (local.get $in)) (unreachable)))
 
@@ -33182,8 +33124,6 @@
 
                (local.get $buf))
 
-         (func $peek-string:two-arguments-are-not-yet-supported (unreachable))
-
          ;; Like Racket's peek-string, but currently only string ports are supported.
          ;; The optional skip argument defaults to 0.
          (func $peek-string (type $Prim23)
@@ -33227,8 +33167,8 @@
 
                ;; --- Determine input port ---
                (if (ref.eq (local.get $in) (global.get $missing))
-                   (then (call $peek-string:two-arguments-are-not-yet-supported)
-                         (unreachable)))
+                   (then (local.set $in (call $current-input-port
+                                              (global.get $missing)))))
                (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
                    (then (call $raise-check-string-port (local.get $in)) (unreachable)))
 
