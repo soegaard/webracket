@@ -71,41 +71,6 @@ WebRacket's `make-compiled-linklet` helper records the export list, but
 with an uninitialized binding. This makes exported-but-unset variables
 indistinguishable from variables that were never exported.
 
-### Linklet imports are not checked against imported instances
-
-Status: open.
-
-Minimal repro:
-
-```racket
-(define l
-  (make-compiled-linklet
-   'l
-   '((x))
-   '()
-   (lambda (self imported)
-     (void))))
-
-(define imported (make-instance 'imported))
-(define result (instantiate-linklet l (list imported)))
-(js-log (instance? result))
-```
-
-Real Racket checks that every imported variable is exported by the
-corresponding import instance during `instantiate-linklet`, even if the body
-does not read the variable.
-
-Current WebRacket behavior:
-
-```text
-true
-```
-
-`instantiate-linklet` currently validates only that `import-instances` is a
-list of instances and that the number of import instances matches the number
-of import sets. It does not validate the symbol names listed in the compiled
-linklet's `importss` field against the corresponding instance.
-
 ### Instantiated linklet exports are mutable through the instance API
 
 Status: open.

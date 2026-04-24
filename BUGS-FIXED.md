@@ -458,6 +458,41 @@ The fix validates `make-compiled-linklet` exports with a temporary `hasheq`
 of seen symbols and rejects duplicate exported names before constructing the
 compiled linklet.
 
+## Linklet imports are not checked against imported instances
+
+Status: fixed
+
+Minimal repro:
+
+```racket
+(define l
+  (make-compiled-linklet
+   'l
+   '((x))
+   '()
+   (lambda (self imported)
+     (void))))
+
+(define imported (make-instance 'imported))
+(define result (instantiate-linklet l (list imported)))
+(js-log (instance? result))
+```
+
+Real Racket checks that every imported variable is exported by the
+corresponding import instance during `instantiate-linklet`, even if the body
+does not read the variable.
+
+Previous WebRacket behavior:
+
+```text
+true
+```
+
+The fix validates each declared import group against the corresponding
+instance before invoking the linklet body. It uses `instance-variable-box`
+with creation disabled, so missing imported bindings fail instead of being
+silently accepted.
+
 ## Byte-string literals are mutable
 
 Status: fixed

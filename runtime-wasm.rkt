@@ -39394,6 +39394,10 @@
                (local $imports-pair      (ref $Pair))
                (local $import-value      (ref eq))
                (local $expected-node     (ref eq))
+               (local $expected-pair     (ref $Pair))
+               (local $expected-imports  (ref eq))
+               (local $expected-import   (ref $Pair))
+               (local $import-symbol     (ref eq))
                (local $proc              (ref $Procedure))
                (local $inv               (ref $ProcedureInvoker))
                (local $args              (ref $Args))
@@ -39485,6 +39489,47 @@
                                (global.get $string:instantiate-linklet:import-count)
                                (local.get $import-instances))
                          (unreachable)))
+
+               ;; Validate declared imports before running the linklet body.
+               (local.set $expected-node
+                          (struct.get $Linklet $importss (local.get $compiled)))
+               (local.set $imports-node (local.get $import-instances))
+               (block $validate-done
+                      (loop $validate-loop
+                            (br_if $validate-done
+                                   (ref.eq (local.get $expected-node) (global.get $null)))
+                            (local.set $expected-pair
+                                       (ref.cast (ref $Pair) (local.get $expected-node)))
+                            (local.set $imports-pair
+                                       (ref.cast (ref $Pair) (local.get $imports-node)))
+                            (local.set $expected-imports
+                                       (struct.get $Pair $a (local.get $expected-pair)))
+                            (local.set $import-value
+                                       (struct.get $Pair $a (local.get $imports-pair)))
+                            (block $symbols-done
+                                   (loop $symbols-loop
+                                         (br_if $symbols-done
+                                                (ref.eq (local.get $expected-imports)
+                                                        (global.get $null)))
+                                         (local.set $expected-import
+                                                    (ref.cast (ref $Pair)
+                                                              (local.get $expected-imports)))
+                                         (local.set $import-symbol
+                                                    (struct.get $Pair $a
+                                                                (local.get $expected-import)))
+                                         (drop (call $instance-variable-box
+                                                     (local.get $import-value)
+                                                     (local.get $import-symbol)
+                                                     (global.get $false)))
+                                         (local.set $expected-imports
+                                                    (struct.get $Pair $d
+                                                                (local.get $expected-import)))
+                                         (br $symbols-loop)))
+                            (local.set $expected-node
+                                       (struct.get $Pair $d (local.get $expected-pair)))
+                            (local.set $imports-node
+                                       (struct.get $Pair $d (local.get $imports-pair)))
+                            (br $validate-loop)))
 
                (if (i32.eq (local.get $return-instance) (i32.const 1))
                    (then
