@@ -86,6 +86,13 @@
                      #;(equal? (procedure? call-with-escape-continuation) #t)
                      (equal? (procedure? (case-lambda ((x) x) ((x y) (+ x y)))) #t)                  
                      (equal? (procedure-arity procedure?) 1)))
+              (list "procedure-reduce-arity"
+                    (and
+                     (procedure? (procedure-reduce-arity values 1))
+                     (equal? (procedure-arity (procedure-reduce-arity values 1)) 1)
+                     (equal? ((procedure-reduce-arity (lambda xs xs) 2) 'a 'b) '(a b))
+                     (with-handlers ([exn? (lambda (ex) #t)])
+                       ((procedure-reduce-arity (lambda xs xs) 2) 'a))))
               (list "closedapp: mutation with 0/1/2/3 free variables"
                     (and
                      ;; 0 free variables: mutation is local to the activation.

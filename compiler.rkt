@@ -1132,6 +1132,7 @@
     (make-inline-specs/by-name
      '(raise
        procedure-arity-includes?
+       procedure-reduce-arity
        number->string
        struct-type-property-predicate-procedure?
        hash->list
@@ -1160,7 +1161,7 @@
          [(raise hash->list hash-keys hash-values
                  string-join string->bytes/utf-8 bytes->path
                  datum->correlated struct-type-property-predicate-procedure?) 1]
-         [(procedure-arity-includes?) 2]
+         [(procedure-arity-includes? procedure-reduce-arity) 2]
          [(number->string) 1]
          [(hash-for-each hash-map hash-map/copy correlated-property) 2]
          [(instantiate-linklet inclusive-range inclusive-range-proc) 2]
@@ -1175,6 +1176,7 @@
                  struct-type-property-predicate-procedure? hash->list hash-keys
                  hash-values string-join bytes->path) 2]
          [(procedure-arity-includes?) 3]
+         [(procedure-reduce-arity) 4]
          [(string->bytes/utf-8) 4]
          [(hash-for-each hash-map hash-map/copy) 3]
          [(instantiate-linklet) 4]
@@ -1191,7 +1193,7 @@
          [(string-replace) 'true]
          [(struct->list) 'symbol:error]
          [(string-join) 'string:space]
-         [(bytes->path datum->correlated correlated-property
+         [(procedure-reduce-arity bytes->path datum->correlated correlated-property
                        inclusive-range inclusive-range-proc) 'missing]
          [else 'false])))
    (make-inline-specs/by-name
@@ -1827,6 +1829,7 @@
   procedure-arity
   procedure-arity-mask
   procedure-arity-includes?
+  procedure-reduce-arity
   arity-at-least
   make-arity-at-least
   arity-at-least?

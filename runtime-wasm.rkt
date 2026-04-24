@@ -1752,6 +1752,7 @@
     (add-runtime-string-constant 'catch*-matching-lengths    "same number of handlers as predicates")
     (add-runtime-string-constant 'real?                      "real?")
     (add-runtime-string-constant 'exact-nonnegative-integer? "exact-nonnegative-integer?")
+    (add-runtime-string-constant 'procedure-arity?           "procedure-arity?")
     (add-runtime-string-constant 'uncaught-exception         "uncaught exception: ")
     (add-runtime-string-constant 'callback:no-js-equivalent
                                  "The callback attempted to return a WebRacket value with no JavaScript equivalent (i.e. without a FASL encoding): ")
@@ -3177,6 +3178,34 @@
                                 (local.get $clos)
                                 (local.get $args-repacked)
                                 (local.get $code)))
+
+         (func $invoke-reduced-procedure
+               (type $ProcedureInvoker)
+               (param $proc (ref $Procedure))
+               (param $args (ref $Args))
+               (result      (ref eq))
+
+               (local $wrapper  (ref $Closure))
+               (local $original (ref $Procedure))
+               (local $arg-count i32)
+
+               (local.set $wrapper (ref.cast (ref $Closure) (local.get $proc)))
+               (local.set $original
+                          (ref.cast (ref $Procedure)
+                                    (array.get $Free
+                                               (struct.get $Closure $free (local.get $wrapper))
+                                               (i32.const 0))))
+               (local.set $arg-count (array.len (local.get $args)))
+               (if (i32.eqz
+                    (call $procedure-arity-includes?/checked/i32
+                          (local.get $wrapper)
+                          (local.get $arg-count)))
+                   (then
+                    (call $raise-arity-mismatch/proc (local.get $wrapper) (local.get $arg-count))))
+               (return_call_ref $ProcedureInvoker
+                                (local.get $original)
+                                (local.get $args)
+                                (struct.get $Procedure $invoke (local.get $original))))
 
          ;; Invoker for case-lambda closures.
          ;; - $args is the vector of *user* arguments (no [closure, tail?] header).
@@ -34880,6 +34909,7 @@
               (ref.func $equal+hash-recur/hash)             ; closure body
               (ref.func $invoke-struct)
               (ref.func $primitive-invoke)
+              (ref.func $invoke-reduced-procedure)
               (ref.func $code:case-lambda-dispatch)
               (ref.func $invoke-case-closure)
               #;(ref.func $struct-constructor/with-guard)
@@ -37001,6 +37031,224 @@
                                          (local.get $v)))
                (local.set $fields (struct.get $Struct $fields (local.get $struct)))
                (array.get $Array (local.get $fields) (i32.const 0)))
+
+         (func $procedure-arity-entry->marker/i32
+               (param $who (ref eq))
+               (param $v   (ref eq))
+               (result i32)
+
+               (local $struct (ref $Struct))
+               (local $fields (ref $Array))
+               (local $value  (ref eq))
+
+               (if (ref.eq (call $exact-nonnegative-integer? (local.get $v)) (global.get $true))
+                   (then
+                    (return
+                     (i32.shr_s
+                      (i31.get_s (ref.cast (ref i31) (local.get $v)))
+                      (i32.const 1)))))
+               (if (ref.eq (call $arity-at-least? (local.get $v)) (global.get $true))
+                   (then
+                    (local.set $struct (call $arity-at-least-unwrap (local.get $who) (local.get $v)))
+                    (local.set $fields (struct.get $Struct $fields (local.get $struct)))
+                    (local.set $value  (array.get $Array (local.get $fields) (i32.const 0)))
+                    (return
+                     (i32.sub
+                      (i32.const -1)
+                      (i32.shr_s
+                       (i31.get_s (ref.cast (ref i31) (local.get $value)))
+                       (i32.const 1))))))
+               (call $raise-argument-error1
+                     (local.get $who)
+                     (global.get $string:procedure-arity?)
+                     (local.get $v))
+               (unreachable))
+
+         (func $procedure-arity-value->field
+               (param $who   (ref eq))
+               (param $arity (ref eq))
+               (result (ref eq))
+
+               (local $len    i32)
+               (local $arr    (ref $I32Array))
+               (local $i      i32)
+               (local $node   (ref eq))
+               (local $entry  (ref eq))
+               (local $marker i32)
+
+               (if (ref.eq (call $exact-nonnegative-integer? (local.get $arity)) (global.get $true))
+                   (then (return (local.get $arity))))
+               (if (ref.eq (call $arity-at-least? (local.get $arity)) (global.get $true))
+                   (then
+                    (local.set $marker (call $procedure-arity-entry->marker/i32
+                                             (local.get $who)
+                                             (local.get $arity)))
+                    (return (ref.i31 (i32.shl (local.get $marker) (i32.const 1))))))
+               (if (ref.eq (call $list? (local.get $arity)) (global.get $false))
+                   (then
+                    (call $raise-argument-error1
+                          (local.get $who)
+                          (global.get $string:procedure-arity?)
+                          (local.get $arity))
+                    (unreachable)))
+               (local.set $len (call $length/i32 (local.get $arity)))
+               (if (i32.eqz (local.get $len))
+                   (then
+                    (return (ref.cast (ref eq)
+                                      (array.new_fixed $I32Array 0)))))
+               (if (i32.eq (local.get $len) (i32.const 1))
+                   (then
+                    (return
+                     (ref.i31
+                      (i32.shl
+                       (call $procedure-arity-entry->marker/i32
+                             (local.get $who)
+                             (call $car (local.get $arity)))
+                       (i32.const 1))))))
+               (local.set $arr (call $i32array-make (local.get $len) (i32.const 0)))
+               (local.set $node (local.get $arity))
+               (local.set $i    (i32.const 0))
+               (block $done
+                      (loop $fill
+                            (br_if $done (ref.eq (local.get $node) (global.get $null)))
+                            (local.set $entry (struct.get $Pair $a
+                                                          (ref.cast (ref $Pair) (local.get $node))))
+                            (local.set $marker (call $procedure-arity-entry->marker/i32
+                                                     (local.get $who)
+                                                     (local.get $entry)))
+                            (call $i32array-set! (local.get $arr) (local.get $i) (local.get $marker))
+                            (local.set $node (struct.get $Pair $d
+                                                         (ref.cast (ref $Pair) (local.get $node))))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $fill)))
+               (ref.cast (ref eq) (local.get $arr)))
+
+         (func $procedure-arity-field->mask/i32
+               (param $a (ref eq))
+               (result i32)
+
+               (local $arr   (ref $I32Array))
+               (local $i     i32)
+               (local $n     i32)
+               (local $m     i32)
+               (local $arity i32)
+               (local $mask  i32)
+               (local $start i32)
+
+               (if (ref.test (ref i31) (local.get $a))
+                   (then
+                    (local.set $arity (i32.shr_s
+                                       (i31.get_s
+                                        (ref.cast (ref i31) (local.get $a)))
+                                       (i32.const 1)))
+                    (return
+                     (if (result i32)
+                         (i32.ge_s (local.get $arity) (i32.const 0))
+                         (then (i32.shl (i32.const 1) (local.get $arity)))
+                         (else (i32.shl (i32.const -1)
+                                        (i32.sub (i32.const -1) (local.get $arity))))))))
+               (local.set $arr (ref.cast (ref $I32Array) (local.get $a)))
+               (local.set $n   (array.len (local.get $arr)))
+               (local.set $i   (i32.const 0))
+               (local.set $mask (i32.const 0))
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $n)))
+                            (local.set $m
+                                       (array.get $I32Array (local.get $arr) (local.get $i)))
+                            (if (i32.ge_s (local.get $m) (i32.const 0))
+                                (then
+                                 (local.set $mask
+                                            (i32.or
+                                             (local.get $mask)
+                                             (i32.shl (i32.const 1) (local.get $m)))))
+                                (else
+                                 (local.set $start
+                                            (i32.sub (i32.const -1) (local.get $m)))
+                                 (local.set $mask
+                                            (i32.or
+                                             (local.get $mask)
+                                             (i32.shl (i32.const -1) (local.get $start))))))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+               (local.get $mask))
+
+         (func $procedure-reduce-arity
+               (param $proc  (ref eq)) ; procedure?
+               (param $arity (ref eq)) ; procedure-arity?
+               (param $name  (ref eq)) ; (or/c symbol? #f), default #f
+               (param $realm (ref eq)) ; symbol?, default 'racket
+               (result (ref eq))
+
+               (local $p          (ref $Procedure))
+               (local $new-arity  (ref eq))
+               (local $new-mask   i32)
+               (local $old-mask   i32)
+               (local $new-name   (ref eq))
+               (local $new-realm  (ref eq))
+               (local $free       (ref $Free))
+
+               (local.set $new-arity (global.get $false))
+               (local.set $new-name  (global.get $false))
+               (local.set $new-realm (global.get $false))
+               (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
+                   (then (call $raise-argument-error:procedure-expected (local.get $proc))
+                         (unreachable)))
+               (local.set $p (ref.cast (ref $Procedure) (local.get $proc)))
+               (local.set $new-arity (call $procedure-arity-value->field
+                                           (global.get $symbol:procedure-reduce-arity)
+                                           (local.get $arity)))
+               (local.set $new-mask (call $procedure-arity-field->mask/i32 (local.get $new-arity)))
+               (local.set $old-mask (call $procedure-arity-mask/checked/i32 (local.get $p)))
+               (if (i32.ne (i32.and (local.get $new-mask)
+                                    (i32.xor (local.get $old-mask) (i32.const -1)))
+                           (i32.const 0))
+                   (then
+                    (call $raise-argument-error1
+                          (global.get $symbol:procedure-reduce-arity)
+                          (global.get $string:procedure-arity?)
+                          (local.get $arity))
+                    (unreachable)))
+
+               (if (ref.eq (local.get $name) (global.get $missing))
+                   (then (local.set $name (global.get $false))))
+               (if (ref.eq (local.get $name) (global.get $false))
+                   (then
+                    (local.set $new-name  (struct.get $Procedure $name (local.get $p)))
+                    (local.set $new-realm (struct.get $Procedure $realm (local.get $p))))
+                   (else
+                    (if (i32.eqz (ref.test (ref $Symbol) (local.get $name)))
+                        (then
+                         (call $raise-argument-error1
+                               (global.get $symbol:procedure-reduce-arity)
+                               (global.get $string:symbol?)
+                               (local.get $name))
+                         (unreachable)))
+                    (local.set $new-name (local.get $name))
+                    (if (ref.eq (local.get $realm) (global.get $missing))
+                        (then (local.set $new-realm (global.get $symbol:racket)))
+                        (else
+                         (if (i32.eqz (ref.test (ref $Symbol) (local.get $realm)))
+                             (then
+                              (call $raise-argument-error1
+                                    (global.get $symbol:procedure-reduce-arity)
+                                    (global.get $string:symbol?)
+                                    (local.get $realm))
+                              (unreachable)))
+                         (local.set $new-realm (local.get $realm))))))
+
+               ;; Keep the original procedure as payload. The reduced wrapper
+               ;; checks its new arity, then forwards the original user args.
+               (local.set $free (array.new_fixed $Free 1 (local.get $p)))
+               (struct.new $Closure
+                           (i32.const 0)
+                           (local.get $new-name)
+                           (local.get $new-arity)
+                           (local.get $new-realm)
+                           (ref.func $invoke-reduced-procedure)
+                           (local.get $new-name)
+                           (ref.func $dummy-code)
+                           (local.get $free)))
          
          (func $procedure-arity (type $Prim1)
                ; Wrapper: accepts any value, checks that it’s a procedure, then delegates

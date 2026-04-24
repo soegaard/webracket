@@ -35,7 +35,10 @@
   (path->string (file-name-from-path p)))
 
 (define (skip-test-file? p)
-  (string-prefix? (path-basename-string p) "__"))
+  (define basename (path-basename-string p))
+  (or (string-prefix? basename "__")
+      ;; WebRacket does not support regular expressions yet.
+      (string=? basename "rx.rkt")))
 
 (define (normalize-output s)
   (regexp-replace* #rx"\r\n?" s "\n"))
@@ -98,21 +101,51 @@
      (regexp-replace #rx"^#lang[^\n]*(\n|$)" content "#lang racket\n")]
     [else content]))
 
+(define test-utils-require-rx
+  #rx"\"(?:\\.\\./)+test-utils\\.rkt\"[ \t]*")
+
+(define empty-require-rx
+  #rx"\\(require[ \t\r\n]*\\)[ \t]*\n?")
+
+(define test-utils-shim
+  (string-append
+   ";; Inlined from RacketScript's test-utils.rkt for WebRacket.\n"
+   "(define-syntax run-if-version\n"
+   "  (syntax-rules ()\n"
+   "    [(_ v test ...) (begin test ...)]))\n"
+   "(define exn:application:mismatch? exn:fail:contract?)\n"
+   "(define exn:application:type? exn:fail:contract?)\n"
+   "(define exn:application:arity? exn:fail:contract:arity?)\n"
+   "(define (test expect fun . args)\n"
+   "  (define res (if (procedure? fun) (apply fun args) (car args)))\n"
+   "  (displayln (equal? expect res)))\n"
+   "(define-syntax err/rt-test\n"
+   "  (syntax-rules ()\n"
+   "    [(_ e)\n"
+   "     (with-handlers ([(lambda (x) #t)\n"
+   "                      (lambda (ex) (displayln (exn-message ex)))])\n"
+   "       e)]\n"
+   "    [(_ e e?)\n"
+   "     (with-handlers ([e? (lambda (ex) (displayln (exn-message ex)))])\n"
+   "       e)]\n"
+   "    [(_ e e? msg-rx)\n"
+   "     (with-handlers ([e? (lambda (ex) (displayln (exn-message ex)))])\n"
+   "       e)]))\n"))
+
 (define (webracket-rewrite content)
+  (define uses-test-utils?
+    (regexp-match? test-utils-require-rx content))
   (define without-test-utils
-    (regexp-replace* #rx"\\(require +\"\\.\\./test-utils\\.rkt\"\\)\n?" content ""))
-  (define test-utils-shim
-    (and (regexp-match? #rx"\\(require +\"\\.\\./test-utils\\.rkt\"\\)" content)
-         ;; arithmatic.rkt only needs this helper macro from test-utils.rkt.
-         ;; Inline a tiny shim instead of the module/provide-heavy helper file.
-         "(define-syntax run-if-version\n  (syntax-rules ()\n    [(_ v test ...) (begin test ...)]))\n"))
+    (regexp-replace* empty-require-rx
+                     (regexp-replace* test-utils-require-rx content "")
+                     ""))
   (define without-lang
     (cond
       [(regexp-match? #rx"^#lang[^\n]*(\n|$)" without-test-utils)
        (regexp-replace #rx"^#lang[^\n]*(\n|$)" without-test-utils "")]
       [else without-test-utils]))
   (define with-inlined-test-utils
-    (if test-utils-shim
+    (if uses-test-utils?
         (string-append test-utils-shim "\n" without-lang)
         without-lang))
   (if (flush-output-port?)
