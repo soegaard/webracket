@@ -5130,6 +5130,17 @@
                                  "/tmp/b")
                          (equal? (path->string (normalize-path "./x" "/var/tmp/"))
                                  "/var/tmp/x")))
+              (list "find-relative-path"
+                    (and (equal? (path->string (find-relative-path "/a/b/" "/a/b/c"))
+                                 "c")
+                         (equal? (path->string (find-relative-path "/a/b/" "/a/d"))
+                                 "../d")
+                         (equal? (path->string (find-relative-path "/a/b/" "/x/y"))
+                                 "../../x/y")
+                         (equal? (path->string (find-relative-path "/" "/a/b"))
+                                 "a/b")
+                         (equal? (path->string (find-relative-path "/a/b" "/a/b/c"))
+                                 "c")))
               (list "path-only"
                     (and (equal? (path->string (path-only "a/b")) "a/")
                          (equal? (path-only "a") #f)

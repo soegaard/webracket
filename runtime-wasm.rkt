@@ -45712,6 +45712,126 @@
                                  (local.get $wrt))
                            (global.get $true)))
 
+               (func $path-part-equal?
+                     (param $a (ref eq))
+                     (param $b (ref eq))
+                     (result   i32)
+
+                     (if (ref.eq (local.get $a) (local.get $b))
+                         (then (return (i32.const 1))))
+                     (if (i32.eqz (ref.test (ref $Path) (local.get $a)))
+                         (then (return (i32.const 0))))
+                     (if (i32.eqz (ref.test (ref $Path) (local.get $b)))
+                         (then (return (i32.const 0))))
+                     (ref.eq (call $bytes=?/2/checked
+                                   (struct.get $Path $bytes
+                                               (ref.cast (ref $Path) (local.get $a)))
+                                   (struct.get $Path $bytes
+                                               (ref.cast (ref $Path) (local.get $b))))
+                             (global.get $true)))
+
+               ;; find-relative-path : (or/c path-string? path-for-some-system?) (or/c path-string? path-for-some-system?) -> path-for-some-system?
+               ;;   Core two-argument behavior with default keyword options; keyword arguments are not supported yet.
+               (func $find-relative-path (type $Prim2)
+                     (param $base-raw (ref eq)) ;; simplified path-string? or path-for-some-system?
+                     (param $path-raw (ref eq)) ;; simplified path-string? or path-for-some-system?
+                     (result          (ref eq))
+
+                     (local $base-path (ref $Path))
+                     (local $path      (ref $Path))
+                     (local $conv      (ref eq))
+                     (local $base      (ref eq))
+                     (local $target    (ref eq))
+                     (local $base-node (ref $Pair))
+                     (local $path-node (ref $Pair))
+                     (local $part      (ref eq))
+                     (local $result    (ref eq))
+                     (local $has?      i32)
+
+                     (local.set $base-path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:find-relative-path)
+                                      (local.get $base-raw)))
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:find-relative-path)
+                                      (local.get $path-raw)))
+                     (local.set $conv (struct.get $Path $convention (local.get $base-path)))
+                     (if (i32.eqz (ref.eq (local.get $conv)
+                                          (struct.get $Path $convention (local.get $path))))
+                         (then (call $raise-argument-error1
+                                     (global.get $symbol:find-relative-path)
+                                     (global.get $string:path-for-some-system?)
+                                     (local.get $path-raw))
+                               (unreachable)))
+                     (local.set $base (call $explode-path (call $normal-case-path (local.get $base-path))))
+                     (local.set $target (call $explode-path (call $normal-case-path (local.get $path))))
+                     (block $common-done
+                            (loop $common-loop
+                                  (br_if $common-done (ref.eq (local.get $base) (global.get $null)))
+                                  (br_if $common-done (ref.eq (local.get $target) (global.get $null)))
+                                  (local.set $base-node (ref.cast (ref $Pair) (local.get $base)))
+                                  (local.set $path-node (ref.cast (ref $Pair) (local.get $target)))
+                                  (br_if $common-done
+                                         (i32.eqz
+                                          (call $path-part-equal?
+                                                (struct.get $Pair $a (local.get $base-node))
+                                                (struct.get $Pair $a (local.get $path-node)))))
+                                  (local.set $base (struct.get $Pair $d (local.get $base-node)))
+                                  (local.set $target (struct.get $Pair $d (local.get $path-node)))
+                                  (br $common-loop)))
+                     (local.set $has? (i32.const 0))
+                     (local.set $result (global.get $symbol:same))
+                     (block $base-done
+                            (loop $base-loop
+                                  (br_if $base-done (ref.eq (local.get $base) (global.get $null)))
+                                  (local.set $base-node (ref.cast (ref $Pair) (local.get $base)))
+                                  (if (local.get $has?)
+                                      (then
+                                       (local.set $result
+                                                  (call $path-join-bytes/convention
+                                                        (global.get $symbol:find-relative-path)
+                                                        (local.get $conv)
+                                                        (local.get $result)
+                                                        (global.get $symbol:up))))
+                                      (else
+                                       (local.set $result
+                                                  (call $path-part->path/convention
+                                                        (global.get $symbol:find-relative-path)
+                                                        (local.get $conv)
+                                                        (global.get $symbol:up)))
+                                       (local.set $has? (i32.const 1))))
+                                  (local.set $base (struct.get $Pair $d (local.get $base-node)))
+                                  (br $base-loop)))
+                     (block $target-done
+                            (loop $target-loop
+                                  (br_if $target-done (ref.eq (local.get $target) (global.get $null)))
+                                  (local.set $path-node (ref.cast (ref $Pair) (local.get $target)))
+                                  (local.set $part (struct.get $Pair $a (local.get $path-node)))
+                                  (if (local.get $has?)
+                                      (then
+                                       (local.set $result
+                                                  (call $path-join-bytes/convention
+                                                        (global.get $symbol:find-relative-path)
+                                                        (local.get $conv)
+                                                        (local.get $result)
+                                                        (local.get $part))))
+                                      (else
+                                       (local.set $result
+                                                  (call $path-part->path/convention
+                                                        (global.get $symbol:find-relative-path)
+                                                        (local.get $conv)
+                                                        (local.get $part)))
+                                       (local.set $has? (i32.const 1))))
+                                  (local.set $target (struct.get $Pair $d (local.get $path-node)))
+                                  (br $target-loop)))
+                     (if (local.get $has?)
+                         (then (return (local.get $result))))
+                     (call $path-part->path/convention
+                           (global.get $symbol:find-relative-path)
+                           (local.get $conv)
+                           (global.get $symbol:same)))
+
                ;; normal-case-path : (or/c path-string? path-for-some-system?) -> path-for-some-system?
                ;;   Return Unix paths unchanged; for Windows, lowercase ASCII letters and use backslash separators.
                (func $normal-case-path (type $Prim1)

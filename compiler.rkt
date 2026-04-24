@@ -2045,6 +2045,7 @@
   path-element->string
   simple-form-path
   normalize-path
+  find-relative-path
   path-only
 
   ;; 15.2 Filesystem

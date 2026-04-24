@@ -1037,6 +1037,7 @@
  path-element->string
  simple-form-path
  normalize-path
+ find-relative-path
  path-only
 
  ;; 15.2 Filesystem
@@ -1920,6 +1921,9 @@
 
 (define (with-output-to-file path thunk)
   (error 'with-output-to-file "only available in compiled WebRacket"))
+
+(define (find-relative-path base path)
+  (error 'find-relative-path "only available in compiled WebRacket"))
 
 (define (webracket-vfs-write-file path bytes)
   (error 'webracket-vfs-write-file "only available in compiled WebRacket"))
