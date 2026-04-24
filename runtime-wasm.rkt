@@ -2532,7 +2532,7 @@
                (param i32) (param i32) (result i32))
          (func $js-vfs-read-file
                (import "primitives" "vfs_read_file")
-               (param i32) (param i32) (param i32) (result i32))
+               (param i32) (param i32) (param i32) (param i32) (result i32))
 
          (func $char-upcase/ucs
                (import "primitives" "char_upcase")
@@ -26344,8 +26344,18 @@
 
          ;; The following memory map is used to segment the linear memory.
          
-         (global $memory-map:string-buffer-base   (mut i32) (i32.const 0))
-         (global $memory-map:string-buffer-length (mut i32) (i32.const 4096))
+         ;; Static host bridge scratch map:
+         ;;   0..1MiB        VFS file transfer buffer
+         ;;   +4KiB          VFS path buffer
+         ;;   +64KiB         callback/FASL/string scratch buffer
+         (global $memory-map:vfs-file-buffer-base   (mut i32) (i32.const 0))
+         (global $memory-map:vfs-file-buffer-length (mut i32) (i32.const 1048576))
+         (global $memory-map:vfs-path-buffer-base   (mut i32) (i32.const 1048576))
+         (global $memory-map:vfs-path-buffer-length (mut i32) (i32.const 4096))
+         (global $memory-map:callback-buffer-base   (mut i32) (i32.const 1052672))
+         (global $memory-map:callback-buffer-length (mut i32) (i32.const 65536))
+         (global $memory-map:string-buffer-base     (mut i32) (i32.const 1052672))
+         (global $memory-map:string-buffer-length   (mut i32) (i32.const 4096))
          
 
          ;;;
@@ -33341,10 +33351,13 @@
 
                (global.set $result-bytes
                            (call $s-exp->fasl (local.get $v) (global.get $false)))
-               #;(local.set $len (call $copy_bytes_to_memory (i32.const 0)))
-               (local.set $len (call $copy-bytes-to-memory
-                                     (global.get $result-bytes) (i32.const 0)))
-               (call $js_print_fasl (i32.const 0) (local.get $len))
+               #;(local.set $len (call $copy_bytes_to_memory (global.get $memory-map:callback-buffer-base)))
+               (local.set $len
+                          (call $copy-bytes-to-callback-buffer
+                                (global.get $result-bytes)))
+               (call $js_print_fasl
+                     (global.get $memory-map:callback-buffer-base)
+                     (local.get $len))
                (global.get $void))
          
          (func $copy-bytes-to-memory
@@ -33406,6 +33419,48 @@
                            (i32.const 0)  ;; hash
                            (i32.const 1)  ;; immutable
                            (local.get $arr)))
+
+         (func $linear-memory-range-available?
+               ;; Check whether ptr..ptr+len is inside the current memory.
+               (param $ptr i32)
+               (param $len i32)
+               (result i32)
+
+               (local $mem-bytes i32)
+               (local $end       i32)
+
+               (local.set $mem-bytes (i32.mul (memory.size) (i32.const 65536)))
+               (local.set $end (i32.add (local.get $ptr) (local.get $len)))
+               (if (i32.lt_u (local.get $end) (local.get $ptr))
+                   (then (return (i32.const 0))))
+               (i32.le_u (local.get $end) (local.get $mem-bytes)))
+
+         (func $copy-bytes-to-callback-buffer
+               ;; Copy encoded callback/FASL bytes into their static region.
+               (param $bs-any (ref eq))
+               (result i32)
+
+               (local $bs  (ref $Bytes))
+               (local $len i32)
+
+               (if (i32.eqz (ref.test (ref $Bytes) (local.get $bs-any)))
+                   (then (call $raise-expected-bytes (local.get $bs-any))
+                         (unreachable)))
+               (local.set $bs (ref.cast (ref $Bytes) (local.get $bs-any)))
+               (local.set $len (array.len (struct.get $Bytes $bs (local.get $bs))))
+               (if (i32.gt_u (local.get $len)
+                             (global.get $memory-map:callback-buffer-length))
+                   (then (call $raise-string-buffer-overflow)
+                         (unreachable)))
+               (if (i32.eqz
+                    (call $linear-memory-range-available?
+                          (global.get $memory-map:callback-buffer-base)
+                          (global.get $memory-map:callback-buffer-length)))
+                   (then (call $raise-string-buffer-overflow)
+                         (unreachable)))
+               (call $copy-bytes-to-memory
+                     (local.get $bs)
+                     (global.get $memory-map:callback-buffer-base)))
          
          #;(func $copy_bytes_to_memory
                (export "copy_bytes_to_memory")
@@ -33530,9 +33585,8 @@
 
                (global.set $result-bytes
                            (call $s-exp->fasl (local.get $v) (global.get $false)))
-               (call $copy-bytes-to-memory
-                     (ref.cast (ref $Bytes) (global.get $result-bytes))
-                     (i32.const 0)))
+               (call $copy-bytes-to-callback-buffer
+                     (ref.cast (ref $Bytes) (global.get $result-bytes))))
 
          (func $wr-bridge-error-message
                (param $v (ref eq))
@@ -33721,9 +33775,8 @@
                                                       (else (local.get $val)))))
                                       (global.get $false)))))
                (local.set $len
-                          (call $copy-bytes-to-memory
-                                (ref.cast (ref $Bytes) (global.get $result-bytes))
-                                (i32.const 0)))
+                          (call $copy-bytes-to-callback-buffer
+                                (ref.cast (ref $Bytes) (global.get $result-bytes))))
                (local.get $len))
 
          (func $wr-call (export "wr-call")
@@ -33825,9 +33878,8 @@
                                                   (local.get $res)))
                                       (global.get $false)))))
                (local.set $len
-                          (call $copy-bytes-to-memory
-                                (ref.cast (ref $Bytes) (global.get $result-bytes))
-                                (i32.const 0)))
+                          (call $copy-bytes-to-callback-buffer
+                                (ref.cast (ref $Bytes) (global.get $result-bytes))))
                (local.get $len))
 
          (func $wr-names (export "wr-names")
@@ -33943,9 +33995,8 @@
                                       (local.get $bridge)
                                       (global.get $false)))))
                (local.set $len
-                          (call $copy-bytes-to-memory
-                                (ref.cast (ref $Bytes) (global.get $result-bytes))
-                                (i32.const 0)))
+                          (call $copy-bytes-to-callback-buffer
+                                (ref.cast (ref $Bytes) (global.get $result-bytes))))
                (local.get $len))
 
          ;; callback-accepts-argc : callback-id argc -> boolean
@@ -33967,7 +34018,7 @@
                      (local.get $argc)))
 
          ;; callback-expected-arity : callback-id -> fasl-string-byte-length
-         ;; Encodes the callback's expected-arity string in linear memory at 0.
+         ;; Encodes the callback's expected-arity string in the callback buffer.
          (func $callback-expected-arity (export "callback-expected-arity")
                (param $id i32)
                (result i32)
@@ -33985,13 +34036,12 @@
                                  (call $procedure-arity->expected-string (local.get $proc))
                                  (global.get $false)))
                (local.set $len
-                          (call $copy-bytes-to-memory
-                                (ref.cast (ref $Bytes) (global.get $result-bytes))
-                                (i32.const 0)))
+                          (call $copy-bytes-to-callback-buffer
+                                (ref.cast (ref $Bytes) (global.get $result-bytes))))
                (local.get $len))
 
          ;; callback-name : callback-id -> fasl-name-byte-length
-         ;; Encodes the callback's object-name result in linear memory at 0.
+         ;; Encodes the callback's object-name result in the callback buffer.
          (func $callback-name (export "callback-name")
                (param $id i32)
                (result i32)
@@ -34009,13 +34059,12 @@
                                  (call $object-name (local.get $proc))
                                  (global.get $false)))
                (local.set $len
-                          (call $copy-bytes-to-memory
-                                (ref.cast (ref $Bytes) (global.get $result-bytes))
-                                (i32.const 0)))
+                          (call $copy-bytes-to-callback-buffer
+                                (ref.cast (ref $Bytes) (global.get $result-bytes))))
                (local.get $len))
 
          ;; callback-debug-id : callback-id -> fasl-debug-id-byte-length
-         ;; Encodes the callback's closure debug-id in linear memory at 0, or #f.
+         ;; Encodes the callback's closure debug-id in the callback buffer, or #f.
          (func $callback-debug-id (export "callback-debug-id")
                (param $id i32)
                (result i32)
@@ -34040,9 +34089,8 @@
                                  (local.get $debug-id)
                                  (global.get $false)))
                (local.set $len
-                          (call $copy-bytes-to-memory
-                                (ref.cast (ref $Bytes) (global.get $result-bytes))
-                                (i32.const 0)))
+                          (call $copy-bytes-to-callback-buffer
+                                (ref.cast (ref $Bytes) (global.get $result-bytes))))
                (local.get $len))
 
          (func $procedure->external (export "procedure->external")
@@ -44665,10 +44713,25 @@
                                       (local.get $who)
                                       (local.get $path-raw)))
                      (local.set $bytes (struct.get $Path $bytes (local.get $path)))
+                     (local.set $len
+                                (array.len
+                                 (struct.get $Bytes $bs (local.get $bytes))))
+                     (if (i32.gt_u (local.get $len)
+                                   (global.get $memory-map:vfs-path-buffer-length))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-path-buffer-base)
+                                (global.get $memory-map:vfs-path-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
                      (local.set $len (call $copy-bytes-to-memory
                                            (local.get $bytes)
-                                           (i32.const 0)))
-                     (call $js-vfs-stat-kind (i32.const 0) (local.get $len)))
+                                           (global.get $memory-map:vfs-path-buffer-base)))
+                     (call $js-vfs-stat-kind
+                           (global.get $memory-map:vfs-path-buffer-base)
+                           (local.get $len)))
 
                (func $file-exists? (type $Prim1)
                      (param $path-raw (ref eq)) ;; path-string?
@@ -44708,11 +44771,24 @@
                                       (global.get $symbol:file-size)
                                       (local.get $path-raw)))
                      (local.set $bytes (struct.get $Path $bytes (local.get $path)))
+                     (local.set $len
+                                (array.len
+                                 (struct.get $Bytes $bs (local.get $bytes))))
+                     (if (i32.gt_u (local.get $len)
+                                   (global.get $memory-map:vfs-path-buffer-length))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-path-buffer-base)
+                                (global.get $memory-map:vfs-path-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
                      (local.set $len (call $copy-bytes-to-memory
                                            (local.get $bytes)
-                                           (i32.const 0)))
+                                           (global.get $memory-map:vfs-path-buffer-base)))
                      (local.set $size (call $js-vfs-file-size
-                                            (i32.const 0)
+                                            (global.get $memory-map:vfs-path-buffer-base)
                                             (local.get $len)))
                      (if (i32.lt_s (local.get $size) (i32.const 0))
                          (then (call $raise-path-expected (local.get $path-raw))
@@ -44727,6 +44803,7 @@
                      (local $path      (ref $Path))
                      (local $path-bs   (ref $Bytes))
                      (local $path-len  i32)
+                     (local $expected  i32)
                      (local $file-len  i32)
                      (local $file-bs   (ref $Bytes))
 
@@ -44735,20 +44812,55 @@
                                       (global.get $symbol:open-input-file)
                                       (local.get $path-raw)))
                      (local.set $path-bs (struct.get $Path $bytes (local.get $path)))
+                     (local.set $path-len
+                                (array.len
+                                 (struct.get $Bytes $bs (local.get $path-bs))))
+                     (if (i32.gt_u (local.get $path-len)
+                                   (global.get $memory-map:vfs-path-buffer-length))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-path-buffer-base)
+                                (global.get $memory-map:vfs-path-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-file-buffer-base)
+                                (global.get $memory-map:vfs-file-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
                      (local.set $path-len (call $copy-bytes-to-memory
                                                 (local.get $path-bs)
-                                                (i32.const 0)))
+                                                (global.get $memory-map:vfs-path-buffer-base)))
+                     (local.set $expected
+                                (call $js-vfs-file-size
+                                      (global.get $memory-map:vfs-path-buffer-base)
+                                      (local.get $path-len)))
+                     (if (i32.lt_s (local.get $expected) (i32.const 0))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (if (i32.gt_u (local.get $expected)
+                                   (global.get $memory-map:vfs-file-buffer-length))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
                      (local.set $file-len
                                 (call $js-vfs-read-file
-                                      (i32.const 0)
+                                      (global.get $memory-map:vfs-path-buffer-base)
                                       (local.get $path-len)
-                                      (i32.const 4096)))
+                                      (global.get $memory-map:vfs-file-buffer-base)
+                                      (global.get $memory-map:vfs-file-buffer-length)))
                      (if (i32.lt_s (local.get $file-len) (i32.const 0))
                          (then (call $raise-path-expected (local.get $path-raw))
                                (unreachable)))
+                     (if (i32.gt_u (local.get $file-len)
+                                   (global.get $memory-map:vfs-file-buffer-length))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
                      (local.set $file-bs
                                 (call $memory-range->immutable-bytes
-                                      (i32.const 4096)
+                                      (global.get $memory-map:vfs-file-buffer-base)
                                       (local.get $file-len)))
                      (call $open-input-bytes
                            (local.get $file-bs)

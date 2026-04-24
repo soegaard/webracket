@@ -86,6 +86,16 @@
                         #:browser?        [browser? #f])
   @~a{
 var memory = new WebAssembly.Memory({initial:1024});
+// Static host bridge scratch map. Keep this in sync with runtime-wasm.rkt.
+//   0..1MiB        VFS file transfer buffer
+//   +4KiB          VFS path buffer
+//   +64KiB         callback/FASL/string scratch buffer
+const VFS_FILE_BUFFER_BASE = 0;
+const VFS_FILE_BUFFER_LENGTH = 1048576;
+const VFS_PATH_BUFFER_BASE = 1048576;
+const VFS_PATH_BUFFER_LENGTH = 4096;
+const CALLBACK_BUFFER_BASE = 1052672;
+const CALLBACK_BUFFER_LENGTH = 65536;
 
 var output_string = [];
 var externals = [];
@@ -843,7 +853,7 @@ function callback_expected_arity_text(id) {
         return 'unknown';
     }
     const len = callback_expected_arity_export(id);
-    return fasl_to_js_value(new Uint8Array(memory.buffer, 0, len))[0];
+    return fasl_to_js_value(new Uint8Array(memory.buffer, CALLBACK_BUFFER_BASE, len))[0];
 }
 
 function callback_name_text(id) {
@@ -851,7 +861,7 @@ function callback_name_text(id) {
         return null;
     }
     const len = callback_name_export(id);
-    const value = fasl_to_js_value(new Uint8Array(memory.buffer, 0, len))[0];
+    const value = fasl_to_js_value(new Uint8Array(memory.buffer, CALLBACK_BUFFER_BASE, len))[0];
     if (typeof value === 'symbol') {
         return Symbol.keyFor(value) ?? value.description ?? String(value);
     }
@@ -866,7 +876,7 @@ function callback_debug_id_text(id) {
         return null;
     }
     const len = callback_debug_id_export(id);
-    const value = fasl_to_js_value(new Uint8Array(memory.buffer, 0, len))[0];
+    const value = fasl_to_js_value(new Uint8Array(memory.buffer, CALLBACK_BUFFER_BASE, len))[0];
     if (typeof value === 'symbol') {
         return Symbol.keyFor(value) ?? value.description ?? String(value);
     }
@@ -898,10 +908,13 @@ export function make_callback(id) {
         }
         try {
             const fasl = js_value_to_fasl(Array.from(args));
-            new Uint8Array(memory.buffer).set(fasl, 0);
-            const len = callback_export(id, 0);
+            if (fasl.length > CALLBACK_BUFFER_LENGTH) {
+                throw new RangeError('WebRacket callback argument FASL exceeds callback buffer');
+            }
+            new Uint8Array(memory.buffer).set(fasl, CALLBACK_BUFFER_BASE);
+            const len = callback_export(id, CALLBACK_BUFFER_BASE);
             const [ok, payload] =
-                fasl_to_js_value(new Uint8Array(memory.buffer, 0, len))[0];
+                fasl_to_js_value(new Uint8Array(memory.buffer, CALLBACK_BUFFER_BASE, len))[0];
             if (ok) {
                 return payload;
             }
@@ -955,8 +968,11 @@ function boolean_to_i32(x) {
 
 function to_fasl(v) {
   const fasl = js_value_to_fasl(v);
-  new Uint8Array(memory.buffer).set(fasl, 0);
-  return 0
+  if (fasl.length > CALLBACK_BUFFER_LENGTH) {
+    throw new RangeError('WebRacket FASL value exceeds callback buffer');
+  }
+  new Uint8Array(memory.buffer).set(fasl, CALLBACK_BUFFER_BASE);
+  return CALLBACK_BUFFER_BASE
 }
 
 function to_string(v) {
@@ -973,9 +989,12 @@ const console_bridge_browser = @|(if browser? "true" "false")|;
 // Invoke a Wasm export with a FASL-encoded payload and decode the FASL result.
 function wr_invoke_fasl(exported, payload) {
   const fasl = js_value_to_fasl(payload);
-  new Uint8Array(memory.buffer).set(fasl, 0);
-  const len = exported(0);
-  return fasl_to_js_value(new Uint8Array(memory.buffer, 0, len))[0];
+  if (fasl.length > CALLBACK_BUFFER_LENGTH) {
+    throw new RangeError('WebRacket console bridge FASL exceeds callback buffer');
+  }
+  new Uint8Array(memory.buffer).set(fasl, CALLBACK_BUFFER_BASE);
+  const len = exported(CALLBACK_BUFFER_BASE);
+  return fasl_to_js_value(new Uint8Array(memory.buffer, CALLBACK_BUFFER_BASE, len))[0];
 }
 
 // Decode the tagged bridge result vector into a JavaScript object.
@@ -1233,9 +1252,10 @@ var imports = {
           return -1;
         }
       }),
-      'vfs_read_file': ((pathStart, pathLen, outStart) => {
+      'vfs_read_file': ((pathStart, pathLen, outStart, outMax) => {
         try {
           const bytes = webracketVFS.readFile(vfs_path_from_memory(pathStart, pathLen));
+          if (bytes.length > outMax) return -2;
           new Uint8Array(memory.buffer).set(bytes, outStart);
           return bytes.length;
         } catch (_) {
