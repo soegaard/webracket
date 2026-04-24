@@ -155,6 +155,40 @@
       (include-lib->ffi-filename lib-name)))
   (remove-duplicates inferred))
 
+;; print-top-level-results : syntax? -> syntax?
+;;   Rewrite user top-level expressions to print their values like racket.
+(define (print-top-level-results stx)
+  (define (head-symbol form)
+    (define datum (syntax-e form))
+    (and (pair? datum)
+         (let ([head (car datum)])
+           (and (identifier? head) (syntax-e head)))))
+  (define (top-level-begin-form? form)
+    (eq? (head-symbol form) 'begin))
+  (define (definition-like-top-level-form? form)
+    (memq (head-symbol form)
+          '(define define-values define-syntax define-syntaxes
+             require #%require include include/reader include-lib)))
+  (define (wrap-form form)
+    (cond
+      [(top-level-begin-form? form)
+       (define inner-forms (cdr (syntax->list form)))
+       #`(begin #,@(map wrap-form inner-forms))]
+      [(definition-like-top-level-form? form)
+       form]
+      [else
+       #`(call-with-values
+          (lambda () #,form)
+          (lambda wr-top-level-results
+            (for-each
+             (lambda (wr-top-level-result)
+               (unless (void? wr-top-level-result)
+                 (print wr-top-level-result (current-output-port) 0)
+                 (write-char #\newline (current-output-port))))
+             wr-top-level-results)
+            (void)))]))
+  (wrap-form stx))
+
 ;; default-ffi-files : (listof path-string?) boolean? -> (listof path-string?)
 ;;   Return the default FFI files that are always loaded unless the caller
 ;;   already supplied matching bundled FFI files.
@@ -223,6 +257,7 @@
          #:node?             node?
          #:tree-shake?       tree-shake?
          #:tree-shake-report tree-shake-report
+         #:print-top-level-results? print-top-level-results?
          #:console-bridge?   console-bridge?
          #:run-after?        run-after?
          #:ffi-files         ffi-files    ; list of file paths for .ffi files
@@ -249,7 +284,10 @@
                                         (~a "read failed: " (exn-message e))))])
       (read-top-level-from-file filename)))
   (define t-read-source-end (now-ms))
-  (define stx-for-compile stx)
+  (define stx-for-compile
+    (if print-top-level-results?
+        (print-top-level-results stx)
+        stx))
 
   ; 2. Handle ffi-files.
   (define t-ffi-setup-start  (now-ms))

@@ -5162,8 +5162,6 @@
     (define (AExpr* aes)             (map (λ (ae) (AExpr2 ae #f)) aes)) ; for effect 
     (define (Expr* es dd cd)         (map (λ (e)  (Expr e dd cd)) es))
     (define (CExpr ce dd cd)         (CExpr2 ce dd cd))      
-    (define (TopLevelForm* ts dd)    (map (λ (t)  (TopLevelForm    t dd)) ts))
-    (define (ModuleLevelForm* ms dd) (map (λ (m)  (ModuleLevelForm m dd)) ms))
     (define f-tmp                    (Var (new-var 'f))) ; used by app
     (define used-primitives-ht       (make-hasheq))
 
@@ -6506,7 +6504,7 @@
                                               ,body-expr)]
                                       [x (pretty-print x)
                                          (error 'generate-code-Top "got: ~a" x)])]
-    [(topmodule ,s ,mn ,mp ,mf ...) (let ([mf (ModuleLevelForm* mf dd)])
+    [(topmodule ,s ,mn ,mp ,mf ...) (let ([mf (map (λ (m) (ModuleLevelForm m dd)) mf)])
                                       `(topmodule ,mn ,mp ,mf ...))]
     [(topbegin ,s ,t ...)
      ; Note: We have flattened `topbegin` so no `t` is a `topbegin`.
@@ -6514,6 +6512,8 @@
      ; The first forms are evaluated for effect.
      ; The last one stores the result in `$result`.
      (let ()
+       (define (TopLevelForm* ts dd)
+         (map (λ (t) (TopLevelForm t dd)) ts))
        (define (define-label? t)
          (nanopass-case (LANF+closure TopLevelForm) t
            [(define-label ,l ,cab) #t]
@@ -6543,7 +6543,8 @@
           [(list t0 ... tn)
            ; (displayln "HERE")
            (define (non-nop? x) (not (equal? x '(nop))))
-           (let ([t0s (filter non-nop? (TopLevelForm* t0 <effect>))]
+           (let ([t0s (filter non-nop?
+                              (TopLevelForm* t0 <effect>))]
                  [tn  (TopLevelForm  tn dd)])
              (if (null? t0s)
                  tn
