@@ -4380,6 +4380,18 @@
                      (equal? (exn-message non-char) "non")
                      (equal? (exn-message eof) "eof"))))
 
+        (list "exn:fail:filesystem structures"
+              (let* ([marks           '()]
+                     [filesystem      (exn:fail:filesystem "filesystem" marks)]
+                     [filesystem-make (make-exn:fail:filesystem "made-filesystem" marks)])
+                (and (equal? (exn:fail? filesystem) #t)
+                     (equal? (exn:fail? filesystem-make) #t)
+                     (equal? (exn:fail:filesystem? filesystem) #t)
+                     (equal? (exn:fail:filesystem? filesystem-make) #t)
+                     (equal? (exn:fail:filesystem? (exn:fail "fail" marks)) #f)
+                     (equal? (exn-message filesystem) "filesystem")
+                     (equal? (exn-message filesystem-make) "made-filesystem"))))
+
         (list "exn:fail:syntax structures"
               (let* ([marks          '()]
                      [expr           (datum->syntax #f 'expr)]
@@ -4861,19 +4873,22 @@
                          (equal? (directory-exists? "/app/main.rkt") #f)))
               (list "file-size"
                     (and (equal? (file-size "/app/data/notes.txt") 6)
-                         (with-handlers ([exn:fail? (lambda (_ex) #t)])
+                         (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                          (lambda (_ex) #t)])
                            (file-size "/app/data/missing.txt")
                            #f)))
               (list "file->bytes"
                     (and (equal? (file->bytes "/app/data/notes.txt") #"notes\n")
                          (equal? (file->bytes "/app/data/more.txt") #"more")
-                         (with-handlers ([exn:fail? (lambda (_ex) #t)])
+                         (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                          (lambda (_ex) #t)])
                            (file->bytes "/app/data/missing.txt")
                            #f)))
               (list "file->string"
                     (and (equal? (file->string "/app/data/notes.txt") "notes\n")
                          (equal? (file->string "/app/data/more.txt") "more")
-                         (with-handlers ([exn:fail? (lambda (_ex) #t)])
+                         (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                          (lambda (_ex) #t)])
                            (file->string "/app/data/missing.txt")
                            #f)))
               (list "open-input-file"
@@ -4893,7 +4908,8 @@
                            (equal? (read-string 6 port) "notes\n")
                            (equal? (loc) '(2 0 7)))))
               (list "open-input-file/missing"
-                    (with-handlers ([exn:fail? (lambda (_ex) #t)])
+                    (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                     (lambda (_ex) #t)])
                       (open-input-file "/app/data/missing.txt")
                       #f))
               (list "call-with-input-file"

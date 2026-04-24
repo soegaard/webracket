@@ -119,6 +119,7 @@
          struct:exn:fail:read
          struct:exn:fail:read:eof
          struct:exn:fail:read:non-char
+         struct:exn:fail:filesystem
          struct:exn:fail:syntax
          struct:exn:fail:syntax:missing-module
          struct:exn:fail:syntax:unbound
@@ -151,6 +152,9 @@
          exn:fail:read:non-char
          exn:fail:read:non-char?
 
+         exn:fail:filesystem
+         exn:fail:filesystem?
+
          exn:fail:syntax
          exn:fail:syntax?
          exn:fail:syntax-exprs
@@ -170,6 +174,7 @@
          make-exn:fail:read
          make-exn:fail:read:eof
          make-exn:fail:read:non-char
+         make-exn:fail:filesystem
          make-exn:fail:syntax
          make-exn:fail:syntax:missing-module
          make-exn:fail:syntax:unbound

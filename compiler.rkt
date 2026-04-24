@@ -695,6 +695,7 @@
     struct:exn:fail:read
     struct:exn:fail:read:eof
     struct:exn:fail:read:non-char
+    struct:exn:fail:filesystem
     struct:exn:fail:syntax
     struct:exn:fail:syntax:missing-module
     struct:exn:fail:syntax:unbound
@@ -1367,6 +1368,10 @@
   exn:fail:read:non-char
   exn:fail:read:non-char?
   make-exn:fail:read:non-char
+
+  exn:fail:filesystem
+  exn:fail:filesystem?
+  make-exn:fail:filesystem
 
   exn:fail:syntax
   exn:fail:syntax?
@@ -2399,6 +2404,7 @@
                          kern-exn:fail:read-srclocs
                          kern-exn:fail:read:eof kern-exn:fail:read:eof?
                          kern-exn:fail:read:non-char kern-exn:fail:read:non-char?
+                         kern-exn:fail:filesystem kern-exn:fail:filesystem?
                          kern-exn:fail:syntax kern-exn:fail:syntax?
                          kern-exn:fail:syntax-exprs
                          kern-exn:fail:syntax:missing-module kern-exn:fail:syntax:missing-module?
@@ -2429,6 +2435,8 @@
     [kern-exn:fail:read:eof?                #'exn:fail:read:eof?]
     [kern-exn:fail:read:non-char            #'exn:fail:read:non-char]
     [kern-exn:fail:read:non-char?           #'exn:fail:read:non-char?]
+    [kern-exn:fail:filesystem               #'exn:fail:filesystem]
+    [kern-exn:fail:filesystem?              #'exn:fail:filesystem?]
     [kern-exn:fail:syntax                   #'exn:fail:syntax]
     [kern-exn:fail:syntax?                  #'exn:fail:syntax?]
     [kern-exn:fail:syntax-exprs             #'exn:fail:syntax-exprs]

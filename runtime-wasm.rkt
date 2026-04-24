@@ -75,6 +75,7 @@
         (struct:exn:fail:read                       ensure-exn:fail:read-type)
         (struct:exn:fail:read:eof                   ensure-exn:fail:read:eof-type)
         (struct:exn:fail:read:non-char              ensure-exn:fail:read:non-char-type)
+        (struct:exn:fail:filesystem                 ensure-exn:fail:filesystem-type)
         (struct:exn:fail:syntax                     ensure-exn:fail:syntax-type)
         (struct:exn:fail:syntax:missing-module      ensure-exn:fail:syntax:missing-module-type)
         (struct:exn:fail:syntax:unbound             ensure-exn:fail:syntax:unbound-type)))
@@ -1640,6 +1641,9 @@
           exn:fail:read:non-char
           exn:fail:read:non-char?
           make-exn:fail:read:non-char
+          exn:fail:filesystem
+          exn:fail:filesystem?
+          make-exn:fail:filesystem
           exn:fail:syntax
           exn:fail:syntax?
           make-exn:fail:syntax
@@ -2872,12 +2876,12 @@
                (unreachable))
 
          ;; raise-vfs-file-error : string? -> none
-         ;;   Raise a catchable placeholder exn:fail for VFS filesystem errors.
+         ;;   Raise a catchable exn:fail:filesystem for VFS filesystem errors.
          (func $raise-vfs-file-error
                (param $message (ref eq))
 
                (drop (call $raise
-                           (call $make-exn:fail
+                           (call $make-exn:fail:filesystem
                                  (local.get $message)
                                  (call $current-continuation-marks
                                        (global.get $missing)))
@@ -3006,6 +3010,8 @@
          (global $exn:fail:read-type                    (mut (ref null $StructType)) (ref.null $StructType))
          (global $exn:fail:read:eof-type                (mut (ref null $StructType)) (ref.null $StructType))
          (global $exn:fail:read:non-char-type           (mut (ref null $StructType)) (ref.null $StructType))
+
+         (global $exn:fail:filesystem-type              (mut (ref null $StructType)) (ref.null $StructType))
 
          (global $exn:fail:syntax-type                  (mut (ref null $StructType)) (ref.null $StructType))
          (global $exn:fail:syntax:missing-module-type   (mut (ref null $StructType)) (ref.null $StructType))
@@ -6591,6 +6597,105 @@
                (local $ok     i32)
 
                (local.set $std (call $ensure-exn:fail:read:non-char-type))
+               (if (result (ref eq))
+                   (ref.test (ref $Struct) (local.get $v))
+                   (then
+                    (local.set $struct (ref.cast (ref $Struct) (local.get $v)))
+                    (local.set $ok (call $struct-type-is-a?/i32
+                                             (struct.get $Struct $type (local.get $struct))
+                                             (local.get $std)))
+                    (if (result (ref eq))
+                        (local.get $ok)
+                        (then (global.get $true))
+                        (else (global.get $false))))
+                   (else (global.get $false))))
+
+         ;; Kernel exception fail:filesystem struct type descriptor cache
+         (func $ensure-exn:fail:filesystem-type
+               (result (ref $StructType))
+
+               (local $existing (ref null $StructType))
+               (local $std      (ref $StructType))
+               (local $super    (ref $StructType))
+               (local $immut    (ref eq))
+
+               (local.set $existing (global.get $exn:fail:filesystem-type))
+               (if (ref.is_null (local.get $existing))
+                   (then
+                    (local.set $super (call $ensure-exn:fail-type))
+                    (local.set $immut (struct.get $StructType $immutables (local.get $super)))
+                    (local.set $std
+                               (call $make-struct-type-descriptor/checked
+                                     (ref.cast (ref $Symbol) (global.get $symbol:exn:fail:filesystem))
+                                     (ref.cast (ref eq) (local.get $super))
+                                     (i32.const 0)
+                                     (i32.const 0)
+                                     (global.get $false)
+                                     (global.get $null)
+                                     (global.get $false)
+                                     (global.get $false)
+                                     (local.get $immut)
+                                     (global.get $false)
+                                     (ref.cast (ref $Symbol) (global.get $symbol:exn:fail:filesystem))))
+                    (global.set $exn:fail:filesystem-type (local.get $std))
+                    (local.set $existing (local.get $std))))
+               (ref.as_non_null (local.get $existing)))
+
+         ;; Construct a kernel exception:fail:filesystem instance
+         (func $exn:fail:filesystem/make
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (result (ref $Struct))
+
+               (local $std    (ref $StructType))
+               (local $fields (ref $Array))
+
+               (local.set $std (call $ensure-exn:fail:filesystem-type))
+               (local.set $fields
+                          (array.new_fixed $Array 2
+                                           (local.get $message)
+                                           (local.get $marks)))
+               (struct.new $Struct
+                           (i32.const 0)
+                           (global.get $false)
+                           (ref.i31 (i32.const 0))
+                           (global.get $false)
+                           (ref.func $invoke-struct)
+                           (local.get $std)
+                           (local.get $fields)))
+
+         ;; exn:fail:filesystem : string? continuation-mark-set? -> exn:fail:filesystem
+         (func $exn:fail:filesystem (type $Prim2)
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (result (ref eq))
+
+               (ref.cast (ref eq)
+                         (call $exn:fail:filesystem/make
+                               (call $exn-ensure-message (global.get $symbol:exn:fail:filesystem) (local.get $message))
+                               (local.get $marks))))
+
+         ;; make-exn:fail:filesystem : string? continuation-mark-set? -> exn:fail:filesystem
+         (func $make-exn:fail:filesystem (type $Prim2)
+               (param $message (ref eq)) ; string
+               (param $marks   (ref eq)) ; continuation-mark-set?
+               (result (ref eq))
+
+               (ref.cast (ref eq)
+                         (call $exn:fail:filesystem/make
+                               (call $exn-ensure-message (global.get $symbol:make-exn:fail:filesystem) (local.get $message))
+                               (local.get $marks))))
+
+         ;; exn:fail:filesystem? : any/c -> boolean?
+         (func $exn:fail:filesystem? (type $Prim1)
+               (param $v (ref eq)) ; any/c
+               (result (ref eq))
+
+               (local $std    (ref $StructType))
+               (local $struct (ref $Struct))
+               (local $ok     i32)
+
+               (local.set $std (call $ensure-exn:fail:filesystem-type))
                (if (result (ref eq))
                    (ref.test (ref $Struct) (local.get $v))
                    (then
