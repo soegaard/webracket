@@ -1762,6 +1762,8 @@
     (add-runtime-string-constant 'read-byte:input-port-closed "read-byte: input port is closed")
     (add-runtime-string-constant 'peek-byte:input-port-closed "peek-byte: input port is closed")
     (add-runtime-string-constant 'write-byte:output-port-closed "write-byte: output port is closed")
+    (add-runtime-string-constant 'vfs:file-size-failed       "file-size: VFS path does not refer to a file")
+    (add-runtime-string-constant 'vfs:read-file-failed       "VFS file read failed")
     (add-runtime-string-constant 'uncaught-exception         "uncaught exception: ")
     (add-runtime-string-constant 'callback:no-js-equivalent
                                  "The callback attempted to return a WebRacket value with no JavaScript equivalent (i.e. without a FASL encoding): ")
@@ -2859,6 +2861,19 @@
          ;; raise-output-port-closed : string? -> none
          ;;   Raise an exn:fail for an operation on a closed output port.
          (func $raise-output-port-closed
+               (param $message (ref eq))
+
+               (drop (call $raise
+                           (call $make-exn:fail
+                                 (local.get $message)
+                                 (call $current-continuation-marks
+                                       (global.get $missing)))
+                           (global.get $true)))
+               (unreachable))
+
+         ;; raise-vfs-file-error : string? -> none
+         ;;   Raise a catchable placeholder exn:fail for VFS filesystem errors.
+         (func $raise-vfs-file-error
                (param $message (ref eq))
 
                (drop (call $raise
@@ -44934,7 +44949,8 @@
                                             (global.get $memory-map:vfs-path-buffer-base)
                                             (local.get $len)))
                      (if (i32.lt_s (local.get $size) (i32.const 0))
-                         (then (call $raise-path-expected (local.get $path-raw))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:file-size-failed))
                                (unreachable)))
                      (ref.i31 (i32.shl (local.get $size) (i32.const 1))))
 
@@ -44983,7 +44999,8 @@
                                       (global.get $memory-map:vfs-path-buffer-base)
                                       (local.get $path-len)))
                      (if (i32.lt_s (local.get $expected) (i32.const 0))
-                         (then (call $raise-path-expected (local.get $path-raw))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:read-file-failed))
                                (unreachable)))
                      (if (i32.gt_u (local.get $expected)
                                    (global.get $memory-map:vfs-file-buffer-length))
@@ -44996,7 +45013,8 @@
                                       (global.get $memory-map:vfs-file-buffer-base)
                                       (global.get $memory-map:vfs-file-buffer-length)))
                      (if (i32.lt_s (local.get $file-len) (i32.const 0))
-                         (then (call $raise-path-expected (local.get $path-raw))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:read-file-failed))
                                (unreachable)))
                      (if (i32.gt_u (local.get $file-len)
                                    (global.get $memory-map:vfs-file-buffer-length))

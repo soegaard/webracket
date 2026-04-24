@@ -4860,13 +4860,22 @@
                          (equal? (directory-exists? "/app/data") #t)
                          (equal? (directory-exists? "/app/main.rkt") #f)))
               (list "file-size"
-                    (equal? (file-size "/app/data/notes.txt") 6))
+                    (and (equal? (file-size "/app/data/notes.txt") 6)
+                         (with-handlers ([exn:fail? (lambda (_ex) #t)])
+                           (file-size "/app/data/missing.txt")
+                           #f)))
               (list "file->bytes"
                     (and (equal? (file->bytes "/app/data/notes.txt") #"notes\n")
-                         (equal? (file->bytes "/app/data/more.txt") #"more")))
+                         (equal? (file->bytes "/app/data/more.txt") #"more")
+                         (with-handlers ([exn:fail? (lambda (_ex) #t)])
+                           (file->bytes "/app/data/missing.txt")
+                           #f)))
               (list "file->string"
                     (and (equal? (file->string "/app/data/notes.txt") "notes\n")
-                         (equal? (file->string "/app/data/more.txt") "more")))
+                         (equal? (file->string "/app/data/more.txt") "more")
+                         (with-handlers ([exn:fail? (lambda (_ex) #t)])
+                           (file->string "/app/data/missing.txt")
+                           #f)))
               (list "open-input-file"
                     (let ([port (open-input-file "/app/data/notes.txt")])
                       (and (input-port? port)
@@ -4883,6 +4892,10 @@
                       (and (equal? (loc) '(1 0 1))
                            (equal? (read-string 6 port) "notes\n")
                            (equal? (loc) '(2 0 7)))))
+              (list "open-input-file/missing"
+                    (with-handlers ([exn:fail? (lambda (_ex) #t)])
+                      (open-input-file "/app/data/missing.txt")
+                      #f))
               (list "call-with-input-file"
                     (let ([saved-port #f])
                       (let ([result
