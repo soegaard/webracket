@@ -5633,6 +5633,31 @@
                            (with-handlers ([exn:fail? (lambda (_ex) #t)])
                              (write-byte 66 port)
                              #f))))
+              (list "open-output-file/exists"
+                    (begin
+                      (webracket-vfs-write-file "/app/data/out-exists.txt" #"old")
+                      (and (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                           (lambda (_ex) #t)])
+                             (open-output-file "/app/data/out-exists.txt")
+                             #f)
+                           (let ([port (open-output-file "/app/data/out-exists.txt"
+                                                         'binary
+                                                         'replace)])
+                             (write-string "new" port)
+                             (close-output-port port)
+                             (equal? (file->string "/app/data/out-exists.txt") "new"))
+                           (let ([port (open-output-file "/app/data/out-exists.txt"
+                                                         'text
+                                                         'append)])
+                             (write-string "!" port)
+                             (close-output-port port)
+                             (equal? (file->string "/app/data/out-exists.txt") "new!"))
+                           (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                           (lambda (_ex) #t)])
+                             (open-output-file "/app/data/out-missing.txt"
+                                               'binary
+                                               'must-truncate)
+                             #f))))
               (list "flush-output/open-output-file"
                     (let ([port (open-output-file "/app/data/flushed.txt")])
                       (and (equal? (write-string "first" port) 5)
@@ -5671,6 +5696,27 @@
                              (port-closed? saved-port)
                              (equal? (file->string "/app/data/call-out.txt")
                                      "called")))))
+              (list "call-with-output-file/exists"
+                    (begin
+                      (webracket-vfs-write-file "/app/data/call-out-exists.txt" #"old")
+                      (and (equal? (call-with-output-file "/app/data/call-out-exists.txt"
+                                     (lambda (port)
+                                       (write-string "new" port)
+                                       'done)
+                                     'binary
+                                     'replace)
+                                   'done)
+                           (equal? (file->string "/app/data/call-out-exists.txt")
+                                   "new")
+                           (equal? (call-with-output-file "/app/data/call-out-exists.txt"
+                                     (lambda (port)
+                                       (write-string "!" port)
+                                       'appended)
+                                     'binary
+                                     'append)
+                                   'appended)
+                           (equal? (file->string "/app/data/call-out-exists.txt")
+                                   "new!"))))
               (list "call-with-input-file*"
                     (let ([saved-port #f])
                       (let ([result
@@ -5717,6 +5763,16 @@
                            (port-closed? saved-port)
                            (equal? (file->string "/app/data/call-star-error.txt")
                                    "star-error"))))
+              (list "call-with-output-file*/exists"
+                    (begin
+                      (webracket-vfs-write-file "/app/data/call-star-exists.txt" #"old")
+                      (call-with-output-file* "/app/data/call-star-exists.txt"
+                        (lambda (port)
+                          (write-string "star-new" port))
+                        'binary
+                        'truncate)
+                      (equal? (file->string "/app/data/call-star-exists.txt")
+                              "star-new")))
               (list "with-input-from-file"
                     (let* ([original (current-input-port)]
                            [during   #f]
@@ -5754,6 +5810,18 @@
                            (eq? (current-output-port) original)
                            (equal? (file->string "/app/data/with-out.txt")
                                    "with"))))
+              (list "with-output-to-file/exists"
+                    (begin
+                      (webracket-vfs-write-file "/app/data/with-out-exists.txt" #"old")
+                      (and (equal? (with-output-to-file "/app/data/with-out-exists.txt"
+                                     (lambda ()
+                                       (write-string "with-new")
+                                       'ok)
+                                     'binary
+                                     'replace)
+                                   'ok)
+                           (equal? (file->string "/app/data/with-out-exists.txt")
+                                   "with-new"))))
               (list "with-output-to-file/exception"
                     (let ([original (current-output-port)]
                           [during   #f])

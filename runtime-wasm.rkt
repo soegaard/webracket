@@ -1540,6 +1540,15 @@
           write
           execute
           bits
+          binary
+          text
+          append
+          update
+          can-update
+          replace
+          truncate
+          must-truncate
+          truncate/replace
           file
           directory
 
@@ -1793,6 +1802,8 @@
     (add-runtime-string-constant 'vfs:type-failed            "file-or-directory-type: VFS path does not exist")
     (add-runtime-string-constant 'vfs:identity-failed        "file-or-directory-identity: VFS path does not exist")
     (add-runtime-string-constant 'permissions-mode           "(or/c #f 'bits (integer-in 0 65535))")
+    (add-runtime-string-constant 'output-file-mode-flag      "(or/c 'binary 'text)")
+    (add-runtime-string-constant 'output-file-exists-flag    "(or/c 'error 'append 'replace 'truncate 'must-truncate 'truncate/replace)")
     (add-runtime-string-constant 'string-or-bytes            "(or/c string? bytes?)")
     (add-runtime-string-constant 'boolean?                   "boolean?")
     (add-runtime-string-constant 'uncaught-exception         "uncaught exception: ")
@@ -48498,20 +48509,87 @@
                                                 (local.get $perms)))))
                      (local.get $perms))
 
-               (func $open-output-file (type $Prim1)
-                     (param $path-raw (ref eq)) ;; path-string?
-                     (result          (ref eq))
+               ;; open-output-file : path-string? [(or/c 'binary 'text)] [(or/c 'error 'append 'replace 'truncate 'must-truncate 'truncate/replace)] -> output-port?
+               ;;   Keywordless form of Racket's #:mode and #:exists options.
+               ;;   Text mode is accepted but currently behaves like binary mode.
+               ;;   Update-style modes wait on random-access file-position support.
+               (func $open-output-file (type $Prim13)
+                     (param $path-raw   (ref eq)) ;; path-string?
+                     (param $mode-raw   (ref eq)) ;; optional (or/c 'binary 'text), default = 'binary
+                     (param $exists-raw (ref eq)) ;; optional exists mode, default = 'error
+                     (result            (ref eq))
 
-                     (local $path (ref $Path))
-                     (local $bs   (ref $Bytes))
-                     (local $loc  (ref $Location))
+                     (local $path     (ref $Path))
+                     (local $bs       (ref $Bytes))
+                     (local $file-bs  (ref $Bytes))
+                     (local $loc      (ref $Location))
+                     (local $mode     (ref eq))
+                     (local $exists   (ref eq))
+                     (local $kind     i32)
+                     (local $append?  i32)
+                     (local $idx      i32)
+                     (local $capacity i32)
 
-                     ;; First version: binary mode only; keyword options such as
-                     ;; #:exists are left until WebRacket supports keywords.
                      (local.set $path
                                 (call $path-string->path/checked
                                       (global.get $symbol:open-output-file)
                                       (local.get $path-raw)))
+                     (local.set $mode
+                                (if (result (ref eq))
+                                    (ref.eq (local.get $mode-raw) (global.get $missing))
+                                    (then (global.get $symbol:binary))
+                                    (else (local.get $mode-raw))))
+                     (if (i32.eqz
+                          (i32.or (ref.eq (local.get $mode) (global.get $symbol:binary))
+                                  (ref.eq (local.get $mode) (global.get $symbol:text))))
+                         (then (call $raise-argument-error1
+                                     (global.get $symbol:open-output-file)
+                                     (global.get $string:output-file-mode-flag)
+                                     (local.get $mode-raw))
+                               (unreachable)))
+                     (local.set $exists
+                                (if (result (ref eq))
+                                    (ref.eq (local.get $exists-raw) (global.get $missing))
+                                    (then (global.get $symbol:error))
+                                    (else (local.get $exists-raw))))
+                     (if (i32.eqz
+                          (i32.or
+                           (i32.or (ref.eq (local.get $exists) (global.get $symbol:error))
+                                   (ref.eq (local.get $exists) (global.get $symbol:append)))
+                           (i32.or
+                            (i32.or (ref.eq (local.get $exists) (global.get $symbol:replace))
+                                    (ref.eq (local.get $exists) (global.get $symbol:truncate)))
+                            (i32.or (ref.eq (local.get $exists) (global.get $symbol:must-truncate))
+                                    (ref.eq (local.get $exists) (global.get $symbol:truncate/replace))))))
+                         (then (call $raise-argument-error1
+                                     (global.get $symbol:open-output-file)
+                                     (global.get $string:output-file-exists-flag)
+                                     (local.get $exists-raw))
+                               (unreachable)))
+                     (local.set $kind
+                                (call $vfs-path-stat-kind
+                                      (global.get $symbol:open-output-file)
+                                      (local.get $path-raw)))
+                     (if (i32.eq (local.get $kind) (i32.const 2))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:write-file-failed))
+                               (unreachable)))
+                     (if (i32.and
+                          (ref.eq (local.get $exists) (global.get $symbol:error))
+                          (i32.ne (local.get $kind) (i32.const 0)))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:write-file-failed))
+                               (unreachable)))
+                     (if (i32.and
+                          (ref.eq (local.get $exists) (global.get $symbol:must-truncate))
+                          (i32.ne (local.get $kind) (i32.const 1)))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:write-file-failed))
+                               (unreachable)))
+                     (local.set $append?
+                                (ref.eq (local.get $exists) (global.get $symbol:append)))
+                     (local.set $capacity (i32.const 32))
+                     (local.set $idx (i32.const 0))
                      (local.set $bs
                                 (struct.new $Bytes
                                             (i32.const 0)
@@ -48519,6 +48597,25 @@
                                             (call $i8make-array
                                                   (i32.const 32)
                                                   (i32.const 0))))
+                     (if (i32.and (local.get $append?)
+                                  (i32.eq (local.get $kind) (i32.const 1)))
+                         (then
+                          (local.set $file-bs
+                                     (call $vfs-read-file-bytes
+                                           (global.get $symbol:open-output-file)
+                                           (local.get $path-raw)))
+                          (local.set $idx
+                                     (array.len
+                                      (struct.get $Bytes $bs (local.get $file-bs))))
+                          (if (local.get $idx)
+                              (then
+                               (local.set $capacity (local.get $idx))
+                               (local.set $bs
+                                          (struct.new $Bytes
+                                                      (i32.const 0)
+                                                      (i32.const 0)
+                                                      (struct.get $Bytes $bs
+                                                                  (local.get $file-bs))))))))
                      (local.set $loc
                                 (ref.cast (ref $Location)
                                           (call $make-initial-location)))
@@ -48527,8 +48624,8 @@
                                  (local.get $path)    ;; $name
                                  (i32.const 0)        ;; $closed
                                  (local.get $bs)      ;; $bytes
-                                 (i32.const 32)       ;; $len
-                                 (i32.const 0)        ;; $idx
+                                 (local.get $capacity) ;; $len
+                                 (local.get $idx)     ;; $idx
                                  (local.get $loc)     ;; $loc
                                  (i32.const 0)        ;; $utf8-len
                                  (i32.const 0)        ;; $utf8-left
@@ -48588,13 +48685,15 @@
                      (drop (call $close-input-port (local.get $port)))
                      (local.get $res))
 
-               ;; $call-with-output-file : path-string? procedure? -> any
+               ;; $call-with-output-file : path-string? procedure? [(or/c 'binary 'text)] [exists-mode] -> any
                ;;   Open a VFS output file, pass its output port to proc, close it,
-               ;;   and return proc's result. Keyword options are not implemented yet.
-               (func $call-with-output-file (type $Prim2)
-                     (param $path-raw (ref eq)) ;; path-string?
-                     (param $proc     (ref eq)) ;; procedure?
-                     (result          (ref eq))
+               ;;   and return proc's result.
+               (func $call-with-output-file (type $Prim24)
+                     (param $path-raw   (ref eq)) ;; path-string?
+                     (param $proc       (ref eq)) ;; procedure?
+                     (param $mode-raw   (ref eq)) ;; optional (or/c 'binary 'text), default = 'binary
+                     (param $exists-raw (ref eq)) ;; optional exists mode, default = 'error
+                     (result            (ref eq))
 
                      (local $f    (ref $Procedure))
                      (local $finv (ref $ProcedureInvoker))
@@ -48604,7 +48703,9 @@
 
                      (local.set $port
                                 (call $open-output-file
-                                      (local.get $path-raw)))
+                                      (local.get $path-raw)
+                                      (local.get $mode-raw)
+                                      (local.get $exists-raw)))
                      (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
                          (then (call $raise-argument-error:procedure-expected
                                      (local.get $proc))
@@ -48747,13 +48848,14 @@
                      (drop (call $close-input-port (local.get $port)))
                      (local.get $res))
 
-               ;; $call-with-output-file* : path-string? procedure? -> any
+               ;; $call-with-output-file* : path-string? procedure? [(or/c 'binary 'text)] [exists-mode] -> any
                ;;   Open a VFS file, pass its output port to proc, and close it on return or exception.
-               ;;   Keyword options such as #:exists are not implemented yet.
-               (func $call-with-output-file* (type $Prim2)
-                     (param $path-raw (ref eq)) ;; path-string?
-                     (param $proc     (ref eq)) ;; procedure?
-                     (result          (ref eq))
+               (func $call-with-output-file* (type $Prim24)
+                     (param $path-raw   (ref eq)) ;; path-string?
+                     (param $proc       (ref eq)) ;; procedure?
+                     (param $mode-raw   (ref eq)) ;; optional (or/c 'binary 'text), default = 'binary
+                     (param $exists-raw (ref eq)) ;; optional exists mode, default = 'error
+                     (result            (ref eq))
 
                      (local $f       (ref $Procedure))
                      (local $finv    (ref $ProcedureInvoker))
@@ -48770,7 +48872,9 @@
                      (local.set $finv (struct.get $Procedure $invoke (local.get $f)))
                      (local.set $port
                                 (call $open-output-file
-                                      (local.get $path-raw)))
+                                      (local.get $path-raw)
+                                      (local.get $mode-raw)
+                                      (local.get $exists-raw)))
                      (local.set $args (array.new_fixed $Args 1 (local.get $port)))
                      (local.set $res
                                 (block $done (result (ref eq))
@@ -48822,13 +48926,14 @@
                      (drop (call $close-input-port (local.get $port)))
                      (local.get $res))
 
-               ;; $with-output-to-file : path-string? procedure? -> any
+               ;; $with-output-to-file : path-string? procedure? [(or/c 'binary 'text)] [exists-mode] -> any
                ;;   Install a VFS output file as the current output port while thunk runs.
-               ;;   Keyword options such as #:exists are not implemented yet.
-               (func $with-output-to-file (type $Prim2)
-                     (param $path-raw (ref eq)) ;; path-string?
-                     (param $thunk    (ref eq)) ;; procedure?
-                     (result          (ref eq))
+               (func $with-output-to-file (type $Prim24)
+                     (param $path-raw   (ref eq)) ;; path-string?
+                     (param $thunk      (ref eq)) ;; procedure?
+                     (param $mode-raw   (ref eq)) ;; optional (or/c 'binary 'text), default = 'binary
+                     (param $exists-raw (ref eq)) ;; optional exists mode, default = 'error
+                     (result            (ref eq))
 
                      (local $port    (ref eq))
                      (local $res     (ref eq))
@@ -48836,7 +48941,9 @@
 
                      (local.set $port
                                 (call $open-output-file
-                                      (local.get $path-raw)))
+                                      (local.get $path-raw)
+                                      (local.get $mode-raw)
+                                      (local.get $exists-raw)))
 
                      (local.set $res
                                 (block $done (result (ref eq))

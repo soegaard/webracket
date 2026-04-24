@@ -1000,11 +1000,8 @@
        unsafe-fxremainder
        unsafe-fxmodulo
        call-with-input-file
-       call-with-output-file
        call-with-input-file*
-       call-with-output-file*
        with-input-from-file
-       with-output-to-file
        instance-unset-variable!
        bytes-join)
      'fixed 2 2))
@@ -1118,6 +1115,14 @@
        simplify-path
        make-directory)
      'optional 1 2)
+    (make-inline-specs
+     '(open-output-file)
+     'optional 1 3)
+    (make-inline-specs
+     '(call-with-output-file
+       call-with-output-file*
+       with-output-to-file)
+     'optional 2 4)
     (make-inline-specs
      '(open-output-bytes
        open-output-string
