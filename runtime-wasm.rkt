@@ -45141,6 +45141,16 @@
                            (call $bytes-append/2 (local.get $bytes) (global.get $bytes:slash))
                            (global.get $missing)))
 
+               ;; resolve-path : path-string? -> path?
+               ;;   Return the validated VFS path; soft links and full cleansing are not modeled yet.
+               (func $resolve-path (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (result          (ref eq))
+
+                     (call $path-string->path/checked
+                           (global.get $symbol:resolve-path)
+                           (local.get $path-raw)))
+
                (func $vfs-path-stat-kind
                      (param $who      (ref eq)) ;; symbol? (currently for diagnostics)
                      (param $path-raw (ref eq)) ;; path-string?

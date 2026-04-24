@@ -1010,6 +1010,7 @@
  current-directory
  path->complete-path
  path->directory-path
+ resolve-path
 
  ;; 15.2 Filesystem
  file-exists?

@@ -4899,6 +4899,11 @@
                                  "/app/data/")
                          (equal? (path->string (path->directory-path "relative"))
                                  "relative/")))
+              (list "resolve-path"
+                    (and (equal? (path->string (resolve-path "/app/main.rkt"))
+                                 "/app/main.rkt")
+                         (equal? (path->string (resolve-path "relative.txt"))
+                                 "relative.txt")))
               (list "build-path"
                     (and (equal? (path->string (build-path "/app" "main.rkt"))
                                  "/app/main.rkt")
