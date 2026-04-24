@@ -12248,7 +12248,7 @@
                                       (else
                                        ;; Try 'a'..'z'
                                        (local.set $digit
-                                                  (i32.sub (local.get $cp) (i32.const 87)))
+                                                  (i32.sub (local.get $cp) (i32.const 97)))
                                        (if (i32.lt_u (local.get $digit) (i32.const 26))
                                            (then
                                             (local.set $digit
@@ -12256,7 +12256,7 @@
                                            (else
                                             ;; Try 'A'..'Z'
                                             (local.set $digit
-                                                       (i32.sub (local.get $cp) (i32.const 55)))
+                                                       (i32.sub (local.get $cp) (i32.const 65)))
                                             (if (i32.lt_u (local.get $digit) (i32.const 26))
                                                 (then
                                                  (local.set $digit
