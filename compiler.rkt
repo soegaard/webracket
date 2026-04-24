@@ -1114,6 +1114,7 @@
        read-bytes
        open-input-file
        read-string
+       normalize-path
        simplify-path
        make-directory)
      'optional 1 2)
@@ -2042,6 +2043,7 @@
   path-element->bytes
   path-element->string
   simple-form-path
+  normalize-path
   path-only
 
   ;; 15.2 Filesystem

@@ -45683,6 +45683,35 @@
                                  (global.get $missing))
                            (global.get $true)))
 
+               ;; normalize-path : path-string? [complete-path?] -> path?
+               ;;   Complete a path relative to wrt, then simplify syntactically.
+               ;;   WebRacket does not resolve VFS links here yet.
+               (func $normalize-path (type $Prim12)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (param $wrt-raw  (ref eq)) ;; complete path-string?, optional default current-directory
+                     (result          (ref eq))
+
+                     (local $wrt (ref eq))
+                     (local $wrt-path (ref $Path))
+
+                     (local.set $wrt (global.get $current-directory-path))
+                     (if (i32.eqz (ref.eq (local.get $wrt-raw) (global.get $missing)))
+                         (then
+                          (local.set $wrt-path
+                                     (call $path-string->path/checked
+                                           (global.get $symbol:normalize-path)
+                                           (local.get $wrt-raw)))
+                          (if (i32.eqz (call $path-bytes-absolute?
+                                             (struct.get $Path $bytes (local.get $wrt-path))))
+                              (then (call $raise-path-expected (local.get $wrt-raw))
+                                    (unreachable)))
+                          (local.set $wrt (local.get $wrt-path))))
+                     (call $simplify-path
+                           (call $path->complete-path
+                                 (local.get $path-raw)
+                                 (local.get $wrt))
+                           (global.get $true)))
+
                ;; normal-case-path : (or/c path-string? path-for-some-system?) -> path-for-some-system?
                ;;   Return Unix paths unchanged; for Windows, lowercase ASCII letters and use backslash separators.
                (func $normal-case-path (type $Prim1)

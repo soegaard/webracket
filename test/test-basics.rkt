@@ -5118,6 +5118,11 @@
                          (equal? (path->string (simple-form-path "./x"))
                                  "/tmp/x")
                          (complete-path? (simple-form-path "x"))))
+              (list "normalize-path"
+                    (and (equal? (path->string (normalize-path "a/../b"))
+                                 "/tmp/b")
+                         (equal? (path->string (normalize-path "./x" "/var/tmp/"))
+                                 "/var/tmp/x")))
               (list "path-only"
                     (and (equal? (path->string (path-only "a/b")) "a/")
                          (equal? (path-only "a") #f)
