@@ -45114,6 +45114,33 @@
                                     (else (local.get $base-raw))))
                      (call $path-join-bytes (local.get $base) (local.get $path)))
 
+               ;; path->directory-path : path-string? -> path?
+               ;;   Ensure a Unix/browser path syntactically ends in a directory separator.
+               (func $path->directory-path (type $Prim1)
+                     (param $path-raw (ref eq)) ;; path-string?
+                     (result          (ref eq))
+
+                     (local $path  (ref $Path))
+                     (local $bytes (ref $Bytes))
+                     (local $arr   (ref $I8Array))
+                     (local $len   i32)
+
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:path->directory-path)
+                                      (local.get $path-raw)))
+                     (local.set $bytes (struct.get $Path $bytes (local.get $path)))
+                     (local.set $arr (struct.get $Bytes $bs (local.get $bytes)))
+                     (local.set $len (array.len (local.get $arr)))
+                     (if (i32.eq (array.get_u $I8Array
+                                              (local.get $arr)
+                                              (i32.sub (local.get $len) (i32.const 1)))
+                                 (i32.const 47))
+                         (then (return (local.get $path))))
+                     (call $bytes->path
+                           (call $bytes-append/2 (local.get $bytes) (global.get $bytes:slash))
+                           (global.get $missing)))
+
                (func $vfs-path-stat-kind
                      (param $who      (ref eq)) ;; symbol? (currently for diagnostics)
                      (param $path-raw (ref eq)) ;; path-string?

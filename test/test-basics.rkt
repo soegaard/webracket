@@ -4892,6 +4892,13 @@
                                  "/app/notes.txt")
                          (equal? (path->string (path->complete-path "/assets/logo.png"))
                                  "/assets/logo.png")))
+              (list "path->directory-path"
+                    (and (equal? (path->string (path->directory-path "/app/data"))
+                                 "/app/data/")
+                         (equal? (path->string (path->directory-path "/app/data/"))
+                                 "/app/data/")
+                         (equal? (path->string (path->directory-path "relative"))
+                                 "relative/")))
               (list "build-path"
                     (and (equal? (path->string (build-path "/app" "main.rkt"))
                                  "/app/main.rkt")
