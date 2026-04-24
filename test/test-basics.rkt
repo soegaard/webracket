@@ -4926,6 +4926,15 @@
                                  "x/y.tar.gz.rkt")
                          (equal? (path->string (path-add-extension "x/.racketrc" ".rkt"))
                                  "x/.racketrc.rkt")))
+              (list "path suffix utilities"
+                    (and (equal? (path->string (path-replace-suffix "x/.racketrc" #".rkt"))
+                                 "x/.rkt")
+                         (equal? (path->string (path-add-suffix "x/.racketrc" #".rkt"))
+                                 "x/_racketrc.rkt")
+                         (equal? (path->string (path-replace-suffix "x/y.tar.gz" #".rkt"))
+                                 "x/y.tar.rkt")
+                         (equal? (path->string (path-add-suffix "x/y.tar.gz" #".rkt"))
+                                 "x/y.tar_gz.rkt")))
               (list "build-path"
                     (and (equal? (path->string (build-path "/app" "main.rkt"))
                                  "/app/main.rkt")

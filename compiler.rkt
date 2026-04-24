@@ -2012,6 +2012,8 @@
   resolve-path
   path-replace-extension
   path-add-extension
+  path-replace-suffix
+  path-add-suffix
 
   ;; 15.2 Filesystem
   file-exists?
