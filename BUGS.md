@@ -35,50 +35,6 @@ The runtime currently stores instance variables as `Symbol -> Box`, so the
 mode is parsed but not represented. Fixing this likely needs an instance
 variable record with both the value box and the mode/constant flag.
 
-### Invalid instance variable modes are accepted
-
-Status: open.
-
-Minimal repro:
-
-```racket
-(define i (make-instance 'i #f 'bogus 'x 1))
-(js-log (instance-variable-value i 'x))
-```
-
-Real Racket:
-
-```text
-make-instance: contract violation
-  expected: (or/c #f 'constant 'consistent)
-  given: 'bogus
-```
-
-Current WebRacket behavior:
-
-```text
-1
-```
-
-The same problem exists for `instance-set-variable-value!`:
-
-```racket
-(define i (make-instance 'i))
-(instance-set-variable-value! i 'x 1 'bogus)
-(js-log (instance-variable-value i 'x))
-```
-
-Current WebRacket behavior:
-
-```text
-1
-```
-
-Because `make-instance` parses optional arguments as `[data #f] [mode #f]`
-before variable bindings, `(make-instance 'i 'x 1)` must also reject `1` as an
-invalid mode. WebRacket currently accepts it as an instance with data `'x` and
-no variables.
-
 ### Uninitialized linklet exports are treated as missing
 
 Status: open.
@@ -186,40 +142,6 @@ This is related to the missing instance-variable mode representation. Real
 linklet instantiation makes exported bindings constant from the instance API,
 but the WebRacket helper linklet body currently writes ordinary mutable
 instance variables.
-
-### Duplicate linklet exports are accepted
-
-Status: open.
-
-Minimal repro:
-
-```racket
-(define l
-  (make-compiled-linklet
-   'l
-   '()
-   '(x x)
-   (lambda (self)
-     (instance-set-variable-value! self 'x 1))))
-
-(js-log (linklet-export-variables l))
-```
-
-Real Racket rejects the corresponding linklet shape:
-
-```text
-invalid parameter list ...
-```
-
-Current WebRacket behavior:
-
-```text
-(x x)
-```
-
-`make-compiled-linklet` validates that exports are symbols, but it does not
-check for duplicate exported names. Since exports define the externally
-accessible instance variables, exact duplicates should be rejected.
 
 ## Quoted hash literals are mutable
 

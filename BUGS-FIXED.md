@@ -388,6 +388,76 @@ The fix refines `VariableReferenceId` during `alpha-rename`: a `non-top`
 variable reference that resolves to a collected top-level binding is rewritten
 to `top`, while local lexical variable references remain `non-top`.
 
+## Invalid instance variable modes are accepted
+
+Status: fixed
+
+Minimal repro:
+
+```racket
+(define i (make-instance 'i #f 'bogus 'x 1))
+(js-log (instance-variable-value i 'x))
+```
+
+and:
+
+```racket
+(define i (make-instance 'i))
+(instance-set-variable-value! i 'x 1 'bogus)
+(js-log (instance-variable-value i 'x))
+```
+
+Real Racket:
+
+```text
+contract violation
+  expected: (or/c #f 'constant 'consistent)
+```
+
+Previous WebRacket behavior:
+
+```text
+1
+```
+
+The fix validates the optional mode in both `make-instance` and
+`instance-set-variable-value!`, while leaving full constant/consistent
+enforcement to the separate instance-variable metadata bug.
+
+## Duplicate linklet exports are accepted
+
+Status: fixed
+
+Minimal repro:
+
+```racket
+(define l
+  (make-compiled-linklet
+   'l
+   '()
+   '(x x)
+   (lambda (self)
+     (instance-set-variable-value! self 'x 1))))
+
+(js-log (linklet-export-variables l))
+```
+
+Real Racket rejects the corresponding linklet shape:
+
+```text
+invalid parameter list ...
+```
+
+Previous WebRacket behavior:
+
+```text
+(x x)
+```
+
+The fix validates `make-compiled-linklet` exports with a temporary `hasheq`
+of seen symbols and rejects duplicate exported names before constructing the
+compiled linklet.
+
 ## Byte-string literals are mutable
 
 Status: fixed

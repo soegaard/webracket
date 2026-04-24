@@ -1801,6 +1801,7 @@
     (add-runtime-string-constant 'listof-symbol?                "(listof symbol?)")
     (add-runtime-string-constant 'listof-listof-symbol?         "(listof (listof symbol?))")
     (add-runtime-string-constant 'listof-instance?              "(listof instance?)")
+    (add-runtime-string-constant 'distinct-listof-symbol?       "(and/c (listof symbol?) distinct?)")
     (add-runtime-string-constant 'symbol-or-false               "(or/c symbol? #f)")
     (add-runtime-string-constant 'instance-mode?                "(or/c #f 'constant 'consistent)")
     (add-runtime-string-constant 'instance-or-false             "(or/c instance? #f)")
@@ -39053,6 +39054,8 @@
                (local $sym                (ref eq))
                (local $exports-node       (ref eq))
                (local $exports-pair       (ref $Pair))
+               (local $seen-exports       (ref $HashEqMutable))
+               (local $seen?              (ref eq))
                (local $compiled-linklet   (ref $CompiledLinklet))
 
                ;; Validate name (allow #f for anonymous linklets).
@@ -39111,7 +39114,8 @@
                                        (struct.get $Pair $d (local.get $imports-pair)))
                             (br $imports-loop)))
 
-               ;; Validate exports: listof symbol?
+               ;; Validate exports: listof symbol? with no duplicate names.
+               (local.set $seen-exports (ref.cast (ref $HashEqMutable) (call $make-empty-hasheq)))
                (local.set $exports-node (local.get $exports))
                (block $exports-done
                       (loop $exports-loop
@@ -39134,6 +39138,21 @@
                                             (global.get $string:symbol?)
                                             (local.get $sym))
                                       (unreachable)))
+                            (local.set $seen?
+                                       (call $hasheq-ref
+                                             (ref.cast (ref eq) (local.get $seen-exports))
+                                             (local.get $sym)
+                                             (global.get $false)))
+                            (if (i32.eqz (ref.eq (local.get $seen?) (global.get $false)))
+                                (then (call $raise-argument-error1
+                                            (global.get $symbol:make-compiled-linklet)
+                                            (global.get $string:distinct-listof-symbol?)
+                                            (local.get $exports))
+                                      (unreachable)))
+                            (call $hasheq-set!/mutable/checked
+                                  (local.get $seen-exports)
+                                  (local.get $sym)
+                                  (global.get $true))
                             (local.set $exports-node
                                        (struct.get $Pair $d (local.get $exports-pair)))
                             (br $exports-loop)))
