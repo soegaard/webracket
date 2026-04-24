@@ -560,6 +560,42 @@ The fix marks the compiled linklet's exported symbols constant on the target
 instance after the linklet body has run, so the body can initialize exports
 but later instance API writes are rejected.
 
+## Uninitialized linklet exports are treated as missing
+
+Status: fixed
+
+Minimal repro:
+
+```racket
+(define l
+  (make-compiled-linklet
+   'l
+   '()
+   '(x)
+   (lambda (self)
+     (void))))
+
+(define i (instantiate-linklet l '()))
+(js-log (instance-variable-names i))
+(js-log (instance-variable-value i 'x 'fallback))
+```
+
+Real Racket linklets expose exported variables even when they have no
+definition; the variable is effectively uninitialized, and referencing it
+raises a variable error instead of using the fallback.
+
+Previous WebRacket behavior:
+
+```text
+null
+Symbol(fallback)
+```
+
+The fix creates missing exported slots after the linklet body runs and marks
+still-uninitialized exports with `unsafe-undefined`. `instance-variable-names`
+therefore reports the export, while `instance-variable-value` raises for that
+marker instead of using the supplied fallback.
+
 ## Byte-string literals are mutable
 
 Status: fixed

@@ -38887,6 +38887,9 @@
                    (then
                     (local.set $box (ref.cast (ref $Box) (local.get $got)))
                     (local.set $val (struct.get $Box $v (local.get $box)))
+                    (if (ref.eq (local.get $val) (global.get $unsafe-undefined))
+                        (then (call $raise-instance-variable-not-found (local.get $sym))
+                              (unreachable)))
                     (if (i32.eqz (ref.eq (local.get $val) (global.get $undefined)))
                         (then (return (local.get $val))))))
 
@@ -39435,6 +39438,8 @@
                (local $exports-node      (ref eq))
                (local $exports-pair      (ref $Pair))
                (local $export-symbol     (ref eq))
+               (local $export-box        (ref $Box))
+               (local $export-val        (ref eq))
                (local $target-plain      (ref $Instance))
                (local $target-constants  (ref $HashEqMutable))
                (local $proc              (ref $Procedure))
@@ -39627,6 +39632,18 @@
                                        (ref.cast (ref $Pair) (local.get $exports-node)))
                             (local.set $export-symbol
                                        (struct.get $Pair $a (local.get $exports-pair)))
+                            (local.set $export-box
+                                       (ref.cast (ref $Box)
+                                                 (call $instance-variable-box
+                                                       (local.get $target-instance)
+                                                       (local.get $export-symbol)
+                                                       (global.get $true))))
+                            (local.set $export-val
+                                       (struct.get $Box $v (local.get $export-box)))
+                            (if (ref.eq (local.get $export-val) (global.get $undefined))
+                                (then (drop (call $set-box!
+                                                  (ref.cast (ref eq) (local.get $export-box))
+                                                  (global.get $unsafe-undefined)))))
                             (call $hasheq-set!/mutable/checked
                                   (local.get $target-constants)
                                   (local.get $export-symbol)
