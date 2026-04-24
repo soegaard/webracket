@@ -1148,7 +1148,7 @@
      '(read-line peek-byte peek-char)
      'optional 0 2)
     (make-inline-specs
-     '(rename-file-or-directory)
+     '(copy-file rename-file-or-directory)
      'optional 2 3))
    (make-inline-specs
     '(build-path)
@@ -2000,6 +2000,7 @@
   make-directory
   delete-directory
   rename-file-or-directory
+  copy-file
   file->bytes
   file->string
   open-input-file

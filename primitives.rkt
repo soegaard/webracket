@@ -1019,6 +1019,7 @@
  make-directory
  delete-directory
  rename-file-or-directory
+ copy-file
  file->bytes
  file->string
  open-input-file
@@ -1816,6 +1817,11 @@
   (case-lambda
     [(old new) (error 'rename-file-or-directory "only available in compiled WebRacket")]
     [(old new exists-ok?) (error 'rename-file-or-directory "only available in compiled WebRacket")]))
+
+(define copy-file
+  (case-lambda
+    [(src dest) (error 'copy-file "only available in compiled WebRacket")]
+    [(src dest exists-ok?) (error 'copy-file "only available in compiled WebRacket")]))
 
 (define directory-list
   (case-lambda

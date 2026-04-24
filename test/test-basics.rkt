@@ -5008,6 +5008,34 @@
                                                        "/app/data/rename-target.txt"
                                                        #t)
                              #f))))
+              (list "copy-file"
+                    (begin
+                      (webracket-vfs-write-file "/app/data/copy-source.txt" #"copy")
+                      (webracket-vfs-write-file "/app/data/copy-target.txt" #"target")
+                      (and (void? (copy-file "/app/data/copy-source.txt"
+                                             "/app/data/copied.txt"))
+                           (equal? (file->string "/app/data/copied.txt") "copy")
+                           (equal? (file->string "/app/data/copy-source.txt") "copy")
+                           (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                            (lambda (_ex) #t)])
+                             (copy-file "/app/data/copy-source.txt"
+                                        "/app/data/copy-target.txt")
+                             #f)
+                           (equal? (file->string "/app/data/copy-target.txt") "target")
+                           (void? (copy-file "/app/data/copy-source.txt"
+                                             "/app/data/copy-target.txt"
+                                             #t))
+                           (equal? (file->string "/app/data/copy-target.txt") "copy")
+                           (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                            (lambda (_ex) #t)])
+                             (copy-file "/app/data/missing-copy.txt"
+                                        "/app/data/nope.txt")
+                             #f)
+                           (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                            (lambda (_ex) #t)])
+                             (copy-file "/app/data"
+                                        "/app/data/copy-dir-source.txt")
+                             #f))))
               (list "file-size"
                     (and (equal? (file-size "/app/data/notes.txt") 6)
                          (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))

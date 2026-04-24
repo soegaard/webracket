@@ -205,6 +205,17 @@ class WebRacketMemoryBackend {
     for (const [, to, bytes] of fileUpdates) this.files.set(to, bytes);
   }
 
+  copyFile(srcPath, destPath, existsOk = false) {
+    const srcP = this.normalize(srcPath);
+    const destP = this.normalize(destPath);
+    if (!this.files.has(srcP)) throw new Error(`VFS source file not found: ${srcPath}`);
+    if (this.dirs.has(destP)) throw new Error(`VFS destination is a directory: ${destPath}`);
+    if (this.files.has(destP) && !existsOk) throw new Error(`VFS destination exists: ${destPath}`);
+    const parent = this.parentDirs(destP).at(-1) || '/';
+    if (!this.dirs.has(parent)) throw new Error(`VFS parent directory not found: ${destPath}`);
+    this.files.set(destP, new Uint8Array(this.files.get(srcP)));
+  }
+
   stat(path) {
     const p = this.normalize(path);
     if (this.files.has(p)) return { type: 'file', size: this.files.get(p).length, mtime: 0 };
@@ -297,6 +308,13 @@ class WebRacketVFS {
     const [newBackend, newRel] = this.resolve(newPath);
     if (oldBackend !== newBackend) throw new Error(`VFS cross-backend rename is not supported: ${oldPath}`);
     oldBackend.rename(oldRel, newRel, existsOk);
+  }
+
+  copyFile(srcPath, destPath, existsOk = false) {
+    const [srcBackend, srcRel] = this.resolve(srcPath);
+    const [destBackend, destRel] = this.resolve(destPath);
+    if (srcBackend !== destBackend) throw new Error(`VFS cross-backend copy is not supported: ${srcPath}`);
+    srcBackend.copyFile(srcRel, destRel, existsOk);
   }
 
   listDir(path) {
@@ -1400,6 +1418,17 @@ var imports = {
           webracketVFS.rename(
             vfs_path_from_memory(oldStart, oldLen),
             vfs_path_from_memory(newStart, newLen),
+            existsOk !== 0);
+          return 0;
+        } catch (_) {
+          return -1;
+        }
+      }),
+      'vfs_copy_file': ((srcStart, srcLen, destStart, destLen, existsOk) => {
+        try {
+          webracketVFS.copyFile(
+            vfs_path_from_memory(srcStart, srcLen),
+            vfs_path_from_memory(destStart, destLen),
             existsOk !== 0);
           return 0;
         } catch (_) {

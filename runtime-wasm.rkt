@@ -1775,6 +1775,7 @@
     (add-runtime-string-constant 'vfs:make-directory-failed  "make-directory: VFS directory creation failed")
     (add-runtime-string-constant 'vfs:directory-list-failed  "directory-list: VFS path does not refer to a directory")
     (add-runtime-string-constant 'vfs:rename-failed          "rename-file-or-directory: VFS rename failed")
+    (add-runtime-string-constant 'vfs:copy-file-failed       "copy-file: VFS copy failed")
     (add-runtime-string-constant 'uncaught-exception         "uncaught exception: ")
     (add-runtime-string-constant 'callback:no-js-equivalent
                                  "The callback attempted to return a WebRacket value with no JavaScript equivalent (i.e. without a FASL encoding): ")
@@ -2590,6 +2591,9 @@
                (param i32) (param i32) (param i32) (param i32) (result i32))
          (func $js-vfs-rename
                (import "primitives" "vfs_rename")
+               (param i32) (param i32) (param i32) (param i32) (param i32) (result i32))
+         (func $js-vfs-copy-file
+               (import "primitives" "vfs_copy_file")
                (param i32) (param i32) (param i32) (param i32) (param i32) (result i32))
 
          (func $char-upcase/ucs
@@ -45618,6 +45622,86 @@
                      (if (i32.lt_s (local.get $status) (i32.const 0))
                          (then (call $raise-vfs-file-error
                                      (global.get $string:vfs:rename-failed))
+                               (unreachable)))
+                     (global.get $void))
+
+               ;; copy-file : path-string? path-string? [any/c] -> void?
+               ;;   Copy a VFS file within the same mounted backend; keyword options are not supported yet.
+               (func $copy-file (type $Prim23)
+                     (param $src-raw       (ref eq)) ;; path-string?
+                     (param $dest-raw      (ref eq)) ;; path-string?
+                     (param $exists-ok-raw (ref eq)) ;; optional any/c, default = #f
+                     (result               (ref eq))
+
+                     (local $src      (ref $Path))
+                     (local $dest     (ref $Path))
+                     (local $src-bs   (ref $Bytes))
+                     (local $dest-bs  (ref $Bytes))
+                     (local $src-len  i32)
+                     (local $dest-len i32)
+                     (local $exists?  i32)
+                     (local $status   i32)
+
+                     (local.set $src
+                                (call $path-string->path/checked
+                                      (global.get $symbol:copy-file)
+                                      (local.get $src-raw)))
+                     (local.set $dest
+                                (call $path-string->path/checked
+                                      (global.get $symbol:copy-file)
+                                      (local.get $dest-raw)))
+                     (local.set $src-bs (struct.get $Path $bytes (local.get $src)))
+                     (local.set $dest-bs (struct.get $Path $bytes (local.get $dest)))
+                     (local.set $src-len
+                                (array.len
+                                 (struct.get $Bytes $bs (local.get $src-bs))))
+                     (local.set $dest-len
+                                (array.len
+                                 (struct.get $Bytes $bs (local.get $dest-bs))))
+                     (if (i32.gt_u (local.get $src-len)
+                                   (global.get $memory-map:vfs-path-buffer-length))
+                         (then (call $raise-path-expected (local.get $src-raw))
+                               (unreachable)))
+                     (if (i32.gt_u (local.get $dest-len)
+                                   (global.get $memory-map:vfs-file-buffer-length))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-path-buffer-base)
+                                (global.get $memory-map:vfs-path-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (if (i32.eqz
+                          (call $linear-memory-range-available?
+                                (global.get $memory-map:vfs-file-buffer-base)
+                                (global.get $memory-map:vfs-file-buffer-length)))
+                         (then (call $raise-string-buffer-overflow)
+                               (unreachable)))
+                     (local.set $src-len
+                                (call $copy-bytes-to-memory
+                                      (local.get $src-bs)
+                                      (global.get $memory-map:vfs-path-buffer-base)))
+                     (local.set $dest-len
+                                (call $copy-bytes-to-memory
+                                      (local.get $dest-bs)
+                                      (global.get $memory-map:vfs-file-buffer-base)))
+                     (local.set $exists?
+                                (if (result i32)
+                                    (ref.eq (local.get $exists-ok-raw) (global.get $missing))
+                                    (then (i32.const 0))
+                                    (else (i32.eqz (ref.eq (local.get $exists-ok-raw)
+                                                           (global.get $false))))))
+                     (local.set $status
+                                (call $js-vfs-copy-file
+                                      (global.get $memory-map:vfs-path-buffer-base)
+                                      (local.get $src-len)
+                                      (global.get $memory-map:vfs-file-buffer-base)
+                                      (local.get $dest-len)
+                                      (local.get $exists?)))
+                     (if (i32.lt_s (local.get $status) (i32.const 0))
+                         (then (call $raise-vfs-file-error
+                                     (global.get $string:vfs:copy-file-failed))
                                (unreachable)))
                      (global.get $void))
 
