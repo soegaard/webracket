@@ -41,6 +41,13 @@
 
 (define stdlib?         (make-parameter #t))   ; include standard library by default
 
+(define (add-vfs-preload-entry! entry)
+  (define path (hash-ref entry 'path))
+  (when (for/or ([existing (in-list (vfs-preloads))])
+          (equal? path (hash-ref existing 'path)))
+    (error 'webracket (format "duplicate VFS preload target path: ~a" path)))
+  (vfs-preloads (cons entry (vfs-preloads))))
+
 (define (validate-vfs-preload-path! who path)
   (when (string=? path "")
     (error who "VFS preload target path is empty"))
@@ -60,15 +67,11 @@
     [_ (error who (format "expected VFS=SOURCE, got: ~a" spec))]))
 
 (define (add-vfs-preload! kind spec)
-  (vfs-preloads
-   (cons (parse-vfs-preload 'webracket kind spec)
-         (vfs-preloads))))
+  (add-vfs-preload-entry! (parse-vfs-preload 'webracket kind spec)))
 
 (define (add-vfs-mkdir! path)
   (validate-vfs-preload-path! 'webracket path)
-  (vfs-preloads
-   (cons (hasheq 'path path 'kind 'directory 'source #t)
-         (vfs-preloads))))
+  (add-vfs-preload-entry! (hasheq 'path path 'kind 'directory 'source #t)))
 
 (define positional-filenames
   (command-line
