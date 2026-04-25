@@ -359,6 +359,8 @@ PROGRAM
               '("app" "pkg" "tmp"))
       (equal? (map path->string (directory-list "/pkg"))
               '("assets"))
+      (equal? (file-or-directory-modify-seconds "/pkg") 0)
+      (equal? (file-or-directory-permissions "/pkg" 'bits) #o777)
       (equal? (map path->string (directory-list "/pkg/assets"))
               '("hello.txt" "nested")))
  (error 'vfs-tar-mount "synthetic parent mount checks failed"))

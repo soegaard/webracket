@@ -823,16 +823,28 @@ class WebRacketVFS {
   }
 
   modifySeconds(path, secs = undefined) {
+    const synthetic = this.syntheticMountStat(path);
+    if (synthetic) {
+      if (secs !== undefined) throw new Error(`VFS synthetic mount directory is read-only: ${path}`);
+      return synthetic.mtime;
+    }
     const [backend, rel] = this.resolve(path);
     return backend.modifySeconds(rel, secs);
   }
 
   permissions(path, mode = undefined) {
+    const synthetic = this.syntheticMountStat(path);
+    if (synthetic) {
+      if (mode !== undefined) throw new Error(`VFS synthetic mount directory is read-only: ${path}`);
+      return synthetic.mode;
+    }
     const [backend, rel] = this.resolve(path);
     return backend.permissions(rel, mode);
   }
 
   identity(path) {
+    const synthetic = this.syntheticMountStat(path);
+    if (synthetic) return synthetic.identity;
     const [backend, rel] = this.resolve(path);
     return backend.identity(rel);
   }
