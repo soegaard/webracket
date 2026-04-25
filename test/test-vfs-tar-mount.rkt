@@ -165,6 +165,17 @@
                 (pad-tar-data content)
                 (make-bytes 1024 0)))
 
+;; make-invalid-pax-size-tar : -> bytes?
+;;   Build a tar archive with an invalid pax size record.
+(define (make-invalid-pax-size-tar)
+  (define pax-record #"12 size=bad\n")
+  (define content #"content")
+  (bytes-append (tar-header "PaxHeader" (bytes-length pax-record) #\x)
+                (pad-tar-data pax-record)
+                (tar-header "sized.txt" 0 #\0)
+                (pad-tar-data content)
+                (make-bytes 1024 0)))
+
 ;; make-invalid-pax-tar : -> bytes?
 ;;   Build a tar archive with a malformed pax record body.
 (define (make-invalid-pax-tar)
@@ -418,6 +429,18 @@ PROGRAM
     (error 'test-vfs-tar-mount-rejects-invalid-pax
            (format "expected invalid tar pax failure, got: ~a" output))))
 
+;; test-vfs-tar-mount-rejects-invalid-pax-size : -> void
+;;   Check that malformed pax size records fail while mounting.
+(define (test-vfs-tar-mount-rejects-invalid-pax-size)
+  (define-values (status output)
+    (run-tar-program "(void)\n" #:tar-bytes (make-invalid-pax-size-tar)))
+  (when (zero? status)
+    (error 'test-vfs-tar-mount-rejects-invalid-pax-size
+           "expected invalid-pax-size tar mount to fail"))
+  (unless (regexp-match? #rx"VFS tar pax size is invalid" output)
+    (error 'test-vfs-tar-mount-rejects-invalid-pax-size
+           (format "expected invalid tar pax size failure, got: ~a" output))))
+
 (module+ test
   (test-vfs-tar-mount)
   (test-vfs-tar-file-mount)
@@ -430,7 +453,8 @@ PROGRAM
   (test-vfs-tar-mount-rejects-links)
   (test-vfs-tar-mount-rejects-truncated-entry)
   (test-vfs-tar-mount-rejects-invalid-size)
-  (test-vfs-tar-mount-rejects-invalid-pax))
+  (test-vfs-tar-mount-rejects-invalid-pax)
+  (test-vfs-tar-mount-rejects-invalid-pax-size))
 
 (module+ main
   (test-vfs-tar-mount)
@@ -445,4 +469,5 @@ PROGRAM
   (test-vfs-tar-mount-rejects-truncated-entry)
   (test-vfs-tar-mount-rejects-invalid-size)
   (test-vfs-tar-mount-rejects-invalid-pax)
+  (test-vfs-tar-mount-rejects-invalid-pax-size)
   (displayln "ok"))
