@@ -361,6 +361,8 @@ PROGRAM
               '("assets"))
       (equal? (file-or-directory-modify-seconds "/pkg") 0)
       (equal? (file-or-directory-permissions "/pkg" 'bits) #o777)
+      (equal? (hash-ref (file-or-directory-stat "/pkg") 'mode) #o777)
+      (equal? (hash-ref (file-or-directory-stat "/pkg") 'modify-time-seconds) 0)
       (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
                        (lambda (_ex) #t)])
         (delete-directory "/pkg")
