@@ -104,12 +104,12 @@
                 record-bs
                 (make-bytes (modulo (- 512 (modulo (bytes-length record-bs) 512)) 512) 0)))
 
-;; tar-header : string? exact-nonnegative-integer? char? -> bytes?
+;; tar-header : string? exact-nonnegative-integer? char? [#:mode exact-nonnegative-integer?] -> bytes?
 ;;   Build a minimal ustar header for hand-written tar fixtures.
-(define (tar-header name size typeflag)
+(define (tar-header name size typeflag #:mode [mode #o644])
   (define header (make-bytes 512 0))
   (write-ascii! header 0 name)
-  (write-octal-field! header 100 8 #o644)
+  (write-octal-field! header 100 8 mode)
   (write-octal-field! header 108 8 0)
   (write-octal-field! header 116 8 0)
   (write-octal-field! header 124 12 size)
@@ -135,7 +135,7 @@
 ;; tar-directory-member : string? -> bytes?
 ;;   Build one hand-written directory member for tar fixtures.
 (define (tar-directory-member name)
-  (tar-header name 0 #\5))
+  (tar-header name 0 #\5 #:mode #o755))
 
 ;; make-duplicate-file-tar : -> bytes?
 ;;   Build a tar archive where an appended file entry replaces an earlier one.
@@ -159,6 +159,14 @@
     [else
      (error 'make-file-directory-conflict-tar
             (format "unknown conflict order: ~a" order))]))
+
+;; make-explicit-directory-tar : -> bytes?
+;;   Build a tar archive with explicit directory entries and one nested file.
+(define (make-explicit-directory-tar)
+  (bytes-append (tar-directory-member "empty/")
+                (tar-directory-member "dir/")
+                (tar-file-member "dir/file.txt" #"inside\n")
+                (make-bytes 1024 0)))
 
 ;; pax-record : string? string? -> bytes?
 ;;   Build one pax record with the correct byte-count prefix.
@@ -389,6 +397,30 @@ PROGRAM
     (run-tar-program program #:tar-bytes (make-duplicate-file-tar)))
   (unless (zero? status)
     (error 'test-vfs-tar-duplicate-file-last-wins
+           (format "compile/run failed (~a): ~a" status output))))
+
+;; test-vfs-tar-explicit-directories : -> void
+;;   Check explicit tar directory entries, listings, and metadata.
+(define (test-vfs-tar-explicit-directories)
+  (define program
+    #<<PROGRAM
+(unless
+ (and (directory-exists? "/assets/empty")
+      (directory-exists? "/assets/dir")
+      (equal? (map path->string (directory-list "/assets"))
+              '("dir" "empty"))
+      (equal? (map path->string (directory-list "/assets/dir"))
+              '("file.txt"))
+      (equal? (file-or-directory-modify-seconds "/assets/empty") 123)
+      (equal? (file-or-directory-permissions "/assets/empty" 'bits) #o755)
+      (equal? (file->string "/assets/dir/file.txt") "inside\n"))
+ (error 'vfs-tar-mount "explicit directory checks failed"))
+PROGRAM
+)
+  (define-values (status output)
+    (run-tar-program program #:tar-bytes (make-explicit-directory-tar)))
+  (unless (zero? status)
+    (error 'test-vfs-tar-explicit-directories
            (format "compile/run failed (~a): ~a" status output))))
 
 ;; test-vfs-tar-mount-rejects-file-then-directory : -> void
@@ -761,6 +793,7 @@ PROGRAM
 (define vfs-tar-tests
   `((test-vfs-tar-mount . ,test-vfs-tar-mount)
     (test-vfs-tar-duplicate-file-last-wins . ,test-vfs-tar-duplicate-file-last-wins)
+    (test-vfs-tar-explicit-directories . ,test-vfs-tar-explicit-directories)
     (test-vfs-tar-mount-rejects-file-then-directory . ,test-vfs-tar-mount-rejects-file-then-directory)
     (test-vfs-tar-mount-rejects-directory-then-file . ,test-vfs-tar-mount-rejects-directory-then-file)
     (test-vfs-tar-file-mount . ,test-vfs-tar-file-mount)
