@@ -464,12 +464,48 @@ Tests should compare against Racket behavior for Unix-style examples.
 
 Implement JS mount table and memory backend.
 
-Add a preload/init path for mounting:
+Add a preload/init path for mounting and seeding memory-backed files:
 
 ```js
 webracketVFS.mount("/app", new MemoryBackend(...));
 webracketVFS.mount("/tmp", new MemoryBackend());
 ```
+
+Generated runtimes expose the singleton as `globalThis.webracketVFS` and
+support a pre-entry manifest through `globalThis.WebRacketVFSPreload`. The host
+sets the manifest before importing/running the generated module:
+
+```js
+globalThis.WebRacketVFSPreload = {
+  "/app/data/message.txt": { text: "hello\n" },
+  "/app/data/blob.bin":    { base64: "QUJD" },
+  "/app/data/from-host":    { file: "./host-input.dat" },
+  "/app/data/from-url":     { url: "./asset.dat" },
+  "/app/images/":          { directory: true }
+};
+await import("./program.js");
+```
+
+The same loader is available after startup as:
+
+```js
+globalThis.preloadWebRacketVFS({
+  "/tmp/input.txt": "later\n"
+});
+```
+
+Manifest entries may be:
+
+- an object mapping VFS paths to file data
+- an array of `[path, data]` pairs
+- an array of records with a `path` field
+
+File data may be a string, `Uint8Array`, `ArrayBuffer`, typed-array view, byte
+array, or an object containing `text`, `bytes`, `base64`, `file`, or `url`.
+`file` entries are loaded with the Node runtime before WebRacket starts. `url`
+entries are fetched before WebRacket starts; relative URLs are resolved against
+the generated JavaScript module URL. Directory records use `{ directory: true }`
+or a path ending in `/`.
 
 Add small host imports for stat, read-file, and list-dir.
 

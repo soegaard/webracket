@@ -575,6 +575,29 @@ function vfsPreloadBytes(entry) {
   throw new Error('WebRacket VFS preload entry must contain bytes, text, or base64 data');
 }
 
+async function vfsPreloadBytesAsync(entry) {
+  if (entry && typeof entry === 'object') {
+    if ('file' in entry) {
+      if (typeof fs === 'undefined' || !fs.readFile) {
+        throw new Error('WebRacket VFS file preload requires the Node runtime');
+      }
+      return new Uint8Array(await fs.readFile(String(entry.file)));
+    }
+    if ('url' in entry) {
+      if (typeof fetch === 'undefined') {
+        throw new Error('WebRacket VFS URL preload requires fetch');
+      }
+      const url = new URL(String(entry.url), import.meta.url);
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`WebRacket VFS URL preload failed: ${url.href}`);
+      }
+      return new Uint8Array(await response.arrayBuffer());
+    }
+  }
+  return vfsPreloadBytes(entry);
+}
+
 function vfsPreloadPairs(entries) {
   if (!entries) return [];
   if (Array.isArray(entries)) {
@@ -599,8 +622,20 @@ function preloadWebRacketVFS(vfs, entries) {
   }
 }
 
+async function preloadWebRacketVFSAsync(vfs, entries) {
+  for (const [path, entry] of vfsPreloadPairs(entries)) {
+    const p = String(path);
+    if ((entry && entry.directory === true) || p.endsWith('/')) {
+      vfs.mkdirp(p);
+    } else {
+      vfs.writeFile(p, await vfsPreloadBytesAsync(entry));
+    }
+  }
+}
+
 globalThis.preloadWebRacketVFS = (entries) => preloadWebRacketVFS(webracketVFS, entries);
-preloadWebRacketVFS(webracketVFS, globalThis.WebRacketVFSPreload);
+globalThis.preloadWebRacketVFSAsync = (entries) => preloadWebRacketVFSAsync(webracketVFS, entries);
+await preloadWebRacketVFSAsync(webracketVFS, globalThis.WebRacketVFSPreload);
 
 function vfs_path_from_memory(start, len) {
   const bytes = new Uint8Array(memory.buffer).slice(start, start + len);
