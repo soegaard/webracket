@@ -254,7 +254,10 @@ The backend should build:
 
 Tar entry names are interpreted as relative Unix paths. Absolute names,
 empty components, `.`, and `..` are rejected when the backend indexes the
-archive. Header checksums are validated while indexing.
+archive. Header checksums are validated while indexing. Duplicate regular-file
+entries use tar extraction semantics: the last member wins. Duplicate directory
+entries are harmless, but file/directory conflicts for the same path are
+rejected.
 
 For a read:
 

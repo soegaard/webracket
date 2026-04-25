@@ -499,11 +499,17 @@ class WebRacketTarBackend {
       const path = this.archivePath(rawPath);
 
       if (typeflag === '5' || rawPath.endsWith('/')) {
+        if (this.files.has(path)) {
+          throw new Error(`VFS tar file/directory conflict: ${path}`);
+        }
         if (path !== '/' && !this.dirs.has(path)) {
           this.addParentDirs(path, mtime);
           this.dirs.set(path, { mtime, mode: mode || 0o777, identity: this.nextId++ });
         }
       } else if (typeflag === '0' || typeflag === '\0') {
+        if (this.dirs.has(path)) {
+          throw new Error(`VFS tar file/directory conflict: ${path}`);
+        }
         this.addParentDirs(path, mtime);
         this.files.set(path, { start: dataStart, size, mtime, mode: mode || 0o666, identity: this.nextId++ });
       }
@@ -4931,6 +4937,8 @@ const wasmModule
    (regexp-match? #rx"VFS tar entry path is invalid" runtime/preload))
   (check-true
    (regexp-match? #rx"VFS tar header checksum is invalid" runtime/preload))
+  (check-true
+   (regexp-match? #rx"VFS tar file/directory conflict" runtime/preload))
 
   (check-exn
    #rx"unknown VFS preload source kind"
