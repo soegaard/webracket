@@ -640,6 +640,19 @@ class WebRacketVFS {
     this.mounts.set(this.normalize(mountPoint), backend);
   }
 
+  mountChildren(path) {
+    const p = this.normalize(path);
+    const prefix = p === '/' ? '/' : `${p}/`;
+    const names = new Set();
+    for (const mountPoint of this.mounts.keys()) {
+      if (mountPoint !== p && mountPoint.startsWith(prefix)) {
+        const name = mountPoint.slice(prefix.length).split('/')[0];
+        if (name) names.add(name);
+      }
+    }
+    return names;
+  }
+
   rootList() {
     return [...this.mounts.keys()].sort().map((p) => p === '/' ? '/' : `${p}/`);
   }
@@ -648,7 +661,7 @@ class WebRacketVFS {
     const p = this.normalize(path);
     let best = null;
     for (const mountPoint of this.mounts.keys()) {
-      if (p === mountPoint || p.startsWith(`${mountPoint}/`)) {
+      if (p === mountPoint || (mountPoint === '/' ? p.startsWith('/') : p.startsWith(`${mountPoint}/`))) {
         if (best === null || mountPoint.length > best.length) best = mountPoint;
       }
     }
@@ -658,6 +671,10 @@ class WebRacketVFS {
   }
 
   stat(path) {
+    const p = this.normalize(path);
+    if (p === '/' && !this.mounts.has('/')) {
+      return { type: 'directory', size: 0, mtime: 0, mode: 0o777, identity: 0 };
+    }
     const [backend, rel] = this.resolve(path);
     return backend.stat(rel);
   }
@@ -743,8 +760,14 @@ class WebRacketVFS {
   }
 
   listDir(path) {
-    const [backend, rel] = this.resolve(path);
-    return backend.listDir(rel);
+    const p = this.normalize(path);
+    if (p === '/' && !this.mounts.has('/')) {
+      return [...this.mountChildren('/')].sort();
+    }
+    const [backend, rel] = this.resolve(p);
+    const names = new Set(backend.listDir(rel));
+    for (const name of this.mountChildren(p)) names.add(name);
+    return [...names].sort();
   }
 
   preload(entries) {
@@ -5004,6 +5027,10 @@ const wasmModule
    (regexp-match? #rx"mountWebRacketVFSAsync" runtime/preload))
   (check-true
    (regexp-match? #rx"WebRacketVFSMounts" runtime/preload))
+  (check-true
+   (regexp-match? #rx"mountChildren\\(path\\)" runtime/preload))
+  (check-true
+   (regexp-match? #rx"identity: 0" runtime/preload))
   (check-true
    (regexp-match? #rx"\\{\"path\":\"/app/message.txt\",\"url\":\"\\./message.txt\"\\}"
                   runtime/preload))

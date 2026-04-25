@@ -185,7 +185,10 @@ class WebRacketVFS {
 }
 ```
 
-The mount resolver should use the longest matching mount point.
+The mount resolver should use the longest matching mount point. Mount points
+are visible as synthetic directories in their parent directory listing, so
+listing `/` shows top-level mounts such as `app`, `tmp`, and `assets`, and
+listing `/app` can show a nested mount such as `assets` for `/app/assets`.
 
 Backends should operate on paths relative to their mount point, while the VFS
 layer handles absolute path validation and mount dispatch.
