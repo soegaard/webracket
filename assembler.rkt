@@ -729,7 +729,9 @@ class WebRacketVFS {
   }
 
   syntheticMountStat(path) {
-    return this.mountChildren(path).size > 0
+    const p = this.normalize(path);
+    const isSyntheticRoot = p === '/' && !this.mounts.has('/');
+    return (isSyntheticRoot || this.mountChildren(p).size > 0)
       ? { type: 'directory', size: 0, mtime: 0, mode: 0o777, identity: this.syntheticMountIdentity(path) }
       : null;
   }
@@ -759,9 +761,6 @@ class WebRacketVFS {
 
   stat(path) {
     const p = this.normalize(path);
-    if (p === '/' && !this.mounts.has('/')) {
-      return { type: 'directory', size: 0, mtime: 0, mode: 0o777, identity: 0 };
-    }
     const synthetic = this.syntheticMountStat(p);
     try {
       const [backend, rel] = this.resolve(path);
