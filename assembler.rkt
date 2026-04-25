@@ -497,6 +497,18 @@ class WebRacketTarBackend {
     return size;
   }
 
+  readPaxMtime(headers) {
+    if (!headers || headers.mtime === undefined) return null;
+    if (!/^-?[0-9]+(\.[0-9]+)?$/.test(headers.mtime)) {
+      throw new Error('VFS tar pax mtime is invalid');
+    }
+    const mtime = Number(headers.mtime);
+    if (!Number.isFinite(mtime) || !Number.isSafeInteger(Math.trunc(mtime))) {
+      throw new Error('VFS tar pax mtime is invalid');
+    }
+    return Math.trunc(mtime);
+  }
+
   validateChecksum(offset) {
     const expected = this.readOctal(offset + 148, 8, -1, 'header checksum');
     let actual = 0;
@@ -570,11 +582,7 @@ class WebRacketTarBackend {
       }
       const entryPath = (nextPaxHeaders && nextPaxHeaders.path) || nextLongName || rawPath;
       const entryMtime =
-        (nextPaxHeaders && nextPaxHeaders.mtime !== undefined && Number.isFinite(Number(nextPaxHeaders.mtime)))
-          ? Math.trunc(Number(nextPaxHeaders.mtime))
-          : (globalPaxHeaders.mtime !== undefined && Number.isFinite(Number(globalPaxHeaders.mtime)))
-          ? Math.trunc(Number(globalPaxHeaders.mtime))
-          : mtime;
+        this.readPaxMtime(nextPaxHeaders) ?? this.readPaxMtime(globalPaxHeaders) ?? mtime;
       nextLongName = null;
       nextPaxHeaders = null;
       const path = this.archivePath(entryPath);
@@ -5138,7 +5146,7 @@ const wasmModule
   (check-true
    (regexp-match? #rx"readPaxHeaders" runtime/preload))
   (check-true
-   (regexp-match? #rx"nextPaxHeaders\\.mtime" runtime/preload))
+   (regexp-match? #rx"readPaxMtime\\(nextPaxHeaders\\)" runtime/preload))
 
   (define (raises-message? rx thunk)
     (with-handlers ([exn:fail? (λ (e) (regexp-match? rx (exn-message e)))])

@@ -264,11 +264,12 @@ rejected. Ustar `prefix` fields, GNU long-name records, local POSIX pax `path`,
 `size`, and `mtime` records, and global POSIX pax `mtime` records are
 supported.
 Pax record lengths are interpreted as UTF-8 byte counts, as specified by the
-archive format, so non-ASCII pax paths are accepted.
+archive format, so non-ASCII pax paths are accepted. Pax mtimes may be
+fractional and are truncated to seconds.
 Symbolic and hard links are rejected because the WebRacket VFS does not
 currently model filesystem links. Entries whose declared payload extends past
-the archive data are rejected as truncated. Malformed octal metadata fields and
-pax records are rejected.
+the archive data are rejected as truncated. Malformed octal metadata fields,
+pax records, and pax numeric metadata are rejected.
 
 For a read:
 

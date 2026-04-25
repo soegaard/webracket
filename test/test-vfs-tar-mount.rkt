@@ -176,6 +176,28 @@
                 (pad-tar-data content)
                 (make-bytes 1024 0)))
 
+;; make-pax-fractional-mtime-tar : -> bytes?
+;;   Build a tar archive with a local fractional pax mtime.
+(define (make-pax-fractional-mtime-tar)
+  (define pax-record #"15 mtime=321.9\n")
+  (define content #"time\n")
+  (bytes-append (tar-header "PaxHeader" (bytes-length pax-record) #\x)
+                (pad-tar-data pax-record)
+                (tar-header "time.txt" (bytes-length content) #\0)
+                (pad-tar-data content)
+                (make-bytes 1024 0)))
+
+;; make-invalid-pax-mtime-tar : -> bytes?
+;;   Build a tar archive with an invalid pax mtime record.
+(define (make-invalid-pax-mtime-tar)
+  (define pax-record #"13 mtime=bad\n")
+  (define content #"time\n")
+  (bytes-append (tar-header "PaxHeader" (bytes-length pax-record) #\x)
+                (pad-tar-data pax-record)
+                (tar-header "time.txt" (bytes-length content) #\0)
+                (pad-tar-data content)
+                (make-bytes 1024 0)))
+
 ;; make-invalid-pax-tar : -> bytes?
 ;;   Build a tar archive with a malformed pax record body.
 (define (make-invalid-pax-tar)
@@ -351,6 +373,23 @@ PROGRAM
     (error 'test-vfs-tar-pax-size
            (format "compile/run failed (~a): ~a" status output))))
 
+;; test-vfs-tar-pax-fractional-mtime : -> void
+;;   Check that local fractional pax mtimes are truncated to seconds.
+(define (test-vfs-tar-pax-fractional-mtime)
+  (define program
+    #<<PROGRAM
+(unless
+ (and (equal? (file->string "/assets/time.txt") "time\n")
+      (equal? (file-or-directory-modify-seconds "/assets/time.txt") 321))
+ (error 'vfs-tar-mount "fractional pax mtime checks failed"))
+PROGRAM
+)
+  (define-values (status output)
+    (run-tar-program program #:tar-bytes (make-pax-fractional-mtime-tar)))
+  (unless (zero? status)
+    (error 'test-vfs-tar-pax-fractional-mtime
+           (format "compile/run failed (~a): ~a" status output))))
+
 ;; test-vfs-tar-mount-global-pax-mtime : -> void
 ;;   Check that global pax mtime applies to following entries.
 (define (test-vfs-tar-mount-global-pax-mtime)
@@ -441,6 +480,18 @@ PROGRAM
     (error 'test-vfs-tar-mount-rejects-invalid-pax-size
            (format "expected invalid tar pax size failure, got: ~a" output))))
 
+;; test-vfs-tar-mount-rejects-invalid-pax-mtime : -> void
+;;   Check that malformed pax mtime records fail while mounting.
+(define (test-vfs-tar-mount-rejects-invalid-pax-mtime)
+  (define-values (status output)
+    (run-tar-program "(void)\n" #:tar-bytes (make-invalid-pax-mtime-tar)))
+  (when (zero? status)
+    (error 'test-vfs-tar-mount-rejects-invalid-pax-mtime
+           "expected invalid-pax-mtime tar mount to fail"))
+  (unless (regexp-match? #rx"VFS tar pax mtime is invalid" output)
+    (error 'test-vfs-tar-mount-rejects-invalid-pax-mtime
+           (format "expected invalid tar pax mtime failure, got: ~a" output))))
+
 (module+ test
   (test-vfs-tar-mount)
   (test-vfs-tar-file-mount)
@@ -448,13 +499,15 @@ PROGRAM
   (test-vfs-tar-synthetic-parent-mount)
   (test-vfs-tar-pax-unicode-path)
   (test-vfs-tar-pax-size)
+  (test-vfs-tar-pax-fractional-mtime)
   (test-vfs-tar-mount-global-pax-mtime)
   (test-vfs-tar-mount-read-only)
   (test-vfs-tar-mount-rejects-links)
   (test-vfs-tar-mount-rejects-truncated-entry)
   (test-vfs-tar-mount-rejects-invalid-size)
   (test-vfs-tar-mount-rejects-invalid-pax)
-  (test-vfs-tar-mount-rejects-invalid-pax-size))
+  (test-vfs-tar-mount-rejects-invalid-pax-size)
+  (test-vfs-tar-mount-rejects-invalid-pax-mtime))
 
 (module+ main
   (test-vfs-tar-mount)
@@ -463,6 +516,7 @@ PROGRAM
   (test-vfs-tar-synthetic-parent-mount)
   (test-vfs-tar-pax-unicode-path)
   (test-vfs-tar-pax-size)
+  (test-vfs-tar-pax-fractional-mtime)
   (test-vfs-tar-mount-global-pax-mtime)
   (test-vfs-tar-mount-read-only)
   (test-vfs-tar-mount-rejects-links)
@@ -470,4 +524,5 @@ PROGRAM
   (test-vfs-tar-mount-rejects-invalid-size)
   (test-vfs-tar-mount-rejects-invalid-pax)
   (test-vfs-tar-mount-rejects-invalid-pax-size)
+  (test-vfs-tar-mount-rejects-invalid-pax-mtime)
   (displayln "ok"))
