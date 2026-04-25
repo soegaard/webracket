@@ -504,11 +504,11 @@ Manifest entries may be:
 File data may be a string, `Uint8Array`, `ArrayBuffer`, typed-array view, byte
 array, or an object containing `text`, `bytes`, `base64`, `file`, or `url`.
 `file` entries are loaded with the Node runtime before WebRacket starts. `url`
-entries are fetched before WebRacket starts; relative URLs are resolved against
-the generated JavaScript module URL. Directory records use `{ directory: true }`
-or a path ending in `/` for an empty VFS directory. In the Node runtime,
-`{ directory: "./assets" }` recursively copies a host directory into the target
-VFS directory before WebRacket starts.
+entries are fetched before WebRacket starts. Relative `file`, `url`, and
+directory source paths are resolved against the generated JavaScript module URL.
+Directory records use `{ directory: true }` or a path ending in `/` for an empty
+VFS directory. In the Node runtime, `{ directory: "./assets" }` recursively
+copies a host directory into the target VFS directory before WebRacket starts.
 
 Add small host imports for stat, read-file, and list-dir.
 
