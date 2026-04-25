@@ -619,10 +619,23 @@ PROGRAM
     (test-vfs-tar-mount-rejects-dangling-pax . ,test-vfs-tar-mount-rejects-dangling-pax)
     (test-vfs-tar-mount-rejects-dangling-long-name . ,test-vfs-tar-mount-rejects-dangling-long-name)))
 
+;; vfs-tar-test-worker-count : -> exact-positive-integer?
+;;   Read the generated-runtime tar test worker count from the environment.
+(define (vfs-tar-test-worker-count)
+  (define raw (getenv "WEBRACKET_VFS_TAR_TEST_JOBS"))
+  (cond
+    [(not raw) 4]
+    [(let ([n (string->number raw)])
+       (and (exact-positive-integer? n) n))]
+    [else
+     (error 'vfs-tar-test-worker-count
+            "expected WEBRACKET_VFS_TAR_TEST_JOBS to be a positive integer, got ~v"
+            raw)]))
+
 ;; run-vfs-tar-tests : -> void?
 ;;   Run generated-runtime tar tests with bounded parallelism.
 (define (run-vfs-tar-tests)
-  (define worker-count 4)
+  (define worker-count (vfs-tar-test-worker-count))
   (define slots (make-semaphore worker-count))
   (define results (make-channel))
   (for ([test (in-list vfs-tar-tests)])
