@@ -125,6 +125,17 @@
   (bytes-append bs
                 (make-bytes (modulo (- 512 (modulo (bytes-length bs) 512)) 512) 0)))
 
+;; pax-record : string? string? -> bytes?
+;;   Build one pax record with the correct byte-count prefix.
+(define (pax-record key value)
+  (define body (string-append key "=" value "\n"))
+  (let loop ([digits 1])
+    (define len (+ digits 1 (bytes-length (string->bytes/utf-8 body))))
+    (define next-digits (string-length (number->string len)))
+    (if (= digits next-digits)
+        (string->bytes/utf-8 (string-append (number->string len) " " body))
+        (loop next-digits))))
+
 ;; make-invalid-size-tar : -> bytes?
 ;;   Build a tar archive with an invalid octal size field.
 (define (make-invalid-size-tar)
@@ -136,7 +147,7 @@
 ;; make-global-pax-mtime-tar : -> bytes?
 ;;   Build a tar archive with a global pax mtime default.
 (define (make-global-pax-mtime-tar)
-  (bytes-append (global-pax-header "13 mtime=321\n")
+  (bytes-append (global-pax-header (bytes->string/utf-8 (pax-record "mtime" "321")))
                 (make-test-tar)))
 
 ;; make-pax-tar : -> bytes?
@@ -162,10 +173,10 @@
 ;; make-pax-size-tar : -> bytes?
 ;;   Build a tar archive whose file size comes from a local pax header.
 (define (make-pax-size-tar)
-  (define pax-record #"9 size=7\n")
+  (define pax-bs (pax-record "size" "7"))
   (define content #"content")
-  (bytes-append (tar-header "PaxHeader" (bytes-length pax-record) #\x)
-                (pad-tar-data pax-record)
+  (bytes-append (tar-header "PaxHeader" (bytes-length pax-bs) #\x)
+                (pad-tar-data pax-bs)
                 (tar-header "sized.txt" 0 #\0)
                 (pad-tar-data content)
                 (make-bytes 1024 0)))
@@ -173,10 +184,10 @@
 ;; make-invalid-pax-size-tar : -> bytes?
 ;;   Build a tar archive with an invalid pax size record.
 (define (make-invalid-pax-size-tar)
-  (define pax-record #"12 size=bad\n")
+  (define pax-bs (pax-record "size" "bad"))
   (define content #"content")
-  (bytes-append (tar-header "PaxHeader" (bytes-length pax-record) #\x)
-                (pad-tar-data pax-record)
+  (bytes-append (tar-header "PaxHeader" (bytes-length pax-bs) #\x)
+                (pad-tar-data pax-bs)
                 (tar-header "sized.txt" 0 #\0)
                 (pad-tar-data content)
                 (make-bytes 1024 0)))
@@ -184,10 +195,10 @@
 ;; make-pax-fractional-mtime-tar : -> bytes?
 ;;   Build a tar archive with a local fractional pax mtime.
 (define (make-pax-fractional-mtime-tar)
-  (define pax-record #"15 mtime=321.9\n")
+  (define pax-bs (pax-record "mtime" "321.9"))
   (define content #"time\n")
-  (bytes-append (tar-header "PaxHeader" (bytes-length pax-record) #\x)
-                (pad-tar-data pax-record)
+  (bytes-append (tar-header "PaxHeader" (bytes-length pax-bs) #\x)
+                (pad-tar-data pax-bs)
                 (tar-header "time.txt" (bytes-length content) #\0)
                 (pad-tar-data content)
                 (make-bytes 1024 0)))
@@ -195,10 +206,10 @@
 ;; make-invalid-pax-mtime-tar : -> bytes?
 ;;   Build a tar archive with an invalid pax mtime record.
 (define (make-invalid-pax-mtime-tar)
-  (define pax-record #"13 mtime=bad\n")
+  (define pax-bs (pax-record "mtime" "bad"))
   (define content #"time\n")
-  (bytes-append (tar-header "PaxHeader" (bytes-length pax-record) #\x)
-                (pad-tar-data pax-record)
+  (bytes-append (tar-header "PaxHeader" (bytes-length pax-bs) #\x)
+                (pad-tar-data pax-bs)
                 (tar-header "time.txt" (bytes-length content) #\0)
                 (pad-tar-data content)
                 (make-bytes 1024 0)))
@@ -213,9 +224,9 @@
 ;; make-dangling-pax-tar : -> bytes?
 ;;   Build a tar archive with a local pax header but no target entry.
 (define (make-dangling-pax-tar)
-  (define pax-record #"14 path=x.txt\n")
-  (bytes-append (tar-header "PaxHeader" (bytes-length pax-record) #\x)
-                (pad-tar-data pax-record)
+  (define pax-bs (pax-record "path" "x.txt"))
+  (bytes-append (tar-header "PaxHeader" (bytes-length pax-bs) #\x)
+                (pad-tar-data pax-bs)
                 (make-bytes 1024 0)))
 
 ;; make-dangling-long-name-tar : -> bytes?
