@@ -576,6 +576,9 @@ function vfsPreloadBytes(entry) {
     if ('bytes' in entry) return vfsPreloadBytes(entry.bytes);
     if ('text' in entry) return new TextEncoder().encode(String(entry.text));
     if ('base64' in entry) return decodeVFSBase64(entry.base64);
+    if ('file' in entry || 'url' in entry || typeof entry.directory === 'string') {
+      throw new Error('WebRacket VFS file, URL, and host directory preloads require preloadWebRacketVFSAsync');
+    }
   }
   throw new Error('WebRacket VFS preload entry must contain bytes, text, or base64 data');
 }
@@ -4678,6 +4681,9 @@ const wasmModule
    (regexp-match? #rx"\"base64\":\"aGVsbG8=\"" runtime/preload))
   (check-true
    (regexp-match? #rx"\"directory\":true" runtime/preload))
+  (check-true
+   (regexp-match? #rx"file, URL, and host directory preloads require preloadWebRacketVFSAsync"
+                  runtime/preload))
 
   (check-exn
    #rx"unknown VFS preload source kind"
