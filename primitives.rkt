@@ -1055,6 +1055,8 @@
  make-directory
  make-directory*
  make-parent-directory*
+ make-temporary-file
+ make-temporary-directory
  delete-directory
  delete-directory/files
  rename-file-or-directory
@@ -1896,6 +1898,19 @@
 
 (define (make-parent-directory* path)
   (error 'make-parent-directory* "only available in compiled WebRacket"))
+
+(define make-temporary-file
+  (case-lambda
+    [() (error 'make-temporary-file "only available in compiled WebRacket")]
+    [(template) (error 'make-temporary-file "only available in compiled WebRacket")]
+    [(template copy-from) (error 'make-temporary-file "only available in compiled WebRacket")]
+    [(template copy-from base-dir) (error 'make-temporary-file "only available in compiled WebRacket")]))
+
+(define make-temporary-directory
+  (case-lambda
+    [() (error 'make-temporary-directory "only available in compiled WebRacket")]
+    [(template) (error 'make-temporary-directory "only available in compiled WebRacket")]
+    [(template base-dir) (error 'make-temporary-directory "only available in compiled WebRacket")]))
 
 (define (delete-directory path)
   (error 'delete-directory "only available in compiled WebRacket"))

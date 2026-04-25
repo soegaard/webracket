@@ -5307,6 +5307,34 @@
               (list "filesystem-root-list"
                     (equal? (map path->string (filesystem-root-list))
                             '("/app/" "/tmp/")))
+              (list "make-temporary-file"
+                    (let* ([p1 (make-temporary-file)]
+                           [_ (webracket-vfs-write-file "/app/temp-source.txt" #"copied")]
+                           [_ (make-directory "/app/temp-base")]
+                           [p2 (make-temporary-file "wr~a.tmp" #f "/app/temp-base")]
+                           [p3 (make-temporary-file "copy~a.dat" "/app/temp-source.txt" "/app/temp-base")]
+                           [p4 (make-temporary-file "dir~a" 'directory "/app/temp-base")]
+                           [p5 (make-temporary-file)])
+                      (and (complete-path? p1)
+                           (equal? (substring (path->string p1) 0 11) "/tmp/rkttmp")
+                           (file-exists? p1)
+                           (file-exists? p2)
+                           (equal? (substring (path->string p2) 0 17) "/app/temp-base/wr")
+                           (file-exists? p3)
+                           (equal? (file->bytes p3) #"copied")
+                           (directory-exists? p4)
+                           (file-exists? p5)
+                           (not (equal? (path->string p1) (path->string p5))))))
+              (list "make-temporary-directory"
+                    (let* ([d1 (make-temporary-directory)]
+                           [_ (make-directory "/app/temp-dir-base")]
+                           [d2 (make-temporary-directory "d~a" "/app/temp-dir-base")])
+                      (and (complete-path? d1)
+                           (directory-exists? d1)
+                           (equal? (substring (path->string d1) 0 11) "/tmp/rkttmp")
+                           (complete-path? d2)
+                           (directory-exists? d2)
+                           (equal? (substring (path->string d2) 0 20) "/app/temp-dir-base/d"))))
               (list "make-directory"
                     (and (void? (make-directory "/app/newdir"))
                          (equal? (directory-exists? "/app/newdir") #t)

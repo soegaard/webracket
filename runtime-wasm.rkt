@@ -682,6 +682,7 @@
         [(? number? n)      (if (= n 6) 26 (min n 5))]
         [(? (λ (a) (arity-range? a 0 1)))  16]
         [(? (λ (a) (arity-range? a 0 2)))  17]
+        [(? (λ (a) (arity-range? a 0 3)))  27]
         [(? (λ (a) (arity-range? a 1 2)))  18]
         [(? (λ (a) (arity-range? a 1 3)))  19]
         [(? (λ (a) (arity-range? a 1 4)))  20]
@@ -707,7 +708,7 @@
         void))
 
     (define primitive-shapes
-      '(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26))
+      '(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27))
 
     (define (primitive->shape pr [desc (primitive->description pr)])
       (and desc
@@ -748,6 +749,7 @@
         [24 'primitive-invoke:shape-24]
         [25 'primitive-invoke:shape-25]
         [26 'primitive-invoke:shape-26]
+        [27 'primitive-invoke:shape-27]
         [_  'primitive-invoke]))
 
     (define (primitive-invoker-tail shape)
@@ -994,6 +996,27 @@
                                       (local.get $a0)
                                       (local.get $a1)
                                       (ref.cast (ref $Prim02) (local.get $code))))
+               (else (return (call $raise-code-type-mismatch (local.get $pproc)))))
+           (unreachable))]
+        [27 ; between 0 and 3 arguments
+         `((if (i32.gt_u (local.get $argc) (i32.const 3))
+               (then (return (call $primitive-invoke:raise-arity-error
+                                   (local.get $pproc) (local.get $argc)))))
+           (if (ref.test (ref $Prim03) (local.get $code))
+               (then (if (i32.eqz (local.get $argc))
+                         (then (local.set $a0 (global.get $missing))
+                               (local.set $a1 (global.get $missing))
+                               (local.set $a2 (global.get $missing)))
+                         (else (if (i32.eq (local.get $argc) (i32.const 1))
+                                   (then (local.set $a1 (global.get $missing))
+                                         (local.set $a2 (global.get $missing)))
+                                   (else (if (i32.eq (local.get $argc) (i32.const 2))
+                                             (then (local.set $a2 (global.get $missing))))))))
+                     (return_call_ref $Prim03
+                                      (local.get $a0)
+                                      (local.get $a1)
+                                      (local.get $a2)
+                                      (ref.cast (ref $Prim03) (local.get $code))))
                (else (return (call $raise-code-type-mismatch (local.get $pproc)))))
            (unreachable))]
         [18 ; between 1 and 2 arguments
@@ -1815,6 +1838,7 @@
     (add-runtime-string-constant 'vfs:rename-failed          "rename-file-or-directory: VFS rename failed")
     (add-runtime-string-constant 'vfs:copy-file-failed       "copy-file: VFS copy failed")
     (add-runtime-string-constant 'vfs:copy-directory/files-failed "copy-directory/files: VFS recursive copy failed")
+    (add-runtime-string-constant 'vfs:temporary-template     "format string containing ~a")
     (add-runtime-string-constant 'vfs:modify-seconds-failed  "file-or-directory-modify-seconds: VFS path does not exist")
     (add-runtime-string-constant 'vfs:permissions-failed     "file-or-directory-permissions: VFS path does not exist")
     (add-runtime-string-constant 'vfs:stat-failed            "file-or-directory-stat: VFS path does not exist")
@@ -1928,6 +1952,7 @@
     (add-runtime-bytes-constant  'backslash                 #"\\")
     (add-runtime-bytes-constant  'dot                       #".")
     (add-runtime-bytes-constant  'dot-dot                   #"..")
+    (add-runtime-bytes-constant  'rkttmp-template           #"rkttmp~a")
     (add-runtime-bytes-constant  'app-dir                   #"/app/")
     (add-runtime-bytes-constant  'vfs-root                  #"/")
     (add-runtime-bytes-constant  'vfs-home-dir              #"/home/")
@@ -2076,6 +2101,8 @@
 
           (type $Prim01   (func (param (ref eq)) (result (ref eq))))
           (type $Prim02   (func (param (ref eq)) (param (ref eq)) (result (ref eq))))
+          (type $Prim03   (func (param (ref eq)) (param (ref eq)) (param (ref eq))
+                                (result (ref eq))))
 
           (type $Prim12   (func (param (ref eq)) (param (ref eq)) (result (ref eq))))
           (type $Prim13   (func (param (ref eq)) (param (ref eq)) (param (ref eq))
@@ -48839,6 +48866,221 @@
                                (unreachable)))
                      (global.get $void))
 
+               ;; make-temporary-candidate : symbol? (or/c string? missing) (or/c path-string? #f missing) -> path?
+               ;;   Build a complete temporary path by replacing the first ~a in template with a counter.
+               (func $make-temporary-candidate
+                     (param $who          (ref eq)) ;; symbol?
+                     (param $template-raw (ref eq)) ;; optional string?, default = "rkttmp~a"
+                     (param $base-dir-raw (ref eq)) ;; optional (or/c path-string? #f), default = (find-system-path 'temp-dir)
+                     (result              (ref eq))
+
+                     (local $template-bs (ref $Bytes))
+                     (local $template-ar (ref $I8Array))
+                     (local $template-len i32)
+                     (local $i            i32)
+                     (local $marker       i32)
+                     (local $n            i32)
+                     (local $digits       (ref eq))
+                     (local $digits-bs    (ref eq))
+                     (local $prefix       (ref eq))
+                     (local $suffix       (ref eq))
+                     (local $name-bs      (ref eq))
+                     (local $base-dir     (ref eq))
+
+                     (local.set $template-bs
+                                (ref.cast (ref $Bytes) (global.get $bytes:empty)))
+                     (local.set $template-ar
+                                (struct.get $Bytes $bs (local.get $template-bs)))
+                     (local.set $digits    (global.get $false))
+                     (local.set $digits-bs (global.get $bytes:empty))
+                     (local.set $prefix    (global.get $bytes:empty))
+                     (local.set $suffix    (global.get $bytes:empty))
+                     (local.set $name-bs   (global.get $bytes:empty))
+                     (local.set $base-dir  (global.get $false))
+
+                     (if (ref.eq (local.get $template-raw) (global.get $missing))
+                         (then
+                          (local.set $template-bs
+                                     (ref.cast (ref $Bytes)
+                                               (global.get $bytes:rkttmp-template))))
+                         (else
+                          (if (i32.eqz (ref.test (ref $String) (local.get $template-raw)))
+                              (then (call $raise-argument-error1
+                                          (local.get $who)
+                                          (global.get $string:string?)
+                                          (local.get $template-raw))
+                                    (unreachable)))
+                          (local.set $template-bs
+                                     (ref.cast (ref $Bytes)
+                                               (call $string->bytes/utf-8
+                                                     (local.get $template-raw)
+                                                     (global.get $false)
+                                                     (global.get $false)
+                                                     (global.get $false))))))
+                     (local.set $template-ar (struct.get $Bytes $bs (local.get $template-bs)))
+                     (local.set $template-len (array.len (local.get $template-ar)))
+                     (local.set $marker (i32.const -1))
+                     (block $done
+                            (loop $loop
+                                  (br_if $done
+                                         (i32.ge_u
+                                          (i32.add (local.get $i) (i32.const 1))
+                                          (local.get $template-len)))
+                                  (if (i32.and
+                                       (i32.eq (array.get_u $I8Array
+                                                            (local.get $template-ar)
+                                                            (local.get $i))
+                                               (i32.const 126)) ;; ~
+                                       (i32.eq (array.get_u $I8Array
+                                                            (local.get $template-ar)
+                                                            (i32.add (local.get $i) (i32.const 1)))
+                                               (i32.const 97))) ;; a
+                                      (then (local.set $marker (local.get $i))
+                                            (br $done)))
+                                  (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                  (br $loop)))
+                     (if (i32.lt_s (local.get $marker) (i32.const 0))
+                         (then (call $raise-argument-error1
+                                     (local.get $who)
+                                     (global.get $string:vfs:temporary-template)
+                                     (local.get $template-raw))
+                               (unreachable)))
+                     (global.set $temporary-file-counter
+                                 (i32.add (global.get $temporary-file-counter)
+                                          (i32.const 1)))
+                     (local.set $n (global.get $temporary-file-counter))
+                     (local.set $digits
+                                (call $number->string
+                                      (ref.i31 (i32.shl (local.get $n) (i32.const 1)))
+                                      (global.get $missing)))
+                     (local.set $digits-bs
+                                (call $string->bytes/utf-8
+                                      (local.get $digits)
+                                      (global.get $false)
+                                      (global.get $false)
+                                      (global.get $false)))
+                     (local.set $prefix
+                                (call $subbytes
+                                      (local.get $template-bs)
+                                      (ref.i31 (i32.shl (i32.const 0) (i32.const 1)))
+                                      (ref.i31 (i32.shl (local.get $marker) (i32.const 1)))))
+                     (local.set $suffix
+                                (call $subbytes
+                                      (local.get $template-bs)
+                                      (ref.i31 (i32.shl
+                                                (i32.add (local.get $marker) (i32.const 2))
+                                                (i32.const 1)))
+                                      (ref.i31 (i32.shl (local.get $template-len) (i32.const 1)))))
+                     (local.set $name-bs
+                                (call $bytes-append/2
+                                      (call $bytes-append/2
+                                            (local.get $prefix)
+                                            (local.get $digits-bs))
+                                      (local.get $suffix)))
+                     (if (call $path-bytes-absolute?
+                               (ref.cast (ref $Bytes) (local.get $name-bs)))
+                         (then (return
+                                (call $bytes->path
+                                      (local.get $name-bs)
+                                      (global.get $missing)))))
+                     (local.set $base-dir
+                                (if (result (ref eq))
+                                    (i32.or (ref.eq (local.get $base-dir-raw) (global.get $missing))
+                                            (ref.eq (local.get $base-dir-raw) (global.get $false)))
+                                    (then (call $find-system-path (global.get $symbol:temp-dir)))
+                                    (else (local.get $base-dir-raw))))
+                     (call $path-join-bytes
+                           (local.get $base-dir)
+                           (call $bytes->path
+                                 (local.get $name-bs)
+                                 (global.get $missing))))
+
+               ;; make-temporary-file : [string?] [(or/c path-string? #f 'directory)] [(or/c path-string? #f)] -> complete-path?
+               ;;   Keywordless form of Racket's #:copy-from and #:base-dir options.
+               ;;   Template support currently recognizes one literal ~a placeholder.
+               (func $make-temporary-file (type $Prim03)
+                     (param $template-raw (ref eq)) ;; optional string?, default = "rkttmp~a"
+                     (param $copy-from-raw (ref eq)) ;; optional (or/c path-string? #f 'directory), default = #f
+                     (param $base-dir-raw (ref eq)) ;; optional (or/c path-string? #f), default = #f
+                     (result (ref eq))
+
+                     (local $copy-from (ref eq))
+                     (local $candidate (ref eq))
+                     (local $port      (ref eq))
+
+                     (local.set $copy-from (global.get $false))
+                     (local.set $candidate (global.get $false))
+                     (local.set $port      (global.get $false))
+                     (local.set $copy-from
+                                (if (result (ref eq))
+                                    (ref.eq (local.get $copy-from-raw) (global.get $missing))
+                                    (then (global.get $false))
+                                    (else (local.get $copy-from-raw))))
+                     (block $done
+                            (loop $loop
+                                  (local.set $candidate
+                                             (call $make-temporary-candidate
+                                                   (global.get $symbol:make-temporary-file)
+                                                   (local.get $template-raw)
+                                                   (local.get $base-dir-raw)))
+                                  (br_if $loop
+                                         (i32.or
+                                          (ref.eq (call $file-exists? (local.get $candidate))
+                                                  (global.get $true))
+                                          (ref.eq (call $directory-exists? (local.get $candidate))
+                                                  (global.get $true))))
+                                  (if (ref.eq (local.get $copy-from) (global.get $symbol:directory))
+                                      (then
+                                       (drop (call $make-directory
+                                                   (local.get $candidate)
+                                                   (global.get $missing))))
+                                      (else
+                                       (if (ref.eq (local.get $copy-from) (global.get $false))
+                                           (then
+                                            (local.set $port
+                                                       (call $open-output-file
+                                                             (local.get $candidate)
+                                                             (global.get $symbol:binary)
+                                                             (global.get $symbol:error)))
+                                            (drop (call $close-output-port
+                                                        (local.get $port))))
+                                           (else
+                                            (drop (call $copy-file
+                                                        (local.get $copy-from)
+                                                        (local.get $candidate)
+                                                        (global.get $false)))))))
+                                  (br $done)))
+                     (local.get $candidate))
+
+               ;; make-temporary-directory : [string?] [(or/c path-string? #f)] -> complete-path?
+               ;;   Keywordless form of Racket's #:base-dir option.
+               (func $make-temporary-directory (type $Prim02)
+                     (param $template-raw (ref eq)) ;; optional string?, default = "rkttmp~a"
+                     (param $base-dir-raw (ref eq)) ;; optional (or/c path-string? #f), default = #f
+                     (result (ref eq))
+
+                     (local $candidate (ref eq))
+
+                     (local.set $candidate (global.get $false))
+                     (block $done
+                            (loop $loop
+                                  (local.set $candidate
+                                             (call $make-temporary-candidate
+                                                   (global.get $symbol:make-temporary-directory)
+                                                   (local.get $template-raw)
+                                                   (local.get $base-dir-raw)))
+                                  (br_if $loop
+                                         (i32.or
+                                          (ref.eq (call $file-exists? (local.get $candidate))
+                                                  (global.get $true))
+                                          (ref.eq (call $directory-exists? (local.get $candidate))
+                                                  (global.get $true))))
+                                  (drop (call $make-directory
+                                              (local.get $candidate)
+                                              (global.get $missing)))
+                                  (br $done)))
+                     (local.get $candidate))
+
                ;; file-or-directory-modify-seconds : path-string? [(or/c exact-nonnegative-integer? #f)] -> (or/c exact-nonnegative-integer? void?)
                ;;   Get or set the VFS modification time; fail-thunk and negative seconds are not supported yet.
                (func $file-or-directory-modify-seconds (type $Prim12)
@@ -49523,6 +49765,7 @@
 
                (global $system-path-convention   (mut (ref eq)) (ref.i31 (i32.const 0)))
                (global $current-directory-path   (mut (ref eq)) (ref.i31 (i32.const 0)))
+               (global $temporary-file-counter   (mut i32)      (i32.const 0))
                (global $current-input-port-value  (mut (ref eq)) (ref.i31 (i32.const 0)))
                (global $current-output-port-value (mut (ref eq)) (ref.i31 (i32.const 0)))
                (global $current-error-port-value  (mut (ref eq)) (ref.i31 (i32.const 0)))
