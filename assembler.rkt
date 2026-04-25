@@ -505,6 +505,7 @@ class WebRacketTarBackend {
   parse() {
     let nextLongName = null;
     let nextPaxHeaders = null;
+    let globalPaxHeaders = {};
     for (let offset = 0; offset + 512 <= this.bytes.length;) {
       let empty = true;
       for (let i = 0; i < 512; i++) {
@@ -533,8 +534,12 @@ class WebRacketTarBackend {
         offset = nextOffset;
         continue;
       }
-      if (typeflag === 'K' || typeflag === 'g') {
-        nextPaxHeaders = null;
+      if (typeflag === 'K') {
+        offset = nextOffset;
+        continue;
+      }
+      if (typeflag === 'g') {
+        globalPaxHeaders = this.readPaxHeaders(dataStart, size);
         offset = nextOffset;
         continue;
       }
@@ -547,6 +552,8 @@ class WebRacketTarBackend {
       const entryMtime =
         (nextPaxHeaders && nextPaxHeaders.mtime !== undefined && Number.isFinite(Number(nextPaxHeaders.mtime)))
           ? Math.trunc(Number(nextPaxHeaders.mtime))
+          : (globalPaxHeaders.mtime !== undefined && Number.isFinite(Number(globalPaxHeaders.mtime)))
+          ? Math.trunc(Number(globalPaxHeaders.mtime))
           : mtime;
       nextLongName = null;
       nextPaxHeaders = null;

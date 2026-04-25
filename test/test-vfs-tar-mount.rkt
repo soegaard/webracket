@@ -63,6 +63,41 @@
   (bytes-set! bs 154 0)
   (bytes-set! bs 155 32))
 
+;; write-ascii! : bytes? exact-nonnegative-integer? string? -> void
+;;   Write an ASCII field into a byte string.
+(define (write-ascii! bs start s)
+  (for ([b (in-bytes (string->bytes/utf-8 s))]
+        [i (in-naturals start)])
+    (bytes-set! bs i b)))
+
+;; write-octal-field! : bytes? exact-nonnegative-integer? exact-nonnegative-integer? exact-nonnegative-integer? -> void
+;;   Write a NUL-padded tar octal field.
+(define (write-octal-field! bs start len n)
+  (define text (number->string n 8))
+  (define padded
+    (string-append (make-string (max 0 (- len 1 (string-length text))) #\0)
+                   text))
+  (write-ascii! bs start padded))
+
+;; global-pax-header : string? -> bytes?
+;;   Build a single global pax header member.
+(define (global-pax-header record)
+  (define header (make-bytes 512 0))
+  (define record-bs (string->bytes/utf-8 record))
+  (write-ascii! header 0 "GlobalHead")
+  (write-octal-field! header 100 8 #o644)
+  (write-octal-field! header 108 8 0)
+  (write-octal-field! header 116 8 0)
+  (write-octal-field! header 124 12 (bytes-length record-bs))
+  (write-octal-field! header 136 12 0)
+  (bytes-set! header 156 (char->integer #\g))
+  (write-ascii! header 257 "ustar")
+  (write-ascii! header 263 "00")
+  (retag-header-checksum! header)
+  (bytes-append header
+                record-bs
+                (make-bytes (modulo (- 512 (modulo (bytes-length record-bs) 512)) 512) 0)))
+
 ;; make-invalid-size-tar : -> bytes?
 ;;   Build a tar archive with an invalid octal size field.
 (define (make-invalid-size-tar)
@@ -70,6 +105,12 @@
   (bytes-set! bs 124 (char->integer #\x))
   (retag-header-checksum! bs)
   bs)
+
+;; make-global-pax-mtime-tar : -> bytes?
+;;   Build a tar archive with a global pax mtime default.
+(define (make-global-pax-mtime-tar)
+  (bytes-append (global-pax-header "13 mtime=321\n")
+                (make-test-tar)))
 
 ;; make-pax-tar : -> bytes?
 ;;   Build a tar archive that uses a pax path record.
@@ -176,6 +217,23 @@ PROGRAM
     (error 'test-vfs-tar-file-mount
            (format "compile/run failed (~a): ~a" status output))))
 
+;; test-vfs-tar-mount-global-pax-mtime : -> void
+;;   Check that global pax mtime applies to following entries.
+(define (test-vfs-tar-mount-global-pax-mtime)
+  (define program
+    #<<PROGRAM
+(unless
+ (and (equal? (file-or-directory-modify-seconds "/assets/hello.txt") 321)
+      (equal? (file-or-directory-modify-seconds "/assets/nested/leaf.txt") 321))
+ (error 'vfs-tar-mount "global pax mtime checks failed"))
+PROGRAM
+)
+  (define-values (status output)
+    (run-tar-program program #:tar-bytes (make-global-pax-mtime-tar)))
+  (unless (zero? status)
+    (error 'test-vfs-tar-mount-global-pax-mtime
+           (format "compile/run failed (~a): ~a" status output))))
+
 ;; test-vfs-tar-mount-read-only : -> void
 ;;   Check that writes to tar-mounted files fail in the generated runtime.
 (define (test-vfs-tar-mount-read-only)
@@ -240,6 +298,7 @@ PROGRAM
 (module+ test
   (test-vfs-tar-mount)
   (test-vfs-tar-file-mount)
+  (test-vfs-tar-mount-global-pax-mtime)
   (test-vfs-tar-mount-read-only)
   (test-vfs-tar-mount-rejects-links)
   (test-vfs-tar-mount-rejects-truncated-entry)
@@ -249,6 +308,7 @@ PROGRAM
 (module+ main
   (test-vfs-tar-mount)
   (test-vfs-tar-file-mount)
+  (test-vfs-tar-mount-global-pax-mtime)
   (test-vfs-tar-mount-read-only)
   (test-vfs-tar-mount-rejects-links)
   (test-vfs-tar-mount-rejects-truncated-entry)
