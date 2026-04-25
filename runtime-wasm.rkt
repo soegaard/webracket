@@ -47876,6 +47876,191 @@
                      (drop (call $close-input-port (local.get $port)))
                      (call $reverse (local.get $acc)))
 
+               ;; file->bytes-lines : path-string? [(or/c 'binary 'text)] [read-line-mode?] -> (listof bytes?)
+               ;;   Keywordless form of Racket's #:mode and #:line-mode options; default line mode = 'any.
+               (func $file->bytes-lines (type $Prim13)
+                     (param $path-raw      (ref eq)) ;; path-string?
+                     (param $mode-raw      (ref eq)) ;; optional (or/c 'binary 'text), default = 'binary
+                     (param $line-mode-raw (ref eq)) ;; optional read-line-mode?, default = 'any
+                     (result               (ref eq))
+
+                     (local $mode      (ref eq))
+                     (local $line-mode (ref eq))
+                     (local $mode-code i32)
+                     (local $bytes     (ref $Bytes))
+                     (local $arr       (ref $I8Array))
+                     (local $len       i32)
+                     (local $i         i32)
+                     (local $start     i32)
+                     (local $end       i32)
+                     (local $b         i32)
+                     (local $next      i32)
+                     (local $acc       (ref eq))
+
+                     (local.set $mode
+                                (if (result (ref eq))
+                                    (ref.eq (local.get $mode-raw) (global.get $missing))
+                                    (then (global.get $symbol:binary))
+                                    (else (local.get $mode-raw))))
+                     (if (i32.eqz
+                          (i32.or (ref.eq (local.get $mode) (global.get $symbol:binary))
+                                  (ref.eq (local.get $mode) (global.get $symbol:text))))
+                         (then (call $raise-argument-error1
+                                     (global.get $symbol:file->bytes-lines)
+                                     (global.get $string:input-file-mode-flag)
+                                     (local.get $mode-raw))
+                               (unreachable)))
+                     (local.set $line-mode
+                                (if (result (ref eq))
+                                    (ref.eq (local.get $line-mode-raw) (global.get $missing))
+                                    (then (global.get $symbol:any))
+                                    (else (local.get $line-mode-raw))))
+                     (local.set $mode-code (i32.const -1))
+                     (block
+                      (if (ref.eq (local.get $line-mode) (global.get $symbol:linefeed))
+                          (then (local.set $mode-code (i32.const 0)) (br 1)))
+                      (if (ref.eq (local.get $line-mode) (global.get $symbol:return))
+                          (then (local.set $mode-code (i32.const 1)) (br 1)))
+                      (if (ref.eq (local.get $line-mode) (global.get $symbol:return-linefeed))
+                          (then (local.set $mode-code (i32.const 2)) (br 1)))
+                      (if (ref.eq (local.get $line-mode) (global.get $symbol:any))
+                          (then (local.set $mode-code (i32.const 3)) (br 1)))
+                      (if (ref.eq (local.get $line-mode) (global.get $symbol:any-one))
+                          (then (local.set $mode-code (i32.const 4)) (br 1)))
+                      (call $raise-read-line:bad-mode (local.get $line-mode))
+                      (unreachable))
+                     (local.set $bytes
+                                (call $vfs-read-file-bytes
+                                      (global.get $symbol:file->bytes-lines)
+                                      (local.get $path-raw)))
+                     (local.set $arr (struct.get $Bytes $bs (local.get $bytes)))
+                     (local.set $len (array.len (local.get $arr)))
+                     (local.set $i (i32.const 0))
+                     (local.set $acc (global.get $null))
+                     (block $done
+                            (loop $outer
+                                  (br_if $done (i32.ge_u (local.get $i) (local.get $len)))
+                                  (local.set $start (local.get $i))
+                                  (block $line-done
+                                         (loop $inner
+                                               (if (i32.ge_u (local.get $i) (local.get $len))
+                                                   (then (local.set $end (local.get $len))
+                                                         (local.set $acc
+                                                                    (call $cons
+                                                                          (struct.new $Bytes
+                                                                                      (i32.const 0)
+                                                                                      (i32.const 0)
+                                                                                      (call $i8array-copy
+                                                                                            (local.get $arr)
+                                                                                            (local.get $start)
+                                                                                            (local.get $end)))
+                                                                          (local.get $acc)))
+                                                         (br $done)))
+                                               (local.set $b (array.get_u $I8Array (local.get $arr) (local.get $i)))
+
+                                               (if (i32.and (i32.eq (local.get $mode-code) (i32.const 0))
+                                                           (i32.eq (local.get $b) (i32.const 10)))
+                                                   (then (local.set $end (local.get $i))
+                                                         (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                                         (local.set $acc
+                                                                    (call $cons
+                                                                          (struct.new $Bytes
+                                                                                      (i32.const 0)
+                                                                                      (i32.const 0)
+                                                                                      (call $i8array-copy
+                                                                                            (local.get $arr)
+                                                                                            (local.get $start)
+                                                                                            (local.get $end)))
+                                                                          (local.get $acc)))
+                                                         (br $line-done)))
+                                               (if (i32.and (i32.eq (local.get $mode-code) (i32.const 1))
+                                                           (i32.eq (local.get $b) (i32.const 13)))
+                                                   (then (local.set $end (local.get $i))
+                                                         (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                                         (local.set $acc
+                                                                    (call $cons
+                                                                          (struct.new $Bytes
+                                                                                      (i32.const 0)
+                                                                                      (i32.const 0)
+                                                                                      (call $i8array-copy
+                                                                                            (local.get $arr)
+                                                                                            (local.get $start)
+                                                                                            (local.get $end)))
+                                                                          (local.get $acc)))
+                                                         (br $line-done)))
+                                               (if (i32.and (i32.eq (local.get $mode-code) (i32.const 2))
+                                                           (i32.eq (local.get $b) (i32.const 13)))
+                                                   (then (if (i32.lt_u (i32.add (local.get $i) (i32.const 1))
+                                                                       (local.get $len))
+                                                             (then (local.set $next
+                                                                              (array.get_u $I8Array
+                                                                                           (local.get $arr)
+                                                                                           (i32.add (local.get $i)
+                                                                                                    (i32.const 1))))
+                                                                   (if (i32.eq (local.get $next) (i32.const 10))
+                                                                       (then (local.set $end (local.get $i))
+                                                                             (local.set $i (i32.add (local.get $i) (i32.const 2)))
+                                                                             (local.set $acc
+                                                                                        (call $cons
+                                                                                              (struct.new $Bytes
+                                                                                                          (i32.const 0)
+                                                                                                          (i32.const 0)
+                                                                                                          (call $i8array-copy
+                                                                                                                (local.get $arr)
+                                                                                                                (local.get $start)
+                                                                                                                (local.get $end)))
+                                                                                              (local.get $acc)))
+                                                                             (br $line-done)))))))
+                                               (if (i32.and (i32.eq (local.get $mode-code) (i32.const 3))
+                                                           (i32.or (i32.eq (local.get $b) (i32.const 10))
+                                                                   (i32.eq (local.get $b) (i32.const 13))))
+                                                   (then (local.set $end (local.get $i))
+                                                         (if (i32.eq (local.get $b) (i32.const 13))
+                                                             (then (if (i32.lt_u (i32.add (local.get $i) (i32.const 1))
+                                                                                 (local.get $len))
+                                                                       (then (local.set $next
+                                                                                        (array.get_u $I8Array
+                                                                                                     (local.get $arr)
+                                                                                                     (i32.add (local.get $i)
+                                                                                                              (i32.const 1))))
+                                                                             (if (i32.eq (local.get $next) (i32.const 10))
+                                                                                 (then (local.set $i
+                                                                                                  (i32.add (local.get $i)
+                                                                                                           (i32.const 1)))))))))
+                                                         (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                                         (local.set $acc
+                                                                    (call $cons
+                                                                          (struct.new $Bytes
+                                                                                      (i32.const 0)
+                                                                                      (i32.const 0)
+                                                                                      (call $i8array-copy
+                                                                                            (local.get $arr)
+                                                                                            (local.get $start)
+                                                                                            (local.get $end)))
+                                                                          (local.get $acc)))
+                                                         (br $line-done)))
+                                               (if (i32.and (i32.eq (local.get $mode-code) (i32.const 4))
+                                                           (i32.or (i32.eq (local.get $b) (i32.const 10))
+                                                                   (i32.eq (local.get $b) (i32.const 13))))
+                                                   (then (local.set $end (local.get $i))
+                                                         (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                                         (local.set $acc
+                                                                    (call $cons
+                                                                          (struct.new $Bytes
+                                                                                      (i32.const 0)
+                                                                                      (i32.const 0)
+                                                                                      (call $i8array-copy
+                                                                                            (local.get $arr)
+                                                                                            (local.get $start)
+                                                                                            (local.get $end)))
+                                                                          (local.get $acc)))
+                                                         (br $line-done)))
+
+                                               (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                                               (br $inner)))
+                                  (br $outer)))
+                     (call $reverse (local.get $acc)))
+
                (func $webracket-vfs-write-file (type $Prim2)
                      (param $path-raw  (ref eq)) ;; path-string?
                      (param $bytes-raw (ref eq)) ;; bytes?

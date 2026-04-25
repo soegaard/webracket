@@ -1119,6 +1119,9 @@
      '(file->lines)
      'optional 1 3)
     (make-inline-specs
+     '(file->bytes-lines)
+     'optional 1 3)
+    (make-inline-specs
      '(open-input-file)
      'optional 1 3)
     (make-inline-specs
@@ -2101,6 +2104,7 @@
   file->bytes
   file->string
   file->lines
+  file->bytes-lines
   open-input-file
   open-output-file
   call-with-input-file
