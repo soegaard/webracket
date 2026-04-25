@@ -534,6 +534,7 @@ directory source paths are resolved against the generated JavaScript module URL.
 Directory records use `{ directory: true }` or a path ending in `/` for an empty
 VFS directory. In the Node runtime, `{ directory: "./assets" }` recursively
 copies a host directory into the target VFS directory before WebRacket starts.
+Manifest target paths must be absolute VFS paths.
 
 Add small host imports for stat, read-file, and list-dir.
 

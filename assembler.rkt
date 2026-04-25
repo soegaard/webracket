@@ -639,9 +639,17 @@ function vfsPreloadPairs(entries) {
   throw new Error('WebRacket VFS preload manifest must be an array or object');
 }
 
+function validateVFSPreloadPath(path) {
+  const p = String(path);
+  if (p.length === 0) throw new Error('WebRacket VFS preload path is empty');
+  if (!p.startsWith('/')) throw new Error(`WebRacket VFS preload path must be absolute: ${p}`);
+  if (p.includes('\0')) throw new Error('WebRacket VFS preload path contains NUL');
+  return p;
+}
+
 function preloadWebRacketVFS(vfs, entries) {
   for (const [path, entry] of vfsPreloadPairs(entries)) {
-    const p = String(path);
+    const p = validateVFSPreloadPath(path);
     if ((entry && entry.directory === true) || p.endsWith('/')) {
       vfs.mkdirp(p);
     } else {
@@ -652,7 +660,7 @@ function preloadWebRacketVFS(vfs, entries) {
 
 async function preloadWebRacketVFSAsync(vfs, entries) {
   for (const [path, entry] of vfsPreloadPairs(entries)) {
-    const p = String(path);
+    const p = validateVFSPreloadPath(path);
     if ((entry && entry.directory === true) || p.endsWith('/')) {
       vfs.mkdirp(p);
     } else if (entry && typeof entry === 'object' && typeof entry.directory === 'string') {
@@ -4684,6 +4692,8 @@ const wasmModule
   (check-true
    (regexp-match? #rx"file, URL, and host directory preloads require preloadWebRacketVFSAsync"
                   runtime/preload))
+  (check-true
+   (regexp-match? #rx"WebRacket VFS preload path must be absolute" runtime/preload))
 
   (check-exn
    #rx"unknown VFS preload source kind"
