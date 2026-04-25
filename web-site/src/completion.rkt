@@ -1304,7 +1304,50 @@
      simple-form-path
      some-system-path->string
      string->some-system-path
-     shrink-path-wrt)))
+     shrink-path-wrt)
+    (filesystem
+     file-exists?
+     directory-exists?
+     link-exists?
+     file-or-directory-type
+     directory-list
+     filesystem-root-list
+     find-system-path
+     current-directory
+     current-directory-for-user
+     current-drive
+     file-size
+     delete-file
+     make-directory
+     make-directory*
+     make-parent-directory*
+     make-temporary-file
+     make-temporary-directory
+     make-temporary-file*
+     make-temporary-directory*
+     delete-directory
+     delete-directory/files
+     rename-file-or-directory
+     copy-file
+     copy-directory/files
+     file-or-directory-modify-seconds
+     file-or-directory-permissions
+     file-or-directory-stat
+     file-or-directory-identity
+     file->bytes
+     file->string
+     file->lines
+     file->bytes-lines
+     open-input-file
+     open-output-file
+     display-to-file
+     display-lines-to-file
+     call-with-input-file
+     call-with-output-file
+     call-with-input-file*
+     call-with-output-file*
+     with-input-from-file
+     with-output-to-file)))
 
 (define macros-primitives
   '((syntax-object-content
@@ -1591,7 +1634,6 @@
 (define standard-library-identifiers
   '(current-error-port
     current-input-port
-    current-output-port
     current-write-relative-directory
     default-error-value->string-handler
     display
@@ -1624,7 +1666,6 @@
     read-syntax
     reset-current-error-port!
     reset-current-input-port!
-    reset-current-output-port!
     write
     writeln)
   )
@@ -2603,6 +2644,89 @@
             unquoted-printing-string
             unquoted-printing-string-value
             unquoted-printing-string?
+            absolute-path?
+            build-path
+            build-path/convention-type
+            bytes->path-element
+            call-with-input-file
+            call-with-input-file*
+            call-with-output-file
+            call-with-output-file*
+            cleanse-path
+            complete-path?
+            copy-directory/files
+            copy-file
+            current-directory
+            current-directory-for-user
+            current-drive
+            current-output-port
+            delete-directory
+            delete-directory/files
+            delete-file
+            directory-exists?
+            directory-list
+            display-lines-to-file
+            display-to-file
+            explode-path
+            file->bytes
+            file->bytes-lines
+            file->lines
+            file->string
+            file-exists?
+            file-name-from-path
+            file-or-directory-identity
+            file-or-directory-modify-seconds
+            file-or-directory-permissions
+            file-or-directory-stat
+            file-or-directory-type
+            file-size
+            filename-extension
+            filesystem-root-list
+            find-relative-path
+            find-system-path
+            flush-output
+            link-exists?
+            make-directory
+            make-directory*
+            make-parent-directory*
+            make-temporary-directory
+            make-temporary-directory*
+            make-temporary-file
+            make-temporary-file*
+            normal-case-path
+            normalize-path
+            open-input-file
+            open-output-file
+            path<?
+            path-add-extension
+            path-add-suffix
+            path-convention-type
+            path-element->bytes
+            path-element->string
+            path-element?
+            path-get-extension
+            path-has-extension?
+            path-only
+            path-replace-extension
+            path-replace-suffix
+            path->complete-path
+            path->directory-path
+            relative-path?
+            rename-file-or-directory
+            reroot-path
+            reset-current-output-port!
+            resolve-path
+            shrink-path-wrt
+            simple-form-path
+            simplify-path
+            some-system-path->string
+            split-path
+            string->path
+            string->path-element
+            string->some-system-path
+            system-path-convention-type
+            with-input-from-file
+            with-output-to-file
             unsafe-car
             unsafe-cdr
             unsafe-fl/
