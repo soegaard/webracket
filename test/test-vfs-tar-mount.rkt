@@ -41,6 +41,12 @@
                #:format 'ustar)
   (get-output-bytes out))
 
+;; make-unsupported-type-tar : -> bytes?
+;;   Build a tar archive with an unsupported tar entry typeflag.
+(define (make-unsupported-type-tar)
+  (bytes-append (tar-header "device" 0 #\3)
+                (make-bytes 1024 0)))
+
 ;; make-truncated-tar : -> bytes?
 ;;   Build a tar archive whose second file entry is cut short.
 (define (make-truncated-tar)
@@ -639,6 +645,18 @@ PROGRAM
     (error 'test-vfs-tar-mount-rejects-links
            (format "expected unsupported tar link failure, got: ~a" output))))
 
+;; test-vfs-tar-mount-rejects-unsupported-type : -> void
+;;   Check that unsupported non-link tar entry types fail while mounting.
+(define (test-vfs-tar-mount-rejects-unsupported-type)
+  (define-values (status output)
+    (run-tar-program "(void)\n" #:tar-bytes (make-unsupported-type-tar)))
+  (when (zero? status)
+    (error 'test-vfs-tar-mount-rejects-unsupported-type
+           "expected unsupported-type tar mount to fail"))
+  (unless (regexp-match? #rx"VFS tar entry type is unsupported" output)
+    (error 'test-vfs-tar-mount-rejects-unsupported-type
+           (format "expected unsupported tar type failure, got: ~a" output))))
+
 ;; test-vfs-tar-mount-rejects-truncated-entry : -> void
 ;;   Check that tar entries whose payload extends past the archive fail.
 (define (test-vfs-tar-mount-rejects-truncated-entry)
@@ -825,6 +843,7 @@ PROGRAM
     (test-vfs-tar-mount-global-pax-mtime . ,test-vfs-tar-mount-global-pax-mtime)
     (test-vfs-tar-mount-read-only . ,test-vfs-tar-mount-read-only)
     (test-vfs-tar-mount-rejects-links . ,test-vfs-tar-mount-rejects-links)
+    (test-vfs-tar-mount-rejects-unsupported-type . ,test-vfs-tar-mount-rejects-unsupported-type)
     (test-vfs-tar-mount-rejects-truncated-entry . ,test-vfs-tar-mount-rejects-truncated-entry)
     (test-vfs-tar-mount-rejects-trailing-data . ,test-vfs-tar-mount-rejects-trailing-data)
     (test-vfs-tar-mount-rejects-invalid-size . ,test-vfs-tar-mount-rejects-invalid-size)
