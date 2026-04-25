@@ -123,6 +123,15 @@
                #:format 'pax)
   (get-output-bytes out))
 
+;; make-pax-unicode-path-tar : -> bytes?
+;;   Build a tar archive whose pax path record needs UTF-8 byte counting.
+(define (make-pax-unicode-path-tar)
+  (define out (open-output-bytes))
+  (tar->output (list (file-entry (string->path "caf\u00E9.txt") #"coffee\n"))
+               out
+               #:format 'pax)
+  (get-output-bytes out))
+
 ;; make-invalid-pax-tar : -> bytes?
 ;;   Build a tar archive with a malformed pax record body.
 (define (make-invalid-pax-tar)
@@ -263,6 +272,24 @@ PROGRAM
     (error 'test-vfs-tar-synthetic-parent-mount
            (format "compile/run failed (~a): ~a" status output))))
 
+;; test-vfs-tar-pax-unicode-path : -> void
+;;   Check that pax path lengths are interpreted as UTF-8 byte counts.
+(define (test-vfs-tar-pax-unicode-path)
+  (define program
+    #<<PROGRAM
+(unless
+ (and (equal? (file->string "/assets/caf\u00E9.txt") "coffee\n")
+      (equal? (map path->string (directory-list "/assets"))
+              '("caf\u00E9.txt")))
+ (error 'vfs-tar-mount "unicode pax path checks failed"))
+PROGRAM
+)
+  (define-values (status output)
+    (run-tar-program program #:tar-bytes (make-pax-unicode-path-tar)))
+  (unless (zero? status)
+    (error 'test-vfs-tar-pax-unicode-path
+           (format "compile/run failed (~a): ~a" status output))))
+
 ;; test-vfs-tar-mount-global-pax-mtime : -> void
 ;;   Check that global pax mtime applies to following entries.
 (define (test-vfs-tar-mount-global-pax-mtime)
@@ -346,6 +373,7 @@ PROGRAM
   (test-vfs-tar-file-mount)
   (test-vfs-tar-nested-mount)
   (test-vfs-tar-synthetic-parent-mount)
+  (test-vfs-tar-pax-unicode-path)
   (test-vfs-tar-mount-global-pax-mtime)
   (test-vfs-tar-mount-read-only)
   (test-vfs-tar-mount-rejects-links)
@@ -358,6 +386,7 @@ PROGRAM
   (test-vfs-tar-file-mount)
   (test-vfs-tar-nested-mount)
   (test-vfs-tar-synthetic-parent-mount)
+  (test-vfs-tar-pax-unicode-path)
   (test-vfs-tar-mount-global-pax-mtime)
   (test-vfs-tar-mount-read-only)
   (test-vfs-tar-mount-rejects-links)

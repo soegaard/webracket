@@ -458,24 +458,29 @@ class WebRacketTarBackend {
   }
 
   readPaxHeaders(start, size) {
-    const text = new TextDecoder().decode(this.bytes.slice(start, start + size));
+    const decoder = new TextDecoder();
     const headers = {};
-    let i = 0;
-    while (i < text.length) {
-      const space = text.indexOf(' ', i);
-      if (space < 0) throw new Error('VFS tar pax header is invalid');
-      const lenText = text.slice(i, space);
+    const end = start + size;
+    for (let i = start; i < end;) {
+      let space = i;
+      while (space < end && this.bytes[space] !== 32) space++;
+      if (space >= end) throw new Error('VFS tar pax header is invalid');
+      const lenText = decoder.decode(this.bytes.slice(i, space));
       if (!/^[0-9]+$/.test(lenText)) throw new Error('VFS tar pax header is invalid');
       const len = parseInt(lenText, 10);
-      if (!Number.isFinite(len) || len <= 0 || i + len > text.length) {
+      const recordEnd = i + len;
+      if (!Number.isFinite(len) || len <= 0 || recordEnd > end) {
         throw new Error('VFS tar pax header is invalid');
       }
-      if (text[i + len - 1] !== '\n') throw new Error('VFS tar pax header is invalid');
-      const record = text.slice(space + 1, i + len - 1);
-      const eq = record.indexOf('=');
-      if (eq <= 0) throw new Error('VFS tar pax header is invalid');
-      headers[record.slice(0, eq)] = record.slice(eq + 1);
-      i += len;
+      if (this.bytes[recordEnd - 1] !== 10) throw new Error('VFS tar pax header is invalid');
+      let eq = space + 1;
+      while (eq < recordEnd - 1 && this.bytes[eq] !== 61) eq++;
+      if (eq <= space + 1 || eq >= recordEnd - 1) {
+        throw new Error('VFS tar pax header is invalid');
+      }
+      const key = decoder.decode(this.bytes.slice(space + 1, eq));
+      headers[key] = decoder.decode(this.bytes.slice(eq + 1, recordEnd - 1));
+      i = recordEnd;
     }
     return headers;
   }
