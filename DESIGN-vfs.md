@@ -252,6 +252,10 @@ The backend should build:
 - a file map: relative path -> byte range
 - a directory map: relative directory -> child path elements
 
+Tar entry names are interpreted as relative Unix paths. Absolute names,
+empty components, `.`, and `..` are rejected when the backend indexes the
+archive.
+
 For a read:
 
 ```js

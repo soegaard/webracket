@@ -428,6 +428,18 @@ class WebRacketTarBackend {
     return '/' + String(path).replace(/^\/+/, '').replace(/\/+$/, '');
   }
 
+  archivePath(rawPath) {
+    const s = String(rawPath || '').replace(/\/+$/, '');
+    if (s === '' || s.startsWith('/')) {
+      throw new Error(`VFS tar entry path is invalid: ${rawPath}`);
+    }
+    const parts = s.split('/');
+    if (parts.some((part) => part === '' || part === '.' || part === '..')) {
+      throw new Error(`VFS tar entry path is invalid: ${rawPath}`);
+    }
+    return `/${parts.join('/')}`;
+  }
+
   readString(start, len) {
     let end = start;
     const max = Math.min(start + len, this.bytes.length);
@@ -472,7 +484,7 @@ class WebRacketTarBackend {
       const mode = this.readOctal(offset + 100, 8, 0o666);
       const typeflag = String.fromCharCode(this.bytes[offset + 156] || 0);
       const dataStart = offset + 512;
-      const path = this.normalize(rawPath);
+      const path = this.archivePath(rawPath);
 
       if (typeflag === '5' || rawPath.endsWith('/')) {
         if (path !== '/' && !this.dirs.has(path)) {
@@ -4903,6 +4915,8 @@ const wasmModule
    (regexp-match? #rx"normalizeVFSPreloadDuplicatePath" runtime/preload))
   (check-true
    (regexp-match? #rx"WebRacket VFS base64 preload is invalid" runtime/preload))
+  (check-true
+   (regexp-match? #rx"VFS tar entry path is invalid" runtime/preload))
 
   (check-exn
    #rx"unknown VFS preload source kind"
