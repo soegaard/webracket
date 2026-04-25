@@ -4562,6 +4562,9 @@ const wasmModule
      (define path (hash-ref entry 'path))
      (define kind (hash-ref entry 'kind))
      (define source (hash-ref entry 'source))
+     (unless (memq kind '(file url text base64 directory))
+       (error 'vfs-preload-manifest-js
+              (format "unknown VFS preload source kind: ~a" kind)))
      (hasheq 'path path kind source))))
 
 (define (vfs-preload-manifest-assignment vfs-preloads)
@@ -4674,7 +4677,15 @@ const wasmModule
   (check-true
    (regexp-match? #rx"\"base64\":\"aGVsbG8=\"" runtime/preload))
   (check-true
-   (regexp-match? #rx"\"directory\":true" runtime/preload)))
+   (regexp-match? #rx"\"directory\":true" runtime/preload))
+
+  (check-exn
+   #rx"unknown VFS preload source kind"
+   (λ ()
+     (runtime #:out "out.wasm"
+              #:host 'browser
+              #:vfs-preloads
+              (list (hasheq 'path "/app/nope" 'kind 'mystery 'source "x"))))))
 
 
 ;;;
