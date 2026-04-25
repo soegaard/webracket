@@ -21315,7 +21315,9 @@
               (call $range/flonum
                     (local.get $start-f64)
                     (local.get $end-f64)
-                    (local.get $step-f64)))
+                    (local.get $step-f64)
+                    (local.get $start-val)
+                    (i32.eqz (local.get $start-is-fl))))
 
         (func $range/fixnum
               (param $start i32)
@@ -21346,6 +21348,8 @@
               (param $start f64)
               (param $end   f64)
               (param $step  f64)
+              (param $start-raw (ref eq))
+              (param $preserve-start i32)
               (result (ref eq))
 
               (local $n   i32)
@@ -21365,7 +21369,11 @@
                            (local.set $lst
                                       (struct.new $Pair
                                                   (i32.const 0)
-                                                  (struct.new $Flonum (i32.const 0) (local.get $cur))
+                                                  (if (result (ref eq))
+                                                      (i32.and (i32.eqz (local.get $n))
+                                                               (local.get $preserve-start))
+                                                      (then (local.get $start-raw))
+                                                      (else (struct.new $Flonum (i32.const 0) (local.get $cur))))
                                                   (local.get $lst)))
                            (local.set $n (i32.add (local.get $n) (i32.const 1)))
                            (br $loop)))

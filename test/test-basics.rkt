@@ -2118,7 +2118,7 @@
                          (equal? (range 10 20) '(10 11 12 13 14 15 16 17 18 19))
                          (equal? (range 20 10) '())
                          (equal? (range 20 10 -1) '(20 19 18 17 16 15 14 13 12 11))
-                         (equal? (range 10 15 1.5) '(10.0 11.5 13.0 14.5))))
+                         (equal? (range 10 15 1.5) '(10 11.5 13.0 14.5))))
 
               (list "inclusive-range"
                     (and (equal? (inclusive-range 10 20)
