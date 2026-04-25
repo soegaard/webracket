@@ -454,6 +454,17 @@ class WebRacketTarBackend {
     return Number.isFinite(n) ? n : fallback;
   }
 
+  validateChecksum(offset) {
+    const expected = this.readOctal(offset + 148, 8, -1);
+    let actual = 0;
+    for (let i = 0; i < 512; i++) {
+      actual += (i >= 148 && i < 156) ? 32 : this.bytes[offset + i];
+    }
+    if (expected !== actual) {
+      throw new Error('VFS tar header checksum is invalid');
+    }
+  }
+
   addParentDirs(path, mtime = 0) {
     const parts = this.normalize(path).split('/').filter(Boolean);
     let cur = '/';
@@ -476,6 +487,7 @@ class WebRacketTarBackend {
       }
       if (empty) break;
 
+      this.validateChecksum(offset);
       const name = this.readString(offset, 100);
       const prefix = this.readString(offset + 345, 155);
       const rawPath = prefix ? `${prefix}/${name}` : name;
@@ -4917,6 +4929,8 @@ const wasmModule
    (regexp-match? #rx"WebRacket VFS base64 preload is invalid" runtime/preload))
   (check-true
    (regexp-match? #rx"VFS tar entry path is invalid" runtime/preload))
+  (check-true
+   (regexp-match? #rx"VFS tar header checksum is invalid" runtime/preload))
 
   (check-exn
    #rx"unknown VFS preload source kind"

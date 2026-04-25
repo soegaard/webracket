@@ -254,7 +254,7 @@ The backend should build:
 
 Tar entry names are interpreted as relative Unix paths. Absolute names,
 empty components, `.`, and `..` are rejected when the backend indexes the
-archive.
+archive. Header checksums are validated while indexing.
 
 For a read:
 
