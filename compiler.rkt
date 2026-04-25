@@ -1177,7 +1177,8 @@
        current-input-port
        current-output-port
        current-error-port
-       current-directory)
+       current-directory
+       current-directory-for-user)
      'optional 0 1)
     (make-inline-specs
      '(raise-read-error
@@ -2072,6 +2073,7 @@
   build-path
   build-path/convention-type
   current-directory
+  current-directory-for-user
   path->complete-path
   path->directory-path
   cleanse-path

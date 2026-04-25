@@ -1016,6 +1016,7 @@
  build-path
  build-path/convention-type
  current-directory
+ current-directory-for-user
  path->complete-path
  path->directory-path
  cleanse-path

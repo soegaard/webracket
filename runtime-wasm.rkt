@@ -45650,6 +45650,25 @@
                      (global.set $current-directory-path (local.get $path))
                      (global.get $void))
 
+               (func $current-directory-for-user (type $Prim01)
+                     (param $path-raw (ref eq)) ;; optional path-string?
+                     (result          (ref eq))
+
+                     (local $path (ref $Path))
+
+                     (if (ref.eq (local.get $path-raw) (global.get $missing))
+                         (then (return (global.get $current-directory-for-user-path))))
+                     (local.set $path
+                                (call $path-string->path/checked
+                                      (global.get $symbol:current-directory-for-user)
+                                      (local.get $path-raw)))
+                     (if (i32.eqz (call $path-bytes-absolute?
+                                        (struct.get $Path $bytes (local.get $path))))
+                         (then (call $raise-path-expected (local.get $path-raw))
+                               (unreachable)))
+                     (global.set $current-directory-for-user-path (local.get $path))
+                     (global.get $void))
+
                (func $path->complete-path (type $Prim12)
                      (param $path-raw (ref eq)) ;; path-string?
                      (param $base-raw (ref eq)) ;; optional path-string?, default current-directory
@@ -49934,6 +49953,7 @@
 
                (global $system-path-convention   (mut (ref eq)) (ref.i31 (i32.const 0)))
                (global $current-directory-path   (mut (ref eq)) (ref.i31 (i32.const 0)))
+               (global $current-directory-for-user-path (mut (ref eq)) (ref.i31 (i32.const 0)))
                (global $temporary-file-counter   (mut i32)      (i32.const 0))
                (global $current-input-port-value  (mut (ref eq)) (ref.i31 (i32.const 0)))
                (global $current-output-port-value (mut (ref eq)) (ref.i31 (i32.const 0)))
@@ -50134,6 +50154,8 @@
                                  (call $bytes->path
                                        (global.get $bytes:app-dir)
                                        (global.get $missing)))
+                     (global.set $current-directory-for-user-path
+                                 (global.get $current-directory-path))
                      (drop (call $reset-current-input-port!))
                      (drop (call $reset-current-output-port!))
                      (drop (call $reset-current-error-port!))

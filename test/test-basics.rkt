@@ -4920,6 +4920,19 @@
                          (begin
                            (current-directory "/tmp/")
                            (equal? (path->string (current-directory)) "/tmp/"))))
+              (list "current-directory-for-user"
+                    (let ([original-current (current-directory)]
+                          [original-user    (current-directory-for-user)])
+                      (current-directory "/tmp/")
+                      (current-directory-for-user "/app/")
+                      (let ([result (and (equal? (path->string original-user) "/app/")
+                                         (equal? (path->string (current-directory)) "/tmp/")
+                                         (equal? (path->string (current-directory-for-user)) "/app/")
+                                         (void? (current-directory-for-user "/tmp/"))
+                                         (equal? (path->string (current-directory-for-user)) "/tmp/"))])
+                        (current-directory original-current)
+                        (current-directory-for-user original-user)
+                        result)))
               (list "current-drive"
                     (and (complete-path? (current-drive))
                          (equal? (path->string (current-drive)) "/")))
