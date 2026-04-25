@@ -27,6 +27,11 @@
                #:format 'ustar)
   (get-output-bytes out))
 
+;; make-empty-tar : -> bytes?
+;;   Build a valid tar archive with no entries.
+(define (make-empty-tar)
+  (make-bytes 1024 0))
+
 ;; make-link-tar : -> bytes?
 ;;   Build a tar archive with an unsupported symbolic-link entry.
 (define (make-link-tar)
@@ -403,6 +408,26 @@ PROGRAM
   (define-values (status output) (run-tar-program program))
   (unless (zero? status)
     (error 'test-vfs-tar-mount
+           (format "compile/run failed (~a): ~a" status output))))
+
+;; test-vfs-tar-empty-mount : -> void
+;;   Check that an empty tar archive mounts as an empty directory.
+(define (test-vfs-tar-empty-mount)
+  (define program
+    #<<PROGRAM
+(unless
+ (and (directory-exists? "/assets")
+      (equal? (map path->string (directory-list "/assets"))
+              '())
+      (equal? (map path->string (filesystem-root-list))
+              '("/app/" "/assets/" "/tmp/")))
+ (error 'vfs-tar-mount "empty tar mount checks failed"))
+PROGRAM
+)
+  (define-values (status output)
+    (run-tar-program program #:tar-bytes (make-empty-tar)))
+  (unless (zero? status)
+    (error 'test-vfs-tar-empty-mount
            (format "compile/run failed (~a): ~a" status output))))
 
 ;; test-vfs-tar-duplicate-file-last-wins : -> void
@@ -858,6 +883,7 @@ PROGRAM
 ;;   Generated-runtime tar tests; each case uses its own temporary directories.
 (define vfs-tar-tests
   `((test-vfs-tar-mount . ,test-vfs-tar-mount)
+    (test-vfs-tar-empty-mount . ,test-vfs-tar-empty-mount)
     (test-vfs-tar-duplicate-file-last-wins . ,test-vfs-tar-duplicate-file-last-wins)
     (test-vfs-tar-explicit-directories . ,test-vfs-tar-explicit-directories)
     (test-vfs-tar-duplicate-directories . ,test-vfs-tar-duplicate-directories)
