@@ -4655,6 +4655,8 @@ const wasmModule
              #:host 'browser
              #:vfs-preloads
              (list (hasheq 'path "/app/message.txt" 'kind 'url 'source "./message.txt")
+                   (hasheq 'path "/app/config.txt" 'kind 'text 'source "mode=test")
+                   (hasheq 'path "/app/blob.dat" 'kind 'base64 'source "aGVsbG8=")
                    (hasheq 'path "/app/assets" 'kind 'directory 'source "./assets"))))
 
   (check-true
@@ -4665,7 +4667,11 @@ const wasmModule
   (check-true
    (regexp-match? #rx"\"path\":\"/app/assets\"" runtime/preload))
   (check-true
-   (regexp-match? #rx"\"directory\":\"\\./assets\"" runtime/preload)))
+   (regexp-match? #rx"\"directory\":\"\\./assets\"" runtime/preload))
+  (check-true
+   (regexp-match? #rx"\"text\":\"mode=test\"" runtime/preload))
+  (check-true
+   (regexp-match? #rx"\"base64\":\"aGVsbG8=\"" runtime/preload)))
 
 
 ;;;

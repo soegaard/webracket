@@ -136,6 +136,12 @@
    [("--vfs-url") spec
                   "Preload URL into VFS as VFS=SOURCE"
                   (add-vfs-preload! 'url spec)]
+   [("--vfs-text") spec
+                   "Preload inline text into VFS as VFS=TEXT"
+                   (add-vfs-preload! 'text spec)]
+   [("--vfs-base64") spec
+                     "Preload inline base64 bytes into VFS as VFS=BASE64"
+                     (add-vfs-preload! 'base64 spec)]
    [("--vfs-dir") spec
                   "Preload Node host directory into VFS as VFS=SOURCE"
                   (add-vfs-preload! 'directory spec)]

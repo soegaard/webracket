@@ -500,6 +500,8 @@ For generated hosts, the command line can emit this manifest directly:
 ```sh
 racket webracket.rkt --vfs-file /app/data/message.txt=./message.txt \
                      --vfs-url /app/data/browser-message.txt=./message.txt \
+                     --vfs-text /app/config.txt=mode=test \
+                     --vfs-base64 /app/blob.dat=aGVsbG8= \
                      --vfs-dir /app/assets=./assets \
                      main.rkt
 ```
@@ -507,6 +509,7 @@ racket webracket.rkt --vfs-file /app/data/message.txt=./message.txt \
 `--vfs-url` resolves relative URLs against the generated host module URL
 and works in browser hosts. `--vfs-file` and `--vfs-dir` resolve relative
 paths against the generated host module URL too, but require the Node host.
+`--vfs-text` and `--vfs-base64` are embedded directly in the generated host.
 
 Manifest entries may be:
 
