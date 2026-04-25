@@ -1,6 +1,7 @@
 #lang racket/base
 (provide ffi-file->foreigns
          ffi-file->foreign-docs
+         foreigns-deduplicate
          foreign->import
          foreign->primitive
          foreigns->primitive-names)
@@ -92,6 +93,9 @@
          (only-in racket/list last drop-right)
          (only-in racket/path path-only)
          "structs.rkt")
+
+(module+ test
+  (require rackunit))
 
 
 ; read-forms-from-file : file-path -> list-of-syntax
@@ -299,6 +303,54 @@
        (if (eq? out 'void)
            '()
            out))]))
+
+;; foreigns-deduplicate : symbol? (listof foreign?) -> (listof foreign?)
+;;   Remove duplicate foreign declarations by Racket primitive name while
+;;   preserving the first occurrence. Repeated identical declarations are
+;;   allowed; conflicting redeclarations are rejected.
+(define (foreigns-deduplicate who foreigns)
+  (define seen (make-hasheq))
+  (for/list ([f (in-list foreigns)]
+             #:unless
+             (let ([name (foreign-racket-name f)])
+               (define prev (hash-ref seen name #f))
+               (cond
+                 [(not prev)
+                  (hash-set! seen name f)
+                  #f]
+                 [(equal? prev f)
+                  #t]
+                 [else
+                  (error who
+                         "conflicting duplicate foreign declaration for ~a: ~a vs ~a"
+                         name prev f)])))
+    f))
+
+(module+ test
+  (define standard+array-foreigns
+    (append (ffi-file->foreigns "ffi/standard.ffi")
+            (ffi-file->foreigns "ffi/array.ffi")))
+
+  (define deduped-standard+array
+    (foreigns-deduplicate 'test standard+array-foreigns))
+
+  (check-equal?
+   (length
+    (filter (λ (f) (eq? (foreign-racket-name f) 'js-undefined))
+            deduped-standard+array))
+   1)
+
+  (check-true
+   (< (length deduped-standard+array)
+      (length standard+array-foreigns)))
+
+  (check-exn
+   exn:fail?
+   (λ ()
+     (foreigns-deduplicate
+      'test
+      (list (foreign 'dup "m1" "name" '(value) '(value))
+            (foreign 'dup "m2" "name" '(value) '(value)))))))
 
 ;;;
 ;;; Generate Code for the WebAssembly runtime

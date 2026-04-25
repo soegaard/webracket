@@ -281,15 +281,14 @@
   (define ffi-funcs     '()) ; list of wat
 
   (for ([ffi-filename resolved-ffi-files])
-    (define fs    (ffi-file->foreigns ffi-filename))
-    (define ims   (map foreign->import    fs))
-    (define prims (map foreign->primitive fs))
-    (set! ffi-foreigns (cons fs    ffi-foreigns))
-    (set! ffi-imports  (cons ims   ffi-imports))
-    (set! ffi-funcs    (cons prims ffi-funcs)))
-  (set! ffi-foreigns (append* (reverse ffi-foreigns)))
-  (set! ffi-imports  (append* (reverse ffi-imports)))
-  (set! ffi-funcs    (append* (reverse ffi-funcs)))
+    (define fs (ffi-file->foreigns ffi-filename))
+    (set! ffi-foreigns (cons fs ffi-foreigns)))
+  (set! ffi-foreigns
+        (foreigns-deduplicate
+         'drive-compilation
+         (append* (reverse ffi-foreigns))))
+  (set! ffi-imports (map foreign->import ffi-foreigns))
+  (set! ffi-funcs   (map foreign->primitive ffi-foreigns))
 
   (current-ffi-foreigns    ffi-foreigns)
   (current-ffi-imports-wat ffi-imports)

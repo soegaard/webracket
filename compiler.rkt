@@ -7393,7 +7393,10 @@
     (values mod report))
 
   (define (compile/primitive-report/ffi stx ffi-path)
-    (define fs    (ffi-file->foreigns ffi-path))
+    (define fs
+      (foreigns-deduplicate
+       'compile/primitive-report/ffi
+       (ffi-file->foreigns ffi-path)))
     (define ims   (map foreign->import fs))
     (define prims (map foreign->primitive fs))
     (define dump-dir (make-temporary-file "webracket-tree-shaker-ffi~a" 'directory))
