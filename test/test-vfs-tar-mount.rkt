@@ -40,9 +40,11 @@
                #:format 'ustar)
   (get-output-bytes out))
 
-;; run-tar-program : string? -> (values exact-integer? string?)
+;; run-tar-program : string? [#:tar-bytes bytes?] [#:source-mode symbol?] -> (values exact-integer? string?)
 ;;   Compile and run a program against an inline tar-mounted VFS backend.
-(define (run-tar-program program #:tar-bytes [tar-bytes (make-test-tar)])
+(define (run-tar-program program
+                         #:tar-bytes [tar-bytes (make-test-tar)]
+                         #:source-mode [source-mode 'base64])
   (define repo-root (simplify-path (build-path (current-directory) "..")))
   (define webracket-rkt (build-path repo-root "webracket.rkt"))
   (define source-dir (make-temporary-file "webracket-vfs-tar-src-~a" 'directory))
@@ -54,8 +56,21 @@
       (call-with-output-file source-path
         (lambda (out) (display program out))
         #:exists 'truncate/replace)
-      (define tar-base64
-        (bytes->string/utf-8 (base64-encode tar-bytes #"")))
+      (define-values (mount-flag mount-spec)
+        (case source-mode
+          [(base64)
+           (values "--vfs-tar-base64"
+                   (string-append "/assets="
+                                  (bytes->string/utf-8 (base64-encode tar-bytes #""))))]
+          [(relative-file)
+           (define tar-path (build-path dest-dir "assets.tar"))
+           (call-with-output-file tar-path
+             (lambda (out) (write-bytes tar-bytes out))
+             #:exists 'truncate/replace)
+           (values "--vfs-tar-file" "/assets=assets.tar")]
+          [else
+           (error 'run-tar-program
+                  (format "unknown tar source mode: ~a" source-mode))]))
       (define stdout (open-output-string))
       (define stderr (open-output-string))
       (define status
@@ -65,7 +80,7 @@
            (find-executable-path "racket")
            (path->string webracket-rkt)
            "--dest" (path->string dest-dir)
-           "--vfs-tar-base64" (string-append "/assets=" tar-base64)
+           mount-flag mount-spec
            "-r"
            (path->string source-path))))
       (values status
@@ -102,6 +117,16 @@ PROGRAM
     (error 'test-vfs-tar-mount
            (format "compile/run failed (~a): ~a" status output))))
 
+;; test-vfs-tar-file-mount : -> void
+;;   Check relative tar file sources are resolved against the generated runtime.
+(define (test-vfs-tar-file-mount)
+  (define-values (status output)
+    (run-tar-program "(file->string \"/assets/hello.txt\")\n"
+                     #:source-mode 'relative-file))
+  (unless (zero? status)
+    (error 'test-vfs-tar-file-mount
+           (format "compile/run failed (~a): ~a" status output))))
+
 ;; test-vfs-tar-mount-read-only : -> void
 ;;   Check that writes to tar-mounted files fail in the generated runtime.
 (define (test-vfs-tar-mount-read-only)
@@ -129,11 +154,13 @@ PROGRAM
 
 (module+ test
   (test-vfs-tar-mount)
+  (test-vfs-tar-file-mount)
   (test-vfs-tar-mount-read-only)
   (test-vfs-tar-mount-rejects-links))
 
 (module+ main
   (test-vfs-tar-mount)
+  (test-vfs-tar-file-mount)
   (test-vfs-tar-mount-read-only)
   (test-vfs-tar-mount-rejects-links)
   (displayln "ok"))
