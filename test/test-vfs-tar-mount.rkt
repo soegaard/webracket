@@ -370,6 +370,12 @@
                                   "="
                                   (bytes->string/utf-8
                                    (base64-encode (gzip-bytes tar-bytes) #""))))]
+          [(gzip-base64-long-flag)
+           (values "--vfs-tar-gz-base64"
+                   (string-append mount-path
+                                  "="
+                                  (bytes->string/utf-8
+                                   (base64-encode (gzip-bytes tar-bytes) #""))))]
           [(invalid-gzip-base64)
            (values "--vfs-tgz-base64"
                    (string-append mount-path
@@ -571,6 +577,16 @@ PROGRAM
     (run-tar-program program #:source-mode 'gzip-base64))
   (unless (zero? status)
     (error 'test-vfs-tgz-mount
+           (format "compile/run failed (~a): ~a" status output))))
+
+;; test-vfs-tar-gz-mount : -> void
+;;   Check the long gzip-compressed tar CLI flag spelling.
+(define (test-vfs-tar-gz-mount)
+  (define-values (status output)
+    (run-tar-program "(file->string \"/assets/hello.txt\")\n"
+                     #:source-mode 'gzip-base64-long-flag))
+  (unless (zero? status)
+    (error 'test-vfs-tar-gz-mount
            (format "compile/run failed (~a): ~a" status output))))
 
 ;; test-vfs-tgz-file-mount : -> void
@@ -972,6 +988,7 @@ PROGRAM
     (test-vfs-tar-mount-rejects-directory-then-file . ,test-vfs-tar-mount-rejects-directory-then-file)
     (test-vfs-tar-file-mount . ,test-vfs-tar-file-mount)
     (test-vfs-tgz-mount . ,test-vfs-tgz-mount)
+    (test-vfs-tar-gz-mount . ,test-vfs-tar-gz-mount)
     (test-vfs-tgz-file-mount . ,test-vfs-tgz-file-mount)
     (test-vfs-tgz-url-mount . ,test-vfs-tgz-url-mount)
     (test-vfs-tgz-mount-rejects-invalid-gzip . ,test-vfs-tgz-mount-rejects-invalid-gzip)
