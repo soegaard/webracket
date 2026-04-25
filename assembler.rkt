@@ -477,6 +477,7 @@ class WebRacketTarBackend {
   }
 
   parse() {
+    let nextLongName = null;
     for (let offset = 0; offset + 512 <= this.bytes.length;) {
       let empty = true;
       for (let i = 0; i < 512; i++) {
@@ -496,9 +497,17 @@ class WebRacketTarBackend {
       const mode = this.readOctal(offset + 100, 8, 0o666);
       const typeflag = String.fromCharCode(this.bytes[offset + 156] || 0);
       const dataStart = offset + 512;
-      const path = this.archivePath(rawPath);
+      const nextOffset = dataStart + Math.ceil(size / 512) * 512;
+      if (typeflag === 'L') {
+        nextLongName = this.readString(dataStart, size);
+        offset = nextOffset;
+        continue;
+      }
+      const entryPath = nextLongName || rawPath;
+      nextLongName = null;
+      const path = this.archivePath(entryPath);
 
-      if (typeflag === '5' || rawPath.endsWith('/')) {
+      if (typeflag === '5' || entryPath.endsWith('/')) {
         if (this.files.has(path)) {
           throw new Error(`VFS tar file/directory conflict: ${path}`);
         }
@@ -514,7 +523,7 @@ class WebRacketTarBackend {
         this.files.set(path, { start: dataStart, size, mtime, mode: mode || 0o666, identity: this.nextId++ });
       }
 
-      offset = dataStart + Math.ceil(size / 512) * 512;
+      offset = nextOffset;
     }
   }
 
@@ -4939,6 +4948,8 @@ const wasmModule
    (regexp-match? #rx"VFS tar header checksum is invalid" runtime/preload))
   (check-true
    (regexp-match? #rx"VFS tar file/directory conflict" runtime/preload))
+  (check-true
+   (regexp-match? #rx"nextLongName" runtime/preload))
 
   (check-exn
    #rx"unknown VFS preload source kind"

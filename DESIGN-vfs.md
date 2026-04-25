@@ -257,7 +257,7 @@ empty components, `.`, and `..` are rejected when the backend indexes the
 archive. Header checksums are validated while indexing. Duplicate regular-file
 entries use tar extraction semantics: the last member wins. Duplicate directory
 entries are harmless, but file/directory conflicts for the same path are
-rejected.
+rejected. Ustar `prefix` fields and GNU long-name records are supported.
 
 For a read:
 
