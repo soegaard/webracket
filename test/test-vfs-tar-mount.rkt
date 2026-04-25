@@ -132,12 +132,33 @@
   (bytes-append (tar-header name (bytes-length content) #\0)
                 (pad-tar-data content)))
 
+;; tar-directory-member : string? -> bytes?
+;;   Build one hand-written directory member for tar fixtures.
+(define (tar-directory-member name)
+  (tar-header name 0 #\5))
+
 ;; make-duplicate-file-tar : -> bytes?
 ;;   Build a tar archive where an appended file entry replaces an earlier one.
 (define (make-duplicate-file-tar)
   (bytes-append (tar-file-member "hello.txt" #"old\n")
                 (tar-file-member "hello.txt" #"new\n")
                 (make-bytes 1024 0)))
+
+;; make-file-directory-conflict-tar : symbol? -> bytes?
+;;   Build a tar archive with conflicting file and directory entries.
+(define (make-file-directory-conflict-tar order)
+  (case order
+    [(file-then-directory)
+     (bytes-append (tar-file-member "conflict" #"file\n")
+                   (tar-directory-member "conflict/")
+                   (make-bytes 1024 0))]
+    [(directory-then-file)
+     (bytes-append (tar-directory-member "conflict/")
+                   (tar-file-member "conflict" #"file\n")
+                   (make-bytes 1024 0))]
+    [else
+     (error 'make-file-directory-conflict-tar
+            (format "unknown conflict order: ~a" order))]))
 
 ;; pax-record : string? string? -> bytes?
 ;;   Build one pax record with the correct byte-count prefix.
@@ -369,6 +390,32 @@ PROGRAM
   (unless (zero? status)
     (error 'test-vfs-tar-duplicate-file-last-wins
            (format "compile/run failed (~a): ~a" status output))))
+
+;; test-vfs-tar-mount-rejects-file-then-directory : -> void
+;;   Check that a later directory cannot replace an earlier file entry.
+(define (test-vfs-tar-mount-rejects-file-then-directory)
+  (define-values (status output)
+    (run-tar-program "(void)\n"
+                     #:tar-bytes (make-file-directory-conflict-tar 'file-then-directory)))
+  (when (zero? status)
+    (error 'test-vfs-tar-mount-rejects-file-then-directory
+           "expected file-then-directory tar mount to fail"))
+  (unless (regexp-match? #rx"VFS tar file/directory conflict" output)
+    (error 'test-vfs-tar-mount-rejects-file-then-directory
+           (format "expected file/directory conflict failure, got: ~a" output))))
+
+;; test-vfs-tar-mount-rejects-directory-then-file : -> void
+;;   Check that a later file cannot replace an earlier directory entry.
+(define (test-vfs-tar-mount-rejects-directory-then-file)
+  (define-values (status output)
+    (run-tar-program "(void)\n"
+                     #:tar-bytes (make-file-directory-conflict-tar 'directory-then-file)))
+  (when (zero? status)
+    (error 'test-vfs-tar-mount-rejects-directory-then-file
+           "expected directory-then-file tar mount to fail"))
+  (unless (regexp-match? #rx"VFS tar file/directory conflict" output)
+    (error 'test-vfs-tar-mount-rejects-directory-then-file
+           (format "expected file/directory conflict failure, got: ~a" output))))
 
 ;; test-vfs-tar-file-mount : -> void
 ;;   Check relative tar file sources are resolved against the generated runtime.
@@ -714,6 +761,8 @@ PROGRAM
 (define vfs-tar-tests
   `((test-vfs-tar-mount . ,test-vfs-tar-mount)
     (test-vfs-tar-duplicate-file-last-wins . ,test-vfs-tar-duplicate-file-last-wins)
+    (test-vfs-tar-mount-rejects-file-then-directory . ,test-vfs-tar-mount-rejects-file-then-directory)
+    (test-vfs-tar-mount-rejects-directory-then-file . ,test-vfs-tar-mount-rejects-directory-then-file)
     (test-vfs-tar-file-mount . ,test-vfs-tar-file-mount)
     (test-vfs-tar-nested-mount . ,test-vfs-tar-nested-mount)
     (test-vfs-tar-synthetic-parent-mount . ,test-vfs-tar-synthetic-parent-mount)
