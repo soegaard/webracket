@@ -495,6 +495,19 @@ globalThis.preloadWebRacketVFS({
 });
 ```
 
+For generated hosts, the command line can emit this manifest directly:
+
+```sh
+racket webracket.rkt --vfs-file /app/data/message.txt=./message.txt \
+                     --vfs-url /app/data/browser-message.txt=./message.txt \
+                     --vfs-dir /app/assets=./assets \
+                     main.rkt
+```
+
+`--vfs-url` resolves relative URLs against the generated host module URL
+and works in browser hosts. `--vfs-file` and `--vfs-dir` resolve relative
+paths against the generated host module URL too, but require the Node host.
+
 Manifest entries may be:
 
 - an object mapping VFS paths to file data

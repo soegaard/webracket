@@ -35,10 +35,26 @@
 
 (define link-flags      (make-parameter '()))  ; ignored
 (define ffi-files       (make-parameter '()))  ; list of filenames for .ffi files
+(define vfs-preloads    (make-parameter '()))  ; list of host-to-VFS preload specs
 
 (define source-filename (make-parameter #f))   ; the file to compile
 
 (define stdlib?         (make-parameter #t))   ; include standard library by default
+
+(define (parse-vfs-preload who kind spec)
+  (match (regexp-match #px"^([^=]+)=(.*)$" spec)
+    [(list _ path source)
+     (when (string=? path "")
+       (error who (format "VFS preload target path is empty: ~a" spec)))
+     (when (string=? source "")
+       (error who (format "VFS preload source is empty: ~a" spec)))
+     (hasheq 'path path 'kind kind 'source source)]
+    [_ (error who (format "expected VFS=SOURCE, got: ~a" spec))]))
+
+(define (add-vfs-preload! kind spec)
+  (vfs-preloads
+   (cons (parse-vfs-preload 'webracket kind spec)
+         (vfs-preloads))))
 
 (define positional-filenames
   (command-line
@@ -114,6 +130,15 @@
    [("--ffi") ffi-file
               "Add .ffi file"
               (ffi-files (cons ffi-file (ffi-files)))]
+   [("--vfs-file") spec
+                   "Preload Node host file into VFS as VFS=SOURCE"
+                   (add-vfs-preload! 'file spec)]
+   [("--vfs-url") spec
+                  "Preload URL into VFS as VFS=SOURCE"
+                  (add-vfs-preload! 'url spec)]
+   [("--vfs-dir") spec
+                  "Preload Node host directory into VFS as VFS=SOURCE"
+                  (add-vfs-preload! 'directory spec)]
    
    #:args filenames
    filenames))
@@ -151,6 +176,7 @@
                      #:tree-shake-report (tree-shake-report)
                      #:print-top-level-results? (print-top-level-results?)
                      #:console-bridge? (console-bridge?)
+                     #:vfs-preloads (reverse (vfs-preloads))
                      #:run-after?    (run-after)
                      #:ffi-files     (ffi-files)
                      #:stdlib?       (stdlib?)))
