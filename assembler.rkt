@@ -646,11 +646,15 @@ function vfsPreloadPairs(entries) {
   }
   const seen = new Set();
   for (const [path] of pairs) {
-    const p = validateVFSPreloadPath(path);
+    const p = normalizeVFSPreloadDuplicatePath(validateVFSPreloadPath(path));
     if (seen.has(p)) throw new Error(`WebRacket VFS duplicate preload path: ${p}`);
     seen.add(p);
   }
   return pairs;
+}
+
+function normalizeVFSPreloadDuplicatePath(path) {
+  return path.replace(/\/+$/, '') || '/';
 }
 
 function validateVFSPreloadPath(path) {
@@ -4716,6 +4720,8 @@ const wasmModule
    (regexp-match? #rx"WebRacket VFS preload path must be absolute" runtime/preload))
   (check-true
    (regexp-match? #rx"WebRacket VFS duplicate preload path" runtime/preload))
+  (check-true
+   (regexp-match? #rx"normalizeVFSPreloadDuplicatePath" runtime/preload))
   (check-true
    (regexp-match? #rx"WebRacket VFS base64 preload is invalid" runtime/preload))
 
