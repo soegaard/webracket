@@ -485,6 +485,18 @@ class WebRacketTarBackend {
     return headers;
   }
 
+  readPaxSize(headers) {
+    if (!headers || headers.size === undefined) return null;
+    if (!/^[0-9]+$/.test(headers.size)) {
+      throw new Error('VFS tar pax size is invalid');
+    }
+    const size = Number(headers.size);
+    if (!Number.isSafeInteger(size)) {
+      throw new Error('VFS tar pax size is invalid');
+    }
+    return size;
+  }
+
   validateChecksum(offset) {
     const expected = this.readOctal(offset + 148, 8, -1, 'header checksum');
     let actual = 0;
@@ -530,7 +542,10 @@ class WebRacketTarBackend {
       const mode = this.readOctal(offset + 100, 8, 0o666, 'mode');
       const typeflag = String.fromCharCode(this.bytes[offset + 156] || 0);
       const dataStart = offset + 512;
-      const nextOffset = dataStart + Math.ceil(size / 512) * 512;
+      const dataSize = (typeflag === '0' || typeflag === '\0')
+        ? (this.readPaxSize(nextPaxHeaders) ?? size)
+        : size;
+      const nextOffset = dataStart + Math.ceil(dataSize / 512) * 512;
       if (nextOffset > this.bytes.length) {
         throw new Error('VFS tar entry data is truncated');
       }
@@ -577,7 +592,7 @@ class WebRacketTarBackend {
           throw new Error(`VFS tar file/directory conflict: ${path}`);
         }
         this.addParentDirs(path, entryMtime);
-        this.files.set(path, { start: dataStart, size, mtime: entryMtime, mode: mode || 0o666, identity: this.nextId++ });
+        this.files.set(path, { start: dataStart, size: dataSize, mtime: entryMtime, mode: mode || 0o666, identity: this.nextId++ });
       } else if (typeflag === '1' || typeflag === '2') {
         throw new Error(`VFS tar link entries are unsupported: ${path}`);
       } else {

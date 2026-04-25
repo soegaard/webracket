@@ -98,6 +98,28 @@
                 record-bs
                 (make-bytes (modulo (- 512 (modulo (bytes-length record-bs) 512)) 512) 0)))
 
+;; tar-header : string? exact-nonnegative-integer? char? -> bytes?
+;;   Build a minimal ustar header for hand-written tar fixtures.
+(define (tar-header name size typeflag)
+  (define header (make-bytes 512 0))
+  (write-ascii! header 0 name)
+  (write-octal-field! header 100 8 #o644)
+  (write-octal-field! header 108 8 0)
+  (write-octal-field! header 116 8 0)
+  (write-octal-field! header 124 12 size)
+  (write-octal-field! header 136 12 123)
+  (bytes-set! header 156 (char->integer typeflag))
+  (write-ascii! header 257 "ustar")
+  (write-ascii! header 263 "00")
+  (retag-header-checksum! header)
+  header)
+
+;; pad-tar-data : bytes? -> bytes?
+;;   Pad a tar entry payload to a 512-byte boundary.
+(define (pad-tar-data bs)
+  (bytes-append bs
+                (make-bytes (modulo (- 512 (modulo (bytes-length bs) 512)) 512) 0)))
+
 ;; make-invalid-size-tar : -> bytes?
 ;;   Build a tar archive with an invalid octal size field.
 (define (make-invalid-size-tar)
@@ -131,6 +153,17 @@
                out
                #:format 'pax)
   (get-output-bytes out))
+
+;; make-pax-size-tar : -> bytes?
+;;   Build a tar archive whose file size comes from a local pax header.
+(define (make-pax-size-tar)
+  (define pax-record #"9 size=7\n")
+  (define content #"content")
+  (bytes-append (tar-header "PaxHeader" (bytes-length pax-record) #\x)
+                (pad-tar-data pax-record)
+                (tar-header "sized.txt" 0 #\0)
+                (pad-tar-data content)
+                (make-bytes 1024 0)))
 
 ;; make-invalid-pax-tar : -> bytes?
 ;;   Build a tar archive with a malformed pax record body.
@@ -290,6 +323,23 @@ PROGRAM
     (error 'test-vfs-tar-pax-unicode-path
            (format "compile/run failed (~a): ~a" status output))))
 
+;; test-vfs-tar-pax-size : -> void
+;;   Check that local pax size records determine regular file payload length.
+(define (test-vfs-tar-pax-size)
+  (define program
+    #<<PROGRAM
+(unless
+ (and (equal? (file-size "/assets/sized.txt") 7)
+      (equal? (file->string "/assets/sized.txt") "content"))
+ (error 'vfs-tar-mount "pax size checks failed"))
+PROGRAM
+)
+  (define-values (status output)
+    (run-tar-program program #:tar-bytes (make-pax-size-tar)))
+  (unless (zero? status)
+    (error 'test-vfs-tar-pax-size
+           (format "compile/run failed (~a): ~a" status output))))
+
 ;; test-vfs-tar-mount-global-pax-mtime : -> void
 ;;   Check that global pax mtime applies to following entries.
 (define (test-vfs-tar-mount-global-pax-mtime)
@@ -374,6 +424,7 @@ PROGRAM
   (test-vfs-tar-nested-mount)
   (test-vfs-tar-synthetic-parent-mount)
   (test-vfs-tar-pax-unicode-path)
+  (test-vfs-tar-pax-size)
   (test-vfs-tar-mount-global-pax-mtime)
   (test-vfs-tar-mount-read-only)
   (test-vfs-tar-mount-rejects-links)
@@ -387,6 +438,7 @@ PROGRAM
   (test-vfs-tar-nested-mount)
   (test-vfs-tar-synthetic-parent-mount)
   (test-vfs-tar-pax-unicode-path)
+  (test-vfs-tar-pax-size)
   (test-vfs-tar-mount-global-pax-mtime)
   (test-vfs-tar-mount-read-only)
   (test-vfs-tar-mount-rejects-links)
