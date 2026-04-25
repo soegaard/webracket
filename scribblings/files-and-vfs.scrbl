@@ -41,9 +41,10 @@ Node or in a browser.
 
 The browser is the reason a VFS is needed. Browser programs do not have direct
 access to an operating-system filesystem. A browser page cannot simply open an
-arbitrary local file path such as @tt{/Users/alice/config.txt}. Instead, the
-host page can fetch URLs, receive embedded data, or use data that was bundled
-into the generated output.
+arbitrary local file path such as @tt{/Users/alice/config.txt}. Instead,
+WebRacket starts with an empty virtual filesystem and fills it with files
+supplied by the generated host code, such as fetched URL assets, inline text
+or bytes, and tar archives served with the page.
 
 So WebRacket gives the compiled program a virtual filesystem. The next
 question is how that filesystem gets its initial files. WebRacket populates
