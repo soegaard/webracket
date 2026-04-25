@@ -527,6 +527,10 @@ class WebRacketTarBackend {
         continue;
       }
       const entryPath = (nextPaxHeaders && nextPaxHeaders.path) || nextLongName || rawPath;
+      const entryMtime =
+        (nextPaxHeaders && nextPaxHeaders.mtime !== undefined && Number.isFinite(Number(nextPaxHeaders.mtime)))
+          ? Math.trunc(Number(nextPaxHeaders.mtime))
+          : mtime;
       nextLongName = null;
       nextPaxHeaders = null;
       const path = this.archivePath(entryPath);
@@ -536,15 +540,15 @@ class WebRacketTarBackend {
           throw new Error(`VFS tar file/directory conflict: ${path}`);
         }
         if (path !== '/' && !this.dirs.has(path)) {
-          this.addParentDirs(path, mtime);
-          this.dirs.set(path, { mtime, mode: mode || 0o777, identity: this.nextId++ });
+          this.addParentDirs(path, entryMtime);
+          this.dirs.set(path, { mtime: entryMtime, mode: mode || 0o777, identity: this.nextId++ });
         }
       } else if (typeflag === '0' || typeflag === '\0') {
         if (this.dirs.has(path)) {
           throw new Error(`VFS tar file/directory conflict: ${path}`);
         }
-        this.addParentDirs(path, mtime);
-        this.files.set(path, { start: dataStart, size, mtime, mode: mode || 0o666, identity: this.nextId++ });
+        this.addParentDirs(path, entryMtime);
+        this.files.set(path, { start: dataStart, size, mtime: entryMtime, mode: mode || 0o666, identity: this.nextId++ });
       }
 
       offset = nextOffset;
@@ -4976,6 +4980,8 @@ const wasmModule
    (regexp-match? #rx"nextLongName" runtime/preload))
   (check-true
    (regexp-match? #rx"readPaxHeaders" runtime/preload))
+  (check-true
+   (regexp-match? #rx"nextPaxHeaders\\.mtime" runtime/preload))
 
   (check-exn
    #rx"unknown VFS preload source kind"
