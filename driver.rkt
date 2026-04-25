@@ -234,6 +234,7 @@
          #:print-top-level-results? print-top-level-results?
          #:console-bridge?   console-bridge?
          #:vfs-preloads      vfs-preloads
+         #:vfs-mounts        vfs-mounts
          #:run-after?        run-after?
          #:ffi-files         ffi-files    ; list of file paths for .ffi files
          #:stdlib?           stdlib?)     ; include standard library 
@@ -410,7 +411,8 @@
            (runtime #:out out-wasm
                     #:host (if node? 'node 'browser)
                     #:console-bridge? console-bridge?
-                    #:vfs-preloads vfs-preloads)))
+                    #:vfs-preloads vfs-preloads
+                    #:vfs-mounts vfs-mounts)))
     #:exists 'replace)
   (ensure-generated-file-exists! 'drive-compilation out-host "host output file")
   (define t-write-host-end (now-ms))

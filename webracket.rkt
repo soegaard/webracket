@@ -36,6 +36,7 @@
 (define link-flags      (make-parameter '()))  ; ignored
 (define ffi-files       (make-parameter '()))  ; list of filenames for .ffi files
 (define vfs-preloads    (make-parameter '()))  ; list of host-to-VFS preload specs
+(define vfs-mounts      (make-parameter '()))  ; list of host-to-VFS mount specs
 
 (define source-filename (make-parameter #f))   ; the file to compile
 
@@ -44,15 +45,24 @@
 (define (normalize-vfs-preload-path-for-duplicates path)
   (regexp-replace #px"/+$" path ""))
 
+(define (duplicate-vfs-target? entries path)
+  (define norm-path (normalize-vfs-preload-path-for-duplicates path))
+  (for/or ([existing (in-list entries)])
+    (equal? norm-path
+            (normalize-vfs-preload-path-for-duplicates
+             (hash-ref existing 'path)))))
+
 (define (add-vfs-preload-entry! entry)
   (define path     (hash-ref entry 'path))
-  (define norm-path (normalize-vfs-preload-path-for-duplicates path))
-  (when (for/or ([existing (in-list (vfs-preloads))])
-          (equal? norm-path
-                  (normalize-vfs-preload-path-for-duplicates
-                   (hash-ref existing 'path))))
+  (when (duplicate-vfs-target? (vfs-preloads) path)
     (error 'webracket (format "duplicate VFS preload target path: ~a" path)))
   (vfs-preloads (cons entry (vfs-preloads))))
+
+(define (add-vfs-mount-entry! entry)
+  (define path (hash-ref entry 'path))
+  (when (duplicate-vfs-target? (vfs-mounts) path)
+    (error 'webracket (format "duplicate VFS mount target path: ~a" path)))
+  (vfs-mounts (cons entry (vfs-mounts))))
 
 (define (validate-vfs-preload-path! who path)
   (when (string=? path "")
@@ -84,6 +94,13 @@
 (define (add-vfs-mkdir! path)
   (validate-vfs-preload-path! 'webracket path)
   (add-vfs-preload-entry! (hasheq 'path path 'kind 'directory 'source #t)))
+
+(define (add-vfs-tar-mount! kind spec)
+  (define entry (parse-vfs-preload 'webracket kind spec))
+  (add-vfs-mount-entry! (hasheq 'path (hash-ref entry 'path)
+                                'kind 'tar
+                                'source-kind kind
+                                'source (hash-ref entry 'source))))
 
 (define positional-filenames
   (command-line
@@ -177,6 +194,15 @@
    [("--vfs-dir") spec
                   "Preload Node host directory into VFS as VFS=SOURCE"
                   (add-vfs-preload! 'directory spec)]
+   [("--vfs-tar-file") spec
+                       "Mount Node host tar into VFS as VFS=SOURCE"
+                       (add-vfs-tar-mount! 'file spec)]
+   [("--vfs-tar-url") spec
+                      "Mount tar URL into VFS as VFS=SOURCE"
+                      (add-vfs-tar-mount! 'url spec)]
+   [("--vfs-tar-base64") spec
+                         "Mount inline base64 tar into VFS as VFS=BASE64"
+                         (add-vfs-tar-mount! 'base64 spec)]
    
    #:args filenames
    filenames))
@@ -215,6 +241,7 @@
                      #:print-top-level-results? (print-top-level-results?)
                      #:console-bridge? (console-bridge?)
                      #:vfs-preloads (reverse (vfs-preloads))
+                     #:vfs-mounts   (reverse (vfs-mounts))
                      #:run-after?    (run-after)
                      #:ffi-files     (ffi-files)
                      #:stdlib?       (stdlib?)))
