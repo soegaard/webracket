@@ -535,12 +535,72 @@ class WebRacketVFS {
     const [backend, rel] = this.resolve(path);
     return backend.listDir(rel);
   }
+
+  preload(entries) {
+    preloadWebRacketVFS(this, entries);
+  }
 }
 
 const webracketVFS = new WebRacketVFS();
 globalThis.WebRacketVFS = WebRacketVFS;
 globalThis.WebRacketMemoryBackend = WebRacketMemoryBackend;
 globalThis.webracketVFS = webracketVFS;
+
+function decodeVFSBase64(s) {
+  if (typeof atob === 'function') {
+    const bin = atob(String(s));
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  }
+  if (typeof Buffer !== 'undefined') {
+    return new Uint8Array(Buffer.from(String(s), 'base64'));
+  }
+  throw new Error('WebRacket VFS base64 preload requires atob or Buffer');
+}
+
+function vfsPreloadBytes(entry) {
+  if (entry instanceof Uint8Array) return new Uint8Array(entry);
+  if (entry instanceof ArrayBuffer) return new Uint8Array(entry);
+  if (ArrayBuffer.isView(entry)) {
+    return new Uint8Array(new Uint8Array(entry.buffer, entry.byteOffset, entry.byteLength));
+  }
+  if (Array.isArray(entry)) return Uint8Array.from(entry);
+  if (typeof entry === 'string') return new TextEncoder().encode(entry);
+  if (entry && typeof entry === 'object') {
+    if ('bytes' in entry) return vfsPreloadBytes(entry.bytes);
+    if ('text' in entry) return new TextEncoder().encode(String(entry.text));
+    if ('base64' in entry) return decodeVFSBase64(entry.base64);
+  }
+  throw new Error('WebRacket VFS preload entry must contain bytes, text, or base64 data');
+}
+
+function vfsPreloadPairs(entries) {
+  if (!entries) return [];
+  if (Array.isArray(entries)) {
+    return entries.map((entry) => {
+      if (Array.isArray(entry) && entry.length >= 2) return [entry[0], entry[1]];
+      if (entry && typeof entry === 'object' && 'path' in entry) return [entry.path, entry];
+      throw new Error('WebRacket VFS preload array entries need a path');
+    });
+  }
+  if (typeof entries === 'object') return Object.entries(entries);
+  throw new Error('WebRacket VFS preload manifest must be an array or object');
+}
+
+function preloadWebRacketVFS(vfs, entries) {
+  for (const [path, entry] of vfsPreloadPairs(entries)) {
+    const p = String(path);
+    if ((entry && entry.directory === true) || p.endsWith('/')) {
+      vfs.mkdirp(p);
+    } else {
+      vfs.writeFile(p, vfsPreloadBytes(entry));
+    }
+  }
+}
+
+globalThis.preloadWebRacketVFS = (entries) => preloadWebRacketVFS(webracketVFS, entries);
+preloadWebRacketVFS(webracketVFS, globalThis.WebRacketVFSPreload);
 
 function vfs_path_from_memory(start, len) {
   const bytes = new Uint8Array(memory.buffer).slice(start, start + len);
