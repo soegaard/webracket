@@ -276,7 +276,8 @@ metadata are rejected.
 Gzip-compressed tar archives are decompressed on the JavaScript side before the
 same tar backend indexes them. Browser hosts use `DecompressionStream("gzip")`
 when it is available; Node hosts use `node:zlib`. The loader also recognizes
-downloaded or file-backed gzip data by its gzip magic bytes.
+downloaded or file-backed gzip data by its gzip magic bytes. Decompression
+failures are reported as WebRacket VFS gzip errors.
 
 For a read:
 

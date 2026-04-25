@@ -608,9 +608,7 @@ PROGRAM
   (when (zero? status)
     (error 'test-vfs-tgz-mount-rejects-invalid-gzip
            "expected invalid-gzip tar mount to fail"))
-  (unless (or (regexp-match? #rx"incorrect header check" output)
-              (regexp-match? #rx"not in gzip format" output)
-              (regexp-match? #rx"DecompressionStream" output))
+  (unless (regexp-match? #rx"WebRacket VFS gzip decompression failed" output)
     (error 'test-vfs-tgz-mount-rejects-invalid-gzip
            (format "expected gzip decompression failure, got: ~a" output))))
 

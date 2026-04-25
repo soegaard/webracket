@@ -992,13 +992,22 @@ function vfsBytesLookLikeGzip(bytes) {
   return bytes.length >= 2 && bytes[0] === 0x1f && bytes[1] === 0x8b;
 }
 
+async function decompressVFSGzipForVFS(bytes) {
+  try {
+    return await decompressVFSGzip(bytes);
+  } catch (err) {
+    const message = err && err.message ? err.message : String(err);
+    throw new Error(`WebRacket VFS gzip decompression failed: ${message}`);
+  }
+}
+
 async function vfsPreloadTarBytesAsync(entry) {
   const bytes = await vfsPreloadBytesAsync(entry);
   if (!entry || typeof entry !== 'object' || !('compression' in entry)) {
-    return vfsBytesLookLikeGzip(bytes) ? await decompressVFSGzip(bytes) : bytes;
+    return vfsBytesLookLikeGzip(bytes) ? await decompressVFSGzipForVFS(bytes) : bytes;
   }
   const compression = String(entry.compression);
-  if (compression === 'gzip') return await decompressVFSGzip(bytes);
+  if (compression === 'gzip') return await decompressVFSGzipForVFS(bytes);
   throw new Error(`WebRacket VFS tar compression is unsupported: ${compression}`);
 }
 
