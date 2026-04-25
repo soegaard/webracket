@@ -724,6 +724,12 @@ class WebRacketVFS {
       : null;
   }
 
+  syntheticMountReadOnly(path) {
+    if (this.syntheticMountStat(path)) {
+      throw new Error(`VFS synthetic mount directory is read-only: ${path}`);
+    }
+  }
+
   rootList() {
     return [...this.mounts.keys()].sort().map((p) => p === '/' ? '/' : `${p}/`);
   }
@@ -763,16 +769,19 @@ class WebRacketVFS {
   }
 
   writeFile(path, bytes) {
+    this.syntheticMountReadOnly(path);
     const [backend, rel] = this.resolve(path);
     backend.writeFile(rel, bytes);
   }
 
   mkdir(path) {
+    this.syntheticMountReadOnly(path);
     const [backend, rel] = this.resolve(path);
     backend.mkdir(rel);
   }
 
   mkdirp(path) {
+    this.syntheticMountReadOnly(path);
     const [backend, rel] = this.resolve(path);
     backend.mkdirp(rel);
   }
@@ -787,21 +796,26 @@ class WebRacketVFS {
   }
 
   deleteFile(path) {
+    this.syntheticMountReadOnly(path);
     const [backend, rel] = this.resolve(path);
     backend.deleteFile(rel);
   }
 
   deleteDirectory(path) {
+    this.syntheticMountReadOnly(path);
     const [backend, rel] = this.resolve(path);
     backend.deleteDirectory(rel);
   }
 
   deleteTree(path) {
+    this.syntheticMountReadOnly(path);
     const [backend, rel] = this.resolve(path);
     backend.deleteTree(rel);
   }
 
   rename(oldPath, newPath, existsOk = false) {
+    this.syntheticMountReadOnly(oldPath);
+    this.syntheticMountReadOnly(newPath);
     const [oldBackend, oldRel] = this.resolve(oldPath);
     const [newBackend, newRel] = this.resolve(newPath);
     if (oldBackend !== newBackend) throw new Error(`VFS cross-backend rename is not supported: ${oldPath}`);
@@ -809,6 +823,7 @@ class WebRacketVFS {
   }
 
   copyFile(srcPath, destPath, existsOk = false) {
+    this.syntheticMountReadOnly(destPath);
     const [srcBackend, srcRel] = this.resolve(srcPath);
     const [destBackend, destRel] = this.resolve(destPath);
     if (srcBackend !== destBackend) throw new Error(`VFS cross-backend copy is not supported: ${srcPath}`);
@@ -816,6 +831,7 @@ class WebRacketVFS {
   }
 
   copyTree(srcPath, destPath) {
+    this.syntheticMountReadOnly(destPath);
     const [srcBackend, srcRel] = this.resolve(srcPath);
     const [destBackend, destRel] = this.resolve(destPath);
     if (srcBackend !== destBackend) throw new Error(`VFS cross-backend copy is not supported: ${srcPath}`);
@@ -5130,6 +5146,8 @@ const wasmModule
    (regexp-match? #rx"WebRacketVFSMounts" runtime/preload))
   (check-true
    (regexp-match? #rx"mountChildren\\(path\\)" runtime/preload))
+  (check-true
+   (regexp-match? #rx"syntheticMountReadOnly\\(path\\)" runtime/preload))
   (check-true
    (regexp-match? #rx"identity: 0" runtime/preload))
   (check-true
