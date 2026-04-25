@@ -56,6 +56,13 @@
    (cons (parse-vfs-preload 'webracket kind spec)
          (vfs-preloads))))
 
+(define (add-vfs-mkdir! path)
+  (when (string=? path "")
+    (error 'webracket "VFS preload directory path is empty"))
+  (vfs-preloads
+   (cons (hasheq 'path path 'kind 'directory 'source #t)
+         (vfs-preloads))))
+
 (define positional-filenames
   (command-line
    #:program "webracket"
@@ -142,6 +149,9 @@
    [("--vfs-base64") spec
                      "Preload inline base64 bytes into VFS as VFS=BASE64"
                      (add-vfs-preload! 'base64 spec)]
+   [("--vfs-mkdir") path
+                   "Preload empty VFS directory"
+                   (add-vfs-mkdir! path)]
    [("--vfs-dir") spec
                   "Preload Node host directory into VFS as VFS=SOURCE"
                   (add-vfs-preload! 'directory spec)]

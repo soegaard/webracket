@@ -502,6 +502,7 @@ racket webracket.rkt --vfs-file /app/data/message.txt=./message.txt \
                      --vfs-url /app/data/browser-message.txt=./message.txt \
                      --vfs-text /app/config.txt=mode=test \
                      --vfs-base64 /app/blob.dat=aGVsbG8= \
+                     --vfs-mkdir /app/cache \
                      --vfs-dir /app/assets=./assets \
                      main.rkt
 ```
@@ -510,6 +511,7 @@ racket webracket.rkt --vfs-file /app/data/message.txt=./message.txt \
 and works in browser hosts. `--vfs-file` and `--vfs-dir` resolve relative
 paths against the generated host module URL too, but require the Node host.
 `--vfs-text` and `--vfs-base64` are embedded directly in the generated host.
+`--vfs-mkdir` creates an empty directory in the memory backend.
 
 Manifest entries may be:
 
