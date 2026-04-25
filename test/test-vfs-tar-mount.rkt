@@ -357,6 +357,8 @@ PROGRAM
       (directory-exists? "/pkg")
       (equal? (map path->string (directory-list "/"))
               '("app" "pkg" "tmp"))
+      (equal? (map path->string (filesystem-root-list))
+              '("/app/" "/pkg/" "/tmp/"))
       (equal? (hash-ref (file-or-directory-stat "/") 'inode)
               (file-or-directory-identity "/"))
       (equal? (hash-ref (file-or-directory-stat "/") 'mode) #o777)
