@@ -718,9 +718,19 @@ class WebRacketVFS {
     return names;
   }
 
+  syntheticMountIdentity(path) {
+    const p = this.normalize(path);
+    let hash = 2166136261;
+    for (let i = 0; i < p.length; i++) {
+      hash ^= p.charCodeAt(i);
+      hash = Math.imul(hash, 16777619) >>> 0;
+    }
+    return 0x10000000 + (hash & 0x0fffffff);
+  }
+
   syntheticMountStat(path) {
     return this.mountChildren(path).size > 0
-      ? { type: 'directory', size: 0, mtime: 0, mode: 0o777, identity: 0 }
+      ? { type: 'directory', size: 0, mtime: 0, mode: 0o777, identity: this.syntheticMountIdentity(path) }
       : null;
   }
 
@@ -5149,7 +5159,7 @@ const wasmModule
   (check-true
    (regexp-match? #rx"syntheticMountReadOnly\\(path\\)" runtime/preload))
   (check-true
-   (regexp-match? #rx"identity: 0" runtime/preload))
+   (regexp-match? #rx"syntheticMountIdentity\\(path\\)" runtime/preload))
   (check-true
    (regexp-match? #rx"\\{\"path\":\"/app/message.txt\",\"url\":\"\\./message.txt\"\\}"
                   runtime/preload))

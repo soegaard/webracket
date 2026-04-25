@@ -363,6 +363,8 @@ PROGRAM
       (equal? (file-or-directory-permissions "/pkg" 'bits) #o777)
       (equal? (hash-ref (file-or-directory-stat "/pkg") 'mode) #o777)
       (equal? (hash-ref (file-or-directory-stat "/pkg") 'modify-time-seconds) 0)
+      (equal? (hash-ref (file-or-directory-stat "/pkg") 'inode)
+              (file-or-directory-identity "/pkg"))
       (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
                        (lambda (_ex) #t)])
         (delete-directory "/pkg")
