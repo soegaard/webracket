@@ -48069,15 +48069,17 @@
                                (unreachable)))
                      (global.get $void))
 
-               ;; delete-directory/files : path-string? -> void?
-               ;;   Recursively delete a VFS file or directory; #:must-exist? is not supported yet.
-               (func $delete-directory/files (type $Prim1)
-                     (param $path-raw (ref eq)) ;; path-string?
-                     (result          (ref eq))
+               ;; delete-directory/files : path-string? [any/c] -> void?
+               ;;   Keywordless form of Racket's #:must-exist? option; default #t.
+               (func $delete-directory/files (type $Prim12)
+                     (param $path-raw       (ref eq)) ;; path-string?
+                     (param $must-exist-raw (ref eq)) ;; optional any/c, default = #t
+                     (result                (ref eq))
 
                      (local $path     (ref $Path))
                      (local $path-bs  (ref $Bytes))
                      (local $path-len i32)
+                     (local $kind     i32)
                      (local $status   i32)
 
                      (local.set $path
@@ -48085,6 +48087,14 @@
                                       (global.get $symbol:delete-directory/files)
                                       (local.get $path-raw)))
                      (local.set $path-bs (struct.get $Path $bytes (local.get $path)))
+                     (local.set $kind
+                                (call $vfs-path-stat-kind
+                                      (global.get $symbol:delete-directory/files)
+                                      (local.get $path-raw)))
+                     (if (i32.eq (local.get $kind) (i32.const 0))
+                         (then
+                          (if (ref.eq (local.get $must-exist-raw) (global.get $false))
+                              (then (return (global.get $void))))))
                      (local.set $path-len
                                 (array.len
                                  (struct.get $Bytes $bs (local.get $path-bs))))
@@ -48192,12 +48202,15 @@
                                (unreachable)))
                      (global.get $void))
 
-               ;; copy-directory/files : path-string? path-string? -> void?
-               ;;   Recursively copy a VFS file or directory; keyword options are not supported yet.
-               (func $copy-directory/files (type $Prim2)
-                     (param $src-raw  (ref eq)) ;; path-string?
-                     (param $dest-raw (ref eq)) ;; path-string?
-                     (result          (ref eq))
+               ;; copy-directory/files : path-string? path-string? [any/c] [any/c] -> void?
+               ;;   Keywordless form of #:keep-modify-seconds? and #:preserve-links?.
+               ;;   The VFS has no links; metadata preservation is backend-defined for now.
+               (func $copy-directory/files (type $Prim24)
+                     (param $src-raw                  (ref eq)) ;; path-string?
+                     (param $dest-raw                 (ref eq)) ;; path-string?
+                     (param $keep-modify-seconds-raw  (ref eq)) ;; optional any/c, default = #f; currently ignored
+                     (param $preserve-links-raw       (ref eq)) ;; optional any/c, default = #f; currently ignored
+                     (result                          (ref eq))
 
                      (local $src      (ref $Path))
                      (local $dest     (ref $Path))

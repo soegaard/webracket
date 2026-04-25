@@ -1866,8 +1866,10 @@
 (define (delete-directory path)
   (error 'delete-directory "only available in compiled WebRacket"))
 
-(define (delete-directory/files path)
-  (error 'delete-directory/files "only available in compiled WebRacket"))
+(define delete-directory/files
+  (case-lambda
+    [(path) (error 'delete-directory/files "only available in compiled WebRacket")]
+    [(path must-exist?) (error 'delete-directory/files "only available in compiled WebRacket")]))
 
 (define rename-file-or-directory
   (case-lambda
@@ -1879,8 +1881,11 @@
     [(src dest) (error 'copy-file "only available in compiled WebRacket")]
     [(src dest exists-ok?) (error 'copy-file "only available in compiled WebRacket")]))
 
-(define (copy-directory/files src dest)
-  (error 'copy-directory/files "only available in compiled WebRacket"))
+(define copy-directory/files
+  (case-lambda
+    [(src dest) (error 'copy-directory/files "only available in compiled WebRacket")]
+    [(src dest keep-modify-seconds?) (error 'copy-directory/files "only available in compiled WebRacket")]
+    [(src dest keep-modify-seconds? preserve-links?) (error 'copy-directory/files "only available in compiled WebRacket")]))
 
 (define file-or-directory-modify-seconds
   (case-lambda

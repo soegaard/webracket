@@ -1177,6 +1177,9 @@
      '(file-or-directory-type)
      'optional 1 2)
     (make-inline-specs
+     '(delete-directory/files)
+     'optional 1 2)
+    (make-inline-specs
      '(path-add-extension)
      'optional 2 3)
     (make-inline-specs
@@ -1184,7 +1187,10 @@
      'optional 2 5)
     (make-inline-specs
      '(copy-file rename-file-or-directory)
-     'optional 2 3))
+     'optional 2 3)
+    (make-inline-specs
+     '(copy-directory/files)
+     'optional 2 4))
    (make-inline-specs
     '(build-path)
     'variadic 1 #f 1)

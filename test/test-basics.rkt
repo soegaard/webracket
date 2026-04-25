@@ -5364,7 +5364,9 @@
                            (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
                                             (lambda (_ex) #t)])
                              (delete-directory/files "/app/delete-tree-missing")
-                             #f))))
+                             #f)
+                           (void? (delete-directory/files "/app/delete-tree-missing"
+                                                          #f)))))
               (list "rename-file-or-directory"
                     (begin
                       (webracket-vfs-write-file "/app/data/rename-source.txt" #"source")
@@ -5443,6 +5445,12 @@
                            (void? (copy-directory/files "/app/copy-tree-file.txt"
                                                         "/app/copied-tree-file.txt"))
                            (equal? (file->string "/app/copied-tree-file.txt") "file")
+                           (void? (copy-directory/files "/app/copy-tree"
+                                                        "/app/copied-tree-options"
+                                                        #t
+                                                        #t))
+                           (equal? (file->string "/app/copied-tree-options/root.txt")
+                                   "root")
                            (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
                                             (lambda (_ex) #t)])
                              (copy-directory/files "/app/copy-tree"
