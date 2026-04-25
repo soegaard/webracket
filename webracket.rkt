@@ -62,6 +62,10 @@
   (when (regexp-match? #rx#"\0" path)
     (error who (format "VFS preload target path contains NUL: ~a" path))))
 
+(define (validate-vfs-base64-source! who source)
+  (unless (regexp-match? #px"^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$" source)
+    (error who (format "VFS preload base64 source is invalid: ~a" source))))
+
 (define (parse-vfs-preload who kind spec)
   (match (regexp-match #px"^([^=]+)=(.*)$" spec)
     [(list _ path source)
@@ -69,6 +73,8 @@
      (when (and (string=? source "")
                 (not (memq kind '(text base64))))
        (error who (format "VFS preload source is empty: ~a" spec)))
+     (when (eq? kind 'base64)
+       (validate-vfs-base64-source! who source))
      (hasheq 'path path 'kind kind 'source source)]
     [_ (error who (format "expected VFS=SOURCE, got: ~a" spec))]))
 
