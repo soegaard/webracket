@@ -126,6 +126,19 @@
   (bytes-append bs
                 (make-bytes (modulo (- 512 (modulo (bytes-length bs) 512)) 512) 0)))
 
+;; tar-file-member : string? bytes? -> bytes?
+;;   Build one hand-written regular-file member for tar fixtures.
+(define (tar-file-member name content)
+  (bytes-append (tar-header name (bytes-length content) #\0)
+                (pad-tar-data content)))
+
+;; make-duplicate-file-tar : -> bytes?
+;;   Build a tar archive where an appended file entry replaces an earlier one.
+(define (make-duplicate-file-tar)
+  (bytes-append (tar-file-member "hello.txt" #"old\n")
+                (tar-file-member "hello.txt" #"new\n")
+                (make-bytes 1024 0)))
+
 ;; pax-record : string? string? -> bytes?
 ;;   Build one pax record with the correct byte-count prefix.
 (define (pax-record key value)
@@ -315,6 +328,21 @@ PROGRAM
   (define-values (status output) (run-tar-program program))
   (unless (zero? status)
     (error 'test-vfs-tar-mount
+           (format "compile/run failed (~a): ~a" status output))))
+
+;; test-vfs-tar-duplicate-file-last-wins : -> void
+;;   Check that appended regular-file entries update earlier tar contents.
+(define (test-vfs-tar-duplicate-file-last-wins)
+  (define program
+    #<<PROGRAM
+(unless (equal? (file->string "/assets/hello.txt") "new\n")
+  (error 'vfs-tar-mount "duplicate file checks failed"))
+PROGRAM
+)
+  (define-values (status output)
+    (run-tar-program program #:tar-bytes (make-duplicate-file-tar)))
+  (unless (zero? status)
+    (error 'test-vfs-tar-duplicate-file-last-wins
            (format "compile/run failed (~a): ~a" status output))))
 
 ;; test-vfs-tar-file-mount : -> void
@@ -600,6 +628,7 @@ PROGRAM
 ;;   Generated-runtime tar tests; each case uses its own temporary directories.
 (define vfs-tar-tests
   `((test-vfs-tar-mount . ,test-vfs-tar-mount)
+    (test-vfs-tar-duplicate-file-last-wins . ,test-vfs-tar-duplicate-file-last-wins)
     (test-vfs-tar-file-mount . ,test-vfs-tar-file-mount)
     (test-vfs-tar-nested-mount . ,test-vfs-tar-nested-mount)
     (test-vfs-tar-synthetic-parent-mount . ,test-vfs-tar-synthetic-parent-mount)
