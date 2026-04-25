@@ -552,14 +552,18 @@ globalThis.WebRacketMemoryBackend = WebRacketMemoryBackend;
 globalThis.webracketVFS = webracketVFS;
 
 function decodeVFSBase64(s) {
+  const text = String(s);
+  if (!/^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/.test(text)) {
+    throw new Error('WebRacket VFS base64 preload is invalid');
+  }
   if (typeof atob === 'function') {
-    const bin = atob(String(s));
+    const bin = atob(text);
     const bytes = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     return bytes;
   }
   if (typeof Buffer !== 'undefined') {
-    return new Uint8Array(Buffer.from(String(s), 'base64'));
+    return new Uint8Array(Buffer.from(text, 'base64'));
   }
   throw new Error('WebRacket VFS base64 preload requires atob or Buffer');
 }
@@ -4712,6 +4716,8 @@ const wasmModule
    (regexp-match? #rx"WebRacket VFS preload path must be absolute" runtime/preload))
   (check-true
    (regexp-match? #rx"WebRacket VFS duplicate preload path" runtime/preload))
+  (check-true
+   (regexp-match? #rx"WebRacket VFS base64 preload is invalid" runtime/preload))
 
   (check-exn
    #rx"unknown VFS preload source kind"
