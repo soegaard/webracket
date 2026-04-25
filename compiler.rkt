@@ -1139,6 +1139,12 @@
      '(make-temporary-directory)
      'optional 0 2)
     (make-inline-specs
+     '(make-temporary-file*)
+     'optional 2 4)
+    (make-inline-specs
+     '(make-temporary-directory*)
+     'optional 2 3)
+    (make-inline-specs
      '(display-to-file)
      'optional 2 4)
     (make-inline-specs
@@ -2107,6 +2113,8 @@
   make-parent-directory*
   make-temporary-file
   make-temporary-directory
+  make-temporary-file*
+  make-temporary-directory*
   delete-directory
   delete-directory/files
   rename-file-or-directory

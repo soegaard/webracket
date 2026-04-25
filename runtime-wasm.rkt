@@ -1810,6 +1810,7 @@
     (add-runtime-string-constant 'keyword?                   "keyword?")
     (add-runtime-string-constant 'pair?                      "pair?")
     (add-runtime-string-constant 'list?                      "list?")
+    (add-runtime-string-constant 'bytes?                     "bytes?")
     (add-runtime-string-constant 'vector?                    "vector?")
     (add-runtime-string-constant 'port?                      "port?")
     (add-runtime-string-constant 'input-port?                "input-port?")
@@ -49052,6 +49053,135 @@
                                   (br $done)))
                      (local.get $candidate))
 
+               ;; make-temporary-candidate* : symbol? bytes? bytes? (or/c path-string? #f missing) -> path?
+               ;;   Build a complete temporary path as bytes-append of prefix, counter, and suffix.
+               (func $make-temporary-candidate*
+                     (param $who          (ref eq)) ;; symbol?
+                     (param $prefix-raw   (ref eq)) ;; bytes?
+                     (param $suffix-raw   (ref eq)) ;; bytes?
+                     (param $base-dir-raw (ref eq)) ;; optional (or/c path-string? #f), default = (find-system-path 'temp-dir)
+                     (result              (ref eq))
+
+                     (local $prefix   (ref $Bytes))
+                     (local $suffix   (ref $Bytes))
+                     (local $digits   (ref eq))
+                     (local $digits-bs (ref eq))
+                     (local $name-bs   (ref eq))
+                     (local $base-dir  (ref eq))
+                     (local $n         i32)
+
+                     (local.set $prefix
+                                (ref.cast (ref $Bytes) (global.get $bytes:empty)))
+                     (local.set $suffix
+                                (ref.cast (ref $Bytes) (global.get $bytes:empty)))
+                     (local.set $digits    (global.get $false))
+                     (local.set $digits-bs (global.get $bytes:empty))
+                     (local.set $name-bs   (global.get $bytes:empty))
+                     (local.set $base-dir  (global.get $false))
+                     (if (i32.eqz (ref.test (ref $Bytes) (local.get $prefix-raw)))
+                         (then (call $raise-argument-error1
+                                     (local.get $who)
+                                     (global.get $string:bytes?)
+                                     (local.get $prefix-raw))
+                               (unreachable)))
+                     (if (i32.eqz (ref.test (ref $Bytes) (local.get $suffix-raw)))
+                         (then (call $raise-argument-error1
+                                     (local.get $who)
+                                     (global.get $string:bytes?)
+                                     (local.get $suffix-raw))
+                               (unreachable)))
+                     (local.set $prefix (ref.cast (ref $Bytes) (local.get $prefix-raw)))
+                     (local.set $suffix (ref.cast (ref $Bytes) (local.get $suffix-raw)))
+                     (global.set $temporary-file-counter
+                                 (i32.add (global.get $temporary-file-counter)
+                                          (i32.const 1)))
+                     (local.set $n (global.get $temporary-file-counter))
+                     (local.set $digits
+                                (call $number->string
+                                      (ref.i31 (i32.shl (local.get $n) (i32.const 1)))
+                                      (global.get $missing)))
+                     (local.set $digits-bs
+                                (call $string->bytes/utf-8
+                                      (local.get $digits)
+                                      (global.get $false)
+                                      (global.get $false)
+                                      (global.get $false)))
+                     (local.set $name-bs
+                                (call $bytes-append/2
+                                      (call $bytes-append/2
+                                            (local.get $prefix)
+                                            (local.get $digits-bs))
+                                      (local.get $suffix)))
+                     (if (call $path-bytes-absolute?
+                               (ref.cast (ref $Bytes) (local.get $name-bs)))
+                         (then (return
+                                (call $bytes->path
+                                      (local.get $name-bs)
+                                      (global.get $missing)))))
+                     (local.set $base-dir
+                                (if (result (ref eq))
+                                    (i32.or (ref.eq (local.get $base-dir-raw) (global.get $missing))
+                                            (ref.eq (local.get $base-dir-raw) (global.get $false)))
+                                    (then (call $find-system-path (global.get $symbol:temp-dir)))
+                                    (else (local.get $base-dir-raw))))
+                     (call $path-join-bytes
+                           (local.get $base-dir)
+                           (call $bytes->path
+                                 (local.get $name-bs)
+                                 (global.get $missing))))
+
+               ;; make-temporary-file* : bytes? bytes? [(or/c path-string? #f)] [(or/c path-string? #f)] -> complete-path?
+               ;;   Keywordless form of Racket's #:copy-from and #:base-dir options.
+               (func $make-temporary-file* (type $Prim24)
+                     (param $prefix-raw    (ref eq)) ;; bytes?
+                     (param $suffix-raw    (ref eq)) ;; bytes?
+                     (param $copy-from-raw (ref eq)) ;; optional (or/c path-string? #f), default = #f
+                     (param $base-dir-raw  (ref eq)) ;; optional (or/c path-string? #f), default = #f
+                     (result (ref eq))
+
+                     (local $copy-from (ref eq))
+                     (local $candidate (ref eq))
+                     (local $port      (ref eq))
+
+                     (local.set $copy-from (global.get $false))
+                     (local.set $candidate (global.get $false))
+                     (local.set $port      (global.get $false))
+                     (local.set $copy-from
+                                (if (result (ref eq))
+                                    (ref.eq (local.get $copy-from-raw) (global.get $missing))
+                                    (then (global.get $false))
+                                    (else (local.get $copy-from-raw))))
+                     (block $done
+                            (loop $loop
+                                  (local.set $candidate
+                                             (call $make-temporary-candidate*
+                                                   (global.get $symbol:make-temporary-file*)
+                                                   (local.get $prefix-raw)
+                                                   (local.get $suffix-raw)
+                                                   (local.get $base-dir-raw)))
+                                  (br_if $loop
+                                         (i32.or
+                                          (ref.eq (call $file-exists? (local.get $candidate))
+                                                  (global.get $true))
+                                          (ref.eq (call $directory-exists? (local.get $candidate))
+                                                  (global.get $true))))
+                                  (if (ref.eq (local.get $copy-from) (global.get $false))
+                                      (then
+                                       (local.set $port
+                                                  (call $open-output-file
+                                                        (local.get $candidate)
+                                                        (global.get $symbol:binary)
+                                                        (global.get $symbol:error)))
+                                       (drop (call $close-output-port
+                                                   (local.get $port))))
+                                      (else
+                                       (drop (call $copy-file
+                                                   (local.get $copy-from)
+                                                   (local.get $candidate)
+                                                   (global.get $false)))))
+                                  (br $done)))
+                     (local.get $candidate))
+
                ;; make-temporary-directory : [string?] [(or/c path-string? #f)] -> complete-path?
                ;;   Keywordless form of Racket's #:base-dir option.
                (func $make-temporary-directory (type $Prim02)
@@ -49068,6 +49198,37 @@
                                              (call $make-temporary-candidate
                                                    (global.get $symbol:make-temporary-directory)
                                                    (local.get $template-raw)
+                                                   (local.get $base-dir-raw)))
+                                  (br_if $loop
+                                         (i32.or
+                                          (ref.eq (call $file-exists? (local.get $candidate))
+                                                  (global.get $true))
+                                          (ref.eq (call $directory-exists? (local.get $candidate))
+                                                  (global.get $true))))
+                                  (drop (call $make-directory
+                                              (local.get $candidate)
+                                              (global.get $missing)))
+                                  (br $done)))
+                     (local.get $candidate))
+
+               ;; make-temporary-directory* : bytes? bytes? [(or/c path-string? #f)] -> complete-path?
+               ;;   Keywordless form of Racket's #:base-dir option.
+               (func $make-temporary-directory* (type $Prim23)
+                     (param $prefix-raw   (ref eq)) ;; bytes?
+                     (param $suffix-raw   (ref eq)) ;; bytes?
+                     (param $base-dir-raw (ref eq)) ;; optional (or/c path-string? #f), default = #f
+                     (result (ref eq))
+
+                     (local $candidate (ref eq))
+
+                     (local.set $candidate (global.get $false))
+                     (block $done
+                            (loop $loop
+                                  (local.set $candidate
+                                             (call $make-temporary-candidate*
+                                                   (global.get $symbol:make-temporary-directory*)
+                                                   (local.get $prefix-raw)
+                                                   (local.get $suffix-raw)
                                                    (local.get $base-dir-raw)))
                                   (br_if $loop
                                          (i32.or

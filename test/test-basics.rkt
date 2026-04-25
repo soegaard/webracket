@@ -5335,6 +5335,30 @@
                            (complete-path? d2)
                            (directory-exists? d2)
                            (equal? (substring (path->string d2) 0 20) "/app/temp-dir-base/d"))))
+              (list "make-temporary-file*"
+                    (let* ([_ (webracket-vfs-write-file "/app/temp-star-source.txt" #"star")]
+                           [_ (make-directory "/app/temp-star-base")]
+                           [p1 (make-temporary-file* #"b" #".tmp")]
+                           [p2 (make-temporary-file* #"copy" #".dat" "/app/temp-star-source.txt" "/app/temp-star-base")]
+                           [p3 (make-temporary-file* #"b" #".tmp")])
+                      (and (complete-path? p1)
+                           (equal? (substring (path->string p1) 0 6) "/tmp/b")
+                           (file-exists? p1)
+                           (file-exists? p2)
+                           (equal? (substring (path->string p2) 0 19) "/app/temp-star-base")
+                           (equal? (file->bytes p2) #"star")
+                           (file-exists? p3)
+                           (not (equal? (path->string p1) (path->string p3))))))
+              (list "make-temporary-directory*"
+                    (let* ([_ (make-directory "/app/temp-dir-star-base")]
+                           [d1 (make-temporary-directory* #"d" #"")]
+                           [d2 (make-temporary-directory* #"ds" #".dir" "/app/temp-dir-star-base")])
+                      (and (complete-path? d1)
+                           (directory-exists? d1)
+                           (equal? (substring (path->string d1) 0 6) "/tmp/d")
+                           (complete-path? d2)
+                           (directory-exists? d2)
+                           (equal? (substring (path->string d2) 0 23) "/app/temp-dir-star-base"))))
               (list "make-directory"
                     (and (void? (make-directory "/app/newdir"))
                          (equal? (directory-exists? "/app/newdir") #t)
