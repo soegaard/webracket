@@ -5175,7 +5175,8 @@ const wasmModule
 (define (run [x #f] 
              #:wat        [out.wat    "out.wat"]
              #:wasm       [out.wasm   "out.wasm"]
-             #:runtime.js [runtime.js "runtime.js"])
+             #:runtime.js [runtime.js "runtime.js"]
+             #:write-runtime? [write-runtime? #t])
   ; (print-wat x)
   ; 1. If needed compile textual format to wasm file.  
   (define okay?
@@ -5185,10 +5186,11 @@ const wasmModule
   (if (not okay?)
       1
       (begin
-        ; 2. Write runtime
-        (with-output-to-file runtime.js
-          (λ () (displayln (runtime #:out out.wasm)))
-          #:exists 'replace)
+        ; 2. Write runtime when this helper owns runtime generation.
+        (when write-runtime?
+          (with-output-to-file runtime.js
+            (λ () (displayln (runtime #:out out.wasm)))
+            #:exists 'replace))
         ; 3. Invoke runtime.js using Node and propagate exact child exit code.
         (let ([node-path (find-executable-path "node")])
           (if node-path

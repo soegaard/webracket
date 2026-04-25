@@ -424,7 +424,11 @@
     (ensure-generated-file-exists! 'drive-compilation out-wasm "Wasm bytecode file")
     (define runtime-js out-host)
     (set! exit-code
-          (run #f #:wat out-wat #:wasm out-wasm #:runtime.js runtime-js))
+          (run #f
+               #:wat out-wat
+               #:wasm out-wasm
+               #:runtime.js runtime-js
+               #:write-runtime? #f))
     (set! t-run-ms (- (now-ms) t-run-start)))
   (when timings?
     (define ffi-setup-ms   (- t-ffi-setup-end t-ffi-setup-start))
