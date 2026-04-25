@@ -210,6 +210,22 @@
   (bytes-set! bs 512 (char->integer #\x))
   bs)
 
+;; make-dangling-pax-tar : -> bytes?
+;;   Build a tar archive with a local pax header but no target entry.
+(define (make-dangling-pax-tar)
+  (define pax-record #"14 path=x.txt\n")
+  (bytes-append (tar-header "PaxHeader" (bytes-length pax-record) #\x)
+                (pad-tar-data pax-record)
+                (make-bytes 1024 0)))
+
+;; make-dangling-long-name-tar : -> bytes?
+;;   Build a tar archive with a GNU long-name header but no target entry.
+(define (make-dangling-long-name-tar)
+  (define name #"long-name.txt\0")
+  (bytes-append (tar-header "././@LongLink" (bytes-length name) #\L)
+                (pad-tar-data name)
+                (make-bytes 1024 0)))
+
 ;; run-tar-program : string? [#:tar-bytes bytes?] [#:mount-path string?] [#:source-mode symbol?] -> (values exact-integer? string?)
 ;;   Compile and run a program against an inline tar-mounted VFS backend.
 (define (run-tar-program program
@@ -509,6 +525,30 @@ PROGRAM
     (error 'test-vfs-tar-mount-rejects-invalid-pax-mtime
            (format "expected invalid tar pax mtime failure, got: ~a" output))))
 
+;; test-vfs-tar-mount-rejects-dangling-pax : -> void
+;;   Check that local pax headers must have a following target entry.
+(define (test-vfs-tar-mount-rejects-dangling-pax)
+  (define-values (status output)
+    (run-tar-program "(void)\n" #:tar-bytes (make-dangling-pax-tar)))
+  (when (zero? status)
+    (error 'test-vfs-tar-mount-rejects-dangling-pax
+           "expected dangling-pax tar mount to fail"))
+  (unless (regexp-match? #rx"VFS tar extension entry has no target" output)
+    (error 'test-vfs-tar-mount-rejects-dangling-pax
+           (format "expected dangling tar extension failure, got: ~a" output))))
+
+;; test-vfs-tar-mount-rejects-dangling-long-name : -> void
+;;   Check that GNU long-name records must have a following target entry.
+(define (test-vfs-tar-mount-rejects-dangling-long-name)
+  (define-values (status output)
+    (run-tar-program "(void)\n" #:tar-bytes (make-dangling-long-name-tar)))
+  (when (zero? status)
+    (error 'test-vfs-tar-mount-rejects-dangling-long-name
+           "expected dangling-long-name tar mount to fail"))
+  (unless (regexp-match? #rx"VFS tar extension entry has no target" output)
+    (error 'test-vfs-tar-mount-rejects-dangling-long-name
+           (format "expected dangling tar extension failure, got: ~a" output))))
+
 (module+ test
   (test-vfs-tar-mount)
   (test-vfs-tar-file-mount)
@@ -525,7 +565,9 @@ PROGRAM
   (test-vfs-tar-mount-rejects-invalid-size)
   (test-vfs-tar-mount-rejects-invalid-pax)
   (test-vfs-tar-mount-rejects-invalid-pax-size)
-  (test-vfs-tar-mount-rejects-invalid-pax-mtime))
+  (test-vfs-tar-mount-rejects-invalid-pax-mtime)
+  (test-vfs-tar-mount-rejects-dangling-pax)
+  (test-vfs-tar-mount-rejects-dangling-long-name))
 
 (module+ main
   (test-vfs-tar-mount)
@@ -544,4 +586,6 @@ PROGRAM
   (test-vfs-tar-mount-rejects-invalid-pax)
   (test-vfs-tar-mount-rejects-invalid-pax-size)
   (test-vfs-tar-mount-rejects-invalid-pax-mtime)
+  (test-vfs-tar-mount-rejects-dangling-pax)
+  (test-vfs-tar-mount-rejects-dangling-long-name)
   (displayln "ok"))

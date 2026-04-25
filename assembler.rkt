@@ -610,6 +610,9 @@ class WebRacketTarBackend {
 
       offset = nextOffset;
     }
+    if (nextLongName !== null || nextPaxHeaders !== null) {
+      throw new Error('VFS tar extension entry has no target');
+    }
     for (let i = offset; i < this.bytes.length; i++) {
       if (this.bytes[i] !== 0) {
         throw new Error('VFS tar trailing data is invalid');
