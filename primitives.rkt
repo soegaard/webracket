@@ -1070,6 +1070,7 @@
  open-input-file
  open-output-file
  display-to-file
+ display-lines-to-file
  call-with-input-file
  call-with-output-file
  call-with-input-file*
@@ -1851,6 +1852,13 @@
     [(v path) (error 'display-to-file "only available in compiled WebRacket")]
     [(v path mode) (error 'display-to-file "only available in compiled WebRacket")]
     [(v path mode exists) (error 'display-to-file "only available in compiled WebRacket")]))
+
+(define display-lines-to-file
+  (case-lambda
+    [(lst path) (error 'display-lines-to-file "only available in compiled WebRacket")]
+    [(lst path separator) (error 'display-lines-to-file "only available in compiled WebRacket")]
+    [(lst path separator mode) (error 'display-lines-to-file "only available in compiled WebRacket")]
+    [(lst path separator mode exists) (error 'display-lines-to-file "only available in compiled WebRacket")]))
 
 (define file->bytes
   (case-lambda

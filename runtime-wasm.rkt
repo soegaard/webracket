@@ -48061,6 +48061,30 @@
                                   (br $outer)))
                      (call $reverse (local.get $acc)))
 
+               ;; display-value-to-port : any/c output-port? -> void?
+               ;;   Display raw bytes directly; otherwise use the runtime display formatter.
+               (func $display-value-to-port (type $Prim2)
+                     (param $v    (ref eq)) ;; any/c
+                     (param $port (ref eq)) ;; output-port?
+                     (result      (ref eq))
+
+                     (local $text (ref $String))
+
+                     (if (ref.test (ref $Bytes) (local.get $v))
+                         (then (drop (call $write-bytes
+                                           (local.get $v)
+                                           (local.get $port)
+                                           (global.get $missing)
+                                           (global.get $missing)))
+                               (return (global.get $void))))
+                     (local.set $text (call $format/display (local.get $v)))
+                     (drop (call $write-string
+                                 (local.get $text)
+                                 (local.get $port)
+                                 (global.get $missing)
+                                 (global.get $missing)))
+                     (global.get $void))
+
                ;; display-to-file : any/c path-string? [(or/c 'binary 'text)] [output-file-exists-flag?] -> void?
                ;;   Keywordless form of Racket's #:mode and #:exists options; delegates options to open-output-file.
                (func $display-to-file (type $Prim24)
@@ -48071,19 +48095,60 @@
                      (result            (ref eq))
 
                      (local $port (ref eq))
-                     (local $text (ref $String))
 
                      (local.set $port
                                 (call $open-output-file
                                       (local.get $path-raw)
                                       (local.get $mode-raw)
                                       (local.get $exists-raw)))
-                     (local.set $text (call $format/display (local.get $v)))
-                     (drop (call $write-string
-                                 (local.get $text)
-                                 (local.get $port)
-                                 (global.get $missing)
-                                 (global.get $missing)))
+                     (drop (call $display-value-to-port
+                                 (local.get $v)
+                                 (local.get $port)))
+                     (drop (call $close-output-port (local.get $port)))
+                     (global.get $void))
+
+               ;; display-lines-to-file : list? path-string? [any/c] [(or/c 'binary 'text)] [output-file-exists-flag?] -> void?
+               ;;   Keywordless form of Racket's #:separator, #:mode, and #:exists options; default separator = #"\n".
+               (func $display-lines-to-file (type $Prim25)
+                     (param $lst-raw    (ref eq)) ;; list?
+                     (param $path-raw   (ref eq)) ;; path-string?
+                     (param $sep-raw    (ref eq)) ;; optional any/c separator, default = #"\n"
+                     (param $mode-raw   (ref eq)) ;; optional (or/c 'binary 'text), default = 'binary
+                     (param $exists-raw (ref eq)) ;; optional exists mode, default = 'error
+                     (result            (ref eq))
+
+                     (local $port (ref eq))
+                     (local $node (ref eq))
+                     (local $pair (ref $Pair))
+
+                     (if (ref.eq (call $list? (local.get $lst-raw)) (global.get $false))
+                         (then (call $raise-argument-error1
+                                     (global.get $symbol:display-lines-to-file)
+                                     (global.get $string:list?)
+                                     (local.get $lst-raw))
+                               (unreachable)))
+                     (local.set $port
+                                (call $open-output-file
+                                      (local.get $path-raw)
+                                      (local.get $mode-raw)
+                                      (local.get $exists-raw)))
+                     (local.set $node (local.get $lst-raw))
+                     (block $done
+                            (loop $loop
+                                  (br_if $done (ref.eq (local.get $node) (global.get $null)))
+                                  (local.set $pair (ref.cast (ref $Pair) (local.get $node)))
+                                  (drop (call $display-value-to-port
+                                              (struct.get $Pair $a (local.get $pair))
+                                              (local.get $port)))
+                                  (if (ref.eq (local.get $sep-raw) (global.get $missing))
+                                      (then (drop (call $write-byte
+                                                        (ref.i31 (i32.const 20))
+                                                        (local.get $port))))
+                                      (else (drop (call $display-value-to-port
+                                                        (local.get $sep-raw)
+                                                        (local.get $port)))))
+                                  (local.set $node (struct.get $Pair $d (local.get $pair)))
+                                  (br $loop)))
                      (drop (call $close-output-port (local.get $port)))
                      (global.get $void))
 

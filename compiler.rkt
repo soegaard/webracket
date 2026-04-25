@@ -1136,6 +1136,9 @@
      '(display-to-file)
      'optional 2 4)
     (make-inline-specs
+     '(display-lines-to-file)
+     'optional 2 5)
+    (make-inline-specs
      '(call-with-output-file
        call-with-output-file*
        with-output-to-file)
@@ -2111,6 +2114,7 @@
   open-input-file
   open-output-file
   display-to-file
+  display-lines-to-file
   call-with-input-file
   call-with-output-file
   call-with-input-file*

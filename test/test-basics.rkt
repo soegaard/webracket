@@ -5724,12 +5724,40 @@
                          (begin
                            (display-to-file 42 "/app/data/display-to-file.txt" 'binary 'append)
                            (equal? (file->string "/app/data/display-to-file.txt") "sym42"))
+                         (begin
+                           (display-to-file #"A\n" "/app/data/display-to-file-bytes.txt")
+                           (equal? (file->bytes "/app/data/display-to-file-bytes.txt") #"A\n"))
                          (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
                                           (lambda (_ex) #t)])
                            (display-to-file "again" "/app/data/display-to-file.txt")
                            #f)
                          (with-handlers ([exn:fail:contract? (lambda (_ex) #t)])
                            (display-to-file "bad" "/app/data/display-to-file-bad.txt" 'update)
+                           #f)))
+              (list "display-lines-to-file"
+                    (and (void? (display-lines-to-file '("a" 1 #"b")
+                                                       "/app/data/display-lines.txt"))
+                         (equal? (file->bytes "/app/data/display-lines.txt")
+                                 #"a\n1\nb\n")
+                         (begin
+                           (display-lines-to-file '(x y)
+                                                  "/app/data/display-lines.txt"
+                                                  ","
+                                                  'text
+                                                  'replace)
+                           (equal? (file->string "/app/data/display-lines.txt")
+                                   "x,y,"))
+                         (begin
+                           (display-lines-to-file '(z)
+                                                  "/app/data/display-lines.txt"
+                                                  #"|"
+                                                  'binary
+                                                  'append)
+                           (equal? (file->string "/app/data/display-lines.txt")
+                                   "x,y,z|"))
+                         (with-handlers ([exn:fail:contract? (lambda (_ex) #t)])
+                           (display-lines-to-file 'not-a-list
+                                                  "/app/data/display-lines-bad.txt")
                            #f)))
               (list "flush-output/open-output-file"
                     (let ([port (open-output-file "/app/data/flushed.txt")])
