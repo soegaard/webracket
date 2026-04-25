@@ -47769,18 +47769,54 @@
                            (global.get $memory-map:vfs-file-buffer-base)
                            (local.get $file-len)))
 
-               (func $file->bytes (type $Prim1)
+               ;; file->bytes : path-string? [(or/c 'binary 'text)] -> bytes?
+               ;;   Keywordless form of Racket's #:mode option; text mode currently behaves like binary mode.
+               (func $file->bytes (type $Prim12)
                      (param $path-raw (ref eq)) ;; path-string?
+                     (param $mode-raw (ref eq)) ;; optional (or/c 'binary 'text), default = 'binary
                      (result          (ref eq))
 
+                     (local $mode (ref eq))
+
+                     (local.set $mode
+                                (if (result (ref eq))
+                                    (ref.eq (local.get $mode-raw) (global.get $missing))
+                                    (then (global.get $symbol:binary))
+                                    (else (local.get $mode-raw))))
+                     (if (i32.eqz
+                          (i32.or (ref.eq (local.get $mode) (global.get $symbol:binary))
+                                  (ref.eq (local.get $mode) (global.get $symbol:text))))
+                         (then (call $raise-argument-error1
+                                     (global.get $symbol:file->bytes)
+                                     (global.get $string:input-file-mode-flag)
+                                     (local.get $mode-raw))
+                               (unreachable)))
                      (call $vfs-read-file-bytes
                            (global.get $symbol:file->bytes)
                            (local.get $path-raw)))
 
-               (func $file->string (type $Prim1)
+               ;; file->string : path-string? [(or/c 'binary 'text)] -> string?
+               ;;   Keywordless form of Racket's #:mode option; text mode currently behaves like binary mode.
+               (func $file->string (type $Prim12)
                      (param $path-raw (ref eq)) ;; path-string?
+                     (param $mode-raw (ref eq)) ;; optional (or/c 'binary 'text), default = 'binary
                      (result          (ref eq))
 
+                     (local $mode (ref eq))
+
+                     (local.set $mode
+                                (if (result (ref eq))
+                                    (ref.eq (local.get $mode-raw) (global.get $missing))
+                                    (then (global.get $symbol:binary))
+                                    (else (local.get $mode-raw))))
+                     (if (i32.eqz
+                          (i32.or (ref.eq (local.get $mode) (global.get $symbol:binary))
+                                  (ref.eq (local.get $mode) (global.get $symbol:text))))
+                         (then (call $raise-argument-error1
+                                     (global.get $symbol:file->string)
+                                     (global.get $string:input-file-mode-flag)
+                                     (local.get $mode-raw))
+                               (unreachable)))
                      (call $bytes->string/utf-8/checked
                            (call $vfs-read-file-bytes
                                  (global.get $symbol:file->string)

@@ -5594,6 +5594,10 @@
               (list "file->bytes"
                     (and (equal? (file->bytes "/app/data/notes.txt") #"notes\n")
                          (equal? (file->bytes "/app/data/more.txt") #"more")
+                         (equal? (file->bytes "/app/data/notes.txt" 'text) #"notes\n")
+                         (with-handlers ([exn:fail:contract? (lambda (_ex) #t)])
+                           (file->bytes "/app/data/notes.txt" 'update)
+                           #f)
                          (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
                                           (lambda (_ex) #t)])
                            (file->bytes "/app/data/missing.txt")
@@ -5601,6 +5605,10 @@
               (list "file->string"
                     (and (equal? (file->string "/app/data/notes.txt") "notes\n")
                          (equal? (file->string "/app/data/more.txt") "more")
+                         (equal? (file->string "/app/data/notes.txt" 'text) "notes\n")
+                         (with-handlers ([exn:fail:contract? (lambda (_ex) #t)])
+                           (file->string "/app/data/notes.txt" 'update)
+                           #f)
                          (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
                                           (lambda (_ex) #t)])
                            (file->string "/app/data/missing.txt")

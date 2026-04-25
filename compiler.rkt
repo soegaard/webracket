@@ -1112,6 +1112,10 @@
        make-directory)
      'optional 1 2)
     (make-inline-specs
+     '(file->bytes
+       file->string)
+     'optional 1 2)
+    (make-inline-specs
      '(open-input-file)
      'optional 1 3)
     (make-inline-specs

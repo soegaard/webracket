@@ -1843,11 +1843,15 @@
     [(path mode) (error 'open-output-file "only available in compiled WebRacket")]
     [(path mode exists) (error 'open-output-file "only available in compiled WebRacket")]))
 
-(define (file->bytes path)
-  (error 'file->bytes "only available in compiled WebRacket"))
+(define file->bytes
+  (case-lambda
+    [(path) (error 'file->bytes "only available in compiled WebRacket")]
+    [(path mode) (error 'file->bytes "only available in compiled WebRacket")]))
 
-(define (file->string path)
-  (error 'file->string "only available in compiled WebRacket"))
+(define file->string
+  (case-lambda
+    [(path) (error 'file->string "only available in compiled WebRacket")]
+    [(path mode) (error 'file->string "only available in compiled WebRacket")]))
 
 (define (delete-file path)
   (error 'delete-file "only available in compiled WebRacket"))
