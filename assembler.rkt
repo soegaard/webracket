@@ -743,6 +743,7 @@ class WebRacketVFS {
   }
 
   rootList() {
+    if (this.mounts.has('/')) return ['/'];
     return this.listDir('/').map((name) => `/${name}/`);
   }
 

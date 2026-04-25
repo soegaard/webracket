@@ -4,6 +4,7 @@
          file/tar
          racket/file
          racket/path
+         racket/string
          racket/system)
 
 ;; file-entry : path-string? bytes? -> tar-entry?
@@ -385,6 +386,26 @@ PROGRAM
     (error 'test-vfs-tar-synthetic-parent-mount
            (format "compile/run failed (~a): ~a" status output))))
 
+;; test-vfs-tar-root-mount-list : -> void
+;;   Check that an explicit root mount reports `/` as the filesystem root.
+(define (test-vfs-tar-root-mount-list)
+  (define program
+    #<<PROGRAM
+(unless
+ (and (equal? (file->string "/hello.txt") "hello from tar\n")
+      (equal? (map path->string (filesystem-root-list))
+              '("/"))
+      (equal? (map path->string (directory-list "/"))
+              '("app" "hello.txt" "nested" "tmp")))
+ (error 'vfs-tar-mount "root mount checks failed"))
+PROGRAM
+)
+  (define-values (status output)
+    (run-tar-program program #:mount-path "/"))
+  (unless (zero? status)
+    (error 'test-vfs-tar-root-mount-list
+           (format "compile/run failed (~a): ~a" status output))))
+
 ;; test-vfs-tar-pax-unicode-path : -> void
 ;;   Check that pax path lengths are interpreted as UTF-8 byte counts.
 (define (test-vfs-tar-pax-unicode-path)
@@ -575,43 +596,65 @@ PROGRAM
     (error 'test-vfs-tar-mount-rejects-dangling-long-name
            (format "expected dangling tar extension failure, got: ~a" output))))
 
+;; vfs-tar-tests : (listof (cons/c symbol? (-> void?)))
+;;   Generated-runtime tar tests; each case uses its own temporary directories.
+(define vfs-tar-tests
+  `((test-vfs-tar-mount . ,test-vfs-tar-mount)
+    (test-vfs-tar-file-mount . ,test-vfs-tar-file-mount)
+    (test-vfs-tar-nested-mount . ,test-vfs-tar-nested-mount)
+    (test-vfs-tar-synthetic-parent-mount . ,test-vfs-tar-synthetic-parent-mount)
+    (test-vfs-tar-root-mount-list . ,test-vfs-tar-root-mount-list)
+    (test-vfs-tar-pax-unicode-path . ,test-vfs-tar-pax-unicode-path)
+    (test-vfs-tar-pax-size . ,test-vfs-tar-pax-size)
+    (test-vfs-tar-pax-fractional-mtime . ,test-vfs-tar-pax-fractional-mtime)
+    (test-vfs-tar-mount-global-pax-mtime . ,test-vfs-tar-mount-global-pax-mtime)
+    (test-vfs-tar-mount-read-only . ,test-vfs-tar-mount-read-only)
+    (test-vfs-tar-mount-rejects-links . ,test-vfs-tar-mount-rejects-links)
+    (test-vfs-tar-mount-rejects-truncated-entry . ,test-vfs-tar-mount-rejects-truncated-entry)
+    (test-vfs-tar-mount-rejects-trailing-data . ,test-vfs-tar-mount-rejects-trailing-data)
+    (test-vfs-tar-mount-rejects-invalid-size . ,test-vfs-tar-mount-rejects-invalid-size)
+    (test-vfs-tar-mount-rejects-invalid-pax . ,test-vfs-tar-mount-rejects-invalid-pax)
+    (test-vfs-tar-mount-rejects-invalid-pax-size . ,test-vfs-tar-mount-rejects-invalid-pax-size)
+    (test-vfs-tar-mount-rejects-invalid-pax-mtime . ,test-vfs-tar-mount-rejects-invalid-pax-mtime)
+    (test-vfs-tar-mount-rejects-dangling-pax . ,test-vfs-tar-mount-rejects-dangling-pax)
+    (test-vfs-tar-mount-rejects-dangling-long-name . ,test-vfs-tar-mount-rejects-dangling-long-name)))
+
+;; run-vfs-tar-tests : -> void?
+;;   Run generated-runtime tar tests with bounded parallelism.
+(define (run-vfs-tar-tests)
+  (define worker-count 4)
+  (define slots (make-semaphore worker-count))
+  (define results (make-channel))
+  (for ([test (in-list vfs-tar-tests)])
+    (thread
+     (lambda ()
+       (define name (car test))
+       (define thunk (cdr test))
+       (semaphore-wait slots)
+       (define failure
+         (dynamic-wind
+           void
+           (lambda ()
+             (with-handlers ([exn:fail? (lambda (ex) ex)])
+               (thunk)
+               #f))
+           (lambda () (semaphore-post slots))))
+       (channel-put results (cons name failure)))))
+  (define failures
+    (for/list ([_ (in-list vfs-tar-tests)]
+               #:do [(define result (channel-get results))]
+               #:when (cdr result))
+      result))
+  (unless (null? failures)
+    (error 'run-vfs-tar-tests
+           (string-join
+            (for/list ([failure (in-list failures)])
+              (format "~a: ~a" (car failure) (exn-message (cdr failure))))
+            "\n"))))
+
 (module+ test
-  (test-vfs-tar-mount)
-  (test-vfs-tar-file-mount)
-  (test-vfs-tar-nested-mount)
-  (test-vfs-tar-synthetic-parent-mount)
-  (test-vfs-tar-pax-unicode-path)
-  (test-vfs-tar-pax-size)
-  (test-vfs-tar-pax-fractional-mtime)
-  (test-vfs-tar-mount-global-pax-mtime)
-  (test-vfs-tar-mount-read-only)
-  (test-vfs-tar-mount-rejects-links)
-  (test-vfs-tar-mount-rejects-truncated-entry)
-  (test-vfs-tar-mount-rejects-trailing-data)
-  (test-vfs-tar-mount-rejects-invalid-size)
-  (test-vfs-tar-mount-rejects-invalid-pax)
-  (test-vfs-tar-mount-rejects-invalid-pax-size)
-  (test-vfs-tar-mount-rejects-invalid-pax-mtime)
-  (test-vfs-tar-mount-rejects-dangling-pax)
-  (test-vfs-tar-mount-rejects-dangling-long-name))
+  (run-vfs-tar-tests))
 
 (module+ main
-  (test-vfs-tar-mount)
-  (test-vfs-tar-file-mount)
-  (test-vfs-tar-nested-mount)
-  (test-vfs-tar-synthetic-parent-mount)
-  (test-vfs-tar-pax-unicode-path)
-  (test-vfs-tar-pax-size)
-  (test-vfs-tar-pax-fractional-mtime)
-  (test-vfs-tar-mount-global-pax-mtime)
-  (test-vfs-tar-mount-read-only)
-  (test-vfs-tar-mount-rejects-links)
-  (test-vfs-tar-mount-rejects-truncated-entry)
-  (test-vfs-tar-mount-rejects-trailing-data)
-  (test-vfs-tar-mount-rejects-invalid-size)
-  (test-vfs-tar-mount-rejects-invalid-pax)
-  (test-vfs-tar-mount-rejects-invalid-pax-size)
-  (test-vfs-tar-mount-rejects-invalid-pax-mtime)
-  (test-vfs-tar-mount-rejects-dangling-pax)
-  (test-vfs-tar-mount-rejects-dangling-long-name)
+  (run-vfs-tar-tests)
   (displayln "ok"))

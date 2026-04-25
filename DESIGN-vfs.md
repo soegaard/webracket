@@ -552,7 +552,8 @@ path. Mutation attempts on synthetic mount parents fail as read-only directory
 operations.
 When no backend is mounted at `/`, the VFS root uses the same synthetic
 directory metadata rules. `filesystem-root-list` reports the visible top-level
-VFS roots, including synthetic mount parents.
+VFS roots, including synthetic mount parents. If a backend is explicitly
+mounted at `/`, `filesystem-root-list` reports `/`.
 
 Use `preloadWebRacketVFS` only for in-memory data such as strings, byte
 arrays, `Uint8Array`, `ArrayBuffer`, `{ text: ... }`, `{ bytes: ... }`, or
