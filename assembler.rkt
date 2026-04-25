@@ -414,6 +414,149 @@ class WebRacketMemoryBackend {
   }
 }
 
+class WebRacketTarBackend {
+  constructor(bytes) {
+    this.bytes = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
+    this.files = new Map();
+    this.dirs = new Map([['/', { mtime: 0, mode: 0o777, identity: 1 }]]);
+    this.nextId = 2;
+    this.parse();
+  }
+
+  normalize(path) {
+    if (!path || path === '/') return '/';
+    return '/' + String(path).replace(/^\/+/, '').replace(/\/+$/, '');
+  }
+
+  readString(start, len) {
+    let end = start;
+    const max = Math.min(start + len, this.bytes.length);
+    while (end < max && this.bytes[end] !== 0) end++;
+    return new TextDecoder().decode(this.bytes.slice(start, end));
+  }
+
+  readOctal(start, len, fallback = 0) {
+    const text = this.readString(start, len).trim();
+    if (text === '') return fallback;
+    const n = parseInt(text, 8);
+    return Number.isFinite(n) ? n : fallback;
+  }
+
+  addParentDirs(path, mtime = 0) {
+    const parts = this.normalize(path).split('/').filter(Boolean);
+    let cur = '/';
+    for (let i = 0; i < parts.length - 1; i++) {
+      cur = cur === '/' ? `/${parts[i]}` : `${cur}/${parts[i]}`;
+      if (!this.dirs.has(cur)) {
+        this.dirs.set(cur, { mtime, mode: 0o777, identity: this.nextId++ });
+      }
+    }
+  }
+
+  parse() {
+    for (let offset = 0; offset + 512 <= this.bytes.length;) {
+      let empty = true;
+      for (let i = 0; i < 512; i++) {
+        if (this.bytes[offset + i] !== 0) {
+          empty = false;
+          break;
+        }
+      }
+      if (empty) break;
+
+      const name = this.readString(offset, 100);
+      const prefix = this.readString(offset + 345, 155);
+      const rawPath = prefix ? `${prefix}/${name}` : name;
+      const size = this.readOctal(offset + 124, 12, 0);
+      const mtime = this.readOctal(offset + 136, 12, 0);
+      const mode = this.readOctal(offset + 100, 8, 0o666);
+      const typeflag = String.fromCharCode(this.bytes[offset + 156] || 0);
+      const dataStart = offset + 512;
+      const path = this.normalize(rawPath);
+
+      if (typeflag === '5' || rawPath.endsWith('/')) {
+        if (path !== '/' && !this.dirs.has(path)) {
+          this.addParentDirs(path, mtime);
+          this.dirs.set(path, { mtime, mode: mode || 0o777, identity: this.nextId++ });
+        }
+      } else if (typeflag === '0' || typeflag === '\0') {
+        this.addParentDirs(path, mtime);
+        this.files.set(path, { start: dataStart, size, mtime, mode: mode || 0o666, identity: this.nextId++ });
+      }
+
+      offset = dataStart + Math.ceil(size / 512) * 512;
+    }
+  }
+
+  readOnly(path) {
+    throw new Error(`VFS tar backend is read-only: ${path}`);
+  }
+
+  stat(path) {
+    const p = this.normalize(path);
+    if (this.files.has(p)) {
+      const f = this.files.get(p);
+      return { type: 'file', size: f.size, mtime: f.mtime, mode: f.mode, identity: f.identity };
+    }
+    if (this.dirs.has(p)) {
+      const d = this.dirs.get(p);
+      return { type: 'directory', size: 0, mtime: d.mtime, mode: d.mode, identity: d.identity };
+    }
+    return { type: 'missing', size: 0, mtime: 0 };
+  }
+
+  readFile(path) {
+    const p = this.normalize(path);
+    if (!this.files.has(p)) throw new Error(`VFS file not found: ${path}`);
+    const f = this.files.get(p);
+    return this.bytes.slice(f.start, f.start + f.size);
+  }
+
+  listDir(path) {
+    const p = this.normalize(path);
+    if (!this.dirs.has(p)) throw new Error(`VFS directory not found: ${path}`);
+    const prefix = p === '/' ? '/' : `${p}/`;
+    const names = new Set();
+    for (const file of this.files.keys()) {
+      if (file.startsWith(prefix)) names.add(file.slice(prefix.length).split('/')[0]);
+    }
+    for (const dir of this.dirs.keys()) {
+      if (dir !== p && dir.startsWith(prefix)) names.add(dir.slice(prefix.length).split('/')[0]);
+    }
+    return [...names].filter(Boolean).sort();
+  }
+
+  modifySeconds(path, secs = undefined) {
+    if (secs !== undefined) this.readOnly(path);
+    const stat = this.stat(path);
+    if (stat.type === 'missing') throw new Error(`VFS path not found: ${path}`);
+    return stat.mtime;
+  }
+
+  permissions(path, mode = undefined) {
+    if (mode !== undefined) this.readOnly(path);
+    const stat = this.stat(path);
+    if (stat.type === 'missing') throw new Error(`VFS path not found: ${path}`);
+    return stat.mode;
+  }
+
+  identity(path) {
+    const stat = this.stat(path);
+    if (stat.type === 'missing') throw new Error(`VFS path not found: ${path}`);
+    return stat.identity;
+  }
+
+  writeFile(path) { this.readOnly(path); }
+  mkdir(path) { this.readOnly(path); }
+  mkdirp(path) { this.readOnly(path); }
+  deleteFile(path) { this.readOnly(path); }
+  deleteDirectory(path) { this.readOnly(path); }
+  deleteTree(path) { this.readOnly(path); }
+  rename(oldPath) { this.readOnly(oldPath); }
+  copyFile(srcPath) { this.readOnly(srcPath); }
+  copyTree(srcPath) { this.readOnly(srcPath); }
+}
+
 class WebRacketVFS {
   constructor() {
     this.mounts = new Map();
@@ -549,6 +692,7 @@ class WebRacketVFS {
 const webracketVFS = new WebRacketVFS();
 globalThis.WebRacketVFS = WebRacketVFS;
 globalThis.WebRacketMemoryBackend = WebRacketMemoryBackend;
+globalThis.WebRacketTarBackend = WebRacketTarBackend;
 globalThis.webracketVFS = webracketVFS;
 
 function decodeVFSBase64(s) {
@@ -608,6 +752,32 @@ async function vfsPreloadBytesAsync(entry) {
     }
   }
   return vfsPreloadBytes(entry);
+}
+
+function vfsMountPairs(entries) {
+  if (!entries) return [];
+  if (Array.isArray(entries)) {
+    return entries.map((entry) => {
+      if (Array.isArray(entry) && entry.length >= 2) return [entry[0], entry[1]];
+      if (entry && typeof entry === 'object' && 'path' in entry) return [entry.path, entry];
+      throw new Error('WebRacket VFS mount array entries need a path');
+    });
+  }
+  if (typeof entries === 'object') return Object.entries(entries);
+  throw new Error('WebRacket VFS mount manifest must be an array or object');
+}
+
+async function mountWebRacketVFSAsync(vfs, entries) {
+  for (const [path, entry] of vfsMountPairs(entries)) {
+    const p = validateVFSPreloadPath(path);
+    if (entry instanceof WebRacketMemoryBackend || entry instanceof WebRacketTarBackend) {
+      vfs.mount(p, entry);
+    } else if (entry && typeof entry === 'object' && 'tar' in entry) {
+      vfs.mount(p, new WebRacketTarBackend(await vfsPreloadBytesAsync(entry.tar)));
+    } else {
+      throw new Error('WebRacket VFS mount entry must be a backend or { tar: ... }');
+    }
+  }
 }
 
 function resolvePreloadFile(path) {
@@ -705,6 +875,8 @@ async function preloadWebRacketVFSAsync(vfs, entries) {
 
 globalThis.preloadWebRacketVFS = (entries) => preloadWebRacketVFS(webracketVFS, entries);
 globalThis.preloadWebRacketVFSAsync = (entries) => preloadWebRacketVFSAsync(webracketVFS, entries);
+globalThis.mountWebRacketVFSAsync = (entries) => mountWebRacketVFSAsync(webracketVFS, entries);
+await mountWebRacketVFSAsync(webracketVFS, globalThis.WebRacketVFSMounts);
 await preloadWebRacketVFSAsync(webracketVFS, globalThis.WebRacketVFSPreload);
 
 function vfs_path_from_memory(start, len) {
@@ -4700,6 +4872,13 @@ const wasmModule
 
   (check-true
    (regexp-match? #rx"globalThis\\.WebRacketVFSPreload = \\[" runtime/preload))
+  (check-true
+   (regexp-match? #rx"globalThis\\.WebRacketTarBackend = WebRacketTarBackend"
+                  runtime/preload))
+  (check-true
+   (regexp-match? #rx"mountWebRacketVFSAsync" runtime/preload))
+  (check-true
+   (regexp-match? #rx"WebRacketVFSMounts" runtime/preload))
   (check-true
    (regexp-match? #rx"\\{\"path\":\"/app/message.txt\",\"url\":\"\\./message.txt\"\\}"
                   runtime/preload))

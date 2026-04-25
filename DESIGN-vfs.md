@@ -485,11 +485,16 @@ webracketVFS.mount("/tmp", new WebRacketMemoryBackend());
 
 Generated runtimes expose the singleton as `globalThis.webracketVFS` and
 export `globalThis.WebRacketVFS` and `globalThis.WebRacketMemoryBackend` for
-manual mounting. They also support a pre-entry manifest through
-`globalThis.WebRacketVFSPreload`. The host sets the manifest before
+manual mounting. They also export `globalThis.WebRacketTarBackend` and support
+pre-entry mount and preload manifests through `globalThis.WebRacketVFSMounts`
+and `globalThis.WebRacketVFSPreload`. The host sets manifests before
 importing/running the generated module:
 
 ```js
+globalThis.WebRacketVFSMounts = {
+  "/assets": { tar: { url: "./assets.tar" } }
+};
+
 globalThis.WebRacketVFSPreload = {
   "/app/data/message.txt": { text: "hello\n" },
   "/app/data/blob.bin":    { base64: "QUJD" },
@@ -511,13 +516,18 @@ globalThis.preloadWebRacketVFS({
 await globalThis.preloadWebRacketVFSAsync({
   "/tmp/from-url.txt": { url: "./later.txt" }
 });
+
+await globalThis.mountWebRacketVFSAsync({
+  "/pkg": { tar: { url: "./pkg.tar" } }
+});
 ```
 
 Use `preloadWebRacketVFS` only for in-memory data such as strings, byte
 arrays, `Uint8Array`, `ArrayBuffer`, `{ text: ... }`, `{ bytes: ... }`, or
 `{ base64: ... }`. Use `preloadWebRacketVFSAsync` for `{ file: ... }`,
 `{ url: ... }`, or `{ directory: "./host-dir" }` records, since those require
-host I/O before the VFS entry can be created.
+host I/O before the VFS entry can be created. Use `mountWebRacketVFSAsync` for
+preparing mounted backends such as `{ tar: { file: "./assets.tar" } }`.
 
 For generated hosts, the command line can emit this manifest directly:
 
