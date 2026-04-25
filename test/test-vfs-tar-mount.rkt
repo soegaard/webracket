@@ -130,10 +130,11 @@
   (bytes-set! bs 512 (char->integer #\x))
   bs)
 
-;; run-tar-program : string? [#:tar-bytes bytes?] [#:source-mode symbol?] -> (values exact-integer? string?)
+;; run-tar-program : string? [#:tar-bytes bytes?] [#:mount-path string?] [#:source-mode symbol?] -> (values exact-integer? string?)
 ;;   Compile and run a program against an inline tar-mounted VFS backend.
 (define (run-tar-program program
                          #:tar-bytes [tar-bytes (make-test-tar)]
+                         #:mount-path [mount-path "/assets"]
                          #:source-mode [source-mode 'base64])
   (define repo-root (simplify-path (build-path (current-directory) "..")))
   (define webracket-rkt (build-path repo-root "webracket.rkt"))
@@ -150,14 +151,15 @@
         (case source-mode
           [(base64)
            (values "--vfs-tar-base64"
-                   (string-append "/assets="
+                   (string-append mount-path
+                                  "="
                                   (bytes->string/utf-8 (base64-encode tar-bytes #""))))]
           [(relative-file)
            (define tar-path (build-path dest-dir "assets.tar"))
            (call-with-output-file tar-path
              (lambda (out) (write-bytes tar-bytes out))
              #:exists 'truncate/replace)
-           (values "--vfs-tar-file" "/assets=assets.tar")]
+           (values "--vfs-tar-file" (string-append mount-path "=assets.tar"))]
           [else
            (error 'run-tar-program
                   (format "unknown tar source mode: ~a" source-mode))]))
@@ -215,6 +217,27 @@ PROGRAM
                      #:source-mode 'relative-file))
   (unless (zero? status)
     (error 'test-vfs-tar-file-mount
+           (format "compile/run failed (~a): ~a" status output))))
+
+;; test-vfs-tar-nested-mount : -> void
+;;   Check that a nested tar mount is visible through its parent directory.
+(define (test-vfs-tar-nested-mount)
+  (define program
+    #<<PROGRAM
+(unless
+ (and (equal? (file->string "/app/assets/hello.txt") "hello from tar\n")
+      (equal? (map path->string (directory-list "/app"))
+              '("assets"))
+      (equal? (map path->string (directory-list "/app/assets"))
+              '("hello.txt" "nested"))
+      (directory-exists? "/app/assets/nested"))
+ (error 'vfs-tar-mount "nested mount checks failed"))
+PROGRAM
+)
+  (define-values (status output)
+    (run-tar-program program #:mount-path "/app/assets"))
+  (unless (zero? status)
+    (error 'test-vfs-tar-nested-mount
            (format "compile/run failed (~a): ~a" status output))))
 
 ;; test-vfs-tar-mount-global-pax-mtime : -> void
@@ -298,6 +321,7 @@ PROGRAM
 (module+ test
   (test-vfs-tar-mount)
   (test-vfs-tar-file-mount)
+  (test-vfs-tar-nested-mount)
   (test-vfs-tar-mount-global-pax-mtime)
   (test-vfs-tar-mount-read-only)
   (test-vfs-tar-mount-rejects-links)
@@ -308,6 +332,7 @@ PROGRAM
 (module+ main
   (test-vfs-tar-mount)
   (test-vfs-tar-file-mount)
+  (test-vfs-tar-nested-mount)
   (test-vfs-tar-mount-global-pax-mtime)
   (test-vfs-tar-mount-read-only)
   (test-vfs-tar-mount-rejects-links)
