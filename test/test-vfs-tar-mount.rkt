@@ -389,8 +389,7 @@
            (values "--vfs-tar-url"
                    (string-append mount-path
                                   "=data:application/gzip;base64,"
-                                  encoded
-                                  "#assets.tgz"))]
+                                  encoded))]
           [else
            (error 'run-tar-program
                   (format "unknown tar source mode: ~a" source-mode))]))
@@ -592,7 +591,7 @@ PROGRAM
            (format "compile/run failed (~a): ~a" status output))))
 
 ;; test-vfs-tgz-url-mount : -> void
-;;   Check gzip-compressed tar URL sources.
+;;   Check gzip-compressed tar URL sources with byte-sniffed compression.
 (define (test-vfs-tgz-url-mount)
   (define-values (status output)
     (run-tar-program "(file->string \"/assets/hello.txt\")\n"

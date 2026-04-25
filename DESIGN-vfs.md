@@ -275,7 +275,8 @@ metadata are rejected.
 
 Gzip-compressed tar archives are decompressed on the JavaScript side before the
 same tar backend indexes them. Browser hosts use `DecompressionStream("gzip")`
-when it is available; Node hosts use `node:zlib`.
+when it is available; Node hosts use `node:zlib`. The loader also recognizes
+downloaded or file-backed gzip data by its gzip magic bytes.
 
 For a read:
 
@@ -587,8 +588,9 @@ paths against the generated host module URL too, but require the Node host.
 `--vfs-text` and `--vfs-base64` are embedded directly in the generated host.
 `--vfs-mkdir` creates an empty directory in the memory backend.
 `--vfs-tar-file` and `--vfs-tar-url` mount read-only tar archives at the target
-VFS path. Sources ending in `.tar.gz` or `.tgz` are treated as gzip-compressed
-tar archives and decompressed before indexing.
+VFS path. Sources ending in `.tar.gz` or `.tgz`, or whose bytes have a gzip
+header, are treated as gzip-compressed tar archives and decompressed before
+indexing.
 CLI preload and mount targets must be absolute VFS paths, such as
 `/app/config.txt`. A preload target may not be equal to or inside an explicit
 mounted backend target.

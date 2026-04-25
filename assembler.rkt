@@ -988,9 +988,15 @@ async function decompressVFSGzip(bytes) {
   throw new Error('WebRacket VFS gzip tar mount requires DecompressionStream or Node zlib');
 }
 
+function vfsBytesLookLikeGzip(bytes) {
+  return bytes.length >= 2 && bytes[0] === 0x1f && bytes[1] === 0x8b;
+}
+
 async function vfsPreloadTarBytesAsync(entry) {
   const bytes = await vfsPreloadBytesAsync(entry);
-  if (!entry || typeof entry !== 'object' || !('compression' in entry)) return bytes;
+  if (!entry || typeof entry !== 'object' || !('compression' in entry)) {
+    return vfsBytesLookLikeGzip(bytes) ? await decompressVFSGzip(bytes) : bytes;
+  }
   const compression = String(entry.compression);
   if (compression === 'gzip') return await decompressVFSGzip(bytes);
   throw new Error(`WebRacket VFS tar compression is unsupported: ${compression}`);
@@ -5275,6 +5281,15 @@ const wasmModule
                            'source "./assets.zip"
                            'compression 'zip))))
 
+  (define (runtime-with-base64-tar-mount)
+    (runtime #:out "out.wasm"
+             #:host 'browser
+             #:vfs-mounts
+             (list (hasheq 'path "/assets"
+                           'kind 'tar
+                           'source-kind 'base64
+                           'source "AA=="))))
+
   (check-true
    (raises-message? #rx"unknown VFS preload source kind"
                     runtime-with-bad-preload-kind))
@@ -5289,7 +5304,11 @@ const wasmModule
 
   (check-true
    (raises-message? #rx"unknown VFS tar compression"
-                    runtime-with-bad-mount-compression)))
+                    runtime-with-bad-mount-compression))
+
+  (check-true
+   (raises-message? #rx"unknown VFS tar source kind"
+                    runtime-with-base64-tar-mount)))
 
 
 ;;;
