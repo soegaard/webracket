@@ -264,7 +264,7 @@ rejected. Ustar `prefix` fields, GNU long-name records, and POSIX pax `path`
 and `mtime` records are supported. Symbolic and hard links are rejected because
 the WebRacket VFS does not currently model filesystem links. Entries whose
 declared payload extends past the archive data are rejected as truncated.
-Malformed octal metadata fields are rejected.
+Malformed octal metadata fields and pax records are rejected.
 
 For a read:
 

@@ -463,12 +463,18 @@ class WebRacketTarBackend {
     let i = 0;
     while (i < text.length) {
       const space = text.indexOf(' ', i);
-      if (space < 0) break;
-      const len = parseInt(text.slice(i, space), 10);
-      if (!Number.isFinite(len) || len <= 0) break;
+      if (space < 0) throw new Error('VFS tar pax header is invalid');
+      const lenText = text.slice(i, space);
+      if (!/^[0-9]+$/.test(lenText)) throw new Error('VFS tar pax header is invalid');
+      const len = parseInt(lenText, 10);
+      if (!Number.isFinite(len) || len <= 0 || i + len > text.length) {
+        throw new Error('VFS tar pax header is invalid');
+      }
+      if (text[i + len - 1] !== '\n') throw new Error('VFS tar pax header is invalid');
       const record = text.slice(space + 1, i + len - 1);
       const eq = record.indexOf('=');
-      if (eq >= 0) headers[record.slice(0, eq)] = record.slice(eq + 1);
+      if (eq <= 0) throw new Error('VFS tar pax header is invalid');
+      headers[record.slice(0, eq)] = record.slice(eq + 1);
       i += len;
     }
     return headers;

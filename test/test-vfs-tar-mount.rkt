@@ -71,6 +71,24 @@
   (retag-header-checksum! bs)
   bs)
 
+;; make-pax-tar : -> bytes?
+;;   Build a tar archive that uses a pax path record.
+(define (make-pax-tar)
+  (define long-name
+    (string-append (make-string 120 #\a) ".txt"))
+  (define out (open-output-bytes))
+  (tar->output (list (file-entry (string->path long-name) #"long\n"))
+               out
+               #:format 'pax)
+  (get-output-bytes out))
+
+;; make-invalid-pax-tar : -> bytes?
+;;   Build a tar archive with a malformed pax record body.
+(define (make-invalid-pax-tar)
+  (define bs (bytes-copy (make-pax-tar)))
+  (bytes-set! bs 512 (char->integer #\x))
+  bs)
+
 ;; run-tar-program : string? [#:tar-bytes bytes?] [#:source-mode symbol?] -> (values exact-integer? string?)
 ;;   Compile and run a program against an inline tar-mounted VFS backend.
 (define (run-tar-program program
@@ -207,13 +225,26 @@ PROGRAM
     (error 'test-vfs-tar-mount-rejects-invalid-size
            (format "expected invalid tar size failure, got: ~a" output))))
 
+;; test-vfs-tar-mount-rejects-invalid-pax : -> void
+;;   Check that malformed pax records fail while mounting.
+(define (test-vfs-tar-mount-rejects-invalid-pax)
+  (define-values (status output)
+    (run-tar-program "(void)\n" #:tar-bytes (make-invalid-pax-tar)))
+  (when (zero? status)
+    (error 'test-vfs-tar-mount-rejects-invalid-pax
+           "expected invalid-pax tar mount to fail"))
+  (unless (regexp-match? #rx"VFS tar pax header is invalid" output)
+    (error 'test-vfs-tar-mount-rejects-invalid-pax
+           (format "expected invalid tar pax failure, got: ~a" output))))
+
 (module+ test
   (test-vfs-tar-mount)
   (test-vfs-tar-file-mount)
   (test-vfs-tar-mount-read-only)
   (test-vfs-tar-mount-rejects-links)
   (test-vfs-tar-mount-rejects-truncated-entry)
-  (test-vfs-tar-mount-rejects-invalid-size))
+  (test-vfs-tar-mount-rejects-invalid-size)
+  (test-vfs-tar-mount-rejects-invalid-pax))
 
 (module+ main
   (test-vfs-tar-mount)
@@ -222,4 +253,5 @@ PROGRAM
   (test-vfs-tar-mount-rejects-links)
   (test-vfs-tar-mount-rejects-truncated-entry)
   (test-vfs-tar-mount-rejects-invalid-size)
+  (test-vfs-tar-mount-rejects-invalid-pax)
   (displayln "ok"))
