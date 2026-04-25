@@ -4568,11 +4568,16 @@ const wasmModule
 })
 
 (define (vfs-preload-manifest-js vfs-preloads)
+  (define seen-paths (make-hash))
   (jsexpr->string
    (for/list ([entry (in-list vfs-preloads)])
      (define path (hash-ref entry 'path))
      (define kind (hash-ref entry 'kind))
      (define source (hash-ref entry 'source))
+     (when (hash-has-key? seen-paths path)
+       (error 'vfs-preload-manifest-js
+              (format "duplicate VFS preload target path: ~a" path)))
+     (hash-set! seen-paths path #t)
      (unless (memq kind '(file url text base64 directory))
        (error 'vfs-preload-manifest-js
               (format "unknown VFS preload source kind: ~a" kind)))
@@ -4701,7 +4706,16 @@ const wasmModule
      (runtime #:out "out.wasm"
               #:host 'browser
               #:vfs-preloads
-              (list (hasheq 'path "/app/nope" 'kind 'mystery 'source "x"))))))
+              (list (hasheq 'path "/app/nope" 'kind 'mystery 'source "x")))))
+
+  (check-exn
+   #rx"duplicate VFS preload target path"
+   (λ ()
+     (runtime #:out "out.wasm"
+              #:host 'browser
+              #:vfs-preloads
+              (list (hasheq 'path "/app/same" 'kind 'text 'source "a")
+                    (hasheq 'path "/app/same" 'kind 'text 'source "b"))))))
 
 
 ;;;
