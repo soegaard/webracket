@@ -495,6 +495,12 @@ globalThis.preloadWebRacketVFS({
 });
 ```
 
+Use `preloadWebRacketVFS` only for in-memory data such as strings, byte
+arrays, `Uint8Array`, `ArrayBuffer`, `{ text: ... }`, `{ bytes: ... }`, or
+`{ base64: ... }`. Use `preloadWebRacketVFSAsync` for `{ file: ... }`,
+`{ url: ... }`, or `{ directory: "./host-dir" }` records, since those require
+host I/O before the VFS entry can be created.
+
 For generated hosts, the command line can emit this manifest directly:
 
 ```sh
