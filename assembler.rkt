@@ -447,9 +447,12 @@ class WebRacketTarBackend {
     return new TextDecoder().decode(this.bytes.slice(start, end));
   }
 
-  readOctal(start, len, fallback = 0) {
+  readOctal(start, len, fallback = 0, fieldName = 'octal field') {
     const text = this.readString(start, len).trim();
     if (text === '') return fallback;
+    if (!/^[0-7]+$/.test(text)) {
+      throw new Error(`VFS tar ${fieldName} is invalid`);
+    }
     const n = parseInt(text, 8);
     return Number.isFinite(n) ? n : fallback;
   }
@@ -472,7 +475,7 @@ class WebRacketTarBackend {
   }
 
   validateChecksum(offset) {
-    const expected = this.readOctal(offset + 148, 8, -1);
+    const expected = this.readOctal(offset + 148, 8, -1, 'header checksum');
     let actual = 0;
     for (let i = 0; i < 512; i++) {
       actual += (i >= 148 && i < 156) ? 32 : this.bytes[offset + i];
@@ -510,9 +513,9 @@ class WebRacketTarBackend {
       const name = this.readString(offset, 100);
       const prefix = this.readString(offset + 345, 155);
       const rawPath = prefix ? `${prefix}/${name}` : name;
-      const size = this.readOctal(offset + 124, 12, 0);
-      const mtime = this.readOctal(offset + 136, 12, 0);
-      const mode = this.readOctal(offset + 100, 8, 0o666);
+      const size = this.readOctal(offset + 124, 12, 0, 'size');
+      const mtime = this.readOctal(offset + 136, 12, 0, 'mtime');
+      const mode = this.readOctal(offset + 100, 8, 0o666, 'mode');
       const typeflag = String.fromCharCode(this.bytes[offset + 156] || 0);
       const dataStart = offset + 512;
       const nextOffset = dataStart + Math.ceil(size / 512) * 512;

@@ -45,6 +45,32 @@
 (define (make-truncated-tar)
   (subbytes (make-test-tar) 0 1600))
 
+;; retag-header-checksum! : bytes? -> void
+;;   Recompute the first tar header checksum after a test mutation.
+(define (retag-header-checksum! bs)
+  (for ([i (in-range 148 156)])
+    (bytes-set! bs i 32))
+  (define checksum
+    (for/sum ([i (in-range 512)])
+      (bytes-ref bs i)))
+  (define text (number->string checksum 8))
+  (define padded
+    (string-append (make-string (max 0 (- 6 (string-length text))) #\0)
+                   text))
+  (for ([b (in-bytes (string->bytes/utf-8 padded))]
+        [i (in-naturals 148)])
+    (bytes-set! bs i b))
+  (bytes-set! bs 154 0)
+  (bytes-set! bs 155 32))
+
+;; make-invalid-size-tar : -> bytes?
+;;   Build a tar archive with an invalid octal size field.
+(define (make-invalid-size-tar)
+  (define bs (bytes-copy (make-test-tar)))
+  (bytes-set! bs 124 (char->integer #\x))
+  (retag-header-checksum! bs)
+  bs)
+
 ;; run-tar-program : string? [#:tar-bytes bytes?] [#:source-mode symbol?] -> (values exact-integer? string?)
 ;;   Compile and run a program against an inline tar-mounted VFS backend.
 (define (run-tar-program program
@@ -169,12 +195,25 @@ PROGRAM
     (error 'test-vfs-tar-mount-rejects-truncated-entry
            (format "expected truncated tar failure, got: ~a" output))))
 
+;; test-vfs-tar-mount-rejects-invalid-size : -> void
+;;   Check that malformed octal size fields fail while mounting.
+(define (test-vfs-tar-mount-rejects-invalid-size)
+  (define-values (status output)
+    (run-tar-program "(void)\n" #:tar-bytes (make-invalid-size-tar)))
+  (when (zero? status)
+    (error 'test-vfs-tar-mount-rejects-invalid-size
+           "expected invalid-size tar mount to fail"))
+  (unless (regexp-match? #rx"VFS tar size is invalid" output)
+    (error 'test-vfs-tar-mount-rejects-invalid-size
+           (format "expected invalid tar size failure, got: ~a" output))))
+
 (module+ test
   (test-vfs-tar-mount)
   (test-vfs-tar-file-mount)
   (test-vfs-tar-mount-read-only)
   (test-vfs-tar-mount-rejects-links)
-  (test-vfs-tar-mount-rejects-truncated-entry))
+  (test-vfs-tar-mount-rejects-truncated-entry)
+  (test-vfs-tar-mount-rejects-invalid-size))
 
 (module+ main
   (test-vfs-tar-mount)
@@ -182,4 +221,5 @@ PROGRAM
   (test-vfs-tar-mount-read-only)
   (test-vfs-tar-mount-rejects-links)
   (test-vfs-tar-mount-rejects-truncated-entry)
+  (test-vfs-tar-mount-rejects-invalid-size)
   (displayln "ok"))
