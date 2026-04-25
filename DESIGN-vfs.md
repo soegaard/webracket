@@ -171,7 +171,17 @@ class WebRacketVFS {
   listDir(path) {}
   writeFile(path, bytes) {}
   mkdir(path) {}
-  delete(path) {}
+  mkdirp(path) {}
+  makeParentDirectory(path) {}
+  deleteFile(path) {}
+  deleteDirectory(path) {}
+  deleteTree(path) {}
+  copyFile(srcPath, destPath, existsOk) {}
+  copyTree(srcPath, destPath) {}
+  rename(oldPath, newPath, existsOk) {}
+  modifySeconds(path, secs) {}
+  permissions(path, mode) {}
+  identity(path) {}
 }
 ```
 
@@ -188,7 +198,9 @@ Use a small structured status value internally in JS:
 {
   type: "file" | "directory" | "missing",
   size: 123,
-  mtime: 0
+  mtime: 0,
+  mode: 0o666,
+  identity: 17
 }
 ```
 
@@ -467,13 +479,15 @@ Implement JS mount table and memory backend.
 Add a preload/init path for mounting and seeding memory-backed files:
 
 ```js
-webracketVFS.mount("/app", new MemoryBackend(...));
-webracketVFS.mount("/tmp", new MemoryBackend());
+webracketVFS.mount("/app", new WebRacketMemoryBackend(...));
+webracketVFS.mount("/tmp", new WebRacketMemoryBackend());
 ```
 
 Generated runtimes expose the singleton as `globalThis.webracketVFS` and
-support a pre-entry manifest through `globalThis.WebRacketVFSPreload`. The host
-sets the manifest before importing/running the generated module:
+export `globalThis.WebRacketVFS` and `globalThis.WebRacketMemoryBackend` for
+manual mounting. They also support a pre-entry manifest through
+`globalThis.WebRacketVFSPreload`. The host sets the manifest before
+importing/running the generated module:
 
 ```js
 globalThis.WebRacketVFSPreload = {
@@ -492,6 +506,10 @@ The same loader is available after startup as:
 ```js
 globalThis.preloadWebRacketVFS({
   "/tmp/input.txt": "later\n"
+});
+
+await globalThis.preloadWebRacketVFSAsync({
+  "/tmp/from-url.txt": { url: "./later.txt" }
 });
 ```
 
@@ -537,7 +555,9 @@ directory source paths are resolved against the generated JavaScript module URL.
 Directory records use `{ directory: true }` or a path ending in `/` for an empty
 VFS directory. In the Node runtime, `{ directory: "./assets" }` recursively
 copies a host directory into the target VFS directory before WebRacket starts.
-Manifest target paths must be absolute VFS paths.
+Manifest target paths must be absolute VFS paths. Duplicate detection treats
+trailing slashes as insignificant, so `/app/cache` and `/app/cache/` are the
+same preload target.
 
 Add small host imports for stat, read-file, and list-dir.
 
