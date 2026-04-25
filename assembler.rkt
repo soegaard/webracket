@@ -5033,7 +5033,7 @@ const wasmModule
      (unless (eq? kind 'tar)
        (error 'vfs-mount-manifest-js
               (format "unknown VFS mount backend kind: ~a" kind)))
-     (unless (memq source-kind '(file url base64))
+     (unless (memq source-kind '(file url))
        (error 'vfs-mount-manifest-js
               (format "unknown VFS tar source kind: ~a" source-kind)))
      (when (and compression (not (eq? compression 'gzip)))

@@ -345,7 +345,7 @@
 (define (run-tar-program program
                          #:tar-bytes [tar-bytes (make-test-tar)]
                          #:mount-path [mount-path "/assets"]
-                         #:source-mode [source-mode 'base64])
+                         #:source-mode [source-mode 'relative-file])
   (define repo-root (simplify-path (build-path (current-directory) "..")))
   (define webracket-rkt (build-path repo-root "webracket.rkt"))
   (define source-dir (make-temporary-file "webracket-vfs-tar-src-~a" 'directory))
@@ -359,29 +359,6 @@
         #:exists 'truncate/replace)
       (define-values (mount-flag mount-spec)
         (case source-mode
-          [(base64)
-           (values "--vfs-tar-base64"
-                   (string-append mount-path
-                                  "="
-                                  (bytes->string/utf-8 (base64-encode tar-bytes #""))))]
-          [(gzip-base64)
-           (values "--vfs-tgz-base64"
-                   (string-append mount-path
-                                  "="
-                                  (bytes->string/utf-8
-                                   (base64-encode (gzip-bytes tar-bytes) #""))))]
-          [(gzip-base64-long-flag)
-           (values "--vfs-tar-gz-base64"
-                   (string-append mount-path
-                                  "="
-                                  (bytes->string/utf-8
-                                   (base64-encode (gzip-bytes tar-bytes) #""))))]
-          [(invalid-gzip-base64)
-           (values "--vfs-tgz-base64"
-                   (string-append mount-path
-                                  "="
-                                  (bytes->string/utf-8
-                                   (base64-encode tar-bytes #""))))]
           [(relative-file)
            (define tar-path (build-path dest-dir "assets.tar"))
            (call-with-output-file tar-path
@@ -393,12 +370,27 @@
            (call-with-output-file tar-path
              (lambda (out) (write-bytes (gzip-bytes tar-bytes) out))
              #:exists 'truncate/replace)
-           (values "--vfs-tgz-file" (string-append mount-path "=assets.tgz"))]
+           (values "--vfs-tar-file" (string-append mount-path "=assets.tgz"))]
+          [(gzip-relative-file-tar-gz)
+           (define tar-path (build-path dest-dir "assets.tar.gz"))
+           (call-with-output-file tar-path
+             (lambda (out) (write-bytes (gzip-bytes tar-bytes) out))
+             #:exists 'truncate/replace)
+           (values "--vfs-tar-file" (string-append mount-path "=assets.tar.gz"))]
+          [(invalid-gzip-relative-file)
+           (define tar-path (build-path dest-dir "assets.tgz"))
+           (call-with-output-file tar-path
+             (lambda (out) (write-bytes tar-bytes out))
+             #:exists 'truncate/replace)
+           (values "--vfs-tar-file" (string-append mount-path "=assets.tgz"))]
           [(gzip-data-url)
            (define encoded
              (bytes->string/utf-8 (base64-encode (gzip-bytes tar-bytes) #"")))
-           (values "--vfs-tgz-url"
-                   (string-append mount-path "=data:application/gzip;base64," encoded))]
+           (values "--vfs-tar-url"
+                   (string-append mount-path
+                                  "=data:application/gzip;base64,"
+                                  encoded
+                                  "#assets.tgz"))]
           [else
            (error 'run-tar-program
                   (format "unknown tar source mode: ~a" source-mode))]))
@@ -565,7 +557,7 @@ PROGRAM
            (format "compile/run failed (~a): ~a" status output))))
 
 ;; test-vfs-tgz-mount : -> void
-;;   Check inline gzip-compressed tar mounts.
+;;   Check .tgz file mounts through the ordinary tar-file flag.
 (define (test-vfs-tgz-mount)
   (define program
     #<<PROGRAM
@@ -574,17 +566,17 @@ PROGRAM
 PROGRAM
 )
   (define-values (status output)
-    (run-tar-program program #:source-mode 'gzip-base64))
+    (run-tar-program program #:source-mode 'gzip-relative-file))
   (unless (zero? status)
     (error 'test-vfs-tgz-mount
            (format "compile/run failed (~a): ~a" status output))))
 
 ;; test-vfs-tar-gz-mount : -> void
-;;   Check the long gzip-compressed tar CLI flag spelling.
+;;   Check .tar.gz file mounts through the ordinary tar-file flag.
 (define (test-vfs-tar-gz-mount)
   (define-values (status output)
     (run-tar-program "(file->string \"/assets/hello.txt\")\n"
-                     #:source-mode 'gzip-base64-long-flag))
+                     #:source-mode 'gzip-relative-file-tar-gz))
   (unless (zero? status)
     (error 'test-vfs-tar-gz-mount
            (format "compile/run failed (~a): ~a" status output))))
@@ -613,7 +605,7 @@ PROGRAM
 ;;   Check that invalid gzip-compressed tar mounts fail before tar indexing.
 (define (test-vfs-tgz-mount-rejects-invalid-gzip)
   (define-values (status output)
-    (run-tar-program "(void)\n" #:source-mode 'invalid-gzip-base64 #:tar-bytes #"not gzip"))
+    (run-tar-program "(void)\n" #:source-mode 'invalid-gzip-relative-file #:tar-bytes #"not gzip"))
   (when (zero? status)
     (error 'test-vfs-tgz-mount-rejects-invalid-gzip
            "expected invalid-gzip tar mount to fail"))

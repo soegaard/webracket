@@ -586,11 +586,9 @@ and works in browser hosts. `--vfs-file` and `--vfs-dir` resolve relative
 paths against the generated host module URL too, but require the Node host.
 `--vfs-text` and `--vfs-base64` are embedded directly in the generated host.
 `--vfs-mkdir` creates an empty directory in the memory backend.
-`--vfs-tar-file`, `--vfs-tar-url`, and `--vfs-tar-base64` mount read-only tar
-archives at the target VFS path. `--vfs-tgz-file`, `--vfs-tgz-url`, and
-`--vfs-tgz-base64` do the same for gzip-compressed tar archives; the explicit
-`--vfs-tar-gz-file`, `--vfs-tar-gz-url`, and `--vfs-tar-gz-base64` spellings
-are aliases.
+`--vfs-tar-file` and `--vfs-tar-url` mount read-only tar archives at the target
+VFS path. Sources ending in `.tar.gz` or `.tgz` are treated as gzip-compressed
+tar archives and decompressed before indexing.
 CLI preload and mount targets must be absolute VFS paths, such as
 `/app/config.txt`. A preload target may not be equal to or inside an explicit
 mounted backend target.

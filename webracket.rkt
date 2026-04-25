@@ -108,16 +108,24 @@
   (validate-vfs-preload-path! 'webracket path)
   (add-vfs-preload-entry! (hasheq 'path path 'kind 'directory 'source #t)))
 
+(define (infer-vfs-tar-compression kind source)
+  (and (memq kind '(file url))
+       (regexp-match? #px"(?i:(\\.tar\\.gz|\\.tgz))$" source)
+       'gzip))
+
 (define (add-vfs-tar-mount! kind spec #:compression [compression #f])
   (define entry (parse-vfs-preload 'webracket kind spec))
+  (define source (hash-ref entry 'source))
+  (define effective-compression
+    (or compression (infer-vfs-tar-compression kind source)))
   (define mount-entry
     (hasheq 'path (hash-ref entry 'path)
             'kind 'tar
             'source-kind kind
-            'source (hash-ref entry 'source)))
+            'source source))
   (add-vfs-mount-entry!
-   (if compression
-       (hash-set mount-entry 'compression compression)
+   (if effective-compression
+       (hash-set mount-entry 'compression effective-compression)
        mount-entry)))
 
 (define positional-filenames
@@ -218,27 +226,6 @@
    [("--vfs-tar-url") spec
                       "Mount tar URL into VFS as VFS=SOURCE"
                       (add-vfs-tar-mount! 'url spec)]
-   [("--vfs-tar-base64") spec
-                         "Mount inline base64 tar into VFS as VFS=BASE64"
-                         (add-vfs-tar-mount! 'base64 spec)]
-   [("--vfs-tgz-file") spec
-                       "Mount Node host gzip-compressed tar into VFS as VFS=SOURCE"
-                       (add-vfs-tar-mount! 'file spec #:compression 'gzip)]
-   [("--vfs-tar-gz-file") spec
-                          "Mount Node host gzip-compressed tar into VFS as VFS=SOURCE"
-                          (add-vfs-tar-mount! 'file spec #:compression 'gzip)]
-   [("--vfs-tgz-url") spec
-                      "Mount gzip-compressed tar URL into VFS as VFS=SOURCE"
-                      (add-vfs-tar-mount! 'url spec #:compression 'gzip)]
-   [("--vfs-tar-gz-url") spec
-                         "Mount gzip-compressed tar URL into VFS as VFS=SOURCE"
-                         (add-vfs-tar-mount! 'url spec #:compression 'gzip)]
-   [("--vfs-tgz-base64") spec
-                         "Mount inline base64 gzip-compressed tar into VFS as VFS=BASE64"
-                         (add-vfs-tar-mount! 'base64 spec #:compression 'gzip)]
-   [("--vfs-tar-gz-base64") spec
-                            "Mount inline base64 gzip-compressed tar into VFS as VFS=BASE64"
-                            (add-vfs-tar-mount! 'base64 spec #:compression 'gzip)]
    
    #:args filenames
    filenames))
