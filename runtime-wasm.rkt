@@ -1930,13 +1930,14 @@
     (add-runtime-bytes-constant  'dot-dot                   #"..")
     (add-runtime-bytes-constant  'app-dir                   #"/app/")
     (add-runtime-bytes-constant  'vfs-root                  #"/")
-    (add-runtime-bytes-constant  'vfs-pref-dir              #"/app/prefs/")
-    (add-runtime-bytes-constant  'vfs-pref-file             #"/app/prefs/racket-prefs.rktd")
+    (add-runtime-bytes-constant  'vfs-home-dir              #"/home/")
+    (add-runtime-bytes-constant  'vfs-pref-dir              #"/home/.config/racket/")
+    (add-runtime-bytes-constant  'vfs-pref-file             #"/home/.config/racket/racket-prefs.rktd")
     (add-runtime-bytes-constant  'vfs-temp-dir              #"/tmp/")
-    (add-runtime-bytes-constant  'vfs-init-file             #"/app/racketrc.rktl")
+    (add-runtime-bytes-constant  'vfs-init-file             #"/home/.racketrc")
     (add-runtime-bytes-constant  'vfs-config-dir            #"/app/etc/")
-    (add-runtime-bytes-constant  'vfs-addon-dir             #"/app/addons/")
-    (add-runtime-bytes-constant  'vfs-cache-dir             #"/app/cache/")
+    (add-runtime-bytes-constant  'vfs-addon-dir             #"/home/.local/share/racket/")
+    (add-runtime-bytes-constant  'vfs-cache-dir             #"/home/.cache/racket/")
     (add-runtime-bytes-constant  'vfs-exec-file             #"/app/webracket")
     (add-runtime-bytes-constant  'vfs-run-file              #"/app/main.rkt")
     (add-runtime-bytes-constant  'vfs-collects-dir          #"/app/collects/")
@@ -45526,7 +45527,7 @@
                      (local.set $kind (ref.cast (ref $Symbol) (local.get $kind-raw)))
                      (if (ref.eq (local.get $kind) (global.get $symbol:home-dir))
                          (then (return (call $bytes->path
-                                             (global.get $bytes:app-dir)
+                                             (global.get $bytes:vfs-home-dir)
                                              (global.get $missing)))))
                      (if (ref.eq (local.get $kind) (global.get $symbol:pref-dir))
                          (then (return (call $bytes->path
@@ -45542,7 +45543,7 @@
                                              (global.get $missing)))))
                      (if (ref.eq (local.get $kind) (global.get $symbol:init-dir))
                          (then (return (call $bytes->path
-                                             (global.get $bytes:app-dir)
+                                             (global.get $bytes:vfs-home-dir)
                                              (global.get $missing)))))
                      (if (ref.eq (local.get $kind) (global.get $symbol:init-file))
                          (then (return (call $bytes->path
@@ -45565,7 +45566,7 @@
                      (if (i32.or (ref.eq (local.get $kind) (global.get $symbol:doc-dir))
                                  (ref.eq (local.get $kind) (global.get $symbol:desk-dir)))
                          (then (return (call $bytes->path
-                                             (global.get $bytes:app-dir)
+                                             (global.get $bytes:vfs-home-dir)
                                              (global.get $missing)))))
                      (if (ref.eq (local.get $kind) (global.get $symbol:sys-dir))
                          (then (return (call $bytes->path
