@@ -5196,6 +5196,8 @@ const wasmModule
   (check-true
    (regexp-match? #rx"nextLongName" runtime/preload))
   (check-true
+   (regexp-match? #rx"nextLongLink" runtime/preload))
+  (check-true
    (regexp-match? #rx"readPaxHeaders" runtime/preload))
   (check-true
    (regexp-match? #rx"readPaxMtime\\(nextPaxHeaders\\)" runtime/preload))

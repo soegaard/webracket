@@ -158,6 +158,12 @@
   (retag-header-checksum! bs)
   bs)
 
+;; make-invalid-path-tar : string? -> bytes?
+;;   Build a tar archive with an unsafe entry path.
+(define (make-invalid-path-tar name)
+  (bytes-append (tar-file-member name #"bad\n")
+                (make-bytes 1024 0)))
+
 ;; make-global-pax-mtime-tar : -> bytes?
 ;;   Build a tar archive with a global pax mtime default.
 (define (make-global-pax-mtime-tar)
@@ -572,6 +578,30 @@ PROGRAM
     (error 'test-vfs-tar-mount-rejects-invalid-size
            (format "expected invalid tar size failure, got: ~a" output))))
 
+;; test-vfs-tar-mount-rejects-absolute-path : -> void
+;;   Check that absolute archive entry names fail while mounting.
+(define (test-vfs-tar-mount-rejects-absolute-path)
+  (define-values (status output)
+    (run-tar-program "(void)\n" #:tar-bytes (make-invalid-path-tar "/escape.txt")))
+  (when (zero? status)
+    (error 'test-vfs-tar-mount-rejects-absolute-path
+           "expected absolute-path tar mount to fail"))
+  (unless (regexp-match? #rx"VFS tar entry path is invalid" output)
+    (error 'test-vfs-tar-mount-rejects-absolute-path
+           (format "expected invalid tar path failure, got: ~a" output))))
+
+;; test-vfs-tar-mount-rejects-parent-path : -> void
+;;   Check that parent-directory archive entry names fail while mounting.
+(define (test-vfs-tar-mount-rejects-parent-path)
+  (define-values (status output)
+    (run-tar-program "(void)\n" #:tar-bytes (make-invalid-path-tar "../escape.txt")))
+  (when (zero? status)
+    (error 'test-vfs-tar-mount-rejects-parent-path
+           "expected parent-path tar mount to fail"))
+  (unless (regexp-match? #rx"VFS tar entry path is invalid" output)
+    (error 'test-vfs-tar-mount-rejects-parent-path
+           (format "expected invalid tar path failure, got: ~a" output))))
+
 ;; test-vfs-tar-mount-rejects-invalid-pax : -> void
 ;;   Check that malformed pax records fail while mounting.
 (define (test-vfs-tar-mount-rejects-invalid-pax)
@@ -662,6 +692,8 @@ PROGRAM
     (test-vfs-tar-mount-rejects-truncated-entry . ,test-vfs-tar-mount-rejects-truncated-entry)
     (test-vfs-tar-mount-rejects-trailing-data . ,test-vfs-tar-mount-rejects-trailing-data)
     (test-vfs-tar-mount-rejects-invalid-size . ,test-vfs-tar-mount-rejects-invalid-size)
+    (test-vfs-tar-mount-rejects-absolute-path . ,test-vfs-tar-mount-rejects-absolute-path)
+    (test-vfs-tar-mount-rejects-parent-path . ,test-vfs-tar-mount-rejects-parent-path)
     (test-vfs-tar-mount-rejects-invalid-pax . ,test-vfs-tar-mount-rejects-invalid-pax)
     (test-vfs-tar-mount-rejects-invalid-pax-size . ,test-vfs-tar-mount-rejects-invalid-pax-size)
     (test-vfs-tar-mount-rejects-invalid-pax-mtime . ,test-vfs-tar-mount-rejects-invalid-pax-mtime)
