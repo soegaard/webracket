@@ -2106,6 +2106,7 @@
   directory-list
   filesystem-root-list
   find-system-path
+  current-drive
   file-size
   delete-file
   make-directory

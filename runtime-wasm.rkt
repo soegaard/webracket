@@ -45623,6 +45623,14 @@
                            (local.get $kind-raw))
                      (unreachable))
 
+               ;; current-drive : -> path?
+               ;;   Return the current VFS drive/root for WebRacket's Unix-style paths.
+               (func $current-drive (type $Prim0)
+                     (result (ref eq))
+                     (call $bytes->path
+                           (global.get $bytes:vfs-root)
+                           (global.get $missing)))
+
                (func $current-directory (type $Prim01)
                      (param $path-raw (ref eq)) ;; optional path-string?
                      (result          (ref eq))

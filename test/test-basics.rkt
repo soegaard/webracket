@@ -4920,6 +4920,9 @@
                          (begin
                            (current-directory "/tmp/")
                            (equal? (path->string (current-directory)) "/tmp/"))))
+              (list "current-drive"
+                    (and (complete-path? (current-drive))
+                         (equal? (path->string (current-drive)) "/")))
               (list "find-system-path"
                     (and (equal? (path->string (find-system-path 'home-dir)) "/home/")
                          (equal? (path->string (find-system-path 'temp-dir)) "/tmp/")

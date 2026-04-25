@@ -1050,6 +1050,7 @@
  directory-list
  filesystem-root-list
  find-system-path
+ current-drive
  file-size
  delete-file
  make-directory
@@ -1980,6 +1981,9 @@
 
 (define (find-system-path kind)
   (error 'find-system-path "only available in compiled WebRacket"))
+
+(define (current-drive)
+  (error 'current-drive "only available in compiled WebRacket"))
 
 (define call-with-input-file
   (case-lambda
