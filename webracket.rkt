@@ -108,12 +108,17 @@
   (validate-vfs-preload-path! 'webracket path)
   (add-vfs-preload-entry! (hasheq 'path path 'kind 'directory 'source #t)))
 
-(define (add-vfs-tar-mount! kind spec)
+(define (add-vfs-tar-mount! kind spec #:compression [compression #f])
   (define entry (parse-vfs-preload 'webracket kind spec))
-  (add-vfs-mount-entry! (hasheq 'path (hash-ref entry 'path)
-                                'kind 'tar
-                                'source-kind kind
-                                'source (hash-ref entry 'source))))
+  (define mount-entry
+    (hasheq 'path (hash-ref entry 'path)
+            'kind 'tar
+            'source-kind kind
+            'source (hash-ref entry 'source)))
+  (add-vfs-mount-entry!
+   (if compression
+       (hash-set mount-entry 'compression compression)
+       mount-entry)))
 
 (define positional-filenames
   (command-line
@@ -216,6 +221,15 @@
    [("--vfs-tar-base64") spec
                          "Mount inline base64 tar into VFS as VFS=BASE64"
                          (add-vfs-tar-mount! 'base64 spec)]
+   [("--vfs-tgz-file") spec
+                       "Mount Node host gzip-compressed tar into VFS as VFS=SOURCE"
+                       (add-vfs-tar-mount! 'file spec #:compression 'gzip)]
+   [("--vfs-tgz-url") spec
+                      "Mount gzip-compressed tar URL into VFS as VFS=SOURCE"
+                      (add-vfs-tar-mount! 'url spec #:compression 'gzip)]
+   [("--vfs-tgz-base64") spec
+                         "Mount inline base64 gzip-compressed tar into VFS as VFS=BASE64"
+                         (add-vfs-tar-mount! 'base64 spec #:compression 'gzip)]
    
    #:args filenames
    filenames))

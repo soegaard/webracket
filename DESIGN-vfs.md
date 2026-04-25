@@ -273,6 +273,10 @@ is rejected. Local pax and GNU long-name extension records must have a following
 target entry. Malformed octal metadata fields, pax records, and pax numeric
 metadata are rejected.
 
+Gzip-compressed tar archives are decompressed on the JavaScript side before the
+same tar backend indexes them. Browser hosts use `DecompressionStream("gzip")`
+when it is available; Node hosts use `node:zlib`.
+
 For a read:
 
 ```js
@@ -581,7 +585,8 @@ paths against the generated host module URL too, but require the Node host.
 `--vfs-text` and `--vfs-base64` are embedded directly in the generated host.
 `--vfs-mkdir` creates an empty directory in the memory backend.
 `--vfs-tar-file`, `--vfs-tar-url`, and `--vfs-tar-base64` mount read-only tar
-archives at the target VFS path.
+archives at the target VFS path. `--vfs-tgz-file`, `--vfs-tgz-url`, and
+`--vfs-tgz-base64` do the same for gzip-compressed tar archives.
 CLI preload and mount targets must be absolute VFS paths, such as
 `/app/config.txt`. A preload target may not be equal to or inside an explicit
 mounted backend target.

@@ -2,6 +2,7 @@
 
 (require net/base64
          file/tar
+         file/gzip
          racket/file
          racket/path
          racket/string
@@ -31,6 +32,14 @@
 ;;   Build a valid tar archive with no entries.
 (define (make-empty-tar)
   (make-bytes 1024 0))
+
+;; gzip-bytes : bytes? -> bytes?
+;;   Compress bytes as gzip data for compressed tar mount tests.
+(define (gzip-bytes bs)
+  (define in (open-input-bytes bs))
+  (define out (open-output-bytes))
+  (gzip-through-ports in out #f 0)
+  (get-output-bytes out))
 
 ;; make-link-tar : -> bytes?
 ;;   Build a tar archive with an unsupported symbolic-link entry.
@@ -355,12 +364,30 @@
                    (string-append mount-path
                                   "="
                                   (bytes->string/utf-8 (base64-encode tar-bytes #""))))]
+          [(gzip-base64)
+           (values "--vfs-tgz-base64"
+                   (string-append mount-path
+                                  "="
+                                  (bytes->string/utf-8
+                                   (base64-encode (gzip-bytes tar-bytes) #""))))]
+          [(invalid-gzip-base64)
+           (values "--vfs-tgz-base64"
+                   (string-append mount-path
+                                  "="
+                                  (bytes->string/utf-8
+                                   (base64-encode tar-bytes #""))))]
           [(relative-file)
            (define tar-path (build-path dest-dir "assets.tar"))
            (call-with-output-file tar-path
              (lambda (out) (write-bytes tar-bytes out))
              #:exists 'truncate/replace)
            (values "--vfs-tar-file" (string-append mount-path "=assets.tar"))]
+          [(gzip-relative-file)
+           (define tar-path (build-path dest-dir "assets.tgz"))
+           (call-with-output-file tar-path
+             (lambda (out) (write-bytes (gzip-bytes tar-bytes) out))
+             #:exists 'truncate/replace)
+           (values "--vfs-tgz-file" (string-append mount-path "=assets.tgz"))]
           [else
            (error 'run-tar-program
                   (format "unknown tar source mode: ~a" source-mode))]))
@@ -525,6 +552,45 @@ PROGRAM
   (unless (zero? status)
     (error 'test-vfs-tar-file-mount
            (format "compile/run failed (~a): ~a" status output))))
+
+;; test-vfs-tgz-mount : -> void
+;;   Check inline gzip-compressed tar mounts.
+(define (test-vfs-tgz-mount)
+  (define program
+    #<<PROGRAM
+(unless (equal? (file->string "/assets/hello.txt") "hello from tar\n")
+  (error 'vfs-tgz-mount "gzip tar checks failed"))
+PROGRAM
+)
+  (define-values (status output)
+    (run-tar-program program #:source-mode 'gzip-base64))
+  (unless (zero? status)
+    (error 'test-vfs-tgz-mount
+           (format "compile/run failed (~a): ~a" status output))))
+
+;; test-vfs-tgz-file-mount : -> void
+;;   Check relative gzip-compressed tar file sources.
+(define (test-vfs-tgz-file-mount)
+  (define-values (status output)
+    (run-tar-program "(file->string \"/assets/hello.txt\")\n"
+                     #:source-mode 'gzip-relative-file))
+  (unless (zero? status)
+    (error 'test-vfs-tgz-file-mount
+           (format "compile/run failed (~a): ~a" status output))))
+
+;; test-vfs-tgz-mount-rejects-invalid-gzip : -> void
+;;   Check that invalid gzip-compressed tar mounts fail before tar indexing.
+(define (test-vfs-tgz-mount-rejects-invalid-gzip)
+  (define-values (status output)
+    (run-tar-program "(void)\n" #:source-mode 'invalid-gzip-base64 #:tar-bytes #"not gzip"))
+  (when (zero? status)
+    (error 'test-vfs-tgz-mount-rejects-invalid-gzip
+           "expected invalid-gzip tar mount to fail"))
+  (unless (or (regexp-match? #rx"incorrect header check" output)
+              (regexp-match? #rx"not in gzip format" output)
+              (regexp-match? #rx"DecompressionStream" output))
+    (error 'test-vfs-tgz-mount-rejects-invalid-gzip
+           (format "expected gzip decompression failure, got: ~a" output))))
 
 ;; test-vfs-tar-nested-mount : -> void
 ;;   Check that a nested tar mount is visible through its parent directory.
@@ -890,6 +956,9 @@ PROGRAM
     (test-vfs-tar-mount-rejects-file-then-directory . ,test-vfs-tar-mount-rejects-file-then-directory)
     (test-vfs-tar-mount-rejects-directory-then-file . ,test-vfs-tar-mount-rejects-directory-then-file)
     (test-vfs-tar-file-mount . ,test-vfs-tar-file-mount)
+    (test-vfs-tgz-mount . ,test-vfs-tgz-mount)
+    (test-vfs-tgz-file-mount . ,test-vfs-tgz-file-mount)
+    (test-vfs-tgz-mount-rejects-invalid-gzip . ,test-vfs-tgz-mount-rejects-invalid-gzip)
     (test-vfs-tar-nested-mount . ,test-vfs-tar-nested-mount)
     (test-vfs-tar-synthetic-parent-mount . ,test-vfs-tar-synthetic-parent-mount)
     (test-vfs-tar-root-mount-list . ,test-vfs-tar-root-mount-list)

@@ -974,6 +974,28 @@ async function vfsPreloadBytesAsync(entry) {
   return vfsPreloadBytes(entry);
 }
 
+async function decompressVFSGzip(bytes) {
+  if (typeof DecompressionStream !== 'undefined') {
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+  if (typeof process !== 'undefined' && process.versions && process.versions.node) {
+    const zlib = await import('node:zlib');
+    return new Uint8Array(await new Promise((resolve, reject) => {
+      zlib.gunzip(Buffer.from(bytes), (err, output) => err ? reject(err) : resolve(output));
+    }));
+  }
+  throw new Error('WebRacket VFS gzip tar mount requires DecompressionStream or Node zlib');
+}
+
+async function vfsPreloadTarBytesAsync(entry) {
+  const bytes = await vfsPreloadBytesAsync(entry);
+  if (!entry || typeof entry !== 'object' || !('compression' in entry)) return bytes;
+  const compression = String(entry.compression);
+  if (compression === 'gzip') return await decompressVFSGzip(bytes);
+  throw new Error(`WebRacket VFS tar compression is unsupported: ${compression}`);
+}
+
 function vfsMountPairs(entries) {
   if (!entries) return [];
   if (Array.isArray(entries)) {
@@ -993,7 +1015,7 @@ async function mountWebRacketVFSAsync(vfs, entries) {
     if (entry instanceof WebRacketMemoryBackend || entry instanceof WebRacketTarBackend) {
       vfs.mount(p, entry);
     } else if (entry && typeof entry === 'object' && 'tar' in entry) {
-      vfs.mount(p, new WebRacketTarBackend(await vfsPreloadBytesAsync(entry.tar)));
+      vfs.mount(p, new WebRacketTarBackend(await vfsPreloadTarBytesAsync(entry.tar)));
     } else {
       throw new Error('WebRacket VFS mount entry must be a backend or { tar: ... }');
     }
@@ -5003,6 +5025,7 @@ const wasmModule
      (define kind (hash-ref entry 'kind))
      (define source-kind (hash-ref entry 'source-kind))
      (define source (hash-ref entry 'source))
+     (define compression (hash-ref entry 'compression #f))
      (when (hash-has-key? seen-paths norm-path)
        (error 'vfs-mount-manifest-js
               (format "duplicate VFS mount target path: ~a" path)))
@@ -5013,7 +5036,14 @@ const wasmModule
      (unless (memq source-kind '(file url base64))
        (error 'vfs-mount-manifest-js
               (format "unknown VFS tar source kind: ~a" source-kind)))
-     (hasheq 'path path 'tar (hasheq source-kind source)))))
+     (when (and compression (not (eq? compression 'gzip)))
+       (error 'vfs-mount-manifest-js
+              (format "unknown VFS tar compression: ~a" compression)))
+     (define tar
+       (if compression
+           (hasheq source-kind source 'compression (symbol->string compression))
+           (hasheq source-kind source)))
+     (hasheq 'path path 'tar tar))))
 
 (define (normalize-vfs-manifest-path path)
   (regexp-replace #px"/+$" path ""))
@@ -5136,7 +5166,8 @@ const wasmModule
     (runtime #:out "out.wasm"
              #:host 'browser
              #:vfs-mounts
-             (list (hasheq 'path "/assets" 'kind 'tar 'source-kind 'url 'source "./assets.tar"))
+             (list (hasheq 'path "/assets" 'kind 'tar 'source-kind 'url 'source "./assets.tar")
+                   (hasheq 'path "/compressed" 'kind 'tar 'source-kind 'url 'source "./assets.tgz" 'compression 'gzip))
              #:vfs-preloads
              (list (hasheq 'path "/app/message.txt" 'kind 'url 'source "./message.txt")
                    (hasheq 'path "/app/config.txt" 'kind 'text 'source "mode=test")
@@ -5151,10 +5182,16 @@ const wasmModule
   (check-true
    (regexp-match? #rx"\"tar\":\\{\"url\":\"\\./assets.tar\"\\}" runtime/preload))
   (check-true
+   (regexp-match? #rx"\"compression\":\"gzip\"" runtime/preload))
+  (check-true
    (regexp-match? #rx"globalThis\\.WebRacketTarBackend = WebRacketTarBackend"
                   runtime/preload))
   (check-true
    (regexp-match? #rx"mountWebRacketVFSAsync" runtime/preload))
+  (check-true
+   (regexp-match? #rx"decompressVFSGzip" runtime/preload))
+  (check-true
+   (regexp-match? #rx"vfsPreloadTarBytesAsync" runtime/preload))
   (check-true
    (regexp-match? #rx"WebRacketVFSMounts" runtime/preload))
   (check-true
