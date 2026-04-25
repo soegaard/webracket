@@ -26,9 +26,23 @@
                #:format 'ustar)
   (get-output-bytes out))
 
+;; make-link-tar : -> bytes?
+;;   Build a tar archive with an unsupported symbolic-link entry.
+(define (make-link-tar)
+  (define out (open-output-bytes))
+  (tar->output (list (tar-entry 'link
+                                (build-path "hello-link.txt")
+                                (build-path "hello.txt")
+                                0
+                                (hash 'permissions #o777
+                                      'modify-seconds 123)))
+               out
+               #:format 'ustar)
+  (get-output-bytes out))
+
 ;; run-tar-program : string? -> (values exact-integer? string?)
 ;;   Compile and run a program against an inline tar-mounted VFS backend.
-(define (run-tar-program program)
+(define (run-tar-program program #:tar-bytes [tar-bytes (make-test-tar)])
   (define repo-root (simplify-path (build-path (current-directory) "..")))
   (define webracket-rkt (build-path repo-root "webracket.rkt"))
   (define source-dir (make-temporary-file "webracket-vfs-tar-src-~a" 'directory))
@@ -41,7 +55,7 @@
         (lambda (out) (display program out))
         #:exists 'truncate/replace)
       (define tar-base64
-        (bytes->string/utf-8 (base64-encode (make-test-tar) #"")))
+        (bytes->string/utf-8 (base64-encode tar-bytes #"")))
       (define stdout (open-output-string))
       (define stderr (open-output-string))
       (define status
@@ -101,11 +115,25 @@ PROGRAM
     (error 'test-vfs-tar-mount-read-only
            (format "expected VFS file write failure, got: ~a" output))))
 
+;; test-vfs-tar-mount-rejects-links : -> void
+;;   Check that unsupported tar link entries fail while mounting.
+(define (test-vfs-tar-mount-rejects-links)
+  (define-values (status output)
+    (run-tar-program "(void)\n" #:tar-bytes (make-link-tar)))
+  (when (zero? status)
+    (error 'test-vfs-tar-mount-rejects-links
+           "expected tar link mount to fail"))
+  (unless (regexp-match? #rx"VFS tar link entries are unsupported" output)
+    (error 'test-vfs-tar-mount-rejects-links
+           (format "expected unsupported tar link failure, got: ~a" output))))
+
 (module+ test
   (test-vfs-tar-mount)
-  (test-vfs-tar-mount-read-only))
+  (test-vfs-tar-mount-read-only)
+  (test-vfs-tar-mount-rejects-links))
 
 (module+ main
   (test-vfs-tar-mount)
   (test-vfs-tar-mount-read-only)
+  (test-vfs-tar-mount-rejects-links)
   (displayln "ok"))

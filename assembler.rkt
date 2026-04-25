@@ -521,6 +521,11 @@ class WebRacketTarBackend {
         offset = nextOffset;
         continue;
       }
+      if (typeflag === 'K' || typeflag === 'g') {
+        nextPaxHeaders = null;
+        offset = nextOffset;
+        continue;
+      }
       if (typeflag === 'x') {
         nextPaxHeaders = this.readPaxHeaders(dataStart, size);
         offset = nextOffset;
@@ -549,6 +554,10 @@ class WebRacketTarBackend {
         }
         this.addParentDirs(path, entryMtime);
         this.files.set(path, { start: dataStart, size, mtime: entryMtime, mode: mode || 0o666, identity: this.nextId++ });
+      } else if (typeflag === '1' || typeflag === '2') {
+        throw new Error(`VFS tar link entries are unsupported: ${path}`);
+      } else {
+        throw new Error(`VFS tar entry type is unsupported: ${typeflag || 'NUL'} for ${path}`);
       }
 
       offset = nextOffset;
