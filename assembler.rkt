@@ -535,7 +535,8 @@ class WebRacketTarBackend {
     let nextLongName = null;
     let nextPaxHeaders = null;
     let globalPaxHeaders = {};
-    for (let offset = 0; offset + 512 <= this.bytes.length;) {
+    let offset = 0;
+    for (; offset + 512 <= this.bytes.length;) {
       let empty = true;
       for (let i = 0; i < 512; i++) {
         if (this.bytes[offset + i] !== 0) {
@@ -608,6 +609,11 @@ class WebRacketTarBackend {
       }
 
       offset = nextOffset;
+    }
+    for (let i = offset; i < this.bytes.length; i++) {
+      if (this.bytes[i] !== 0) {
+        throw new Error('VFS tar trailing data is invalid');
+      }
     }
   }
 

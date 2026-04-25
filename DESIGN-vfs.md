@@ -268,8 +268,9 @@ archive format, so non-ASCII pax paths are accepted. Pax mtimes may be
 fractional and are truncated to seconds.
 Symbolic and hard links are rejected because the WebRacket VFS does not
 currently model filesystem links. Entries whose declared payload extends past
-the archive data are rejected as truncated. Malformed octal metadata fields,
-pax records, and pax numeric metadata are rejected.
+the archive data are rejected as truncated. Non-zero trailing partial-block data
+is rejected. Malformed octal metadata fields, pax records, and pax numeric
+metadata are rejected.
 
 For a read:
 

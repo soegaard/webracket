@@ -45,6 +45,11 @@
 (define (make-truncated-tar)
   (subbytes (make-test-tar) 0 1600))
 
+;; make-trailing-data-tar : -> bytes?
+;;   Build a tar archive with non-zero trailing partial-block data.
+(define (make-trailing-data-tar)
+  (bytes-append (make-test-tar) #"junk"))
+
 ;; retag-header-checksum! : bytes? -> void
 ;;   Recompute the first tar header checksum after a test mutation.
 (define (retag-header-checksum! bs)
@@ -444,6 +449,18 @@ PROGRAM
     (error 'test-vfs-tar-mount-rejects-truncated-entry
            (format "expected truncated tar failure, got: ~a" output))))
 
+;; test-vfs-tar-mount-rejects-trailing-data : -> void
+;;   Check that non-zero partial-block trailing data fails while mounting.
+(define (test-vfs-tar-mount-rejects-trailing-data)
+  (define-values (status output)
+    (run-tar-program "(void)\n" #:tar-bytes (make-trailing-data-tar)))
+  (when (zero? status)
+    (error 'test-vfs-tar-mount-rejects-trailing-data
+           "expected trailing-data tar mount to fail"))
+  (unless (regexp-match? #rx"VFS tar trailing data is invalid" output)
+    (error 'test-vfs-tar-mount-rejects-trailing-data
+           (format "expected trailing tar data failure, got: ~a" output))))
+
 ;; test-vfs-tar-mount-rejects-invalid-size : -> void
 ;;   Check that malformed octal size fields fail while mounting.
 (define (test-vfs-tar-mount-rejects-invalid-size)
@@ -504,6 +521,7 @@ PROGRAM
   (test-vfs-tar-mount-read-only)
   (test-vfs-tar-mount-rejects-links)
   (test-vfs-tar-mount-rejects-truncated-entry)
+  (test-vfs-tar-mount-rejects-trailing-data)
   (test-vfs-tar-mount-rejects-invalid-size)
   (test-vfs-tar-mount-rejects-invalid-pax)
   (test-vfs-tar-mount-rejects-invalid-pax-size)
@@ -521,6 +539,7 @@ PROGRAM
   (test-vfs-tar-mount-read-only)
   (test-vfs-tar-mount-rejects-links)
   (test-vfs-tar-mount-rejects-truncated-entry)
+  (test-vfs-tar-mount-rejects-trailing-data)
   (test-vfs-tar-mount-rejects-invalid-size)
   (test-vfs-tar-mount-rejects-invalid-pax)
   (test-vfs-tar-mount-rejects-invalid-pax-size)
