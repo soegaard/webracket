@@ -992,6 +992,12 @@ function vfsBytesLookLikeGzip(bytes) {
   return bytes.length >= 2 && bytes[0] === 0x1f && bytes[1] === 0x8b;
 }
 
+function vfsTarSourceNameLooksGzip(entry) {
+  if (!entry || typeof entry !== 'object') return false;
+  const source = 'file' in entry ? entry.file : ('url' in entry ? entry.url : null);
+  return typeof source === 'string' && /\.(tar\.gz|tgz)$/i.test(source);
+}
+
 async function decompressVFSGzipForVFS(bytes) {
   try {
     return await decompressVFSGzip(bytes);
@@ -1004,7 +1010,9 @@ async function decompressVFSGzipForVFS(bytes) {
 async function vfsPreloadTarBytesAsync(entry) {
   const bytes = await vfsPreloadBytesAsync(entry);
   if (!entry || typeof entry !== 'object' || !('compression' in entry)) {
-    return vfsBytesLookLikeGzip(bytes) ? await decompressVFSGzipForVFS(bytes) : bytes;
+    return (vfsTarSourceNameLooksGzip(entry) || vfsBytesLookLikeGzip(bytes))
+      ? await decompressVFSGzipForVFS(bytes)
+      : bytes;
   }
   const compression = String(entry.compression);
   if (compression === 'gzip') return await decompressVFSGzipForVFS(bytes);
@@ -5205,6 +5213,8 @@ const wasmModule
    (regexp-match? #rx"mountWebRacketVFSAsync" runtime/preload))
   (check-true
    (regexp-match? #rx"decompressVFSGzip" runtime/preload))
+  (check-true
+   (regexp-match? #rx"vfsTarSourceNameLooksGzip" runtime/preload))
   (check-true
    (regexp-match? #rx"vfsPreloadTarBytesAsync" runtime/preload))
   (check-true

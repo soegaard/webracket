@@ -4,7 +4,19 @@ import { createRequire } from "node:module";
 import process from "node:process";
 
 // Return the page-specific smoke probe for browser fixtures that need one.
-async function runPageProbe(page, testPage) {
+async function runPageProbe(page, testPage, consoleMessages) {
+  if (testPage === "test-vfs-tgz-browser.html") {
+    for (let i = 0; i < 30; i++) {
+      if (consoleMessages.some((text) => text.includes("hello from browser tgz"))) {
+        return;
+      }
+      await page.waitForTimeout(100);
+    }
+    throw new Error(
+      `Expected VFS tgz output not observed. Console: ${JSON.stringify(consoleMessages)}`
+    );
+  }
+
   if (testPage !== "test-console-bridge-smoke.html") {
     return;
   }
@@ -203,7 +215,7 @@ async function main() {
           throw pageErrors[0];
         }
 
-        await runPageProbe(page, testPage);
+        await runPageProbe(page, testPage, consoleMessages);
 
         const meaningful = consoleMessages.filter((text) => text.trim().length > 0);
         if (meaningful.length === 0) {
