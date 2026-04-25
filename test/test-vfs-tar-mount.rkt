@@ -26,32 +26,14 @@
                #:format 'ustar)
   (get-output-bytes out))
 
-;; test-vfs-tar-mount : -> void
+;; run-tar-program : string? -> (values exact-integer? string?)
 ;;   Compile and run a program against an inline tar-mounted VFS backend.
-(define (test-vfs-tar-mount)
+(define (run-tar-program program)
   (define repo-root (simplify-path (build-path (current-directory) "..")))
   (define webracket-rkt (build-path repo-root "webracket.rkt"))
   (define source-dir (make-temporary-file "webracket-vfs-tar-src-~a" 'directory))
   (define dest-dir (make-temporary-file "webracket-vfs-tar-out-~a" 'directory))
   (define source-path (build-path source-dir "tar-smoke.rkt"))
-  (define program
-    #<<PROGRAM
-(unless
- (and (equal? (file->string "/assets/hello.txt") "hello from tar\n")
-      (equal? (file->string "/assets/nested/leaf.txt") "leaf\n")
-      (equal? (map path->string (directory-list "/assets"))
-              '("hello.txt" "nested"))
-      (equal? (map path->string (directory-list "/"))
-              '("app" "assets" "tmp"))
-      (equal? (map path->string (filesystem-root-list))
-              '("/app/" "/assets/" "/tmp/"))
-      (directory-exists? "/assets/nested")
-      (equal? (file-or-directory-modify-seconds "/assets/hello.txt") 123)
-      (equal? (file-or-directory-permissions "/assets/hello.txt" 'bits) #o644))
- (error 'vfs-tar-mount "mounted tar checks failed"))
-PROGRAM
-)
-
   (dynamic-wind
     void
     (lambda ()
@@ -72,21 +54,58 @@ PROGRAM
            "--vfs-tar-base64" (string-append "/assets=" tar-base64)
            "-r"
            (path->string source-path))))
-      (define output
-        (string-append (get-output-string stdout)
-                       (get-output-string stderr)))
-      (unless (zero? status)
-        (error 'test-vfs-tar-mount
-               (format "compile/run failed (~a): ~a" status output))))
+      (values status
+              (string-append (get-output-string stdout)
+                             (get-output-string stderr))))
     (lambda ()
       (with-handlers ([exn:fail:filesystem? void])
         (delete-directory/files source-dir))
       (with-handlers ([exn:fail:filesystem? void])
         (delete-directory/files dest-dir)))))
 
+;; test-vfs-tar-mount : -> void
+;;   Check read/list/stat behavior for an inline tar-mounted VFS backend.
+(define (test-vfs-tar-mount)
+  (define program
+    #<<PROGRAM
+(unless
+ (and (equal? (file->string "/assets/hello.txt") "hello from tar\n")
+      (equal? (file->string "/assets/nested/leaf.txt") "leaf\n")
+      (equal? (map path->string (directory-list "/assets"))
+              '("hello.txt" "nested"))
+      (equal? (map path->string (directory-list "/"))
+              '("app" "assets" "tmp"))
+      (equal? (map path->string (filesystem-root-list))
+              '("/app/" "/assets/" "/tmp/"))
+      (directory-exists? "/assets/nested")
+      (equal? (file-or-directory-modify-seconds "/assets/hello.txt") 123)
+      (equal? (file-or-directory-permissions "/assets/hello.txt" 'bits) #o644))
+ (error 'vfs-tar-mount "mounted tar checks failed"))
+PROGRAM
+)
+  (define-values (status output) (run-tar-program program))
+  (unless (zero? status)
+    (error 'test-vfs-tar-mount
+           (format "compile/run failed (~a): ~a" status output))))
+
+;; test-vfs-tar-mount-read-only : -> void
+;;   Check that writes to tar-mounted files fail in the generated runtime.
+(define (test-vfs-tar-mount-read-only)
+  (define program
+    "(webracket-vfs-write-file \"/assets/hello.txt\" #\"overwrite\")\n")
+  (define-values (status output) (run-tar-program program))
+  (when (zero? status)
+    (error 'test-vfs-tar-mount-read-only
+           "expected write into tar mount to fail"))
+  (unless (regexp-match? #rx"VFS file write failed" output)
+    (error 'test-vfs-tar-mount-read-only
+           (format "expected VFS file write failure, got: ~a" output))))
+
 (module+ test
-  (test-vfs-tar-mount))
+  (test-vfs-tar-mount)
+  (test-vfs-tar-mount-read-only))
 
 (module+ main
   (test-vfs-tar-mount)
+  (test-vfs-tar-mount-read-only)
   (displayln "ok"))
