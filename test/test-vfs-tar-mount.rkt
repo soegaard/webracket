@@ -174,6 +174,14 @@
                 (tar-file-member "dir/file.txt" #"inside\n")
                 (make-bytes 1024 0)))
 
+;; make-duplicate-directory-tar : -> bytes?
+;;   Build a tar archive with duplicate directory entries.
+(define (make-duplicate-directory-tar)
+  (bytes-append (tar-directory-member "dup/")
+                (tar-directory-member "dup/")
+                (tar-file-member "dup/file.txt" #"inside\n")
+                (make-bytes 1024 0)))
+
 ;; pax-record : string? string? -> bytes?
 ;;   Build one pax record with the correct byte-count prefix.
 (define (pax-record key value)
@@ -434,6 +442,27 @@ PROGRAM
     (run-tar-program program #:tar-bytes (make-explicit-directory-tar)))
   (unless (zero? status)
     (error 'test-vfs-tar-explicit-directories
+           (format "compile/run failed (~a): ~a" status output))))
+
+;; test-vfs-tar-duplicate-directories : -> void
+;;   Check that duplicate tar directory entries are harmless.
+(define (test-vfs-tar-duplicate-directories)
+  (define program
+    #<<PROGRAM
+(unless
+ (and (directory-exists? "/assets/dup")
+      (equal? (map path->string (directory-list "/assets"))
+              '("dup"))
+      (equal? (map path->string (directory-list "/assets/dup"))
+              '("file.txt"))
+      (equal? (file->string "/assets/dup/file.txt") "inside\n"))
+ (error 'vfs-tar-mount "duplicate directory checks failed"))
+PROGRAM
+)
+  (define-values (status output)
+    (run-tar-program program #:tar-bytes (make-duplicate-directory-tar)))
+  (unless (zero? status)
+    (error 'test-vfs-tar-duplicate-directories
            (format "compile/run failed (~a): ~a" status output))))
 
 ;; test-vfs-tar-mount-rejects-file-then-directory : -> void
@@ -831,6 +860,7 @@ PROGRAM
   `((test-vfs-tar-mount . ,test-vfs-tar-mount)
     (test-vfs-tar-duplicate-file-last-wins . ,test-vfs-tar-duplicate-file-last-wins)
     (test-vfs-tar-explicit-directories . ,test-vfs-tar-explicit-directories)
+    (test-vfs-tar-duplicate-directories . ,test-vfs-tar-duplicate-directories)
     (test-vfs-tar-mount-rejects-file-then-directory . ,test-vfs-tar-mount-rejects-file-then-directory)
     (test-vfs-tar-mount-rejects-directory-then-file . ,test-vfs-tar-mount-rejects-directory-then-file)
     (test-vfs-tar-file-mount . ,test-vfs-tar-file-mount)
