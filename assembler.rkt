@@ -627,16 +627,26 @@ function hostJoinPath(base, name) {
 }
 
 function vfsPreloadPairs(entries) {
+  let pairs;
   if (!entries) return [];
   if (Array.isArray(entries)) {
-    return entries.map((entry) => {
+    pairs = entries.map((entry) => {
       if (Array.isArray(entry) && entry.length >= 2) return [entry[0], entry[1]];
       if (entry && typeof entry === 'object' && 'path' in entry) return [entry.path, entry];
       throw new Error('WebRacket VFS preload array entries need a path');
     });
+  } else if (typeof entries === 'object') {
+    pairs = Object.entries(entries);
+  } else {
+    throw new Error('WebRacket VFS preload manifest must be an array or object');
   }
-  if (typeof entries === 'object') return Object.entries(entries);
-  throw new Error('WebRacket VFS preload manifest must be an array or object');
+  const seen = new Set();
+  for (const [path] of pairs) {
+    const p = validateVFSPreloadPath(path);
+    if (seen.has(p)) throw new Error(`WebRacket VFS duplicate preload path: ${p}`);
+    seen.add(p);
+  }
+  return pairs;
 }
 
 function validateVFSPreloadPath(path) {
@@ -4699,6 +4709,8 @@ const wasmModule
                   runtime/preload))
   (check-true
    (regexp-match? #rx"WebRacket VFS preload path must be absolute" runtime/preload))
+  (check-true
+   (regexp-match? #rx"WebRacket VFS duplicate preload path" runtime/preload))
 
   (check-exn
    #rx"unknown VFS preload source kind"
