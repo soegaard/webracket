@@ -43706,6 +43706,9 @@
                      (local $parts     (ref eq))
                      (local $part      (ref eq))
                      (local $path      (ref $Path))
+                     (local $relative  (ref eq))
+                     (local $relative-parts (ref eq))
+                     (local $relative-node  (ref $Pair))
                      (local $reversed  (ref eq))
                      (local $with-seps (ref eq))
 
@@ -43715,6 +43718,12 @@
                                                 (call $bytes->path
                                                       (global.get $bytes:non-empty) ; ignored
                                                       (global.get $missing))))
+                     (local.set $relative (global.get $false))
+                     (local.set $relative-parts (global.get $null))
+                     (local.set $relative-node (ref.cast (ref $Pair)
+                                                         (call $cons
+                                                               (global.get $false)
+                                                               (global.get $null))))
                      ;; Extract fields
                      (local.set $fields (call $srcloc-unwrap
                                               (global.get $symbol:srcloc->string)
@@ -43736,9 +43745,23 @@
                               (else
                                (if (ref.test (ref $Path) (local.get $source))
                                    (then
-                                    ;; TODO: Support current-directory-for-user adjustments.
                                     (local.set $path (ref.cast (ref $Path) (local.get $source)))
-                                    (local.set $part (call $path->string (local.get $path))))
+                                    (local.set $relative
+                                               (call $find-relative-path
+                                                     (global.get $current-directory-for-user-path)
+                                                     (local.get $path)
+                                                     (global.get $false)
+                                                     (global.get $true)
+                                                     (global.get $true)))
+                                    (local.set $relative-parts (call $explode-path (local.get $relative)))
+                                    (if (i32.and
+                                         (ref.test (ref $Pair) (local.get $relative-parts))
+                                         (ref.eq (struct.get $Pair $a
+                                                             (ref.cast (ref $Pair)
+                                                                       (local.get $relative-parts)))
+                                                 (global.get $symbol:up)))
+                                        (then (local.set $relative (local.get $path))))
+                                    (local.set $part (call $path->string (local.get $relative))))
                                    (else
                                     (local.set $part (call $format/display (local.get $source)))))))
                           (local.set $parts (call $cons (local.get $part) (local.get $parts)))))

@@ -4240,22 +4240,33 @@
               (let () 
                 (let* ([loc   (make-srcloc 'src 3 0 10 5)]
                        [loc2  (srcloc "file" #f #f #f #f)]
-                       [loc3  (make-srcloc (bytes->path #"foo") 3 0 10 5)])
-                  (and (equal? (srcloc? loc)          #t)
-                       (equal? (srcloc? 42)           #f)
-                       (equal? (srcloc-source loc)    'src)
-                       (equal? (srcloc-line loc)      3)
-                       (equal? (srcloc-column loc)    0)
-                       (equal? (srcloc-position loc)  10)
-                       (equal? (srcloc-span loc)      5)
-                       (equal? (srcloc->string loc)   "src:3:0")
-                       (equal? (srcloc->string loc3)  "foo:3:0")
-                       (equal? (srcloc? loc2)         #t)
-                       (equal? (srcloc-line loc2)     #f)
-                       (equal? (srcloc-column loc2)   #f)
-                       (equal? (srcloc-position loc2) #f)
-                       (equal? (srcloc-span loc2)     #f)
-                       (equal? (srcloc->string loc2) "file")))))
+                       [loc3  (make-srcloc (bytes->path #"foo") 3 0 10 5)]
+                       [original-user (current-directory-for-user)])
+                  (current-directory-for-user "/tmp/")
+                  (let ([result
+                         (and (equal? (srcloc? loc)          #t)
+                              (equal? (srcloc? 42)           #f)
+                              (equal? (srcloc-source loc)    'src)
+                              (equal? (srcloc-line loc)      3)
+                              (equal? (srcloc-column loc)    0)
+                              (equal? (srcloc-position loc)  10)
+                              (equal? (srcloc-span loc)      5)
+                              (equal? (srcloc->string loc)   "src:3:0")
+                              (equal? (srcloc->string loc3)  "foo:3:0")
+                              (equal? (srcloc? loc2)         #t)
+                              (equal? (srcloc-line loc2)     #f)
+                              (equal? (srcloc-column loc2)   #f)
+                              (equal? (srcloc-position loc2) #f)
+                              (equal? (srcloc-span loc2)     #f)
+                              (equal? (srcloc->string loc2) "file")
+                              (equal? (srcloc->string
+                                       (make-srcloc (string->path "/tmp/project/main.rkt") 9 1 #f #f))
+                                      "project/main.rkt:9:1")
+                              (equal? (srcloc->string
+                                       (make-srcloc (string->path "/app/project/main.rkt") 9 1 #f #f))
+                                      "/app/project/main.rkt:9:1"))])
+                    (current-directory-for-user original-user)
+                    result))))
 
         (list "with-handlers"
                     (let* ([no-exn-result
