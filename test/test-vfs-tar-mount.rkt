@@ -251,6 +251,14 @@
                 (pad-tar-data name)
                 (make-bytes 1024 0)))
 
+;; make-dangling-long-link-tar : -> bytes?
+;;   Build a tar archive with a GNU long-link header but no target entry.
+(define (make-dangling-long-link-tar)
+  (define name #"long-link-target.txt\0")
+  (bytes-append (tar-header "././@LongLink" (bytes-length name) #\K)
+                (pad-tar-data name)
+                (make-bytes 1024 0)))
+
 ;; run-tar-program : string? [#:tar-bytes bytes?] [#:mount-path string?] [#:source-mode symbol?] -> (values exact-integer? string?)
 ;;   Compile and run a program against an inline tar-mounted VFS backend.
 (define (run-tar-program program
@@ -624,6 +632,18 @@ PROGRAM
     (error 'test-vfs-tar-mount-rejects-dangling-long-name
            (format "expected dangling tar extension failure, got: ~a" output))))
 
+;; test-vfs-tar-mount-rejects-dangling-long-link : -> void
+;;   Check that GNU long-link records must have a following target entry.
+(define (test-vfs-tar-mount-rejects-dangling-long-link)
+  (define-values (status output)
+    (run-tar-program "(void)\n" #:tar-bytes (make-dangling-long-link-tar)))
+  (when (zero? status)
+    (error 'test-vfs-tar-mount-rejects-dangling-long-link
+           "expected dangling-long-link tar mount to fail"))
+  (unless (regexp-match? #rx"VFS tar extension entry has no target" output)
+    (error 'test-vfs-tar-mount-rejects-dangling-long-link
+           (format "expected dangling tar extension failure, got: ~a" output))))
+
 ;; vfs-tar-tests : (listof (cons/c symbol? (-> void?)))
 ;;   Generated-runtime tar tests; each case uses its own temporary directories.
 (define vfs-tar-tests
@@ -646,7 +666,8 @@ PROGRAM
     (test-vfs-tar-mount-rejects-invalid-pax-size . ,test-vfs-tar-mount-rejects-invalid-pax-size)
     (test-vfs-tar-mount-rejects-invalid-pax-mtime . ,test-vfs-tar-mount-rejects-invalid-pax-mtime)
     (test-vfs-tar-mount-rejects-dangling-pax . ,test-vfs-tar-mount-rejects-dangling-pax)
-    (test-vfs-tar-mount-rejects-dangling-long-name . ,test-vfs-tar-mount-rejects-dangling-long-name)))
+    (test-vfs-tar-mount-rejects-dangling-long-name . ,test-vfs-tar-mount-rejects-dangling-long-name)
+    (test-vfs-tar-mount-rejects-dangling-long-link . ,test-vfs-tar-mount-rejects-dangling-long-link)))
 
 ;; vfs-tar-test-worker-count : -> exact-positive-integer?
 ;;   Read the generated-runtime tar test worker count from the environment.

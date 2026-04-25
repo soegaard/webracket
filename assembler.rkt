@@ -533,6 +533,7 @@ class WebRacketTarBackend {
 
   parse() {
     let nextLongName = null;
+    let nextLongLink = false;
     let nextPaxHeaders = null;
     let globalPaxHeaders = {};
     let offset = 0;
@@ -568,6 +569,7 @@ class WebRacketTarBackend {
         continue;
       }
       if (typeflag === 'K') {
+        nextLongLink = true;
         offset = nextOffset;
         continue;
       }
@@ -585,6 +587,7 @@ class WebRacketTarBackend {
       const entryMtime =
         this.readPaxMtime(nextPaxHeaders) ?? this.readPaxMtime(globalPaxHeaders) ?? mtime;
       nextLongName = null;
+      nextLongLink = false;
       nextPaxHeaders = null;
       const path = this.archivePath(entryPath);
 
@@ -610,7 +613,7 @@ class WebRacketTarBackend {
 
       offset = nextOffset;
     }
-    if (nextLongName !== null || nextPaxHeaders !== null) {
+    if (nextLongName !== null || nextLongLink || nextPaxHeaders !== null) {
       throw new Error('VFS tar extension entry has no target');
     }
     for (let i = offset; i < this.bytes.length; i++) {
