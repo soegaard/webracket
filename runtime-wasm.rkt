@@ -47822,6 +47822,60 @@
                                  (global.get $symbol:file->string)
                                  (local.get $path-raw))))
 
+               ;; file->lines : path-string? [(or/c 'binary 'text)] [read-line-mode?] -> (listof string?)
+               ;;   Keywordless form of Racket's #:mode and #:line-mode options; default line mode = 'any.
+               (func $file->lines (type $Prim13)
+                     (param $path-raw      (ref eq)) ;; path-string?
+                     (param $mode-raw      (ref eq)) ;; optional (or/c 'binary 'text), default = 'binary
+                     (param $line-mode-raw (ref eq)) ;; optional read-line-mode?, default = 'any
+                     (result               (ref eq))
+
+                     (local $mode      (ref eq))
+                     (local $line-mode (ref eq))
+                     (local $port      (ref eq))
+                     (local $line      (ref eq))
+                     (local $acc       (ref eq))
+
+                     (local.set $mode
+                                (if (result (ref eq))
+                                    (ref.eq (local.get $mode-raw) (global.get $missing))
+                                    (then (global.get $symbol:binary))
+                                    (else (local.get $mode-raw))))
+                     (if (i32.eqz
+                          (i32.or (ref.eq (local.get $mode) (global.get $symbol:binary))
+                                  (ref.eq (local.get $mode) (global.get $symbol:text))))
+                         (then (call $raise-argument-error1
+                                     (global.get $symbol:file->lines)
+                                     (global.get $string:input-file-mode-flag)
+                                     (local.get $mode-raw))
+                               (unreachable)))
+                     (local.set $line-mode
+                                (if (result (ref eq))
+                                    (ref.eq (local.get $line-mode-raw) (global.get $missing))
+                                    (then (global.get $symbol:any))
+                                    (else (local.get $line-mode-raw))))
+                     (local.set $port
+                                (call $open-input-file
+                                      (local.get $path-raw)
+                                      (local.get $mode)
+                                      (global.get $missing)))
+                     (local.set $acc (global.get $null))
+                     (block $done
+                            (loop $loop
+                                  (local.set $line
+                                             (call $read-line
+                                                   (local.get $port)
+                                                   (local.get $line-mode)))
+                                  (br_if $done
+                                         (ref.eq (local.get $line) (global.get $eof)))
+                                  (local.set $acc
+                                             (call $cons
+                                                   (local.get $line)
+                                                   (local.get $acc)))
+                                  (br $loop)))
+                     (drop (call $close-input-port (local.get $port)))
+                     (call $reverse (local.get $acc)))
+
                (func $webracket-vfs-write-file (type $Prim2)
                      (param $path-raw  (ref eq)) ;; path-string?
                      (param $bytes-raw (ref eq)) ;; bytes?

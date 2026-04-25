@@ -1116,6 +1116,9 @@
        file->string)
      'optional 1 2)
     (make-inline-specs
+     '(file->lines)
+     'optional 1 3)
+    (make-inline-specs
      '(open-input-file)
      'optional 1 3)
     (make-inline-specs
@@ -2097,6 +2100,7 @@
   file-or-directory-identity
   file->bytes
   file->string
+  file->lines
   open-input-file
   open-output-file
   call-with-input-file

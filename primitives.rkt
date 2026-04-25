@@ -1065,6 +1065,7 @@
  file-or-directory-identity
  file->bytes
  file->string
+ file->lines
  open-input-file
  open-output-file
  call-with-input-file
@@ -1852,6 +1853,12 @@
   (case-lambda
     [(path) (error 'file->string "only available in compiled WebRacket")]
     [(path mode) (error 'file->string "only available in compiled WebRacket")]))
+
+(define file->lines
+  (case-lambda
+    [(path) (error 'file->lines "only available in compiled WebRacket")]
+    [(path mode) (error 'file->lines "only available in compiled WebRacket")]
+    [(path mode line-mode) (error 'file->lines "only available in compiled WebRacket")]))
 
 (define (delete-file path)
   (error 'delete-file "only available in compiled WebRacket"))

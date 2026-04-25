@@ -5613,6 +5613,21 @@
                                           (lambda (_ex) #t)])
                            (file->string "/app/data/missing.txt")
                            #f)))
+              (list "file->lines"
+                    (begin
+                      (webracket-vfs-write-file "/app/data/lines.txt" #"a\nb\n")
+                      (webracket-vfs-write-file "/app/data/return-lines.txt" #"x\ry")
+                      (and (equal? (file->lines "/app/data/lines.txt") '("a" "b"))
+                           (equal? (file->lines "/app/data/lines.txt" 'text) '("a" "b"))
+                           (equal? (file->lines "/app/data/return-lines.txt" 'binary 'return)
+                                   '("x" "y"))
+                           (with-handlers ([exn:fail:contract? (lambda (_ex) #t)])
+                             (file->lines "/app/data/lines.txt" 'update)
+                             #f)
+                           (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                            (lambda (_ex) #t)])
+                             (file->lines "/app/data/missing-lines.txt")
+                             #f))))
               (list "open-input-file"
                     (let ([port (open-input-file "/app/data/notes.txt")])
                       (and (input-port? port)
