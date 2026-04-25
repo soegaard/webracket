@@ -12,6 +12,8 @@
 
 @include-section["command-line-tool.scrbl"]
 
+@include-section["files-and-vfs.scrbl"]
+
 @include-section["webracket-for-racket-programmers.scrbl"]
 
 @include-section["console-bridge.scrbl"]

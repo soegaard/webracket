@@ -99,6 +99,10 @@
     caddr
     cadr
     call-with-exception-handler
+    call-with-input-file
+    call-with-input-file*
+    call-with-output-file
+    call-with-output-file*
     call-with-output-string
     call-with-values
     car
@@ -162,6 +166,8 @@
     check-string
     cons
     cons?
+    copy-file
+    copy-directory/files
     correlated->datum
     correlated-column
     correlated-e
@@ -182,6 +188,13 @@
     datum->correlated
     datum->syntax
     degrees->radians
+    delete-directory
+    delete-directory/files
+    delete-file
+    directory-exists?
+    directory-list
+    display-lines-to-file
+    display-to-file
     double-flonum?
     drop
     drop-common-prefix
@@ -249,6 +262,17 @@
     false?
     fasl->s-exp
     fifteenth
+    file->bytes
+    file->bytes-lines
+    file->lines
+    file->string
+    file-exists?
+    file-or-directory-identity
+    file-or-directory-modify-seconds
+    file-or-directory-permissions
+    file-or-directory-stat
+    file-or-directory-type
+    file-size
     fifth
     filter
     filter-map
@@ -445,6 +469,13 @@
     make-input-port
     make-instance
     make-list
+    make-directory
+    make-directory*
+    make-parent-directory*
+    make-temporary-directory
+    make-temporary-directory*
+    make-temporary-file
+    make-temporary-file*
     make-srcloc
     make-string
     make-struct-field-accessor
@@ -504,8 +535,10 @@
     object-name
     odd?
     open-input-bytes
+    open-input-file
     open-input-string
     open-output-bytes
+    open-output-file
     open-output-string
     order-of-magnitude
     ormap
@@ -575,6 +608,7 @@
     remv*
     remw
     remw*
+    rename-file-or-directory
     rest
     reverse
     round
@@ -813,6 +847,9 @@
     vector?
     void
     void?
+    webracket-vfs-write-file
+    with-input-from-file
+    with-output-to-file
     write-byte
     write-bytes
     write-char
@@ -912,6 +949,10 @@
   caddr
   cadr
   call-with-exception-handler
+  call-with-input-file
+  call-with-input-file*
+  call-with-output-file
+  call-with-output-file*
   call-with-output-string
   call-with-values
   car
@@ -975,6 +1016,8 @@
   check-string
   cons
   cons?
+  copy-file
+  copy-directory/files
   correlated->datum
   correlated-column
   correlated-e
@@ -995,6 +1038,13 @@
   datum->correlated
   datum->syntax
   degrees->radians
+  delete-directory
+  delete-directory/files
+  delete-file
+  directory-exists?
+  directory-list
+  display-lines-to-file
+  display-to-file
   double-flonum?
   drop
   drop-common-prefix
@@ -1062,6 +1112,17 @@
   false?
   fasl->s-exp
   fifteenth
+  file->bytes
+  file->bytes-lines
+  file->lines
+  file->string
+  file-exists?
+  file-or-directory-identity
+  file-or-directory-modify-seconds
+  file-or-directory-permissions
+  file-or-directory-stat
+  file-or-directory-type
+  file-size
   fifth
   filter
   filter-map
@@ -1258,6 +1319,13 @@
   make-input-port
   make-instance
   make-list
+  make-directory
+  make-directory*
+  make-parent-directory*
+  make-temporary-directory
+  make-temporary-directory*
+  make-temporary-file
+  make-temporary-file*
   make-srcloc
   make-string
   make-struct-field-accessor
@@ -1317,8 +1385,10 @@
   object-name
   odd?
   open-input-bytes
+  open-input-file
   open-input-string
   open-output-bytes
+  open-output-file
   open-output-string
   order-of-magnitude
   ormap
@@ -1388,6 +1458,7 @@
   remv*
   remw
   remw*
+  rename-file-or-directory
   rest
   reverse
   round
@@ -1626,6 +1697,9 @@
   vector?
   void
   void?
+  webracket-vfs-write-file
+  with-input-from-file
+  with-output-to-file
   write-byte
   write-bytes
   write-char
@@ -1723,6 +1797,10 @@
 (define caddr any/c)
 (define cadr any/c)
 (define call-with-exception-handler any/c)
+(define call-with-input-file any/c)
+(define call-with-input-file* any/c)
+(define call-with-output-file any/c)
+(define call-with-output-file* any/c)
 (define call-with-output-string any/c)
 (define call-with-values any/c)
 (define car any/c)
@@ -1786,6 +1864,8 @@
 (define check-string any/c)
 (define cons any/c)
 (define cons? any/c)
+(define copy-file any/c)
+(define copy-directory/files any/c)
 (define correlated->datum any/c)
 (define correlated-column any/c)
 (define correlated-e any/c)
@@ -1806,6 +1886,13 @@
 (define datum->correlated any/c)
 (define datum->syntax any/c)
 (define degrees->radians any/c)
+(define delete-directory any/c)
+(define delete-directory/files any/c)
+(define delete-file any/c)
+(define directory-exists? any/c)
+(define directory-list any/c)
+(define display-lines-to-file any/c)
+(define display-to-file any/c)
 (define double-flonum? any/c)
 (define drop any/c)
 (define drop-common-prefix any/c)
@@ -1873,6 +1960,17 @@
 (define false? any/c)
 (define fasl->s-exp any/c)
 (define fifteenth any/c)
+(define file->bytes any/c)
+(define file->bytes-lines any/c)
+(define file->lines any/c)
+(define file->string any/c)
+(define file-exists? any/c)
+(define file-or-directory-identity any/c)
+(define file-or-directory-modify-seconds any/c)
+(define file-or-directory-permissions any/c)
+(define file-or-directory-stat any/c)
+(define file-or-directory-type any/c)
+(define file-size any/c)
 (define fifth any/c)
 (define filter any/c)
 (define filter-map any/c)
@@ -2069,6 +2167,13 @@
 (define make-input-port any/c)
 (define make-instance any/c)
 (define make-list any/c)
+(define make-directory any/c)
+(define make-directory* any/c)
+(define make-parent-directory* any/c)
+(define make-temporary-directory any/c)
+(define make-temporary-directory* any/c)
+(define make-temporary-file any/c)
+(define make-temporary-file* any/c)
 (define make-srcloc any/c)
 (define make-string any/c)
 (define make-struct-field-accessor any/c)
@@ -2128,8 +2233,10 @@
 (define object-name any/c)
 (define odd? any/c)
 (define open-input-bytes any/c)
+(define open-input-file any/c)
 (define open-input-string any/c)
 (define open-output-bytes any/c)
+(define open-output-file any/c)
 (define open-output-string any/c)
 (define order-of-magnitude any/c)
 (define ormap any/c)
@@ -2199,6 +2306,7 @@
 (define remv* any/c)
 (define remw any/c)
 (define remw* any/c)
+(define rename-file-or-directory any/c)
 (define rest any/c)
 (define reverse any/c)
 (define round any/c)
@@ -2437,6 +2545,9 @@
 (define vector? any/c)
 (define void any/c)
 (define void? any/c)
+(define webracket-vfs-write-file any/c)
+(define with-input-from-file any/c)
+(define with-output-to-file any/c)
 (define write-byte any/c)
 (define write-bytes any/c)
 (define write-char any/c)

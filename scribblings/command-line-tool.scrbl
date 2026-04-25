@@ -50,7 +50,7 @@ racket webracket.rkt --list-primitives [--ffi <file> ...]
 Minimal compile:
 
 @shellblock{
-racket webracket.rkt program.rkt
+racket webracket.rkt --node program.rkt
 }
 
 Compile and run immediately in Node mode:
@@ -64,19 +64,19 @@ racket webracket.rkt --node --run program.rkt
 Compile with default output names:
 
 @shellblock{
-racket webracket.rkt program.rkt
+racket webracket.rkt --node program.rkt
 }
 
 Choose explicit output files:
 
 @shellblock{
-racket webracket.rkt --wat-file out/program.wat --wasm-file out/program.wasm --host-file out/program.js program.rkt
+racket webracket.rkt --node --wat-file out/program.wat --wasm-file out/program.wasm --host-file out/program.js program.rkt
 }
 
 Choose a destination directory for the default outputs:
 
 @shellblock{
-racket webracket.rkt --dest out program.rkt
+racket webracket.rkt --node --dest out program.rkt
 }
 
 Explicit `--wat-file`, `--wasm-file`, and `--host-file` options still take
@@ -97,31 +97,31 @@ racket webracket.rkt --browser --console-bridge program.rkt
 Compile without the standard library:
 
 @shellblock{
-racket webracket.rkt --no-stdlib program.rkt
+racket webracket.rkt --node --no-stdlib program.rkt
 }
 
 Dump compiler passes (limit to 25 dumps):
 
 @shellblock{
-racket webracket.rkt --dump-passes tmp/passes --dump-passes-limit 25 program.rkt
+racket webracket.rkt --node --dump-passes tmp/passes --dump-passes-limit 25 program.rkt
 }
 
 Print timing information:
 
 @shellblock{
-racket webracket.rkt --timings program.rkt
+racket webracket.rkt --node --timings program.rkt
 }
 
 Write pretty-formatted WAT (default is non-pretty):
 
 @shellblock{
-racket webracket.rkt --pretty-wat program.rkt
+racket webracket.rkt --node --pretty-wat program.rkt
 }
 
 Include one or more @tt{.ffi} files:
 
 @shellblock{
-racket webracket.rkt --ffi dom --ffi standard program.rkt
+racket webracket.rkt --node --ffi dom --ffi standard program.rkt
 }
 
 Print all known primitives:
@@ -222,19 +222,37 @@ FFI and linker flags:
   @item{@tt{-l} / @tt{--link-flags <flag>}: Accepted but currently ignored by the driver.}
 ]
 
+Virtual filesystem options:
+
+@itemlist[
+  @item{@tt{--vfs-file VFS=PATH}: Preload a Node host file into a VFS file.}
+  @item{@tt{--vfs-url VFS=URL}: Fetch a URL into a VFS file.}
+  @item{@tt{--vfs-text VFS=TEXT}: Embed inline text as a VFS file.}
+  @item{@tt{--vfs-base64 VFS=BASE64}: Embed small inline base64 bytes as a VFS file.}
+  @item{@tt{--vfs-mkdir VFS}: Create an empty VFS directory.}
+  @item{@tt{--vfs-dir VFS=PATH}: Preload a Node host directory into a VFS directory.}
+  @item{@tt{--vfs-tar-file VFS=PATH}: Mount a Node host tar archive as a read-only VFS subtree.}
+  @item{@tt{--vfs-tar-url VFS=URL}: Mount a tar archive fetched by URL as a read-only VFS subtree.}
+]
+
+Sources ending in @tt{.tar.gz} or @tt{.tgz} are treated as gzip-compressed tar
+archives. For a tutorial and compatibility notes, see @secref["files-and-vfs"].
+
 @section{Command-Line Examples}
 
 @itemlist[
-  @item{@shell-code{racket webracket.rkt program.rkt}}
+  @item{@shell-code{racket webracket.rkt --node program.rkt}}
   @item{@shell-code{racket webracket.rkt --list-primitives}}
   @item{@shell-code{racket webracket.rkt --list-primitives --ffi dom --ffi standard}}
   @item{@shell-code{racket webracket.rkt --node --run program.rkt}}
   @item{@shell-code{racket webracket.rkt --browser program.rkt}}
-  @item{@shell-code{racket webracket.rkt --wat-file out/program.wat --wasm-file out/program.wasm --host-file out/program.js program.rkt}}
-  @item{@shell-code{racket webracket.rkt --dest out program.rkt}}
-  @item{@shell-code{racket webracket.rkt --no-stdlib program.rkt}}
-  @item{@shell-code{racket webracket.rkt --dump-passes tmp/passes --dump-passes-limit 25 program.rkt}}
-  @item{@shell-code{racket webracket.rkt --timings program.rkt}}
-  @item{@shell-code{racket webracket.rkt --pretty-wat program.rkt}}
-  @item{@shell-code{racket webracket.rkt --ffi dom --ffi standard program.rkt}}
+  @item{@shell-code{racket webracket.rkt --node --wat-file out/program.wat --wasm-file out/program.wasm --host-file out/program.js program.rkt}}
+  @item{@shell-code{racket webracket.rkt --node --dest out program.rkt}}
+  @item{@shell-code{racket webracket.rkt --node --no-stdlib program.rkt}}
+  @item{@shell-code{racket webracket.rkt --node --dump-passes tmp/passes --dump-passes-limit 25 program.rkt}}
+  @item{@shell-code{racket webracket.rkt --node --timings program.rkt}}
+  @item{@shell-code{racket webracket.rkt --node --pretty-wat program.rkt}}
+  @item{@shell-code{racket webracket.rkt --node --ffi dom --ffi standard program.rkt}}
+  @item{@shell-code{racket webracket.rkt --node --vfs-text /app/message.txt=hello program.rkt}}
+  @item{@shell-code{racket webracket.rkt --browser --vfs-tar-url /assets=./assets.tgz program.rkt}}
 ]
