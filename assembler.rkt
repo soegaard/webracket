@@ -454,6 +454,23 @@ class WebRacketTarBackend {
     return Number.isFinite(n) ? n : fallback;
   }
 
+  readPaxHeaders(start, size) {
+    const text = new TextDecoder().decode(this.bytes.slice(start, start + size));
+    const headers = {};
+    let i = 0;
+    while (i < text.length) {
+      const space = text.indexOf(' ', i);
+      if (space < 0) break;
+      const len = parseInt(text.slice(i, space), 10);
+      if (!Number.isFinite(len) || len <= 0) break;
+      const record = text.slice(space + 1, i + len - 1);
+      const eq = record.indexOf('=');
+      if (eq >= 0) headers[record.slice(0, eq)] = record.slice(eq + 1);
+      i += len;
+    }
+    return headers;
+  }
+
   validateChecksum(offset) {
     const expected = this.readOctal(offset + 148, 8, -1);
     let actual = 0;
@@ -478,6 +495,7 @@ class WebRacketTarBackend {
 
   parse() {
     let nextLongName = null;
+    let nextPaxHeaders = null;
     for (let offset = 0; offset + 512 <= this.bytes.length;) {
       let empty = true;
       for (let i = 0; i < 512; i++) {
@@ -503,8 +521,14 @@ class WebRacketTarBackend {
         offset = nextOffset;
         continue;
       }
-      const entryPath = nextLongName || rawPath;
+      if (typeflag === 'x') {
+        nextPaxHeaders = this.readPaxHeaders(dataStart, size);
+        offset = nextOffset;
+        continue;
+      }
+      const entryPath = (nextPaxHeaders && nextPaxHeaders.path) || nextLongName || rawPath;
       nextLongName = null;
+      nextPaxHeaders = null;
       const path = this.archivePath(entryPath);
 
       if (typeflag === '5' || entryPath.endsWith('/')) {
@@ -4950,6 +4974,8 @@ const wasmModule
    (regexp-match? #rx"VFS tar file/directory conflict" runtime/preload))
   (check-true
    (regexp-match? #rx"nextLongName" runtime/preload))
+  (check-true
+   (regexp-match? #rx"readPaxHeaders" runtime/preload))
 
   (check-exn
    #rx"unknown VFS preload source kind"
