@@ -41,12 +41,20 @@
 
 (define stdlib?         (make-parameter #t))   ; include standard library by default
 
+(define (validate-vfs-preload-path! who path)
+  (when (string=? path "")
+    (error who "VFS preload target path is empty"))
+  (unless (regexp-match? #px"^/" path)
+    (error who (format "VFS preload target path must be absolute, got: ~a" path)))
+  (when (regexp-match? #rx#"\0" path)
+    (error who (format "VFS preload target path contains NUL: ~a" path))))
+
 (define (parse-vfs-preload who kind spec)
   (match (regexp-match #px"^([^=]+)=(.*)$" spec)
     [(list _ path source)
-     (when (string=? path "")
-       (error who (format "VFS preload target path is empty: ~a" spec)))
-     (when (string=? source "")
+     (validate-vfs-preload-path! who path)
+     (when (and (string=? source "")
+                (not (memq kind '(text base64))))
        (error who (format "VFS preload source is empty: ~a" spec)))
      (hasheq 'path path 'kind kind 'source source)]
     [_ (error who (format "expected VFS=SOURCE, got: ~a" spec))]))
@@ -57,8 +65,7 @@
          (vfs-preloads))))
 
 (define (add-vfs-mkdir! path)
-  (when (string=? path "")
-    (error 'webracket "VFS preload directory path is empty"))
+  (validate-vfs-preload-path! 'webracket path)
   (vfs-preloads
    (cons (hasheq 'path path 'kind 'directory 'source #t)
          (vfs-preloads))))

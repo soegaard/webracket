@@ -512,6 +512,7 @@ and works in browser hosts. `--vfs-file` and `--vfs-dir` resolve relative
 paths against the generated host module URL too, but require the Node host.
 `--vfs-text` and `--vfs-base64` are embedded directly in the generated host.
 `--vfs-mkdir` creates an empty directory in the memory backend.
+CLI preload targets must be absolute VFS paths, such as `/app/config.txt`.
 
 Manifest entries may be:
 
