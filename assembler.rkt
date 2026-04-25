@@ -516,6 +516,9 @@ class WebRacketTarBackend {
       const typeflag = String.fromCharCode(this.bytes[offset + 156] || 0);
       const dataStart = offset + 512;
       const nextOffset = dataStart + Math.ceil(size / 512) * 512;
+      if (nextOffset > this.bytes.length) {
+        throw new Error('VFS tar entry data is truncated');
+      }
       if (typeflag === 'L') {
         nextLongName = this.readString(dataStart, size);
         offset = nextOffset;

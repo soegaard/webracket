@@ -40,6 +40,11 @@
                #:format 'ustar)
   (get-output-bytes out))
 
+;; make-truncated-tar : -> bytes?
+;;   Build a tar archive whose second file entry is cut short.
+(define (make-truncated-tar)
+  (subbytes (make-test-tar) 0 1600))
+
 ;; run-tar-program : string? [#:tar-bytes bytes?] [#:source-mode symbol?] -> (values exact-integer? string?)
 ;;   Compile and run a program against an inline tar-mounted VFS backend.
 (define (run-tar-program program
@@ -152,15 +157,29 @@ PROGRAM
     (error 'test-vfs-tar-mount-rejects-links
            (format "expected unsupported tar link failure, got: ~a" output))))
 
+;; test-vfs-tar-mount-rejects-truncated-entry : -> void
+;;   Check that tar entries whose payload extends past the archive fail.
+(define (test-vfs-tar-mount-rejects-truncated-entry)
+  (define-values (status output)
+    (run-tar-program "(void)\n" #:tar-bytes (make-truncated-tar)))
+  (when (zero? status)
+    (error 'test-vfs-tar-mount-rejects-truncated-entry
+           "expected truncated tar mount to fail"))
+  (unless (regexp-match? #rx"VFS tar entry data is truncated" output)
+    (error 'test-vfs-tar-mount-rejects-truncated-entry
+           (format "expected truncated tar failure, got: ~a" output))))
+
 (module+ test
   (test-vfs-tar-mount)
   (test-vfs-tar-file-mount)
   (test-vfs-tar-mount-read-only)
-  (test-vfs-tar-mount-rejects-links))
+  (test-vfs-tar-mount-rejects-links)
+  (test-vfs-tar-mount-rejects-truncated-entry))
 
 (module+ main
   (test-vfs-tar-mount)
   (test-vfs-tar-file-mount)
   (test-vfs-tar-mount-read-only)
   (test-vfs-tar-mount-rejects-links)
+  (test-vfs-tar-mount-rejects-truncated-entry)
   (displayln "ok"))
