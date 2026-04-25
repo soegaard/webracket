@@ -698,6 +698,9 @@ Important test groups:
 - `port-next-location` after LF, CR, CRLF, tabs, and multibyte UTF-8
 
 For tar/blob backend tests, use a tiny archive mounted at `/assets` or `/pkg`.
+The generated-runtime tar tests run with bounded parallelism by default. Set
+`WEBRACKET_VFS_TAR_TEST_JOBS=1` when debugging order-sensitive failures or
+when a serial run is easier to inspect.
 
 ## Open Questions
 
