@@ -164,6 +164,17 @@
   (bytes-append (tar-file-member name #"bad\n")
                 (make-bytes 1024 0)))
 
+;; make-invalid-pax-path-tar : string? -> bytes?
+;;   Build a tar archive with an unsafe pax path override.
+(define (make-invalid-pax-path-tar name)
+  (define pax-bs (pax-record "path" name))
+  (define content #"bad\n")
+  (bytes-append (tar-header "PaxHeader" (bytes-length pax-bs) #\x)
+                (pad-tar-data pax-bs)
+                (tar-header "safe.txt" (bytes-length content) #\0)
+                (pad-tar-data content)
+                (make-bytes 1024 0)))
+
 ;; make-global-pax-mtime-tar : -> bytes?
 ;;   Build a tar archive with a global pax mtime default.
 (define (make-global-pax-mtime-tar)
@@ -602,6 +613,30 @@ PROGRAM
     (error 'test-vfs-tar-mount-rejects-parent-path
            (format "expected invalid tar path failure, got: ~a" output))))
 
+;; test-vfs-tar-mount-rejects-absolute-pax-path : -> void
+;;   Check that absolute pax path overrides fail while mounting.
+(define (test-vfs-tar-mount-rejects-absolute-pax-path)
+  (define-values (status output)
+    (run-tar-program "(void)\n" #:tar-bytes (make-invalid-pax-path-tar "/escape.txt")))
+  (when (zero? status)
+    (error 'test-vfs-tar-mount-rejects-absolute-pax-path
+           "expected absolute-pax-path tar mount to fail"))
+  (unless (regexp-match? #rx"VFS tar entry path is invalid" output)
+    (error 'test-vfs-tar-mount-rejects-absolute-pax-path
+           (format "expected invalid tar path failure, got: ~a" output))))
+
+;; test-vfs-tar-mount-rejects-parent-pax-path : -> void
+;;   Check that parent-directory pax path overrides fail while mounting.
+(define (test-vfs-tar-mount-rejects-parent-pax-path)
+  (define-values (status output)
+    (run-tar-program "(void)\n" #:tar-bytes (make-invalid-pax-path-tar "../escape.txt")))
+  (when (zero? status)
+    (error 'test-vfs-tar-mount-rejects-parent-pax-path
+           "expected parent-pax-path tar mount to fail"))
+  (unless (regexp-match? #rx"VFS tar entry path is invalid" output)
+    (error 'test-vfs-tar-mount-rejects-parent-pax-path
+           (format "expected invalid tar path failure, got: ~a" output))))
+
 ;; test-vfs-tar-mount-rejects-invalid-pax : -> void
 ;;   Check that malformed pax records fail while mounting.
 (define (test-vfs-tar-mount-rejects-invalid-pax)
@@ -694,6 +729,8 @@ PROGRAM
     (test-vfs-tar-mount-rejects-invalid-size . ,test-vfs-tar-mount-rejects-invalid-size)
     (test-vfs-tar-mount-rejects-absolute-path . ,test-vfs-tar-mount-rejects-absolute-path)
     (test-vfs-tar-mount-rejects-parent-path . ,test-vfs-tar-mount-rejects-parent-path)
+    (test-vfs-tar-mount-rejects-absolute-pax-path . ,test-vfs-tar-mount-rejects-absolute-pax-path)
+    (test-vfs-tar-mount-rejects-parent-pax-path . ,test-vfs-tar-mount-rejects-parent-pax-path)
     (test-vfs-tar-mount-rejects-invalid-pax . ,test-vfs-tar-mount-rejects-invalid-pax)
     (test-vfs-tar-mount-rejects-invalid-pax-size . ,test-vfs-tar-mount-rejects-invalid-pax-size)
     (test-vfs-tar-mount-rejects-invalid-pax-mtime . ,test-vfs-tar-mount-rejects-invalid-pax-mtime)
