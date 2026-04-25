@@ -481,6 +481,7 @@ globalThis.WebRacketVFSPreload = {
   "/app/data/blob.bin":    { base64: "QUJD" },
   "/app/data/from-host":    { file: "./host-input.dat" },
   "/app/data/from-url":     { url: "./asset.dat" },
+  "/app/assets":            { directory: "./assets" },
   "/app/images/":          { directory: true }
 };
 await import("./program.js");
@@ -505,7 +506,9 @@ array, or an object containing `text`, `bytes`, `base64`, `file`, or `url`.
 `file` entries are loaded with the Node runtime before WebRacket starts. `url`
 entries are fetched before WebRacket starts; relative URLs are resolved against
 the generated JavaScript module URL. Directory records use `{ directory: true }`
-or a path ending in `/`.
+or a path ending in `/` for an empty VFS directory. In the Node runtime,
+`{ directory: "./assets" }` recursively copies a host directory into the target
+VFS directory before WebRacket starts.
 
 Add small host imports for stat, read-file, and list-dir.
 

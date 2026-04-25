@@ -539,6 +539,10 @@ class WebRacketVFS {
   preload(entries) {
     preloadWebRacketVFS(this, entries);
   }
+
+  async preloadAsync(entries) {
+    await preloadWebRacketVFSAsync(this, entries);
+  }
 }
 
 const webracketVFS = new WebRacketVFS();
@@ -598,6 +602,15 @@ async function vfsPreloadBytesAsync(entry) {
   return vfsPreloadBytes(entry);
 }
 
+function vfsJoinPath(base, name) {
+  const b = String(base || '/').replace(/\/+$/, '') || '/';
+  return b === '/' ? `/${name}` : `${b}/${name}`;
+}
+
+function hostJoinPath(base, name) {
+  return `${String(base).replace(/\/+$/, '')}/${name}`;
+}
+
 function vfsPreloadPairs(entries) {
   if (!entries) return [];
   if (Array.isArray(entries)) {
@@ -627,6 +640,21 @@ async function preloadWebRacketVFSAsync(vfs, entries) {
     const p = String(path);
     if ((entry && entry.directory === true) || p.endsWith('/')) {
       vfs.mkdirp(p);
+    } else if (entry && typeof entry === 'object' && typeof entry.directory === 'string') {
+      if (typeof fs === 'undefined' || !fs.readdir || !fs.readFile) {
+        throw new Error('WebRacket VFS directory preload requires the Node runtime');
+      }
+      vfs.mkdirp(p);
+      const children = await fs.readdir(entry.directory, { withFileTypes: true });
+      for (const child of children) {
+        const childSource = hostJoinPath(entry.directory, child.name);
+        const childPath = vfsJoinPath(p, child.name);
+        if (child.isDirectory()) {
+          await preloadWebRacketVFSAsync(vfs, [[childPath, { directory: childSource }]]);
+        } else if (child.isFile()) {
+          vfs.writeFile(childPath, new Uint8Array(await fs.readFile(childSource)));
+        }
+      }
     } else {
       vfs.writeFile(p, await vfsPreloadBytesAsync(entry));
     }
