@@ -1,10 +1,22 @@
 #lang scribble/manual
 
 @(require scribble-tools
+          scribble/core
+          scribble/html-properties
           (for-label (lib "scribblings/primitives-labels.rkt" "webracket")))
 
 @(define (long-option name)
-   (litchar (string-append "--" name)))
+   (elem (tt "-") (tt "-") (tt name)))
+
+@(define api-table-row-style
+   (make-style #f
+               (list (attributes '((style . "display: block; padding-top: .22em; padding-bottom: .22em;"))))))
+
+@(define (api-cell content)
+   (elem #:style api-table-row-style content))
+
+@(define (api-row area examples status)
+   (list (api-cell area) (api-cell examples) (api-cell status)))
 
 @title[#:tag "files-and-vfs"]{Files and the Virtual Filesystem}
 
@@ -542,36 +554,36 @@ for the implemented primitive list.
  #:style 'boxed
  (list
   (list @bold{Area} @bold{Examples} @bold{Status})
-  (list "Whole-file reads"
-        @elem{@racket[file->string], @racket[file->bytes],
-              @racket[file->lines], @racket[file->bytes-lines]}
-        "supported")
-  (list "Input ports"
-        @elem{@racket[open-input-file], @racket[call-with-input-file],
-              @racket[with-input-from-file], @racket[read-byte],
-              @racket[peek-byte], @racket[read-line], @racket[read-string]}
-        "supported")
-  (list "Output ports"
-        @elem{@racket[open-output-file], @racket[call-with-output-file],
-              @racket[with-output-to-file], @racket[display-to-file],
-              @racket[write-bytes], @racket[write-string],
-              @racket[flush-output]}
-        "supported on mutable paths")
-  (list "Port location tracking"
-        @elem{@racket[port-count-lines!], @racket[port-next-location]}
-        "supported for file and string input ports")
-  (list "Path and file predicates"
-        @elem{@racket[file-exists?], @racket[directory-exists?],
-              @racket[file-size]}
-        "supported")
-  (list "Directory operations"
-        @elem{@racket[directory-list], @racket[make-directory],
-              @racket[make-directory*]}
-        "supported on mutable paths")
-  (list "File mutation"
-        @elem{@racket[copy-file], @racket[rename-file-or-directory],
-              @racket[delete-file], @racket[delete-directory]}
-        "supported on mutable paths; tar mounts are read-only"))]
+  (api-row "Whole-file reads"
+           @elem{@racket[file->string], @racket[file->bytes],
+                 @racket[file->lines], @racket[file->bytes-lines]}
+           "supported")
+  (api-row "Input ports"
+           @elem{@racket[open-input-file], @racket[call-with-input-file],
+                 @racket[with-input-from-file], @racket[read-byte],
+                 @racket[peek-byte], @racket[read-line], @racket[read-string]}
+           "supported")
+  (api-row "Output ports"
+           @elem{@racket[open-output-file], @racket[call-with-output-file],
+                 @racket[with-output-to-file], @racket[display-to-file],
+                 @racket[write-bytes], @racket[write-string],
+                 @racket[flush-output]}
+           "supported on mutable paths")
+  (api-row "Port location tracking"
+           @elem{@racket[port-count-lines!], @racket[port-next-location]}
+           "supported for file and string input ports")
+  (api-row "Path and file predicates"
+           @elem{@racket[file-exists?], @racket[directory-exists?],
+                 @racket[file-size]}
+           "supported")
+  (api-row "Directory operations"
+           @elem{@racket[directory-list], @racket[make-directory],
+                 @racket[make-directory*]}
+           "supported on mutable paths")
+  (api-row "File mutation"
+           @elem{@racket[copy-file], @racket[rename-file-or-directory],
+                 @racket[delete-file], @racket[delete-directory]}
+           "supported on mutable paths; tar mounts are read-only"))]
 
 @section{Backends}
 
