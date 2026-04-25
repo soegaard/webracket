@@ -388,6 +388,11 @@
              (lambda (out) (write-bytes (gzip-bytes tar-bytes) out))
              #:exists 'truncate/replace)
            (values "--vfs-tgz-file" (string-append mount-path "=assets.tgz"))]
+          [(gzip-data-url)
+           (define encoded
+             (bytes->string/utf-8 (base64-encode (gzip-bytes tar-bytes) #"")))
+           (values "--vfs-tgz-url"
+                   (string-append mount-path "=data:application/gzip;base64," encoded))]
           [else
            (error 'run-tar-program
                   (format "unknown tar source mode: ~a" source-mode))]))
@@ -576,6 +581,16 @@ PROGRAM
                      #:source-mode 'gzip-relative-file))
   (unless (zero? status)
     (error 'test-vfs-tgz-file-mount
+           (format "compile/run failed (~a): ~a" status output))))
+
+;; test-vfs-tgz-url-mount : -> void
+;;   Check gzip-compressed tar URL sources.
+(define (test-vfs-tgz-url-mount)
+  (define-values (status output)
+    (run-tar-program "(file->string \"/assets/hello.txt\")\n"
+                     #:source-mode 'gzip-data-url))
+  (unless (zero? status)
+    (error 'test-vfs-tgz-url-mount
            (format "compile/run failed (~a): ~a" status output))))
 
 ;; test-vfs-tgz-mount-rejects-invalid-gzip : -> void
@@ -958,6 +973,7 @@ PROGRAM
     (test-vfs-tar-file-mount . ,test-vfs-tar-file-mount)
     (test-vfs-tgz-mount . ,test-vfs-tgz-mount)
     (test-vfs-tgz-file-mount . ,test-vfs-tgz-file-mount)
+    (test-vfs-tgz-url-mount . ,test-vfs-tgz-url-mount)
     (test-vfs-tgz-mount-rejects-invalid-gzip . ,test-vfs-tgz-mount-rejects-invalid-gzip)
     (test-vfs-tar-nested-mount . ,test-vfs-tar-nested-mount)
     (test-vfs-tar-synthetic-parent-mount . ,test-vfs-tar-synthetic-parent-mount)
