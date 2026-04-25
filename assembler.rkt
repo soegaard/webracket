@@ -5265,6 +5265,16 @@ const wasmModule
              #:vfs-preloads
              (list (hasheq 'path "/assets/config.txt" 'kind 'text 'source "x"))))
 
+  (define (runtime-with-bad-mount-compression)
+    (runtime #:out "out.wasm"
+             #:host 'browser
+             #:vfs-mounts
+             (list (hasheq 'path "/assets"
+                           'kind 'tar
+                           'source-kind 'url
+                           'source "./assets.zip"
+                           'compression 'zip))))
+
   (check-true
    (raises-message? #rx"unknown VFS preload source kind"
                     runtime-with-bad-preload-kind))
@@ -5275,7 +5285,11 @@ const wasmModule
 
   (check-true
    (raises-message? #rx"VFS preload target is inside mounted backend"
-                    runtime-with-overlapping-mount)))
+                    runtime-with-overlapping-mount))
+
+  (check-true
+   (raises-message? #rx"unknown VFS tar compression"
+                    runtime-with-bad-mount-compression)))
 
 
 ;;;
