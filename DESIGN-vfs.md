@@ -537,6 +537,10 @@ await globalThis.mountWebRacketVFSAsync({
 });
 ```
 
+Nested mount parents that do not have their own backend behave as synthetic
+read-only directories. For example, mounting `/pkg/assets` makes `/pkg`
+visible in `/`, and `directory-list` on `/pkg` returns `assets`.
+
 Use `preloadWebRacketVFS` only for in-memory data such as strings, byte
 arrays, `Uint8Array`, `ArrayBuffer`, `{ text: ... }`, `{ bytes: ... }`, or
 `{ base64: ... }`. Use `preloadWebRacketVFSAsync` for `{ file: ... }`,

@@ -240,6 +240,29 @@ PROGRAM
     (error 'test-vfs-tar-nested-mount
            (format "compile/run failed (~a): ~a" status output))))
 
+;; test-vfs-tar-synthetic-parent-mount : -> void
+;;   Check that unmounted parents of nested tar mounts behave as directories.
+(define (test-vfs-tar-synthetic-parent-mount)
+  (define program
+    #<<PROGRAM
+(unless
+ (and (equal? (file->string "/pkg/assets/hello.txt") "hello from tar\n")
+      (directory-exists? "/pkg")
+      (equal? (map path->string (directory-list "/"))
+              '("app" "pkg" "tmp"))
+      (equal? (map path->string (directory-list "/pkg"))
+              '("assets"))
+      (equal? (map path->string (directory-list "/pkg/assets"))
+              '("hello.txt" "nested")))
+ (error 'vfs-tar-mount "synthetic parent mount checks failed"))
+PROGRAM
+)
+  (define-values (status output)
+    (run-tar-program program #:mount-path "/pkg/assets"))
+  (unless (zero? status)
+    (error 'test-vfs-tar-synthetic-parent-mount
+           (format "compile/run failed (~a): ~a" status output))))
+
 ;; test-vfs-tar-mount-global-pax-mtime : -> void
 ;;   Check that global pax mtime applies to following entries.
 (define (test-vfs-tar-mount-global-pax-mtime)
@@ -322,6 +345,7 @@ PROGRAM
   (test-vfs-tar-mount)
   (test-vfs-tar-file-mount)
   (test-vfs-tar-nested-mount)
+  (test-vfs-tar-synthetic-parent-mount)
   (test-vfs-tar-mount-global-pax-mtime)
   (test-vfs-tar-mount-read-only)
   (test-vfs-tar-mount-rejects-links)
@@ -333,6 +357,7 @@ PROGRAM
   (test-vfs-tar-mount)
   (test-vfs-tar-file-mount)
   (test-vfs-tar-nested-mount)
+  (test-vfs-tar-synthetic-parent-mount)
   (test-vfs-tar-mount-global-pax-mtime)
   (test-vfs-tar-mount-read-only)
   (test-vfs-tar-mount-rejects-links)

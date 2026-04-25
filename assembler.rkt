@@ -681,6 +681,12 @@ class WebRacketVFS {
     return names;
   }
 
+  syntheticMountStat(path) {
+    return this.mountChildren(path).size > 0
+      ? { type: 'directory', size: 0, mtime: 0, mode: 0o777, identity: 0 }
+      : null;
+  }
+
   rootList() {
     return [...this.mounts.keys()].sort().map((p) => p === '/' ? '/' : `${p}/`);
   }
@@ -703,8 +709,15 @@ class WebRacketVFS {
     if (p === '/' && !this.mounts.has('/')) {
       return { type: 'directory', size: 0, mtime: 0, mode: 0o777, identity: 0 };
     }
-    const [backend, rel] = this.resolve(path);
-    return backend.stat(rel);
+    const synthetic = this.syntheticMountStat(p);
+    try {
+      const [backend, rel] = this.resolve(path);
+      const stat = backend.stat(rel);
+      return stat.type === 'missing' && synthetic ? synthetic : stat;
+    } catch (err) {
+      if (synthetic) return synthetic;
+      throw err;
+    }
   }
 
   readFile(path) {
@@ -789,12 +802,23 @@ class WebRacketVFS {
 
   listDir(path) {
     const p = this.normalize(path);
+    const children = this.mountChildren(p);
     if (p === '/' && !this.mounts.has('/')) {
-      return [...this.mountChildren('/')].sort();
+      return [...children].sort();
     }
-    const [backend, rel] = this.resolve(p);
-    const names = new Set(backend.listDir(rel));
-    for (const name of this.mountChildren(p)) names.add(name);
+    let names;
+    let stat = null;
+    try {
+      const [backend, rel] = this.resolve(p);
+      stat = backend.stat(rel);
+      names = stat.type === 'missing' && children.size > 0
+        ? new Set()
+        : new Set(backend.listDir(rel));
+    } catch (err) {
+      if (children.size === 0 || (stat && stat.type !== 'missing')) throw err;
+      names = new Set();
+    }
+    for (const name of children) names.add(name);
     return [...names].sort();
   }
 
