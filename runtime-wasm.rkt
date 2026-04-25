@@ -48061,6 +48061,32 @@
                                   (br $outer)))
                      (call $reverse (local.get $acc)))
 
+               ;; display-to-file : any/c path-string? [(or/c 'binary 'text)] [output-file-exists-flag?] -> void?
+               ;;   Keywordless form of Racket's #:mode and #:exists options; delegates options to open-output-file.
+               (func $display-to-file (type $Prim24)
+                     (param $v          (ref eq)) ;; any/c
+                     (param $path-raw   (ref eq)) ;; path-string?
+                     (param $mode-raw   (ref eq)) ;; optional (or/c 'binary 'text), default = 'binary
+                     (param $exists-raw (ref eq)) ;; optional exists mode, default = 'error
+                     (result            (ref eq))
+
+                     (local $port (ref eq))
+                     (local $text (ref $String))
+
+                     (local.set $port
+                                (call $open-output-file
+                                      (local.get $path-raw)
+                                      (local.get $mode-raw)
+                                      (local.get $exists-raw)))
+                     (local.set $text (call $format/display (local.get $v)))
+                     (drop (call $write-string
+                                 (local.get $text)
+                                 (local.get $port)
+                                 (global.get $missing)
+                                 (global.get $missing)))
+                     (drop (call $close-output-port (local.get $port)))
+                     (global.get $void))
+
                (func $webracket-vfs-write-file (type $Prim2)
                      (param $path-raw  (ref eq)) ;; path-string?
                      (param $bytes-raw (ref eq)) ;; bytes?

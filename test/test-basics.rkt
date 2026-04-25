@@ -5715,6 +5715,22 @@
                                                'binary
                                                'must-truncate)
                              #f))))
+              (list "display-to-file"
+                    (and (void? (display-to-file "hello" "/app/data/display-to-file.txt"))
+                         (equal? (file->string "/app/data/display-to-file.txt") "hello")
+                         (begin
+                           (display-to-file 'sym "/app/data/display-to-file.txt" 'text 'replace)
+                           (equal? (file->string "/app/data/display-to-file.txt") "sym"))
+                         (begin
+                           (display-to-file 42 "/app/data/display-to-file.txt" 'binary 'append)
+                           (equal? (file->string "/app/data/display-to-file.txt") "sym42"))
+                         (with-handlers ([(lambda (ex) (exn:fail:filesystem? ex))
+                                          (lambda (_ex) #t)])
+                           (display-to-file "again" "/app/data/display-to-file.txt")
+                           #f)
+                         (with-handlers ([exn:fail:contract? (lambda (_ex) #t)])
+                           (display-to-file "bad" "/app/data/display-to-file-bad.txt" 'update)
+                           #f)))
               (list "flush-output/open-output-file"
                     (let ([port (open-output-file "/app/data/flushed.txt")])
                       (and (equal? (write-string "first" port) 5)
