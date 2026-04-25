@@ -52,16 +52,29 @@
             (normalize-vfs-preload-path-for-duplicates
              (hash-ref existing 'path)))))
 
+(define (vfs-subpath-or-same? path maybe-parent)
+  (define p (normalize-vfs-preload-path-for-duplicates path))
+  (define parent (normalize-vfs-preload-path-for-duplicates maybe-parent))
+  (define parent-prefix (if (equal? parent "/") "/" (string-append parent "/")))
+  (or (equal? p parent)
+      (string-prefix? p parent-prefix)))
+
 (define (add-vfs-preload-entry! entry)
   (define path     (hash-ref entry 'path))
   (when (duplicate-vfs-target? (vfs-preloads) path)
     (error 'webracket (format "duplicate VFS preload target path: ~a" path)))
+  (when (for/or ([mount (in-list (vfs-mounts))])
+          (vfs-subpath-or-same? path (hash-ref mount 'path)))
+    (error 'webracket (format "VFS preload target is inside mounted backend: ~a" path)))
   (vfs-preloads (cons entry (vfs-preloads))))
 
 (define (add-vfs-mount-entry! entry)
   (define path (hash-ref entry 'path))
   (when (duplicate-vfs-target? (vfs-mounts) path)
     (error 'webracket (format "duplicate VFS mount target path: ~a" path)))
+  (when (for/or ([preload (in-list (vfs-preloads))])
+          (vfs-subpath-or-same? (hash-ref preload 'path) path))
+    (error 'webracket (format "VFS mount target contains preload target: ~a" path)))
   (vfs-mounts (cons entry (vfs-mounts))))
 
 (define (validate-vfs-preload-path! who path)

@@ -4862,6 +4862,25 @@ const wasmModule
               (format "unknown VFS tar source kind: ~a" source-kind)))
      (hasheq 'path path 'tar (hasheq source-kind source)))))
 
+(define (normalize-vfs-manifest-path path)
+  (regexp-replace #px"/+$" path ""))
+
+(define (vfs-manifest-subpath-or-same? path maybe-parent)
+  (define p (normalize-vfs-manifest-path path))
+  (define parent (normalize-vfs-manifest-path maybe-parent))
+  (define parent-prefix (if (equal? parent "/") "/" (string-append parent "/")))
+  (or (equal? p parent)
+      (string-prefix? p parent-prefix)))
+
+(define (validate-vfs-manifest-interactions! vfs-preloads vfs-mounts)
+  (for* ([preload (in-list vfs-preloads)]
+         [mount   (in-list vfs-mounts)])
+    (define preload-path (hash-ref preload 'path))
+    (define mount-path   (hash-ref mount 'path))
+    (when (vfs-manifest-subpath-or-same? preload-path mount-path)
+      (error 'runtime
+             (format "VFS preload target is inside mounted backend: ~a" preload-path)))))
+
 (define (vfs-preload-manifest-assignment vfs-preloads)
   (if (null? vfs-preloads)
       ""
@@ -4937,6 +4956,7 @@ const wasmModule
                  #:console-bridge? [console-bridge? #f]
                  #:vfs-preloads [vfs-preloads '()]
                  #:vfs-mounts [vfs-mounts '()])
+  (validate-vfs-manifest-interactions! vfs-preloads vfs-mounts)
   (case host
     [(node)    (node-runtime    out.wasm #:console-bridge? console-bridge? #:vfs-preloads vfs-preloads #:vfs-mounts vfs-mounts)]
     [(browser) (browser-runtime out.wasm #:console-bridge? console-bridge? #:vfs-preloads vfs-preloads #:vfs-mounts vfs-mounts)]
@@ -5021,22 +5041,43 @@ const wasmModule
   (check-true
    (regexp-match? #rx"nextPaxHeaders\\.mtime" runtime/preload))
 
-  (check-exn
-   #rx"unknown VFS preload source kind"
-   (λ ()
-     (runtime #:out "out.wasm"
-              #:host 'browser
-              #:vfs-preloads
-              (list (hasheq 'path "/app/nope" 'kind 'mystery 'source "x")))))
+  (define (raises-message? rx thunk)
+    (with-handlers ([exn:fail? (λ (e) (regexp-match? rx (exn-message e)))])
+      (thunk)
+      #f))
 
-  (check-exn
-   #rx"duplicate VFS preload target path"
-   (λ ()
-     (runtime #:out "out.wasm"
-              #:host 'browser
-              #:vfs-preloads
-              (list (hasheq 'path "/app/same" 'kind 'text 'source "a")
-                    (hasheq 'path "/app/same/" 'kind 'directory 'source #t))))))
+  (define (runtime-with-bad-preload-kind)
+    (runtime #:out "out.wasm"
+             #:host 'browser
+             #:vfs-preloads
+             (list (hasheq 'path "/app/nope" 'kind 'mystery 'source "x"))))
+
+  (define (runtime-with-duplicate-preloads)
+    (runtime #:out "out.wasm"
+             #:host 'browser
+             #:vfs-preloads
+             (list (hasheq 'path "/app/same" 'kind 'text 'source "a")
+                   (hasheq 'path "/app/same/" 'kind 'directory 'source #t))))
+
+  (define (runtime-with-overlapping-mount)
+    (runtime #:out "out.wasm"
+             #:host 'browser
+             #:vfs-mounts
+             (list (hasheq 'path "/assets" 'kind 'tar 'source-kind 'url 'source "./assets.tar"))
+             #:vfs-preloads
+             (list (hasheq 'path "/assets/config.txt" 'kind 'text 'source "x"))))
+
+  (check-true
+   (raises-message? #rx"unknown VFS preload source kind"
+                    runtime-with-bad-preload-kind))
+
+  (check-true
+   (raises-message? #rx"duplicate VFS preload target path"
+                    runtime-with-duplicate-preloads))
+
+  (check-true
+   (raises-message? #rx"VFS preload target is inside mounted backend"
+                    runtime-with-overlapping-mount)))
 
 
 ;;;
