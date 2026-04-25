@@ -517,7 +517,8 @@ importing/running the generated module:
 
 ```js
 globalThis.WebRacketVFSMounts = {
-  "/assets": { tar: { url: "./assets.tar" } }
+  "/assets": { tar: { url: "./assets.tar" } },
+  "/pkg":    { tar: { url: "./pkg.tgz", compression: "gzip" } }
 };
 
 globalThis.WebRacketVFSPreload = {
@@ -543,7 +544,8 @@ await globalThis.preloadWebRacketVFSAsync({
 });
 
 await globalThis.mountWebRacketVFSAsync({
-  "/pkg": { tar: { url: "./pkg.tar" } }
+  "/pkg": { tar: { url: "./pkg.tar" } },
+  "/docs": { tar: { file: "./docs.tgz", compression: "gzip" } }
 });
 ```
 
