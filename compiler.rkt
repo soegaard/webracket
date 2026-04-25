@@ -2093,6 +2093,7 @@
   file-or-directory-type
   directory-list
   filesystem-root-list
+  find-system-path
   file-size
   delete-file
   make-directory

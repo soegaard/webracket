@@ -1543,6 +1543,25 @@
           binary
           text
           append
+          home-dir
+          pref-dir
+          pref-file
+          temp-dir
+          init-dir
+          init-file
+          config-dir
+          host-config-dir
+          addon-dir
+          host-addon-dir
+          cache-dir
+          doc-dir
+          desk-dir
+          sys-dir
+          exec-file
+          run-file
+          collects-dir
+          host-collects-dir
+          orig-dir
           update
           can-update
           replace
@@ -1805,6 +1824,7 @@
     (add-runtime-string-constant 'input-file-mode-flag       "(or/c 'binary 'text)")
     (add-runtime-string-constant 'output-file-mode-flag      "(or/c 'binary 'text)")
     (add-runtime-string-constant 'output-file-exists-flag    "(or/c 'error 'append 'replace 'truncate 'must-truncate 'truncate/replace)")
+    (add-runtime-string-constant 'system-path-kind           "(or/c 'home-dir 'pref-dir 'pref-file 'temp-dir 'init-dir 'init-file 'config-dir 'host-config-dir 'addon-dir 'host-addon-dir 'cache-dir 'doc-dir 'desk-dir 'sys-dir 'exec-file 'run-file 'collects-dir 'host-collects-dir 'orig-dir)")
     (add-runtime-string-constant 'string-or-bytes            "(or/c string? bytes?)")
     (add-runtime-string-constant 'boolean?                   "boolean?")
     (add-runtime-string-constant 'uncaught-exception         "uncaught exception: ")
@@ -1909,6 +1929,17 @@
     (add-runtime-bytes-constant  'dot                       #".")
     (add-runtime-bytes-constant  'dot-dot                   #"..")
     (add-runtime-bytes-constant  'app-dir                   #"/app/")
+    (add-runtime-bytes-constant  'vfs-root                  #"/")
+    (add-runtime-bytes-constant  'vfs-pref-dir              #"/app/prefs/")
+    (add-runtime-bytes-constant  'vfs-pref-file             #"/app/prefs/racket-prefs.rktd")
+    (add-runtime-bytes-constant  'vfs-temp-dir              #"/tmp/")
+    (add-runtime-bytes-constant  'vfs-init-file             #"/app/racketrc.rktl")
+    (add-runtime-bytes-constant  'vfs-config-dir            #"/app/etc/")
+    (add-runtime-bytes-constant  'vfs-addon-dir             #"/app/addons/")
+    (add-runtime-bytes-constant  'vfs-cache-dir             #"/app/cache/")
+    (add-runtime-bytes-constant  'vfs-exec-file             #"/app/webracket")
+    (add-runtime-bytes-constant  'vfs-run-file              #"/app/main.rkt")
+    (add-runtime-bytes-constant  'vfs-collects-dir          #"/app/collects/")
 
 
     ;;;
@@ -45477,6 +45508,91 @@
                                   (local.set $rest (struct.get $Pair $d (local.get $node)))
                                   (br $loop)))
                      (local.get $result))
+
+               ;; find-system-path : symbol? -> path?
+               ;;   Return stable complete paths in WebRacket's virtual filesystem.
+               (func $find-system-path (type $Prim1)
+                     (param $kind-raw (ref eq)) ;; symbol?
+                     (result          (ref eq))
+
+                     (local $kind (ref $Symbol))
+
+                     (if (i32.eqz (ref.test (ref $Symbol) (local.get $kind-raw)))
+                         (then (call $raise-argument-error1
+                                     (global.get $symbol:find-system-path)
+                                     (global.get $string:symbol?)
+                                     (local.get $kind-raw))
+                               (unreachable)))
+                     (local.set $kind (ref.cast (ref $Symbol) (local.get $kind-raw)))
+                     (if (ref.eq (local.get $kind) (global.get $symbol:home-dir))
+                         (then (return (call $bytes->path
+                                             (global.get $bytes:app-dir)
+                                             (global.get $missing)))))
+                     (if (ref.eq (local.get $kind) (global.get $symbol:pref-dir))
+                         (then (return (call $bytes->path
+                                             (global.get $bytes:vfs-pref-dir)
+                                             (global.get $missing)))))
+                     (if (ref.eq (local.get $kind) (global.get $symbol:pref-file))
+                         (then (return (call $bytes->path
+                                             (global.get $bytes:vfs-pref-file)
+                                             (global.get $missing)))))
+                     (if (ref.eq (local.get $kind) (global.get $symbol:temp-dir))
+                         (then (return (call $bytes->path
+                                             (global.get $bytes:vfs-temp-dir)
+                                             (global.get $missing)))))
+                     (if (ref.eq (local.get $kind) (global.get $symbol:init-dir))
+                         (then (return (call $bytes->path
+                                             (global.get $bytes:app-dir)
+                                             (global.get $missing)))))
+                     (if (ref.eq (local.get $kind) (global.get $symbol:init-file))
+                         (then (return (call $bytes->path
+                                             (global.get $bytes:vfs-init-file)
+                                             (global.get $missing)))))
+                     (if (i32.or (ref.eq (local.get $kind) (global.get $symbol:config-dir))
+                                 (ref.eq (local.get $kind) (global.get $symbol:host-config-dir)))
+                         (then (return (call $bytes->path
+                                             (global.get $bytes:vfs-config-dir)
+                                             (global.get $missing)))))
+                     (if (i32.or (ref.eq (local.get $kind) (global.get $symbol:addon-dir))
+                                 (ref.eq (local.get $kind) (global.get $symbol:host-addon-dir)))
+                         (then (return (call $bytes->path
+                                             (global.get $bytes:vfs-addon-dir)
+                                             (global.get $missing)))))
+                     (if (ref.eq (local.get $kind) (global.get $symbol:cache-dir))
+                         (then (return (call $bytes->path
+                                             (global.get $bytes:vfs-cache-dir)
+                                             (global.get $missing)))))
+                     (if (i32.or (ref.eq (local.get $kind) (global.get $symbol:doc-dir))
+                                 (ref.eq (local.get $kind) (global.get $symbol:desk-dir)))
+                         (then (return (call $bytes->path
+                                             (global.get $bytes:app-dir)
+                                             (global.get $missing)))))
+                     (if (ref.eq (local.get $kind) (global.get $symbol:sys-dir))
+                         (then (return (call $bytes->path
+                                             (global.get $bytes:vfs-root)
+                                             (global.get $missing)))))
+                     (if (ref.eq (local.get $kind) (global.get $symbol:exec-file))
+                         (then (return (call $bytes->path
+                                             (global.get $bytes:vfs-exec-file)
+                                             (global.get $missing)))))
+                     (if (ref.eq (local.get $kind) (global.get $symbol:run-file))
+                         (then (return (call $bytes->path
+                                             (global.get $bytes:vfs-run-file)
+                                             (global.get $missing)))))
+                     (if (i32.or (ref.eq (local.get $kind) (global.get $symbol:collects-dir))
+                                 (ref.eq (local.get $kind) (global.get $symbol:host-collects-dir)))
+                         (then (return (call $bytes->path
+                                             (global.get $bytes:vfs-collects-dir)
+                                             (global.get $missing)))))
+                     (if (ref.eq (local.get $kind) (global.get $symbol:orig-dir))
+                         (then (return (call $bytes->path
+                                             (global.get $bytes:app-dir)
+                                             (global.get $missing)))))
+                     (call $raise-argument-error1
+                           (global.get $symbol:find-system-path)
+                           (global.get $string:system-path-kind)
+                           (local.get $kind-raw))
+                     (unreachable))
 
                (func $current-directory (type $Prim01)
                      (param $path-raw (ref eq)) ;; optional path-string?

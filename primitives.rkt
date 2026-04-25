@@ -1049,6 +1049,7 @@
  file-or-directory-type
  directory-list
  filesystem-root-list
+ find-system-path
  file-size
  delete-file
  make-directory
@@ -1948,6 +1949,9 @@
 
 (define (filesystem-root-list)
   (error 'filesystem-root-list "only available in compiled WebRacket"))
+
+(define (find-system-path kind)
+  (error 'find-system-path "only available in compiled WebRacket"))
 
 (define call-with-input-file
   (case-lambda

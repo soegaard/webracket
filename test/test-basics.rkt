@@ -4920,6 +4920,22 @@
                          (begin
                            (current-directory "/tmp/")
                            (equal? (path->string (current-directory)) "/tmp/"))))
+              (list "find-system-path"
+                    (and (equal? (path->string (find-system-path 'home-dir)) "/app/")
+                         (equal? (path->string (find-system-path 'temp-dir)) "/tmp/")
+                         (equal? (path->string (find-system-path 'pref-file))
+                                 "/app/prefs/racket-prefs.rktd")
+                         (equal? (path->string (find-system-path 'sys-dir)) "/")
+                         (equal? (path->string (find-system-path 'exec-file))
+                                 "/app/webracket")
+                         (equal? (path->string (find-system-path 'collects-dir))
+                                 "/app/collects/")
+                         (with-handlers ([exn:fail:contract? (lambda (_ex) #t)])
+                           (find-system-path "home-dir")
+                           #f)
+                         (with-handlers ([exn:fail:contract? (lambda (_ex) #t)])
+                           (find-system-path 'not-a-system-path)
+                           #f)))
               (list "path->complete-path"
                     (and (equal? (path->string (path->complete-path "notes.txt" "/app/"))
                                  "/app/notes.txt")
