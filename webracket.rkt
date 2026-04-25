@@ -41,10 +41,16 @@
 
 (define stdlib?         (make-parameter #t))   ; include standard library by default
 
+(define (normalize-vfs-preload-path-for-duplicates path)
+  (regexp-replace #px"/+$" path ""))
+
 (define (add-vfs-preload-entry! entry)
-  (define path (hash-ref entry 'path))
+  (define path     (hash-ref entry 'path))
+  (define norm-path (normalize-vfs-preload-path-for-duplicates path))
   (when (for/or ([existing (in-list (vfs-preloads))])
-          (equal? path (hash-ref existing 'path)))
+          (equal? norm-path
+                  (normalize-vfs-preload-path-for-duplicates
+                   (hash-ref existing 'path))))
     (error 'webracket (format "duplicate VFS preload target path: ~a" path)))
   (vfs-preloads (cons entry (vfs-preloads))))
 
