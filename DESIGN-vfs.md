@@ -528,6 +528,9 @@ Manifest entries may be:
 
 File data may be a string, `Uint8Array`, `ArrayBuffer`, typed-array view, byte
 array, or an object containing `text`, `bytes`, `base64`, `file`, or `url`.
+`base64` data uses the standard `A-Z`, `a-z`, `0-9`, `+`, `/`, and `=`
+alphabet with padding in the final group only; an empty string represents a
+zero-byte file.
 `file` entries are loaded with the Node runtime before WebRacket starts. `url`
 entries are fetched before WebRacket starts. Relative `file`, `url`, and
 directory source paths are resolved against the generated JavaScript module URL.
