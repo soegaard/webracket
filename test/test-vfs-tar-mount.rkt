@@ -187,6 +187,13 @@
   (retag-header-checksum! bs)
   bs)
 
+;; make-invalid-checksum-tar : -> bytes?
+;;   Build a tar archive with a corrupted first header checksum.
+(define (make-invalid-checksum-tar)
+  (define bs (bytes-copy (make-test-tar)))
+  (bytes-set! bs 0 (char->integer #\x))
+  bs)
+
 ;; make-invalid-path-tar : string? -> bytes?
 ;;   Build a tar archive with an unsafe entry path.
 (define (make-invalid-path-tar name)
@@ -668,6 +675,18 @@ PROGRAM
     (error 'test-vfs-tar-mount-rejects-invalid-size
            (format "expected invalid tar size failure, got: ~a" output))))
 
+;; test-vfs-tar-mount-rejects-invalid-checksum : -> void
+;;   Check that corrupted tar header checksums fail while mounting.
+(define (test-vfs-tar-mount-rejects-invalid-checksum)
+  (define-values (status output)
+    (run-tar-program "(void)\n" #:tar-bytes (make-invalid-checksum-tar)))
+  (when (zero? status)
+    (error 'test-vfs-tar-mount-rejects-invalid-checksum
+           "expected invalid-checksum tar mount to fail"))
+  (unless (regexp-match? #rx"VFS tar header checksum is invalid" output)
+    (error 'test-vfs-tar-mount-rejects-invalid-checksum
+           (format "expected invalid tar checksum failure, got: ~a" output))))
+
 ;; test-vfs-tar-mount-rejects-absolute-path : -> void
 ;;   Check that absolute archive entry names fail while mounting.
 (define (test-vfs-tar-mount-rejects-absolute-path)
@@ -809,6 +828,7 @@ PROGRAM
     (test-vfs-tar-mount-rejects-truncated-entry . ,test-vfs-tar-mount-rejects-truncated-entry)
     (test-vfs-tar-mount-rejects-trailing-data . ,test-vfs-tar-mount-rejects-trailing-data)
     (test-vfs-tar-mount-rejects-invalid-size . ,test-vfs-tar-mount-rejects-invalid-size)
+    (test-vfs-tar-mount-rejects-invalid-checksum . ,test-vfs-tar-mount-rejects-invalid-checksum)
     (test-vfs-tar-mount-rejects-absolute-path . ,test-vfs-tar-mount-rejects-absolute-path)
     (test-vfs-tar-mount-rejects-parent-path . ,test-vfs-tar-mount-rejects-parent-path)
     (test-vfs-tar-mount-rejects-absolute-pax-path . ,test-vfs-tar-mount-rejects-absolute-pax-path)
