@@ -116,19 +116,31 @@
       (include-lib->ffi-filename lib-name)))
   (remove-duplicates inferred))
 
-;; default-ffi-files : (listof path-string?) boolean? -> (listof path-string?)
-;;   Return the default FFI files that are always loaded unless the caller
-;;   already supplied matching bundled FFI files.
-(define (default-ffi-files ffi-files browser?)
-  (define suppress-default?
-    (for/or ([ffi-filename ffi-files])
-      (member (ffi-filename-stem ffi-filename)
-              '("array" "canvas" "dom" "standard"))))
-  (if suppress-default?
-      '()
-      (if browser?
-          (list "dom.ffi")
-          (list "standard.ffi"))))
+;; default-ffi-files : boolean? -> (listof path-string?)
+;;   Return the bundled FFI files enabled by default for the target.
+(define (default-ffi-files browser?)
+  (if browser?
+      (list "standard.ffi" "dom.ffi")
+      (list "standard.ffi")))
+
+;; merged-ffi-files : symbol? boolean? (listof path-string?) [syntax?] -> (listof path?)
+;;   Resolve and deduplicate default, explicit, and inferred ffi files.
+;;     explicit: from the command line
+;;     inferred: from include-lib
+(define (merged-ffi-files who browser? ffi-files [stx #f])
+  (define resolved-base-ffi-files
+    (remove-duplicates
+     (resolve-ffi-files! who
+                         (append (default-ffi-files browser?)
+                                 ffi-files))))
+  (define inferred-ffi-files
+    (if stx
+        (source->inferred-ffi-files stx resolved-base-ffi-files)
+        '()))
+  (remove-duplicates
+   (resolve-ffi-files! who
+                       (append resolved-base-ffi-files
+                               inferred-ffi-files))))
 
 ;;;
 ;;; Include Files
@@ -205,9 +217,7 @@
 ;;   Return a sorted list of known primitives, optionally extended with FFI primitives.
 (define (list-available-primitives #:ffi-files [ffi-files '()])
   (define resolved-ffi-files
-    (remove-duplicates
-     (resolve-ffi-files! 'list-available-primitives
-                         (append (default-ffi-files ffi-files) ffi-files))))
+    (merged-ffi-files 'list-available-primitives #f ffi-files))
   (define requested-ffi-primitives
     (append-map (λ (ffi-filename)
                   (foreigns->primitive-names (ffi-file->foreigns ffi-filename)))
@@ -307,14 +317,8 @@
 
   ; 2. Handle ffi-files.
   (define t-ffi-setup-start  (now-ms))
-  (define inferred-ffi-files
-    (source->inferred-ffi-files stx ffi-files))
-  (define user-ffi-files (append ffi-files inferred-ffi-files))
   (define resolved-ffi-files
-    (remove-duplicates
-     (resolve-ffi-files! 'drive-compilation
-                         (append (default-ffi-files user-ffi-files browser?)
-                                 user-ffi-files))))
+    (merged-ffi-files 'drive-compilation browser? ffi-files stx))
 
   (define ffi-foreigns  '()) ; list of `foreign` structures
   (define ffi-imports   '()) ; list of wat
@@ -760,4 +764,3 @@
     (and candidate
          (file-exists? candidate)
          (path->complete-path candidate (current-directory)))))
-
