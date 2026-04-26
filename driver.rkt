@@ -53,6 +53,10 @@
          "compiler.rkt"
          "define-foreign.rkt")
 
+;;;
+;;; FFI Files
+;;; 
+
 ;; resolve-ffi-files! : symbol? (listof path-string?) -> (listof path-string?)
 ;;   Resolve ffi-files to existing paths and fail if any are missing.
 (define (resolve-ffi-files! who ffi-files)
@@ -62,34 +66,6 @@
       (error who
              (~a "ffi file not found: " ffi-filename)))
     resolved))
-
-;; include-lib->ffi-filename : symbol? -> (or/c path-string? #f)
-;;   Return the ffi bundle corresponding to a public include-lib library name.
-    (define include-lib->ffi-filename-table
-  '((array      . "array.ffi")
-    (audio      . "audio.ffi")
-    (canvas     . "canvas.ffi")
-    (console    . "console.ffi")
-    (document   . "document.ffi")
-    (dom        . "dom.ffi")
-    (domrect    . "domrect.ffi")
-    (element    . "element.ffi")
-    (event      . "event.ffi")
-    (fetch      . "dom.ffi")
-    (image      . "image.ffi")
-    (iterator   . "iterator.ffi")
-    (jsx-graph  . "jsxgraph.ffi")
-    (media      . "media.ffi")
-    (rquery     . "dom.ffi")
-    (performance . "performance.ffi")
-    (storage    . "dom.ffi")
-    (indexed-db . "dom.ffi")
-    (websocket  . "websocket.ffi")
-    (window     . "window.ffi")))
-
-(define (include-lib->ffi-filename lib-name)
-  (define maybe (assq lib-name include-lib->ffi-filename-table))
-  (and maybe (cdr maybe)))
 
 ;; ffi-filename-basename : path-string? -> string?
 ;;   Return the last path component for an ffi file specification.
@@ -107,21 +83,6 @@
   (and basename
        (path->string
         (path-replace-extension (string->path basename) #""))))
-
-;; bundle->suppressed-include-lib-names : string? -> (listof symbol?)
-;;   Return include-lib names that are already covered by an explicit ffi bundle.
-;;   This keeps umbrella bundles like `dom.ffi` from re-adding the sublibs
-;;   they already include transitively.
-(define bundle->suppressed-include-lib-names-table
-  '(("dom"    . (array canvas document domrect element event image media performance window))
-    ("canvas" . (array media))))
-
-(define (bundle->suppressed-include-lib-names ffi-filename)
-  (define basename (ffi-filename-stem ffi-filename))
-  (define maybe (and basename (assoc basename bundle->suppressed-include-lib-names-table)))
-  (if maybe
-      (cdr maybe)
-      '()))
 
 ;; source->inferred-ffi-files : syntax? (listof path-string?) -> (listof path-string?)
 ;;   Infer direct ffi bundles from top-level `(include-lib ...)` forms in source.
@@ -155,14 +116,6 @@
       (include-lib->ffi-filename lib-name)))
   (remove-duplicates inferred))
 
-;; add-print-top-level-results-sentinel : syntax? -> syntax?
-;;   Insert a compiler-private definition immediately before user forms.
-(define (add-print-top-level-results-sentinel stx)
-  (define sentinel-id (datum->syntax stx print-top-level-results-sentinel-symbol stx))
-  #`(begin
-      (define #,sentinel-id (void))
-      #,stx))
-
 ;; default-ffi-files : (listof path-string?) boolean? -> (listof path-string?)
 ;;   Return the default FFI files that are always loaded unless the caller
 ;;   already supplied matching bundled FFI files.
@@ -176,6 +129,77 @@
       (if browser?
           (list "dom.ffi")
           (list "standard.ffi"))))
+
+;;;
+;;; Include Files
+;;;
+
+;; include-lib->ffi-filename : symbol? -> (or/c path-string? #f)
+;;   Return the ffi bundle corresponding to a public include-lib library name.
+(define include-lib->ffi-filename-table
+  '((array      . "array.ffi")
+    (audio      . "audio.ffi")
+    (canvas     . "canvas.ffi")
+    (console    . "console.ffi")
+    (document   . "document.ffi")
+    (dom        . "dom.ffi")
+    (domrect    . "domrect.ffi")
+    (element    . "element.ffi")
+    (event      . "event.ffi")
+    (fetch      . "dom.ffi")          ; is window enough?
+    (image      . "image.ffi")
+    (iterator   . "iterator.ffi")
+    (jsx-graph  . "jsxgraph.ffi")
+    (media      . "media.ffi")
+    (rquery     . "dom.ffi")
+    (performance . "performance.ffi")
+    (storage    . "dom.ffi")          ; smaller dep?
+    (indexed-db . "dom.ffi")          ; smaller dep?
+    (websocket  . "websocket.ffi")
+    (window     . "window.ffi")))
+
+(define (include-lib->ffi-filename lib-name)
+  (define maybe (assq lib-name include-lib->ffi-filename-table))
+  (and maybe (cdr maybe)))
+
+
+;; bundle->suppressed-include-lib-names : string? -> (listof symbol?)
+;;   Return include-lib names that are already covered by an explicit ffi bundle.
+;;   This keeps umbrella bundles like `dom.ffi` from re-adding the sublibs
+;;   they already include transitively.
+(define bundle->suppressed-include-lib-names-table
+  '(("dom"    . (array canvas document domrect element event image media performance window))
+    ("canvas" . (array media))))
+
+(define (bundle->suppressed-include-lib-names ffi-filename)
+  (define basename (ffi-filename-stem ffi-filename))
+  (define maybe (and basename (assoc basename bundle->suppressed-include-lib-names-table)))
+  (if maybe
+      (cdr maybe)
+      '()))
+
+;;;
+;;; Printing of top-level results
+;;;
+
+;; --print-top-level-results
+;;   Print each top-level expression result with print.
+
+;; When this option is present, the compiler wraps top-level expressions.
+;; The compiler needs to know where the standard library ends and where
+;; the user program starts, so we insert a sentinel.
+
+;; add-print-top-level-results-sentinel : syntax? -> syntax?
+;;   Insert a compiler-private definition immediately before user forms.
+(define (add-print-top-level-results-sentinel stx)
+  (define sentinel-id (datum->syntax stx print-top-level-results-sentinel-symbol stx))
+  #`(begin
+      (define #,sentinel-id (void))
+      #,stx))
+
+;;;
+;;; Available Primitives
+;;;
 
 ;; list-available-primitives : [#:ffi-files (listof path-string?)] -> (listof symbol?)
 ;;   Return a sorted list of known primitives, optionally extended with FFI primitives.
@@ -193,12 +217,17 @@
   (define core-primitives
     (filter (λ (sym) (not (memq sym ffi-primitives)))
             primitives))
+  
   (sort (remove-duplicates (append core-primitives requested-ffi-primitives))
         symbol<?))
+
 
 ;;;
 ;;; THE MAIN DRIVER
 ;;;
+
+;;   --timings
+;;      Print timing breakdown for compilation steps.
 
 (struct compilation-timings
   (ffi-setup
@@ -215,29 +244,40 @@
    driver-total)
   #:transparent)
 
+
 (define (drive-compilation
+         ;; Paths
          #:filename          filename
          #:wat-filename      wat-filename
          #:wasm-filename     wasm-filename
          #:host-filename     host-filename      ; default: "runtime.js"
          #:dest-dir          dest-dir
-         #:label-map-forms?  label-map-forms?
-         #:dump-passes-dir   dump-passes-dir
+         ;; Debug Information
+         #:label-map-forms?  label-map-forms?    
+         #:dump-passes-dir   dump-passes-dir     
          #:dump-passes-limit dump-passes-limit  ; max number of passes to dump
          #:timings?          timings?
-         #:pretty-wat?       pretty-wat?
+         #:pretty-wat?       pretty-wat?        ; pretty print (slow) the wat-file
          #:verbose?          verbose?
-         #:browser?          browser?
+         ;; Targets
+         #:browser?          browser?           
          #:node?             node?
-         #:tree-shake?       tree-shake?
+         ;; Optimization
+         #:tree-shake?       tree-shake?        ; remove dead code from the wat-file
          #:tree-shake-report tree-shake-report
+         ;; Program Debug
          #:print-top-level-results? print-top-level-results?
-         #:console-bridge?   console-bridge?
-         #:vfs-preloads      vfs-preloads
+         ;; Reflection
+         #:console-bridge?   console-bridge?    ; adds WR on the JS side
+         ;; Populate the Virtual File System
+         #:vfs-preloads      vfs-preloads       
          #:vfs-mounts        vfs-mounts
+         ;; Convenience
          #:run-after?        run-after?
+         ;; Foreign Function Interface
          #:ffi-files         ffi-files    ; list of file paths for .ffi files
-         #:stdlib?           stdlib?)     ; include standard library 
+         ;; Standard Library
+         #:stdlib?           stdlib?)     ; can be turned off for testing the compiler
 
   (define exit-code       0)
   (define compile-timings #f)
@@ -363,9 +403,9 @@
 
   ; 5. Compile the syntax object.
   (label-map-include-form? label-map-forms?)
-  (current-pass-dump-dir dump-passes-dir)
+  (current-pass-dump-dir   dump-passes-dir)
   (current-pass-dump-limit dump-passes-limit)
-  (current-pass-timings? timings?)
+  (current-pass-timings?   timings?)
   (define t-compile-start (now-ms))
   (define wat
     (with-handlers (#;[exn:fail? (λ (e)
@@ -429,19 +469,21 @@
                #:runtime.js runtime-js
                #:write-runtime? #f))
     (set! t-run-ms (- (now-ms) t-run-start)))
+
+  ; 10. Output timings
   (when timings?
-    (define ffi-setup-ms   (- t-ffi-setup-end t-ffi-setup-start))
-    (define read-source-ms (- t-read-source-end t-read-source-start))
-    (define add-stdlib-ms  (- t-add-stdlib-end t-add-stdlib-start))
-    (define preflight-ms   (- t-preflight-end t-preflight-start))
-    (define compile-ms     (- t-compile-end t-compile-start))
-    (define write-wat-ms   (- t-write-wat-end t-write-wat-start))
-    (define assemble-ms    (- t-assemble-end t-assemble-start))
-    (define write-map-ms   (- t-write-map-end t-write-map-start))
-    (define write-host-ms  (- t-write-host-end t-write-host-start))
-    (define compile-total-ms (- t-write-host-end t-compile-start))
-    (define driver-total-ms (+ (- t-write-host-end t-driver-start)
-                               t-run-ms))
+    (define ffi-setup-ms     (- t-ffi-setup-end   t-ffi-setup-start))
+    (define read-source-ms   (- t-read-source-end t-read-source-start))
+    (define add-stdlib-ms    (- t-add-stdlib-end  t-add-stdlib-start))
+    (define preflight-ms     (- t-preflight-end   t-preflight-start))
+    (define compile-ms       (- t-compile-end     t-compile-start))
+    (define write-wat-ms     (- t-write-wat-end   t-write-wat-start))
+    (define assemble-ms      (- t-assemble-end    t-assemble-start))
+    (define write-map-ms     (- t-write-map-end   t-write-map-start))
+    (define write-host-ms    (- t-write-host-end  t-write-host-start))
+    (define compile-total-ms (- t-write-host-end  t-compile-start))
+    (define driver-total-ms  (+ (- t-write-host-end t-driver-start)
+                                t-run-ms))
     (set! compile-timings
           (compilation-timings ffi-setup-ms
                                read-source-ms
@@ -457,10 +499,10 @@
                                driver-total-ms))
     (define driver-rows
       (append
-       (list (list "ffi-setup" ffi-setup-ms)
-             (list "read-source" read-source-ms)
-             (list "add-stdlib" add-stdlib-ms)
-             (list "preflight" preflight-ms)
+       (list (list "ffi-setup"        ffi-setup-ms)
+             (list "read-source"      read-source-ms)
+             (list "add-stdlib"       add-stdlib-ms)
+             (list "preflight"        preflight-ms)
              (list "compile-pipeline" compile-total-ms))
        (if (zero? t-run-ms)
            '()
@@ -468,12 +510,12 @@
        (list (list "total" driver-total-ms))))
     (define overall-table
       (format-timing-table
-       (list (list "compile" compile-ms)
-             (list "write-wat" write-wat-ms)
-             (list "assemble" assemble-ms)
-             (list "write-map" write-map-ms)
+       (list (list "compile"    compile-ms)
+             (list "write-wat"  write-wat-ms)
+             (list "assemble"   assemble-ms)
+             (list "write-map"  write-map-ms)
              (list "write-host" write-host-ms)
-             (list "total" compile-total-ms))))
+             (list "total"      compile-total-ms))))
     (displayln "=== Driver Timings ===")
     (displayln (format-timing-table driver-rows))
     (displayln "=== Compile Pipeline ===")
@@ -681,7 +723,6 @@
   (parameterize ([current-load-relative-directory dir]
                  [current-write-relative-directory dir])
     (define program (read-lang-file src-path))
-    #;(pretty-write program (current-error-port))
     (pretty-write (syntax->datum
                    (topexpand program))
                    out))
@@ -696,6 +737,7 @@
 ;;;
 ;;; RESOLUTION OF FFI-PATHS
 ;;;
+
 
 (define-runtime-path here ".")
 (define system-ffi-directory
@@ -719,24 +761,3 @@
          (file-exists? candidate)
          (path->complete-path candidate (current-directory)))))
 
-
-
-;;;     
-;;; TEST
-;;;     
-
-#;(begin
-    (read-lang-file "test/test.rkt")
-
-    (require racket/pretty)
-
-    (pretty-print
-     (syntax->datum
-      (read-lang-file "test/test.rkt")))
-
-    (expand-file "test/test.rkt")
-
-
-    (pretty-print
-     (syntax->datum
-      (expand-file "test/test.rkt"))))
