@@ -13435,8 +13435,23 @@
          (func $raise-byte-out-of-range   (param $x (ref eq)) (unreachable))
          (func $raise-check-bytes         (param $x (ref eq)) (unreachable))
          (func $raise-check-byte          (param $x (ref eq)) (unreachable))
-         (func $raise-bad-bytes-ref-index (param $x (ref eq)) (param $idx (ref eq)) (unreachable))         
-         (func $raise-bad-bytes-range     (param $x (ref eq)) (param i32) (param i32) (unreachable))         
+         ;; Out-of-range byte-string indexes must be catchable Racket errors,
+         ;; not raw Wasm traps.
+         (func $raise-bad-bytes-ref-index (param $x (ref eq)) (param $idx (ref eq))
+               (call $raise-argument-error1
+                     (global.get $symbol:bytes-ref)
+                     (global.get $string:exact-nonnegative-integer?)
+                     (local.get $idx)))
+         (func $raise-bad-bytes-set-index (param $x (ref eq)) (param $idx (ref eq))
+               (call $raise-argument-error1
+                     (global.get $symbol:bytes-set!)
+                     (global.get $string:exact-nonnegative-integer?)
+                     (local.get $idx)))
+         (func $raise-bad-bytes-range     (param $x (ref eq)) (param $from i32) (param $to i32)
+               (call $raise-argument-error1
+                     (global.get $symbol:subbytes)
+                     (global.get $string:exact-nonnegative-integer?)
+                     (ref.i31 (i32.shl (local.get $from) (i32.const 1)))))
          
          (func $make-bytes (type $Prim12)
                (param $k-raw (ref eq))     ;; fixnum
@@ -14023,7 +14038,7 @@
                (if (i32.lt_u (local.get $idx) (call $i8array-length (local.get $arr)))
                    (then (call $i8array-set! (local.get $arr) (local.get $idx) (local.get $bv))
                          (return (global.get $void)))
-                   (else (call $raise-bad-bytes-ref-index (local.get $a) (local.get $i))))
+                   (else (call $raise-bad-bytes-set-index (local.get $a) (local.get $i))))
                (unreachable))
 
          (func $bytes-set!/checked
