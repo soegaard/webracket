@@ -901,7 +901,7 @@
       unsafe-fx+ unsafe-fx* unsafe-fx- unsafe-fx-/wraparound
       unsafe-fxand unsafe-fxior unsafe-fxxor       
       unsafe-flmin unsafe-flmax unsafe-fxmin unsafe-fxmax            
-      append* apply cartesian-product vector-count map andmap ormap
+      append* apply compose compose1 cartesian-product vector-count map andmap ormap
       append-map count for-each foldl foldr vector-map vector-map! filter-map      
       min max flmin flmax fxmin fxmax gcd lcm
       make-instance instance-set-variable-value! instance-variable-value
@@ -911,7 +911,7 @@
     ; - min-proc
     (λ (name)
       (case name
-        [(+ * unsafe-fx+ unsafe-fx* cartesian-product string-append-immutable gcd lcm) 0]
+        [(+ * unsafe-fx+ unsafe-fx* compose compose1 cartesian-product string-append-immutable gcd lcm) 0]
         [(- / unsafe-fx- fx-/wraparound unsafe-fx-/wraparound min max
              flmin flmax unsafe-flmin unsafe-flmax
              fxmin fxmax unsafe-fxmin unsafe-fxmax
@@ -933,7 +933,7 @@
         [(vector-count map andmap ormap append-map count for-each vector-map vector-map! filter-map
                        instance-variable-value) 2]
         [(foldl foldr instance-set-variable-value!) 3]
-        [(+ * unsafe-fx+ unsafe-fx* cartesian-product string-append-immutable gcd lcm) 0]
+        [(+ * unsafe-fx+ unsafe-fx* compose compose1 cartesian-product string-append-immutable gcd lcm) 0]
         [else 1])))
    (make-inline-specs '(= < > <= >=) 'variadic-args 1 #f 1)
    (make-inline-specs '(build-path/convention-type) 'variadic 2 #f 2)
@@ -1939,6 +1939,8 @@
   keyword<?
 
   apply
+  compose
+  compose1
   procedure-rename
   procedure?
   procedure->external
@@ -2574,6 +2576,7 @@
                          kern-exn:fail:syntax:missing-module kern-exn:fail:syntax:missing-module?
                          kern-exn:fail:syntax:missing-module-path
                          kern-exn:fail:syntax:unbound kern-exn:fail:syntax:unbound?
+                         kern-arity-at-least
                           )
     [kern-exn                               #'exn]
     [kern-exn?                              #'exn?]
@@ -2609,6 +2612,7 @@
     [kern-exn:fail:syntax:missing-module-path #'exn:fail:syntax:missing-module-path]
     [kern-exn:fail:syntax:unbound           #'exn:fail:syntax:unbound]
     [kern-exn:fail:syntax:unbound?          #'exn:fail:syntax:unbound?]
+    [kern-arity-at-least                    #'arity-at-least]
     
     [_ id]))
 

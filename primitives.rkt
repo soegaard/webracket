@@ -809,7 +809,7 @@
 
  
  ;; 4.20 Procedures
- procedure? apply procedure-rename procedure->external
+ procedure? apply compose compose1 procedure-rename procedure->external
  procedure-arity procedure-arity-mask procedure-arity-includes?
  procedure-reduce-arity
  arity-at-least make-arity-at-least

@@ -3477,6 +3477,85 @@
                                 (local.get $args)
                                 (struct.get $Procedure $invoke (local.get $original))))
 
+         ;; invoke-composed-procedure : procedure? args-array? -> any
+         ;;   Invoke a compose/compose1 wrapper from right to left.
+         (func $invoke-composed-procedure
+               (type $ProcedureInvoker)
+               (param $proc (ref $Procedure))
+               (param $args (ref $Args))
+               (result      (ref eq))
+
+               (local $wrapper (ref $Closure))
+               (local $free    (ref $Free))
+               (local $procs   (ref $Array))
+               (local $single? (ref eq))
+               (local $p       (ref $Procedure))
+               (local $inv     (ref $ProcedureInvoker))
+               (local $result  (ref eq))
+               (local $vals    (ref $Values))
+               (local $next    (ref $Args))
+               (local $i       i32)
+               (local $n       i32)
+               (local $m       i32)
+
+               (local.set $p      (global.get $dummy-closure))
+               (local.set $inv    (ref.func $invoke-closure))
+               (local.set $result (global.get $false))
+               (local.set $vals   (array.new $Values (global.get $null) (i32.const 0)))
+               (local.set $next   (array.new $Args (global.get $null) (i32.const 0)))
+               (local.set $wrapper (ref.cast (ref $Closure) (local.get $proc)))
+               (local.set $free    (struct.get $Closure $free (local.get $wrapper)))
+               (local.set $procs   (ref.cast (ref $Array)
+                                              (array.get $Free (local.get $free) (i32.const 0))))
+               (local.set $single? (array.get $Free (local.get $free) (i32.const 1)))
+               (local.set $n       (array.len (local.get $procs)))
+               (if (i32.eqz (local.get $n))
+                   (then (return_call $values (local.get $args))))
+
+               (local.set $i (i32.sub (local.get $n) (i32.const 1)))
+               (local.set $p (ref.cast (ref $Procedure)
+                                        (array.get $Array (local.get $procs) (local.get $i))))
+               (local.set $inv (struct.get $Procedure $invoke (local.get $p)))
+               (local.set $result
+                          (call_ref $ProcedureInvoker
+                                    (local.get $p)
+                                    (local.get $args)
+                                    (local.get $inv)))
+
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.eqz (local.get $i)))
+                            (local.set $i (i32.sub (local.get $i) (i32.const 1)))
+                            (if (ref.eq (local.get $single?) (global.get $true))
+                                (then
+                                 (local.set $result (call $expect-one-value (local.get $result)))
+                                 (local.set $next (array.new_fixed $Args 1 (local.get $result))))
+                                (else
+                                 (if (ref.test (ref $Values) (local.get $result))
+                                     (then
+                                      (local.set $vals (ref.cast (ref $Values) (local.get $result)))
+                                      (local.set $m    (array.len (local.get $vals)))
+                                      (local.set $next (array.new $Args (global.get $null) (local.get $m)))
+                                      (array.copy $Args $Values
+                                                  (local.get $next) (i32.const 0)
+                                                  (local.get $vals) (i32.const 0)
+                                                  (local.get $m)))
+                                     (else
+                                      (local.set $next
+                                                 (array.new_fixed $Args 1 (local.get $result)))))))
+                            (local.set $p (ref.cast (ref $Procedure)
+                                                    (array.get $Array
+                                                               (local.get $procs)
+                                                               (local.get $i))))
+                            (local.set $inv (struct.get $Procedure $invoke (local.get $p)))
+                            (local.set $result
+                                       (call_ref $ProcedureInvoker
+                                                 (local.get $p)
+                                                 (local.get $next)
+                                                 (local.get $inv)))
+                            (br $loop)))
+               (local.get $result))
+
          ;; Invoker for case-lambda closures.
          ;; - $args is the vector of *user* arguments (no [closure, tail?] header).
          ;; - Arity checking + repacking are handled by the closure's code
@@ -35667,6 +35746,7 @@
               (ref.func $invoke-struct)
               (ref.func $primitive-invoke)
               (ref.func $invoke-reduced-procedure)
+              (ref.func $invoke-composed-procedure)
               (ref.func $code:case-lambda-dispatch)
               (ref.func $invoke-case-closure)
               #;(ref.func $struct-constructor/with-guard)
@@ -37935,6 +38015,85 @@
                             (local.set $i (i32.add (local.get $i) (i32.const 1)))
                             (br $loop)))
                (local.get $mask))
+
+         ;; make-composed-procedure : list? boolean? -> procedure?
+         ;;   Build the procedure returned by compose or compose1.
+         (func $make-composed-procedure
+               (param $args    (ref eq))
+               (param $single? (ref eq))
+               (result         (ref eq))
+
+               (local $procs (ref $Array))
+               (local $n     i32)
+               (local $i     i32)
+               (local $p     (ref $Procedure))
+               (local $free  (ref $Free))
+
+               (local.set $procs (call $list->array (local.get $args)))
+               (local.set $n     (array.len (local.get $procs)))
+               (block $done
+                      (loop $loop
+                            (br_if $done (i32.ge_u (local.get $i) (local.get $n)))
+                            (if (i32.eqz
+                                 (ref.test (ref $Procedure)
+                                           (array.get $Array
+                                                      (local.get $procs)
+                                                      (local.get $i))))
+                                (then
+                                 (call $raise-argument-error:procedure-expected
+                                       (array.get $Array
+                                                  (local.get $procs)
+                                                  (local.get $i)))
+                                 (unreachable)))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+               (if (i32.eq (local.get $n) (i32.const 1))
+                   (then (return (array.get $Array (local.get $procs) (i32.const 0)))))
+               (if (i32.eqz (local.get $n))
+                   (then
+                    (local.set $free
+                               (array.new_fixed $Free
+                                                2
+                                                (ref.cast (ref eq) (local.get $procs))
+                                                (local.get $single?)))
+                    (return
+                     (struct.new $Closure
+                                 (i32.const 0)
+                                 (global.get $symbol:compose)
+                                 (ref.i31 (i32.const -2))
+                                 (global.get $the-racket-realm)
+                                 (ref.func $invoke-composed-procedure)
+                                 (global.get $symbol:compose)
+                                 (ref.func $dummy-code)
+                                 (local.get $free)))))
+               (local.set $p (ref.cast (ref $Procedure)
+                                        (array.get $Array
+                                                   (local.get $procs)
+                                                   (i32.sub (local.get $n) (i32.const 1)))))
+               (local.set $free
+                          (array.new_fixed $Free
+                                           2
+                                           (ref.cast (ref eq) (local.get $procs))
+                                           (local.get $single?)))
+               (struct.new $Closure
+                           (i32.const 0)
+                           (global.get $symbol:compose)
+                           (struct.get $Procedure $arity (local.get $p))
+                           (global.get $the-racket-realm)
+                           (ref.func $invoke-composed-procedure)
+                           (global.get $symbol:compose)
+                           (ref.func $dummy-code)
+                           (local.get $free)))
+
+         (func $compose (type $Prim>=0)
+               (param $args (ref eq))
+               (result      (ref eq))
+               (call $make-composed-procedure (local.get $args) (global.get $false)))
+
+         (func $compose1 (type $Prim>=0)
+               (param $args (ref eq))
+               (result      (ref eq))
+               (call $make-composed-procedure (local.get $args) (global.get $true)))
 
          (func $procedure-reduce-arity
                (param $proc  (ref eq)) ; procedure?
