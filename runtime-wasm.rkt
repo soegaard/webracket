@@ -19121,10 +19121,16 @@
                      (local.get $x)))
          (func $raise-bad-list-ref-index
                (param $xs  (ref $Pair)) (param $i   i32) (param $len i32)
-               (unreachable))
+               (call $raise-argument-error1
+                     (global.get $symbol:list-ref)
+                     (global.get $string:exact-nonnegative-integer?)
+                     (ref.i31 (i32.shl (local.get $i) (i32.const 1)))))
          (func $raise-bad-list-set-index
                (param $xs (ref eq)) (param $i i32) (param $len i32)
-               (unreachable))
+               (call $raise-argument-error1
+                     (global.get $symbol:list-set)
+                     (global.get $string:exact-nonnegative-integer?)
+                     (ref.i31 (i32.shl (local.get $i) (i32.const 1)))))
 
          (func $pair? (type $Prim1)
                ,@(make-predicate-body '$Pair))
@@ -19528,11 +19534,25 @@
 
               ;; Decode & check fixnum index
               (if (ref.test (ref i31) (local.get $i))
-                  (then (local.set $idx (i31.get_u (ref.cast (ref i31) (local.get $i))))
+                  (then (local.set $idx (i31.get_s (ref.cast (ref i31) (local.get $i))))
                         (if (i32.ne (i32.and (local.get $idx) (i32.const 1)) (i32.const 0))
-                            (then (call $raise-check-fixnum (local.get $i))))
-                        (local.set $idx (i32.shr_u (local.get $idx) (i32.const 1))))
-                  (else (call $raise-check-fixnum (local.get $i))))
+                            (then (call $raise-argument-error1
+                                        (global.get $symbol:list-set)
+                                        (global.get $string:exact-nonnegative-integer?)
+                                        (local.get $i))
+                                  (unreachable)))
+                        (local.set $idx (i32.shr_s (local.get $idx) (i32.const 1))))
+                  (else (call $raise-argument-error1
+                              (global.get $symbol:list-set)
+                              (global.get $string:exact-nonnegative-integer?)
+                              (local.get $i))
+                        (unreachable)))
+              (if (i32.lt_s (local.get $idx) (i32.const 0))
+                  (then (call $raise-argument-error1
+                              (global.get $symbol:list-set)
+                              (global.get $string:exact-nonnegative-integer?)
+                              (local.get $i))
+                        (unreachable)))
 
               ;; Ensure non-empty proper list
               (if (ref.eq (local.get $xs) (global.get $null))
@@ -21621,11 +21641,25 @@
 
               (if (ref.test (ref i31) (local.get $i))
                   (then
-                   (local.set $idx (i31.get_u (ref.cast (ref i31) (local.get $i))))
+                   (local.set $idx (i31.get_s (ref.cast (ref i31) (local.get $i))))
                    (if (i32.ne (i32.and (local.get $idx) (i32.const 1)) (i32.const 0))
-                       (then (call $raise-check-fixnum (local.get $i))))
-                   (local.set $idx (i32.shr_u (local.get $idx) (i32.const 1))))
-                  (else (call $raise-check-fixnum (local.get $i))))
+                       (then (call $raise-argument-error1
+                                   (global.get $symbol:list-update)
+                                   (global.get $string:exact-nonnegative-integer?)
+                                   (local.get $i))
+                             (unreachable)))
+                   (local.set $idx (i32.shr_s (local.get $idx) (i32.const 1))))
+                  (else (call $raise-argument-error1
+                              (global.get $symbol:list-update)
+                              (global.get $string:exact-nonnegative-integer?)
+                              (local.get $i))
+                        (unreachable)))
+              (if (i32.lt_s (local.get $idx) (i32.const 0))
+                  (then (call $raise-argument-error1
+                              (global.get $symbol:list-update)
+                              (global.get $string:exact-nonnegative-integer?)
+                              (local.get $i))
+                        (unreachable)))
 
               (if (i32.eqz (ref.test (ref $Procedure) (local.get $proc)))
                   (then (call $raise-argument-error:procedure-expected (local.get $proc))
@@ -24111,6 +24145,19 @@
                        (else))
                    (local.set $use-proc (i32.const 1))))
 
+              (if (ref.eq (call $list? (local.get $l)) (global.get $false))
+                  (then (call $raise-argument-error1
+                              (global.get $symbol:list-prefix?)
+                              (global.get $string:list?)
+                              (local.get $l))
+                        (unreachable)))
+              (if (ref.eq (call $list? (local.get $r)) (global.get $false))
+                  (then (call $raise-argument-error1
+                              (global.get $symbol:list-prefix?)
+                              (global.get $string:list?)
+                              (local.get $r))
+                        (unreachable)))
+
               ;; Iterate through lists
               (local.set $lcur (local.get $l))
               (local.set $rcur (local.get $r))
@@ -24186,6 +24233,19 @@
                              (unreachable))
                        (else))
                    (local.set $use-proc (i32.const 1))))
+
+              (if (ref.eq (call $list? (local.get $l)) (global.get $false))
+                  (then (call $raise-argument-error1
+                              (global.get $symbol:take-common-prefix)
+                              (global.get $string:list?)
+                              (local.get $l))
+                        (unreachable)))
+              (if (ref.eq (call $list? (local.get $r)) (global.get $false))
+                  (then (call $raise-argument-error1
+                              (global.get $symbol:take-common-prefix)
+                              (global.get $string:list?)
+                              (local.get $r))
+                        (unreachable)))
 
               ;; Iterate through lists, building accumulator
               (local.set $lcur (local.get $l))
@@ -24264,6 +24324,19 @@
                        (else))
                    (local.set $use-proc (i32.const 1))))
 
+              (if (ref.eq (call $list? (local.get $l)) (global.get $false))
+                  (then (call $raise-argument-error1
+                              (global.get $symbol:drop-common-prefix)
+                              (global.get $string:list?)
+                              (local.get $l))
+                        (unreachable)))
+              (if (ref.eq (call $list? (local.get $r)) (global.get $false))
+                  (then (call $raise-argument-error1
+                              (global.get $symbol:drop-common-prefix)
+                              (global.get $string:list?)
+                              (local.get $r))
+                        (unreachable)))
+
               ;; Iterate through lists, dropping common prefix
               (local.set $lcur (local.get $l))
               (local.set $rcur (local.get $r))
@@ -24338,6 +24411,19 @@
                              (unreachable))
                        (else))
                    (local.set $use-proc (i32.const 1))))
+
+              (if (ref.eq (call $list? (local.get $l)) (global.get $false))
+                  (then (call $raise-argument-error1
+                              (global.get $symbol:split-common-prefix)
+                              (global.get $string:list?)
+                              (local.get $l))
+                        (unreachable)))
+              (if (ref.eq (call $list? (local.get $r)) (global.get $false))
+                  (then (call $raise-argument-error1
+                              (global.get $symbol:split-common-prefix)
+                              (global.get $string:list?)
+                              (local.get $r))
+                        (unreachable)))
 
               ;; Iterate through lists, building accumulator and returning tails
               (local.set $lcur (local.get $l))
