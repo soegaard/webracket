@@ -2912,6 +2912,10 @@
               (import "primitives" "external_number_to_f64")
               (param (ref extern)) (result f64))
 
+        (func $js-flonum->string
+              (import "primitives" "flonum_to_string")
+              (param f64) (result i32))
+
         (func $js-external-string->string
               (import "primitives" "external_string_to_string")
               (param externref) (result i32))
@@ -13233,7 +13237,7 @@
                             (br $append-loop)))
                (call $i32growable-array->string (local.get $g)))
 
-         (func $flonum->string
+         (func $old:flonum->string
                (param $f (ref $Flonum))
                (result   (ref $String))
 
@@ -13259,6 +13263,15 @@
                                 (local.get $s)
                                 (call $codepoint->string (i32.const 48)))) ;; '0'
                    (else (local.get $s))))
+
+         (func $flonum->string
+               (param $f (ref $Flonum))
+               (result   (ref $String))
+
+               (ref.cast (ref $String)
+                         (call $linear-memory->string
+                               (call $js-flonum->string
+                                     (struct.get $Flonum $v (local.get $f))))))
 
         (func $i32->string
               (param $n   i32)
@@ -13345,11 +13358,7 @@
          (func $format/display:flonum
                (param $val (ref $Flonum))
                (result     (ref $String))
-               (ref.cast (ref $String)
-                 (call $string-trim-right
-                       (call $f64->string
-                             (struct.get $Flonum $v (local.get $val)))
-                       ,(Imm #\0))))
+               (call $flonum->string (local.get $val)))
          
 
 

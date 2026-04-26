@@ -1902,6 +1902,16 @@ function to_string(v) {
   return to_fasl(v);
 }
 
+function flonum_to_racket_string(x) {
+  if (Number.isNaN(x)) return '+nan.0';
+  if (x === Infinity) return '+inf.0';
+  if (x === -Infinity) return '-inf.0';
+  if (Object.is(x, -0)) return '-0.0';
+
+  const s = String(x);
+  return /[.eE]/.test(s) ? s : `${s}.0`;
+}
+
 const console_bridge_enabled = @|(if console-bridge? "true" "false")|;
 const console_bridge_browser = @|(if browser? "true" "false")|;
 
@@ -2359,6 +2369,8 @@ var imports = {
         (typeof obj === 'number'
          ? obj
          : (obj instanceof Number ? obj.valueOf() : NaN))),
+      'flonum_to_string': (x =>
+        to_fasl(flonum_to_racket_string(x))),
       'external_string_to_string': (obj =>
         (typeof obj === 'string'
          ? to_string(obj)
