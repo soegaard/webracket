@@ -755,11 +755,13 @@
         (path-add-extension ffi-filename ".ffi")))
   
   (define candidates
-    (append (list filename
-                  (build-path "ffi" filename))
-            (if system-ffi-directory
-                (list (build-path system-ffi-directory filename))
-                '())))
+    (if (absolute-path? filename)
+        (list filename)
+        (append (list filename
+                      (build-path "ffi" filename))
+                (if system-ffi-directory
+                    (list (build-path system-ffi-directory filename))
+                    '()))))
   (for/or ([candidate (in-list candidates)])
     (and candidate
          (file-exists? candidate)
