@@ -82,12 +82,19 @@
     [else
      (simplify-path (current-directory))]))
 
-;; relative-path-string : path? path? -> string?
-;;   Compute a relative pathname string from base-dir to target-path.
-(define-for-syntax (relative-path-string base-dir target-path)
-  (define simple-base-dir   (simplify-path (path->complete-path base-dir)))
+;; path->include-string : path? -> string?
+;;   Convert a path to a portable include/reader path string.
+(define-for-syntax (path->include-string p)
+  (regexp-replace* #rx"\\\\"
+                   (path->string p)
+                   "/"))
+
+;; relative-include-path-string : path? path? -> string?
+;;   Compute a portable relative pathname string from base-dir to target-path.
+(define-for-syntax (relative-include-path-string base-dir target-path)
+  (define simple-base-dir    (simplify-path (path->complete-path base-dir)))
   (define simple-target-path (simplify-path (path->complete-path target-path)))
-  (path->string
+  (path->include-string
    (find-relative-path simple-base-dir
                        simple-target-path)))
 
@@ -205,7 +212,7 @@
                              lib-id-stx))
        (hash-set! include-lib-seen lib-key #t)
        (define lib-file
-         (relative-path-string
+         (relative-include-path-string
           (syntax-source-directory lib-id-stx)
           lib-path))
        (datum->syntax stx
