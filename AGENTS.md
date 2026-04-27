@@ -24,6 +24,8 @@ Racket primitives** faithfully.
 ### Build and Publish Workflow
 
 - Unless otherwise stated, assume screenshots are from content served from `local/`.
+- For visual parity/debugging work, prefer Playwright-based computed-style comparisons over screenshot-only comparison when Playwright is available.
+- Use screenshots as a fallback or supporting aid, not the primary source of truth, when computed-style inspection is possible.
 - During development, build scripts must write to `local/` only.
 - Do not write to `public/` from build scripts.
 - `publish.sh` is the only script that copies from `local/` to `public/`.
