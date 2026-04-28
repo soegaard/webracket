@@ -3907,6 +3907,16 @@
 
 (define current-assigned-info (make-parameter #f))
 
+(define (assigned-info-mark! info x)
+  (when (hash? info)
+    (hash-set! info x (var-info #t))))
+
+(define (assigned-info->id-set info)
+  (for/fold ([xs empty-set]) ([(x vi) (in-hash info)])
+    (match vi
+      [(var-info #t) (set-add xs x)]
+      [_ xs])))
+
 (define-pass lower-letrec-values : LFE2+ (T) -> LFE2+ ()
   (definitions
     (define h #'lower-letrec-values)
@@ -4110,6 +4120,7 @@
           (syntax-property s letrec-initialization-set-key #t)
           s))
     (define (InitSet s x t)
+      (assigned-info-mark! (current-assigned-info) x)
       (with-output-language (LFE2+ Expr)
         `(set! ,(init-set-syntax s) ,x ,t)))
     (define (InitializeClause s xs e)
@@ -4628,7 +4639,12 @@
   ; more convenient to use assignment-conversion than
   ; calling collect-assignable-variables and box-mutables in order
   ; (since  assignment-conversion has type T -> T)
-  (define ms (collect-assignable-variables T))
+  (define ms
+    (cond
+      [(current-assigned-info)
+       => assigned-info->id-set]
+      [else
+       (collect-assignable-variables T)]))
   (current-console-bridge-mutable-top-binding-names
    (for/list ([x (in-list (id-set->list ms))]
               #:do [(define sym (syntax-e (variable-id x)))]
@@ -5103,14 +5119,16 @@
               (flatten-topbegin
                (parse
                 (expand-syntax stx))))))))
+        (define ua (uncover-assigned ar))
         (define lr
-          (parameterize ([current-assigned-info (uncover-assigned ar)])
+          (parameterize ([current-assigned-info ua])
             (lower-letrec-values ar)))
         (unparse-all
          (unparse-LANF
           (anormalize
            (categorize-applications
-            (assignment-conversion lr)))))))
+            (parameterize ([current-assigned-info ua])
+              (assignment-conversion lr))))))))
     (check-equal? (test #'1) ''1)
     (check-equal? (test #'(+ 2 3)) '(primapp + '2 '3))
     (check-equal? (test #'(+ 2 (* 4 5)))
@@ -8025,7 +8043,9 @@
   (define ac
     (time-pass "assignment-conversion"
       (λ ()
-        (define a (assignment-conversion lr))
+        (define a
+          (parameterize ([current-assigned-info ua])
+            (assignment-conversion lr)))
         (when debug:print-passes?
           (displayln "--- assignment conversion ---")
           (displayln (pretty-print a) (current-error-port)))
@@ -8071,17 +8091,20 @@
           (parse
            (unexpand
             (topexpand stx))))))))))
+  (define ua (uncover-assigned ar))
   (define lr
-    (parameterize ([current-assigned-info (uncover-assigned ar)])
+    (parameterize ([current-assigned-info ua])
       (lower-letrec-values ar)))
+  (define ac
+    (parameterize ([current-assigned-info ua])
+      (assignment-conversion lr)))
   (pretty-print
    (strip    
     (flatten-begin
      (closure-conversion
       (anormalize
        (categorize-applications
-        (assignment-conversion
-         lr))))))))
+        ac)))))))
 
 (module+ test
   (define (module-has-top-level-form? mod head name)
@@ -8213,9 +8236,11 @@
   (define eb  (explicit-begin cq))
   (define ecl (explicit-case-lambda eb))
   (define ar  (α-rename ecl))
-  (define lr  (parameterize ([current-assigned-info (uncover-assigned ar)])
+  (define ua  (uncover-assigned ar))
+  (define lr  (parameterize ([current-assigned-info ua])
                 (lower-letrec-values ar)))
-  (define ac  (assignment-conversion lr))
+  (define ac  (parameterize ([current-assigned-info ua])
+                (assignment-conversion lr)))
   (define ca  (categorize-applications ac))
   (define an  (anormalize ca))
   (pretty-print (strip an)))
@@ -8229,9 +8254,11 @@
   (define eb  (explicit-begin cq))
   (define ecl (explicit-case-lambda eb))
   (define ar  (α-rename ecl))
-  (define lr  (parameterize ([current-assigned-info (uncover-assigned ar)])
+  (define ua  (uncover-assigned ar))
+  (define lr  (parameterize ([current-assigned-info ua])
                 (lower-letrec-values ar)))
-  (define ac  (assignment-conversion lr))
+  (define ac  (parameterize ([current-assigned-info ua])
+                (assignment-conversion lr)))
   (define ca  (categorize-applications ac))
   (pretty-print (strip ca)))
 
@@ -8244,9 +8271,11 @@
   (define eb  (explicit-begin cq))
   (define ecl (explicit-case-lambda eb))
   (define ar  (α-rename ecl))
-  (define lr  (parameterize ([current-assigned-info (uncover-assigned ar)])
+  (define ua  (uncover-assigned ar))
+  (define lr  (parameterize ([current-assigned-info ua])
                 (lower-letrec-values ar)))
-  (define ac  (assignment-conversion lr))
+  (define ac  (parameterize ([current-assigned-info ua])
+                (assignment-conversion lr)))
   (define ca  (categorize-applications ac))
   (define an  (anormalize ca))
   (define cc  (closure-conversion an))
@@ -8265,9 +8294,11 @@
   (define eb  (explicit-begin cq))
   (define ecl (explicit-case-lambda eb))
   (define ar  (α-rename ecl))
-  (define lr  (parameterize ([current-assigned-info (uncover-assigned ar)])
+  (define ua  (uncover-assigned ar))
+  (define lr  (parameterize ([current-assigned-info ua])
                 (lower-letrec-values ar)))
-  (define ac  (assignment-conversion lr))
+  (define ac  (parameterize ([current-assigned-info ua])
+                (assignment-conversion lr)))
   (pretty-print
    (values ; strip
     (values ; classify-variables
