@@ -39,7 +39,13 @@
                      (equal? (letrec ([f (lambda () 1)])
                                'ok)
                              'ok)
+                     (equal? (letrec ([f (lambda () (f))])
+                               'ok)
+                             'ok)
                      (equal? (letrec ([f (case-lambda [() 1])])
+                               'ok)
+                             'ok)
+                     (equal? (letrec ([f (case-lambda [() (f)])])
                                'ok)
                              'ok)
                      (equal? (letrec ([x 12]

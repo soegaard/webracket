@@ -4743,16 +4743,20 @@
            (define dead-pure-singleton?
              (or (eq? local-simple-kind 'pure)
                  (lambda-clause? xs rhs)))
+           (define body-uses-singleton?
+             (for/or ([x (in-list xs)])
+               (set-in? x (referenced-vars body))))
            (cond
-             [self-recursive?
-              (Lower-waddell/classified s local-classified body)]
+             [(and (not body-uses-singleton?)
+                   dead-pure-singleton?)
+              body]
              [(eq? local-kind 'unreferenced)
               (cond
-                [dead-pure-singleton?
-                 body]
                 [else
                  (with-output-language (LFE2+ Expr)
                    (Begin s (list (EvaluateClause s xs rhs) body)))])]
+             [self-recursive?
+              (Lower-waddell/classified s local-classified body)]
              [else
               (with-output-language (LFE2+ Expr)
                 `(let-values ,s ([(,xs ...) ,rhs]) ,body))])]
@@ -5437,7 +5441,15 @@
                                   'ok)
                               'scc)
                   ''ok)
+    (check-equal? (lower-test #'(letrec ([f (λ () (f))])
+                                  'ok)
+                              'scc)
+                  ''ok)
     (check-equal? (lower-test #'(letrec ([f (case-lambda [() 1])])
+                                  'ok)
+                              'scc)
+                  ''ok)
+    (check-equal? (lower-test #'(letrec ([f (case-lambda [() (f)])])
                                   'ok)
                               'scc)
                   ''ok)
