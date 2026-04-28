@@ -4186,8 +4186,14 @@
       (Loop clauses '()))
     (define (Lower-basic s x e e0)
       (define clauses (map list x e))
+      (define assigned (set-union (assigned-vars e0)
+                                  (for/fold ([xs empty-set]) ([rhs (in-list e)])
+                                    (set-union xs (assigned-vars rhs)))))
       (define-values (raw-lambda-clauses raw-complex-clauses)
-        (partition (match-lambda [(list xs rhs) (lambda-clause? xs rhs)])
+        (partition (match-lambda
+                     [(list xs rhs)
+                      (and (lambda-clause? xs rhs)
+                           (not (set-in? (first xs) assigned)))])
                    clauses))
       (define-values (lambda-clauses complex-clauses)
         (if (null? raw-complex-clauses)
@@ -4988,6 +4994,13 @@
                   '(let-values (((x) '1))
                      (letrec-values (((f) (λ () x)))
                        (f))))
+    (check-true
+     (regexp-match?
+      #rx"^\\(let-values \\(\\(\\(f\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(f[0-9]+\\) \\(λ \\(g\\) \\(begin \\(set! f g\\) \\(f\\)\\)\\)\\)\\) \\(begin \\(set! f f[0-9]+\\) \\(quote 0\\)\\)\\) \\(f \\(λ \\(\\) \\(quote 12\\)\\)\\)\\)\\)$"
+      (format "~s"
+              (lower-test #'(letrec ([f (λ (g) (set! f g) (f))])
+                              (f (λ () 12)))
+                          'basic))))
     (check-equal? (lower-test #'(letrec ([x (begin 1 2)]
                                          [f (λ () 3)]
                                          [u (begin 4 5)])
