@@ -4630,13 +4630,11 @@
                       `(letrec-values ,s ([(,(map first lambda-bindings))
                                            ,(map second lambda-bindings)] ...)
                          ,body)))))))
-    (define (Lower-waddell s x e e0)
-      (define lhs-set (binding-vars-set x))
-      (define referenced (all-referenced-vars e0 e))
-      (define assigned (or (current-assigned-analysis)
-                           (all-assigned-vars e0 e)))
-      (define classified
-        (classify-clauses x e lhs-set referenced assigned))
+    (define (scc-binding->classified-clause binding)
+      (list (letrec-scc-binding-kind binding)
+            (letrec-scc-binding-xs binding)
+            (letrec-scc-binding-rhs binding)))
+    (define (Lower-waddell/classified s classified e0)
       (define (bindings-of kind)
         (for/list ([clause (in-list classified)]
                    #:when (eq? (first clause) kind))
@@ -4646,58 +4644,92 @@
       (define complex-clauses      (bindings-of 'complex))
       (define unreferenced-clauses (bindings-of 'unreferenced))
       (with-output-language (LFE2+ Expr)
-      (define placeholder-clauses
-        (placeholder-bindings (append allocating-clauses complex-clauses)))
-      (define lambda-bindings
-        (for/list ([clause (in-list lambda-clauses)])
-          (list (first clause) (second clause))))
-      (define lambda-lhs-set
-        (binding-vars-set (map first lambda-clauses)))
-      (define (simple-pure-after-lambda? clause)
-        (match clause
-          [(list 'simple-pure _xs rhs)
-           (not (lhs-free? rhs lambda-lhs-set))]
-          [_
-           #f]))
-      (define seq-exprs
-        (for/list ([clause (in-list classified)]
-                   #:unless (eq? (first clause) 'simple-pure)
-                   #:unless (eq? (first clause) 'lambda))
+        (define placeholder-clauses
+          (placeholder-bindings (append allocating-clauses complex-clauses)))
+        (define lambda-bindings
+          (for/list ([clause (in-list lambda-clauses)])
+            (list (first clause) (second clause))))
+        (define lambda-lhs-set
+          (binding-vars-set (map first lambda-clauses)))
+        (define (simple-pure-after-lambda? clause)
+          (match clause
+            [(list 'simple-pure _xs rhs)
+             (not (lhs-free? rhs lambda-lhs-set))]
+            [_ #f]))
+        (define seq-exprs
+          (for/list ([clause (in-list classified)]
+                     #:unless (eq? (first clause) 'simple-pure)
+                     #:unless (eq? (first clause) 'lambda))
             (match clause
               [(list 'simple-allocates xs rhs) (InitializeClause s xs rhs)]
-              [(list 'complex xs rhs)      (InitializeClause s xs rhs)]
-              [(list 'unreferenced xs rhs) (EvaluateClause s xs rhs)])))
-      (define body0
+              [(list 'complex xs rhs)          (InitializeClause s xs rhs)]
+              [(list 'unreferenced xs rhs)     (EvaluateClause s xs rhs)])))
+        (define body0
           (if (null? seq-exprs)
               e0
               (Begin s (append seq-exprs (list e0)))))
-      (define body0*
-        (for/fold ([body body0])
-                  ([clause (in-list (reverse classified))]
-                   #:when (simple-pure-after-lambda? clause))
-          (match clause
-            [(list _kind xs rhs)
-             `(let-values ,s ([(,xs ...) ,rhs]) ,body)])))
-      (define body1
+        (define body0*
+          (for/fold ([body body0])
+                    ([clause (in-list (reverse classified))]
+                     #:when (simple-pure-after-lambda? clause))
+            (match clause
+              [(list _kind xs rhs)
+               `(let-values ,s ([(,xs ...) ,rhs]) ,body)])))
+        (define body1
           (if (null? lambda-bindings)
               body0*
-              (let ([lambda-xss  (map first  lambda-bindings)]
+              (let ([lambda-xss  (map first lambda-bindings)]
                     [lambda-rhss (map second lambda-bindings)])
                 `(letrec-values ,s ([(,lambda-xss ...) ,lambda-rhss] ...)
                    ,body0*))))
-      (define body2
+        (define body2
           (if (null? placeholder-clauses)
               body1
               `(let-values ,s ([(,(map first placeholder-clauses))
                                 ,(map second placeholder-clauses)] ...)
                  ,body1)))
-      (for/fold ([body body2])
+        (for/fold ([body body2])
                   ([clause (in-list (reverse classified))]
                    #:when (memq (first clause) '(simple-pure))
                    #:unless (simple-pure-after-lambda? clause))
           (match clause
             [(list _kind xs rhs)
-             `(let-values ,s ([(,xs ...) ,rhs]) ,body)])))))
+             `(let-values ,s ([(,xs ...) ,rhs]) ,body)]))))
+    (define (Lower-waddell s x e e0)
+      (define lhs-set (binding-vars-set x))
+      (define referenced (all-referenced-vars e0 e))
+      (define assigned (or (current-assigned-analysis)
+                           (all-assigned-vars e0 e)))
+      (define classified
+        (classify-clauses x e lhs-set referenced assigned))
+      (Lower-waddell/classified s classified e0))
+    (define (Lower-scc s x e e0)
+      (define lhs-set (binding-vars-set x))
+      (define referenced (all-referenced-vars e0 e))
+      (define assigned (or (current-assigned-analysis)
+                           (all-assigned-vars e0 e)))
+      (define classified
+        (classify-clauses x e lhs-set referenced assigned))
+      (define sccs
+        (letrec-classified-clauses->sccs classified))
+      (for/fold ([body e0])
+                ([scc (in-list (reverse sccs))])
+        (define sorted-scc
+          (sort scc < #:key letrec-scc-binding-pos))
+        (match sorted-scc
+          [(list binding)
+           (match-define (letrec-scc-binding _pos xs rhs _kind _refs self-recursive?) binding)
+           (if self-recursive?
+               (Lower-waddell/classified s
+                                         (list (scc-binding->classified-clause binding))
+                                         body)
+               (with-output-language (LFE2+ Expr)
+                 `(let-values ,s ([(,xs ...) ,rhs]) ,body)))]
+          [_ 
+           (define classified-scc
+             (for/list ([binding (in-list sorted-scc)])
+               (scc-binding->classified-clause binding)))
+           (Lower-waddell/classified s classified-scc body)]))))
   (TopLevelForm        : TopLevelForm        (T) -> TopLevelForm        ())
   (ModuleLevelForm     : ModuleLevelForm     (M) -> ModuleLevelForm     ())
   (GeneralTopLevelForm : GeneralTopLevelForm (G) -> GeneralTopLevelForm ())
@@ -4707,7 +4739,7 @@
      (case (current-letrec-strategy)
        [(basic)   (Lower-basic s x e e0)]
        [(waddell) (Lower-waddell s x e e0)]
-       [(scc)     (Lower-waddell s x e e0)]
+       [(scc)     (Lower-scc s x e e0)]
        [else
         (error 'lower-letrec-values
                "unknown letrec strategy: ~a"
@@ -5349,6 +5381,24 @@
                   '(let-values (((x) '1))
                      (letrec-values (((f) (λ () x)))
                        (f))))
+    (check-equal? (lower-test #'(letrec ([a 1]
+                                         [b a]
+                                         [c b])
+                                  c)
+                              'scc)
+                  '(let-values (((a) '1))
+                     (let-values (((b) a))
+                       (let-values (((c) b))
+                         c))))
+    (check-equal? (lower-test #'(letrec ([f (λ () (g))]
+                                         [g (λ () (f))]
+                                         [x (f)])
+                                  x)
+                              'scc)
+                  '(letrec-values (((f) (λ () (g)))
+                                   ((g) (λ () (f))))
+                     (let-values (((x) (f)))
+                       x)))
     (check-true
      (regexp-match?
       #rx"^\\(let-values \\(\\(\\(f\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(f[.0-9]+\\) \\(λ \\(g\\) \\(begin \\(set! f g\\) \\(f\\)\\)\\)\\)\\) \\(begin \\(set! f f[.0-9]+\\) \\(quote 0\\)\\)\\) \\(f \\(λ \\(\\) \\(quote 12\\)\\)\\)\\)\\)$"
