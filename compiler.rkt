@@ -4069,7 +4069,6 @@
       (and (= (length xs) 1)
            (nanopass-case (LFE2+ Expr) e
              [(λ ,s ,f ,e0) #t]
-             [(case-lambda ,s ,ab ...) #t]
              [else #f])))
     (define (split-lambda-values-clause xs rhs assigned)
       (and (all-unassigned-bindings? xs assigned)
@@ -4081,7 +4080,6 @@
                    (for/and ([e (in-list e1)])
                      (nanopass-case (LFE2+ Expr) e
                        [(λ ,s ,f ,e0) #t]
-                       [(case-lambda ,s ,ab ...) #t]
                        [else #f]))
                    (for/list ([x (in-list xs)]
                               [e (in-list e1)])

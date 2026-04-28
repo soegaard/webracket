@@ -217,6 +217,12 @@
                                                             (lambda () 2))])
                                (list (f) (g)))
                              '(1 2))
+                     (equal? (letrec-values ([(f g) (values (case-lambda
+                                                              [() 1])
+                                                             (case-lambda
+                                                               [() 2]))])
+                               (list (f) (g)))
+                             '(1 2))
                      (equal? (letrec-values ([(u v) (let-values ([(a b) (values 1 2)])
                                                       (values a b))])
                                (+ u v))
@@ -237,6 +243,13 @@
                      (equal? (letrec-values ([(f g) (letrec-values ([(a b) (values (lambda () 1)
                                                                                       (lambda () 2))])
                                                        (values a b))])
+                               (list (f) (g)))
+                             '(1 2))
+                     (equal? (letrec-values ([(f g) (letrec-values ([(a b) (values (case-lambda
+                                                                                       [() 1])
+                                                                                      (case-lambda
+                                                                                        [() 2]))])
+                                                        (values a b))])
                                (list (f) (g)))
                              '(1 2))
                      (equal? (letrec-values ([(f) (begin 0 (lambda () 1))])
