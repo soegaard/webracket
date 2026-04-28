@@ -4170,7 +4170,7 @@
           'complex
           kind))
     (define (assimilate-let-values-clause xs rhs lhs-set referenced assigned)
-      (and (single-unassigned-binding? xs assigned)
+      (and (all-unassigned-bindings? xs assigned)
            (nanopass-case (LFE2+ Expr) rhs
              [(let-values ,s ([(,x* ...) ,e*] ...) ,e0)
               (define nested-classified
@@ -4197,7 +4197,7 @@
              [else
               #f])))
     (define (assimilate-letrec-values-clause xs rhs lhs-set referenced assigned)
-      (and (single-unassigned-binding? xs assigned)
+      (and (all-unassigned-bindings? xs assigned)
            (nanopass-case (LFE2+ Expr) rhs
              [(letrec-values ,s ([(,x* ...) ,e*] ...) ,e0)
              (define nested-lambda-clauses
@@ -5080,11 +5080,26 @@
                               'waddell)
                   '(let-values (((x y) (values '1 '2)))
                      (+ x y)))
+    (check-equal? (lower-test #'(letrec-values ([(x y) (let-values ([(a b) (values 1 2)])
+                                                  (values a b))])
+                                 (+ x y))
+                              'waddell)
+                  '(let-values (((a b) (values '1 '2)))
+                     (let-values (((x y) (values a b)))
+                       (+ x y))))
     (check-true
      (regexp-match?
       #rx"^\\(let-values \\(\\(\\(x\\) \\(quote unsafe-undefined[0-9]+\\)\\) \\(\\(y\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(x[0-9]+ y[0-9]+\\) \\(values \\(cons \\(quote 1\\) \\(quote 2\\)\\) \\(quote 3\\)\\)\\)\\) \\(begin \\(set! x x[0-9]+\\) \\(set! y y[0-9]+\\) \\(quote 0\\)\\)\\) \\(cons x y\\)\\)\\)$"
       (format "~s"
               (lower-test #'(letrec-values ([(x y) (values (cons 1 2) 3)])
+                              (cons x y))
+                          'waddell))))
+    (check-true
+     (regexp-match?
+      #rx"^\\(let-values \\(\\(\\(a\\) \\(quote unsafe-undefined[0-9]+\\)\\) \\(\\(b\\) \\(quote unsafe-undefined[0-9]+\\)\\) \\(\\(x\\) \\(quote unsafe-undefined[0-9]+\\)\\) \\(\\(y\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(a[0-9]+ b[0-9]+\\) \\(values \\(cons \\(quote 1\\) \\(quote 2\\)\\) \\(quote 3\\)\\)\\)\\) \\(begin \\(set! a a[0-9]+\\) \\(set! b b[0-9]+\\) \\(quote 0\\)\\)\\) \\(let-values \\(\\(\\(x[0-9]+ y[0-9]+\\) \\(values a b\\)\\)\\) \\(begin \\(set! x x[0-9]+\\) \\(set! y y[0-9]+\\) \\(quote 0\\)\\)\\) \\(cons x y\\)\\)\\)$"
+      (format "~s"
+              (lower-test #'(letrec-values ([(x y) (let-values ([(a b) (values (cons 1 2) 3)])
+                                                   (values a b))])
                               (cons x y))
                           'waddell))))
     (check-equal? (lower-test #'(letrec ([x (let-values ([(a) 1]) a)])
