@@ -5171,6 +5171,20 @@
                   '(letrec-values (((f) (λ () '1))
                                    ((g) (λ () '2)))
                      (list (f) (g))))
+    (check-true
+     (regexp-match?
+      #rx"^\\(let-values \\(\\(\\(f\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(f[.0-9]+\\) \\(case-lambda \\(λ \\(\\) \\(quote 1\\)\\)\\)\\)\\) \\(begin \\(set! f f[.0-9]+\\) \\(quote 0\\)\\)\\) \\(f\\)\\)\\)$"
+      (format "~s"
+              (lower-test #'(letrec ([f (case-lambda [() 1])])
+                              (f))
+                          'basic))))
+    (check-true
+     (regexp-match?
+      #rx"^\\(let-values \\(\\(\\(f\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(f[.0-9]+\\) \\(case-lambda \\(λ \\(\\) \\(quote 1\\)\\)\\)\\)\\) \\(begin \\(set! f f[.0-9]+\\) \\(quote 0\\)\\)\\) \\(f\\)\\)\\)$"
+      (format "~s"
+              (lower-test #'(letrec ([f (case-lambda [() 1])])
+                              (f))
+                          'waddell))))
     (check-equal? (lower-test #'(letrec-values ([(x y) (let-values ([(a b) (values 1 2)])
                                                   (values a b))])
                                  (+ x y))
@@ -7250,11 +7264,11 @@
                     (add-symbol-constant name name) ; on purpose name twice
                     `(global.get ,$name)]
                 [else
-                    `(global.get $false)]))
+                 `(global.get $false)]))
             (Store! dest `(struct.new $Closure
                                (i32.const 0)               ; hash
                                ,get-name                   ; name:  #f or $Symbol
-                               ,(Imm ar)                   ; arity: 
+                               ,(Imm ar)                   ; arity:
                                (global.get $false)         ; realm: #f or $Symbol
                                (ref.func $invoke-closure)  ; invoke (used by apply, map, etc.)
                                ,(closure-debug-id-expr l)  ; debug-id
