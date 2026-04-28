@@ -156,6 +156,19 @@
     (for ([line (in-list (string-split (string-trim (strategy-result-stderr r)) "\n"))])
       (printf "    ~a\n" line))))
 
+;; report-delta : strategy-result? strategy-result? -> void?
+;;   Print compile-time and size deltas between two strategy results.
+(define (report-delta base-r other-r)
+  (printf "  compile time: ~a\n"
+          (format-duration-ms
+           (- (strategy-result-compile-ms other-r)
+              (strategy-result-compile-ms base-r))))
+  (printf "  wat size:     ~a MB\n"
+          (~r (/ (- (strategy-result-wat-size other-r)
+                    (strategy-result-wat-size base-r))
+                 1000000.0)
+              #:precision '(= 6))))
+
 ;; strategy-order : (listof symbol?)
 ;;   Letrec strategies to measure for each suite.
 (define strategy-order '(basic waddell scc))
@@ -217,16 +230,20 @@
           #:unless (eq? 'basic (strategy-result-name r)))
       (printf "Delta vs Basic (~a)\n"
               (string-titlecase (symbol->string (strategy-result-name r))))
-      (printf "  compile time: ~a\n"
-              (format-duration-ms
-               (- (strategy-result-compile-ms r)
-                  (strategy-result-compile-ms baseline))))
-      (printf "  wat size:     ~a MB\n"
-              (~r (/ (- (strategy-result-wat-size r)
-                        (strategy-result-wat-size baseline))
-                     1000000.0)
-                  #:precision '(= 6)))
+      (report-delta baseline r)
       (newline)))
+  (define waddell
+    (for/first ([r (in-list results)]
+                #:when (eq? 'waddell (strategy-result-name r)))
+      r))
+  (define scc
+    (for/first ([r (in-list results)]
+                #:when (eq? 'scc (strategy-result-name r)))
+      r))
+  (when (and waddell scc)
+    (printf "Delta vs Waddell (Scc)\n")
+    (report-delta waddell scc)
+    (newline))
   (define ok?
     (for/and ([r (in-list results)])
       (and (strategy-result-compile-ok? r)
