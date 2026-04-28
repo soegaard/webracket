@@ -173,9 +173,9 @@
    [("--tree-shake-report") filename
                             "Write the runtime primitive report to <filename>"
                             (tree-shake-report filename)]
-   [("--letrec-basic") "Use the basic letrec lowering strategy (default)"
+   [("--letrec-basic") "Use the basic letrec lowering strategy"
                        (letrec-strategy 'basic)]
-   [("--letrec-waddell") "Use the Waddell letrec lowering strategy"
+   [("--letrec-waddell") "Use the Waddell letrec lowering strategy (default)"
                          (letrec-strategy 'waddell)]
    [("--print-top-level-results")
     "Print each top-level expression result with print; useful for script-style tests"
