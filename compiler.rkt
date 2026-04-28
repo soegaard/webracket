@@ -4079,10 +4079,12 @@
        (define all-refs
          (lfe2+-referenced-vars rhs))
        (define refs
-         (set-intersection lhs-set all-refs))
+         (for/list ([x (in-list (id-set->list all-refs))]
+                    #:when (set-in? x lhs-set))
+           x))
        (define self-recursive?
          (for/or ([x (in-list xs)])
-           (set-in? x refs)))
+           (set-in? x all-refs)))
        (letrec-scc-binding pos xs rhs kind refs all-refs self-recursive?)])))
 
 ;; letrec-scc-bindings->nodes : (listof letrec-scc-binding?) -> (listof letrec-scc-node?)
@@ -4099,7 +4101,7 @@
   (for ([node (in-list nodes)])
     (define binding (letrec-scc-node-binding node))
     (define ref-edges
-      (for/fold ([edges '()]) ([x (in-list (id-set->list (letrec-scc-binding-refs binding)))])
+      (for/fold ([edges '()]) ([x (in-list (letrec-scc-binding-refs binding))])
         (define dep (hash-ref var->node x #f))
         (if (and dep (not (memq dep edges)))
             (cons dep edges)
@@ -4714,12 +4716,12 @@
           (letrec-scc-binding-rhs binding)))
       (define lhs-set
         (binding-vars-set x))
-    (define referenced
-      (set-intersection lhs-set
-                        (set-union body-referenced
-                                   (for/fold ([refs empty-set]) ([binding (in-list sorted-scc)])
-                                     (set-union refs
-                                                (letrec-scc-binding-all-refs binding))))))
+      (define referenced
+        (set-intersection lhs-set
+                          (set-union body-referenced
+                                     (for/fold ([refs empty-set]) ([binding (in-list sorted-scc)])
+                                       (set-union refs
+                                                  (letrec-scc-binding-all-refs binding))))))
       (classify-clauses x e lhs-set referenced assigned))
     (define (Lower-scc s x e e0)
       (define lhs-set (binding-vars-set x))
@@ -4730,19 +4732,29 @@
         (classify-clauses x e lhs-set referenced assigned))
       (define sccs
         (letrec-classified-clauses->sccs classified))
-      (for/fold ([body e0])
-                ([scc (in-list (reverse sccs))])
+      (define initial-state
+        (cons e0 (referenced-vars e0)))
+      (car
+       (for/fold ([state initial-state])
+                 ([scc (in-list (reverse sccs))])
+        (define body
+          (car state))
+        (define body-referenced
+          (cdr state))
         (define sorted-scc
           (sort scc < #:key letrec-scc-binding-pos))
-        (define body-referenced
-          (referenced-vars body))
         (define local-classified
           (Reclassify-scc sorted-scc body-referenced assigned))
         (define body-uses-scc?
           (for*/or ([binding (in-list sorted-scc)]
                     [x (in-list (letrec-scc-binding-xs binding))])
             (set-in? x body-referenced)))
-        (match sorted-scc
+        (define scc-all-refs
+          (for/fold ([refs empty-set]) ([binding (in-list sorted-scc)])
+            (set-union refs
+                       (letrec-scc-binding-all-refs binding))))
+        (define next-body
+          (match sorted-scc
           [(list binding)
            (match-define (letrec-scc-binding _pos xs rhs _kind _refs _all-refs self-recursive?) binding)
            (define local-kind
@@ -4772,7 +4784,7 @@
              [self-recursive?
               (Lower-waddell/classified s local-classified body)]
              [else
-              (with-output-language (LFE2+ Expr)
+             (with-output-language (LFE2+ Expr)
                 `(let-values ,s ([(,xs ...) ,rhs]) ,body))])]
           [_
            (cond
@@ -4781,7 +4793,9 @@
                      (memq (first clause) '(simple-pure lambda))))
               body]
              [else
-              (Lower-waddell/classified s local-classified body)])]))))
+              (Lower-waddell/classified s local-classified body)])]))
+        (cons next-body
+              (set-union body-referenced scc-all-refs))))))
   (TopLevelForm        : TopLevelForm        (T) -> TopLevelForm        ())
   (ModuleLevelForm     : ModuleLevelForm     (M) -> ModuleLevelForm     ())
   (GeneralTopLevelForm : GeneralTopLevelForm (G) -> GeneralTopLevelForm ())
