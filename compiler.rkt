@@ -5469,6 +5469,11 @@
                                   'ok)
                               'scc)
                   ''ok)
+    (check-equal? (lower-test #'(letrec ([f (case-lambda [() (g)])]
+                                         [g (case-lambda [() (f)])])
+                                  'ok)
+                              'scc)
+                  ''ok)
     (check-equal? (lower-test #'(letrec ([f (λ () (g))]
                                          [g (λ () (f))])
                                   'ok)
@@ -5492,6 +5497,13 @@
                                                                  [() 1])
                                                                 (case-lambda
                                                                   [() 2]))])
+                                 'ok)
+                              'scc)
+                  ''ok)
+    (check-equal? (lower-test #'(letrec-values ([(f g) (values (case-lambda
+                                                                 [() (g)])
+                                                                (case-lambda
+                                                                  [() (f)]))])
                                  'ok)
                               'scc)
                   ''ok)

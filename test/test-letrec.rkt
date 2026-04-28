@@ -262,6 +262,16 @@
                                                                [() 2]))])
                                'ok)
                              'ok)
+                     (equal? (letrec ([f (case-lambda [() (g)])]
+                                      [g (case-lambda [() (f)])])
+                               'ok)
+                             'ok)
+                     (equal? (letrec-values ([(f g) (values (case-lambda
+                                                              [() (g)])
+                                                             (case-lambda
+                                                               [() (f)]))])
+                               'ok)
+                             'ok)
                      (equal? (letrec ([f (lambda () (g))]
                                       [g (lambda () (f))])
                                'ok)
