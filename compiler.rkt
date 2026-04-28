@@ -4703,6 +4703,19 @@
       (define classified
         (classify-clauses x e lhs-set referenced assigned))
       (Lower-waddell/classified s classified e0))
+    (define (Reclassify-scc sorted-scc body assigned)
+      (define x
+        (for/list ([binding (in-list sorted-scc)])
+          (letrec-scc-binding-xs binding)))
+      (define e
+        (for/list ([binding (in-list sorted-scc)])
+          (letrec-scc-binding-rhs binding)))
+      (define lhs-set
+        (binding-vars-set x))
+      (define referenced
+        (set-intersection lhs-set
+                          (all-referenced-vars body e)))
+      (classify-clauses x e lhs-set referenced assigned))
     (define (Lower-scc s x e e0)
       (define lhs-set (binding-vars-set x))
       (define referenced (all-referenced-vars e0 e))
@@ -4716,19 +4729,21 @@
                 ([scc (in-list (reverse sccs))])
         (define sorted-scc
           (sort scc < #:key letrec-scc-binding-pos))
+        (define local-classified
+          (Reclassify-scc sorted-scc body assigned))
         (match sorted-scc
           [(list binding)
-           (match-define (letrec-scc-binding _pos xs rhs kind _refs self-recursive?) binding)
+           (match-define (letrec-scc-binding _pos xs rhs _kind _refs self-recursive?) binding)
+           (define local-kind
+             (first (first local-classified)))
            (define local-lhs-set
              (binding-vars-set (list xs)))
            (define local-simple-kind
              (effect-free-simple-kind rhs local-lhs-set))
            (cond
              [self-recursive?
-              (Lower-waddell/classified s
-                                        (list (scc-binding->classified-clause binding))
-                                        body)]
-             [(eq? kind 'unreferenced)
+              (Lower-waddell/classified s local-classified body)]
+             [(eq? local-kind 'unreferenced)
               (cond
                 [(eq? local-simple-kind 'pure)
                  body]
@@ -4739,10 +4754,7 @@
               (with-output-language (LFE2+ Expr)
                 `(let-values ,s ([(,xs ...) ,rhs]) ,body))])]
           [_ 
-           (define classified-scc
-             (for/list ([binding (in-list sorted-scc)])
-               (scc-binding->classified-clause binding)))
-           (Lower-waddell/classified s classified-scc body)]))))
+           (Lower-waddell/classified s local-classified body)]))))
   (TopLevelForm        : TopLevelForm        (T) -> TopLevelForm        ())
   (ModuleLevelForm     : ModuleLevelForm     (M) -> ModuleLevelForm     ())
   (GeneralTopLevelForm : GeneralTopLevelForm (G) -> GeneralTopLevelForm ())
