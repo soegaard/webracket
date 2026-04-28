@@ -101,6 +101,20 @@
                                                   (unbox x))])
                                  (list y (reverse events))))
                              '(21 (x y)))))
+              (list "letrec allocation identity"
+                    (and
+                     (equal? (letrec ([x (box 12)]
+                                      [y (box 12)])
+                               (eq? x y))
+                             #f)
+                     (equal? (letrec ([x (list 1 2)]
+                                      [y x])
+                               (eq? x y))
+                             #t)
+                     (equal? (letrec ([x (vector 1)]
+                                      [y (box x)])
+                               (eq? (unbox y) x))
+                             #t)))
               (list "letrec accessor boundaries"
                     (and
                      (equal? (letrec ([x (cons 1 2)]
@@ -148,6 +162,28 @@
                                                    (vector-ref x 0))])
                                   (list z (reverse events)))))
                             'raised))
+              (list "letrec exception order"
+                    (and
+                     (equal? (let ([events '()])
+                               (with-handlers ([exn? (lambda (_ex)
+                                                       (reverse events))])
+                                 (letrec ([x (begin (set! events (cons 'x events))
+                                                    (box 1))]
+                                          [y (begin (set! events (cons 'y events))
+                                                    (car 17))]
+                                          [z (begin (set! events (cons 'z events))
+                                                    (unbox x))])
+                                   z)))
+                             '(x y))
+                     (equal? (let ([events '()])
+                               (with-handlers ([exn? (lambda (_ex)
+                                                       (list 'raised (reverse events)))])
+                                 (letrec-values ([(x) (begin (set! events (cons 'x events))
+                                                             (vector 1 2))]
+                                                 [(y) (begin (set! events (cons 'y events))
+                                                             (car 17))])
+                                   x)))
+                             '(raised (x y)))))
               (list "letrec-values basics"
                     (and
                      (equal? (letrec-values ([(x) 1]) x) 1)
@@ -178,4 +214,23 @@
                                                           (+ x 7))])
                                 (list y (reverse events))))
                             '(12 (x y))))
+              (list "letrec-values mixed allocation and identity"
+                    (and
+                     (equal? (letrec-values ([(x) (box 7)]
+                                             [(y) x])
+                               (eq? x y))
+                             #t)
+                     (equal? (letrec-values ([(x) (box 7)]
+                                             [(y) (box 7)])
+                               (eq? x y))
+                             #f)
+                     (equal? (let ([events '()])
+                               (letrec-values ([(x) (begin (set! events (cons 'x events))
+                                                           (list 1 2))]
+                                               [(y) (begin (set! events (cons 'y events))
+                                                           x)]
+                                               [(z) (begin (set! events (cons 'z events))
+                                                           (eq? x y))])
+                                 (list z (reverse events))))
+                             '(#t (x y z)))))
               ))))
