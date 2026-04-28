@@ -74,6 +74,72 @@
                                           (f))])
                               (f (lambda () 12)))
                             12))
+              (list "letrec constructor boundaries"
+                    (and
+                     (equal? (letrec ([x (box 12)])
+                               (unbox x))
+                             12)
+                     (equal? (letrec ([x (box-immutable 13)])
+                               (unbox x))
+                             13)
+                     (equal? (letrec ([x (make-hasheq)])
+                               (hash-set! x 'a 14)
+                               (hash-ref x 'a))
+                             14)
+                     (equal? (let ([events '()])
+                               (letrec ([x (begin (set! events (cons 'x events))
+                                                  (box 21))]
+                                        [y (begin (set! events (cons 'y events))
+                                                  (unbox x))])
+                                 (list y (reverse events))))
+                             '(21 (x y)))))
+              (list "letrec accessor boundaries"
+                    (and
+                     (equal? (letrec ([x (cons 1 2)]
+                                      [y (car x)])
+                               y)
+                             1)
+                     (equal? (let ([events '()])
+                               (letrec ([x (begin (set! events (cons 'x events))
+                                                  (cons 11 12))]
+                                        [y (begin (set! events (cons 'y events))
+                                                  (car x))]
+                                        [z (begin (set! events (cons 'z events))
+                                                  (cdr x))])
+                                 (list y z (reverse events))))
+                             '(11 12 (x y z)))))
+              (list "letrec allocating chains"
+                    (and
+                     (equal? (let ([events '()])
+                               (letrec ([x (begin (set! events (cons 'x events))
+                                                  (list 1 2 3))]
+                                        [y (begin (set! events (cons 'y events))
+                                                  (vector (car x) (cadr x)))]
+                                        [z (begin (set! events (cons 'z events))
+                                                  (+ (vector-ref y 0)
+                                                     (vector-ref y 1)))])
+                                 (list z (reverse events))))
+                             '(3 (x y z)))
+                     (equal? (let ([events '()])
+                               (letrec ([x (begin (set! events (cons 'x events))
+                                                  (box 30))]
+                                        [y (begin (set! events (cons 'y events))
+                                                  (list (unbox x) (unbox x)))]
+                                        [z (begin (set! events (cons 'z events))
+                                                  (+ (car y) (cadr y)))])
+                                 (list z (reverse events))))
+                             '(60 (x y z)))))
+              (list "letrec allocation before failing read"
+                    (equal? (with-handlers ([exn? (lambda (_ex) 'raised)])
+                              (let ([events '()])
+                                (letrec ([x (begin (set! events (cons 'x events))
+                                                   (vector 1 2))]
+                                         [y (begin (set! events (cons 'y events))
+                                                   (car 17))]
+                                         [z (begin (set! events (cons 'z events))
+                                                   (vector-ref x 0))])
+                                  (list z (reverse events)))))
+                            'raised))
               (list "letrec-values basics"
                     (and
                      (equal? (letrec-values ([(x) 1]) x) 1)
