@@ -3907,33 +3907,33 @@
 ;;       update the table, so `box-mutable` gets uptodate information.
 
 (struct var-info        (assigned?) #:transparent)
-(struct letrec-analysis (assigned)  #:transparent)
+(struct assigned-analysis (assigned)  #:transparent)
 ; where
 ;  assigned is a hashtable from identifier to var-info
 
-(define current-letrec-analysis (make-parameter #f))
+(define current-assigned-analysis (make-parameter #f))
 
 (define assigned-var-info (var-info #t))
 
-(define (letrec-analysis-mark-assigned! analysis x)
-  (when (letrec-analysis? analysis)
-    (define ht (letrec-analysis-assigned analysis))
+(define (assigned-analysis-mark-assigned! analysis x)
+  (when (assigned-analysis? analysis)
+    (define ht (assigned-analysis-assigned analysis))
     (unless (match (hash-ref ht x #f)
               [(var-info #t) #t]
               [_             #f])
       (hash-set! ht x assigned-var-info))))
 
-(define (letrec-analysis-assigned->id-set analysis)
-  (for/fold ([xs empty-set]) ([(x vi) (in-hash (letrec-analysis-assigned analysis))])
+(define (assigned-analysis->id-set analysis)
+  (for/fold ([xs empty-set]) ([(x vi) (in-hash (assigned-analysis-assigned analysis))])
     (match vi
       [(var-info #t) (set-add xs x)]
       [_ xs])))
 
-(define (analyze-letrec! T)
+(define (uncover-assigned! T)
   (define assigned (make-hasheq))
   (for ([x (in-list (id-set->list (collect-assignable-variables T)))])
     (hash-set! assigned x assigned-var-info))
-  (letrec-analysis assigned))
+  (assigned-analysis assigned))
 
 (define-pass collect-assignable-variables : LFE2+ (T) -> * ()
   ;; Assumption: α-conversion has been done
@@ -4229,7 +4229,7 @@
           (syntax-property s letrec-initialization-set-key #t)
           s))
     (define (InitSet s x t)
-      (letrec-analysis-mark-assigned! (current-letrec-analysis) x)
+      (assigned-analysis-mark-assigned! (current-assigned-analysis) x)
       (with-output-language (LFE2+ Expr)
         `(set! ,(init-set-syntax s) ,x ,t)))
     (define (InitializeClause s xs e)
@@ -4412,8 +4412,8 @@
         (set-union xs (var-proc rhs))))
     (define (var-assigned? assigned x)
       (cond
-        [(letrec-analysis? assigned)
-         (match (hash-ref (letrec-analysis-assigned assigned) x #f)
+        [(assigned-analysis? assigned)
+         (match (hash-ref (assigned-analysis-assigned assigned) x #f)
            [(var-info assigned?) assigned?]
            [_ #f])]
         [(hash? assigned)
@@ -4445,7 +4445,7 @@
       (for/list ([clause (in-list clauses)])
         (list (first (first clause)) (second clause))))
     (define (Lower-basic s x e e0)
-      (define assigned (or (current-letrec-analysis)
+      (define assigned (or (current-assigned-analysis)
                            (all-assigned-vars e0 e)))
       (define clauses (split-basic-clauses x e assigned))
       (define-values (raw-lambda-clauses raw-complex-clauses)
@@ -4481,7 +4481,7 @@
     (define (Lower-waddell s x e e0)
       (define lhs-set (binding-vars-set x))
       (define referenced (all-referenced-vars e0 e))
-      (define assigned (or (current-letrec-analysis)
+      (define assigned (or (current-assigned-analysis)
                            (all-assigned-vars e0 e)))
       (define classified
         (classify-clauses x e lhs-set referenced assigned))
@@ -4581,8 +4581,8 @@
   ; (since  assignment-conversion has type T -> T)
   (define ms
     (cond
-      [(current-letrec-analysis)
-       => letrec-analysis-assigned->id-set]
+      [(current-assigned-analysis)
+       => assigned-analysis->id-set]
       [else
        (collect-assignable-variables T)]))
   (current-console-bridge-mutable-top-binding-names
@@ -5118,7 +5118,7 @@
               (flatten-topbegin
                (parse
                 (expand-syntax stx))))))))
-        (parameterize ([current-letrec-analysis (analyze-letrec! ar)])
+        (parameterize ([current-assigned-analysis (uncover-assigned! ar)])
           (unparse-all
            (unparse-LFE2+
             (lower-letrec-values ar))))))
@@ -5146,15 +5146,15 @@
               (flatten-topbegin
                (parse
                 (expand-syntax stx))))))))
-        (define ua (analyze-letrec! ar))
+        (define ua (uncover-assigned! ar))
         (define lr
-          (parameterize ([current-letrec-analysis ua])
+          (parameterize ([current-assigned-analysis ua])
             (lower-letrec-values ar)))
         (unparse-all
          (unparse-LANF
           (anormalize
            (categorize-applications
-            (parameterize ([current-letrec-analysis ua])
+            (parameterize ([current-assigned-analysis ua])
               (assignment-conversion lr))))))))
     (check-equal? (test #'1) ''1)
     (check-equal? (test #'(+ 2 3)) '(primapp + '2 '3))
@@ -8061,8 +8061,8 @@
   (define ar  (time-pass "α-rename"             (λ () (α-rename ecl))
                          (λ (v) (count-unparsed unparse-LFE2+ v))
                          (λ (v) (unparse-all (unparse-LFE2+ v)))))
-  (define ua  (time-pass "analyze-letrec!"     (λ () (analyze-letrec! ar))))
-  (define lr  (time-pass "lower-letrec-values"  (λ () (parameterize ([current-letrec-analysis ua])
+  (define ua  (time-pass "uncover-assigned!"    (λ () (uncover-assigned! ar))))
+  (define lr  (time-pass "lower-letrec-values"  (λ () (parameterize ([current-assigned-analysis ua])
                                                             (lower-letrec-values ar)))
                          (λ (v) (count-unparsed unparse-LFE2+ v))
                          (λ (v) (unparse-all (unparse-LFE2+ v)))))
@@ -8071,7 +8071,7 @@
     (time-pass "assignment-conversion"
       (λ ()
         (define a
-          (parameterize ([current-letrec-analysis ua])
+          (parameterize ([current-assigned-analysis ua])
             (assignment-conversion lr)))
         (when debug:print-passes?
           (displayln "--- assignment conversion ---")
@@ -8118,12 +8118,12 @@
           (parse
            (unexpand
             (topexpand stx))))))))))
-  (define ua (analyze-letrec! ar))
+  (define ua (uncover-assigned! ar))
   (define lr
-    (parameterize ([current-letrec-analysis ua])
+    (parameterize ([current-assigned-analysis ua])
       (lower-letrec-values ar)))
   (define ac
-    (parameterize ([current-letrec-analysis ua])
+    (parameterize ([current-assigned-analysis ua])
       (assignment-conversion lr)))
   (pretty-print
    (strip    
@@ -8263,10 +8263,10 @@
   (define eb  (explicit-begin cq))
   (define ecl (explicit-case-lambda eb))
   (define ar  (α-rename ecl))
-  (define ua  (analyze-letrec! ar))
-  (define lr  (parameterize ([current-letrec-analysis ua])
+  (define ua  (uncover-assigned! ar))
+  (define lr  (parameterize ([current-assigned-analysis ua])
                 (lower-letrec-values ar)))
-  (define ac  (parameterize ([current-letrec-analysis ua])
+  (define ac  (parameterize ([current-assigned-analysis ua])
                 (assignment-conversion lr)))
   (define ca  (categorize-applications ac))
   (define an  (anormalize ca))
@@ -8281,10 +8281,10 @@
   (define eb  (explicit-begin cq))
   (define ecl (explicit-case-lambda eb))
   (define ar  (α-rename ecl))
-  (define ua  (analyze-letrec! ar))
-  (define lr  (parameterize ([current-letrec-analysis ua])
+  (define ua  (uncover-assigned! ar))
+  (define lr  (parameterize ([current-assigned-analysis ua])
                 (lower-letrec-values ar)))
-  (define ac  (parameterize ([current-letrec-analysis ua])
+  (define ac  (parameterize ([current-assigned-analysis ua])
                 (assignment-conversion lr)))
   (define ca  (categorize-applications ac))
   (pretty-print (strip ca)))
@@ -8298,10 +8298,10 @@
   (define eb  (explicit-begin cq))
   (define ecl (explicit-case-lambda eb))
   (define ar  (α-rename ecl))
-  (define ua  (analyze-letrec! ar))
-  (define lr  (parameterize ([current-letrec-analysis ua])
+  (define ua  (uncover-assigned! ar))
+  (define lr  (parameterize ([current-assigned-analysis ua])
                 (lower-letrec-values ar)))
-  (define ac  (parameterize ([current-letrec-analysis ua])
+  (define ac  (parameterize ([current-assigned-analysis ua])
                 (assignment-conversion lr)))
   (define ca  (categorize-applications ac))
   (define an  (anormalize ca))
@@ -8321,10 +8321,10 @@
   (define eb  (explicit-begin cq))
   (define ecl (explicit-case-lambda eb))
   (define ar  (α-rename ecl))
-  (define ua  (analyze-letrec! ar))
-  (define lr  (parameterize ([current-letrec-analysis ua])
+  (define ua  (uncover-assigned! ar))
+  (define lr  (parameterize ([current-assigned-analysis ua])
                 (lower-letrec-values ar)))
-  (define ac  (parameterize ([current-letrec-analysis ua])
+  (define ac  (parameterize ([current-assigned-analysis ua])
                 (assignment-conversion lr)))
   (pretty-print
    (values ; strip
