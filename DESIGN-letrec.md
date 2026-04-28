@@ -158,9 +158,12 @@ unreferenced bindings; it is enough to run the effect expressions.
 
 ---
 
-## 3. New Pipeline
+## 3. Current Pipeline
 
-### 3.1 Proposed pipeline
+### 3.1 Implemented pipeline
+
+The current compiler runs `lower-letrec-values` after `α-rename` and
+before assignment conversion:
 
 ```text
 infer-names
@@ -168,13 +171,9 @@ infer-names
 => explicit-begin
 => explicit-case-lambda
 => α-rename
-
-=> uncover-assigned
-=> purify-letrec-values     ; Waddell-style
-
+=> lower-letrec-values
 => assignment-conversion
 => simplify-LFE
-
 => categorize-applications
 => anormalize
 => closure-conversion
@@ -182,31 +181,13 @@ infer-names
 => generate-code
 ```
 
-Note: Internally `purify-letrec-values`
-can be split in an analysis pass and a rewrite pass.
+This placement is important:
 
+```text
+- unique names are already available
+- assignment information is still available
+- set! has not yet been eliminated
 ```
-=> uncover-assigned
-=> analyze-letrec-values
-=> purify-letrec-values
-```
-
-where
-
-```
-analyze-letrec-values:
-  classify each clause as:
-  - unreferenced
-  - simple
-  - lambda
-  - complex
-
-purify-letrec-values:
-  consume those classifications
-  emit let / fix / temporary / set! structure
-```
-
----
 
 ### 3.2 Core invariant
 
@@ -216,183 +197,138 @@ Before assignment-conversion:
   - assignment info available
 
 After assignment-conversion:
-  - no set!
-  - mutation explicit via boxes
+  - no source-level set!
+  - mutation explicit via boxes / initialize-boxed!
 ```
 
 ---
 
-## 4. New Passes
+## 4. Current Lowering
 
-### 4.1 uncover-assigned
+### 4.1 Strategies
 
-Purpose:
+The compiler currently supports two strategies controlled by
+`current-letrec-strategy`:
 
 ```text
-Determine which variables are assigned
+basic
+  The older conservative lowering.
+
+waddell
+  The newer partitioned lowering.
 ```
 
-Output:
+`waddell` is now the default strategy. `basic` remains available as a
+debugging and comparison mode.
+
+### 4.2 Classification used by `waddell`
+
+Each clause is classified as one of:
 
 ```text
-assigned? : Var → Bool
+unreferenced
+simple-pure
+simple-allocates
+lambda
+complex
 ```
 
-Implementation:
-
-* scan `(set! x e)`
-* mark `x` assigned in its binding scope
-
----
-
-### 4.2 purify-letrec-values
-
-Implements Waddell transformation.
-
-Steps:
-
-1. Recursively transform RHS and body
-2. Collect bindings
-3. Partition bindings:
+where:
 
 ```text
-simple / lambda / complex / unreferenced
+unreferenced
+  binding not used; evaluate RHS only for effects
+
+simple-pure
+  unassigned, non-recursive, effect-free RHS
+
+simple-allocates
+  unassigned, non-recursive RHS that allocates but is still simple enough
+  to recognize structurally
+
+lambda
+  unassigned lambda-like RHS, including case-lambda
+
+complex
+  everything else
 ```
 
-4. Emit nested structure:
+The split between `simple-pure` and `simple-allocates` is important.
+Allocation is observable in ways that truly pure expressions are not, so
+allocating RHSs are lowered more conservatively.
+
+### 4.3 Reconstruction shape
+
+Conceptually, the `waddell` lowering emits:
 
 ```text
-let (simple)
-let (placeholders)
-fix (lambda)
-let (temporaries)
+let-values       ; simple-pure
+let-values       ; placeholders for complex / allocating clauses
+letrec-values    ; lambda and lambda-like clauses
+let-values       ; temporaries for ordered initialization
 set!
 body
 ```
 
----
+The actual implementation is adapted to Racket `letrec`, i.e. Scheme
+`letrec*`, so it preserves left-to-right evaluation order for the
+non-lambda clauses.
 
-### 4.3 assignment-conversion (existing)
+### 4.4 Implemented special cases
 
-Consumes assigned variables:
+The current implementation already handles:
 
 ```text
-x → box(x)
-(set! x e) → set-box!
+- recursive lambda and case-lambda clauses directly
+- exact-arity letrec-values with simple RHSs
+- exact-arity (values λ ...) and (values case-lambda ...) clauses
+- pure wrappers such as begin / begin0 / if around simple RHSs
+- nested let-values assimilation
+- nested letrec-values assimilation
+- conservative ordered assimilation for allocating nested clauses
 ```
 
-No semantic change, just representation.
+### 4.5 Current `basic` behavior
 
----
-
-## 5. Changes to Existing Passes
-
-### 5.1 lower-letrec-values
-
-Replace with:
+The `basic` strategy is still supported, but it has also been hardened:
 
 ```text
-purify-letrec-values
-```
-
-Major change:
-
-```text
-OLD: all-or-nothing lowering
-NEW: fine-grained partition
+- assigned recursive lambdas do not stay on the direct recursive path
+- recursive case-lambda now works end to end
+- multi-lambda letrec-values clauses are normalized before lowering
 ```
 
 ---
 
-### 5.2 assignment-conversion
+## 5. What Was Completed
 
-Change:
-
-```text
-OLD: discovers assigned variables
-NEW: consumes assigned info from uncover-assigned
-```
-
-Simplifies implementation.
-
----
-
-### 5.3 α-rename
-
-No change, but becomes **required earlier**.
-
----
-
-### 5.4 explicit-case-lambda
-
-Ensure:
+The migration plan is no longer just a proposal. The following pieces are
+implemented:
 
 ```text
-case-lambda is treated as lambda-like
+1. Move letrec lowering after α-rename
+2. Add current-letrec-strategy with basic / waddell modes
+3. Implement first Waddell-style partitioned lowering
+4. Add focused letrec regression suite
+5. Add paired compile-time / wat-size measurement tool
+6. Support nested assimilation
+7. Distinguish pure from allocating simple clauses
+8. Support direct recursive case-lambda lowering
+9. Make waddell the default
 ```
 
----
-
-### 5.5 simplify-LFE
-
-Add cleanup after assignment conversion:
-
-```text
-remove trivial lets
-flatten begins
-```
+The focused regression suite is `test/test-letrec.rkt`. The paired
+measurement tool is `tools/measure-letrec-test-basics.rkt`.
 
 ---
 
-## 6. Migration Plan
+## 6. Open Follow-Up Work
 
-### Step 1 — Add uncover-assigned
+### 6.1 SCC-based transformation
 
-* no behavior change
-* record assignment info
-
----
-
-### Step 2 — Refactor assignment-conversion
-
-* consume assignment info instead of recomputing
-
----
-
-### Step 3 — Replace lower-letrec-values
-
-Implement Waddell-style partitioning
-
-Keep fallback behavior for safety
-
-That is: Let's have an parameter `current-letrec-strategy` 
-that can have two modes `basic` or `wadell`. This allows
-users to use `basic` while the new `wadell` strategy is
-worked out.
-
-
----
-
-### Step 4 — Validate correctness
-
-* recursive lambdas
-* mixed bindings
-* mutation cases
-
----
-
-### Step 5 — Enable optimizations
-
-* measure reduction in set!
-* check closure conversion improvements
-
----
-
-## 7. Future Improvements
-
-### 7.1 SCC-based transformation (Fixing Letrec Reloaded)
-
-Replace whole-letrec partitioning with:
+The current implementation still partitions a whole `letrec` cluster at
+once. A later improvement is the SCC-based algorithm from *Fixing Letrec
+(Reloaded)*:
 
 ```text
 dependency graph
@@ -400,65 +336,56 @@ dependency graph
 => transform per SCC
 ```
 
-Benefit:
+This could avoid assignments for some currently-complex clauses.
+
+### 6.2 Broader simple detection
+
+Current simple detection is still intentionally conservative.
+
+Possible future improvements:
 
 ```text
-avoid assignments for nonrecursive complex bindings
+- richer purity information
+- more primitive classifications
+- more wrapper-form recognition
+```
+
+### 6.3 Direct recursive non-lambda data
+
+The current implementation still reserves the direct recursive path for
+lambda-like clauses. Recursive data constructors such as pairs, boxes, or
+vectors are still handled conservatively.
+
+### 6.4 Simplification / cleanup
+
+Now that `waddell` is the default, some of the remaining follow-up work is
+engineering rather than semantics:
+
+```text
+- simplify duplicated basic / waddell support code
+- decide how long basic should remain as a supported fallback
+- document benchmark results and strategy tradeoffs
 ```
 
 ---
 
-### 7.2 Assimilation of nested bindings
+## 7. Notes on Semantics
 
-From paper:
+### 7.1 `letrec` means `letrec*` here
 
-```text
-(letrec ([x (let (...) ...)]) ...)
-=> flatten nested lets
-```
+Racket `letrec` has sequential `letrec*`-style RHS evaluation, and the
+compiler now respects that fact. Earlier versions of this design note
+treated `letrec*` as future work; that is no longer accurate.
 
-Reduces unnecessary complexity.
+### 7.2 Why lambda clauses are special
 
----
+A binding is considered simple only if its RHS does not refer to any
+variables bound by the surrounding `letrec`. By contrast, `lambda` and
+`case-lambda` clauses are identified syntactically and may refer to the
+entire recursive group, including themselves and each other.
 
-### 7.3 Extend fix beyond lambdas
-
-Paper suggests:
-
-```text
-allow data constructors (pairs, vectors)
-```
-
-Would enable:
-
-```text
-recursive data structures without assignment
-```
-
----
-
-### 7.4 Better “simple” detection
-
-Currently conservative.
-
-Improve:
-
-```text
-effect analysis
-primitive purity tracking
-```
-
----
-
-### 7.5 letrec* semantics (Racket alignment)
-
-Add:
-
-```text
-evaluation-order constraints
-```
-
-for internal definitions.
+That distinction is what enables direct recursive closure wiring without
+introducing assignment for every binding in the group.
 
 ---
 
@@ -467,37 +394,17 @@ for internal definitions.
 Design principles:
 
 ```text
-1. Separate analysis from transformation
+1. Run letrec lowering after α-rename
 2. Delay mutation elimination
-3. Preserve as much structure as possible
+3. Preserve as much direct binding structure as possible
 4. Minimize assignment
-5. Enable closure optimization
+5. Respect Racket letrec* evaluation order
+6. Keep an escape hatch while the new strategy matures
 ```
 
-The Waddell transformation is:
-
-```text
-simple, effective, and a perfect stepping stone
-```
-
-toward the more advanced SCC-based algorithm.
-
-## 9. Addendum
-
-One important clarification concerns the classification of bindings. A
-binding is considered simple only if its right-hand side does not refer
-to any variables bound by the surrounding `letrec`, whereas `lambda`
-bindings are identified syntactically and may freely refer to the entire
-recursive group, including themselves and each other. This distinction is
-crucial: `lambda` bindings are placed in the fix form precisely because
-they support recursive references without requiring assignment, enabling
-direct closure wiring. In contrast, non-`lambda` bindings that participate
-in recursion must be treated as complex and handled via placeholders and
-set!. Additionally, this design deliberately postpones support for
-`letrec*`. Since `letrec*` imposes a sequential evaluation order rather
-than the simultaneous semantics assumed by the Waddell transformation, it
-is excluded from the initial implementation and left as future work once
-the core letrec transformation is in place.
+The project is now past the migration stage and into the refinement stage:
+the Waddell-style lowering is implemented, tested, benchmarked, and used
+by default, while `basic` remains available as a conservative fallback.
 
 ---
 
@@ -526,4 +433,3 @@ Sperber, Michael, R. Kent Dybvig, Matthew Flatt, and Anton van Straaten (eds.).
 “Revised^6 Report on the Algorithmic Language Scheme (R6RS).”
 2007.
 ```
-

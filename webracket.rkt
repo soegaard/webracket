@@ -27,7 +27,7 @@
 (define list-primitives? (make-parameter #f))
 (define tree-shake?     (make-parameter #t))
 (define tree-shake-report (make-parameter #f))
-(define letrec-strategy (make-parameter 'basic))
+(define letrec-strategy (make-parameter 'waddell))
 (define print-top-level-results? (make-parameter #f))
 (define console-bridge? (make-parameter #f))
 
