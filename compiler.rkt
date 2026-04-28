@@ -3906,6 +3906,141 @@
 (define-pass lower-letrec-values : LFE2+ (T) -> LFE2+ ()
   (definitions
     (define h #'lower-letrec-values)
+    (define (referenced-vars e)
+      (define (Expr* es)
+        (for/fold ([xs empty-set]) ([e (in-list es)])
+          (set-union xs (Expr e))))
+      (define (Abstraction ab)
+        (nanopass-case (LFE2+ Abstraction) ab
+          [(λ ,s ,f ,e0) (Expr e0)]))
+      (define (Expr e)
+        (nanopass-case (LFE2+ Expr) e
+          [,x                       (set-add empty-set x)]
+          [,ab                      (Abstraction ab)]
+          [(case-lambda ,s ,ab ...) (for/fold ([xs empty-set]) ([ab (in-list ab)])
+                                     (set-union xs (Abstraction ab)))]
+          [(if ,s ,e0 ,e1 ,e2)      (Expr* (list e0 e1 e2))]
+          [(begin ,s ,e0 ,e1 ...)   (Expr* (cons e0 e1))]
+          [(begin0 ,s ,e0 ,e1 ...)  (Expr* (cons e0 e1))]
+          [(let-values ,s ([(,x ...) ,e] ...) ,e0)
+           (Expr* (cons e0 e))]
+          [(letrec-values ,s ([(,x ...) ,e] ...) ,e0)
+           (Expr* (cons e0 e))]
+          [(set! ,s ,x ,e0)         (Expr e0)]
+          [(top ,s ,x)              empty-set]
+          [(variable-reference ,s ,vrx) empty-set]
+          [(quote ,s ,d)            empty-set]
+          [(quote-syntax ,s ,d)     empty-set]
+          [(wcm ,s ,e0 ,e1 ,e2)     (Expr* (list e0 e1 e2))]
+          [(app ,s ,e0 ,e1 ...)     (Expr* (cons e0 e1))]))
+      (Expr e))
+    (define (assigned-vars e)
+      (define (Expr* es)
+        (for/fold ([xs empty-set]) ([e (in-list es)])
+          (set-union xs (Expr e))))
+      (define (Abstraction ab)
+        (nanopass-case (LFE2+ Abstraction) ab
+          [(λ ,s ,f ,e0) (Expr e0)]))
+      (define (Expr e)
+        (nanopass-case (LFE2+ Expr) e
+          [,x                       empty-set]
+          [,ab                      (Abstraction ab)]
+          [(case-lambda ,s ,ab ...) (for/fold ([xs empty-set]) ([ab (in-list ab)])
+                                     (set-union xs (Abstraction ab)))]
+          [(if ,s ,e0 ,e1 ,e2)      (Expr* (list e0 e1 e2))]
+          [(begin ,s ,e0 ,e1 ...)   (Expr* (cons e0 e1))]
+          [(begin0 ,s ,e0 ,e1 ...)  (Expr* (cons e0 e1))]
+          [(let-values ,s ([(,x ...) ,e] ...) ,e0)
+           (Expr* (cons e0 e))]
+          [(letrec-values ,s ([(,x ...) ,e] ...) ,e0)
+           (Expr* (cons e0 e))]
+          [(set! ,s ,x ,e0)         (set-add (Expr e0) x)]
+          [(top ,s ,x)              empty-set]
+          [(variable-reference ,s ,vrx) empty-set]
+          [(quote ,s ,d)            empty-set]
+          [(quote-syntax ,s ,d)     empty-set]
+          [(wcm ,s ,e0 ,e1 ,e2)     (Expr* (list e0 e1 e2))]
+          [(app ,s ,e0 ,e1 ...)     (Expr* (cons e0 e1))]))
+      (Expr e))
+    (define (lhs-free? e lhs-set)
+      (set-empty? (set-intersection lhs-set (referenced-vars e))))
+    (define (effect-free-simple? e lhs-set)
+      (define (Expr* es)
+        (for/and ([e (in-list es)])
+          (Expr e)))
+      (define (pure-primitive-application? rator rands)
+        (and (variable? rator)
+             (primitive? (variable-id rator))
+             (not (special-primitive? rator))
+             (case (syntax-e (variable-id rator))
+               [(+ - * / = < > <= >=
+                   zero? add1 sub1 abs max min
+                   not boolean? boolean=? false? xor immutable?
+                   number? number->string string->number real? inexact-real?
+                   inexact? inexact->exact exact->inexact real->double-flonum
+                   nan? infinite? positive-integer? negative-integer?
+                   nonpositive-integer? nonnegative-integer? natural?
+                   sqr sqrt integer-sqrt integer-sqrt/remainder expt exp log
+                   sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh
+                   bitwise-ior bitwise-and bitwise-xor bitwise-not
+                   bitwise-bit-set? bitwise-first-bit-set bitwise-bit-field
+                   arithmetic-shift integer-length
+                   flonum? double-flonum? single-flonum? single-flonum-available?
+                   fl+ fl- fl* fl/ fl= fl< fl> fl<= fl>= flabs flround flfloor
+                   flceiling fltruncate flsingle flbit-field flsin flcos fltan
+                   flasin flacos flatan flsinh flcosh fltanh flasinh flacosh
+                   flatanh fllog flexp flsqrt flmin flmax flexpt
+                   fixnum? fxzero? fx+ fx- fx* fx= fx> fx< fx<= fx>= fxquotient
+                   unsafe-fxquotient fxremainder fxmodulo fxabs fxand fxior fxxor
+                   fxnot fxlshift fxrshift fxpopcount fxpopcount32 fxpopcount16
+                   fx+/wraparound fx-/wraparound fx*/wraparound
+                   fxlshift/wraparound fxrshift/logical fxmin fxmax
+                   fx->fl ->fl fl->fx fl->exact-integer
+                   string? string-length string-ref string=?
+                   string<? string>? string<=? string>=?
+                   string-ci=? string-ci<? string-ci<=? string-ci>? string-ci>=?
+                   string->immutable-string string->list list->string
+                   bytes? bytes-length bytes-ref bytes=? bytes<? bytes>?
+                   bytes->immutable-bytes byte?
+                   char? char->integer integer->char char-utf-8-length
+                   char=? char<? char<=? char>? char>=? char-alphabetic?
+                   char-lower-case? char-upper-case? char-title-case?
+                   char-numeric? char-symbolic? char-punctuation? char-graphic?
+                   char-whitespace? char-grapheme-break-property char-grapheme-step
+                   char-general-category char-blank? char-iso-control?
+                   char-extended-pictographic? char-upcase char-downcase
+                   char-titlecase char-foldcase char-ci=? char-ci<?
+                   char-ci<=? char-ci>? char-ci>=?
+                   symbol? symbol=? symbol-interned? symbol<?
+                   keyword? keyword<? cons? empty? first rest second third fourth
+                   fifth sixth seventh eighth ninth tenth eleventh twelfth
+                   thirteenth fourteenth fifteenth last last-pair list-ref
+                   list-tail member memq memv memw memf findf assq assv assw
+                   assoc assf argmax argmin vector? vector-length
+                   unsafe-vector-length unsafe-vector-ref vector-empty?
+                   hash-eq? hash-eqv? hash-equal? hash-equal-always? hash-empty?
+                   hash-count procedure? procedure-arity arity-at-least?
+                   arity-at-least-value eof-object? port? input-port? output-port?
+                   port-closed? string-port? srcloc? srcloc-source srcloc-line
+                   srcloc-column srcloc-position srcloc-span object-name
+                   path? path-for-some-system? path-string? path<?
+                   file-exists? directory-exists? link-exists?
+                   file-or-directory-type file-size)
+                (Expr* rands)]
+               [else #f])))
+      (define (Expr e)
+        (nanopass-case (LFE2+ Expr) e
+          [(quote ,s ,d)            #t]
+          [(quote-syntax ,s ,d)     #t]
+          [,x                       (not (set-in? x lhs-set))]
+          [(top ,s ,x)              #t]
+          [(if ,s ,e0 ,e1 ,e2)      (Expr* (list e0 e1 e2))]
+          [(begin ,s ,e0 ,e1 ...)   (Expr* (cons e0 e1))]
+          [(begin0 ,s ,e0 ,e1 ...)  #f]
+          [(app ,s ,e0 ,e1 ...)     (pure-primitive-application? e0 e1)]
+          [else                     #f]))
+      (and (lhs-free? e lhs-set)
+           (Expr e)))
     (define (lambda-clause? xs e)
       (and (= (length xs) 1)
            (nanopass-case (LFE2+ Expr) e
@@ -3948,41 +4083,129 @@
                         [t (in-list ts)])
                (InitSet s x t)))
            `(let-values ,s ([(,ts ...) ,e])
-              ,(Begin s (append init-sets (list (Zero)))))]))))
+              ,(Begin s (append init-sets (list (Zero)))))])))
+    (define (EvaluateClause s xs e)
+      (with-output-language (LFE2+ Expr)
+        `(let-values ,s ([(,xs ...) ,e]) ,(Zero))))
+    (define (Lower-basic s x e e0)
+      (define clauses (map list x e))
+      (define-values (raw-lambda-clauses raw-complex-clauses)
+        (partition (match-lambda [(list xs rhs) (lambda-clause? xs rhs)])
+                   clauses))
+      (define-values (lambda-clauses complex-clauses)
+        (if (null? raw-complex-clauses)
+            (values raw-lambda-clauses '())
+            (values '() clauses)))
+      (with-output-language (LFE2+ Expr)
+        (if (null? complex-clauses)
+            `(letrec-values ,s ([(,x ...) ,e] ...) ,e0)
+            (let ()
+              (define placeholder-clauses
+                (for*/list ([clause (in-list complex-clauses)]
+                            [x      (in-list (first clause))])
+                  (list x (Unsafe-Undefined))))
+              (define lambda-bindings
+                (for/list ([clause (in-list lambda-clauses)])
+                  (list (first (first clause)) (second clause))))
+              (define init-exprs
+                (for/list ([clause (in-list complex-clauses)])
+                  (InitializeClause s (first clause) (second clause))))
+              (define body (Begin s (append init-exprs (list e0))))
+              `(let-values ,s ([(,(map first placeholder-clauses))
+                                ,(map second placeholder-clauses)] ...)
+                 ,(if (null? lambda-bindings)
+                      body
+                      `(letrec-values ,s ([(,(map first lambda-bindings))
+                                           ,(map second lambda-bindings)] ...)
+                         ,body)))))))
+    (define (Lower-waddell s x e e0)
+      (define lhs-set (for/fold ([xs empty-set]) ([x* (in-list x)])
+                        (for/fold ([xs xs]) ([x (in-list x*)])
+                          (set-add xs x))))
+      (define referenced (set-union (referenced-vars e0)
+                                    (for/fold ([xs empty-set]) ([rhs (in-list e)])
+                                      (set-union xs (referenced-vars rhs)))))
+      (define assigned (set-union (assigned-vars e0)
+                                  (for/fold ([xs empty-set]) ([rhs (in-list e)])
+                                    (set-union xs (assigned-vars rhs)))))
+      (define classified
+        (for/list ([xs (in-list x)]
+                   [rhs (in-list e)])
+          (define kind
+            (cond
+              [(and (for/and ([x (in-list xs)])
+                      (and (not (set-in? x referenced))
+                           (not (set-in? x assigned)))))
+               'unreferenced]
+              [(and (= (length xs) 1)
+                    (not (set-in? (first xs) assigned))
+                    (lambda-clause? xs rhs))
+               'lambda]
+              [(and (= (length xs) 1)
+                    (not (set-in? (first xs) assigned))
+                    (effect-free-simple? rhs lhs-set))
+               'simple]
+              [else
+               'complex]))
+          (list kind xs rhs)))
+      (define (bindings-of kind)
+        (for/list ([clause (in-list classified)]
+                   #:when (eq? (first clause) kind))
+          (rest clause)))
+      (define simple-clauses       (bindings-of 'simple))
+      (define lambda-clauses       (bindings-of 'lambda))
+      (define complex-clauses      (bindings-of 'complex))
+      (define unreferenced-clauses (bindings-of 'unreferenced))
+      (with-output-language (LFE2+ Expr)
+        (define placeholder-clauses
+          (for*/list ([clause (in-list complex-clauses)]
+                      [x      (in-list (first clause))])
+            (list x (Unsafe-Undefined))))
+        (define lambda-bindings
+          (for/list ([clause (in-list lambda-clauses)])
+            (list (first (first clause)) (second clause))))
+        (define seq-exprs
+          (for/list ([clause (in-list classified)]
+                     #:unless (eq? (first clause) 'simple)
+                     #:unless (eq? (first clause) 'lambda))
+            (match clause
+              [(list 'complex xs rhs)      (InitializeClause s xs rhs)]
+              [(list 'unreferenced xs rhs) (EvaluateClause s xs rhs)])))
+        (define body0
+          (if (null? seq-exprs)
+              e0
+              (Begin s (append seq-exprs (list e0)))))
+        (define body1
+          (if (null? lambda-bindings)
+              body0
+              `(letrec-values ,s ([(,(map first lambda-bindings))
+                                   ,(map second lambda-bindings)] ...)
+                 ,body0)))
+        (define body2
+          (if (null? placeholder-clauses)
+              body1
+              `(let-values ,s ([(,(map first placeholder-clauses))
+                                ,(map second placeholder-clauses)] ...)
+                 ,body1)))
+        (for/fold ([body body2])
+                  ([clause (in-list (reverse simple-clauses))])
+          (match clause
+            [(list xs rhs)
+             `(let-values ,s ([(,xs ...) ,rhs]) ,body)])))))
   (TopLevelForm        : TopLevelForm        (T) -> TopLevelForm        ())
   (ModuleLevelForm     : ModuleLevelForm     (M) -> ModuleLevelForm     ())
   (GeneralTopLevelForm : GeneralTopLevelForm (G) -> GeneralTopLevelForm ())
   (Formals             : Formals             (F) -> Formals             ())
   (Expr : Expr (E) -> Expr ()
     [(letrec-values ,s ([(,x ...) ,[e]] ...) ,[e0])
-     (define clauses (map list x e))
-     (define-values (raw-lambda-clauses raw-complex-clauses)
-       (partition (match-lambda [(list xs rhs) (lambda-clause? xs rhs)])
-                  clauses))
-     (define-values (lambda-clauses complex-clauses)
-       (if (null? raw-complex-clauses)
-           (values raw-lambda-clauses '())
-           (values '() clauses)))
-     (with-output-language (LFE2+ Expr)
-       (if (null? complex-clauses)
-           `(letrec-values ,s ([(,x ...) ,e] ...) ,e0)
-           (let ()
-             (define placeholder-clauses
-               (for*/list ([clause (in-list complex-clauses)]
-                           [x      (in-list (first clause))])
-                 (list x (Unsafe-Undefined))))
-             (define lambda-bindings
-               (for/list ([clause (in-list lambda-clauses)])
-                 (list (first (first clause)) (second clause))))
-             (define init-exprs
-               (for/list ([clause (in-list complex-clauses)])
-                 (InitializeClause s (first clause) (second clause))))
-             (define body (Begin s (append init-exprs (list e0))))
-             `(let-values ,s ([(,(map first placeholder-clauses))
-                               ,(map second placeholder-clauses)] ...)
-                (letrec-values ,s ([(,(map first lambda-bindings))
-                                    ,(map second lambda-bindings)] ...)
-                  ,body)))))]))
+     (case (current-letrec-strategy)
+       [(basic)   (Lower-basic s x e e0)]
+       [(waddell) (Lower-waddell s x e e0)]
+       [else
+        (error 'lower-letrec-values
+               "unknown letrec strategy: ~a"
+               (current-letrec-strategy))])])
+  (TopLevelForm T))
 
 
 ;;;
@@ -4603,6 +4826,20 @@
 
 (module+ test
   (let ()
+    (define (lower-test stx [strategy 'basic])
+      (reset-counter!)
+      (parameterize ([α-rename-mode 'simple]
+                     [current-letrec-strategy strategy])
+        (unparse-all
+         (unparse-LFE2+
+          (lower-letrec-values
+           (α-rename
+            (explicit-case-lambda
+             (explicit-begin
+              (infer-names
+               (flatten-topbegin
+                (parse
+                 (expand-syntax stx))))))))))))
     (define (test stx)
       (reset-counter!)
       (parameterize ([α-rename-mode 'simple])
@@ -4644,6 +4881,29 @@
                                                       (let-values (((t.3) (app fact t.2)))
                                                         (primapp * n t.3))))))))
                      (app fact '5)))
+    (check-equal? (format "~s"
+                          (lower-test #'(letrec ([x 1]
+                                                 [f (λ () x)])
+                                          (f))
+                                      'basic))
+                  "(let-values (((x) (quote unsafe-undefined642)) ((f) (quote unsafe-undefined642))) (begin (let-values (((x1) (quote 1))) (begin (set! x x1) (quote 0))) (let-values (((f2) (λ () x))) (begin (set! f f2) (quote 0))) (f)))")
+    (check-equal? (lower-test #'(letrec ([x 1]
+                                         [f (λ () x)])
+                                  (f))
+                              'waddell)
+                  '(let-values (((x) '1))
+                     (letrec-values (((f) (λ () x)))
+                       (f))))
+    (check-equal? (lower-test #'(letrec ([x (begin 1 2)]
+                                         [f (λ () 3)]
+                                         [u (begin 4 5)])
+                                  (f))
+                              'waddell)
+                  '(letrec-values (((f) (λ () '3)))
+                     (begin
+                       (let-values (((x) (begin '1 '2))) '0)
+                       (let-values (((u) (begin '4 '5))) '0)
+                       (f))))
     (check-equal? (test #'(module t webracket (fx+ 1 (fx+ 2 3))))
                   '(module t webracket
                      (#%plain-module-begin
