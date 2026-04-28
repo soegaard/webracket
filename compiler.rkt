@@ -4251,12 +4251,13 @@
         (for/list ([clause (in-list classified)]
                    #:when (eq? (first clause) kind))
           (rest clause)))
+      (define allocating-clauses   (bindings-of 'simple-allocates))
       (define lambda-clauses       (bindings-of 'lambda))
       (define complex-clauses      (bindings-of 'complex))
       (define unreferenced-clauses (bindings-of 'unreferenced))
       (with-output-language (LFE2+ Expr)
         (define placeholder-clauses
-          (for*/list ([clause (in-list complex-clauses)]
+          (for*/list ([clause (in-list (append allocating-clauses complex-clauses))]
                       [x      (in-list (first clause))])
             (list x (Unsafe-Undefined))))
         (define lambda-bindings
@@ -4265,9 +4266,9 @@
         (define seq-exprs
           (for/list ([clause (in-list classified)]
                      #:unless (eq? (first clause) 'simple-pure)
-                     #:unless (eq? (first clause) 'simple-allocates)
                      #:unless (eq? (first clause) 'lambda))
             (match clause
+              [(list 'simple-allocates xs rhs) (InitializeClause s xs rhs)]
               [(list 'complex xs rhs)      (InitializeClause s xs rhs)]
               [(list 'unreferenced xs rhs) (EvaluateClause s xs rhs)])))
         (define body0
@@ -4288,7 +4289,7 @@
                  ,body1)))
         (for/fold ([body body2])
                   ([clause (in-list (reverse classified))]
-                   #:when (memq (first clause) '(simple-pure simple-allocates)))
+                   #:when (memq (first clause) '(simple-pure)))
           (match clause
             [(list _kind xs rhs)
              `(let-values ,s ([(,xs ...) ,rhs]) ,body)])))))
@@ -5060,18 +5061,12 @@
                            "\\(current-directory\\)")
     (check-complex-waddell #'(letrec ([x (current-input-port)]) x)
                            "\\(current-input-port\\)")
-    (check-equal? (lower-test #'(letrec ([x (cons 1 2)]) x)
-                              'waddell)
-                  '(let-values (((x) (cons '1 '2)))
-                     x))
-    (check-equal? (lower-test #'(letrec ([x (list 1 2)]) x)
-                              'waddell)
-                  '(let-values (((x) (list '1 '2)))
-                     x))
-    (check-equal? (lower-test #'(letrec ([x (vector 1 2)]) x)
-                              'waddell)
-                  '(let-values (((x) (vector '1 '2)))
-                     x))
+    (check-complex-waddell #'(letrec ([x (cons 1 2)]) x)
+                           "\\(cons \\(quote 1\\) \\(quote 2\\)\\)")
+    (check-complex-waddell #'(letrec ([x (list 1 2)]) x)
+                           "\\(list \\(quote 1\\) \\(quote 2\\)\\)")
+    (check-complex-waddell #'(letrec ([x (vector 1 2)]) x)
+                           "\\(vector \\(quote 1\\) \\(quote 2\\)\\)")
     (check-complex-waddell #'(letrec ([x (car '(1 . 2))]) x)
                            (regexp-quote "(car (quote (1 . 2)))"))
     (check-equal? (test #'(module t webracket (fx+ 1 (fx+ 2 3))))
