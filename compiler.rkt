@@ -4017,7 +4017,7 @@
   (TopLevelForm T empty-set))
 
 
-(struct letrec-scc-binding (pos xs rhs kind refs self-recursive?)
+(struct letrec-scc-binding (pos xs rhs kind refs all-refs self-recursive?)
   #:transparent)
 
 (struct letrec-scc-node (binding edges index lowlink on-stack? done?)
@@ -4076,12 +4076,14 @@
              [pos (in-naturals)])
     (match clause
       [(list kind xs rhs)
+       (define all-refs
+         (lfe2+-referenced-vars rhs))
        (define refs
-         (set-intersection lhs-set (lfe2+-referenced-vars rhs)))
+         (set-intersection lhs-set all-refs))
        (define self-recursive?
          (for/or ([x (in-list xs)])
            (set-in? x refs)))
-       (letrec-scc-binding pos xs rhs kind refs self-recursive?)])))
+       (letrec-scc-binding pos xs rhs kind refs all-refs self-recursive?)])))
 
 ;; letrec-scc-bindings->nodes : (listof letrec-scc-binding?) -> (listof letrec-scc-node?)
 ;;   Build a dependency graph for one letrec cluster using letrec* order constraints.
@@ -4712,10 +4714,12 @@
           (letrec-scc-binding-rhs binding)))
       (define lhs-set
         (binding-vars-set x))
-      (define referenced
-        (set-intersection lhs-set
-                          (set-union body-referenced
-                                     (rhs-vars-set e referenced-vars))))
+    (define referenced
+      (set-intersection lhs-set
+                        (set-union body-referenced
+                                   (for/fold ([refs empty-set]) ([binding (in-list sorted-scc)])
+                                     (set-union refs
+                                                (letrec-scc-binding-all-refs binding))))))
       (classify-clauses x e lhs-set referenced assigned))
     (define (Lower-scc s x e e0)
       (define lhs-set (binding-vars-set x))
@@ -4740,7 +4744,7 @@
             (set-in? x body-referenced)))
         (match sorted-scc
           [(list binding)
-           (match-define (letrec-scc-binding _pos xs rhs _kind _refs self-recursive?) binding)
+           (match-define (letrec-scc-binding _pos xs rhs _kind _refs _all-refs self-recursive?) binding)
            (define local-kind
              (first (first local-classified)))
            (define local-lhs-set
