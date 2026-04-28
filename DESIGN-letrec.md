@@ -408,6 +408,189 @@ by default, while `basic` remains available as a conservative fallback.
 
 ---
 
+## 9. Revised SCC Plan
+
+The next major improvement is to add an SCC-based lowering strategy based on
+Ghuloum and Dybvig’s “Fixing Letrec (Reloaded).” This should be introduced as
+a third strategy, not as an in-place rewrite of the current `waddell` path.
+
+### 9.1 Strategy rollout
+
+Add a third `current-letrec-strategy` mode:
+
+```text
+basic
+waddell
+scc
+```
+
+Add a corresponding command-line switch:
+
+```text
+--letrec-scc
+```
+
+Initially, `scc` may alias `waddell` so the plumbing can be added without
+changing behavior.
+
+### 9.2 Why a third strategy
+
+Using a separate `scc` strategy keeps the migration low-risk:
+
+```text
+- basic remains the conservative fallback
+- waddell remains the current default and known-good optimized path
+- scc can evolve experimentally without destabilizing the default
+- correctness and benchmark comparisons can be done waddell vs scc
+```
+
+### 9.3 Stage 0: plumbing only
+
+Introduce the new strategy and flag:
+
+```text
+1. Extend current-letrec-strategy with scc
+2. Add --letrec-scc
+3. Route scc to the current waddell implementation initially
+4. Re-run compiler tests and measurement runs
+```
+
+Goal:
+
+```text
+Establish the migration switch before adding SCC-specific code.
+```
+
+### 9.4 Stage 1: read-only SCC infrastructure
+
+Add the internal machinery without changing lowering:
+
+```text
+1. Define a per-binding graph/node representation for one letrec cluster
+2. Record, per binding:
+   - original position
+   - bound ids
+   - rhs
+   - current clause classification seed
+   - referenced letrec-bound ids
+   - whether the binding is self-recursive
+3. Implement Tarjan SCC computation
+4. Build dependency graphs for letrec* semantics
+5. Add tests for SCC grouping only
+```
+
+Goal:
+
+```text
+Prove the graph construction and SCC partitioning independently of codegen.
+```
+
+### 9.5 Stage 2: first SCC lowering
+
+Make only the `scc` strategy lower SCC-by-SCC:
+
+```text
+1. Keep basic unchanged
+2. Keep waddell unchanged
+3. For scc:
+   - build SCCs for each letrec-values cluster
+   - process SCCs in dependency order
+   - lower each SCC independently
+```
+
+For a singleton SCC:
+
+```text
+- drop it if it is unused and pure
+- use direct recursive binding if it is an unassigned lambda
+- use let if it is not self-recursive
+- otherwise use the current placeholder/init path
+```
+
+For a multi-binding SCC:
+
+```text
+- partition into lambda and non-lambda clauses
+- preserve letrec* ordering inside the SCC
+- use the existing placeholder + initialization machinery for the complex part
+```
+
+Goal:
+
+```text
+Recover the main SCC benefit while minimizing semantic churn.
+```
+
+### 9.6 Stage 3: order-edge refinement
+
+Refine the graph used by `scc` so it matches the paper/Chez strategy more
+closely:
+
+```text
+1. Add letrec* order edges for non-freely-movable bindings
+2. Preserve left-to-right semantics for effectful or allocating clauses
+3. Re-check the order-sensitive letrec test cases
+```
+
+Goal:
+
+```text
+Make the SCC graph faithful for sequential recursive bindings.
+```
+
+### 9.7 Stage 4: assimilation under SCCs
+
+Revisit nested assimilation after SCC lowering is stable:
+
+```text
+1. Re-enable or refine nested let-values assimilation within the SCC framework
+2. Re-enable or refine nested letrec-values assimilation within the SCC framework
+3. Keep conservative handling for allocating and complex clauses unless proven safe
+```
+
+Goal:
+
+```text
+Recover current structural wins cleanly on top of SCC partitioning.
+```
+
+### 9.8 Stage 5: comparison and possible promotion
+
+After `scc` is stable:
+
+```text
+1. Compare basic / waddell / scc on test-letrec.rkt
+2. Compare basic / waddell / scc on test-basics.rkt
+3. Compare real programs such as pict smoke examples
+4. Evaluate correctness, compile time, and .wat size
+5. Decide whether scc should remain experimental, replace waddell, or become the new default
+```
+
+Goal:
+
+```text
+Promote scc only after it is clearly better or clearly simpler at equal quality.
+```
+
+### 9.9 Recommended migration order
+
+Recommended order of work:
+
+```text
+Stage 0  add strategy + flag
+Stage 1  add graph + Tarjan + SCC tests
+Stage 2  lower SCCs under scc only
+Stage 3  refine letrec* order edges
+Stage 4  revisit assimilation inside SCC lowering
+Stage 5  benchmark and decide on promotion
+```
+
+This keeps the current compiler stable while the SCC path matures, and it
+preserves both `basic` and `waddell` as fallback/debugging strategies during
+the transition.
+
+---
+
 ## References
 
 ```text
