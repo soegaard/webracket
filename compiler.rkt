@@ -3212,93 +3212,6 @@
        `(letrec-values ,s ([(,x** ...) ,e*] ...) ,e0 ,e1 ...))]
     ))
 
-;;;
-;;; LOWER LETREC VALUES
-;;;
-
-;; Lower complex letrec-values only after infer-names has seen the original
-;; binding shape. Otherwise generated temporaries become the inferred names.
-(define-pass lower-letrec-values : LFE (T) -> LFE ()
-  (definitions
-    (define h #'lower-letrec-values)
-    (define (lambda-clause? xs e)
-      (and (= (length xs) 1)
-           (nanopass-case (LFE Expr) e
-             [(λ ,s ,f ,e0 ,e1 ...) #t]
-             [else #f])))
-    (define (fresh-variable-like x)
-      (variable (car (generate-temporaries (list (variable-id x))))))
-    (define (Unsafe-Undefined)
-      (with-output-language (LFE Expr)
-        `(quote ,h ,(datum h datum:unsafe-undefined))))
-    (define (Zero)
-      (with-output-language (LFE Expr)
-        `(quote ,h ,(datum h 0))))
-    (define (Begin s es)
-      (with-output-language (LFE Expr)
-        (match es
-          [(list e)          `,e]
-          [(list e0 e1 ...)  `(begin ,s ,e0 ,e1 ...)])))
-    (define (init-set-syntax s)
-      (if (syntax? s)
-          (syntax-property s letrec-initialization-set-key #t)
-          s))
-    (define (InitSet s x t)
-      (with-output-language (LFE Expr)
-        `(set! ,(init-set-syntax s) ,x ,t)))
-    (define (InitializeClause s xs e)
-      (with-output-language (LFE Expr)
-        (match xs
-          ['()
-           `(let-values ,s ([() ,e]) ,(Zero))]
-          [(list x)
-           (define t (fresh-variable-like x))
-           `(let-values ,s ([(,t) ,e])
-              (begin ,s ,(InitSet s x t) ,(Zero)))]
-          [_
-           (define ts (map fresh-variable-like xs))
-           (define init-sets
-             (for/list ([x (in-list xs)]
-                        [t (in-list ts)])
-               (InitSet s x t)))
-           `(let-values ,s ([(,ts ...) ,e])
-              ,(Begin s (append init-sets (list (Zero)))))]))))
-
-  (TopLevelForm        : TopLevelForm        (T) -> TopLevelForm        ())
-  (ModuleLevelForm     : ModuleLevelForm     (M) -> ModuleLevelForm     ())
-  (GeneralTopLevelForm : GeneralTopLevelForm (G) -> GeneralTopLevelForm ())
-  (Formals             : Formals             (F) -> Formals             ())
-
-  (Expr : Expr (E) -> Expr ()
-    [(letrec-values ,s ([(,x ...) ,[e]] ...) ,[e0] ,[e1] ...)
-     (define clauses (map list x e))
-     (define-values (raw-lambda-clauses raw-complex-clauses)
-       (partition (match-lambda [(list xs rhs) (lambda-clause? xs rhs)])
-                  clauses))
-     (define-values (lambda-clauses complex-clauses)
-       (if (null? raw-complex-clauses)
-           (values raw-lambda-clauses '())
-           (values '() clauses)))
-     (with-output-language (LFE Expr)
-       (if (null? complex-clauses)
-           `(letrec-values ,s ([(,x ...) ,e] ...) ,e0 ,e1 ...)
-           (let ()
-             (define placeholder-clauses
-               (for*/list ([clause (in-list complex-clauses)]
-                           [x      (in-list (first clause))])
-                 (list x (Unsafe-Undefined))))
-             (define lambda-bindings
-               (for/list ([clause (in-list lambda-clauses)])
-                 (list (first (first clause)) (second clause))))
-             (define init-exprs
-               (for/list ([clause (in-list complex-clauses)])
-                 (InitializeClause s (first clause) (second clause))))
-             (define body (Begin s (append init-exprs (cons e0 e1))))
-             `(let-values ,s ([(,(map first placeholder-clauses))
-                               ,(map second placeholder-clauses)] ...)
-                (letrec-values ,s ([(,(map first lambda-bindings))
-                                    ,(map second lambda-bindings)] ...)
-                  ,body)))))]))
 
 ;;;
 ;;; QUOTATIONS
@@ -3982,6 +3895,97 @@
 
 
 ;;;
+;;; LOWER LETREC VALUES
+;;;
+
+;; Lower complex letrec-values only after infer-names has seen the original
+;; binding shape. Otherwise generated temporaries become the inferred names.
+;; This stage-1 version keeps the old rewrite strategy and only ports it to
+;; the post-α-rename language, so it can run after α-rename.
+
+(define-pass lower-letrec-values : LFE2+ (T) -> LFE2+ ()
+  (definitions
+    (define h #'lower-letrec-values)
+    (define (lambda-clause? xs e)
+      (and (= (length xs) 1)
+           (nanopass-case (LFE2+ Expr) e
+             [(λ ,s ,f ,e0) #t]
+             [(case-lambda ,s ,ab ...) #t]
+             [else #f])))
+    (define (fresh-variable-like x)
+      (variable (car (generate-temporaries (list (variable-id x))))))
+    (define (Unsafe-Undefined)
+      (with-output-language (LFE2+ Expr)
+        `(quote ,h ,(datum h datum:unsafe-undefined))))
+    (define (Zero)
+      (with-output-language (LFE2+ Expr)
+        `(quote ,h ,(datum h 0))))
+    (define (Begin s es)
+      (with-output-language (LFE2+ Expr)
+        (match es
+          [(list e)          `,e]
+          [(list e0 e1 ...)  `(begin ,s ,e0 ,e1 ...)])))
+    (define (init-set-syntax s)
+      (if (syntax? s)
+          (syntax-property s letrec-initialization-set-key #t)
+          s))
+    (define (InitSet s x t)
+      (with-output-language (LFE2+ Expr)
+        `(set! ,(init-set-syntax s) ,x ,t)))
+    (define (InitializeClause s xs e)
+      (with-output-language (LFE2+ Expr)
+        (match xs
+          ['()
+           `(let-values ,s ([() ,e]) ,(Zero))]
+          [(list x)
+           (define t (fresh-variable-like x))
+           `(let-values ,s ([(,t) ,e])
+              (begin ,s ,(InitSet s x t) ,(Zero)))]
+          [_
+           (define ts (map fresh-variable-like xs))
+           (define init-sets
+             (for/list ([x (in-list xs)]
+                        [t (in-list ts)])
+               (InitSet s x t)))
+           `(let-values ,s ([(,ts ...) ,e])
+              ,(Begin s (append init-sets (list (Zero)))))]))))
+  (TopLevelForm        : TopLevelForm        (T) -> TopLevelForm        ())
+  (ModuleLevelForm     : ModuleLevelForm     (M) -> ModuleLevelForm     ())
+  (GeneralTopLevelForm : GeneralTopLevelForm (G) -> GeneralTopLevelForm ())
+  (Formals             : Formals             (F) -> Formals             ())
+  (Expr : Expr (E) -> Expr ()
+    [(letrec-values ,s ([(,x ...) ,[e]] ...) ,[e0])
+     (define clauses (map list x e))
+     (define-values (raw-lambda-clauses raw-complex-clauses)
+       (partition (match-lambda [(list xs rhs) (lambda-clause? xs rhs)])
+                  clauses))
+     (define-values (lambda-clauses complex-clauses)
+       (if (null? raw-complex-clauses)
+           (values raw-lambda-clauses '())
+           (values '() clauses)))
+     (with-output-language (LFE2+ Expr)
+       (if (null? complex-clauses)
+           `(letrec-values ,s ([(,x ...) ,e] ...) ,e0)
+           (let ()
+             (define placeholder-clauses
+               (for*/list ([clause (in-list complex-clauses)]
+                           [x      (in-list (first clause))])
+                 (list x (Unsafe-Undefined))))
+             (define lambda-bindings
+               (for/list ([clause (in-list lambda-clauses)])
+                 (list (first (first clause)) (second clause))))
+             (define init-exprs
+               (for/list ([clause (in-list complex-clauses)])
+                 (InitializeClause s (first clause) (second clause))))
+             (define body (Begin s (append init-exprs (list e0))))
+             `(let-values ,s ([(,(map first placeholder-clauses))
+                               ,(map second placeholder-clauses)] ...)
+                (letrec-values ,s ([(,(map first lambda-bindings))
+                                    ,(map second lambda-bindings)] ...)
+                  ,body)))))]))
+
+
+;;;
 ;;; ASSIGNMENT CONVERSION
 ;;;
 
@@ -4074,6 +4078,7 @@
     [(wcm ,s ,e0 ,e1 ,e2)                       (Expr* (list e0 e1 e2) xs)]
     [(app ,s ,e0 ,e1 ...)                       (Expr* (cons e0 e1) xs)])  
   (TopLevelForm T empty-set))
+
 
 (define-pass box-mutables : LFE2+ (T ms) -> LFE2+ ()
   ;; Assumption: α-conversion has been done
@@ -4606,10 +4611,10 @@
           (anormalize
            (categorize-applications
             (assignment-conversion
-             (α-rename
-              (explicit-case-lambda
-               (explicit-begin
-                (lower-letrec-values
+             (lower-letrec-values
+              (α-rename
+               (explicit-case-lambda
+                (explicit-begin
                  (infer-names
                   (flatten-topbegin
                    (parse
@@ -7288,10 +7293,7 @@
   (define in  (time-pass "infer-names"          (λ () (infer-names ft))
                          (λ (v) (count-unparsed unparse-LFE v))
                          (λ (v) (unparse-all (unparse-LFE v)))))
-  (define lr  (time-pass "lower-letrec-values"  (λ () (lower-letrec-values in))
-                         (λ (v) (count-unparsed unparse-LFE v))
-                         (λ (v) (unparse-all (unparse-LFE v)))))
-  (define cq  (time-pass "convert-quotations"   (λ () (convert-quotations lr))
+  (define cq  (time-pass "convert-quotations"   (λ () (convert-quotations in))
                          (λ (v) (count-unparsed unparse-LFE v))
                          (λ (v) (unparse-all (unparse-LFE v)))))
   (define eb  (time-pass "explicit-begin"       (λ () (explicit-begin cq))
@@ -7303,11 +7305,14 @@
   (define ar  (time-pass "α-rename"             (λ () (α-rename ecl))
                          (λ (v) (count-unparsed unparse-LFE2+ v))
                          (λ (v) (unparse-all (unparse-LFE2+ v)))))
+  (define lr  (time-pass "lower-letrec-values"  (λ () (lower-letrec-values ar))
+                         (λ (v) (count-unparsed unparse-LFE2+ v))
+                         (λ (v) (unparse-all (unparse-LFE2+ v)))))
 
   (define ac
     (time-pass "assignment-conversion"
       (λ ()
-        (define a (assignment-conversion ar))
+        (define a (assignment-conversion lr))
         (when debug:print-passes?
           (displayln "--- assignment conversion ---")
           (displayln (pretty-print a) (current-error-port)))
@@ -7350,11 +7355,11 @@
       (anormalize
        (categorize-applications
         (assignment-conversion
-         (α-rename
-          (explicit-case-lambda
-           (explicit-begin
-            (convert-quotations
-             (lower-letrec-values
+         (lower-letrec-values
+          (α-rename
+           (explicit-case-lambda
+            (explicit-begin
+             (convert-quotations
               (infer-names
                (flatten-topbegin
                 (parse
@@ -7484,80 +7489,72 @@
   
 (define (comp-- stx)
   (reset-counter!)
-  (pretty-print
-   (strip    
-      (anormalize
-       (categorize-applications
-        (assignment-conversion
-         (α-rename
-          (explicit-case-lambda
-           (explicit-begin
-            (convert-quotations
-             (lower-letrec-values
-              (infer-names
-               (flatten-topbegin
-                (parse
-                 (unexpand
-                  (topexpand stx))))))))))))))))
+  (define p   (parse (unexpand (topexpand stx))))
+  (define ft  (flatten-topbegin p))
+  (define in  (infer-names ft))
+  (define cq  (convert-quotations in))
+  (define eb  (explicit-begin cq))
+  (define ecl (explicit-case-lambda eb))
+  (define ar  (α-rename ecl))
+  (define lr  (lower-letrec-values ar))
+  (define ac  (assignment-conversion lr))
+  (define ca  (categorize-applications ac))
+  (define an  (anormalize ca))
+  (pretty-print (strip an)))
 
 (define (comp--- stx)
   (reset-counter!)
-  (pretty-print
-   (strip    
-    (categorize-applications
-     (assignment-conversion
-      (α-rename
-       (explicit-case-lambda
-        (explicit-begin
-         (convert-quotations
-          (lower-letrec-values
-           (infer-names
-            (flatten-topbegin
-             (parse
-              (unexpand
-               (topexpand stx)))))))))))))))
+  (define p   (parse (unexpand (topexpand stx))))
+  (define ft  (flatten-topbegin p))
+  (define in  (infer-names ft))
+  (define cq  (convert-quotations in))
+  (define eb  (explicit-begin cq))
+  (define ecl (explicit-case-lambda eb))
+  (define ar  (α-rename ecl))
+  (define lr  (lower-letrec-values ar))
+  (define ac  (assignment-conversion lr))
+  (define ca  (categorize-applications ac))
+  (pretty-print (strip ca)))
 
 (define (test stx)
   (reset-counter!)
+  (define p   (parse (unexpand (topexpand stx))))
+  (define ft  (flatten-topbegin p))
+  (define in  (infer-names ft))
+  (define cq  (convert-quotations in))
+  (define eb  (explicit-begin cq))
+  (define ecl (explicit-case-lambda eb))
+  (define ar  (α-rename ecl))
+  (define lr  (lower-letrec-values ar))
+  (define ac  (assignment-conversion lr))
+  (define ca  (categorize-applications ac))
+  (define an  (anormalize ca))
+  (define cc  (closure-conversion an))
+  (define fb  (flatten-begin cc))
   (pretty-print
    (values ; strip
     (values ; classify-variables
-     (flatten-begin
-      (closure-conversion
-       (anormalize
-        (categorize-applications
-         (assignment-conversion
-          (α-rename
-           (explicit-case-lambda
-            (explicit-begin
-             (convert-quotations
-              (lower-letrec-values
-               (infer-names
-                (flatten-topbegin
-                 (parse
-                  (unexpand
-                   (topexpand stx)))))))))))))))))))
+     fb))))
 
 (define (test- stx)
   (reset-counter!)
+  (define p   (parse (unexpand (topexpand stx))))
+  (define ft  (flatten-topbegin p))
+  (define in  (infer-names ft))
+  (define cq  (convert-quotations in))
+  (define eb  (explicit-begin cq))
+  (define ecl (explicit-case-lambda eb))
+  (define ar  (α-rename ecl))
+  (define lr  (lower-letrec-values ar))
+  (define ac  (assignment-conversion lr))
   (pretty-print
    (values ; strip
-  (values ; classify-variables
-   (values ; flatten-begin
-    (values ; closure-conversion
-     (values ; anormalize
-      (values ;categorize-applications
-       (assignment-conversion
-        (α-rename
-         (explicit-case-lambda
-          (explicit-begin
-           (convert-quotations
-            (lower-letrec-values
-             (infer-names
-              (flatten-topbegin
-               (parse
-                (unexpand
-                 (topexpand stx)))))))))))))))))))
+    (values ; classify-variables
+     (values ; flatten-begin
+      (values ; closure-conversion
+       (values ; anormalize
+        (values ;categorize-applications
+         ac))))))))
 
 
 

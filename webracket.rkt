@@ -27,6 +27,7 @@
 (define list-primitives? (make-parameter #f))
 (define tree-shake?     (make-parameter #t))
 (define tree-shake-report (make-parameter #f))
+(define letrec-strategy (make-parameter 'basic))
 (define print-top-level-results? (make-parameter #f))
 (define console-bridge? (make-parameter #f))
 
@@ -172,6 +173,10 @@
    [("--tree-shake-report") filename
                             "Write the runtime primitive report to <filename>"
                             (tree-shake-report filename)]
+   [("--letrec-basic") "Use the basic letrec lowering strategy (default)"
+                       (letrec-strategy 'basic)]
+   [("--letrec-waddell") "Use the Waddell letrec lowering strategy"
+                         (letrec-strategy 'waddell)]
    [("--print-top-level-results")
     "Print each top-level expression result with print; useful for script-style tests"
     (print-top-level-results? #t)]
@@ -259,6 +264,7 @@
                      #:verbose?      (verbose-mode)
                      #:browser?      (browser)
                      #:node?         (nodejs)
+                     #:letrec-strategy (letrec-strategy)
                      #:tree-shake?   (tree-shake?)
                      #:tree-shake-report (tree-shake-report)
                      #:print-top-level-results? (print-top-level-results?)
