@@ -3893,6 +3893,129 @@
         (check-equal? (unparse-variable (ρ-ref ρ (datum->syntax #f 'x))) 'x.1)
         (check-true  (ρ-name-used? ρ (datum->syntax #f 'x))))))
 
+;;;
+;;; Uncover Assigned Variables
+;;;
+
+;; The pass `collect-assignable-variables` returns id-set of all variables
+;; that are (potentially) assigned to.
+
+;; This information is needed in tho following two passes:
+;;   `lower-letrec-values` and `box-mutables`.
+
+;; Note: When `lower-letrec-values` needs to insert `set!` it needs to
+;;       update the table, so `box-mutable` gets uptodate information.
+
+(struct var-info        (assigned?) #:transparent)
+(struct letrec-analysis (assigned)  #:transparent)
+; where
+;  assigned is a hashtable from identifier to var-info
+
+(define current-letrec-analysis (make-parameter #f))
+
+(define assigned-var-info (var-info #t))
+
+(define (letrec-analysis-mark-assigned! analysis x)
+  (when (letrec-analysis? analysis)
+    (define ht (letrec-analysis-assigned analysis))
+    (unless (match (hash-ref ht x #f)
+              [(var-info #t) #t]
+              [_             #f])
+      (hash-set! ht x assigned-var-info))))
+
+(define (letrec-analysis-assigned->id-set analysis)
+  (for/fold ([xs empty-set]) ([(x vi) (in-hash (letrec-analysis-assigned analysis))])
+    (match vi
+      [(var-info #t) (set-add xs x)]
+      [_ xs])))
+
+(define (analyze-letrec! T)
+  (define assigned (make-hasheq))
+  (for ([x (in-list (id-set->list (collect-assignable-variables T)))])
+    (hash-set! assigned x assigned-var-info))
+  (letrec-analysis assigned))
+
+(define-pass collect-assignable-variables : LFE2+ (T) -> * ()
+  ;; Assumption: α-conversion has been done
+  (definitions
+    (define (TopLevelForm*    Ts  xs)  (map* TopLevelForm    Ts  xs))
+    (define (ModuleLevelForm* Ms  xs)  (map* ModuleLevelForm Ms  xs))
+    (define (Expr*            Es  xs)  (map* Expr            Es  xs))
+    (define (Abstraction*     ABs xs)  (map* Abstraction     ABs xs)))
+  (TopLevelForm : TopLevelForm (T xs) -> * (xs)
+    [(topbegin ,s ,t ...)           (TopLevelForm* t xs)]
+    [(#%expression ,s ,e)           (Expr e xs)]
+    [(topmodule ,s ,mn ,mp ,mf ...) (ModuleLevelForm* mf xs)]
+    [,g                             (GeneralTopLevelForm g xs)])
+  (ModuleLevelForm : ModuleLevelForm (M xs) -> * (xs)
+    [(#%provide ,rps ...)
+     ;; Preserve accumulator: this pass threads one running set across forms.
+     ;; Returning empty-set here would erase mutable vars seen earlier.
+     xs]
+    [,g                             (GeneralTopLevelForm g xs)])
+  (GeneralTopLevelForm : GeneralTopLevelForm (G xs) -> * (xs)
+    [,e                                 (Expr e xs)]
+    ; until we implement namespace, top-level variables are boxed
+    [(define-values   ,s (,x ...) ,e)
+     (if assignment-convertsion-for-top-level-vars?
+         (Expr e (set-union (ids->id-set x) xs))
+         (Expr e xs))]
+    [(define-syntaxes ,s (,x ...) ,e)   (Expr e xs)]
+    [(#%require       ,s ,rrs ...)
+     ;; Preserve accumulator for the same reason as #%provide above.
+     xs])
+
+  (RawProvideSpec : RawProvideSpec (RPS rps) -> * (rps)
+    #;(for-meta   phase-level ps ...)
+    #;(for-syntax             ps ...)
+    #;(for-label              ps ...)
+    #;(protect                rps ...)
+    [,ps (PhaselessSpec ps)])
+
+  (PhaselessSpec : PhaselessSpec (PS ps) -> * (ps)
+    #;(for-space space sls ...)
+    #;(protect         ps ...)
+    [,sls (SpacelessSpec sls)]) ; spaceless-spec
+
+  (SpacelessSpec : SpacelessSpec (SLS sls) -> * (sls)
+    #;(rename local-id export-id)
+    #;(struct ...)
+    #;(all-from ...)
+    #;(all-from-except ...)
+    #;(all-defined)
+    #;(all-defined-except ...)
+    #;(prefix-all-defined prefix-id)
+    #;(prefix-all-defined-except ...)
+    #;(protect ...)
+    #;(expand (id . datum))
+    #;(expand (id . datum) orig-form)
+    [[,x0 ,x1] empty-set]) ; [id_before id_after]
+
+  #;(Space (space)
+      x ; identifier
+      #f)
+  
+
+  (Abstraction : Abstraction (AB xs) -> * (xs)
+    [(λ ,s ,f ,e)                               (Expr e xs)])
+  (Expr : Expr (E xs) -> * (xs)
+    [,x                                         xs]
+    [,ab                                        (Abstraction ab xs)]
+    [(case-lambda ,s ,ab ...)                   (Abstraction* ab xs)]
+    [(if ,s ,e0 ,e1 ,e2)                        (Expr* (list e0 e1 e2) xs)]
+    [(begin  ,s ,e0 ,e1 ...)                    (Expr* (cons e0 e1) xs)]
+    [(begin0 ,s ,e0 ,e1 ...)                    (Expr* (cons e0 e1) xs)]
+    [(let-values    ,s ([(,x ...) ,e] ...) ,e0) (Expr* e (Expr e0 xs))]
+    [(letrec-values ,s ([(,x ...) ,e] ...) ,e0) (Expr* e (Expr e0 xs))]
+    [(set! ,s ,x ,e)                            (set-add (Expr e xs) x)]    
+    [(top ,s ,x)                                xs]
+    [(variable-reference ,s ,vrx)               xs]
+    [(quote ,s ,d)                              xs]
+    [(quote-syntax ,s ,d)                       xs]
+    [(wcm ,s ,e0 ,e1 ,e2)                       (Expr* (list e0 e1 e2) xs)]
+    [(app ,s ,e0 ,e1 ...)                       (Expr* (cons e0 e1) xs)])  
+  (TopLevelForm T empty-set))
+
 
 ;;;
 ;;; LOWER LETREC VALUES
@@ -3902,20 +4025,6 @@
 ;; binding shape. Otherwise generated temporaries become the inferred names.
 ;; This stage-1 version keeps the old rewrite strategy and only ports it to
 ;; the post-α-rename language, so it can run after α-rename.
-
-(struct var-info (assigned?) #:transparent)
-
-(define current-assigned-info (make-parameter #f))
-
-(define (assigned-info-mark! info x)
-  (when (hash? info)
-    (hash-set! info x (var-info #t))))
-
-(define (assigned-info->id-set info)
-  (for/fold ([xs empty-set]) ([(x vi) (in-hash info)])
-    (match vi
-      [(var-info #t) (set-add xs x)]
-      [_ xs])))
 
 (define-pass lower-letrec-values : LFE2+ (T) -> LFE2+ ()
   (definitions
@@ -4120,7 +4229,7 @@
           (syntax-property s letrec-initialization-set-key #t)
           s))
     (define (InitSet s x t)
-      (assigned-info-mark! (current-assigned-info) x)
+      (letrec-analysis-mark-assigned! (current-letrec-analysis) x)
       (with-output-language (LFE2+ Expr)
         `(set! ,(init-set-syntax s) ,x ,t)))
     (define (InitializeClause s xs e)
@@ -4303,6 +4412,10 @@
         (set-union xs (var-proc rhs))))
     (define (var-assigned? assigned x)
       (cond
+        [(letrec-analysis? assigned)
+         (match (hash-ref (letrec-analysis-assigned assigned) x #f)
+           [(var-info assigned?) assigned?]
+           [_ #f])]
         [(hash? assigned)
          (match (hash-ref assigned x #f)
            [(var-info assigned?) assigned?]
@@ -4332,7 +4445,7 @@
       (for/list ([clause (in-list clauses)])
         (list (first (first clause)) (second clause))))
     (define (Lower-basic s x e e0)
-      (define assigned (or (current-assigned-info)
+      (define assigned (or (current-letrec-analysis)
                            (all-assigned-vars e0 e)))
       (define clauses (split-basic-clauses x e assigned))
       (define-values (raw-lambda-clauses raw-complex-clauses)
@@ -4368,7 +4481,7 @@
     (define (Lower-waddell s x e e0)
       (define lhs-set (binding-vars-set x))
       (define referenced (all-referenced-vars e0 e))
-      (define assigned (or (current-assigned-info)
+      (define assigned (or (current-letrec-analysis)
                            (all-assigned-vars e0 e)))
       (define classified
         (classify-clauses x e lhs-set referenced assigned))
@@ -4462,92 +4575,23 @@
 
 (define assignment-convertsion-for-top-level-vars? #f)
 
-(define-pass collect-assignable-variables : LFE2+ (T) -> * ()
-  ;; Assumption: α-conversion has been done
-  (definitions
-    (define (TopLevelForm*    Ts  xs)  (map* TopLevelForm    Ts  xs))
-    (define (ModuleLevelForm* Ms  xs)  (map* ModuleLevelForm Ms  xs))
-    (define (Expr*            Es  xs)  (map* Expr            Es  xs))
-    (define (Abstraction*     ABs xs)  (map* Abstraction     ABs xs)))
-  (TopLevelForm : TopLevelForm (T xs) -> * (xs)
-    [(topbegin ,s ,t ...)           (TopLevelForm* t xs)]
-    [(#%expression ,s ,e)           (Expr e xs)]
-    [(topmodule ,s ,mn ,mp ,mf ...) (ModuleLevelForm* mf xs)]
-    [,g                             (GeneralTopLevelForm g xs)])
-  (ModuleLevelForm : ModuleLevelForm (M xs) -> * (xs)
-    [(#%provide ,rps ...)
-     ;; Preserve accumulator: this pass threads one running set across forms.
-     ;; Returning empty-set here would erase mutable vars seen earlier.
-     xs]
-    [,g                             (GeneralTopLevelForm g xs)])
-  (GeneralTopLevelForm : GeneralTopLevelForm (G xs) -> * (xs)
-    [,e                                 (Expr e xs)]
-    ; until we implement namespace, top-level variables are boxed
-    [(define-values   ,s (,x ...) ,e)
-     (if assignment-convertsion-for-top-level-vars?
-         (Expr e (set-union (ids->id-set x) xs))
-         (Expr e xs))]
-    [(define-syntaxes ,s (,x ...) ,e)   (Expr e xs)]
-    [(#%require       ,s ,rrs ...)
-     ;; Preserve accumulator for the same reason as #%provide above.
-     xs])
-
-  (RawProvideSpec : RawProvideSpec (RPS rps) -> * (rps)
-    #;(for-meta   phase-level ps ...)
-    #;(for-syntax             ps ...)
-    #;(for-label              ps ...)
-    #;(protect                rps ...)
-    [,ps (PhaselessSpec ps)])
-
-  (PhaselessSpec : PhaselessSpec (PS ps) -> * (ps)
-    #;(for-space space sls ...)
-    #;(protect         ps ...)
-    [,sls (SpacelessSpec sls)]) ; spaceless-spec
-
-  (SpacelessSpec : SpacelessSpec (SLS sls) -> * (sls)
-    #;(rename local-id export-id)
-    #;(struct ...)
-    #;(all-from ...)
-    #;(all-from-except ...)
-    #;(all-defined)
-    #;(all-defined-except ...)
-    #;(prefix-all-defined prefix-id)
-    #;(prefix-all-defined-except ...)
-    #;(protect ...)
-    #;(expand (id . datum))
-    #;(expand (id . datum) orig-form)
-    [[,x0 ,x1] empty-set]) ; [id_before id_after]
-
-  #;(Space (space)
-      x ; identifier
-      #f)
-  
-
-  (Abstraction : Abstraction (AB xs) -> * (xs)
-    [(λ ,s ,f ,e)                               (Expr e xs)])
-  (Expr : Expr (E xs) -> * (xs)
-    [,x                                         xs]
-    [,ab                                        (Abstraction ab xs)]
-    [(case-lambda ,s ,ab ...)                   (Abstraction* ab xs)]
-    [(if ,s ,e0 ,e1 ,e2)                        (Expr* (list e0 e1 e2) xs)]
-    [(begin  ,s ,e0 ,e1 ...)                    (Expr* (cons e0 e1) xs)]
-    [(begin0 ,s ,e0 ,e1 ...)                    (Expr* (cons e0 e1) xs)]
-    [(let-values    ,s ([(,x ...) ,e] ...) ,e0) (Expr* e (Expr e0 xs))]
-    [(letrec-values ,s ([(,x ...) ,e] ...) ,e0) (Expr* e (Expr e0 xs))]
-    [(set! ,s ,x ,e)                            (set-add (Expr e xs) x)]    
-    [(top ,s ,x)                                xs]
-    [(variable-reference ,s ,vrx)               xs]
-    [(quote ,s ,d)                              xs]
-    [(quote-syntax ,s ,d)                       xs]
-    [(wcm ,s ,e0 ,e1 ,e2)                       (Expr* (list e0 e1 e2) xs)]
-    [(app ,s ,e0 ,e1 ...)                       (Expr* (cons e0 e1) xs)])  
-  (TopLevelForm T empty-set))
-
-(define (uncover-assigned T)
-  (define info (make-hasheq))
-  (for ([x (in-list (id-set->list (collect-assignable-variables T)))])
-    (hash-set! info x (var-info #t)))
-  info)
+(define (assignment-conversion T) ; LFE2+ -> LFE2+
+  ; more convenient to use assignment-conversion than
+  ; calling collect-assignable-variables and box-mutables in order
+  ; (since  assignment-conversion has type T -> T)
+  (define ms
+    (cond
+      [(current-letrec-analysis)
+       => letrec-analysis-assigned->id-set]
+      [else
+       (collect-assignable-variables T)]))
+  (current-console-bridge-mutable-top-binding-names
+   (for/list ([x (in-list (id-set->list ms))]
+              #:do [(define sym (syntax-e (variable-id x)))]
+              #:when (and (symbol? sym)
+                          (member sym (current-console-bridge-top-binding-names))))
+     sym))
+  (box-mutables T ms))
 
 
 (define-pass box-mutables : LFE2+ (T ms) -> LFE2+ ()
@@ -4635,23 +4679,6 @@
        `(letrec-values ,s ([(,x ...) ,e*] ...) ,e0))])
   (TopLevelForm T))
 
-(define (assignment-conversion T) ; LFE2+ -> LFE2+
-  ; more convenient to use assignment-conversion than
-  ; calling collect-assignable-variables and box-mutables in order
-  ; (since  assignment-conversion has type T -> T)
-  (define ms
-    (cond
-      [(current-assigned-info)
-       => assigned-info->id-set]
-      [else
-       (collect-assignable-variables T)]))
-  (current-console-bridge-mutable-top-binding-names
-   (for/list ([x (in-list (id-set->list ms))]
-              #:do [(define sym (syntax-e (variable-id x)))]
-              #:when (and (symbol? sym)
-                          (member sym (current-console-bridge-top-binding-names))))
-     sym))
-  (box-mutables T ms))
 
 (module+ test
   (let ()
@@ -5091,7 +5118,7 @@
               (flatten-topbegin
                (parse
                 (expand-syntax stx))))))))
-        (parameterize ([current-assigned-info (uncover-assigned ar)])
+        (parameterize ([current-letrec-analysis (analyze-letrec! ar)])
           (unparse-all
            (unparse-LFE2+
             (lower-letrec-values ar))))))
@@ -5119,15 +5146,15 @@
               (flatten-topbegin
                (parse
                 (expand-syntax stx))))))))
-        (define ua (uncover-assigned ar))
+        (define ua (analyze-letrec! ar))
         (define lr
-          (parameterize ([current-assigned-info ua])
+          (parameterize ([current-letrec-analysis ua])
             (lower-letrec-values ar)))
         (unparse-all
          (unparse-LANF
           (anormalize
            (categorize-applications
-            (parameterize ([current-assigned-info ua])
+            (parameterize ([current-letrec-analysis ua])
               (assignment-conversion lr))))))))
     (check-equal? (test #'1) ''1)
     (check-equal? (test #'(+ 2 3)) '(primapp + '2 '3))
@@ -8034,8 +8061,8 @@
   (define ar  (time-pass "α-rename"             (λ () (α-rename ecl))
                          (λ (v) (count-unparsed unparse-LFE2+ v))
                          (λ (v) (unparse-all (unparse-LFE2+ v)))))
-  (define ua  (time-pass "uncover-assigned"     (λ () (uncover-assigned ar))))
-  (define lr  (time-pass "lower-letrec-values"  (λ () (parameterize ([current-assigned-info ua])
+  (define ua  (time-pass "analyze-letrec!"     (λ () (analyze-letrec! ar))))
+  (define lr  (time-pass "lower-letrec-values"  (λ () (parameterize ([current-letrec-analysis ua])
                                                             (lower-letrec-values ar)))
                          (λ (v) (count-unparsed unparse-LFE2+ v))
                          (λ (v) (unparse-all (unparse-LFE2+ v)))))
@@ -8044,7 +8071,7 @@
     (time-pass "assignment-conversion"
       (λ ()
         (define a
-          (parameterize ([current-assigned-info ua])
+          (parameterize ([current-letrec-analysis ua])
             (assignment-conversion lr)))
         (when debug:print-passes?
           (displayln "--- assignment conversion ---")
@@ -8091,12 +8118,12 @@
           (parse
            (unexpand
             (topexpand stx))))))))))
-  (define ua (uncover-assigned ar))
+  (define ua (analyze-letrec! ar))
   (define lr
-    (parameterize ([current-assigned-info ua])
+    (parameterize ([current-letrec-analysis ua])
       (lower-letrec-values ar)))
   (define ac
-    (parameterize ([current-assigned-info ua])
+    (parameterize ([current-letrec-analysis ua])
       (assignment-conversion lr)))
   (pretty-print
    (strip    
@@ -8236,10 +8263,10 @@
   (define eb  (explicit-begin cq))
   (define ecl (explicit-case-lambda eb))
   (define ar  (α-rename ecl))
-  (define ua  (uncover-assigned ar))
-  (define lr  (parameterize ([current-assigned-info ua])
+  (define ua  (analyze-letrec! ar))
+  (define lr  (parameterize ([current-letrec-analysis ua])
                 (lower-letrec-values ar)))
-  (define ac  (parameterize ([current-assigned-info ua])
+  (define ac  (parameterize ([current-letrec-analysis ua])
                 (assignment-conversion lr)))
   (define ca  (categorize-applications ac))
   (define an  (anormalize ca))
@@ -8254,10 +8281,10 @@
   (define eb  (explicit-begin cq))
   (define ecl (explicit-case-lambda eb))
   (define ar  (α-rename ecl))
-  (define ua  (uncover-assigned ar))
-  (define lr  (parameterize ([current-assigned-info ua])
+  (define ua  (analyze-letrec! ar))
+  (define lr  (parameterize ([current-letrec-analysis ua])
                 (lower-letrec-values ar)))
-  (define ac  (parameterize ([current-assigned-info ua])
+  (define ac  (parameterize ([current-letrec-analysis ua])
                 (assignment-conversion lr)))
   (define ca  (categorize-applications ac))
   (pretty-print (strip ca)))
@@ -8271,10 +8298,10 @@
   (define eb  (explicit-begin cq))
   (define ecl (explicit-case-lambda eb))
   (define ar  (α-rename ecl))
-  (define ua  (uncover-assigned ar))
-  (define lr  (parameterize ([current-assigned-info ua])
+  (define ua  (analyze-letrec! ar))
+  (define lr  (parameterize ([current-letrec-analysis ua])
                 (lower-letrec-values ar)))
-  (define ac  (parameterize ([current-assigned-info ua])
+  (define ac  (parameterize ([current-letrec-analysis ua])
                 (assignment-conversion lr)))
   (define ca  (categorize-applications ac))
   (define an  (anormalize ca))
@@ -8294,10 +8321,10 @@
   (define eb  (explicit-begin cq))
   (define ecl (explicit-case-lambda eb))
   (define ar  (α-rename ecl))
-  (define ua  (uncover-assigned ar))
-  (define lr  (parameterize ([current-assigned-info ua])
+  (define ua  (analyze-letrec! ar))
+  (define lr  (parameterize ([current-letrec-analysis ua])
                 (lower-letrec-values ar)))
-  (define ac  (parameterize ([current-assigned-info ua])
+  (define ac  (parameterize ([current-letrec-analysis ua])
                 (assignment-conversion lr)))
   (pretty-print
    (values ; strip
