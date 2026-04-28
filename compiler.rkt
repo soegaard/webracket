@@ -3903,6 +3903,10 @@
 ;; This stage-1 version keeps the old rewrite strategy and only ports it to
 ;; the post-α-rename language, so it can run after α-rename.
 
+(struct var-info (assigned?) #:transparent)
+
+(define current-assigned-info (make-parameter #f))
+
 (define-pass lower-letrec-values : LFE2+ (T) -> LFE2+ ()
   (definitions
     (define h #'lower-letrec-values)
@@ -4130,10 +4134,10 @@
         `(let-values ,s ([(,xs ...) ,e]) ,(Zero))))
     (define (single-unassigned-binding? xs assigned)
       (and (= (length xs) 1)
-           (not (set-in? (first xs) assigned))))
+           (not (var-assigned? assigned (first xs)))))
     (define (all-unassigned-bindings? xs assigned)
       (for/and ([x (in-list xs)])
-        (not (set-in? x assigned))))
+        (not (var-assigned? assigned x))))
     (define (simple-values-kind xs rhs lhs-set assigned)
       (define (join-mv-kind kind mv-kind)
         (cond
@@ -4175,7 +4179,7 @@
       (cond
         [(and (for/and ([x (in-list xs)])
                 (and (not (set-in? x referenced))
-                     (not (set-in? x assigned)))))
+                     (not (var-assigned? assigned x)))))
          'unreferenced]
         [(and (single-unassigned-binding? xs assigned)
               (lambda-clause? xs rhs))
@@ -4286,6 +4290,14 @@
     (define (rhs-vars-set rhs* var-proc)
       (for/fold ([xs empty-set]) ([rhs (in-list rhs*)])
         (set-union xs (var-proc rhs))))
+    (define (var-assigned? assigned x)
+      (cond
+        [(hash? assigned)
+         (match (hash-ref assigned x #f)
+           [(var-info assigned?) assigned?]
+           [_ #f])]
+        [else
+         (set-in? assigned x)]))
     (define (all-assigned-vars body rhs*)
       (set-union (assigned-vars body)
                  (rhs-vars-set rhs* assigned-vars)))
@@ -4309,13 +4321,14 @@
       (for/list ([clause (in-list clauses)])
         (list (first (first clause)) (second clause))))
     (define (Lower-basic s x e e0)
-      (define assigned (all-assigned-vars e0 e))
+      (define assigned (or (current-assigned-info)
+                           (all-assigned-vars e0 e)))
       (define clauses (split-basic-clauses x e assigned))
       (define-values (raw-lambda-clauses raw-complex-clauses)
         (partition (match-lambda
                      [(list xs rhs)
                       (and (lambda-clause? xs rhs)
-                           (not (set-in? (first xs) assigned)))])
+                           (not (var-assigned? assigned (first xs))))])
                    clauses))
       (define-values (lambda-clauses complex-clauses)
         (if (null? raw-complex-clauses)
@@ -4344,7 +4357,8 @@
     (define (Lower-waddell s x e e0)
       (define lhs-set (binding-vars-set x))
       (define referenced (all-referenced-vars e0 e))
-      (define assigned (all-assigned-vars e0 e))
+      (define assigned (or (current-assigned-info)
+                           (all-assigned-vars e0 e)))
       (define classified
         (classify-clauses x e lhs-set referenced assigned))
       (define (bindings-of kind)
@@ -4517,6 +4531,12 @@
     [(wcm ,s ,e0 ,e1 ,e2)                       (Expr* (list e0 e1 e2) xs)]
     [(app ,s ,e0 ,e1 ...)                       (Expr* (cons e0 e1) xs)])  
   (TopLevelForm T empty-set))
+
+(define (uncover-assigned T)
+  (define info (make-hasheq))
+  (for ([x (in-list (id-set->list (collect-assignable-variables T)))])
+    (hash-set! info x (var-info #t)))
+  info)
 
 
 (define-pass box-mutables : LFE2+ (T ms) -> LFE2+ ()
@@ -5047,16 +5067,18 @@
       (reset-counter!)
       (parameterize ([α-rename-mode 'simple]
                      [current-letrec-strategy strategy])
-        (unparse-all
-         (unparse-LFE2+
-          (lower-letrec-values
-           (α-rename
-            (explicit-case-lambda
-             (explicit-begin
-              (infer-names
-               (flatten-topbegin
-                (parse
-                 (expand-syntax stx))))))))))))
+        (define ar
+          (α-rename
+           (explicit-case-lambda
+            (explicit-begin
+             (infer-names
+              (flatten-topbegin
+               (parse
+                (expand-syntax stx))))))))
+        (parameterize ([current-assigned-info (uncover-assigned ar)])
+          (unparse-all
+           (unparse-LFE2+
+            (lower-letrec-values ar))))))
     (define (check-complex-waddell stx rhs-rx)
       (define lowered
         (format "~s"
@@ -5073,19 +5095,22 @@
     (define (test stx)
       (reset-counter!)
       (parameterize ([α-rename-mode 'simple])
+        (define ar
+          (α-rename
+           (explicit-case-lambda
+            (explicit-begin
+             (infer-names
+              (flatten-topbegin
+               (parse
+                (expand-syntax stx))))))))
+        (define lr
+          (parameterize ([current-assigned-info (uncover-assigned ar)])
+            (lower-letrec-values ar)))
         (unparse-all
          (unparse-LANF
           (anormalize
            (categorize-applications
-            (assignment-conversion
-             (lower-letrec-values
-              (α-rename
-               (explicit-case-lambda
-                (explicit-begin
-                 (infer-names
-                  (flatten-topbegin
-                   (parse
-                    (expand-syntax stx)))))))))))))))
+            (assignment-conversion lr)))))))
     (check-equal? (test #'1) ''1)
     (check-equal? (test #'(+ 2 3)) '(primapp + '2 '3))
     (check-equal? (test #'(+ 2 (* 4 5)))
@@ -7991,7 +8016,9 @@
   (define ar  (time-pass "α-rename"             (λ () (α-rename ecl))
                          (λ (v) (count-unparsed unparse-LFE2+ v))
                          (λ (v) (unparse-all (unparse-LFE2+ v)))))
-  (define lr  (time-pass "lower-letrec-values"  (λ () (lower-letrec-values ar))
+  (define ua  (time-pass "uncover-assigned"     (λ () (uncover-assigned ar))))
+  (define lr  (time-pass "lower-letrec-values"  (λ () (parameterize ([current-assigned-info ua])
+                                                            (lower-letrec-values ar)))
                          (λ (v) (count-unparsed unparse-LFE2+ v))
                          (λ (v) (unparse-all (unparse-LFE2+ v)))))
 
@@ -8034,6 +8061,19 @@
 
 (define (comp- stx)
   (reset-counter!)
+  (define ar
+    (α-rename
+     (explicit-case-lambda
+      (explicit-begin
+       (convert-quotations
+        (infer-names
+         (flatten-topbegin
+          (parse
+           (unexpand
+            (topexpand stx))))))))))
+  (define lr
+    (parameterize ([current-assigned-info (uncover-assigned ar)])
+      (lower-letrec-values ar)))
   (pretty-print
    (strip    
     (flatten-begin
@@ -8041,16 +8081,7 @@
       (anormalize
        (categorize-applications
         (assignment-conversion
-         (lower-letrec-values
-          (α-rename
-           (explicit-case-lambda
-            (explicit-begin
-             (convert-quotations
-              (infer-names
-               (flatten-topbegin
-                (parse
-                 (unexpand
-                  (topexpand stx))))))))))))))))))
+         lr))))))))
 
 (module+ test
   (define (module-has-top-level-form? mod head name)
@@ -8182,7 +8213,8 @@
   (define eb  (explicit-begin cq))
   (define ecl (explicit-case-lambda eb))
   (define ar  (α-rename ecl))
-  (define lr  (lower-letrec-values ar))
+  (define lr  (parameterize ([current-assigned-info (uncover-assigned ar)])
+                (lower-letrec-values ar)))
   (define ac  (assignment-conversion lr))
   (define ca  (categorize-applications ac))
   (define an  (anormalize ca))
@@ -8197,7 +8229,8 @@
   (define eb  (explicit-begin cq))
   (define ecl (explicit-case-lambda eb))
   (define ar  (α-rename ecl))
-  (define lr  (lower-letrec-values ar))
+  (define lr  (parameterize ([current-assigned-info (uncover-assigned ar)])
+                (lower-letrec-values ar)))
   (define ac  (assignment-conversion lr))
   (define ca  (categorize-applications ac))
   (pretty-print (strip ca)))
@@ -8211,7 +8244,8 @@
   (define eb  (explicit-begin cq))
   (define ecl (explicit-case-lambda eb))
   (define ar  (α-rename ecl))
-  (define lr  (lower-letrec-values ar))
+  (define lr  (parameterize ([current-assigned-info (uncover-assigned ar)])
+                (lower-letrec-values ar)))
   (define ac  (assignment-conversion lr))
   (define ca  (categorize-applications ac))
   (define an  (anormalize ca))
@@ -8231,7 +8265,8 @@
   (define eb  (explicit-begin cq))
   (define ecl (explicit-case-lambda eb))
   (define ar  (α-rename ecl))
-  (define lr  (lower-letrec-values ar))
+  (define lr  (parameterize ([current-assigned-info (uncover-assigned ar)])
+                (lower-letrec-values ar)))
   (define ac  (assignment-conversion lr))
   (pretty-print
    (values ; strip
