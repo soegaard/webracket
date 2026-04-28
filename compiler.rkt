@@ -4017,6 +4017,158 @@
   (TopLevelForm T empty-set))
 
 
+(struct letrec-scc-binding (pos xs rhs kind refs self-recursive?)
+  #:transparent)
+
+(struct letrec-scc-node (binding edges index lowlink on-stack? done?)
+  #:mutable
+  #:transparent)
+
+;; lfe2+-referenced-vars : LFE2+ Expr -> id-set?
+;;   Compute referenced variables for an LFE2+ expression.
+(define (lfe2+-referenced-vars e)
+  (define (Expr* es)
+    (for/fold ([xs empty-set]) ([e (in-list es)])
+      (set-union xs (Expr e))))
+  (define (Abstraction ab)
+    (nanopass-case (LFE2+ Abstraction) ab
+      [(λ ,s ,f ,e0) (Expr e0)]))
+  (define (Expr e)
+    (nanopass-case (LFE2+ Expr) e
+      [,x                       (set-add empty-set x)]
+      [,ab                      (Abstraction ab)]
+      [(case-lambda ,s ,ab ...) (for/fold ([xs empty-set]) ([ab (in-list ab)])
+                                 (set-union xs (Abstraction ab)))]
+      [(if ,s ,e0 ,e1 ,e2)      (Expr* (list e0 e1 e2))]
+      [(begin ,s ,e0 ,e1 ...)   (Expr* (cons e0 e1))]
+      [(begin0 ,s ,e0 ,e1 ...)  (Expr* (cons e0 e1))]
+      [(let-values ,s ([(,x ...) ,e] ...) ,e0)
+       (Expr* (cons e0 e))]
+      [(letrec-values ,s ([(,x ...) ,e] ...) ,e0)
+       (Expr* (cons e0 e))]
+      [(set! ,s ,x ,e0)         (Expr e0)]
+      [(top ,s ,x)              empty-set]
+      [(variable-reference ,s ,vrx) empty-set]
+      [(quote ,s ,d)            empty-set]
+      [(quote-syntax ,s ,d)     empty-set]
+      [(wcm ,s ,e0 ,e1 ,e2)     (Expr* (list e0 e1 e2))]
+      [(app ,s ,e0 ,e1 ...)     (Expr* (cons e0 e1))]))
+  (Expr e))
+
+;; letrec-classified-clause-vars-set : (listof (list symbol? (listof variable?) any)) -> id-set?
+;;   Collect bound variables from classified letrec clauses.
+(define (letrec-classified-clause-vars-set clauses)
+  (for/fold ([xs empty-set]) ([clause (in-list clauses)])
+    (for/fold ([xs xs]) ([x (in-list (second clause))])
+      (set-add xs x))))
+
+;; letrec-scc-order-sensitive-kind? : symbol? -> boolean?
+;;   Determine whether a classified clause constrains letrec* evaluation order.
+(define (letrec-scc-order-sensitive-kind? kind)
+  (memq kind '(simple-allocates complex unreferenced)))
+
+;; letrec-classified-clauses->scc-bindings : (listof (list symbol? (listof variable?) LFE2+ Expr)) -> (listof letrec-scc-binding?)
+;;   Build SCC bindings from classified letrec clauses.
+(define (letrec-classified-clauses->scc-bindings classified)
+  (define lhs-set
+    (letrec-classified-clause-vars-set classified))
+  (for/list ([clause (in-list classified)]
+             [pos (in-naturals)])
+    (match clause
+      [(list kind xs rhs)
+       (define refs
+         (set-intersection lhs-set (lfe2+-referenced-vars rhs)))
+       (define self-recursive?
+         (for/or ([x (in-list xs)])
+           (set-in? x refs)))
+       (letrec-scc-binding pos xs rhs kind refs self-recursive?)])))
+
+;; letrec-scc-bindings->nodes : (listof letrec-scc-binding?) -> (listof letrec-scc-node?)
+;;   Build a dependency graph for one letrec cluster using letrec* order constraints.
+(define (letrec-scc-bindings->nodes bindings)
+  (define nodes
+    (for/list ([binding (in-list bindings)])
+      (letrec-scc-node binding '() #f #f #f #f)))
+  (define var->node (make-hasheq))
+  (for ([node (in-list nodes)])
+    (for ([x (in-list (letrec-scc-binding-xs (letrec-scc-node-binding node)))])
+      (hash-set! var->node x node)))
+  (define last-ordered #f)
+  (for ([node (in-list nodes)])
+    (define binding (letrec-scc-node-binding node))
+    (define ref-edges
+      (for/fold ([edges '()]) ([x (in-list (id-set->list (letrec-scc-binding-refs binding)))])
+        (define dep (hash-ref var->node x #f))
+        (if (and dep (not (memq dep edges)))
+            (cons dep edges)
+            edges)))
+    (define edges
+      (if (and last-ordered
+               (letrec-scc-order-sensitive-kind? (letrec-scc-binding-kind binding))
+               (not (memq last-ordered ref-edges)))
+          (cons last-ordered ref-edges)
+          ref-edges))
+    (set-letrec-scc-node-edges! node (reverse edges))
+    (when (letrec-scc-order-sensitive-kind? (letrec-scc-binding-kind binding))
+      (set! last-ordered node)))
+  nodes)
+
+;; letrec-scc-nodes->bindings : (listof letrec-scc-node?) -> (listof letrec-scc-binding?)
+;;   Extract bindings from SCC nodes.
+(define (letrec-scc-nodes->bindings nodes)
+  (map letrec-scc-node-binding nodes))
+
+;; letrec-tarjan-sccs : (listof letrec-scc-node?) -> (listof (listof letrec-scc-node?))
+;;   Compute SCCs in dependency order using Tarjan's algorithm.
+(define (letrec-tarjan-sccs nodes)
+  (define sccs '())
+  (define index 0)
+  (define stack '())
+  (define (visit node)
+    (set-letrec-scc-node-index! node index)
+    (set-letrec-scc-node-lowlink! node index)
+    (set-letrec-scc-node-on-stack?! node #t)
+    (set! stack (cons node stack))
+    (set! index (add1 index))
+    (for ([dep (in-list (letrec-scc-node-edges node))])
+      (cond
+        [(letrec-scc-node-done? dep) (void)]
+        [(not (letrec-scc-node-index dep))
+         (visit dep)
+         (set-letrec-scc-node-lowlink! node
+                                       (min (letrec-scc-node-lowlink node)
+                                            (letrec-scc-node-lowlink dep)))]
+        [(letrec-scc-node-on-stack? dep)
+         (set-letrec-scc-node-lowlink! node
+                                       (min (letrec-scc-node-lowlink node)
+                                            (letrec-scc-node-index dep)))]))
+    (when (= (letrec-scc-node-lowlink node)
+             (letrec-scc-node-index node))
+      (define component
+        (let pop ()
+          (define top (car stack))
+          (set! stack (cdr stack))
+          (set-letrec-scc-node-on-stack?! top #f)
+          (set-letrec-scc-node-done?! top #t)
+          (cons top
+                (if (eq? top node)
+                    '()
+                    (pop)))))
+      (set! sccs (cons component sccs))))
+  (for ([node (in-list nodes)])
+    (unless (letrec-scc-node-index node)
+      (visit node)))
+  (reverse sccs))
+
+;; letrec-classified-clauses->sccs : (listof (list symbol? (listof variable?) LFE2+ Expr)) -> (listof (listof letrec-scc-binding?))
+;;   Convenience wrapper from classified clauses to binding SCCs.
+(define (letrec-classified-clauses->sccs classified)
+  (map letrec-scc-nodes->bindings
+       (letrec-tarjan-sccs
+        (letrec-scc-bindings->nodes
+         (letrec-classified-clauses->scc-bindings classified)))))
+
+
 ;;;
 ;;; LOWER LETREC VALUES
 ;;;
@@ -5154,8 +5306,8 @@
         (unparse-all
          (unparse-LANF
           (anormalize
-           (categorize-applications
-            (parameterize ([current-assigned-analysis ua])
+            (categorize-applications
+             (parameterize ([current-assigned-analysis ua])
               (assignment-conversion lr))))))))
     (check-equal? (test #'1) ''1)
     (check-equal? (test #'(+ 2 3)) '(primapp + '2 '3))
@@ -5371,6 +5523,61 @@
                      (#%plain-module-begin
                       (let-values (((t.1) (primapp fx+ '2 '3)))
                         (primapp fx+ '1 t.1)))))))
+
+(module+ test
+  (define (letrec-scc-summary stx kinds)
+    (define (as-variable x)
+      (cond
+        [(variable? x) x]
+        [(identifier? x) (variable x)]
+        [else x]))
+    (define (name-of x)
+      (cond
+        [(variable? x) (syntax-e (variable-id x))]
+        [(identifier? x) (syntax-e x)]
+        [else x]))
+    (reset-counter!)
+    (parameterize ([α-rename-mode 'simple])
+      (define ar
+        (α-rename
+         (explicit-case-lambda
+          (explicit-begin
+           (infer-names
+            (flatten-topbegin
+             (parse
+              (expand-syntax stx))))))))
+      (nanopass-case (LFE2+ Expr) ar
+        [(letrec-values ,s0 ([(,x ...) ,e] ...) ,e0)
+         (let ([classified
+                (for/list ([kind (in-list kinds)]
+                           [xs (in-list x)]
+                           [rhs (in-list e)])
+                  (list kind (map as-variable xs) rhs))])
+           (for/list ([scc (in-list (letrec-classified-clauses->sccs classified))])
+             (for/list ([binding (in-list (sort scc <
+                                                 #:key letrec-scc-binding-pos))])
+               (for/list ([x (in-list (letrec-scc-binding-xs binding))])
+                 (name-of x)))))]
+        [else
+         (error 'letrec-scc-summary "expected a top-level letrec expression")])))
+  (check-equal? (letrec-scc-summary #'(letrec ([a 1]
+                                               [b a]
+                                               [c b])
+                                        c)
+                                    '(simple-pure simple-pure simple-pure))
+                '(((a)) ((b)) ((c))))
+  (check-equal? (letrec-scc-summary #'(letrec ([f (λ () (g))]
+                                               [g (λ () (f))]
+                                               [x (f)])
+                                        x)
+                                    '(lambda lambda complex))
+                '(((f) (g)) ((x))))
+  (check-equal? (letrec-scc-summary #'(letrec ([a (cons 1 2)]
+                                               [b (cons 3 4)]
+                                               [c (cons 5 6)])
+                                        c)
+                                    '(simple-allocates simple-allocates simple-allocates))
+                '(((a)) ((b)) ((c)))))
 
 ;;;
 ;;; FREE VARIABLE ANALYSIS
