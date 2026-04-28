@@ -5174,6 +5174,17 @@
                   '(letrec-values (((f) (λ () '1))
                                    ((g) (λ () '2)))
                      (list (f) (g))))
+    (check-equal? (lower-test #'(letrec-values ([(f g) (values (case-lambda
+                                                                 [() 1])
+                                                                (case-lambda
+                                                                  [() 2]))])
+                                 (list (f) (g)))
+                              'waddell)
+                  '(letrec-values (((f) (case-lambda
+                                          (λ () '1)))
+                                   ((g) (case-lambda
+                                          (λ () '2))))
+                     (list (f) (g))))
     (check-equal? (lower-test #'(letrec ([f (case-lambda [() 1])])
                                   (f))
                               'basic)
@@ -5215,6 +5226,19 @@
                               'waddell)
                   '(letrec-values (((a) (λ () '1))
                                    ((b) (λ () '2)))
+                     (let-values (((f g) (values a b)))
+                       (list (f) (g)))))
+    (check-equal? (lower-test #'(letrec-values ([(f g) (letrec-values ([(a b) (values (case-lambda
+                                                                                          [() 1])
+                                                                                         (case-lambda
+                                                                                           [() 2]))])
+                                                   (values a b))])
+                                 (list (f) (g)))
+                              'waddell)
+                  '(letrec-values (((a) (case-lambda
+                                          (λ () '1)))
+                                   ((b) (case-lambda
+                                          (λ () '2))))
                      (let-values (((f g) (values a b)))
                        (list (f) (g)))))
     (check-equal? (lower-test #'(letrec ([x (let-values ([(a) 1]) a)])
