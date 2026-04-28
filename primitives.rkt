@@ -1842,52 +1842,55 @@
 ;;; Number Formatting
 ;;;
 
+(require (prefix-in racket: racket/file))
+
 (define open-input-file
   (case-lambda
-    [(path) (error 'open-input-file "only available in compiled WebRacket")]
-    [(path mode) (error 'open-input-file "only available in compiled WebRacket")]
-    [(path mode for-module?) (error 'open-input-file "only available in compiled WebRacket")]))
+    [(path) (racket:open-input-file path)]
+    [(path mode) (racket:open-input-file path #:mode mode)]
+    [(path mode for-module?) (racket:open-input-file path #:mode mode #:for-module? for-module?)]))
 
 (define open-output-file
   (case-lambda
-    [(path) (error 'open-output-file "only available in compiled WebRacket")]
-    [(path mode) (error 'open-output-file "only available in compiled WebRacket")]
-    [(path mode exists) (error 'open-output-file "only available in compiled WebRacket")]))
+    [(path) (racket:open-output-file path)]
+    [(path mode) (racket:open-output-file path #:mode mode)]
+    [(path mode exists) (racket:open-output-file path #:mode mode #:exists exists)]))
 
 (define display-to-file
   (case-lambda
-    [(v path) (error 'display-to-file "only available in compiled WebRacket")]
-    [(v path mode) (error 'display-to-file "only available in compiled WebRacket")]
-    [(v path mode exists) (error 'display-to-file "only available in compiled WebRacket")]))
+    [(v path) (racket:display-to-file v path)]
+    [(v path mode) (racket:display-to-file v path #:mode mode)]
+    [(v path mode exists) (racket:display-to-file v path #:mode mode #:exists exists)]))
 
 (define display-lines-to-file
   (case-lambda
-    [(lst path) (error 'display-lines-to-file "only available in compiled WebRacket")]
-    [(lst path separator) (error 'display-lines-to-file "only available in compiled WebRacket")]
-    [(lst path separator mode) (error 'display-lines-to-file "only available in compiled WebRacket")]
-    [(lst path separator mode exists) (error 'display-lines-to-file "only available in compiled WebRacket")]))
+    [(lst path) (racket:display-lines-to-file lst path)]
+    [(lst path separator) (racket:display-lines-to-file lst path #:separator separator)]
+    [(lst path separator mode) (racket:display-lines-to-file lst path #:separator separator #:mode mode)]
+    [(lst path separator mode exists)
+     (racket:display-lines-to-file lst path #:separator separator #:mode mode #:exists exists)]))
 
 (define file->bytes
   (case-lambda
-    [(path) (error 'file->bytes "only available in compiled WebRacket")]
-    [(path mode) (error 'file->bytes "only available in compiled WebRacket")]))
+    [(path) (racket:file->bytes path)]
+    [(path mode) (racket:file->bytes path #:mode mode)]))
 
 (define file->string
   (case-lambda
-    [(path) (error 'file->string "only available in compiled WebRacket")]
-    [(path mode) (error 'file->string "only available in compiled WebRacket")]))
+    [(path) (racket:file->string path)]
+    [(path mode) (racket:file->string path #:mode mode)]))
 
 (define file->lines
   (case-lambda
-    [(path) (error 'file->lines "only available in compiled WebRacket")]
-    [(path mode) (error 'file->lines "only available in compiled WebRacket")]
-    [(path mode line-mode) (error 'file->lines "only available in compiled WebRacket")]))
+    [(path) (racket:file->lines path)]
+    [(path mode) (racket:file->lines path #:mode mode)]
+    [(path mode line-mode) (racket:file->lines path #:mode mode #:line-mode line-mode)]))
 
 (define file->bytes-lines
   (case-lambda
-    [(path) (error 'file->bytes-lines "only available in compiled WebRacket")]
-    [(path mode) (error 'file->bytes-lines "only available in compiled WebRacket")]
-    [(path mode line-mode) (error 'file->bytes-lines "only available in compiled WebRacket")]))
+    [(path) (racket:file->bytes-lines path)]
+    [(path mode) (racket:file->bytes-lines path #:mode mode)]
+    [(path mode line-mode) (racket:file->bytes-lines path #:mode mode #:line-mode line-mode)]))
 
 (define (delete-file path)
   (error 'delete-file "only available in compiled WebRacket"))
@@ -1988,36 +1991,36 @@
 
 (define call-with-input-file
   (case-lambda
-    [(path proc) (error 'call-with-input-file "only available in compiled WebRacket")]
-    [(path proc mode) (error 'call-with-input-file "only available in compiled WebRacket")]))
+    [(path proc) (racket:call-with-input-file path proc)]
+    [(path proc mode) (racket:call-with-input-file path proc #:mode mode)]))
 
 (define call-with-output-file
   (case-lambda
-    [(path proc) (error 'call-with-output-file "only available in compiled WebRacket")]
-    [(path proc mode) (error 'call-with-output-file "only available in compiled WebRacket")]
-    [(path proc mode exists) (error 'call-with-output-file "only available in compiled WebRacket")]))
+    [(path proc) (racket:call-with-output-file path proc)]
+    [(path proc mode) (racket:call-with-output-file path proc #:mode mode)]
+    [(path proc mode exists) (racket:call-with-output-file path proc #:mode mode #:exists exists)]))
 
 (define call-with-input-file*
   (case-lambda
-    [(path proc) (error 'call-with-input-file* "only available in compiled WebRacket")]
-    [(path proc mode) (error 'call-with-input-file* "only available in compiled WebRacket")]))
+    [(path proc) (racket:call-with-input-file* path proc)]
+    [(path proc mode) (racket:call-with-input-file* path proc #:mode mode)]))
 
 (define call-with-output-file*
   (case-lambda
-    [(path proc) (error 'call-with-output-file* "only available in compiled WebRacket")]
-    [(path proc mode) (error 'call-with-output-file* "only available in compiled WebRacket")]
-    [(path proc mode exists) (error 'call-with-output-file* "only available in compiled WebRacket")]))
+    [(path proc) (racket:call-with-output-file* path proc)]
+    [(path proc mode) (racket:call-with-output-file* path proc #:mode mode)]
+    [(path proc mode exists) (racket:call-with-output-file* path proc #:mode mode #:exists exists)]))
 
 (define with-input-from-file
   (case-lambda
-    [(path thunk) (error 'with-input-from-file "only available in compiled WebRacket")]
-    [(path thunk mode) (error 'with-input-from-file "only available in compiled WebRacket")]))
+    [(path thunk) (racket:with-input-from-file path thunk)]
+    [(path thunk mode) (racket:with-input-from-file path thunk #:mode mode)]))
 
 (define with-output-to-file
   (case-lambda
-    [(path thunk) (error 'with-output-to-file "only available in compiled WebRacket")]
-    [(path thunk mode) (error 'with-output-to-file "only available in compiled WebRacket")]
-    [(path thunk mode exists) (error 'with-output-to-file "only available in compiled WebRacket")]))
+    [(path thunk) (racket:with-output-to-file path thunk)]
+    [(path thunk mode) (racket:with-output-to-file path thunk #:mode mode)]
+    [(path thunk mode exists) (racket:with-output-to-file path thunk #:mode mode #:exists exists)]))
 
 (define find-relative-path
   (case-lambda
