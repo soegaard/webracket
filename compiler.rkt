@@ -3968,69 +3968,78 @@
       (define (Expr* es)
         (for/and ([e (in-list es)])
           (Expr e)))
-      (define (letrec-simple-primitive? x)
-        (case (syntax-e (variable-id x))
-          [(+ - * / = < > <= >=
-              zero? add1 sub1 abs max min
-              not boolean? boolean=? false? xor immutable?
-              number? number->string string->number real? inexact-real?
-              inexact? inexact->exact exact->inexact real->double-flonum
-              nan? infinite? positive-integer? negative-integer?
-              nonpositive-integer? nonnegative-integer? natural?
-              sqr sqrt integer-sqrt integer-sqrt/remainder expt exp log
-              sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh
-              bitwise-ior bitwise-and bitwise-xor bitwise-not
-              bitwise-bit-set? bitwise-first-bit-set bitwise-bit-field
-              arithmetic-shift integer-length
-              flonum? double-flonum? single-flonum? single-flonum-available?
-              fl+ fl- fl* fl/ fl= fl< fl> fl<= fl>= flabs flround flfloor
-              flceiling fltruncate flsingle flbit-field flsin flcos fltan
-              flasin flacos flatan flsinh flcosh fltanh flasinh flacosh
-              flatanh fllog flexp flsqrt flmin flmax flexpt
-              fixnum? fxzero? fx+ fx- fx* fx= fx> fx< fx<= fx>= fxquotient
-              unsafe-fxquotient fxremainder fxmodulo fxabs fxand fxior fxxor
-              fxnot fxlshift fxrshift fxpopcount fxpopcount32 fxpopcount16
-              fx+/wraparound fx-/wraparound fx*/wraparound
-              fxlshift/wraparound fxrshift/logical fxmin fxmax
-              fx->fl ->fl fl->fx fl->exact-integer
-              string? string-length string-ref string=?
-              string<? string>? string<=? string>=?
-              string-ci=? string-ci<? string-ci<=? string-ci>? string-ci>=?
-              string->immutable-string string->list list->string
-              bytes? bytes-length bytes-ref bytes=? bytes<? bytes>?
-              bytes->immutable-bytes byte?
-              char? char->integer integer->char char-utf-8-length
-              char=? char<? char<=? char>? char>=? char-alphabetic?
-              char-lower-case? char-upper-case? char-title-case?
-              char-numeric? char-symbolic? char-punctuation? char-graphic?
-              char-whitespace? char-grapheme-break-property char-grapheme-step
-              char-general-category char-blank? char-iso-control?
-              char-extended-pictographic? char-upcase char-downcase
-              char-titlecase char-foldcase char-ci=? char-ci<?
-              char-ci<=? char-ci>? char-ci>=?
-              symbol? symbol=? symbol-interned? symbol<?
-              keyword? keyword<? cons? empty? first rest second third fourth
-              fifth sixth seventh eighth ninth tenth eleventh twelfth
-              thirteenth fourteenth fifteenth last last-pair list-ref
-              list-tail member memq memv memw memf findf assq assv assw
-              assoc assf argmax argmin vector? vector-length
-              unsafe-vector-length unsafe-vector-ref vector-empty?
-              hash-eq? hash-eqv? hash-equal? hash-equal-always? hash-empty?
-              hash-count procedure? procedure-arity arity-at-least?
-              arity-at-least-value eof-object? port? input-port? output-port?
-              port-closed? string-port? srcloc? srcloc-source srcloc-line
-              srcloc-column srcloc-position srcloc-span object-name
-              path? path-for-some-system? path-string? path<?
-              file-exists? directory-exists? link-exists?
-              file-or-directory-type file-size)
-           #t]
-          [else
-           #f]))
-      (define (pure-primitive-application? rator rands)
+      (define letrec-primitive-order-classes
+        (let ([ht (make-hasheq)])
+          (for ([x (in-list
+                    '(+ - * / = < > <= >=
+                      zero? add1 sub1 abs max min
+                      not boolean? boolean=? false? xor immutable?
+                      number? number->string string->number real? inexact-real?
+                      inexact? inexact->exact exact->inexact real->double-flonum
+                      nan? infinite? positive-integer? negative-integer?
+                      nonpositive-integer? nonnegative-integer? natural?
+                      sqr sqrt integer-sqrt integer-sqrt/remainder expt exp log
+                      sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh
+                      bitwise-ior bitwise-and bitwise-xor bitwise-not
+                      bitwise-bit-set? bitwise-first-bit-set bitwise-bit-field
+                      arithmetic-shift integer-length
+                      flonum? double-flonum? single-flonum? single-flonum-available?
+                      fl+ fl- fl* fl/ fl= fl< fl> fl<= fl>= flabs flround flfloor
+                      flceiling fltruncate flsingle flbit-field flsin flcos fltan
+                      flasin flacos flatan flsinh flcosh fltanh flasinh flacosh
+                      flatanh fllog flexp flsqrt flmin flmax flexpt
+                      fixnum? fxzero? fx+ fx- fx* fx= fx> fx< fx<= fx>= fxquotient
+                      unsafe-fxquotient fxremainder fxmodulo fxabs fxand fxior fxxor
+                      fxnot fxlshift fxrshift fxpopcount fxpopcount32 fxpopcount16
+                      fx+/wraparound fx-/wraparound fx*/wraparound
+                      fxlshift/wraparound fxrshift/logical fxmin fxmax
+                      fx->fl ->fl fl->fx fl->exact-integer
+                      string? string-length string-ref string=?
+                      string<? string>? string<=? string>=?
+                      string-ci=? string-ci<? string-ci<=? string-ci>? string-ci>=?
+                      string->immutable-string string->list list->string
+                      bytes? bytes-length bytes-ref bytes=? bytes<? bytes>?
+                      bytes->immutable-bytes byte?
+                      char? char->integer integer->char char-utf-8-length
+                      char=? char<? char<=? char>? char>=? char-alphabetic?
+                      char-lower-case? char-upper-case? char-title-case?
+                      char-numeric? char-symbolic? char-punctuation? char-graphic?
+                      char-whitespace? char-grapheme-break-property char-grapheme-step
+                      char-general-category char-blank? char-iso-control?
+                      char-extended-pictographic? char-upcase char-downcase
+                      char-titlecase char-foldcase char-ci=? char-ci<?
+                      char-ci<=? char-ci>? char-ci>=?
+                      symbol? symbol=? symbol-interned? symbol<?
+                      keyword? keyword<? cons? empty? first rest second third fourth
+                      fifth sixth seventh eighth ninth tenth eleventh twelfth
+                      thirteenth fourteenth fifteenth last last-pair list-ref
+                      list-tail member memq memv memw memf findf assq assv assw
+                      assoc assf argmax argmin vector? vector-length
+                      unsafe-vector-length unsafe-vector-ref vector-empty?
+                      hash-eq? hash-eqv? hash-equal? hash-equal-always? hash-empty?
+                      hash-count procedure? procedure-arity arity-at-least?
+                      arity-at-least-value eof-object? port? input-port? output-port?
+                      port-closed? string-port? srcloc? srcloc-source srcloc-line
+                      srcloc-column srcloc-position srcloc-span object-name
+                      path? path-for-some-system? path-string? path<?
+                      file-exists? directory-exists? link-exists?
+                      file-or-directory-type file-size))])
+            (hash-set! ht x 'pure))
+          (for ([x (in-list '(box box-immutable cons hasheq hasheqv list vector))])
+            (hash-set! ht x 'allocates))
+          (for ([x (in-list '(unsafe-car unsafe-cdr))])
+            (hash-set! ht x 'ordered))
+          ht))
+      (define (letrec-primitive-order-class x)
+        (hash-ref letrec-primitive-order-classes
+                  (syntax-e (variable-id x))
+                  #f))
+      (define (letrec-simple-primitive-application? rator rands)
         (and (variable? rator)
              (primitive? (variable-id rator))
              (not (special-primitive? rator))
-             (letrec-simple-primitive? rator)
+             (memq (letrec-primitive-order-class rator)
+                   '(pure allocates))
              (Expr* rands)))
       (define (Expr e)
         (nanopass-case (LFE2+ Expr) e
@@ -4041,7 +4050,7 @@
           [(if ,s ,e0 ,e1 ,e2)      (Expr* (list e0 e1 e2))]
           [(begin ,s ,e0 ,e1 ...)   (Expr* (cons e0 e1))]
           [(begin0 ,s ,e0 ,e1 ...)  #f]
-          [(app ,s ,e0 ,e1 ...)     (pure-primitive-application? e0 e1)]
+          [(app ,s ,e0 ,e1 ...)     (letrec-simple-primitive-application? e0 e1)]
           [else                     #f]))
       (and (lhs-free? e lhs-set)
            (Expr e)))
@@ -4910,6 +4919,19 @@
                (flatten-topbegin
                 (parse
                  (expand-syntax stx))))))))))))
+    (define (check-complex-waddell stx rhs-rx)
+      (define lowered
+        (format "~s"
+                (lower-test stx 'waddell)))
+      (check-true
+       (regexp-match? #rx"\\(quote unsafe-undefined[0-9]+\\)"
+                      lowered))
+      (check-true
+       (regexp-match? (regexp rhs-rx)
+                      lowered))
+      (check-true
+       (regexp-match? #rx"\\(set! x x[0-9]+\\)"
+                      lowered)))
     (define (test stx)
       (reset-counter!)
       (parameterize ([α-rename-mode 'simple])
@@ -4995,18 +5017,28 @@
                   '(letrec-values (((a) (λ () '1))
                                    ((f) (λ () a)))
                      (f)))
-    (check-true
-     (regexp-match?
-      #rx"^\\(let-values \\(\\(\\(x\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(x[0-9]+\\) \\(random\\)\\)\\) \\(begin \\(set! x x[0-9]+\\) \\(quote 0\\)\\)\\) x\\)\\)$"
-      (format "~s"
-              (lower-test #'(letrec ([x (random)]) x)
-                          'waddell))))
-    (check-true
-     (regexp-match?
-      #rx"^\\(let-values \\(\\(\\(x\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(x[0-9]+\\) \\(gensym\\)\\)\\) \\(begin \\(set! x x[0-9]+\\) \\(quote 0\\)\\)\\) x\\)\\)$"
-      (format "~s"
-              (lower-test #'(letrec ([x (gensym)]) x)
-                          'waddell))))
+    (check-complex-waddell #'(letrec ([x (random)]) x)
+                           "\\(random\\)")
+    (check-complex-waddell #'(letrec ([x (gensym)]) x)
+                           "\\(gensym\\)")
+    (check-complex-waddell #'(letrec ([x (current-directory)]) x)
+                           "\\(current-directory\\)")
+    (check-complex-waddell #'(letrec ([x (current-input-port)]) x)
+                           "\\(current-input-port\\)")
+    (check-equal? (lower-test #'(letrec ([x (cons 1 2)]) x)
+                              'waddell)
+                  '(let-values (((x) (cons '1 '2)))
+                     x))
+    (check-equal? (lower-test #'(letrec ([x (list 1 2)]) x)
+                              'waddell)
+                  '(let-values (((x) (list '1 '2)))
+                     x))
+    (check-equal? (lower-test #'(letrec ([x (vector 1 2)]) x)
+                              'waddell)
+                  '(let-values (((x) (vector '1 '2)))
+                     x))
+    (check-complex-waddell #'(letrec ([x (car '(1 . 2))]) x)
+                           (regexp-quote "(car (quote (1 . 2)))"))
     (check-equal? (test #'(module t webracket (fx+ 1 (fx+ 2 3))))
                   '(module t webracket
                      (#%plain-module-begin
