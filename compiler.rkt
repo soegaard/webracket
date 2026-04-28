@@ -4718,13 +4718,26 @@
           (sort scc < #:key letrec-scc-binding-pos))
         (match sorted-scc
           [(list binding)
-           (match-define (letrec-scc-binding _pos xs rhs _kind _refs self-recursive?) binding)
-           (if self-recursive?
-               (Lower-waddell/classified s
-                                         (list (scc-binding->classified-clause binding))
-                                         body)
-               (with-output-language (LFE2+ Expr)
-                 `(let-values ,s ([(,xs ...) ,rhs]) ,body)))]
+           (match-define (letrec-scc-binding _pos xs rhs kind _refs self-recursive?) binding)
+           (define local-lhs-set
+             (binding-vars-set (list xs)))
+           (define local-simple-kind
+             (effect-free-simple-kind rhs local-lhs-set))
+           (cond
+             [self-recursive?
+              (Lower-waddell/classified s
+                                        (list (scc-binding->classified-clause binding))
+                                        body)]
+             [(eq? kind 'unreferenced)
+              (cond
+                [(eq? local-simple-kind 'pure)
+                 body]
+                [else
+                 (with-output-language (LFE2+ Expr)
+                   (Begin s (list (EvaluateClause s xs rhs) body)))])]
+             [else
+              (with-output-language (LFE2+ Expr)
+                `(let-values ,s ([(,xs ...) ,rhs]) ,body))])]
           [_ 
            (define classified-scc
              (for/list ([binding (in-list sorted-scc)])
@@ -5399,10 +5412,24 @@
                                    ((g) (λ () (f))))
                      (let-values (((x) (f)))
                        x)))
+    (check-equal? (lower-test #'(letrec ([a 1]
+                                         [b 2])
+                                  b)
+                              'scc)
+                  '(let-values (((b) '2))
+                     b))
+    (check-true
+     (regexp-match?
+      #rx"^\\(begin \\(let-values \\(\\(\\(a\\) \\(random\\)\\)\\) \\(quote 0\\)\\) \\(let-values \\(\\(\\(b\\) \\(quote 2\\)\\)\\) b\\)\\)$"
+      (format "~s"
+              (lower-test #'(letrec ([a (random)]
+                                     [b 2])
+                              b)
+                          'scc))))
     (check-true
      (regexp-match?
       #rx"^\\(let-values \\(\\(\\(f\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(f[.0-9]+\\) \\(λ \\(g\\) \\(begin \\(set! f g\\) \\(f\\)\\)\\)\\)\\) \\(begin \\(set! f f[.0-9]+\\) \\(quote 0\\)\\)\\) \\(f \\(λ \\(\\) \\(quote 12\\)\\)\\)\\)\\)$"
-      (format "~s"
+     (format "~s"
               (lower-test #'(letrec ([f (λ (g) (set! f g) (f))])
                               (f (λ () 12)))
                           'basic))))
