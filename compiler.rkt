@@ -4087,6 +4087,90 @@
     (define (EvaluateClause s xs e)
       (with-output-language (LFE2+ Expr)
         `(let-values ,s ([(,xs ...) ,e]) ,(Zero))))
+    (define (single-unassigned-binding? xs assigned)
+      (and (= (length xs) 1)
+           (not (set-in? (first xs) assigned))))
+    (define (classify-clause xs rhs lhs-set referenced assigned)
+      (cond
+        [(and (for/and ([x (in-list xs)])
+                (and (not (set-in? x referenced))
+                     (not (set-in? x assigned)))))
+         'unreferenced]
+        [(and (single-unassigned-binding? xs assigned)
+              (lambda-clause? xs rhs))
+         'lambda]
+        [(and (single-unassigned-binding? xs assigned)
+              (effect-free-simple? rhs lhs-set))
+         'simple]
+        [else
+         'complex]))
+    (define (assimilate-let-values-clause xs rhs lhs-set referenced assigned)
+      (and (single-unassigned-binding? xs assigned)
+           (nanopass-case (LFE2+ Expr) rhs
+             [(let-values ,s ([(,x* ...) ,e*] ...) ,e0)
+              (define nested-classified
+                (for/list ([xs (in-list x*)]
+                           [rhs (in-list e*)])
+                  (list (classify-clause xs rhs lhs-set referenced assigned)
+                        xs
+                        rhs)))
+              (define body-kind
+                (classify-clause xs e0 lhs-set referenced assigned))
+              (and (for/and ([clause (in-list nested-classified)])
+                     (memq (first clause) '(simple lambda)))
+                   (memq body-kind '(simple lambda))
+                   (append (for/list ([clause (in-list nested-classified)])
+                             (list (second clause) (third clause)))
+                           (list (list xs e0))))]
+             [else
+              #f])))
+    (define (assimilate-letrec-values-clause xs rhs lhs-set referenced assigned)
+      (and (single-unassigned-binding? xs assigned)
+           (nanopass-case (LFE2+ Expr) rhs
+             [(letrec-values ,s ([(,x* ...) ,e*] ...) ,e0)
+              (define nested-lambda-clauses
+                (for/list ([xs (in-list x*)]
+                           [rhs (in-list e*)])
+                  (and (single-unassigned-binding? xs assigned)
+                       (lambda-clause? xs rhs)
+                       (list 'lambda xs rhs))))
+              (define nested-lhs-set
+                (for/fold ([lhs-set lhs-set]) ([xs (in-list x*)])
+                  (for/fold ([lhs-set lhs-set]) ([x (in-list xs)])
+                    (set-add lhs-set x))))
+              (define body-kind
+                (classify-clause xs e0 nested-lhs-set referenced assigned))
+              (and (andmap values nested-lambda-clauses)
+                   (memq body-kind '(simple lambda))
+                   (append nested-lambda-clauses
+                           (list (list xs e0))))]
+             [else
+              #f])))
+    (define (classify-clauses x e lhs-set referenced assigned)
+      (define clauses (map list x e))
+      (define (Loop pending classified)
+        (cond
+          [(null? pending)
+           (reverse classified)]
+          [else
+           (match (car pending)
+             [(list (? symbol? kind) xs rhs)
+              #:when (memq kind '(unreferenced simple lambda complex))
+              (Loop (cdr pending)
+                    (cons (list kind xs rhs) classified))]
+             [(list xs rhs)
+              (define assimilated
+                (or (assimilate-let-values-clause xs rhs lhs-set referenced assigned)
+                    (assimilate-letrec-values-clause xs rhs lhs-set referenced assigned)))
+              (cond
+                [assimilated
+                 (Loop (append assimilated (cdr pending)) classified)]
+                [else
+                 (define kind
+                   (classify-clause xs rhs lhs-set referenced assigned))
+                 (Loop (cdr pending)
+                       (cons (list kind xs rhs) classified))])])]))
+      (Loop clauses '()))
     (define (Lower-basic s x e e0)
       (define clauses (map list x e))
       (define-values (raw-lambda-clauses raw-complex-clauses)
@@ -4129,25 +4213,7 @@
                                   (for/fold ([xs empty-set]) ([rhs (in-list e)])
                                     (set-union xs (assigned-vars rhs)))))
       (define classified
-        (for/list ([xs (in-list x)]
-                   [rhs (in-list e)])
-          (define kind
-            (cond
-              [(and (for/and ([x (in-list xs)])
-                      (and (not (set-in? x referenced))
-                           (not (set-in? x assigned)))))
-               'unreferenced]
-              [(and (= (length xs) 1)
-                    (not (set-in? (first xs) assigned))
-                    (lambda-clause? xs rhs))
-               'lambda]
-              [(and (= (length xs) 1)
-                    (not (set-in? (first xs) assigned))
-                    (effect-free-simple? rhs lhs-set))
-               'simple]
-              [else
-               'complex]))
-          (list kind xs rhs)))
+        (classify-clauses x e lhs-set referenced assigned))
       (define (bindings-of kind)
         (for/list ([clause (in-list classified)]
                    #:when (eq? (first clause) kind))
@@ -4881,12 +4947,14 @@
                                                       (let-values (((t.3) (app fact t.2)))
                                                         (primapp * n t.3))))))))
                      (app fact '5)))
-    (check-equal? (format "~s"
-                          (lower-test #'(letrec ([x 1]
-                                                 [f (λ () x)])
-                                          (f))
-                                      'basic))
-                  "(let-values (((x) (quote unsafe-undefined642)) ((f) (quote unsafe-undefined642))) (begin (let-values (((x1) (quote 1))) (begin (set! x x1) (quote 0))) (let-values (((f2) (λ () x))) (begin (set! f f2) (quote 0))) (f)))")
+    (check-true
+     (regexp-match?
+      #rx"^\\(let-values \\(\\(\\(x\\) \\(quote unsafe-undefined[0-9]+\\)\\) \\(\\(f\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(x1\\) \\(quote 1\\)\\)\\) \\(begin \\(set! x x1\\) \\(quote 0\\)\\)\\) \\(let-values \\(\\(\\(f2\\) \\(λ \\(\\) x\\)\\)\\) \\(begin \\(set! f f2\\) \\(quote 0\\)\\)\\) \\(f\\)\\)\\)$"
+      (format "~s"
+              (lower-test #'(letrec ([x 1]
+                                     [f (λ () x)])
+                              (f))
+                          'basic))))
     (check-equal? (lower-test #'(letrec ([x 1]
                                          [f (λ () x)])
                                   (f))
@@ -4904,6 +4972,25 @@
                        (let-values (((x) (begin '1 '2))) '0)
                        (let-values (((u) (begin '4 '5))) '0)
                        (f))))
+    (check-equal? (lower-test #'(letrec ([x (let-values ([(a) 1]) a)])
+                                  x)
+                              'waddell)
+                  '(let-values (((a) '1))
+                     (let-values (((x) a))
+                       x)))
+    (check-equal? (lower-test #'(letrec ([f (let-values ([(a) 1]) (λ () a))])
+                                  (f))
+                              'waddell)
+                  '(let-values (((a) '1))
+                     (letrec-values (((f) (λ () a)))
+                       (f))))
+    (check-equal? (lower-test #'(letrec ([f (letrec ([a (λ () 1)])
+                                               (λ () a))])
+                                  (f))
+                              'waddell)
+                  '(letrec-values (((a) (λ () '1))
+                                   ((f) (λ () a)))
+                     (f)))
     (check-equal? (test #'(module t webracket (fx+ 1 (fx+ 2 3))))
                   '(module t webracket
                      (#%plain-module-begin
