@@ -1843,6 +1843,7 @@
 ;;;
 
 (require (prefix-in racket: racket/file))
+(require (prefix-in racket: racket/path))
 
 (define open-input-file
   (case-lambda
@@ -1893,101 +1894,106 @@
     [(path mode line-mode) (racket:file->bytes-lines path #:mode mode #:line-mode line-mode)]))
 
 (define (delete-file path)
-  (error 'delete-file "only available in compiled WebRacket"))
+  (racket:delete-file path))
 
 (define make-directory
   (case-lambda
-    [(path) (error 'make-directory "only available in compiled WebRacket")]
-    [(path permissions) (error 'make-directory "only available in compiled WebRacket")]))
+    [(path) (racket:make-directory path)]
+    [(path permissions) (racket:make-directory path permissions)]))
 
 (define (make-directory* path)
-  (error 'make-directory* "only available in compiled WebRacket"))
+  (racket:make-directory* path))
 
 (define (make-parent-directory* path)
-  (error 'make-parent-directory* "only available in compiled WebRacket"))
+  (racket:make-parent-directory* path))
 
 (define make-temporary-file
   (case-lambda
-    [() (error 'make-temporary-file "only available in compiled WebRacket")]
-    [(template) (error 'make-temporary-file "only available in compiled WebRacket")]
-    [(template copy-from) (error 'make-temporary-file "only available in compiled WebRacket")]
-    [(template copy-from base-dir) (error 'make-temporary-file "only available in compiled WebRacket")]))
+    [() (racket:make-temporary-file)]
+    [(template) (racket:make-temporary-file template)]
+    [(template copy-from) (racket:make-temporary-file template #:copy-from copy-from)]
+    [(template copy-from base-dir) (racket:make-temporary-file template #:copy-from copy-from #:base-dir base-dir)]))
 
 (define make-temporary-directory
   (case-lambda
-    [() (error 'make-temporary-directory "only available in compiled WebRacket")]
-    [(template) (error 'make-temporary-directory "only available in compiled WebRacket")]
-    [(template base-dir) (error 'make-temporary-directory "only available in compiled WebRacket")]))
+    [() (racket:make-temporary-directory)]
+    [(template) (racket:make-temporary-directory template)]
+    [(template base-dir) (racket:make-temporary-directory template #:base-dir base-dir)]))
 
 (define make-temporary-file*
   (case-lambda
-    [(prefix suffix) (error 'make-temporary-file* "only available in compiled WebRacket")]
-    [(prefix suffix copy-from) (error 'make-temporary-file* "only available in compiled WebRacket")]
-    [(prefix suffix copy-from base-dir) (error 'make-temporary-file* "only available in compiled WebRacket")]))
+    [(prefix suffix) (racket:make-temporary-file* prefix suffix)]
+    [(prefix suffix copy-from) (racket:make-temporary-file* prefix suffix #:copy-from copy-from)]
+    [(prefix suffix copy-from base-dir)
+     (racket:make-temporary-file* prefix suffix #:copy-from copy-from #:base-dir base-dir)]))
 
 (define make-temporary-directory*
   (case-lambda
-    [(prefix suffix) (error 'make-temporary-directory* "only available in compiled WebRacket")]
-    [(prefix suffix base-dir) (error 'make-temporary-directory* "only available in compiled WebRacket")]))
+    [(prefix suffix) (racket:make-temporary-directory* prefix suffix)]
+    [(prefix suffix base-dir) (racket:make-temporary-directory* prefix suffix #:base-dir base-dir)]))
 
 (define (delete-directory path)
-  (error 'delete-directory "only available in compiled WebRacket"))
+  (racket:delete-directory path))
 
 (define delete-directory/files
   (case-lambda
-    [(path) (error 'delete-directory/files "only available in compiled WebRacket")]
-    [(path must-exist?) (error 'delete-directory/files "only available in compiled WebRacket")]))
+    [(path) (racket:delete-directory/files path)]
+    [(path must-exist?) (racket:delete-directory/files path #:must-exist? must-exist?)]))
 
 (define rename-file-or-directory
   (case-lambda
-    [(old new) (error 'rename-file-or-directory "only available in compiled WebRacket")]
-    [(old new exists-ok?) (error 'rename-file-or-directory "only available in compiled WebRacket")]))
+    [(old new) (racket:rename-file-or-directory old new)]
+    [(old new exists-ok?) (racket:rename-file-or-directory old new exists-ok?)]))
 
 (define copy-file
   (case-lambda
-    [(src dest) (error 'copy-file "only available in compiled WebRacket")]
-    [(src dest exists-ok?) (error 'copy-file "only available in compiled WebRacket")]))
+    [(src dest) (racket:copy-file src dest)]
+    [(src dest exists-ok?) (racket:copy-file src dest exists-ok?)]))
 
 (define copy-directory/files
   (case-lambda
-    [(src dest) (error 'copy-directory/files "only available in compiled WebRacket")]
-    [(src dest keep-modify-seconds?) (error 'copy-directory/files "only available in compiled WebRacket")]
-    [(src dest keep-modify-seconds? preserve-links?) (error 'copy-directory/files "only available in compiled WebRacket")]))
+    [(src dest) (racket:copy-directory/files src dest)]
+    [(src dest keep-modify-seconds?)
+     (racket:copy-directory/files src dest #:keep-modify-seconds? keep-modify-seconds?)]
+    [(src dest keep-modify-seconds? preserve-links?)
+     (racket:copy-directory/files src dest
+                                  #:keep-modify-seconds? keep-modify-seconds?
+                                  #:preserve-links? preserve-links?)]))
 
 (define file-or-directory-modify-seconds
   (case-lambda
-    [(path) (error 'file-or-directory-modify-seconds "only available in compiled WebRacket")]
-    [(path secs-n) (error 'file-or-directory-modify-seconds "only available in compiled WebRacket")]))
+    [(path) (racket:file-or-directory-modify-seconds path)]
+    [(path secs-n) (racket:file-or-directory-modify-seconds path secs-n)]))
 
 (define file-or-directory-permissions
   (case-lambda
-    [(path) (error 'file-or-directory-permissions "only available in compiled WebRacket")]
-    [(path mode) (error 'file-or-directory-permissions "only available in compiled WebRacket")]))
+    [(path) (racket:file-or-directory-permissions path)]
+    [(path mode) (racket:file-or-directory-permissions path mode)]))
 
 (define file-or-directory-stat
   (case-lambda
-    [(path) (error 'file-or-directory-stat "only available in compiled WebRacket")]
-    [(path as-link?) (error 'file-or-directory-stat "only available in compiled WebRacket")]))
+    [(path) (racket:file-or-directory-stat path)]
+    [(path as-link?) (racket:file-or-directory-stat path as-link?)]))
 
 (define file-or-directory-identity
   (case-lambda
-    [(path) (error 'file-or-directory-identity "only available in compiled WebRacket")]
-    [(path as-link?) (error 'file-or-directory-identity "only available in compiled WebRacket")]))
+    [(path) (racket:file-or-directory-identity path)]
+    [(path as-link?) (racket:file-or-directory-identity path as-link?)]))
 
 (define directory-list
   (case-lambda
-    [() (error 'directory-list "only available in compiled WebRacket")]
-    [(path) (error 'directory-list "only available in compiled WebRacket")]
-    [(path build?) (error 'directory-list "only available in compiled WebRacket")]))
+    [() (racket:directory-list)]
+    [(path) (racket:directory-list path)]
+    [(path build?) (racket:directory-list path #:build? build?)]))
 
 (define (filesystem-root-list)
-  (error 'filesystem-root-list "only available in compiled WebRacket"))
+  (racket:filesystem-root-list))
 
 (define (find-system-path kind)
-  (error 'find-system-path "only available in compiled WebRacket"))
+  (racket:find-system-path kind))
 
 (define (current-drive)
-  (error 'current-drive "only available in compiled WebRacket"))
+  (racket:current-drive))
 
 (define call-with-input-file
   (case-lambda
@@ -2025,16 +2031,21 @@
 (define find-relative-path
   (case-lambda
     [(base path)
-     (error 'find-relative-path "only available in compiled WebRacket")]
+     (racket:find-relative-path base path)]
     [(base path more-than-root?)
-     (error 'find-relative-path "only available in compiled WebRacket")]
+     (racket:find-relative-path base path #:more-than-root? more-than-root?)]
     [(base path more-than-root? more-than-same?)
-     (error 'find-relative-path "only available in compiled WebRacket")]
+     (racket:find-relative-path base path
+                                #:more-than-root? more-than-root?
+                                #:more-than-same? more-than-same?)]
     [(base path more-than-root? more-than-same? normalize-case?)
-     (error 'find-relative-path "only available in compiled WebRacket")]))
+     (racket:find-relative-path base path
+                                #:more-than-root? more-than-root?
+                                #:more-than-same? more-than-same?
+                                #:normalize-case? normalize-case?)]))
 
 (define (shrink-path-wrt path other-paths)
-  (error 'shrink-path-wrt "only available in compiled WebRacket"))
+  (racket:shrink-path-wrt path other-paths))
 
 (define (webracket-vfs-write-file path bytes)
   (error 'webracket-vfs-write-file "only available in compiled WebRacket"))
