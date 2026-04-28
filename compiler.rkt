@@ -4739,10 +4739,16 @@
            (define local-lhs-set
              (binding-vars-set (list xs)))
            (define local-simple-kind
-             (effect-free-simple-kind rhs local-lhs-set))
+              (effect-free-simple-kind rhs local-lhs-set))
+           (define local-mv-kind
+             (simple-values-kind xs rhs local-lhs-set assigned))
+           (define dead-lambda-values-singleton?
+             (and (split-lambda-values-clause xs rhs assigned) #t))
            (define dead-pure-singleton?
-             (or (eq? local-simple-kind 'pure)
-                 (lambda-clause? xs rhs)))
+              (or (eq? local-simple-kind 'pure)
+                  (eq? local-mv-kind 'pure)
+                  dead-lambda-values-singleton?
+                  (lambda-clause? xs rhs)))
            (define body-uses-singleton?
              (for/or ([x (in-list xs)])
                (set-in? x (referenced-vars body))))
@@ -5459,6 +5465,18 @@
                   '(let-values (((x y) (values '1 '2)))
                      (+ x y)))
     (check-equal? (lower-test #'(letrec-values ([(x y) (values 1 2)])
+                                 'ok)
+                              'scc)
+                  ''ok)
+    (check-equal? (lower-test #'(letrec-values ([(f g) (values (λ () 1)
+                                                               (λ () 2))])
+                                 'ok)
+                              'scc)
+                  ''ok)
+    (check-equal? (lower-test #'(letrec-values ([(f g) (values (case-lambda
+                                                                 [() 1])
+                                                                (case-lambda
+                                                                  [() 2]))])
                                  'ok)
                               'scc)
                   ''ok)

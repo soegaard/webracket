@@ -252,6 +252,16 @@
                                                              (values 1 2))])
                                  (list 'ok (reverse events))))
                              '(ok (xy)))
+                     (equal? (letrec-values ([(f g) (values (lambda () 1)
+                                                            (lambda () 2))])
+                               'ok)
+                             'ok)
+                     (equal? (letrec-values ([(f g) (values (case-lambda
+                                                              [() 1])
+                                                             (case-lambda
+                                                               [() 2]))])
+                               'ok)
+                             'ok)
                      (equal? (let ([events '()])
                                (letrec-values ([(x y) (values (begin (set! events (cons 'x events))
                                                                     1)
