@@ -177,6 +177,8 @@
                        (letrec-strategy 'basic)]
    [("--letrec-waddell") "Use the Waddell letrec lowering strategy (default)"
                          (letrec-strategy 'waddell)]
+   [("--letrec-scc") "Use the SCC letrec lowering strategy"
+                     (letrec-strategy 'scc)]
    [("--print-top-level-results")
     "Print each top-level expression result with print; useful for script-style tests"
     (print-top-level-results? #t)]

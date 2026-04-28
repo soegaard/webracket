@@ -58,20 +58,12 @@
   (make-directory* dest-dir)
   (define source-base
     (file-name-from-path source-file))
-  (define strategy-flag
-    (case strategy
-      [(basic)   "--letrec-basic"]
-      [(waddell) "--letrec-waddell"]
-      [else
-       (error 'compile-strategy
-              "unknown strategy: ~a"
-              strategy)]))
   (define-values (compile-ok? compile-stdout compile-stderr compile-ms)
     (run-command/capture repo-root
                          racket-exe
                          "webracket.rkt"
                          "--no-stdlib"
-                         strategy-flag
+                         (strategy-flag strategy)
                          "--dest"
                          (path->string dest-dir)
                          (path->string source-file)))
@@ -164,50 +156,82 @@
     (for ([line (in-list (string-split (string-trim (strategy-result-stderr r)) "\n"))])
       (printf "    ~a\n" line))))
 
+;; strategy-order : (listof symbol?)
+;;   Letrec strategies to measure for each suite.
+(define strategy-order '(basic waddell scc))
+
+;; strategy-flag : symbol? -> string?
+;;   Command-line flag for one letrec strategy.
+(define (strategy-flag strategy)
+  (case strategy
+    [(basic)   "--letrec-basic"]
+    [(waddell) "--letrec-waddell"]
+    [(scc)     "--letrec-scc"]
+    [else
+     (error 'strategy-flag
+            "unknown strategy: ~a"
+            strategy)]))
+
+;; strategy-dest-dir : string? symbol? -> path?
+;;   Destination directory for one suite/strategy measurement.
+(define (strategy-dest-dir suite-stem strategy)
+  (build-path repo-root "tmp" (format "measure-~a-~a" suite-stem strategy)))
+
 ;; measure-suite : path? string? -> boolean?
-;;   Measure one suite under both strategies; return #t when both succeed.
+;;   Measure one suite under all configured strategies; return #t when all succeed.
 (define (measure-suite source-file suite-name)
   (define racket-exe (ensure-executable "racket"))
   (define node-exe   (ensure-executable "node"))
   (define suite-stem
     (path->string (path-replace-extension (file-name-from-path source-file) "")))
-  (define basic-dir
-    (build-path repo-root "tmp" (format "measure-~a-basic" suite-stem)))
-  (define waddell-dir
-    (build-path repo-root "tmp" (format "measure-~a-waddell" suite-stem)))
-  (define basic-box   (box #f))
-  (define waddell-box (box #f))
-  (define basic-thread
-    (run-strategy-in-thread source-file 'basic racket-exe node-exe basic-dir basic-box))
-  (define waddell-thread
-    (run-strategy-in-thread source-file 'waddell racket-exe node-exe waddell-dir waddell-box))
-  (thread-wait basic-thread)
-  (thread-wait waddell-thread)
-  (define basic   (unbox basic-box))
-  (define waddell (unbox waddell-box))
+  (define result-boxes
+    (for/list ([strategy (in-list strategy-order)])
+      (cons strategy (box #f))))
+  (define threads
+    (for/list ([strategy (in-list strategy-order)]
+               [entry (in-list result-boxes)])
+      (run-strategy-in-thread source-file
+                              strategy
+                              racket-exe
+                              node-exe
+                              (strategy-dest-dir suite-stem strategy)
+                              (cdr entry))))
+  (for ([th (in-list threads)])
+    (thread-wait th))
+  (define results
+    (for/list ([entry (in-list result-boxes)])
+      (unbox (cdr entry))))
   (printf "Measured ~a\n\n" (path->string source-file))
-  (report-result basic)
+  (for ([r (in-list results)]
+        [i (in-naturals)])
+    (when (positive? i)
+      (newline))
+    (report-result r))
   (newline)
-  (report-result waddell)
-  (newline)
-  (printf "Delta\n")
-  (printf "  compile time: ~a\n"
-          (format-duration-ms
-           (- (strategy-result-compile-ms waddell)
-              (strategy-result-compile-ms basic))))
-  (printf "  wat size:     ~a MB\n"
-          (~r (/ (- (strategy-result-wat-size waddell)
-                    (strategy-result-wat-size basic))
-                 1000000.0)
-              #:precision '(= 6)))
-  (newline)
+  (define baseline
+    (for/first ([r (in-list results)]
+                #:when (eq? 'basic (strategy-result-name r)))
+      r))
+  (when baseline
+    (for ([r (in-list results)]
+          #:unless (eq? 'basic (strategy-result-name r)))
+      (printf "Delta vs Basic (~a)\n"
+              (string-titlecase (symbol->string (strategy-result-name r))))
+      (printf "  compile time: ~a\n"
+              (format-duration-ms
+               (- (strategy-result-compile-ms r)
+                  (strategy-result-compile-ms baseline))))
+      (printf "  wat size:     ~a MB\n"
+              (~r (/ (- (strategy-result-wat-size r)
+                        (strategy-result-wat-size baseline))
+                     1000000.0)
+                  #:precision '(= 6)))
+      (newline)))
   (define ok?
-    (and (strategy-result-compile-ok? basic)
-         (strategy-result-compile-ok? waddell)
-         (strategy-result-run-ok? basic)
-         (strategy-result-run-ok? waddell)
-         (not (strategy-result-saw-#f? basic))
-         (not (strategy-result-saw-#f? waddell))))
+    (for/and ([r (in-list results)])
+      (and (strategy-result-compile-ok? r)
+           (strategy-result-run-ok? r)
+           (not (strategy-result-saw-#f? r)))))
   (unless ok?
     (printf "Stopped after ~a failed.\n" suite-name))
   ok?)

@@ -4555,6 +4555,7 @@
      (case (current-letrec-strategy)
        [(basic)   (Lower-basic s x e e0)]
        [(waddell) (Lower-waddell s x e e0)]
+       [(scc)     (Lower-waddell s x e e0)]
        [else
         (error 'lower-letrec-values
                "unknown letrec strategy: ~a"
