@@ -4135,24 +4135,36 @@
       (for/and ([x (in-list xs)])
         (not (set-in? x assigned))))
     (define (simple-values-kind xs rhs lhs-set assigned)
+      (define (join-mv-kind kind mv-kind)
+        (cond
+          [(or (not kind) (not mv-kind)) #f]
+          [(or (eq? kind 'allocates)
+               (eq? mv-kind 'allocates))
+           'allocates]
+          [else
+           'pure]))
+      (define (MV rhs)
+        (nanopass-case (LFE2+ Expr) rhs
+          [(app ,s ,e0 ,e1 ...)
+           (and (variable? e0)
+                (free-identifier=? (variable-id e0) #'values)
+                (= (length xs) (length e1))
+                (for/fold ([kind 'pure]) ([e (in-list e1)])
+                  (join-mv-kind kind (effect-free-simple-kind e lhs-set))))]
+          [(begin ,s ,e0 ,e1 ...)
+           (match (cons e0 e1)
+             [(list prefix ... last)
+              (join-mv-kind (for/fold ([kind 'pure]) ([e (in-list prefix)])
+                              (join-mv-kind kind (effect-free-simple-kind e lhs-set)))
+                            (MV last))])]
+          [(if ,s ,e0 ,e1 ,e2)
+           (join-mv-kind (effect-free-simple-kind e0 lhs-set)
+                         (join-mv-kind (MV e1)
+                                       (MV e2)))]
+          [else
+           #f]))
       (and (all-unassigned-bindings? xs assigned)
-           (nanopass-case (LFE2+ Expr) rhs
-             [(app ,s ,e0 ,e1 ...)
-              (and (variable? e0)
-                   (free-identifier=? (variable-id e0) #'values)
-                   (= (length xs) (length e1))
-                   (let ([args-kind (for/fold ([kind 'pure]) ([e (in-list e1)])
-                                      (define e-kind (effect-free-simple-kind e lhs-set))
-                                      (cond
-                                        [(or (not kind) (not e-kind)) #f]
-                                        [(or (eq? kind 'allocates)
-                                             (eq? e-kind 'allocates))
-                                         'allocates]
-                                        [else
-                                         'pure]))])
-                     args-kind))]
-             [else
-              #f])))
+           (MV rhs)))
     (define (classify-clause xs rhs lhs-set referenced assigned)
       (cond
         [(and (for/and ([x (in-list xs)])
@@ -5128,6 +5140,20 @@
                                  (+ x y))
                               'waddell)
                   '(let-values (((x y) (values '1 '2)))
+                     (+ x y)))
+    (check-equal? (lower-test #'(letrec-values ([(x y) (begin 0 (values 1 2))])
+                                 (+ x y))
+                              'waddell)
+                  '(let-values (((x y) (begin '0 (values '1 '2))))
+                     (+ x y)))
+    (check-equal? (lower-test #'(letrec-values ([(x y) (if #t
+                                                           (values 1 2)
+                                                           (values 3 4))])
+                                 (+ x y))
+                              'waddell)
+                  '(let-values (((x y) (if '#t
+                                           (values '1 '2)
+                                           (values '3 '4))))
                      (+ x y)))
     (check-equal? (lower-test #'(letrec-values ([(f g) (values (λ () 1)
                                                                (λ () 2))])

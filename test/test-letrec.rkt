@@ -202,6 +202,14 @@
                      (equal? (letrec-values ([(x y z) (values 1 2 3)])
                                (+ x y z))
                              6)
+                     (equal? (letrec-values ([(p q) (begin 0 (values 1 2))])
+                               (+ p q))
+                             3)
+                     (equal? (letrec-values ([(p q) (if #t
+                                                        (values 1 2)
+                                                        (values 3 4))])
+                               (+ p q))
+                             3)
                      (equal? (letrec-values ([(f g) (values (lambda () 1)
                                                             (lambda () 2))])
                                (list (f) (g)))
@@ -241,12 +249,12 @@
                             '(12 (x y))))
               (list "letrec-values mixed allocation and identity"
                     (and
-                     (equal? (letrec-values ([(x) (box 7)]
-                                             [(y) x])
-                               (eq? x y))
+                     (equal? (letrec-values ([(bx) (box 7)]
+                                             [(by) bx])
+                               (eq? bx by))
                              #t)
-                     (equal? (letrec-values ([(x y) (values (box 7) 9)])
-                               (list (unbox x) y))
+                     (equal? (letrec-values ([(mx my) (values (box 7) 9)])
+                               (list (unbox mx) my))
                              '(7 9))
                      (equal? (letrec-values ([(u v) (let-values ([(a b) (values (box 7) 9)])
                                                       (values a b))])
