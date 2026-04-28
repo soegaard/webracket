@@ -4089,7 +4089,7 @@
              [else
               #f])))
     (define (fresh-variable-like x)
-      (variable (car (generate-temporaries (list (variable-id x))))))
+      (new-var x))
     (define (Unsafe-Undefined)
       (with-output-language (LFE2+ Expr)
         `(quote ,h ,(datum h datum:unsafe-undefined))))
@@ -4157,6 +4157,12 @@
               (join-mv-kind (for/fold ([kind 'pure]) ([e (in-list prefix)])
                               (join-mv-kind kind (effect-free-simple-kind e lhs-set)))
                             (MV last))])]
+          [(begin0 ,s ,e0 ,e1 ...)
+           (match (cons e0 e1)
+             [(list first rest ...)
+              (join-mv-kind (MV first)
+                            (for/fold ([kind 'pure]) ([e (in-list rest)])
+                              (join-mv-kind kind (effect-free-simple-kind e lhs-set))))])]
           [(if ,s ,e0 ,e1 ,e2)
            (join-mv-kind (effect-free-simple-kind e0 lhs-set)
                          (join-mv-kind (MV e1)
@@ -5057,7 +5063,7 @@
        (regexp-match? (regexp rhs-rx)
                       lowered))
       (check-true
-       (regexp-match? #rx"\\(set! x x[0-9]+\\)"
+       (regexp-match? #rx"\\(set! x x[.0-9]+\\)"
                       lowered)))
     (define (test stx)
       (reset-counter!)
@@ -5102,7 +5108,7 @@
                      (app fact '5)))
     (check-true
      (regexp-match?
-      #rx"^\\(let-values \\(\\(\\(x\\) \\(quote unsafe-undefined[0-9]+\\)\\) \\(\\(f\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(x1\\) \\(quote 1\\)\\)\\) \\(begin \\(set! x x1\\) \\(quote 0\\)\\)\\) \\(let-values \\(\\(\\(f2\\) \\(λ \\(\\) x\\)\\)\\) \\(begin \\(set! f f2\\) \\(quote 0\\)\\)\\) \\(f\\)\\)\\)$"
+      #rx"^\\(let-values \\(\\(\\(x\\) \\(quote unsafe-undefined[0-9]+\\)\\) \\(\\(f\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(x[.0-9]+\\) \\(quote 1\\)\\)\\) \\(begin \\(set! x x[.0-9]+\\) \\(quote 0\\)\\)\\) \\(let-values \\(\\(\\(f[.0-9]+\\) \\(λ \\(\\) x\\)\\)\\) \\(begin \\(set! f f[.0-9]+\\) \\(quote 0\\)\\)\\) \\(f\\)\\)\\)$"
       (format "~s"
               (lower-test #'(letrec ([x 1]
                                      [f (λ () x)])
@@ -5117,7 +5123,7 @@
                        (f))))
     (check-true
      (regexp-match?
-      #rx"^\\(let-values \\(\\(\\(f\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(f[0-9]+\\) \\(λ \\(g\\) \\(begin \\(set! f g\\) \\(f\\)\\)\\)\\)\\) \\(begin \\(set! f f[0-9]+\\) \\(quote 0\\)\\)\\) \\(f \\(λ \\(\\) \\(quote 12\\)\\)\\)\\)\\)$"
+      #rx"^\\(let-values \\(\\(\\(f\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(f[.0-9]+\\) \\(λ \\(g\\) \\(begin \\(set! f g\\) \\(f\\)\\)\\)\\)\\) \\(begin \\(set! f f[.0-9]+\\) \\(quote 0\\)\\)\\) \\(f \\(λ \\(\\) \\(quote 12\\)\\)\\)\\)\\)$"
       (format "~s"
               (lower-test #'(letrec ([f (λ (g) (set! f g) (f))])
                               (f (λ () 12)))
@@ -5155,6 +5161,11 @@
                                            (values '1 '2)
                                            (values '3 '4))))
                      (+ x y)))
+    (check-equal? (lower-test #'(letrec-values ([(x y) (begin0 (values 1 2) 9)])
+                                 (+ x y))
+                              'waddell)
+                  '(let-values (((x y) (begin0 (values '1 '2) '9)))
+                     (+ x y)))
     (check-equal? (lower-test #'(letrec-values ([(f g) (values (λ () 1)
                                                                (λ () 2))])
                                  (list (f) (g)))
@@ -5171,14 +5182,14 @@
                        (+ x y))))
     (check-true
      (regexp-match?
-      #rx"^\\(let-values \\(\\(\\(x\\) \\(quote unsafe-undefined[0-9]+\\)\\) \\(\\(y\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(x[0-9]+ y[0-9]+\\) \\(values \\(cons \\(quote 1\\) \\(quote 2\\)\\) \\(quote 3\\)\\)\\)\\) \\(begin \\(set! x x[0-9]+\\) \\(set! y y[0-9]+\\) \\(quote 0\\)\\)\\) \\(cons x y\\)\\)\\)$"
+      #rx"^\\(let-values \\(\\(\\(x\\) \\(quote unsafe-undefined[0-9]+\\)\\) \\(\\(y\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(x[.0-9]+ y[.0-9]+\\) \\(values \\(cons \\(quote 1\\) \\(quote 2\\)\\) \\(quote 3\\)\\)\\)\\) \\(begin \\(set! x x[.0-9]+\\) \\(set! y y[.0-9]+\\) \\(quote 0\\)\\)\\) \\(cons x y\\)\\)\\)$"
       (format "~s"
               (lower-test #'(letrec-values ([(x y) (values (cons 1 2) 3)])
                               (cons x y))
                           'waddell))))
     (check-true
      (regexp-match?
-      #rx"^\\(let-values \\(\\(\\(a\\) \\(quote unsafe-undefined[0-9]+\\)\\) \\(\\(b\\) \\(quote unsafe-undefined[0-9]+\\)\\) \\(\\(x\\) \\(quote unsafe-undefined[0-9]+\\)\\) \\(\\(y\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(a[0-9]+ b[0-9]+\\) \\(values \\(cons \\(quote 1\\) \\(quote 2\\)\\) \\(quote 3\\)\\)\\)\\) \\(begin \\(set! a a[0-9]+\\) \\(set! b b[0-9]+\\) \\(quote 0\\)\\)\\) \\(let-values \\(\\(\\(x[0-9]+ y[0-9]+\\) \\(values a b\\)\\)\\) \\(begin \\(set! x x[0-9]+\\) \\(set! y y[0-9]+\\) \\(quote 0\\)\\)\\) \\(cons x y\\)\\)\\)$"
+      #rx"^\\(let-values \\(\\(\\(a\\) \\(quote unsafe-undefined[0-9]+\\)\\) \\(\\(b\\) \\(quote unsafe-undefined[0-9]+\\)\\) \\(\\(x\\) \\(quote unsafe-undefined[0-9]+\\)\\) \\(\\(y\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(a[.0-9]+ b[.0-9]+\\) \\(values \\(cons \\(quote 1\\) \\(quote 2\\)\\) \\(quote 3\\)\\)\\)\\) \\(begin \\(set! a a[.0-9]+\\) \\(set! b b[.0-9]+\\) \\(quote 0\\)\\)\\) \\(let-values \\(\\(\\(x[.0-9]+ y[.0-9]+\\) \\(values a b\\)\\)\\) \\(begin \\(set! x x[.0-9]+\\) \\(set! y y[.0-9]+\\) \\(quote 0\\)\\)\\) \\(cons x y\\)\\)\\)$"
       (format "~s"
               (lower-test #'(letrec-values ([(x y) (let-values ([(a b) (values (cons 1 2) 3)])
                                                    (values a b))])
@@ -5207,7 +5218,7 @@
                        (f))))
     (check-true
      (regexp-match?
-      #rx"^\\(let-values \\(\\(\\(a\\) \\(quote unsafe-undefined[0-9]+\\)\\) \\(\\(x\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(a[0-9]+\\) \\(cons \\(quote 1\\) \\(quote 2\\)\\)\\)\\) \\(begin \\(set! a a[0-9]+\\) \\(quote 0\\)\\)\\) \\(let-values \\(\\(\\(x[0-9]+\\) a\\)\\) \\(begin \\(set! x x[0-9]+\\) \\(quote 0\\)\\)\\) x\\)\\)$"
+      #rx"^\\(let-values \\(\\(\\(a\\) \\(quote unsafe-undefined[0-9]+\\)\\) \\(\\(x\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(a[.0-9]+\\) \\(cons \\(quote 1\\) \\(quote 2\\)\\)\\)\\) \\(begin \\(set! a a[.0-9]+\\) \\(quote 0\\)\\)\\) \\(let-values \\(\\(\\(x[.0-9]+\\) a\\)\\) \\(begin \\(set! x x[.0-9]+\\) \\(quote 0\\)\\)\\) x\\)\\)$"
       (format "~s"
               (lower-test #'(letrec ([x (let-values ([(a) (cons 1 2)]) a)])
                               x)
@@ -5221,7 +5232,7 @@
                      (f)))
     (check-true
      (regexp-match?
-      #rx"^\\(let-values \\(\\(\\(x\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(letrec-values \\(\\(\\(a\\) \\(λ \\(\\) \\(quote 1\\)\\)\\)\\) \\(begin \\(let-values \\(\\(\\(x[0-9]+\\) \\(cons \\(a\\) \\(quote 2\\)\\)\\)\\) \\(begin \\(set! x x[0-9]+\\) \\(quote 0\\)\\)\\) x\\)\\)\\)$"
+      #rx"^\\(let-values \\(\\(\\(x\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(letrec-values \\(\\(\\(a\\) \\(λ \\(\\) \\(quote 1\\)\\)\\)\\) \\(begin \\(let-values \\(\\(\\(x[.0-9]+\\) \\(cons \\(a\\) \\(quote 2\\)\\)\\)\\) \\(begin \\(set! x x[.0-9]+\\) \\(quote 0\\)\\)\\) x\\)\\)\\)$"
       (format "~s"
               (lower-test #'(letrec ([x (letrec ([a (λ () 1)])
                                           (cons (a) 2))])
