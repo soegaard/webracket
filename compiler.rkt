@@ -4031,7 +4031,8 @@
                       srcloc-column srcloc-position srcloc-span object-name
                       path? path-for-some-system? path-string? path<?
                       file-exists? directory-exists? link-exists?
-                      file-or-directory-type file-size))])
+                      file-or-directory-type file-size
+                      values))])
             (hash-set! ht x 'pure))
           (for ([x (in-list '(box box-immutable cons hasheq hasheqv list vector))])
             (hash-set! ht x 'allocates))
@@ -4113,6 +4114,28 @@
     (define (single-unassigned-binding? xs assigned)
       (and (= (length xs) 1)
            (not (set-in? (first xs) assigned))))
+    (define (all-unassigned-bindings? xs assigned)
+      (for/and ([x (in-list xs)])
+        (not (set-in? x assigned))))
+    (define (simple-values-kind xs rhs lhs-set assigned)
+      (and (all-unassigned-bindings? xs assigned)
+           (nanopass-case (LFE2+ Expr) rhs
+             [(app ,s ,e0 ,e1 ...)
+              (and (variable? e0)
+                   (free-identifier=? (variable-id e0) #'values)
+                   (= (length xs) (length e1))
+                   (let ([args-kind (for/fold ([kind 'pure]) ([e (in-list e1)])
+                                      (define e-kind (effect-free-simple-kind e lhs-set))
+                                      (cond
+                                        [(or (not kind) (not e-kind)) #f]
+                                        [(or (eq? kind 'allocates)
+                                             (eq? e-kind 'allocates))
+                                         'allocates]
+                                        [else
+                                         'pure]))])
+                     args-kind))]
+             [else
+              #f])))
     (define (classify-clause xs rhs lhs-set referenced assigned)
       (cond
         [(and (for/and ([x (in-list xs)])
@@ -4122,6 +4145,12 @@
         [(and (single-unassigned-binding? xs assigned)
               (lambda-clause? xs rhs))
          'lambda]
+        [(simple-values-kind xs rhs lhs-set assigned)
+         => (lambda (kind)
+              (case kind
+                [(pure)      'simple-pure]
+                [(allocates) 'simple-allocates]
+                [else        'complex]))]
         [(and (single-unassigned-binding? xs assigned)
               (effect-free-simple-kind rhs lhs-set))
          => (lambda (kind)
@@ -5046,6 +5075,18 @@
                               'waddell)
                   '(let-values (((x) (begin0 '1 '2)))
                      x))
+    (check-equal? (lower-test #'(letrec-values ([(x y) (values 1 2)])
+                                 (+ x y))
+                              'waddell)
+                  '(let-values (((x y) (values '1 '2)))
+                     (+ x y)))
+    (check-true
+     (regexp-match?
+      #rx"^\\(let-values \\(\\(\\(x\\) \\(quote unsafe-undefined[0-9]+\\)\\) \\(\\(y\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(x[0-9]+ y[0-9]+\\) \\(values \\(cons \\(quote 1\\) \\(quote 2\\)\\) \\(quote 3\\)\\)\\)\\) \\(begin \\(set! x x[0-9]+\\) \\(set! y y[0-9]+\\) \\(quote 0\\)\\)\\) \\(cons x y\\)\\)\\)$"
+      (format "~s"
+              (lower-test #'(letrec-values ([(x y) (values (cons 1 2) 3)])
+                              (cons x y))
+                          'waddell))))
     (check-equal? (lower-test #'(letrec ([x (let-values ([(a) 1]) a)])
                                   x)
                               'waddell)
