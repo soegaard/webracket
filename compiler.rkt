@@ -4740,12 +4740,15 @@
              (binding-vars-set (list xs)))
            (define local-simple-kind
              (effect-free-simple-kind rhs local-lhs-set))
+           (define dead-pure-singleton?
+             (or (eq? local-simple-kind 'pure)
+                 (lambda-clause? xs rhs)))
            (cond
              [self-recursive?
               (Lower-waddell/classified s local-classified body)]
              [(eq? local-kind 'unreferenced)
               (cond
-                [(eq? local-simple-kind 'pure)
+                [dead-pure-singleton?
                  body]
                 [else
                  (with-output-language (LFE2+ Expr)
@@ -5430,6 +5433,23 @@
                               'scc)
                   '(let-values (((b) '2))
                      b))
+    (check-equal? (lower-test #'(letrec ([f (λ () 1)])
+                                  'ok)
+                              'scc)
+                  ''ok)
+    (check-equal? (lower-test #'(letrec ([f (case-lambda [() 1])])
+                                  'ok)
+                              'scc)
+                  ''ok)
+    (check-equal? (lower-test #'(letrec-values ([(x y) (values 1 2)])
+                                 (+ x y))
+                              'scc)
+                  '(let-values (((x y) (values '1 '2)))
+                     (+ x y)))
+    (check-equal? (lower-test #'(letrec-values ([(x y) (values 1 2)])
+                                 'ok)
+                              'scc)
+                  ''ok)
     (check-true
      (regexp-match?
       #rx"^\\(begin \\(let-values \\(\\(\\(a\\) \\(random\\)\\)\\) \\(quote 0\\)\\) \\(let-values \\(\\(\\(b\\) \\(quote 2\\)\\)\\) b\\)\\)$"
@@ -5437,6 +5457,13 @@
               (lower-test #'(letrec ([a (random)]
                                      [b 2])
                               b)
+                          'scc))))
+    (check-true
+     (regexp-match?
+      #rx"^\\(begin \\(let-values \\(\\(\\(x y\\) \\(values \\(random\\) \\(quote 1\\)\\)\\)\\) \\(quote 0\\)\\) \\(quote ok\\)\\)$"
+      (format "~s"
+              (lower-test #'(letrec-values ([(x y) (values (random) 1)])
+                              'ok)
                           'scc))))
     (check-true
      (regexp-match?

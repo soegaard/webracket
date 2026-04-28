@@ -36,6 +36,12 @@
                                       [f (lambda () x)])
                                (f))
                              12)
+                     (equal? (letrec ([f (lambda () 1)])
+                               'ok)
+                             'ok)
+                     (equal? (letrec ([f (case-lambda [() 1])])
+                               'ok)
+                             'ok)
                      (equal? (letrec ([x 12]
                                       [f (lambda (n) (set! x n))]
                                       [g (lambda () x)])
@@ -197,6 +203,9 @@
                     (and
                      (equal? (letrec-values ([(x) 1]) x) 1)
                      (equal? (letrec-values ([(x y) (values 1 2)])
+                               'ok)
+                             'ok)
+                     (equal? (letrec-values ([(x y) (values 1 2)])
                                (+ x y))
                              3)
                      (equal? (letrec-values ([(x y z) (values 1 2 3)])
@@ -230,6 +239,20 @@
                      (equal? (letrec-values ([(f) (lambda () 11)])
                                (f))
                              11)))
+              (list "letrec-values dead bindings"
+                    (and
+                     (equal? (let ([events '()])
+                               (letrec-values ([(x y) (begin (set! events (cons 'xy events))
+                                                             (values 1 2))])
+                                 (list 'ok (reverse events))))
+                             '(ok (xy)))
+                     (equal? (let ([events '()])
+                               (letrec-values ([(x y) (values (begin (set! events (cons 'x events))
+                                                                    1)
+                                                              (begin (set! events (cons 'y events))
+                                                                    2))])
+                                 (list 'ok (reverse events))))
+                             '(ok (x y)))))
               (list "letrec-values mixed recursive references"
                     (and
                      (equal? (letrec-values ([(x) 12]
