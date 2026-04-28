@@ -4131,6 +4131,15 @@
                 [else        'complex]))]
         [else
          'complex]))
+    (define (clause-vars-set clauses)
+      (for/fold ([xs empty-set]) ([clause (in-list clauses)])
+        (for/fold ([xs xs]) ([x (in-list (second clause))])
+          (set-add xs x))))
+    (define (degrade-simple-pure-body-kind kind rhs ordered-lhs-set)
+      (if (and (eq? kind 'simple-pure)
+               (not (lhs-free? rhs ordered-lhs-set)))
+          'complex
+          kind))
     (define (assimilate-let-values-clause xs rhs lhs-set referenced assigned)
       (and (single-unassigned-binding? xs assigned)
            (nanopass-case (LFE2+ Expr) rhs
@@ -4141,36 +4150,42 @@
                   (list (classify-clause xs rhs lhs-set referenced assigned)
                         xs
                         rhs)))
+              (define ordered-nested-lhs-set
+                (clause-vars-set
+                 (filter (lambda (clause)
+                           (eq? (first clause) 'simple-allocates))
+                         nested-classified)))
               (define body-kind
-                (classify-clause xs e0 lhs-set referenced assigned))
+                (degrade-simple-pure-body-kind
+                 (classify-clause xs e0 lhs-set referenced assigned)
+                 e0
+                 ordered-nested-lhs-set))
               (and (for/and ([clause (in-list nested-classified)])
-                     (memq (first clause) '(simple-pure lambda)))
-                   (memq body-kind '(simple-pure lambda))
-                   (append (for/list ([clause (in-list nested-classified)])
-                             (list (second clause) (third clause)))
-                           (list (list xs e0))))]
+                     (memq (first clause) '(simple-pure simple-allocates lambda)))
+                   (memq body-kind '(simple-pure simple-allocates lambda complex))
+                   (append nested-classified
+                           (list (list body-kind xs e0))))]
              [else
               #f])))
     (define (assimilate-letrec-values-clause xs rhs lhs-set referenced assigned)
       (and (single-unassigned-binding? xs assigned)
            (nanopass-case (LFE2+ Expr) rhs
              [(letrec-values ,s ([(,x* ...) ,e*] ...) ,e0)
-              (define nested-lambda-clauses
-                (for/list ([xs (in-list x*)]
-                           [rhs (in-list e*)])
+             (define nested-lambda-clauses
+               (for/list ([xs (in-list x*)]
+                          [rhs (in-list e*)])
                   (and (single-unassigned-binding? xs assigned)
                        (lambda-clause? xs rhs)
                        (list 'lambda xs rhs))))
-              (define nested-lhs-set
-                (for/fold ([lhs-set lhs-set]) ([xs (in-list x*)])
-                  (for/fold ([lhs-set lhs-set]) ([x (in-list xs)])
-                    (set-add lhs-set x))))
               (define body-kind
-                (classify-clause xs e0 nested-lhs-set referenced assigned))
+                (degrade-simple-pure-body-kind
+                 (classify-clause xs e0 lhs-set referenced assigned)
+                 e0
+                 (clause-vars-set nested-lambda-clauses)))
               (and (andmap values nested-lambda-clauses)
-                   (memq body-kind '(simple lambda))
+                   (memq body-kind '(simple-pure simple-allocates lambda complex))
                    (append nested-lambda-clauses
-                           (list (list xs e0))))]
+                           (list (list body-kind xs e0))))]
              [else
               #f])))
     (define (classify-clauses x e lhs-set referenced assigned)
@@ -5041,7 +5056,7 @@
                        (f))))
     (check-true
      (regexp-match?
-      #rx"^\\(let-values \\(\\(\\(x\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(x[0-9]+\\) \\(let-values \\(\\(\\(a\\) \\(cons \\(quote 1\\) \\(quote 2\\)\\)\\)\\) a\\)\\)\\) \\(begin \\(set! x x[0-9]+\\) \\(quote 0\\)\\)\\) x\\)\\)$"
+      #rx"^\\(let-values \\(\\(\\(a\\) \\(quote unsafe-undefined[0-9]+\\)\\) \\(\\(x\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(a[0-9]+\\) \\(cons \\(quote 1\\) \\(quote 2\\)\\)\\)\\) \\(begin \\(set! a a[0-9]+\\) \\(quote 0\\)\\)\\) \\(let-values \\(\\(\\(x[0-9]+\\) a\\)\\) \\(begin \\(set! x x[0-9]+\\) \\(quote 0\\)\\)\\) x\\)\\)$"
       (format "~s"
               (lower-test #'(letrec ([x (let-values ([(a) (cons 1 2)]) a)])
                               x)
@@ -5053,6 +5068,14 @@
                   '(letrec-values (((a) (λ () '1))
                                    ((f) (λ () a)))
                      (f)))
+    (check-true
+     (regexp-match?
+      #rx"^\\(let-values \\(\\(\\(x\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(letrec-values \\(\\(\\(a\\) \\(λ \\(\\) \\(quote 1\\)\\)\\)\\) \\(begin \\(let-values \\(\\(\\(x[0-9]+\\) \\(cons \\(a\\) \\(quote 2\\)\\)\\)\\) \\(begin \\(set! x x[0-9]+\\) \\(quote 0\\)\\)\\) x\\)\\)\\)$"
+      (format "~s"
+              (lower-test #'(letrec ([x (letrec ([a (λ () 1)])
+                                          (cons (a) 2))])
+                              x)
+                          'waddell))))
     (check-complex-waddell #'(letrec ([x (random)]) x)
                            "\\(random\\)")
     (check-complex-waddell #'(letrec ([x (gensym)]) x)
