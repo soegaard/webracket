@@ -4,7 +4,7 @@ SMOKE_DIR := lib/web-easy/smoke
 SINGLE_COMPILE ?= run-browser-parity-profile-compile.sh
 SINGLE_PAGE ?= test-browser-parity-profile.html
 
-.PHONY: help smoke-ci smoke-headless-lite smoke-style smoke-theme smoke-theme-contracts smoke-theme-core smoke-theme-visual smoke-verify smoke-quick smoke-release smoke-one smoke-list smoke-commands smoke-compare-navbars smoke-compare-buttons smoke-compare-all smoke-solar-parity smoke-solar-sections smoke-solar-sections-gate dom-headless
+.PHONY: help smoke-ci smoke-headless-lite smoke-style smoke-theme smoke-theme-contracts smoke-theme-core smoke-theme-visual smoke-verify smoke-quick smoke-release smoke-one smoke-list smoke-commands smoke-compare-navbars smoke-compare-buttons smoke-compare-all smoke-solar-parity smoke-solar-sections smoke-solar-sections-gate dom-headless measure-letrec-test-basics
 
 help:
 	@echo "Available targets:"
@@ -29,6 +29,7 @@ help:
 	@echo "  smoke-solar-sections  Run per-section Solar2 parity report (with RMSE per section)."
 	@echo "  smoke-solar-sections-gate  Run quick per-section Solar2 RMSE threshold gate."
 	@echo "  dom-headless          Run the DOM browser wrapper suite."
+	@echo "  measure-letrec-test-basics  Run test-letrec first, then compare letrec strategies on test-basics."
 
 smoke-ci:
 	cd $(SMOKE_DIR) && ./headless.sh ci
@@ -129,3 +130,6 @@ smoke-solar-sections-gate:
 
 dom-headless:
 	cd test && ./run-dom-headless.sh
+
+measure-letrec-test-basics:
+	racket tools/measure-letrec-test-basics.rkt
