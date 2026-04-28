@@ -4731,6 +4731,10 @@
           (sort scc < #:key letrec-scc-binding-pos))
         (define local-classified
           (Reclassify-scc sorted-scc body assigned))
+        (define body-uses-scc?
+          (for*/or ([binding (in-list sorted-scc)]
+                    [x (in-list (letrec-scc-binding-xs binding))])
+            (set-in? x (referenced-vars body))))
         (match sorted-scc
           [(list binding)
            (match-define (letrec-scc-binding _pos xs rhs _kind _refs self-recursive?) binding)
@@ -4749,11 +4753,8 @@
                   (eq? local-mv-kind 'pure)
                   dead-lambda-values-singleton?
                   (lambda-clause? xs rhs)))
-           (define body-uses-singleton?
-             (for/or ([x (in-list xs)])
-               (set-in? x (referenced-vars body))))
            (cond
-             [(and (not body-uses-singleton?)
+             [(and (not body-uses-scc?)
                    dead-pure-singleton?)
               body]
              [(eq? local-kind 'unreferenced)
@@ -4766,8 +4767,14 @@
              [else
               (with-output-language (LFE2+ Expr)
                 `(let-values ,s ([(,xs ...) ,rhs]) ,body))])]
-          [_ 
-           (Lower-waddell/classified s local-classified body)]))))
+          [_
+           (cond
+             [(and (not body-uses-scc?)
+                   (for/and ([clause (in-list local-classified)])
+                     (memq (first clause) '(simple-pure lambda))))
+              body]
+             [else
+              (Lower-waddell/classified s local-classified body)])]))))
   (TopLevelForm        : TopLevelForm        (T) -> TopLevelForm        ())
   (ModuleLevelForm     : ModuleLevelForm     (M) -> ModuleLevelForm     ())
   (GeneralTopLevelForm : GeneralTopLevelForm (G) -> GeneralTopLevelForm ())
@@ -5459,6 +5466,11 @@
                                   'ok)
                               'scc)
                   ''ok)
+    (check-equal? (lower-test #'(letrec ([f (λ () (g))]
+                                         [g (λ () (f))])
+                                  'ok)
+                              'scc)
+                  ''ok)
     (check-equal? (lower-test #'(letrec-values ([(x y) (values 1 2)])
                                  (+ x y))
                               'scc)
@@ -5477,6 +5489,11 @@
                                                                  [() 1])
                                                                 (case-lambda
                                                                   [() 2]))])
+                                 'ok)
+                              'scc)
+                  ''ok)
+    (check-equal? (lower-test #'(letrec-values ([(f g) (values (λ () (g))
+                                                               (λ () (f)))])
                                  'ok)
                               'scc)
                   ''ok)
