@@ -4069,6 +4069,7 @@
       (and (= (length xs) 1)
            (nanopass-case (LFE2+ Expr) e
              [(λ ,s ,f ,e0) #t]
+             [(case-lambda ,s ,ab ...) #t]
              [else #f])))
     (define (split-lambda-values-clause xs rhs assigned)
       (and (all-unassigned-bindings? xs assigned)
@@ -4080,6 +4081,7 @@
                    (for/and ([e (in-list e1)])
                      (nanopass-case (LFE2+ Expr) e
                        [(λ ,s ,f ,e0) #t]
+                       [(case-lambda ,s ,ab ...) #t]
                        [else #f]))
                    (for/list ([x (in-list xs)]
                               [e (in-list e1)])
@@ -4947,6 +4949,7 @@
   (define (RHS s E k)
     (nanopass-case (LFE3 Expr) E
       [,ab  (Abstraction ab k)]
+      [,cab (CaseAbstraction cab k)]
       [else (Expr (with-output-language (LFE3 Expr)
                     (let ([h (make-h s)])
                       `(closedapp ,h (λ ,h ,(LFE3-Formals '()) ,E)))) k)]))
@@ -5171,20 +5174,18 @@
                   '(letrec-values (((f) (λ () '1))
                                    ((g) (λ () '2)))
                      (list (f) (g))))
-    (check-true
-     (regexp-match?
-      #rx"^\\(let-values \\(\\(\\(f\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(f[.0-9]+\\) \\(case-lambda \\(λ \\(\\) \\(quote 1\\)\\)\\)\\)\\) \\(begin \\(set! f f[.0-9]+\\) \\(quote 0\\)\\)\\) \\(f\\)\\)\\)$"
-      (format "~s"
-              (lower-test #'(letrec ([f (case-lambda [() 1])])
-                              (f))
-                          'basic))))
-    (check-true
-     (regexp-match?
-      #rx"^\\(let-values \\(\\(\\(f\\) \\(quote unsafe-undefined[0-9]+\\)\\)\\) \\(begin \\(let-values \\(\\(\\(f[.0-9]+\\) \\(case-lambda \\(λ \\(\\) \\(quote 1\\)\\)\\)\\)\\) \\(begin \\(set! f f[.0-9]+\\) \\(quote 0\\)\\)\\) \\(f\\)\\)\\)$"
-      (format "~s"
-              (lower-test #'(letrec ([f (case-lambda [() 1])])
-                              (f))
-                          'waddell))))
+    (check-equal? (lower-test #'(letrec ([f (case-lambda [() 1])])
+                                  (f))
+                              'basic)
+                  '(letrec-values (((f) (case-lambda
+                                          (λ () '1))))
+                     (f)))
+    (check-equal? (lower-test #'(letrec ([f (case-lambda [() 1])])
+                                  (f))
+                              'waddell)
+                  '(letrec-values (((f) (case-lambda
+                                          (λ () '1))))
+                     (f)))
     (check-equal? (lower-test #'(letrec-values ([(x y) (let-values ([(a b) (values 1 2)])
                                                   (values a b))])
                                  (+ x y))
@@ -7247,38 +7248,54 @@
      (unless (apply = (list* 1 1 (map length x**))) ; all clauses expect one value?
        (error 'generate-code "TODO support multiple values in letrec-values"))
      
+     (define (closure-debug-id-expr l)
+       (define debug-id (syntax-e (variable-id l)))
+       (define $debug-id (string->symbol (~a "$symbol:" debug-id)))
+       (add-symbol-constant debug-id debug-id)
+       `(global.get ,$debug-id))
+     (define (closure-name-expr in)
+       (cond
+         [in (define name  (syntax-e (variable-id in)))
+             (define $name (string->symbol (~a "$symbol:" name)))
+             (add-symbol-constant name name) ; on purpose name twice
+             `(global.get ,$name)]
+         [else
+          `(global.get $false)]))
      (define (AllocateClosure ca dest) ; called by letrec-values
        ; Allocates a closure in which the $free array contains zeros only.
-       (define (closure-debug-id-expr l)
-         (define debug-id (syntax-e (variable-id l)))
-         (define $debug-id (string->symbol (~a "$symbol:" debug-id)))
-         (add-symbol-constant debug-id debug-id)
-         `(global.get ,$debug-id))
-       (nanopass-case (LANF+closure ClosureAllocation) ca
+       (nanopass-case (LANF+closure AExpr) ca
          [(closure ,s ,in ,l ,ar ,ae1 ...)
           (let ([us (make-list (length ae1) (Undefined))])
-            (define get-name
-              (cond
-                [in (define name  (syntax-e (variable-id in)))
-                    (define $name (string->symbol (~a "$symbol:" name)))
-                    (add-symbol-constant name name) ; on purpose name twice
-                    `(global.get ,$name)]
-                [else
-                 `(global.get $false)]))
             (Store! dest `(struct.new $Closure
                                (i32.const 0)               ; hash
-                               ,get-name                   ; name:  #f or $Symbol
+                               ,(closure-name-expr in)     ; name:  #f or $Symbol
                                ,(Imm ar)                   ; arity:
                                (global.get $false)         ; realm: #f or $Symbol
                                (ref.func $invoke-closure)  ; invoke (used by apply, map, etc.)
                                ,(closure-debug-id-expr l)  ; debug-id
                                (ref.func ,(Label l))
                                (array.new_fixed $Free ,(length ae1) ,@us))))]
+         [(case-closure ,s ,in ,l [,ar ,ca*] ...)
+          (define n (length ca*))
+          (define ar* (canonicalize-arity-markers ar))
+          (define arity-expr (arity-markers->eq-expr ar*))
+          (Store! dest
+                  `(struct.new $CaseClosure
+                               (i32.const 0)
+                               ,(closure-name-expr in)
+                               ,arity-expr
+                               (global.get $false)
+                               (ref.func $invoke-case-closure)
+                               ,(closure-debug-id-expr l)
+                               (ref.func $code:case-lambda-dispatch)
+                               (global.get $empty-free)
+                               (array.new $I32Array (i32.const 0) (i32.const ,n))
+                               (array.new $Array (global.get $null) (i32.const ,n))))]
          [else (error 'AllocateClosure "internal error, got: ~a" ca)]))
 
      (define (FillClosure ca dd)
        ; Fill in the $free array
-       (nanopass-case (LANF+closure ClosureAllocation) ca
+       (nanopass-case (LANF+closure AExpr) ca
          [(closure ,s ,in ,l ,ar ,ae1 ...)
           ; This will be sliced into a `block` so we don't need another one.
           (for/list ([ae (AExpr* ae1)]
@@ -7286,7 +7303,26 @@
             `(array.set $Free
                         (struct.get $Closure $free (ref.cast (ref $Closure) ,(Reference dd)))
                         (i32.const ,i)
-                        ,ae))]))
+                        ,ae))]
+         [(case-closure ,s ,in ,l [,ar ,ca*] ...)
+         (append*
+          (for/list ([m  ar]
+                     [arm-ca ca*]
+                     [i  (in-naturals)])
+             (define arm (emit-fresh-local 'case-arm '(ref $Closure)))
+             (append
+              (list (AllocateClosure arm-ca arm))
+              (FillClosure arm-ca arm)
+              (list `(array.set $I32Array
+                                (struct.get $CaseClosure $arities
+                                            (ref.cast (ref $CaseClosure) ,(Reference dd)))
+                                (i32.const ,i)
+                                (i32.const ,m))
+                    `(array.set $Array
+                                (struct.get $CaseClosure $arms
+                                            (ref.cast (ref $CaseClosure) ,(Reference dd)))
+                                (i32.const ,i)
+                                ,(Reference arm))))))]))
 
      ; declare the `x` as a local variables
      (for ([x* x**])
