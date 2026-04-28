@@ -4279,19 +4279,38 @@
                  (Loop (cdr pending)
                        (cons (list kind xs rhs) classified))])])]))
       (Loop clauses '()))
+    (define (binding-vars-set xss)
+      (for/fold ([xs empty-set]) ([x* (in-list xss)])
+        (for/fold ([xs xs]) ([x (in-list x*)])
+          (set-add xs x))))
+    (define (rhs-vars-set rhs* var-proc)
+      (for/fold ([xs empty-set]) ([rhs (in-list rhs*)])
+        (set-union xs (var-proc rhs))))
+    (define (all-assigned-vars body rhs*)
+      (set-union (assigned-vars body)
+                 (rhs-vars-set rhs* assigned-vars)))
+    (define (all-referenced-vars body rhs*)
+      (set-union (referenced-vars body)
+                 (rhs-vars-set rhs* referenced-vars)))
+    (define (split-basic-clauses x e assigned)
+      (append*
+       (for/list ([xs  (in-list x)]
+                  [rhs (in-list e)])
+         (let ([split (split-lambda-values-clause xs rhs assigned)])
+           (if split
+               (for/list ([clause (in-list split)])
+                 (rest clause))
+               (list (list xs rhs)))))))
+    (define (placeholder-bindings clauses)
+      (for*/list ([clause (in-list clauses)]
+                  [x      (in-list (first clause))])
+        (list x (Unsafe-Undefined))))
+    (define (single-clause-lambda-bindings clauses)
+      (for/list ([clause (in-list clauses)])
+        (list (first (first clause)) (second clause))))
     (define (Lower-basic s x e e0)
-      (define assigned (set-union (assigned-vars e0)
-                                  (for/fold ([xs empty-set]) ([rhs (in-list e)])
-                                    (set-union xs (assigned-vars rhs)))))
-      (define clauses
-        (append*
-         (for/list ([xs  (in-list x)]
-                    [rhs (in-list e)])
-           (let ([split (split-lambda-values-clause xs rhs assigned)])
-             (if split
-                 (for/list ([clause (in-list split)])
-                   (rest clause))
-                 (list (list xs rhs)))))))
+      (define assigned (all-assigned-vars e0 e))
+      (define clauses (split-basic-clauses x e assigned))
       (define-values (raw-lambda-clauses raw-complex-clauses)
         (partition (match-lambda
                      [(list xs rhs)
@@ -4309,13 +4328,8 @@
               `(letrec-values ,s ([(,lambda-xss ...) ,lambda-rhss] ...)
                  ,e0))
             (let ()
-              (define placeholder-clauses
-                (for*/list ([clause (in-list complex-clauses)]
-                            [x      (in-list (first clause))])
-                  (list x (Unsafe-Undefined))))
-              (define lambda-bindings
-                (for/list ([clause (in-list lambda-clauses)])
-                  (list (first (first clause)) (second clause))))
+              (define placeholder-clauses (placeholder-bindings complex-clauses))
+              (define lambda-bindings (single-clause-lambda-bindings lambda-clauses))
               (define init-exprs
                 (for/list ([clause (in-list complex-clauses)])
                   (InitializeClause s (first clause) (second clause))))
@@ -4328,15 +4342,9 @@
                                            ,(map second lambda-bindings)] ...)
                          ,body)))))))
     (define (Lower-waddell s x e e0)
-      (define lhs-set (for/fold ([xs empty-set]) ([x* (in-list x)])
-                        (for/fold ([xs xs]) ([x (in-list x*)])
-                          (set-add xs x))))
-      (define referenced (set-union (referenced-vars e0)
-                                    (for/fold ([xs empty-set]) ([rhs (in-list e)])
-                                      (set-union xs (referenced-vars rhs)))))
-      (define assigned (set-union (assigned-vars e0)
-                                  (for/fold ([xs empty-set]) ([rhs (in-list e)])
-                                    (set-union xs (assigned-vars rhs)))))
+      (define lhs-set (binding-vars-set x))
+      (define referenced (all-referenced-vars e0 e))
+      (define assigned (all-assigned-vars e0 e))
       (define classified
         (classify-clauses x e lhs-set referenced assigned))
       (define (bindings-of kind)
@@ -4348,17 +4356,13 @@
       (define complex-clauses      (bindings-of 'complex))
       (define unreferenced-clauses (bindings-of 'unreferenced))
       (with-output-language (LFE2+ Expr)
-        (define placeholder-clauses
-          (for*/list ([clause (in-list (append allocating-clauses complex-clauses))]
-                      [x      (in-list (first clause))])
-            (list x (Unsafe-Undefined))))
+      (define placeholder-clauses
+        (placeholder-bindings (append allocating-clauses complex-clauses)))
       (define lambda-bindings
         (for/list ([clause (in-list lambda-clauses)])
           (list (first clause) (second clause))))
       (define lambda-lhs-set
-        (for/fold ([xs empty-set]) ([clause (in-list lambda-clauses)])
-          (for/fold ([xs xs]) ([x (in-list (first clause))])
-            (set-add xs x))))
+        (binding-vars-set (map first lambda-clauses)))
       (define (simple-pure-after-lambda? clause)
         (match clause
           [(list 'simple-pure _xs rhs)
