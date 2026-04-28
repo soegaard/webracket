@@ -50,8 +50,17 @@
                                                  (+ x 1))]
                                        [z (begin (set! events (cons 'z events))
                                                  (+ y 1))])
-                                (list z (reverse events))))
+                                 (list z (reverse events))))
                             '(14 (x y z))))
+              (list "letrec pure begin0"
+                    (and
+                     (equal? (letrec ([x (begin0 12 13 14)]) x)
+                             12)
+                     (equal? (letrec ([x (begin0 (if #t 7 8)
+                                                   (begin 1 2)
+                                                   (+ 3 4))])
+                               x)
+                             7)))
               (list "letrec nested forms"
                     (and
                      (equal? (letrec ([f (letrec ([g (lambda (x) (* x 2))])

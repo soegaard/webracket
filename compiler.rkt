@@ -4059,7 +4059,7 @@
           [(top ,s ,x)              'pure]
           [(if ,s ,e0 ,e1 ,e2)      (Expr* (list e0 e1 e2))]
           [(begin ,s ,e0 ,e1 ...)   (Expr* (cons e0 e1))]
-          [(begin0 ,s ,e0 ,e1 ...)  #f]
+          [(begin0 ,s ,e0 ,e1 ...)  (Expr* (cons e0 e1))]
           [(app ,s ,e0 ,e1 ...)     (letrec-simple-primitive-application? e0 e1)]
           [else                     #f]))
       (and (lhs-free? e lhs-set)
@@ -5042,6 +5042,10 @@
                        (let-values (((x) (begin '1 '2))) '0)
                        (let-values (((u) (begin '4 '5))) '0)
                        (f))))
+    (check-equal? (lower-test #'(letrec ([x (begin0 1 2)]) x)
+                              'waddell)
+                  '(let-values (((x) (begin0 '1 '2)))
+                     x))
     (check-equal? (lower-test #'(letrec ([x (let-values ([(a) 1]) a)])
                                   x)
                               'waddell)
