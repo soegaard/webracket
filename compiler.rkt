@@ -4703,7 +4703,7 @@
       (define classified
         (classify-clauses x e lhs-set referenced assigned))
       (Lower-waddell/classified s classified e0))
-    (define (Reclassify-scc sorted-scc body assigned)
+    (define (Reclassify-scc sorted-scc body-referenced assigned)
       (define x
         (for/list ([binding (in-list sorted-scc)])
           (letrec-scc-binding-xs binding)))
@@ -4714,7 +4714,8 @@
         (binding-vars-set x))
       (define referenced
         (set-intersection lhs-set
-                          (all-referenced-vars body e)))
+                          (set-union body-referenced
+                                     (rhs-vars-set e referenced-vars))))
       (classify-clauses x e lhs-set referenced assigned))
     (define (Lower-scc s x e e0)
       (define lhs-set (binding-vars-set x))
@@ -4729,12 +4730,14 @@
                 ([scc (in-list (reverse sccs))])
         (define sorted-scc
           (sort scc < #:key letrec-scc-binding-pos))
+        (define body-referenced
+          (referenced-vars body))
         (define local-classified
-          (Reclassify-scc sorted-scc body assigned))
+          (Reclassify-scc sorted-scc body-referenced assigned))
         (define body-uses-scc?
           (for*/or ([binding (in-list sorted-scc)]
                     [x (in-list (letrec-scc-binding-xs binding))])
-            (set-in? x (referenced-vars body))))
+            (set-in? x body-referenced)))
         (match sorted-scc
           [(list binding)
            (match-define (letrec-scc-binding _pos xs rhs _kind _refs self-recursive?) binding)
