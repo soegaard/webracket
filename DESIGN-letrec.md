@@ -365,6 +365,12 @@ Implement Waddell-style partitioning
 
 Keep fallback behavior for safety
 
+That is: Let's have an parameter `current-letrec-strategy` 
+that can have two modes `basic` or `wadell`. This allows
+users to use `basic` while the new `wadell` strategy is
+worked out.
+
+
 ---
 
 ### Step 4 — Validate correctness
