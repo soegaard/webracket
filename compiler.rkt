@@ -4020,6 +4020,9 @@
 (struct letrec-scc-binding (pos xs rhs kind refs all-refs self-recursive?)
   #:transparent)
 
+(struct letrec-scc-component (bindings x e lhs-set flat-xs all-refs)
+  #:transparent)
+
 (struct letrec-scc-node (binding edges index lowlink on-stack? done?)
   #:mutable
   #:transparent)
@@ -4060,6 +4063,13 @@
 (define (letrec-classified-clause-vars-set clauses)
   (for/fold ([xs empty-set]) ([clause (in-list clauses)])
     (for/fold ([xs xs]) ([x (in-list (second clause))])
+      (set-add xs x))))
+
+;; letrec-binding-groups-vars-set : (listof (listof variable?)) -> id-set?
+;;   Collect bound variables from grouped letrec bindings.
+(define (letrec-binding-groups-vars-set xss)
+  (for/fold ([xs empty-set]) ([group (in-list xss)])
+    (for/fold ([xs xs]) ([x (in-list group)])
       (set-add xs x))))
 
 ;; letrec-scc-order-sensitive-kind? : symbol? -> boolean?
@@ -4171,6 +4181,28 @@
        (letrec-tarjan-sccs
         (letrec-scc-bindings->nodes
          (letrec-classified-clauses->scc-bindings classified)))))
+
+;; letrec-scc-components : (listof (list symbol? (listof variable?) LFE2+ Expr)) -> (listof letrec-scc-component?)
+;;   Build SCC components with sorted bindings and cached full-reference unions.
+(define (letrec-scc-components classified)
+  (for/list ([scc (in-list (letrec-classified-clauses->sccs classified))])
+    (define bindings
+      (sort scc < #:key letrec-scc-binding-pos))
+    (define x
+      (for/list ([binding (in-list bindings)])
+        (letrec-scc-binding-xs binding)))
+    (define e
+      (for/list ([binding (in-list bindings)])
+        (letrec-scc-binding-rhs binding)))
+    (define lhs-set
+      (letrec-binding-groups-vars-set x))
+    (define flat-xs
+      (append* x))
+    (define all-refs
+      (for/fold ([refs empty-set]) ([binding (in-list bindings)])
+        (set-union refs
+                   (letrec-scc-binding-all-refs binding))))
+    (letrec-scc-component bindings x e lhs-set flat-xs all-refs)))
 
 
 ;;;
@@ -4707,21 +4739,17 @@
       (define classified
         (classify-clauses x e lhs-set referenced assigned))
       (Lower-waddell/classified s classified e0))
-    (define (Reclassify-scc sorted-scc body-referenced assigned)
+    (define (Reclassify-scc component body-referenced assigned)
       (define x
-        (for/list ([binding (in-list sorted-scc)])
-          (letrec-scc-binding-xs binding)))
+        (letrec-scc-component-x component))
       (define e
-        (for/list ([binding (in-list sorted-scc)])
-          (letrec-scc-binding-rhs binding)))
+        (letrec-scc-component-e component))
       (define lhs-set
-        (binding-vars-set x))
+        (letrec-scc-component-lhs-set component))
       (define referenced
         (set-intersection lhs-set
                           (set-union body-referenced
-                                     (for/fold ([refs empty-set]) ([binding (in-list sorted-scc)])
-                                       (set-union refs
-                                                  (letrec-scc-binding-all-refs binding))))))
+                                     (letrec-scc-component-all-refs component))))
       (classify-clauses x e lhs-set referenced assigned))
     (define (Lower-scc s x e e0)
       (define lhs-set (binding-vars-set x))
@@ -4730,29 +4758,26 @@
                            (all-assigned-vars e0 e)))
       (define classified
         (classify-clauses x e lhs-set referenced assigned))
-      (define sccs
-        (letrec-classified-clauses->sccs classified))
+      (define components
+        (letrec-scc-components classified))
       (define initial-state
         (cons e0 (referenced-vars e0)))
       (car
        (for/fold ([state initial-state])
-                 ([scc (in-list (reverse sccs))])
+                 ([component (in-list (reverse components))])
         (define body
           (car state))
         (define body-referenced
           (cdr state))
         (define sorted-scc
-          (sort scc < #:key letrec-scc-binding-pos))
+          (letrec-scc-component-bindings component))
         (define local-classified
-          (Reclassify-scc sorted-scc body-referenced assigned))
+          (Reclassify-scc component body-referenced assigned))
         (define body-uses-scc?
-          (for*/or ([binding (in-list sorted-scc)]
-                    [x (in-list (letrec-scc-binding-xs binding))])
+          (for/or ([x (in-list (letrec-scc-component-flat-xs component))])
             (set-in? x body-referenced)))
         (define scc-all-refs
-          (for/fold ([refs empty-set]) ([binding (in-list sorted-scc)])
-            (set-union refs
-                       (letrec-scc-binding-all-refs binding))))
+          (letrec-scc-component-all-refs component))
         (define next-body
           (match sorted-scc
           [(list binding)
