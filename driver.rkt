@@ -436,7 +436,7 @@
     (with-handlers ([exn:fail? (λ (e)
                                  (error 'drive-compilation
                                         (~a "wat->wasm failed: " (exn-message e))))])
-      (wat->wasm wat #:wat out-wat #:wasm out-wasm)))
+      (wat->wasm wat #:wat out-wat #:wasm out-wasm #:write-wat? #f)))
   (unless wat->wasm-success?
     (error 'drive-compilation
            (~a "wat->wasm failed to produce bytecode for " filename)))

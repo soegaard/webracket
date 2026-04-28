@@ -5378,7 +5378,10 @@ const wasmModule
 (define (print-wat x)
   (wat-pretty-write x))
 
-(define (wat->wasm x #:wat [out.wat "out.wat"] #:wasm [out.wasm "out.wasm"])
+(define (wat->wasm x
+                   #:wat [out.wat "out.wat"]
+                   #:wasm [out.wasm "out.wasm"]
+                   #:write-wat? [write-wat? #t])
   ; The argument x is an s-expresssion.
   ; It represents a WebAssembly module in textual format.
   ; Note: `wasm-tools parse` enables all proposals automatically,
@@ -5386,10 +5389,11 @@ const wasmModule
   ;       enable any features such as exception handling.
 
   ; 1. Write the module x to a wat file
-  (with-output-to-file out.wat
-    (λ ()
-      (wat-pretty-write x))
-    #:exists 'replace)
+  (when write-wat?
+    (with-output-to-file out.wat
+      (λ ()
+        (wat-pretty-write x))
+      #:exists 'replace))
   ; 2. Compile the wat file into a wasm file.
   (define success? #t)
   (define compilation-output
