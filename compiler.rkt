@@ -4071,6 +4071,23 @@
              [(λ ,s ,f ,e0) #t]
              [(case-lambda ,s ,ab ...) #t]
              [else #f])))
+    (define (split-lambda-values-clause xs rhs assigned)
+      (and (all-unassigned-bindings? xs assigned)
+           (nanopass-case (LFE2+ Expr) rhs
+             [(app ,s ,e0 ,e1 ...)
+              (and (variable? e0)
+                   (free-identifier=? (variable-id e0) #'values)
+                   (= (length xs) (length e1))
+                   (for/and ([e (in-list e1)])
+                     (nanopass-case (LFE2+ Expr) e
+                       [(λ ,s ,f ,e0) #t]
+                       [(case-lambda ,s ,ab ...) #t]
+                       [else #f]))
+                   (for/list ([x (in-list xs)]
+                              [e (in-list e1)])
+                     (list 'lambda (list x) e)))]
+             [else
+              #f])))
     (define (fresh-variable-like x)
       (variable (car (generate-temporaries (list (variable-id x))))))
     (define (Unsafe-Undefined)
@@ -4200,20 +4217,19 @@
       (and (all-unassigned-bindings? xs assigned)
            (nanopass-case (LFE2+ Expr) rhs
              [(letrec-values ,s ([(,x* ...) ,e*] ...) ,e0)
-             (define nested-lambda-clauses
+              (define nested-lambda-clauses
                (for/list ([xs (in-list x*)]
                           [rhs (in-list e*)])
-                  (and (single-unassigned-binding? xs assigned)
-                       (lambda-clause? xs rhs)
-                       (list 'lambda xs rhs))))
+                  (or (and (single-unassigned-binding? xs assigned)
+                           (lambda-clause? xs rhs)
+                           (list (list 'lambda xs rhs)))
+                      (split-lambda-values-clause xs rhs assigned)
+                      #f)))
               (define body-kind
-                (degrade-simple-pure-body-kind
-                 (classify-clause xs e0 lhs-set referenced assigned)
-                 e0
-                 (clause-vars-set nested-lambda-clauses)))
+                (classify-clause xs e0 lhs-set referenced assigned))
               (and (andmap values nested-lambda-clauses)
                    (memq body-kind '(simple-pure simple-allocates lambda complex))
-                   (append nested-lambda-clauses
+                   (append (append* nested-lambda-clauses)
                            (list (list body-kind xs e0))))]
              [else
               #f])))
@@ -4225,13 +4241,16 @@
            (reverse classified)]
           [else
            (match (car pending)
-            [(list (? symbol? kind) xs rhs)
+             [(list (? symbol? kind) xs rhs)
               #:when (memq kind '(unreferenced simple-pure simple-allocates lambda complex))
               (Loop (cdr pending)
                     (cons (list kind xs rhs) classified))]
              [(list xs rhs)
+              (define split-lambdas
+                (split-lambda-values-clause xs rhs assigned))
               (define assimilated
-                (or (assimilate-let-values-clause xs rhs lhs-set referenced assigned)
+                (or split-lambdas
+                    (assimilate-let-values-clause xs rhs lhs-set referenced assigned)
                     (assimilate-letrec-values-clause xs rhs lhs-set referenced assigned)))
               (cond
                 [assimilated
@@ -4243,10 +4262,18 @@
                        (cons (list kind xs rhs) classified))])])]))
       (Loop clauses '()))
     (define (Lower-basic s x e e0)
-      (define clauses (map list x e))
       (define assigned (set-union (assigned-vars e0)
                                   (for/fold ([xs empty-set]) ([rhs (in-list e)])
                                     (set-union xs (assigned-vars rhs)))))
+      (define clauses
+        (append*
+         (for/list ([xs  (in-list x)]
+                    [rhs (in-list e)])
+           (let ([split (split-lambda-values-clause xs rhs assigned)])
+             (if split
+                 (for/list ([clause (in-list split)])
+                   (rest clause))
+                 (list (list xs rhs)))))))
       (define-values (raw-lambda-clauses raw-complex-clauses)
         (partition (match-lambda
                      [(list xs rhs)
@@ -4259,7 +4286,10 @@
             (values '() clauses)))
       (with-output-language (LFE2+ Expr)
         (if (null? complex-clauses)
-            `(letrec-values ,s ([(,x ...) ,e] ...) ,e0)
+            (let ([lambda-xss  (map first  lambda-clauses)]
+                  [lambda-rhss (map second lambda-clauses)])
+              `(letrec-values ,s ([(,lambda-xss ...) ,lambda-rhss] ...)
+                 ,e0))
             (let ()
               (define placeholder-clauses
                 (for*/list ([clause (in-list complex-clauses)]
@@ -4304,36 +4334,55 @@
           (for*/list ([clause (in-list (append allocating-clauses complex-clauses))]
                       [x      (in-list (first clause))])
             (list x (Unsafe-Undefined))))
-        (define lambda-bindings
-          (for/list ([clause (in-list lambda-clauses)])
-            (list (first (first clause)) (second clause))))
-        (define seq-exprs
-          (for/list ([clause (in-list classified)]
-                     #:unless (eq? (first clause) 'simple-pure)
-                     #:unless (eq? (first clause) 'lambda))
+      (define lambda-bindings
+        (for/list ([clause (in-list lambda-clauses)])
+          (list (first clause) (second clause))))
+      (define lambda-lhs-set
+        (for/fold ([xs empty-set]) ([clause (in-list lambda-clauses)])
+          (for/fold ([xs xs]) ([x (in-list (first clause))])
+            (set-add xs x))))
+      (define (simple-pure-after-lambda? clause)
+        (match clause
+          [(list 'simple-pure _xs rhs)
+           (not (lhs-free? rhs lambda-lhs-set))]
+          [_
+           #f]))
+      (define seq-exprs
+        (for/list ([clause (in-list classified)]
+                   #:unless (eq? (first clause) 'simple-pure)
+                   #:unless (eq? (first clause) 'lambda))
             (match clause
               [(list 'simple-allocates xs rhs) (InitializeClause s xs rhs)]
               [(list 'complex xs rhs)      (InitializeClause s xs rhs)]
               [(list 'unreferenced xs rhs) (EvaluateClause s xs rhs)])))
-        (define body0
+      (define body0
           (if (null? seq-exprs)
               e0
               (Begin s (append seq-exprs (list e0)))))
-        (define body1
+      (define body0*
+        (for/fold ([body body0])
+                  ([clause (in-list (reverse classified))]
+                   #:when (simple-pure-after-lambda? clause))
+          (match clause
+            [(list _kind xs rhs)
+             `(let-values ,s ([(,xs ...) ,rhs]) ,body)])))
+      (define body1
           (if (null? lambda-bindings)
-              body0
-              `(letrec-values ,s ([(,(map first lambda-bindings))
-                                   ,(map second lambda-bindings)] ...)
-                 ,body0)))
-        (define body2
+              body0*
+              (let ([lambda-xss  (map first  lambda-bindings)]
+                    [lambda-rhss (map second lambda-bindings)])
+                `(letrec-values ,s ([(,lambda-xss ...) ,lambda-rhss] ...)
+                   ,body0*))))
+      (define body2
           (if (null? placeholder-clauses)
               body1
               `(let-values ,s ([(,(map first placeholder-clauses))
                                 ,(map second placeholder-clauses)] ...)
                  ,body1)))
-        (for/fold ([body body2])
+      (for/fold ([body body2])
                   ([clause (in-list (reverse classified))]
-                   #:when (memq (first clause) '(simple-pure)))
+                   #:when (memq (first clause) '(simple-pure))
+                   #:unless (simple-pure-after-lambda? clause))
           (match clause
             [(list _kind xs rhs)
              `(let-values ,s ([(,xs ...) ,rhs]) ,body)])))))
@@ -5080,6 +5129,13 @@
                               'waddell)
                   '(let-values (((x y) (values '1 '2)))
                      (+ x y)))
+    (check-equal? (lower-test #'(letrec-values ([(f g) (values (λ () 1)
+                                                               (λ () 2))])
+                                 (list (f) (g)))
+                              'waddell)
+                  '(letrec-values (((f) (λ () '1))
+                                   ((g) (λ () '2)))
+                     (list (f) (g))))
     (check-equal? (lower-test #'(letrec-values ([(x y) (let-values ([(a b) (values 1 2)])
                                                   (values a b))])
                                  (+ x y))
@@ -5102,6 +5158,15 @@
                                                    (values a b))])
                               (cons x y))
                           'waddell))))
+    (check-equal? (lower-test #'(letrec-values ([(f g) (letrec-values ([(a b) (values (λ () 1)
+                                                                                         (λ () 2))])
+                                                  (values a b))])
+                                 (list (f) (g)))
+                              'waddell)
+                  '(letrec-values (((a) (λ () '1))
+                                   ((b) (λ () '2)))
+                     (let-values (((f g) (values a b)))
+                       (list (f) (g)))))
     (check-equal? (lower-test #'(letrec ([x (let-values ([(a) 1]) a)])
                                   x)
                               'waddell)
