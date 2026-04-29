@@ -4754,20 +4754,23 @@
                           (set-union body-referenced
                                      (letrec-scc-component-all-refs component))))
       (classify-clauses x e lhs-set referenced assigned))
-    (define (Reclassify-singleton-scc binding body-referenced assigned)
-      (define xs
-        (letrec-scc-binding-xs binding))
-      (define rhs
-        (letrec-scc-binding-rhs binding))
+    (define (Reclassify-classified-scc component classified body-referenced assigned)
       (define lhs-set
-        (letrec-binding-groups-vars-set (list xs)))
+        (letrec-scc-component-lhs-set component))
       (define referenced
         (set-intersection lhs-set
                           (set-union body-referenced
-                                     (letrec-scc-binding-all-refs binding))))
-      (list (list (classify-clause xs rhs lhs-set referenced assigned)
-                  xs
-                  rhs)))
+                                     (letrec-scc-component-all-refs component))))
+      (for/list ([clause (in-list classified)])
+        (match clause
+          [(list 'unreferenced xs rhs)
+           (if (for/or ([x (in-list xs)])
+                 (set-in? x body-referenced))
+               (list (classify-clause xs rhs lhs-set referenced assigned)
+                     xs
+                     rhs)
+               clause)]
+          [_ clause])))
     (define (Lower-scc s x e e0)
       (define lhs-set (binding-vars-set x))
       (define referenced (all-referenced-vars e0 e))
@@ -4803,13 +4806,11 @@
              default-classified]
             [(not (classified-has-unreferenced? default-classified))
              default-classified]
-            [(and (= (length sorted-scc) 1)
-                  (= (length default-classified) 1))
-             (Reclassify-singleton-scc (first sorted-scc)
-                                       body-referenced
-                                       assigned)]
             [else
-             (Reclassify-scc metadata body-referenced assigned)]))
+             (Reclassify-classified-scc metadata
+                                        default-classified
+                                        body-referenced
+                                        assigned)]))
         (define scc-all-refs
           (letrec-scc-component-all-refs metadata))
         (define next-body
