@@ -421,6 +421,30 @@
                                       [n (cons 1 2)])
                                n)
                              '(1 . 2))
+                     (equal? (letrec ([a (letrec ([b (lambda () c)]
+                                                  [d 0])
+                                           b)]
+                                      [c (cons 1 2)])
+                               (letrec ([m (lambda () n)]
+                                        [n (cons 3 4)])
+                                 (cons (m) n)))
+                             '((3 . 4) 3 . 4))
+                     (equal? (letrec ([a (letrec ([b (lambda () (lambda () c))]
+                                                  [d (b)])
+                                           d)]
+                                      [c (cons 1 2)])
+                               (letrec ([m (lambda () n)]
+                                        [n (cons 3 4)])
+                                 (cons c (cons (m) n))))
+                             '((1 . 2) (3 . 4) 3 . 4))
+                     (equal? (letrec ([a (letrec ([b (lambda () (lambda () c))]
+                                                  [d (b)])
+                                           d)]
+                                      [c (cons 1 2)])
+                               (letrec ([m (lambda () n)]
+                                        [n (cons c 4)])
+                                 (cons (a) (cons (m) n))))
+                             '((1 . 2) ((1 . 2) . 4) (1 . 2) . 4))
                      (equal? (letrec ([b 3]
                                       [a (set! b 0)])
                                17)
