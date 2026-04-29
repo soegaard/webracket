@@ -4697,25 +4697,71 @@
       (list (letrec-scc-binding-kind binding)
             (letrec-scc-binding-xs binding)
             (letrec-scc-binding-rhs binding)))
+    (define (partition-classified-clauses classified)
+      (for/fold ([simple-pure '()]
+                 [allocating '()]
+                 [lambda-clauses '()]
+                 [complex '()]
+                 [unreferenced '()])
+                ([clause (in-list classified)])
+        (match clause
+          [(list 'simple-pure xs rhs)
+           (values (cons (list xs rhs) simple-pure)
+                   allocating
+                   lambda-clauses
+                   complex
+                   unreferenced)]
+          [(list 'simple-allocates xs rhs)
+           (values simple-pure
+                   (cons (list xs rhs) allocating)
+                   lambda-clauses
+                   complex
+                   unreferenced)]
+          [(list 'lambda xs rhs)
+           (values simple-pure
+                   allocating
+                   (cons (list xs rhs) lambda-clauses)
+                   complex
+                   unreferenced)]
+          [(list 'complex xs rhs)
+           (values simple-pure
+                   allocating
+                   lambda-clauses
+                   (cons (list xs rhs) complex)
+                   unreferenced)]
+          [(list 'unreferenced xs rhs)
+           (values simple-pure
+                   allocating
+                   lambda-clauses
+                   complex
+                   (cons (list xs rhs) unreferenced))])))
     (define (Lower-waddell/classified s classified e0)
-      (define (bindings-of kind)
-        (for/list ([clause (in-list classified)]
-                   #:when (eq? (first clause) kind))
-          (rest clause)))
-      (define allocating-clauses   (bindings-of 'simple-allocates))
-      (define lambda-clauses       (bindings-of 'lambda))
-      (define complex-clauses      (bindings-of 'complex))
-      (define unreferenced-clauses (bindings-of 'unreferenced))
+      (define-values (simple-pure-clauses
+                      allocating-clauses
+                      lambda-clauses
+                      complex-clauses
+                      unreferenced-clauses)
+        (partition-classified-clauses classified))
+      (define allocating-clauses*
+        (reverse allocating-clauses))
+      (define lambda-clauses*
+        (reverse lambda-clauses))
+      (define complex-clauses*
+        (reverse complex-clauses))
+      (define unreferenced-clauses*
+        (reverse unreferenced-clauses))
       (with-output-language (LFE2+ Expr)
         (define placeholder-clauses
-          (placeholder-bindings (append allocating-clauses complex-clauses)))
+          (placeholder-bindings (append allocating-clauses* complex-clauses*)))
         (define lambda-bindings
-          (for/list ([clause (in-list lambda-clauses)])
+          (for/list ([clause (in-list lambda-clauses*)])
             (list (first clause) (second clause))))
         (define lambda-lhs-set
-          (binding-vars-set (map first lambda-clauses)))
+          (binding-vars-set (map first lambda-clauses*)))
         (define (simple-pure-after-lambda? clause)
           (match clause
+            [(list _xs rhs)
+             (not (lhs-free? rhs lambda-lhs-set))]
             [(list 'simple-pure _xs rhs)
              (not (lhs-free? rhs lambda-lhs-set))]
             [_ #f]))
@@ -4752,11 +4798,10 @@
                                 ,(map second placeholder-clauses)] ...)
                  ,body1)))
         (for/fold ([body body2])
-                  ([clause (in-list (reverse classified))]
-                   #:when (memq (first clause) '(simple-pure))
+                  ([clause (in-list simple-pure-clauses)]
                    #:unless (simple-pure-after-lambda? clause))
           (match clause
-            [(list _kind xs rhs)
+            [(list xs rhs)
              `(let-values ,s ([(,xs ...) ,rhs]) ,body)]))))
     (define (Lower-waddell s x e e0)
       (define lhs-set (binding-vars-set x))
