@@ -378,4 +378,42 @@
                                    'ok)
                                  (save)))
                              8)))
+              (list "letrec variable error paths"
+                    (and
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (letrec ([x x]) x))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (letrec ([x y] [y 5]) y))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (letrec-values ([(x y) (values (lambda () z)
+                                                              (lambda () z))]
+                                               [(z) (y)])
+                                 z))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (letrec ([B (begin (set! B B) 1)])
+                                 1))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (list (begin
+                                       (letrec ([x (set! x x)])
+                                         0)
+                                       0)))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (let ([indirect (lambda (f) (f))])
+                                 (letrec ([x (indirect
+                                              (lambda ()
+                                                (set! x (+ 1 0))
+                                                x))])
+                                   'ok)))
+                             'raised)))
               ))))

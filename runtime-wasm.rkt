@@ -26758,12 +26758,22 @@
         ;;; Boxed (for assignable variables)
         ;;;
 
-        ;; We use `boxed`, `set-boxed!` and `unboxed` for assignable variables.
-        ;; These "boxes" are not the same as the Racket datatype `box`.
-        ;; See next section.
-         
-         (func $boxed (type $Prim1) (param $v (ref eq))  (result (ref eq)) 
-               (struct.new $Boxed (local.get $v)))
+	        ;; We use `boxed`, `set-boxed!` and `unboxed` for assignable variables.
+	        ;; These "boxes" are not the same as the Racket datatype `box`.
+	        ;; See next section.
+	        
+	         (func $raise-letrec-placeholder-access
+	               (drop (call $raise
+	                           (call $exn:fail:contract:variable
+	                                 (global.get $string:unsafe-undefined)
+	                                 (call $current-continuation-marks
+	                                       (global.get $missing))
+	                                 (global.get $symbol:exn:fail:contract:variable))
+	                           (global.get $true)))
+	               (unreachable))
+	         
+	         (func $boxed (type $Prim1) (param $v (ref eq))  (result (ref eq)) 
+	               (struct.new $Boxed (local.get $v)))
 
          (func $unboxed (type $Prim1) (param $b (ref eq))  (result (ref eq))
                (local $B (ref $Boxed))
@@ -26772,11 +26782,11 @@
                           (block $ok (result (ref $Boxed))
                             (br_on_cast $ok (ref eq) (ref $Boxed) (local.get $b))
                             (unreachable)))
-               (local.set $v (struct.get $Boxed $v (local.get $B)))
-               ;; Safe code must not observe letrec's internal placeholder.
-               (if (ref.eq (local.get $v) (global.get $unsafe-undefined))
-                   (then (unreachable)))
-               (local.get $v))
+	               (local.set $v (struct.get $Boxed $v (local.get $B)))
+	               ;; Safe code must not observe letrec's internal placeholder.
+	               (if (ref.eq (local.get $v) (global.get $unsafe-undefined))
+	                   (then (call $raise-letrec-placeholder-access)))
+	               (local.get $v))
 
          (func $set-boxed! (type $Prim2)
                ; todo: make this return no values
@@ -26791,8 +26801,8 @@
                           (block $ok (result (ref $Boxed))
                                  (br_on_cast $ok (ref eq) (ref $Boxed) (local.get $b))
                                  (return (global.get $error))))
-               (if (ref.eq (struct.get $Boxed $v (local.get $B)) (global.get $unsafe-undefined))
-                   (then (unreachable)))
+	               (if (ref.eq (struct.get $Boxed $v (local.get $B)) (global.get $unsafe-undefined))
+	                   (then (call $raise-letrec-placeholder-access)))
                ; 2. Set the contents
                (struct.set $Boxed $v (local.get $B) (local.get $v))
                ; 3. Return `void`
@@ -39533,11 +39543,17 @@
               (struct.get $VariableReference $constant?
                           (ref.cast (ref $VariableReference) (local.get $varref))))
 
-        (func $raise-unbound-variable-reference (type $Prim1)
-              (param $name (ref eq))
-              (result (ref eq))
-              (drop (call $js-log (local.get $name)))
-              (unreachable))
+	        (func $raise-unbound-variable-reference (type $Prim1)
+	              (param $name (ref eq))
+	              (result (ref eq))
+	              (drop (call $raise
+	                          (call $exn:fail:contract:variable
+	                                (global.get $string:undefined)
+	                                (call $current-continuation-marks
+	                                      (global.get $missing))
+	                                (local.get $name))
+	                          (global.get $true)))
+	              (unreachable))
          
          ;; 14.2 Evaluation and compilation
          ;; 14.3 The racket/load language

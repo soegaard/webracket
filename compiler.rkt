@@ -4124,7 +4124,6 @@
             edges)))
     (define edges
       (if (and last-ordered
-               (letrec-scc-order-sensitive-kind? (letrec-scc-binding-kind binding))
                (not (memq last-ordered ref-edges)))
           (cons last-ordered ref-edges)
           ref-edges))
@@ -4719,12 +4718,65 @@
                    allocating
                    lambda-clauses
                    complex)])))
+    (define (normalize-classified+refs-for-order classified+refs)
+      (define-values (normalized-rev _prior-seq-refs)
+        (for/fold ([normalized-rev '()]
+                   [prior-seq-refs empty-set])
+                  ([clause+refs (in-list classified+refs)])
+          (match clause+refs
+            [(cons (list 'simple-pure xs rhs) refs)
+             (define blocked?
+               (for/or ([x (in-list xs)])
+                 (set-in? x prior-seq-refs)))
+             (define normalized
+               (if blocked?
+                   (cons (list 'simple-allocates xs rhs) refs)
+                   clause+refs))
+             (values (cons normalized normalized-rev)
+                     (if blocked?
+                         (set-union prior-seq-refs refs)
+                         prior-seq-refs))]
+            [(cons (list 'lambda _xs _rhs) _refs)
+             (values (cons clause+refs normalized-rev)
+                     prior-seq-refs)]
+            [(cons _clause refs)
+             (values (cons clause+refs normalized-rev)
+                     (set-union prior-seq-refs refs))])))
+      (reverse normalized-rev))
+    (define (normalize-classified-for-order classified)
+      (define-values (normalized-rev _prior-seq-refs)
+        (for/fold ([normalized-rev '()]
+                   [prior-seq-refs empty-set])
+                  ([clause (in-list classified)])
+          (match clause
+            [(list 'simple-pure xs rhs)
+             (define blocked?
+               (for/or ([x (in-list xs)])
+                 (set-in? x prior-seq-refs)))
+             (values (cons (if blocked?
+                               (list 'simple-allocates xs rhs)
+                               clause)
+                           normalized-rev)
+                     (if blocked?
+                         (set-union prior-seq-refs
+                                    (lfe2+-referenced-vars rhs))
+                         prior-seq-refs))]
+            [(list 'lambda _xs _rhs)
+             (values (cons clause normalized-rev)
+                     prior-seq-refs)]
+            [(list _kind _xs rhs)
+             (values (cons clause normalized-rev)
+                     (set-union prior-seq-refs
+                                (lfe2+-referenced-vars rhs)))])))
+      (reverse normalized-rev))
     (define (prepare-classified-plan s classified)
+      (define classified*
+        (normalize-classified-for-order classified))
       (define-values (simple-pure-clauses
                       allocating-clauses
                       lambda-clauses
                       complex-clauses)
-        (partition-classified-clauses classified))
+        (partition-classified-clauses classified*))
       (define allocating-clauses*
         (reverse allocating-clauses))
       (define lambda-clauses*
@@ -4746,7 +4798,7 @@
            (not (lhs-free? rhs lambda-lhs-set))]
           [_ #f]))
       (define seq-exprs
-        (for/list ([clause (in-list classified)]
+        (for/list ([clause (in-list classified*)]
                    #:unless (eq? (first clause) 'simple-pure)
                    #:unless (eq? (first clause) 'lambda))
           (match clause
@@ -4754,7 +4806,7 @@
             [(list 'complex xs rhs)          (InitializeClause s xs rhs)]
             [(list 'unreferenced xs rhs)     (EvaluateClause s xs rhs)])))
       (define pure-after-clauses
-        (for/list ([clause (in-list (reverse classified))]
+        (for/list ([clause (in-list (reverse classified*))]
                    #:when (simple-pure-after-lambda? clause))
           (match clause
             [(list _kind xs rhs) (list xs rhs)]
@@ -4769,15 +4821,17 @@
                               pure-after-clauses
                               pure-before-clauses))
     (define (prepare-classified+refs-plan s classified+refs)
+      (define classified+refs*
+        (normalize-classified+refs-for-order classified+refs))
       (define classified
-        (map car classified+refs))
+        (map car classified+refs*))
       (define-values (allocating-clauses
                       lambda-clauses
                       complex-clauses)
         (for/fold ([allocating '()]
                    [lambda-clauses '()]
                    [complex '()])
-                  ([clause+refs (in-list classified+refs)])
+                  ([clause+refs (in-list classified+refs*)])
           (match (car clause+refs)
             [(list 'simple-allocates xs rhs)
              (values (cons (list xs rhs) allocating)
@@ -4820,14 +4874,14 @@
             [(list 'complex xs rhs)          (InitializeClause s xs rhs)]
             [(list 'unreferenced xs rhs)     (EvaluateClause s xs rhs)])))
       (define pure-after-clauses
-        (for/list ([clause+refs (in-list (reverse classified+refs))]
+        (for/list ([clause+refs (in-list (reverse classified+refs*))]
                    #:when (and (eq? (first (car clause+refs)) 'simple-pure)
                                (simple-pure-after-lambda? (cdr clause+refs))))
           (match (car clause+refs)
             [(list _kind xs rhs) (list xs rhs)]
             [(list xs rhs)       (list xs rhs)])))
       (define pure-before-clauses
-        (for/list ([clause+refs (in-list classified+refs)]
+        (for/list ([clause+refs (in-list classified+refs*)]
                    #:when (eq? (first (car clause+refs)) 'simple-pure)
                    #:unless (simple-pure-after-lambda? (cdr clause+refs)))
           (match (car clause+refs)
@@ -4840,13 +4894,15 @@
                                       pure-after-clauses
                                       pure-before-clauses)))
     (define (prepare-classified+refs-plan-only s classified+refs)
+      (define classified+refs*
+        (normalize-classified+refs-for-order classified+refs))
       (define-values (allocating-clauses
                       lambda-clauses
                       complex-clauses)
         (for/fold ([allocating '()]
                    [lambda-clauses '()]
                    [complex '()])
-                  ([clause+refs (in-list classified+refs)])
+                  ([clause+refs (in-list classified+refs*)])
           (match (car clause+refs)
             [(list 'simple-allocates xs rhs)
              (values (cons (list xs rhs) allocating)
@@ -4881,7 +4937,7 @@
         (for/and ([x (in-list (id-set->list lambda-lhs-set))])
           (not (set-in? x all-refs))))
       (define seq-exprs
-        (for/list ([clause+refs (in-list classified+refs)]
+        (for/list ([clause+refs (in-list classified+refs*)]
                    #:unless (eq? (first (car clause+refs)) 'simple-pure)
                    #:unless (eq? (first (car clause+refs)) 'lambda))
           (match (car clause+refs)
@@ -4889,14 +4945,14 @@
             [(list 'complex xs rhs)          (InitializeClause s xs rhs)]
             [(list 'unreferenced xs rhs)     (EvaluateClause s xs rhs)])))
       (define pure-after-clauses
-        (for/list ([clause+refs (in-list (reverse classified+refs))]
+        (for/list ([clause+refs (in-list (reverse classified+refs*))]
                    #:when (and (eq? (first (car clause+refs)) 'simple-pure)
                                (simple-pure-after-lambda? (cdr clause+refs))))
           (match (car clause+refs)
             [(list _kind xs rhs) (list xs rhs)]
             [(list xs rhs)       (list xs rhs)])))
       (define pure-before-clauses
-        (for/list ([clause+refs (in-list classified+refs)]
+        (for/list ([clause+refs (in-list classified+refs*)]
                    #:when (eq? (first (car clause+refs)) 'simple-pure)
                    #:unless (simple-pure-after-lambda? (cdr clause+refs)))
           (match (car clause+refs)
