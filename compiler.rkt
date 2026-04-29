@@ -4020,7 +4020,7 @@
 (struct letrec-scc-binding (pos xs rhs kind refs all-refs self-recursive?)
   #:transparent)
 
-(struct letrec-scc-component (bindings x e lhs-set flat-xs all-refs reclassifiable has-unreferenced? dead-when-unused?)
+(struct letrec-scc-component (bindings x e lhs-set flat-xs all-refs reclassifiable has-unreferenced? dead-when-unused? singleton-info)
   #:transparent)
 
 (struct letrec-scc-node (binding edges index lowlink on-stack? done?)
@@ -4202,7 +4202,7 @@
       (for/fold ([refs empty-set]) ([binding (in-list bindings)])
         (set-union refs
                    (letrec-scc-binding-all-refs binding))))
-    (letrec-scc-component bindings x e lhs-set flat-xs all-refs #f #f #f)))
+    (letrec-scc-component bindings x e lhs-set flat-xs all-refs #f #f #f #f)))
 
 
 ;;;
@@ -4811,10 +4811,35 @@
                    (hash-set! ht xs (list fallback-kind rhs))]
                   [_ (void)]))
               ht))
+          (define singleton-info
+            (match (letrec-scc-component-bindings component)
+              [(list binding)
+               (define xs
+                 (letrec-scc-binding-xs binding))
+               (define rhs
+                 (letrec-scc-binding-rhs binding))
+               (define local-lhs-set
+                 (letrec-binding-groups-vars-set (list xs)))
+               (define local-simple-kind
+                 (effect-free-simple-kind rhs local-lhs-set))
+               (define local-mv-kind
+                 (simple-values-kind xs rhs local-lhs-set assigned))
+               (define dead-lambda-values-singleton?
+                 (and (split-lambda-values-clause xs rhs assigned) #t))
+               (define dead-pure-singleton?
+                 (or (eq? local-simple-kind 'pure)
+                     (eq? local-mv-kind 'pure)
+                     dead-lambda-values-singleton?
+                     (lambda-clause? xs rhs)))
+               (list local-simple-kind
+                     local-mv-kind
+                     dead-pure-singleton?)]
+              [_ #f]))
           (cons (struct-copy letrec-scc-component component
                              [reclassifiable reclassifiable]
                              [has-unreferenced? (classified-has-unreferenced? default-classified)]
-                             [dead-when-unused? (classified-dead-when-unused? default-classified)])
+                             [dead-when-unused? (classified-dead-when-unused? default-classified)]
+                             [singleton-info singleton-info])
                 default-classified)))
       (define initial-state
         (cons e0 (referenced-vars e0)))
@@ -4853,19 +4878,11 @@
            (match-define (letrec-scc-binding _pos xs rhs _kind _refs _all-refs self-recursive?) binding)
            (define local-kind
              (first (first local-classified)))
-           (define local-lhs-set
-             (binding-vars-set (list xs)))
-           (define local-simple-kind
-              (effect-free-simple-kind rhs local-lhs-set))
-           (define local-mv-kind
-             (simple-values-kind xs rhs local-lhs-set assigned))
-           (define dead-lambda-values-singleton?
-             (and (split-lambda-values-clause xs rhs assigned) #t))
+           (define singleton-info
+             (letrec-scc-component-singleton-info metadata))
            (define dead-pure-singleton?
-              (or (eq? local-simple-kind 'pure)
-                  (eq? local-mv-kind 'pure)
-                  dead-lambda-values-singleton?
-                  (lambda-clause? xs rhs)))
+             (and singleton-info
+                  (third singleton-info)))
            (cond
              [(and (not body-uses-scc?)
                    dead-pure-singleton?)
