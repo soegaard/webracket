@@ -10,6 +10,7 @@
   (define ns (make-base-empty-namespace))
 
   (parameterize ([current-namespace ns])
+    (namespace-require '(for-syntax racket/base))
     (namespace-require 'webracket))
   ns)
 

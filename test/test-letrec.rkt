@@ -744,5 +744,25 @@
                                  (define (ciao)
                                    123)
                                  #t))
-                             'raised)))
+                             'raised)
+                     (equal? (let ()
+                               (define-syntax a
+                                 (syntax-rules ()
+                                   ((_ x c)
+                                    (begin
+                                      (define x (lambda () y))
+                                      (define y c)))))
+                               (a one 1)
+                               (one))
+                             1)
+                     (equal? (let ()
+                               (define-syntax a
+                                 (syntax-rules ()
+                                   ((_ x c)
+                                    (begin
+                                      (define y c)
+                                      (define x (lambda () y))))))
+                               (a one 1)
+                               (one))
+                             1)))
               ))))
