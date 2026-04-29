@@ -445,6 +445,12 @@
                                         [n (cons c 4)])
                                  (cons (a) (cons (m) n))))
                              '((1 . 2) ((1 . 2) . 4) (1 . 2) . 4))
+                     (equal? (letrec ([a (letrec ([b (lambda () c)]
+                                                  [c (cons 1 2)])
+                                           (b))]
+                                      [d a])
+                               d)
+                             '(1 . 2))
                      (equal? (letrec ([a (let ([x 0])
                                            (lambda () x))]
                                       [b (let ([y 2])

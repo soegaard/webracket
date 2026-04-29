@@ -1751,6 +1751,7 @@
     (add-runtime-string-constant 'void                       "#<void>")
     (add-runtime-string-constant 'undefined                  "#<undefined>")
     (add-runtime-string-constant 'unsafe-undefined           "#<unsafe-undefined>")
+    (add-runtime-string-constant 'use-before-initialization  "undefined; cannot use before initialization")
     (add-runtime-string-constant 'unspecified                "#<unspecified>")
     (add-runtime-string-constant 'missing                    "#<missing>")
     (add-runtime-string-constant 'closure                    "#<closure>")
@@ -26765,7 +26766,7 @@
 	         (func $raise-letrec-placeholder-access
 	               (drop (call $raise
 	                           (call $exn:fail:contract:variable
-	                                 (global.get $string:unsafe-undefined)
+	                                 (global.get $string:use-before-initialization)
 	                                 (call $current-continuation-marks
 	                                       (global.get $missing))
 	                                 (global.get $symbol:exn:fail:contract:variable))
