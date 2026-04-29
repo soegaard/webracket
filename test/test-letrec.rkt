@@ -377,7 +377,14 @@
                                                 x))])
                                    'ok)
                                  (save)))
-                             8)))
+                             8)
+                     (equal? (procedure?
+                              (let ([proc
+                                     (letrec ([x (letrec ([v (lambda () x)])
+                                                   v)])
+                                       x)])
+                                (proc)))
+                             #t)))
               (list "letrec variable error paths"
                     (and
                      (equal? (with-handlers ([exn:fail:contract:variable?

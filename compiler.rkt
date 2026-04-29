@@ -4526,6 +4526,40 @@
                (not (lhs-free? rhs ordered-lhs-set)))
           'complex
           kind))
+    (define (direct-remapped-lambda-clauses outer-xs lambda-clauses e0)
+      (define (returned-vars e)
+        (cond
+          [(variable? e)
+           (list e)]
+          [else
+           (nanopass-case (LFE2+ Expr) e
+             [(app ,s ,e1 ,e2 ...)
+              (and (variable? e1)
+                   (free-identifier=? (variable-id e1) #'values)
+                   (= (length outer-xs) (length e2))
+                   (andmap variable? e2)
+                   e2)]
+             [else
+              #f])]))
+      (let ([returned (returned-vars e0)])
+        (and returned
+             (= (length outer-xs) (length lambda-clauses))
+             (for/and ([clause (in-list lambda-clauses)])
+               (match clause
+                 [(list 'lambda (list _x) _rhs) #t]
+                 [_ #f]))
+             (let ([nested-vars
+                    (for/list ([clause (in-list lambda-clauses)])
+                      (match clause
+                        [(list 'lambda (list x) _rhs) x]))])
+               (and (for/and ([returned-var (in-list returned)]
+                              [nested-var   (in-list nested-vars)])
+                      (variable=? returned-var nested-var))
+                    (for/list ([outer-x (in-list outer-xs)]
+                               [clause   (in-list lambda-clauses)])
+                      (match clause
+                        [(list 'lambda (list _nested-x) nested-rhs)
+                         (list 'lambda (list outer-x) nested-rhs)])))))))
     (define (assimilate-let-values-clause xs rhs lhs-set referenced assigned)
       (and (all-unassigned-bindings? xs assigned)
            (nanopass-case (LFE2+ Expr) rhs
@@ -4536,6 +4570,10 @@
                   (list (classify-clause xs rhs lhs-set referenced assigned)
                         xs
                         rhs)))
+              (define direct-remapped
+                (direct-remapped-lambda-clauses xs
+                                                nested-classified
+                                                e0))
               (define ordered-nested-lhs-set
                 (clause-vars-set
                  (filter (lambda (clause)
@@ -4548,9 +4586,10 @@
                  ordered-nested-lhs-set))
               (and (for/and ([clause (in-list nested-classified)])
                      (memq (first clause) '(simple-pure simple-allocates lambda)))
-                   (memq body-kind '(simple-pure simple-allocates lambda complex))
-                   (append nested-classified
-                           (list (list body-kind xs e0))))]
+                   (or direct-remapped
+                       (and (memq body-kind '(simple-pure simple-allocates lambda complex))
+                            (append nested-classified
+                                    (list (list body-kind xs e0))))))]
              [else
               #f])))
     (define (assimilate-letrec-values-clause xs rhs lhs-set referenced assigned)
@@ -4565,12 +4604,19 @@
                            (list (list 'lambda xs rhs)))
                       (split-lambda-values-clause xs rhs assigned)
                       #f)))
+              (define flat-nested-lambda-clauses
+                (append* nested-lambda-clauses))
+              (define direct-remapped
+                (direct-remapped-lambda-clauses xs
+                                                flat-nested-lambda-clauses
+                                                e0))
               (define body-kind
                 (classify-clause xs e0 lhs-set referenced assigned))
               (and (andmap values nested-lambda-clauses)
-                   (memq body-kind '(simple-pure simple-allocates lambda complex))
-                   (append (append* nested-lambda-clauses)
-                           (list (list body-kind xs e0))))]
+                   (or direct-remapped
+                       (and (memq body-kind '(simple-pure simple-allocates lambda complex))
+                            (append flat-nested-lambda-clauses
+                                    (list (list body-kind xs e0))))))]
              [else
               #f])))
     (define (classify-clauses x e lhs-set referenced assigned)
@@ -6217,10 +6263,9 @@
                                                   (values a b))])
                                  (list (f) (g)))
                               'waddell)
-                  '(letrec-values (((a) (λ () '1))
-                                   ((b) (λ () '2)))
-                     (let-values (((f g) (values a b)))
-                       (list (f) (g)))))
+                  '(letrec-values (((f) (λ () '1))
+                                   ((g) (λ () '2)))
+                     (list (f) (g))))
     (check-equal? (lower-test #'(letrec-values ([(f g) (letrec-values ([(a b) (values (case-lambda
                                                                                           [() 1])
                                                                                          (case-lambda
@@ -6228,12 +6273,35 @@
                                                    (values a b))])
                                  (list (f) (g)))
                               'waddell)
-                  '(letrec-values (((a) (case-lambda
+                  '(letrec-values (((f) (case-lambda
                                           (λ () '1)))
-                                   ((b) (case-lambda
+                                   ((g) (case-lambda
                                           (λ () '2))))
-                     (let-values (((f g) (values a b)))
-                       (list (f) (g)))))
+                     (list (f) (g))))
+    (check-equal? (lower-test #'(letrec ([x (letrec ([v (lambda () x)])
+                                            v)])
+                                  x)
+                              'waddell)
+                  '(letrec-values (((x) (λ () x)))
+                     x))
+    (check-equal? (lower-test #'(letrec ([x (let-values ([(v) (lambda () x)])
+                                            v)])
+                                  x)
+                              'waddell)
+                  '(letrec-values (((x) (λ () x)))
+                     x))
+    (check-equal? (lower-test #'(letrec ([x (letrec ([v (lambda () x)])
+                                            v)])
+                                  x)
+                              'scc)
+                  '(letrec-values (((x) (λ () x)))
+                     x))
+    (check-equal? (lower-test #'(letrec ([x (let-values ([(v) (lambda () x)])
+                                            v)])
+                                  x)
+                              'scc)
+                  '(letrec-values (((x) (λ () x)))
+                     x))
     (check-equal? (lower-test #'(letrec ([x (let-values ([(a) 1]) a)])
                                   x)
                               'waddell)
