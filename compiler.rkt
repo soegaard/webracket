@@ -4023,7 +4023,7 @@
 (struct letrec-scc-binding-facts (self-recursive? default-kind fallback-kind dead-pure-singleton?)
   #:transparent)
 
-(struct letrec-scc-component (bindings x e lhs-set flat-xs all-refs binding-facts has-unreferenced? unreferenced-xss dead-when-unused? default-plan single-used-xs single-used-classified single-used-plan)
+(struct letrec-scc-component (bindings x e lhs-set flat-xs all-refs binding-facts has-unreferenced? unreferenced-xss unreferenced-set dead-when-unused? default-plan single-used-xs single-used-classified single-used-plan)
   #:transparent)
 
 (struct letrec-classified-plan (placeholder-clauses lambda-bindings seq-exprs pure-after-clauses pure-before-clauses)
@@ -4208,7 +4208,7 @@
       (for/fold ([refs empty-set]) ([binding (in-list bindings)])
         (set-union refs
                    (letrec-scc-binding-all-refs binding))))
-    (letrec-scc-component bindings x e lhs-set flat-xs all-refs #f #f #f #f #f #f #f #f)))
+    (letrec-scc-component bindings x e lhs-set flat-xs all-refs #f #f #f #f #f #f #f #f #f)))
 
 
 ;;;
@@ -4990,6 +4990,9 @@
           (define unreferenced-xss
             (and has-unreferenced?
                  (reverse unreferenced-xss-rev)))
+          (define unreferenced-set
+            (and has-unreferenced?
+                 (letrec-binding-groups-vars-set unreferenced-xss)))
           (define needs-default-plan?
             (match (letrec-scc-component-bindings component)
               [(list binding)
@@ -5043,6 +5046,7 @@
                              [binding-facts binding-facts]
                              [has-unreferenced? has-unreferenced?]
                              [unreferenced-xss unreferenced-xss]
+                             [unreferenced-set unreferenced-set]
                              [dead-when-unused? dead-when-unused?]
                               [default-plan default-plan]
                              [single-used-xs single-used-xs]
@@ -5075,9 +5079,8 @@
             [(not (letrec-scc-component-has-unreferenced? metadata))
              (values default-classified
                      (letrec-scc-component-default-plan metadata))]
-            [(not (for/or ([xs (in-list (letrec-scc-component-unreferenced-xss metadata))])
-                    (for/or ([x (in-list xs)])
-                      (set-in? x body-referenced))))
+            [(not (for/or ([x (in-list (id-set->list (letrec-scc-component-unreferenced-set metadata)))])
+                    (set-in? x body-referenced)))
              (values default-classified
                      (letrec-scc-component-default-plan metadata))]
             [(and (letrec-scc-component-single-used-xs metadata)
