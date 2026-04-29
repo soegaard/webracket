@@ -4020,7 +4020,7 @@
 (struct letrec-scc-binding (pos xs rhs kind refs all-refs self-recursive?)
   #:transparent)
 
-(struct letrec-scc-component (bindings x e lhs-set flat-xs all-refs)
+(struct letrec-scc-component (bindings x e lhs-set flat-xs all-refs reclassifiable)
   #:transparent)
 
 (struct letrec-scc-node (binding edges index lowlink on-stack? done?)
@@ -4202,7 +4202,7 @@
       (for/fold ([refs empty-set]) ([binding (in-list bindings)])
         (set-union refs
                    (letrec-scc-binding-all-refs binding))))
-    (letrec-scc-component bindings x e lhs-set flat-xs all-refs)))
+    (letrec-scc-component bindings x e lhs-set flat-xs all-refs #f)))
 
 
 ;;;
@@ -4759,16 +4759,20 @@
                                      (letrec-scc-component-all-refs component))))
       (classify-clauses x e lhs-set referenced assigned))
     (define (Reclassify-classified-scc component classified body-referenced assigned)
-      (define lhs-set
-        (letrec-scc-component-lhs-set component))
+      (define reclassifiable
+        (letrec-scc-component-reclassifiable component))
       (for/list ([clause (in-list classified)])
         (match clause
           [(list 'unreferenced xs rhs)
            (if (for/or ([x (in-list xs)])
                  (set-in? x body-referenced))
-               (list (classify-nonunreferenced-clause xs rhs lhs-set assigned)
-                     xs
-                     rhs)
+               (match (hash-ref reclassifiable xs #f)
+                 [(list kind rhs0)
+                  (list kind xs rhs0)]
+                 [_ 
+                  (error 'Reclassify-classified-scc
+                         "missing fallback kind for ~a"
+                         xs)])
                clause)]
           [_ clause])))
     (define (Lower-scc s x e e0)
@@ -4780,8 +4784,22 @@
         (classify-clauses x e lhs-set referenced assigned))
       (define components
         (for/list ([component (in-list (letrec-scc-components classified))])
-          (cons component
-                (Reclassify-scc component empty-set assigned))))
+          (define default-classified
+            (Reclassify-scc component empty-set assigned))
+          (define reclassifiable
+            (let ([ht (make-hasheq)])
+              (for ([clause (in-list default-classified)])
+                (match clause
+                  [(list 'unreferenced xs rhs)
+                   (hash-set! ht xs (list (classify-nonunreferenced-clause xs rhs
+                                                                           (letrec-scc-component-lhs-set component)
+                                                                           assigned)
+                                          rhs))]
+                  [_ (void)]))
+              ht))
+          (cons (struct-copy letrec-scc-component component
+                             [reclassifiable reclassifiable])
+                default-classified)))
       (define initial-state
         (cons e0 (referenced-vars e0)))
       (car
