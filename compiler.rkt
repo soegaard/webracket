@@ -5002,35 +5002,35 @@
             (and has-unreferenced?
                  (= (length unreferenced-xss) 1)
                  (first unreferenced-xss)))
-          (define single-used-classified
-            (and single-used-xs
-                 (for/list ([binding (in-list (letrec-scc-component-bindings component))])
-                   (define xs
-                     (letrec-scc-binding-xs binding))
-                   (define rhs
-                     (letrec-scc-binding-rhs binding))
-                   (define facts
-                     (hash-ref binding-facts xs))
-                   (define kind
-                     (if (equal? xs single-used-xs)
-                         (letrec-scc-binding-facts-fallback-kind facts)
-                         (letrec-scc-binding-facts-default-kind facts)))
-                   (list kind xs rhs))))
-          (define single-used-classified+refs
-            (and single-used-xs
-                 (for/list ([binding (in-list (letrec-scc-component-bindings component))])
-                   (define xs
-                     (letrec-scc-binding-xs binding))
-                   (define rhs
-                     (letrec-scc-binding-rhs binding))
-                   (define facts
-                     (hash-ref binding-facts xs))
-                   (define kind
-                     (if (equal? xs single-used-xs)
-                         (letrec-scc-binding-facts-fallback-kind facts)
-                         (letrec-scc-binding-facts-default-kind facts)))
-                   (cons (list kind xs rhs)
-                         (letrec-scc-binding-all-refs binding)))))
+          (define-values (single-used-classified
+                          single-used-classified+refs)
+            (if single-used-xs
+                (for/fold ([classified '()]
+                           [classified+refs '()])
+                          ([binding (in-list (letrec-scc-component-bindings component))])
+                  (define xs
+                    (letrec-scc-binding-xs binding))
+                  (define rhs
+                    (letrec-scc-binding-rhs binding))
+                  (define facts
+                    (hash-ref binding-facts xs))
+                  (define kind
+                    (if (equal? xs single-used-xs)
+                        (letrec-scc-binding-facts-fallback-kind facts)
+                        (letrec-scc-binding-facts-default-kind facts)))
+                  (define clause
+                    (list kind xs rhs))
+                  (values (cons clause classified)
+                          (cons (cons clause
+                                      (letrec-scc-binding-all-refs binding))
+                                classified+refs)))
+                (values #f #f)))
+          (define single-used-classified*
+            (and single-used-classified
+                 (reverse single-used-classified)))
+          (define single-used-classified+refs*
+            (and single-used-classified+refs
+                 (reverse single-used-classified+refs)))
           (define default-plan
             (and needs-default-plan?
                  (let-values ([(ignored-classified plan)
@@ -5038,9 +5038,9 @@
                    plan)))
           (define single-used-plan
             (and needs-default-plan?
-                 single-used-classified+refs
+                 single-used-classified+refs*
                  (let-values ([(ignored-classified plan)
-                               (prepare-classified+refs-plan s single-used-classified+refs)])
+                               (prepare-classified+refs-plan s single-used-classified+refs*)])
                    plan)))
           (cons (struct-copy letrec-scc-component component
                              [binding-facts binding-facts]
@@ -5050,7 +5050,7 @@
                              [dead-when-unused? dead-when-unused?]
                               [default-plan default-plan]
                              [single-used-xs single-used-xs]
-                             [single-used-classified single-used-classified]
+                             [single-used-classified single-used-classified*]
                              [single-used-plan single-used-plan])
                 default-classified)))
       (define initial-state
