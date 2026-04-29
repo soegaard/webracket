@@ -4020,7 +4020,10 @@
 (struct letrec-scc-binding (pos xs rhs kind refs all-refs self-recursive?)
   #:transparent)
 
-(struct letrec-scc-component (bindings x e lhs-set flat-xs all-refs reclassifiable has-unreferenced? dead-when-unused? singleton-info)
+(struct letrec-scc-component (bindings x e lhs-set flat-xs all-refs reclassifiable has-unreferenced? dead-when-unused? singleton-info default-plan)
+  #:transparent)
+
+(struct letrec-classified-plan (placeholder-clauses lambda-bindings seq-exprs pure-after-clauses pure-before-clauses)
   #:transparent)
 
 (struct letrec-scc-node (binding edges index lowlink on-stack? done?)
@@ -4202,7 +4205,7 @@
       (for/fold ([refs empty-set]) ([binding (in-list bindings)])
         (set-union refs
                    (letrec-scc-binding-all-refs binding))))
-    (letrec-scc-component bindings x e lhs-set flat-xs all-refs #f #f #f #f)))
+    (letrec-scc-component bindings x e lhs-set flat-xs all-refs #f #f #f #f #f)))
 
 
 ;;;
@@ -4735,7 +4738,7 @@
                    lambda-clauses
                    complex
                    (cons (list xs rhs) unreferenced))])))
-    (define (Lower-waddell/classified s classified e0)
+    (define (prepare-classified-plan s classified)
       (define-values (simple-pure-clauses
                       allocating-clauses
                       lambda-clauses
@@ -4748,41 +4751,60 @@
         (reverse lambda-clauses))
       (define complex-clauses*
         (reverse complex-clauses))
-      (define unreferenced-clauses*
-        (reverse unreferenced-clauses))
+      (define placeholder-clauses
+        (placeholder-bindings (append allocating-clauses* complex-clauses*)))
+      (define lambda-bindings
+        (for/list ([clause (in-list lambda-clauses*)])
+          (list (first clause) (second clause))))
+      (define lambda-lhs-set
+        (binding-vars-set (map first lambda-clauses*)))
+      (define (simple-pure-after-lambda? clause)
+        (match clause
+          [(list xs rhs)
+           (not (lhs-free? rhs lambda-lhs-set))]
+          [(list 'simple-pure _xs rhs)
+           (not (lhs-free? rhs lambda-lhs-set))]
+          [_ #f]))
+      (define seq-exprs
+        (for/list ([clause (in-list classified)]
+                   #:unless (eq? (first clause) 'simple-pure)
+                   #:unless (eq? (first clause) 'lambda))
+          (match clause
+            [(list 'simple-allocates xs rhs) (InitializeClause s xs rhs)]
+            [(list 'complex xs rhs)          (InitializeClause s xs rhs)]
+            [(list 'unreferenced xs rhs)     (EvaluateClause s xs rhs)])))
+      (define pure-after-clauses
+        (for/list ([clause (in-list (reverse classified))]
+                   #:when (simple-pure-after-lambda? clause))
+          (match clause
+            [(list _kind xs rhs) (list xs rhs)]
+            [(list xs rhs)       (list xs rhs)])))
+      (define pure-before-clauses
+        (for/list ([clause (in-list simple-pure-clauses)]
+                   #:unless (simple-pure-after-lambda? clause))
+          clause))
+      (letrec-classified-plan placeholder-clauses
+                              lambda-bindings
+                              seq-exprs
+                              pure-after-clauses
+                              pure-before-clauses))
+    (define (Lower-waddell/plan s plan e0)
       (with-output-language (LFE2+ Expr)
         (define placeholder-clauses
-          (placeholder-bindings (append allocating-clauses* complex-clauses*)))
+          (letrec-classified-plan-placeholder-clauses plan))
         (define lambda-bindings
-          (for/list ([clause (in-list lambda-clauses*)])
-            (list (first clause) (second clause))))
-        (define lambda-lhs-set
-          (binding-vars-set (map first lambda-clauses*)))
-        (define (simple-pure-after-lambda? clause)
-          (match clause
-            [(list _xs rhs)
-             (not (lhs-free? rhs lambda-lhs-set))]
-            [(list 'simple-pure _xs rhs)
-             (not (lhs-free? rhs lambda-lhs-set))]
-            [_ #f]))
+          (letrec-classified-plan-lambda-bindings plan))
         (define seq-exprs
-          (for/list ([clause (in-list classified)]
-                     #:unless (eq? (first clause) 'simple-pure)
-                     #:unless (eq? (first clause) 'lambda))
-            (match clause
-              [(list 'simple-allocates xs rhs) (InitializeClause s xs rhs)]
-              [(list 'complex xs rhs)          (InitializeClause s xs rhs)]
-              [(list 'unreferenced xs rhs)     (EvaluateClause s xs rhs)])))
+          (letrec-classified-plan-seq-exprs plan))
         (define body0
           (if (null? seq-exprs)
               e0
               (Begin s (append seq-exprs (list e0)))))
         (define body0*
           (for/fold ([body body0])
-                    ([clause (in-list (reverse classified))]
-                     #:when (simple-pure-after-lambda? clause))
+                    ([clause (in-list (letrec-classified-plan-pure-after-clauses plan))])
             (match clause
-              [(list _kind xs rhs)
+              [(list xs rhs)
                `(let-values ,s ([(,xs ...) ,rhs]) ,body)])))
         (define body1
           (if (null? lambda-bindings)
@@ -4798,11 +4820,14 @@
                                 ,(map second placeholder-clauses)] ...)
                  ,body1)))
         (for/fold ([body body2])
-                  ([clause (in-list simple-pure-clauses)]
-                   #:unless (simple-pure-after-lambda? clause))
+                  ([clause (in-list (letrec-classified-plan-pure-before-clauses plan))])
           (match clause
             [(list xs rhs)
              `(let-values ,s ([(,xs ...) ,rhs]) ,body)]))))
+    (define (Lower-waddell/classified s classified e0)
+      (Lower-waddell/plan s
+                          (prepare-classified-plan s classified)
+                          e0))
     (define (Lower-waddell s x e e0)
       (define lhs-set (binding-vars-set x))
       (define referenced (all-referenced-vars e0 e))
@@ -4880,11 +4905,14 @@
                      local-mv-kind
                      dead-pure-singleton?)]
               [_ #f]))
+          (define default-plan
+            (prepare-classified-plan s default-classified))
           (cons (struct-copy letrec-scc-component component
                              [reclassifiable reclassifiable]
                              [has-unreferenced? (classified-has-unreferenced? default-classified)]
                              [dead-when-unused? (classified-dead-when-unused? default-classified)]
-                             [singleton-info singleton-info])
+                             [singleton-info singleton-info]
+                             [default-plan default-plan])
                 default-classified)))
       (define initial-state
         (cons e0 (referenced-vars e0)))
@@ -4938,7 +4966,11 @@
                  (with-output-language (LFE2+ Expr)
                    (Begin s (list (EvaluateClause s xs rhs) body)))])]
              [self-recursive?
-              (Lower-waddell/classified s local-classified body)]
+              (if (eq? local-classified default-classified)
+                  (Lower-waddell/plan s
+                                      (letrec-scc-component-default-plan metadata)
+                                      body)
+                  (Lower-waddell/classified s local-classified body))]
              [else
              (with-output-language (LFE2+ Expr)
                 `(let-values ,s ([(,xs ...) ,rhs]) ,body))])]
@@ -4948,7 +4980,11 @@
                    (letrec-scc-component-dead-when-unused? metadata))
               body]
              [else
-              (Lower-waddell/classified s local-classified body)])]))
+              (if (eq? local-classified default-classified)
+                  (Lower-waddell/plan s
+                                      (letrec-scc-component-default-plan metadata)
+                                      body)
+                  (Lower-waddell/classified s local-classified body))])]))
         (cons next-body
               (set-union body-referenced scc-all-refs))))))
   (TopLevelForm        : TopLevelForm        (T) -> TopLevelForm        ())
