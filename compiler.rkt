@@ -4020,7 +4020,7 @@
 (struct letrec-scc-binding (pos xs rhs kind refs all-refs self-recursive?)
   #:transparent)
 
-(struct letrec-scc-component (bindings x e lhs-set flat-xs all-refs reclassifiable)
+(struct letrec-scc-component (bindings x e lhs-set flat-xs all-refs reclassifiable has-unreferenced? dead-when-unused?)
   #:transparent)
 
 (struct letrec-scc-node (binding edges index lowlink on-stack? done?)
@@ -4202,7 +4202,7 @@
       (for/fold ([refs empty-set]) ([binding (in-list bindings)])
         (set-union refs
                    (letrec-scc-binding-all-refs binding))))
-    (letrec-scc-component bindings x e lhs-set flat-xs all-refs #f)))
+    (letrec-scc-component bindings x e lhs-set flat-xs all-refs #f #f #f)))
 
 
 ;;;
@@ -4598,6 +4598,9 @@
     (define (classified-has-unreferenced? classified)
       (for/or ([clause (in-list classified)])
         (eq? (first clause) 'unreferenced)))
+    (define (classified-dead-when-unused? classified)
+      (for/and ([clause (in-list classified)])
+        (memq (first clause) '(simple-pure lambda))))
     (define (binding-vars-set xss)
       (for/fold ([xs empty-set]) ([x* (in-list xss)])
         (for/fold ([xs xs]) ([x (in-list x*)])
@@ -4798,7 +4801,9 @@
                   [_ (void)]))
               ht))
           (cons (struct-copy letrec-scc-component component
-                             [reclassifiable reclassifiable])
+                             [reclassifiable reclassifiable]
+                             [has-unreferenced? (classified-has-unreferenced? default-classified)]
+                             [dead-when-unused? (classified-dead-when-unused? default-classified)])
                 default-classified)))
       (define initial-state
         (cons e0 (referenced-vars e0)))
@@ -4822,7 +4827,7 @@
           (cond
             [(not body-uses-scc?)
              default-classified]
-            [(not (classified-has-unreferenced? default-classified))
+            [(not (letrec-scc-component-has-unreferenced? metadata))
              default-classified]
             [else
              (Reclassify-classified-scc metadata
@@ -4867,8 +4872,7 @@
           [_
            (cond
              [(and (not body-uses-scc?)
-                   (for/and ([clause (in-list local-classified)])
-                     (memq (first clause) '(simple-pure lambda))))
+                   (letrec-scc-component-dead-when-unused? metadata))
               body]
              [else
               (Lower-waddell/classified s local-classified body)])]))
