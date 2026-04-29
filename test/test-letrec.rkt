@@ -402,6 +402,15 @@
                                       [y x])
                                (+ x y))
                              6)
+                     (equal? (letrec ([f 12]
+                                      [g (lambda () f)])
+                               (g))
+                             12)
+                     (equal? (letrec ([f 12]
+                                      [g (lambda (n) (set! f n))])
+                               (g 130)
+                               f)
+                             130)
                      (equal? (letrec ([f (let ([n 0])
                                            (lambda ()
                                              (set! n (+ n 1))
@@ -410,6 +419,15 @@
                                         [y (f)])
                                  (list x y)))
                              '(1 2))
+                     (equal? (letrec ([f (letrec ([g (lambda (x) (* x 2))])
+                                           (lambda (n) (g (* n 2))))])
+                               (f 12))
+                             48)
+                     (equal? (letrec ([a 12]
+                                      [b (+ a 5)]
+                                      [c (+ b a)])
+                               c)
+                             29)
                      (equal? (letrec ([a 3]
                                       [b (cons (lambda () a)
                                                (lambda (x) (set! a x)))])
