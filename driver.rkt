@@ -169,7 +169,9 @@
     (storage    . "dom.ffi")          ; smaller dep?
     (indexed-db . "dom.ffi")          ; smaller dep?
     (websocket  . "websocket.ffi")
-    (window     . "window.ffi")))
+    (window     . "window.ffi")
+    (web-easy   . "dom.ffi")
+    (web-pict   . "dom.ffi")))
 
 (define (include-lib->ffi-filename lib-name)
   (define maybe (assq lib-name include-lib->ffi-filename-table))

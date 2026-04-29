@@ -4020,7 +4020,7 @@
 (struct letrec-scc-binding (pos xs rhs kind refs all-refs self-recursive?)
   #:transparent)
 
-(struct letrec-scc-component (bindings x e lhs-set flat-xs all-refs reclassifiable has-unreferenced? dead-when-unused? singleton-info default-plan single-used-xs single-used-classified single-used-plan)
+(struct letrec-scc-component (bindings x e lhs-set flat-xs all-refs reclassifiable has-unreferenced? unreferenced-xss dead-when-unused? singleton-info default-plan single-used-xs single-used-classified single-used-plan)
   #:transparent)
 
 (struct letrec-classified-plan (placeholder-clauses lambda-bindings seq-exprs pure-after-clauses pure-before-clauses)
@@ -4205,7 +4205,7 @@
       (for/fold ([refs empty-set]) ([binding (in-list bindings)])
         (set-union refs
                    (letrec-scc-binding-all-refs binding))))
-    (letrec-scc-component bindings x e lhs-set flat-xs all-refs #f #f #f #f #f #f #f #f)))
+    (letrec-scc-component bindings x e lhs-set flat-xs all-refs #f #f #f #f #f #f #f #f #f)))
 
 
 ;;;
@@ -4788,6 +4788,118 @@
                               seq-exprs
                               pure-after-clauses
                               pure-before-clauses))
+    (define (prepare-reclassified-scc-plan s component default-classified body-referenced)
+      (define reclassifiable
+        (letrec-scc-component-reclassifiable component))
+      (define-values (classified-rev
+                      simple-pure-clauses
+                      allocating-clauses
+                      lambda-clauses
+                      complex-clauses
+                      unreferenced-clauses)
+        (for/fold ([classified-rev '()]
+                   [simple-pure '()]
+                   [allocating '()]
+                   [lambda-clauses '()]
+                   [complex '()]
+                   [unreferenced '()])
+                  ([clause (in-list default-classified)])
+          (define local-clause
+            (match clause
+              [(list 'unreferenced xs rhs)
+               (if (for/or ([x (in-list xs)])
+                     (set-in? x body-referenced))
+                   (match (hash-ref reclassifiable xs #f)
+                     [(list kind rhs0)
+                      (list kind xs rhs0)]
+                     [_ 
+                      (error 'prepare-reclassified-scc-plan
+                             "missing fallback kind for ~a"
+                             xs)])
+                   clause)]
+              [_ clause]))
+          (match local-clause
+            [(list 'simple-pure xs rhs)
+             (values (cons local-clause classified-rev)
+                     (cons (list xs rhs) simple-pure)
+                     allocating
+                     lambda-clauses
+                     complex
+                     unreferenced)]
+            [(list 'simple-allocates xs rhs)
+             (values (cons local-clause classified-rev)
+                     simple-pure
+                     (cons (list xs rhs) allocating)
+                     lambda-clauses
+                     complex
+                     unreferenced)]
+            [(list 'lambda xs rhs)
+             (values (cons local-clause classified-rev)
+                     simple-pure
+                     allocating
+                     (cons (list xs rhs) lambda-clauses)
+                     complex
+                     unreferenced)]
+            [(list 'complex xs rhs)
+             (values (cons local-clause classified-rev)
+                     simple-pure
+                     allocating
+                     lambda-clauses
+                     (cons (list xs rhs) complex)
+                     unreferenced)]
+            [(list 'unreferenced xs rhs)
+             (values (cons local-clause classified-rev)
+                     simple-pure
+                     allocating
+                     lambda-clauses
+                     complex
+                     (cons (list xs rhs) unreferenced))])))
+      (define classified
+        (reverse classified-rev))
+      (define allocating-clauses*
+        (reverse allocating-clauses))
+      (define lambda-clauses*
+        (reverse lambda-clauses))
+      (define complex-clauses*
+        (reverse complex-clauses))
+      (define placeholder-clauses
+        (placeholder-bindings (append allocating-clauses* complex-clauses*)))
+      (define lambda-bindings
+        (for/list ([clause (in-list lambda-clauses*)])
+          (list (first clause) (second clause))))
+      (define lambda-lhs-set
+        (binding-vars-set (map first lambda-clauses*)))
+      (define (simple-pure-after-lambda? clause)
+        (match clause
+          [(list xs rhs)
+           (not (lhs-free? rhs lambda-lhs-set))]
+          [(list 'simple-pure _xs rhs)
+           (not (lhs-free? rhs lambda-lhs-set))]
+          [_ #f]))
+      (define seq-exprs
+        (for/list ([clause (in-list classified)]
+                   #:unless (eq? (first clause) 'simple-pure)
+                   #:unless (eq? (first clause) 'lambda))
+          (match clause
+            [(list 'simple-allocates xs rhs) (InitializeClause s xs rhs)]
+            [(list 'complex xs rhs)          (InitializeClause s xs rhs)]
+            [(list 'unreferenced xs rhs)     (EvaluateClause s xs rhs)])))
+      (define pure-after-clauses
+        (for/list ([clause (in-list (reverse classified))]
+                   #:when (simple-pure-after-lambda? clause))
+          (match clause
+            [(list _kind xs rhs) (list xs rhs)]
+            [(list xs rhs)       (list xs rhs)])))
+      (define pure-before-clauses
+        (for/list ([clause (in-list simple-pure-clauses)]
+                   #:unless (simple-pure-after-lambda? clause))
+          clause))
+      (values classified
+              (letrec-classified-plan placeholder-clauses
+                                      lambda-bindings
+                                      seq-exprs
+                                      pure-after-clauses
+                                      pure-before-clauses)))
     (define (Lower-waddell/plan s plan e0)
       (with-output-language (LFE2+ Expr)
         (define placeholder-clauses
@@ -4836,23 +4948,6 @@
       (define classified
         (classify-clauses x e lhs-set referenced assigned))
       (Lower-waddell/classified s classified e0))
-    (define (Reclassify-classified-scc component classified body-referenced assigned)
-      (define reclassifiable
-        (letrec-scc-component-reclassifiable component))
-      (for/list ([clause (in-list classified)])
-        (match clause
-          [(list 'unreferenced xs rhs)
-           (if (for/or ([x (in-list xs)])
-                 (set-in? x body-referenced))
-               (match (hash-ref reclassifiable xs #f)
-                 [(list kind rhs0)
-                  (list kind xs rhs0)]
-                 [_ 
-                  (error 'Reclassify-classified-scc
-                         "missing fallback kind for ~a"
-                         xs)])
-               clause)]
-          [_ clause])))
     (define (Lower-scc s x e e0)
       (define lhs-set (binding-vars-set x))
       (define referenced (all-referenced-vars e0 e))
@@ -4866,6 +4961,11 @@
             (Default-classified-scc component assigned))
           (define has-unreferenced?
             (classified-has-unreferenced? default-classified))
+          (define unreferenced-xss
+            (and has-unreferenced?
+                 (for/list ([clause (in-list default-classified)]
+                            #:when (eq? (first clause) 'unreferenced))
+                   (second clause))))
           (define reclassifiable
             (and has-unreferenced?
                  (let ([ht (make-hasheq)])
@@ -4939,6 +5039,7 @@
           (cons (struct-copy letrec-scc-component component
                              [reclassifiable reclassifiable]
                              [has-unreferenced? has-unreferenced?]
+                             [unreferenced-xss unreferenced-xss]
                              [dead-when-unused? (classified-dead-when-unused? default-classified)]
                              [singleton-info singleton-info]
                              [default-plan default-plan]
@@ -4964,21 +5065,29 @@
         (define body-uses-scc?
           (for/or ([x (in-list (letrec-scc-component-flat-xs metadata))])
             (set-in? x body-referenced)))
-        (define local-classified
+        (define-values (local-classified local-plan)
           (cond
             [(not body-uses-scc?)
-             default-classified]
+             (values default-classified
+                     (letrec-scc-component-default-plan metadata))]
             [(not (letrec-scc-component-has-unreferenced? metadata))
-             default-classified]
+             (values default-classified
+                     (letrec-scc-component-default-plan metadata))]
+            [(not (for/or ([xs (in-list (letrec-scc-component-unreferenced-xss metadata))])
+                    (for/or ([x (in-list xs)])
+                      (set-in? x body-referenced))))
+             (values default-classified
+                     (letrec-scc-component-default-plan metadata))]
             [(and (letrec-scc-component-single-used-xs metadata)
                   (for/or ([x (in-list (letrec-scc-component-single-used-xs metadata))])
                     (set-in? x body-referenced)))
-             (letrec-scc-component-single-used-classified metadata)]
+             (values (letrec-scc-component-single-used-classified metadata)
+                     (letrec-scc-component-single-used-plan metadata))]
             [else
-             (Reclassify-classified-scc metadata
-                                        default-classified
-                                        body-referenced
-                                        assigned)]))
+             (prepare-reclassified-scc-plan s
+                                            metadata
+                                            default-classified
+                                            body-referenced)]))
         (define scc-all-refs
           (letrec-scc-component-all-refs metadata))
         (define next-body
@@ -5002,18 +5111,7 @@
                  (with-output-language (LFE2+ Expr)
                    (Begin s (list (EvaluateClause s xs rhs) body)))])]
              [self-recursive?
-              (cond
-                [(eq? local-classified default-classified)
-                 (Lower-waddell/plan s
-                                     (letrec-scc-component-default-plan metadata)
-                                     body)]
-                [(eq? local-classified
-                      (letrec-scc-component-single-used-classified metadata))
-                 (Lower-waddell/plan s
-                                     (letrec-scc-component-single-used-plan metadata)
-                                     body)]
-                [else
-                 (Lower-waddell/classified s local-classified body)])]
+              (Lower-waddell/plan s local-plan body)]
              [else
              (with-output-language (LFE2+ Expr)
                 `(let-values ,s ([(,xs ...) ,rhs]) ,body))])]
@@ -5023,18 +5121,7 @@
                    (letrec-scc-component-dead-when-unused? metadata))
               body]
              [else
-              (cond
-                [(eq? local-classified default-classified)
-                 (Lower-waddell/plan s
-                                     (letrec-scc-component-default-plan metadata)
-                                     body)]
-                [(eq? local-classified
-                      (letrec-scc-component-single-used-classified metadata))
-                 (Lower-waddell/plan s
-                                     (letrec-scc-component-single-used-plan metadata)
-                                     body)]
-                [else
-                 (Lower-waddell/classified s local-classified body)])])]))
+              (Lower-waddell/plan s local-plan body)])]))
         (cons next-body
               (set-union body-referenced scc-all-refs))))))
   (TopLevelForm        : TopLevelForm        (T) -> TopLevelForm        ())
