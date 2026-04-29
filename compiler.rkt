@@ -4023,7 +4023,7 @@
 (struct letrec-scc-binding-facts (self-recursive? default-kind fallback-kind dead-pure-singleton?)
   #:transparent)
 
-(struct letrec-scc-component (bindings x e lhs-set flat-xs all-refs binding-facts has-unreferenced? unreferenced-xss unreferenced-set dead-when-unused? default-plan single-used-xs single-used-classified single-used-plan)
+(struct letrec-scc-component (bindings x e lhs-set flat-xs all-refs binding+facts binding-facts has-unreferenced? unreferenced-xss unreferenced-set dead-when-unused? default-plan single-used-xs single-used-classified single-used-plan)
   #:transparent)
 
 (struct letrec-classified-plan (placeholder-clauses lambda-bindings seq-exprs pure-after-clauses pure-before-clauses)
@@ -4208,7 +4208,8 @@
       (for/fold ([refs empty-set]) ([binding (in-list bindings)])
         (set-union refs
                    (letrec-scc-binding-all-refs binding))))
-    (letrec-scc-component bindings x e lhs-set flat-xs all-refs #f #f #f #f #f #f #f #f #f)))
+    (letrec-scc-component bindings x e lhs-set flat-xs all-refs
+                          #f #f #f #f #f #f #f #f #f #f)))
 
 
 ;;;
@@ -4839,19 +4840,19 @@
                                       pure-after-clauses
                                       pure-before-clauses)))
     (define (prepare-reclassified-scc-plan s component body-referenced)
-      (define binding-facts
-        (letrec-scc-component-binding-facts component))
       (define classified+refs-rev
         (for/fold ([classified+refs-rev '()])
-                  ([binding (in-list (letrec-scc-component-bindings component))])
+                  ([binding+facts (in-list (letrec-scc-component-binding+facts component))])
+          (define binding
+            (car binding+facts))
+          (define facts
+            (cdr binding+facts))
           (define xs
             (letrec-scc-binding-xs binding))
           (define rhs
             (letrec-scc-binding-rhs binding))
           (define all-refs
             (letrec-scc-binding-all-refs binding))
-          (define facts
-            (hash-ref binding-facts xs))
           (define default-kind
             (letrec-scc-binding-facts-default-kind facts))
           (define local-clause
@@ -4863,19 +4864,19 @@
           (cons (cons local-clause all-refs) classified+refs-rev)))
       (prepare-classified+refs-plan s (reverse classified+refs-rev)))
     (define (prepare-single-used-scc-plan s component used-xs)
-      (define binding-facts
-        (letrec-scc-component-binding-facts component))
       (define-values (classified-rev
                       classified+refs-rev)
         (for/fold ([classified-rev '()]
                    [classified+refs-rev '()])
-                  ([binding (in-list (letrec-scc-component-bindings component))])
+                  ([binding+facts (in-list (letrec-scc-component-binding+facts component))])
+          (define binding
+            (car binding+facts))
+          (define facts
+            (cdr binding+facts))
           (define xs
             (letrec-scc-binding-xs binding))
           (define rhs
             (letrec-scc-binding-rhs binding))
-          (define facts
-            (hash-ref binding-facts xs))
           (define kind
             (if (equal? xs used-xs)
                 (letrec-scc-binding-facts-fallback-kind facts)
@@ -4958,7 +4959,8 @@
         (classify-clauses x e lhs-set referenced assigned))
       (define components
         (for/list ([component (in-list (letrec-scc-components classified))])
-          (define-values (binding-facts
+          (define-values (binding+facts-rev
+                          binding-facts
                           default-classified+refs-rev
                           has-unreferenced?
                           unreferenced-xss-rev
@@ -4966,11 +4968,13 @@
             (let ([ht (make-hash)])
               (define scc-all-refs
                 (letrec-scc-component-all-refs component))
-              (define-values (default-classified+refs-rev
+              (define-values (binding+facts-rev
+                              default-classified+refs-rev
                               has-unreferenced?
                               unreferenced-xss-rev
                               dead-when-unused?)
-                (for/fold ([default-classified+refs-rev '()]
+                (for/fold ([binding+facts-rev '()]
+                           [default-classified+refs-rev '()]
                            [has-unreferenced? #f]
                            [unreferenced-xss-rev '()]
                            [dead-when-unused? #t])
@@ -5007,7 +5011,11 @@
                               default-kind
                               fallback-kind
                               dead-pure-singleton?))
-                  (values (cons (cons (list default-kind xs rhs)
+                  (define facts
+                    (hash-ref ht xs))
+                  (values (cons (cons binding facts)
+                                binding+facts-rev)
+                          (cons (cons (list default-kind xs rhs)
                                       (letrec-scc-binding-all-refs binding))
                                 default-classified+refs-rev)
                           (or has-unreferenced?
@@ -5017,11 +5025,14 @@
                               unreferenced-xss-rev)
                           (and dead-when-unused?
                                (memq default-kind '(simple-pure lambda))))))
-              (values ht
+              (values binding+facts-rev
+                      ht
                       default-classified+refs-rev
                       has-unreferenced?
                       unreferenced-xss-rev
                       dead-when-unused?)))
+          (define binding+facts
+            (reverse binding+facts-rev))
           (define default-classified+refs
             (reverse default-classified+refs-rev))
           (define default-classified
@@ -5082,6 +5093,7 @@
                                (prepare-classified+refs-plan s single-used-classified+refs*)])
                    plan)))
           (cons (struct-copy letrec-scc-component component
+                             [binding+facts binding+facts]
                              [binding-facts binding-facts]
                              [has-unreferenced? has-unreferenced?]
                              [unreferenced-xss unreferenced-xss]
@@ -5148,7 +5160,7 @@
              (first (first local-classified)))
            (define dead-pure-singleton?
              (letrec-scc-binding-facts-dead-pure-singleton?
-              (hash-ref (letrec-scc-component-binding-facts metadata) xs)))
+              (cdr (first (letrec-scc-component-binding+facts metadata)))))
            (cond
              [(and (not body-uses-scc?)
                    dead-pure-singleton?)
