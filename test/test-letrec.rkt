@@ -451,6 +451,11 @@
                                            (* y (a)))])
                                b)
                              0)
+                     (equal? (letrec ([a (lambda () b)]
+                                      [b (lambda () c)]
+                                      [c (a)])
+                               (eq? (c) c))
+                             #t)
                      (equal? (letrec ([b 3]
                                       [a (set! b 0)])
                                17)
