@@ -4862,6 +4862,36 @@
                 (list default-kind xs rhs)))
           (cons (cons local-clause all-refs) classified+refs-rev)))
       (prepare-classified+refs-plan s (reverse classified+refs-rev)))
+    (define (prepare-single-used-scc-plan s component used-xs)
+      (define binding-facts
+        (letrec-scc-component-binding-facts component))
+      (define-values (classified-rev
+                      classified+refs-rev)
+        (for/fold ([classified-rev '()]
+                   [classified+refs-rev '()])
+                  ([binding (in-list (letrec-scc-component-bindings component))])
+          (define xs
+            (letrec-scc-binding-xs binding))
+          (define rhs
+            (letrec-scc-binding-rhs binding))
+          (define facts
+            (hash-ref binding-facts xs))
+          (define kind
+            (if (equal? xs used-xs)
+                (letrec-scc-binding-facts-fallback-kind facts)
+                (letrec-scc-binding-facts-default-kind facts)))
+          (define clause
+            (list kind xs rhs))
+          (values (cons clause classified-rev)
+                  (cons (cons clause
+                              (letrec-scc-binding-all-refs binding))
+                        classified+refs-rev))))
+      (define classified
+        (reverse classified-rev))
+      (let-values ([(ignored-classified plan)
+                    (prepare-classified+refs-plan s
+                                                  (reverse classified+refs-rev))])
+        (values classified plan)))
     (define (Lower-waddell/plan s plan e0)
       (with-output-language (LFE2+ Expr)
         (define placeholder-clauses
@@ -5071,6 +5101,12 @@
         (define body-uses-scc?
           (for/or ([x (in-list (letrec-scc-component-flat-xs metadata))])
             (set-in? x body-referenced)))
+        (define used-unreferenced-xss
+          (and (letrec-scc-component-has-unreferenced? metadata)
+               (filter (lambda (xs)
+                         (for/or ([x (in-list xs)])
+                           (set-in? x body-referenced)))
+                       (letrec-scc-component-unreferenced-xss metadata))))
         (define-values (local-classified local-plan)
           (cond
             [(not body-uses-scc?)
@@ -5079,15 +5115,19 @@
             [(not (letrec-scc-component-has-unreferenced? metadata))
              (values default-classified
                      (letrec-scc-component-default-plan metadata))]
-            [(not (for/or ([x (in-list (id-set->list (letrec-scc-component-unreferenced-set metadata)))])
-                    (set-in? x body-referenced)))
+            [(or (not used-unreferenced-xss)
+                 (null? used-unreferenced-xss))
              (values default-classified
                      (letrec-scc-component-default-plan metadata))]
-            [(and (letrec-scc-component-single-used-xs metadata)
-                  (for/or ([x (in-list (letrec-scc-component-single-used-xs metadata))])
-                    (set-in? x body-referenced)))
+            [(and (= (length used-unreferenced-xss) 1)
+                  (equal? (first used-unreferenced-xss)
+                          (letrec-scc-component-single-used-xs metadata)))
              (values (letrec-scc-component-single-used-classified metadata)
                      (letrec-scc-component-single-used-plan metadata))]
+            [(= (length used-unreferenced-xss) 1)
+             (prepare-single-used-scc-plan s
+                                           metadata
+                                           (first used-unreferenced-xss))]
             [else
              (prepare-reclassified-scc-plan s
                                             metadata
