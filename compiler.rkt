@@ -4892,6 +4892,15 @@
                     (prepare-classified+refs-plan s
                                                   (reverse classified+refs-rev))])
         (values classified plan)))
+    (define (used-unreferenced-summary component body-referenced)
+      (for/fold ([count 0]
+                 [first-used #f])
+                ([xs (in-list (letrec-scc-component-unreferenced-xss component))])
+        (if (for/or ([x (in-list xs)])
+              (set-in? x body-referenced))
+            (values (add1 count)
+                    (or first-used xs))
+            (values count first-used))))
     (define (Lower-waddell/plan s plan e0)
       (with-output-language (LFE2+ Expr)
         (define placeholder-clauses
@@ -5101,12 +5110,10 @@
         (define body-uses-scc?
           (for/or ([x (in-list (letrec-scc-component-flat-xs metadata))])
             (set-in? x body-referenced)))
-        (define used-unreferenced-xss
-          (and (letrec-scc-component-has-unreferenced? metadata)
-               (filter (lambda (xs)
-                         (for/or ([x (in-list xs)])
-                           (set-in? x body-referenced)))
-                       (letrec-scc-component-unreferenced-xss metadata))))
+        (define-values (used-unreferenced-count used-unreferenced-xs)
+          (if (letrec-scc-component-has-unreferenced? metadata)
+              (used-unreferenced-summary metadata body-referenced)
+              (values 0 #f)))
         (define-values (local-classified local-plan)
           (cond
             [(not body-uses-scc?)
@@ -5115,19 +5122,18 @@
             [(not (letrec-scc-component-has-unreferenced? metadata))
              (values default-classified
                      (letrec-scc-component-default-plan metadata))]
-            [(or (not used-unreferenced-xss)
-                 (null? used-unreferenced-xss))
+            [(zero? used-unreferenced-count)
              (values default-classified
                      (letrec-scc-component-default-plan metadata))]
-            [(and (= (length used-unreferenced-xss) 1)
-                  (equal? (first used-unreferenced-xss)
+            [(and (= used-unreferenced-count 1)
+                  (equal? used-unreferenced-xs
                           (letrec-scc-component-single-used-xs metadata)))
              (values (letrec-scc-component-single-used-classified metadata)
                      (letrec-scc-component-single-used-plan metadata))]
-            [(= (length used-unreferenced-xss) 1)
+            [(= used-unreferenced-count 1)
              (prepare-single-used-scc-plan s
                                            metadata
-                                           (first used-unreferenced-xss))]
+                                           used-unreferenced-xs)]
             [else
              (prepare-reclassified-scc-plan s
                                             metadata
