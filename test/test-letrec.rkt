@@ -380,11 +380,32 @@
                              8)
                      (equal? (procedure?
                               (let ([proc
-                                     (letrec ([x (letrec ([v (lambda () x)])
-                                                   v)])
+                                (letrec ([x (letrec ([v (lambda () x)])
+                                                  v)])
                                        x)])
                                 (proc)))
-                             #t)))
+                             #t)
+                     (equal? (letrec ([x 'a])
+                               (letrec ([y 'b])
+                                 #f
+                                 (set! x y))
+                               (eq? x 'b))
+                             #t)
+                     (equal? (let ([base 20])
+                               (letrec ([f (lambda (x)
+                                             (if (= x 0)
+                                                 base
+                                                 (+ (f (- x 1)) 1)))])
+                                 (f 10)))
+                             30)
+                     (equal? (letrec ([f (let ([n 0])
+                                           (lambda ()
+                                             (set! n (+ n 1))
+                                             n))])
+                               (letrec ([x (f)]
+                                        [y (f)])
+                                 (list x y)))
+                             '(1 2))))
               (list "letrec variable error paths"
                     (and
                      (equal? (with-handlers ([exn:fail:contract:variable?
