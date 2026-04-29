@@ -3121,6 +3121,19 @@
        [(#f) e2]
        [else `(if ,s ,e0 ,e1 ,e2)])]
 
+    ;; Empty Binding Elimination
+    [(let-values ,s () ,[e0])
+     e0]
+
+    ;; Trivial Let Simplification
+    [(let-values ,s ([(,x) ,[e]]) ,[e0])
+     (nanopass-case (LFE Expr) e0
+       [,xd
+        (guard (id=? x xd))
+        e]
+       [else
+        `(let-values ,s ([(,x) ,e]) ,e0)])]
+
     ;; Foldable Applications
     [(app ,s ,x ,[e*] ...)
      (define folded
@@ -3154,6 +3167,10 @@
                  (unparse-LFE
                   (simplify-LFE
                    (parse (expand-syntax stx))))))])
+    (check-equal? (test #'(let-values ([(x) (+ 1 2)]) x))
+                  '(+ '1 '2))
+    (check-equal? (test #'(let-values () 1))
+                  ''1)
     (check-equal? (test #'(if #f 1 2))
                   ''2)
     (check-equal? (test #'(if 10 1 2))
@@ -3171,7 +3188,7 @@
     (check-equal? (test #'(let-values ([(x) '5]) (begin x x)))
                   '(let-values (((x) '5)) x x))
     (check-equal? (test #'(let-values ([(x) (#%plain-app values '5)]) x))
-                  '(let-values (((x) (values '5))) x))))
+                  '(values '5))))
 
 
 ;;;
