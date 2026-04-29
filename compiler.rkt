@@ -3137,6 +3137,30 @@
         [(quote ,s ,d)        #t]
         [(quote-syntax ,s ,d) #t]
         [else                 #f]))
+    ;; pure-expression? : LFE Expr -> boolean?
+    ;;   Recognize obviously effect-free expressions for dead-code pruning.
+    (define (pure-expression? e)
+      (nanopass-case (LFE Expr) e
+        [,x
+         #t]
+        [(quote ,s ,d)
+         #t]
+        [(quote-syntax ,s ,d)
+         #t]
+        [(top ,s ,x)
+         #t]
+        [(if ,s ,e0 ,e1 ,e2)
+         (and (pure-expression? e0)
+              (pure-expression? e1)
+              (pure-expression? e2))]
+        [(begin ,s ,e0 ,e1 ...)
+         (andmap pure-expression? (cons e0 e1))]
+        [(app ,s ,e0 ,e1 ...)
+         (and (variable? e0)
+              (primitive-has-property? (syntax-e (variable-id e0)) 'pure)
+              (andmap pure-expression? e1))]
+        [else
+         #f]))
     ;; quoted-constant-value : LFE Expr -> any/c or #f
     ;;   Extract the value from a quoted constant expression.
     (define (quoted-constant-value e)
@@ -3164,6 +3188,17 @@
            e]
           [(cons e0 e1)
            `(begin ,s ,e0 ,e1 ...)])))
+    ;; live-begin-expressions : (listof LFE Expr) -> (listof LFE Expr)
+    ;;   Drop pure non-final expressions from a begin sequence.
+    (define (live-begin-expressions es)
+      (match es
+        [(list e)
+         (list e)]
+        [(cons e0 e1)
+         (define rest (live-begin-expressions e1))
+         (if (pure-expression? e0)
+             rest
+             (cons e0 rest))]))
     ;; constant-truthiness : LFE Expr -> (or/c #t #f 'unknown)
     ;;   Determine the truthiness of a quoted constant expression.
     (define (constant-truthiness e)
@@ -3381,7 +3416,8 @@
 
     [(begin ,s ,e0 ,e1 ...)
      (letv ((es κ) (Expr* (cons e0 e1) κ))
-       (values (Begin s (append-map begin-expressions es))
+       (values (Begin s (live-begin-expressions
+                         (append-map begin-expressions es)))
                κ))]
 
     [(begin0 ,s ,e0 ,e1 ...)
@@ -3466,7 +3502,17 @@
     (check-equal? (test #'(if #t (begin 1) 2))
                   ''1)
     (check-equal? (test #'(if #t (begin 1 (begin 2 3)) 4))
-                  '(begin '1 '2 '3))
+                  ''3)
+    (check-equal? (test #'(if #t (begin '1 '2) 3))
+                  ''2)
+    (check-equal? (test #'(if #t (begin (not '#f) 2) 3))
+                  ''2)
+    (check-equal? (test #'(let-values ([(x) '0])
+                            (begin (begin (set! x '1) x) x)))
+                  '(let-values (((x) '0))
+                     (set! x '1)
+                     x
+                     x))
     (check-equal? (test #'(let-values ([(x) '5]) (begin x x)))
                   '(let-values (((x) '5)) '5 '5))
     (check-equal? (test #'(let-values ([(x) (#%plain-app values '5)]) x))
