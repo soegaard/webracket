@@ -39,6 +39,12 @@
 ;;   during letrec lowering.  If a primitive is only `ordered`, the compiler
 ;;   should leave it on the general sequential path instead of trying to fold
 ;;   it into the simple pure or simple allocating cases.
+;;
+;;   `foldable`
+;;   A `foldable` primitive is safe to evaluate at compile time when all
+;;   arguments are compile-time constants and the primitive returns a single
+;;   value. This property is intended for early local simplification and is
+;;   separate from motion-oriented properties like `pure` or `restricted`.
 
 (provide primitive-db
          define-primitive
@@ -96,7 +102,7 @@
 (define-primitive bitwise-not                               1                   (pure))
 (define-primitive bitwise-xor                               at-least-0          (pure))
 (define-primitive boolean=?                                 2                   (pure))
-(define-primitive boolean?                                  1                   (pure))
+(define-primitive boolean?                                  1                   (pure foldable))
 (define-primitive box                                       1                   (allocates))
 (define-primitive box-immutable                             1                   (allocates))
 (define-primitive box?                                      1                   (pure))
@@ -263,12 +269,12 @@
 (define-primitive empty?                                    1                   (pure))
 (define-primitive eof-object?                               1                   (pure))
 (define-primitive eq-hash-code                              1                   (ordered))
-(define-primitive eq?                                       2                   (pure))
+(define-primitive eq?                                       2                   (pure foldable))
 (define-primitive equal-always?                             2                   (pure))
 (define-primitive equal-hash-code                           1                   (ordered))
-(define-primitive equal?                                    2                   (pure))
+(define-primitive equal?                                    2                   (pure foldable))
 (define-primitive eqv-hash-code                             1                   (ordered))
-(define-primitive eqv?                                      2                   (pure))
+(define-primitive eqv?                                      2                   (pure foldable))
 (define-primitive even?                                     1                   (pure))
 (define-primitive exact->inexact                            1                   (pure))
 (define-primitive exact-ceiling                             1                   (ordered))
@@ -590,8 +596,8 @@
 (define-primitive nonpositive-integer?                      1                   (pure))
 (define-primitive normal-case-path                          1                   (ordered))
 (define-primitive normalize-path                            [1 2]               (ordered))
-(define-primitive not                                       1                   (pure))
-(define-primitive null?                                     1                   (pure))
+(define-primitive not                                       1                   (pure foldable))
+(define-primitive null?                                     1                   (pure foldable))
 (define-primitive number->string                            [1 2]               (pure))
 (define-primitive number?                                   1                   (pure))
 (define-primitive object-name                               1                   (pure))
@@ -605,7 +611,7 @@
 (define-primitive order-of-magnitude                        1                   (ordered))
 (define-primitive ormap                                     at-least-2          (ordered))
 (define-primitive output-port?                              1                   (pure))
-(define-primitive pair?                                     1                   (pure))
+(define-primitive pair?                                     1                   (pure foldable))
 (define-primitive partition                                 2                   (ordered))
 (define-primitive path->bytes                               1                   (allocates))
 (define-primitive path->complete-path                       [1 2]               (ordered))

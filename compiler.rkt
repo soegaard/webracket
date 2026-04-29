@@ -3,6 +3,7 @@
 (provide (all-defined-out))
 (require racket/set
          racket/list
+         racket/runtime-path
          syntax/id-set
          syntax/id-table)
 
@@ -731,6 +732,49 @@
 (define primitives-set (mutable-seteq))
 
 (define primitive-arity-cache (make-hasheq))
+(define primitive-info-cache #f)
+(define primitive-value-cache (make-hasheq))
+(define-runtime-path primitives-module-path "primitives.rkt")
+
+(define (ensure-primitive-info-cache!)
+  (or primitive-info-cache
+      (let ([ht (make-hasheq)])
+        (for ([info (in-list primitive-db)])
+          (hash-set! ht (primitive-info-name info) info))
+        (set! primitive-info-cache ht)
+        ht)))
+
+;; primitive-info/ref : symbol? -> (or/c primitive-info? #f)
+;;   Look up primitive metadata from `primitives-db.rkt`.
+(define (primitive-info/ref sym)
+  (hash-ref (ensure-primitive-info-cache!) sym #f))
+
+;; primitive-has-property? : symbol? symbol? -> boolean?
+;;   Check whether primitive `sym` has property `prop`.
+(define (primitive-has-property? sym prop)
+  (define info (primitive-info/ref sym))
+  (and info
+       (memq prop (primitive-info-properties info))))
+
+;; foldable? : (or/c syntax? variable? symbol?) -> boolean?
+;;   Check whether `v` names a primitive that may be constant-folded.
+(define (foldable? v)
+  (cond
+    [(syntax? v)
+     (and (primitive? v)
+          (primitive-has-property? (syntax-e v) 'foldable))]
+    [(variable? v)
+     (and (primitive? v)
+          (primitive-has-property? (syntax-e (variable-id v)) 'foldable))]
+    [else
+     (and (primitive? v)
+          (primitive-has-property? v 'foldable))]))
+
+;; primitive-value/ref : symbol? -> any/c
+;;   Look up the host Racket binding for primitive `sym`.
+(define (primitive-value/ref sym)
+  (hash-ref! primitive-value-cache sym
+             (λ () (dynamic-require primitives-module-path sym))))
 
 (define (ffi-primitive-arity sym)
   (and (ffi-primitive? sym)
@@ -3019,6 +3063,116 @@
     (check-equal? (test #'(module test webracket (fx+ 11 22)))
                   '(module test webracket (#%plain-module-begin (fx+ '11 '22))))))
 
+;; simplify-LFE : LFE -> LFE
+;;   Simplify parsed LFE before subsequent normalization passes.
+(define-pass simplify-LFE : LFE (T) -> LFE ()
+  (definitions
+    ;; constant-expression? : LFE Expr -> boolean?
+    ;;   Recognize constant expressions that are safe to propagate.
+    (define (constant-expression? e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)        #t]
+        [(quote-syntax ,s ,d) #t]
+        [else                 #f]))
+    ;; quoted-constant-value : LFE Expr -> any/c or #f
+    ;;   Extract the value from a quoted constant expression.
+    (define (quoted-constant-value e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d) (datum-value d)]
+        [else          #f]))
+    ;; quoted-values : (listof LFE Expr) -> (listof any/c)
+    ;;   Extract values from quoted constant expressions.
+    (define (quoted-values e*)
+      (map quoted-constant-value e*))
+    ;; constant-truthiness : LFE Expr -> (or/c #t #f 'unknown)
+    ;;   Determine the truthiness of a quoted constant expression.
+    (define (constant-truthiness e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d) (if (eq? (datum-value d) #f) #f #t)]
+        [else          'unknown]))
+    ;; fold-primitive-application : syntax? variable? (listof any/c) -> LFE Expr or #f
+    ;;   Fold a single-valued primitive application on constant arguments.
+    (define (fold-primitive-application s x vals)
+      (define sym (syntax-e (variable-id x)))
+      (and (primitive-arity-accepts? sym (length vals))
+           (with-handlers ([exn:fail? (λ (e) #f)])
+             (define result
+               (call-with-values
+                (λ ()
+                  (apply (primitive-value/ref sym) vals))
+                (case-lambda
+                  [(v) v]
+                  [vs (raise-arguments-error 'simplify-LFE
+                                             "expected single-valued foldable primitive result"
+                                             "primitive" sym
+                                             "values" vs)])))
+             (with-output-language (LFE Expr)
+               `(quote ,s ,(datum s result)))))))
+  
+  (TopLevelForm        : TopLevelForm        (T) -> TopLevelForm ())
+  (ModuleLevelForm     : ModuleLevelForm     (M) -> ModuleLevelForm ())
+  (GeneralTopLevelForm : GeneralTopLevelForm (G) -> GeneralTopLevelForm ())
+
+  (Expr : Expr (E) -> Expr ()
+    ;; Conditional Simplification
+    [(if ,s ,[e0] ,[e1] ,[e2])
+     (case (constant-truthiness e0)
+       [(#t) e1]
+       [(#f) e2]
+       [else `(if ,s ,e0 ,e1 ,e2)])]
+
+    ;; Foldable Applications
+    [(app ,s ,x ,[e*] ...)
+     (define folded
+       (and (foldable? x)
+            (andmap constant-expression? e*)
+            (fold-primitive-application s x (quoted-values e*))))
+     (or folded
+         `(app ,s ,x ,e* ...))]
+
+    ;; Constant Propagation
+    [(let-values ,s ([(,x) ,[e]]) ,[e0])
+     (nanopass-case (LFE Expr) e0
+       [,xd
+        (guard (and (id=? x xd)
+                    (constant-expression? e)))
+        e]
+       [else
+        `(let-values ,s ([(,x) ,e]) ,e0)])])
+  (Formals : Formals (F) -> Formals ())
+  (RawRequireSpec : RawRequireSpec (RRS) -> RawRequireSpec ())
+  (RawRootModulePath : RawRootModulePath (RRMP) -> RawRootModulePath ())
+  (RawProvideSpec : RawProvideSpec (RPS) -> RawProvideSpec ())
+  (PhaselessSpec : PhaselessSpec (PS) -> PhaselessSpec ())
+  (SpacelessSpec : SpacelessSpec (SS) -> SpacelessSpec ())
+  (PhaseLevel : PhaseLevel (PL) -> PhaseLevel ())
+  (Space : Space (S) -> Space ()))
+
+(module+ test
+  (let ([test (λ (stx)
+                (unparse-all
+                 (unparse-LFE
+                  (simplify-LFE
+                   (parse (expand-syntax stx))))))])
+    (check-equal? (test #'(if #f 1 2))
+                  ''2)
+    (check-equal? (test #'(if 10 1 2))
+                  ''1)
+    (check-equal? (test #'(if (pair? '()) 1 2))
+                  ''2)
+    (check-equal? (test #'(not #f))
+                  ''#t)
+    (check-equal? (test #'(eq? '5 '5))
+                  ''#t)
+    (check-equal? (test #'(pair? '()))
+                  ''#f)
+    (check-equal? (test #'(let-values ([(x) '5]) x))
+                  ''5)
+    (check-equal? (test #'(let-values ([(x) '5]) (begin x x)))
+                  '(let-values (((x) '5)) x x))
+    (check-equal? (test #'(let-values ([(x) (#%plain-app values '5)]) x))
+                  '(let-values (((x) (values '5))) x))))
+
 
 ;;;
 ;;; FLATTEN TOP-LEVEL BEGIN
@@ -4572,16 +4726,9 @@
       (define (Expr* es)
         (for/fold ([kind 'pure]) ([e (in-list es)])
           (join-simple-kinds kind (Expr e))))
-      (define primitive-info-by-name
-        (let ([ht (make-hasheq)])
-          (for ([info (in-list primitive-db)])
-            (hash-set! ht (primitive-info-name info) info))
-          ht))
       (define (letrec-primitive-order-class x)
         (define info
-          (hash-ref primitive-info-by-name
-                    (syntax-e (variable-id x))
-                    #f))
+          (primitive-info/ref (syntax-e (variable-id x))))
         (and info
              (let ([props (primitive-info-properties info)])
                (cond
@@ -9398,10 +9545,13 @@
   (define p0  (time-pass "parse"                (λ () (parse u))
                          (λ (v) (count-unparsed unparse-LFE v))
                          (λ (v) (unparse-all (unparse-LFE v)))))
+  (define s0  (time-pass "simplify-LFE"         (λ () (simplify-LFE p0))
+                         (λ (v) (count-unparsed unparse-LFE v))
+                         (λ (v) (unparse-all (unparse-LFE v)))))
   (define p   (time-pass "print-top-level-results"
                          (λ () (if (current-print-top-level-results?)
-                                   (print-top-level-results p0)
-                                   p0))
+                                   (print-top-level-results s0)
+                                   s0))
                          (λ (v) (count-unparsed unparse-LFE v))
                          (λ (v) (unparse-all (unparse-LFE v)))))
   (define ft  (time-pass "flatten-topbegin"     (λ () (flatten-topbegin p))
