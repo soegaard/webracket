@@ -4483,12 +4483,8 @@
            #f]))
       (and (all-unassigned-bindings? xs assigned)
            (MV rhs)))
-    (define (classify-clause xs rhs lhs-set referenced assigned)
+    (define (classify-nonunreferenced-clause xs rhs lhs-set assigned)
       (cond
-        [(and (for/and ([x (in-list xs)])
-                (and (not (set-in? x referenced))
-                     (not (var-assigned? assigned x)))))
-         'unreferenced]
         [(and (single-unassigned-binding? xs assigned)
               (lambda-clause? xs rhs))
          'lambda]
@@ -4507,6 +4503,14 @@
                 [else        'complex]))]
         [else
          'complex]))
+    (define (classify-clause xs rhs lhs-set referenced assigned)
+      (cond
+        [(and (for/and ([x (in-list xs)])
+                (and (not (set-in? x referenced))
+                     (not (var-assigned? assigned x)))))
+         'unreferenced]
+        [else
+         (classify-nonunreferenced-clause xs rhs lhs-set assigned)]))
     (define (clause-vars-set clauses)
       (for/fold ([xs empty-set]) ([clause (in-list clauses)])
         (for/fold ([xs xs]) ([x (in-list (second clause))])
@@ -4757,16 +4761,12 @@
     (define (Reclassify-classified-scc component classified body-referenced assigned)
       (define lhs-set
         (letrec-scc-component-lhs-set component))
-      (define referenced
-        (set-intersection lhs-set
-                          (set-union body-referenced
-                                     (letrec-scc-component-all-refs component))))
       (for/list ([clause (in-list classified)])
         (match clause
           [(list 'unreferenced xs rhs)
            (if (for/or ([x (in-list xs)])
                  (set-in? x body-referenced))
-               (list (classify-clause xs rhs lhs-set referenced assigned)
+               (list (classify-nonunreferenced-clause xs rhs lhs-set assigned)
                      xs
                      rhs)
                clause)]
