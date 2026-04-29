@@ -3147,6 +3147,23 @@
     ;;   Extract values from quoted constant expressions.
     (define (quoted-values e*)
       (map quoted-constant-value e*))
+    ;; begin-expressions : LFE Expr -> (listof LFE Expr)
+    ;;   Return the flattened expression sequence for a begin-like expression.
+    (define (begin-expressions e)
+      (nanopass-case (LFE Expr) e
+        [(begin ,s ,e0 ,e1 ...)
+         (append-map begin-expressions (cons e0 e1))]
+        [else
+         (list e)]))
+    ;; Begin : syntax? (listof LFE Expr) -> LFE Expr
+    ;;   Rebuild a begin expression, avoiding single-expression begins.
+    (define (Begin s es)
+      (with-output-language (LFE Expr)
+        (match es
+          [(list e)
+           e]
+          [(cons e0 e1)
+           `(begin ,s ,e0 ,e1 ...)])))
     ;; constant-truthiness : LFE Expr -> (or/c #t #f 'unknown)
     ;;   Determine the truthiness of a quoted constant expression.
     (define (constant-truthiness e)
@@ -3364,9 +3381,8 @@
 
     [(begin ,s ,e0 ,e1 ...)
      (letv ((es κ) (Expr* (cons e0 e1) κ))
-       (match es
-         [(cons e0 e1)
-          (values `(begin ,s ,e0 ,e1 ...) κ)]))]
+       (values (Begin s (append-map begin-expressions es))
+               κ))]
 
     [(begin0 ,s ,e0 ,e1 ...)
      (letv ((e0 κ) (Expr e0 κ))
@@ -3447,6 +3463,10 @@
                   ''5)
     (check-equal? (test #'(let-values ([(x) '#f]) (if x 1 2)))
                   ''2)
+    (check-equal? (test #'(if #t (begin 1) 2))
+                  ''1)
+    (check-equal? (test #'(if #t (begin 1 (begin 2 3)) 4))
+                  '(begin '1 '2 '3))
     (check-equal? (test #'(let-values ([(x) '5]) (begin x x)))
                   '(let-values (((x) '5)) '5 '5))
     (check-equal? (test #'(let-values ([(x) (#%plain-app values '5)]) x))
