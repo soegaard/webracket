@@ -175,9 +175,9 @@
                             (tree-shake-report filename)]
    [("--letrec-basic") "Use the basic letrec lowering strategy"
                        (letrec-strategy 'basic)]
-   [("--letrec-waddell") "Use the Waddell letrec lowering strategy (default)"
+   [("--letrec-waddell") "Use the Waddell letrec lowering strategy"
                          (letrec-strategy 'waddell)]
-   [("--letrec-scc") "Use the SCC letrec lowering strategy"
+   [("--letrec-scc") "Use the SCC letrec lowering strategy (default)"
                      (letrec-strategy 'scc)]
    [("--print-top-level-results")
     "Print each top-level expression result with print; useful for script-style tests"
