@@ -398,6 +398,10 @@
                                                  (+ (f (- x 1)) 1)))])
                                  (f 10)))
                              30)
+                     (equal? (letrec ([x 3]
+                                      [y x])
+                               (+ x y))
+                             6)
                      (equal? (letrec ([f (let ([n 0])
                                            (lambda ()
                                              (set! n (+ n 1))
@@ -406,6 +410,16 @@
                                         [y (f)])
                                  (list x y)))
                              '(1 2))
+                     (equal? (letrec ([a 3]
+                                      [b (cons (lambda () a)
+                                               (lambda (x) (set! a x)))])
+                               ((cdr b) 17)
+                               (list a ((car b))))
+                             '(17 17))
+                     (equal? (letrec ([b 3]
+                                      [a (set! b 0)])
+                               17)
+                             17)
                      (equal? (letrec ([a (lambda () c)]
                                       [b (if #t a (a))]
                                       [c (cons 1 2)])
@@ -423,6 +437,12 @@
                              'raised)
                      (equal? (with-handlers ([exn:fail:contract:variable?
                                               (lambda (_ex) 'raised)])
+                               (letrec ([y x]
+                                        [x 3])
+                                 (+ x y)))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
                                (letrec-values ([(x y) (values (lambda () z)
                                                               (lambda () z))]
                                                [(z) (y)])
@@ -432,6 +452,12 @@
                                               (lambda (_ex) 'raised)])
                                (letrec ([B (begin (set! B B) 1)])
                                  1))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (letrec ([a (set! b 0)]
+                                        [b 3])
+                                 17))
                              'raised)
                      (equal? (with-handlers ([exn:fail:contract:variable?
                                               (lambda (_ex) 'raised)])

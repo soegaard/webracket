@@ -4064,6 +4064,37 @@
       [(app ,s ,e0 ,e1 ...)     (Expr* (cons e0 e1))]))
   (Expr e))
 
+;; lfe2+-assigned-vars : LFE2+ Expr -> id-set?
+;;   Compute assigned variables for an LFE2+ expression.
+(define (lfe2+-assigned-vars e)
+  (define (Expr* es)
+    (for/fold ([xs empty-set]) ([e (in-list es)])
+      (set-union xs (Expr e))))
+  (define (Abstraction ab)
+    (nanopass-case (LFE2+ Abstraction) ab
+      [(λ ,s ,f ,e0) (Expr e0)]))
+  (define (Expr e)
+    (nanopass-case (LFE2+ Expr) e
+      [,x                       empty-set]
+      [,ab                      (Abstraction ab)]
+      [(case-lambda ,s ,ab ...) (for/fold ([xs empty-set]) ([ab (in-list ab)])
+                                 (set-union xs (Abstraction ab)))]
+      [(if ,s ,e0 ,e1 ,e2)      (Expr* (list e0 e1 e2))]
+      [(begin ,s ,e0 ,e1 ...)   (Expr* (cons e0 e1))]
+      [(begin0 ,s ,e0 ,e1 ...)  (Expr* (cons e0 e1))]
+      [(let-values ,s ([(,x ...) ,e] ...) ,e0)
+       (Expr* (cons e0 e))]
+      [(letrec-values ,s ([(,x ...) ,e] ...) ,e0)
+       (Expr* (cons e0 e))]
+      [(set! ,s ,x ,e0)         (set-add (Expr e0) x)]
+      [(top ,s ,x)              empty-set]
+      [(variable-reference ,s ,vrx) empty-set]
+      [(quote ,s ,d)            empty-set]
+      [(quote-syntax ,s ,d)     empty-set]
+      [(wcm ,s ,e0 ,e1 ,e2)     (Expr* (list e0 e1 e2))]
+      [(app ,s ,e0 ,e1 ...)     (Expr* (cons e0 e1))]))
+  (Expr e))
+
 ;; letrec-classified-clause-vars-set : (listof (list symbol? (listof variable?) any)) -> id-set?
 ;;   Collect bound variables from classified letrec clauses.
 (define (letrec-classified-clause-vars-set clauses)
@@ -4093,7 +4124,8 @@
     (match clause
       [(list kind xs rhs)
        (define all-refs
-         (lfe2+-referenced-vars rhs))
+         (set-union (lfe2+-referenced-vars rhs)
+                    (lfe2+-assigned-vars rhs)))
        (define refs
          (for/list ([x (in-list (id-set->list all-refs))]
                     #:when (set-in? x lhs-set))
