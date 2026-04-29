@@ -4020,7 +4020,7 @@
 (struct letrec-scc-binding (pos xs rhs kind refs all-refs self-recursive?)
   #:transparent)
 
-(struct letrec-scc-component (bindings x e lhs-set flat-xs all-refs reclassifiable has-unreferenced? dead-when-unused? singleton-info default-plan)
+(struct letrec-scc-component (bindings x e lhs-set flat-xs all-refs reclassifiable has-unreferenced? dead-when-unused? singleton-info default-plan single-used-xs single-used-classified single-used-plan)
   #:transparent)
 
 (struct letrec-classified-plan (placeholder-clauses lambda-bindings seq-exprs pure-after-clauses pure-before-clauses)
@@ -4205,7 +4205,7 @@
       (for/fold ([refs empty-set]) ([binding (in-list bindings)])
         (set-union refs
                    (letrec-scc-binding-all-refs binding))))
-    (letrec-scc-component bindings x e lhs-set flat-xs all-refs #f #f #f #f #f)))
+    (letrec-scc-component bindings x e lhs-set flat-xs all-refs #f #f #f #f #f #f #f #f)))
 
 
 ;;;
@@ -4864,23 +4864,26 @@
         (for/list ([component (in-list (letrec-scc-components classified))])
           (define default-classified
             (Default-classified-scc component assigned))
+          (define has-unreferenced?
+            (classified-has-unreferenced? default-classified))
           (define reclassifiable
-            (let ([ht (make-hasheq)])
-              (for ([clause (in-list default-classified)])
-                (match clause
-                  [(list 'unreferenced xs rhs)
-                   (define fallback-kind
-                     (match (for/first ([binding (in-list (letrec-scc-component-bindings component))]
-                                        #:when (equal? xs (letrec-scc-binding-xs binding)))
-                              (letrec-scc-binding-kind binding))
-                       ['unreferenced
-                        (classify-nonunreferenced-clause xs rhs
-                                                         (letrec-scc-component-lhs-set component)
-                                                         assigned)]
-                       [kind kind]))
-                   (hash-set! ht xs (list fallback-kind rhs))]
-                  [_ (void)]))
-              ht))
+            (and has-unreferenced?
+                 (let ([ht (make-hasheq)])
+                   (for ([clause (in-list default-classified)])
+                     (match clause
+                       [(list 'unreferenced xs rhs)
+                        (define fallback-kind
+                          (match (for/first ([binding (in-list (letrec-scc-component-bindings component))]
+                                             #:when (equal? xs (letrec-scc-binding-xs binding)))
+                                   (letrec-scc-binding-kind binding))
+                            ['unreferenced
+                             (classify-nonunreferenced-clause xs rhs
+                                                              (letrec-scc-component-lhs-set component)
+                                                              assigned)]
+                            [kind kind]))
+                        (hash-set! ht xs (list fallback-kind rhs))]
+                       [_ (void)]))
+                   ht)))
           (define singleton-info
             (match (letrec-scc-component-bindings component)
               [(list binding)
@@ -4905,14 +4908,43 @@
                      local-mv-kind
                      dead-pure-singleton?)]
               [_ #f]))
+          (define needs-default-plan?
+            (match (letrec-scc-component-bindings component)
+              [(list binding)
+               (letrec-scc-binding-self-recursive? binding)]
+              [_ #t]))
+          (define single-used-xs
+            (and has-unreferenced?
+                 (= (hash-count reclassifiable) 1)
+                 (for/first ([(xs _v) (in-hash reclassifiable)])
+                   xs)))
+          (define single-used-classified
+            (and single-used-xs
+                 (for/list ([clause (in-list default-classified)])
+                   (match clause
+                     [(list 'unreferenced xs rhs)
+                      (if (equal? xs single-used-xs)
+                          (match (hash-ref reclassifiable xs)
+                            [(list kind rhs0)
+                             (list kind xs rhs0)])
+                          clause)]
+                     [_ clause]))))
           (define default-plan
-            (prepare-classified-plan s default-classified))
+            (and needs-default-plan?
+                 (prepare-classified-plan s default-classified)))
+          (define single-used-plan
+            (and needs-default-plan?
+                 single-used-classified
+                 (prepare-classified-plan s single-used-classified)))
           (cons (struct-copy letrec-scc-component component
                              [reclassifiable reclassifiable]
-                             [has-unreferenced? (classified-has-unreferenced? default-classified)]
+                             [has-unreferenced? has-unreferenced?]
                              [dead-when-unused? (classified-dead-when-unused? default-classified)]
                              [singleton-info singleton-info]
-                             [default-plan default-plan])
+                             [default-plan default-plan]
+                             [single-used-xs single-used-xs]
+                             [single-used-classified single-used-classified]
+                             [single-used-plan single-used-plan])
                 default-classified)))
       (define initial-state
         (cons e0 (referenced-vars e0)))
@@ -4938,6 +4970,10 @@
              default-classified]
             [(not (letrec-scc-component-has-unreferenced? metadata))
              default-classified]
+            [(and (letrec-scc-component-single-used-xs metadata)
+                  (for/or ([x (in-list (letrec-scc-component-single-used-xs metadata))])
+                    (set-in? x body-referenced)))
+             (letrec-scc-component-single-used-classified metadata)]
             [else
              (Reclassify-classified-scc metadata
                                         default-classified
@@ -4966,11 +5002,18 @@
                  (with-output-language (LFE2+ Expr)
                    (Begin s (list (EvaluateClause s xs rhs) body)))])]
              [self-recursive?
-              (if (eq? local-classified default-classified)
-                  (Lower-waddell/plan s
-                                      (letrec-scc-component-default-plan metadata)
-                                      body)
-                  (Lower-waddell/classified s local-classified body))]
+              (cond
+                [(eq? local-classified default-classified)
+                 (Lower-waddell/plan s
+                                     (letrec-scc-component-default-plan metadata)
+                                     body)]
+                [(eq? local-classified
+                      (letrec-scc-component-single-used-classified metadata))
+                 (Lower-waddell/plan s
+                                     (letrec-scc-component-single-used-plan metadata)
+                                     body)]
+                [else
+                 (Lower-waddell/classified s local-classified body)])]
              [else
              (with-output-language (LFE2+ Expr)
                 `(let-values ,s ([(,xs ...) ,rhs]) ,body))])]
@@ -4980,11 +5023,18 @@
                    (letrec-scc-component-dead-when-unused? metadata))
               body]
              [else
-              (if (eq? local-classified default-classified)
-                  (Lower-waddell/plan s
-                                      (letrec-scc-component-default-plan metadata)
-                                      body)
-                  (Lower-waddell/classified s local-classified body))])]))
+              (cond
+                [(eq? local-classified default-classified)
+                 (Lower-waddell/plan s
+                                     (letrec-scc-component-default-plan metadata)
+                                     body)]
+                [(eq? local-classified
+                      (letrec-scc-component-single-used-classified metadata))
+                 (Lower-waddell/plan s
+                                     (letrec-scc-component-single-used-plan metadata)
+                                     body)]
+                [else
+                 (Lower-waddell/classified s local-classified body)])])]))
         (cons next-body
               (set-union body-referenced scc-all-refs))))))
   (TopLevelForm        : TopLevelForm        (T) -> TopLevelForm        ())
