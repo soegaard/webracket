@@ -422,5 +422,94 @@
                                                 (set! x (+ 1 0))
                                                 x))])
                                    'ok)))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (letrec ([x ((lambda l z) 5)]
+                                        [z 5])
+                                 x))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (letrec ([q (lambda () s)]
+                                        [r (q)]
+                                        [s 5])
+                                 r))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (letrec ([f (lambda () (letrec ([x x]) 5))]
+                                        [g (f)])
+                                 g))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (letrec ([a (letrec ([y (lambda () x)])
+                                             (lambda () (y)))]
+                                        [x (a)])
+                                 x))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (letrec ([a (letrec ([x (lambda () (y))]
+                                                    [y (lambda () a)])
+                                             (x))])
+                                 a))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (letrec ([w (lambda () r)]
+                                        [z (lambda () 5)]
+                                        [x (set! z w)]
+                                        [y (set! x (z))]
+                                        [r 5])
+                                 x))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (letrec ([x (letrec ([v (lambda () y)]) v)]
+                                        [y (x)])
+                                 y))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (letrec ([a 1]
+                                        [b (set! a (lambda () c))]
+                                        [c (a)])
+                                 c))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (letrec ([b (let ([d (lambda () c)])
+                                             (d))]
+                                        [c 1])
+                                 b))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (letrec ([b (let-values ([(a) 5]
+                                                        [(e d) (values 1
+                                                                       (lambda () c))])
+                                             (d))]
+                                        [c 1])
+                                 b))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (letrec ([b (let-values ([(e d) (values 1
+                                                                       (lambda () c))]
+                                                        [(a) 5])
+                                             (d))]
+                                        [c 1])
+                                 b))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (letrec ([b (let ([e (lambda ()
+                                                      (let ([d (lambda () c)])
+                                                        (d)))])
+                                             (e))]
+                                        [c 1])
+                                 b))
                              'raised)))
               ))))

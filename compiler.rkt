@@ -4124,6 +4124,7 @@
             edges)))
     (define edges
       (if (and last-ordered
+               (letrec-scc-order-sensitive-kind? (letrec-scc-binding-kind binding))
                (not (memq last-ordered ref-edges)))
           (cons last-ordered ref-edges)
           ref-edges))
@@ -4765,6 +4766,26 @@
                    lambda-clauses
                    complex)])))
     (define (normalize-classified+refs-for-order classified+refs)
+      (define ref-ht (make-hasheq))
+      (for ([clause+refs (in-list classified+refs)])
+        (match clause+refs
+          [(cons (list _kind xs _rhs) refs)
+           (for ([x (in-list xs)])
+             (hash-set! ref-ht x refs))]))
+      (define (expand-refs refs)
+        (let loop ([pending (id-set->list refs)]
+                   [seen refs])
+          (cond
+            [(null? pending) seen]
+            [else
+             (define x (car pending))
+             (define next-refs (hash-ref ref-ht x empty-set))
+             (define unseen
+               (for/list ([y (in-list (id-set->list next-refs))]
+                          #:unless (set-in? y seen))
+                 y))
+             (loop (append (cdr pending) unseen)
+                   (set-union seen next-refs))])))
       (define-values (normalized-rev _prior-seq-refs)
         (for/fold ([normalized-rev '()]
                    [prior-seq-refs empty-set])
@@ -4778,18 +4799,44 @@
                (if blocked?
                    (cons (list 'simple-allocates xs rhs) refs)
                    clause+refs))
+             (define expanded-refs
+               (expand-refs refs))
              (values (cons normalized normalized-rev)
                      (if blocked?
-                         (set-union prior-seq-refs refs)
+                         (set-union prior-seq-refs expanded-refs)
                          prior-seq-refs))]
             [(cons (list 'lambda _xs _rhs) _refs)
              (values (cons clause+refs normalized-rev)
                      prior-seq-refs)]
             [(cons _clause refs)
+             (define expanded-refs
+               (expand-refs refs))
              (values (cons clause+refs normalized-rev)
-                     (set-union prior-seq-refs refs))])))
+                     (set-union prior-seq-refs expanded-refs))])))
       (reverse normalized-rev))
     (define (normalize-classified-for-order classified)
+      (define ref-ht (make-hasheq))
+      (for ([clause (in-list classified)])
+        (match clause
+          [(list _kind xs rhs)
+           (define refs
+             (lfe2+-referenced-vars rhs))
+           (for ([x (in-list xs)])
+             (hash-set! ref-ht x refs))]))
+      (define (expand-refs refs)
+        (let loop ([pending (id-set->list refs)]
+                   [seen refs])
+          (cond
+            [(null? pending) seen]
+            [else
+             (define x (car pending))
+             (define next-refs (hash-ref ref-ht x empty-set))
+             (define unseen
+               (for/list ([y (in-list (id-set->list next-refs))]
+                          #:unless (set-in? y seen))
+                 y))
+             (loop (append (cdr pending) unseen)
+                   (set-union seen next-refs))])))
       (define-values (normalized-rev _prior-seq-refs)
         (for/fold ([normalized-rev '()]
                    [prior-seq-refs empty-set])
@@ -4799,21 +4846,23 @@
              (define blocked?
                (for/or ([x (in-list xs)])
                  (set-in? x prior-seq-refs)))
+             (define expanded-refs
+               (expand-refs (lfe2+-referenced-vars rhs)))
              (values (cons (if blocked?
                                (list 'simple-allocates xs rhs)
                                clause)
                            normalized-rev)
                      (if blocked?
-                         (set-union prior-seq-refs
-                                    (lfe2+-referenced-vars rhs))
+                         (set-union prior-seq-refs expanded-refs)
                          prior-seq-refs))]
             [(list 'lambda _xs _rhs)
              (values (cons clause normalized-rev)
                      prior-seq-refs)]
             [(list _kind _xs rhs)
+             (define expanded-refs
+               (expand-refs (lfe2+-referenced-vars rhs)))
              (values (cons clause normalized-rev)
-                     (set-union prior-seq-refs
-                                (lfe2+-referenced-vars rhs)))])))
+                     (set-union prior-seq-refs expanded-refs))])))
       (reverse normalized-rev))
     (define (prepare-classified-plan s classified)
       (define classified*
@@ -5172,7 +5221,8 @@
       (define assigned (or (current-assigned-analysis)
                            (all-assigned-vars e0 e)))
       (define classified
-        (classify-clauses x e lhs-set referenced assigned))
+        (normalize-classified-for-order
+         (classify-clauses x e lhs-set referenced assigned)))
       (define components
         (for/list ([component (in-list (letrec-scc-components classified))])
           (define singleton-component?
