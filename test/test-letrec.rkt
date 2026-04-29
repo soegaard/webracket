@@ -445,6 +445,12 @@
                                         [n (cons c 4)])
                                  (cons (a) (cons (m) n))))
                              '((1 . 2) ((1 . 2) . 4) (1 . 2) . 4))
+                     (equal? (letrec ([a (let ([x 0])
+                                           (lambda () x))]
+                                      [b (let ([y 2])
+                                           (* y (a)))])
+                               b)
+                             0)
                      (equal? (letrec ([b 3]
                                       [a (set! b 0)])
                                17)
@@ -662,6 +668,14 @@
                                  (letrec ([m (lambda () n)]
                                           [n (cons 3 4)])
                                    (cons (m) n))))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (letrec ([a (lambda () c)]
+                                        [b (lambda () a)]
+                                        [c ((b))]
+                                        [d (cons 1 2)])
+                                 d))
                              'raised)
                      (equal? (with-handlers ([exn:fail:contract:variable?
                                               (lambda (_ex) 'raised)])
