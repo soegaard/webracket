@@ -416,15 +416,28 @@
                                ((cdr b) 17)
                                (list a ((car b))))
                              '(17 17))
+                     (equal? (letrec ([m (let ([f (lambda () n)])
+                                           f)]
+                                      [n (cons 1 2)])
+                               n)
+                             '(1 . 2))
                      (equal? (letrec ([b 3]
                                       [a (set! b 0)])
                                17)
                              17)
                      (equal? (letrec ([a (lambda () c)]
                                       [b (if #t a (a))]
-                                      [c (cons 1 2)])
+                                       [c (cons 1 2)])
                                (b))
-                             '(1 . 2))))
+                             '(1 . 2))
+                     (equal? (letrec ([a (lambda (n) (n 0))]
+                                      [b (a (lambda (x)
+                                              (if (zero? x)
+                                                  #f
+                                                  c)))]
+                                      [c #t])
+                               b)
+                             #f)))
               (list "letrec variable error paths"
                     (and
                      (equal? (with-handlers ([exn:fail:contract:variable?
@@ -458,6 +471,13 @@
                                (letrec ([a (set! b 0)]
                                         [b 3])
                                  17))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (letrec ([m (let ([f (lambda () n)])
+                                             (f))]
+                                        [n (cons 1 2)])
+                                 n))
                              'raised)
                      (equal? (with-handlers ([exn:fail:contract:variable?
                                               (lambda (_ex) 'raised)])
@@ -593,5 +613,15 @@
                                         [d ((b))]
                                         [c (cons 1 2)])
                                  d))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (letrec ([a (lambda (n) (n 0))]
+                                        [b (a (lambda (x)
+                                                (if (zero? x)
+                                                    c
+                                                    #f)))]
+                                        [c #t])
+                                 b))
                              'raised)))
               ))))
