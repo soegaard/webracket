@@ -423,6 +423,22 @@
                                            (lambda (n) (g (* n 2))))])
                                (f 12))
                              48)
+                     (equal? (letrec ([f (lambda (f n)
+                                           (if (= n 0)
+                                               1
+                                               (* n (f f (- n 1)))))])
+                               (f f 5))
+                             120)
+                     (equal? (let ([f (lambda (f)
+                                        (lambda (n)
+                                          (if (= n 0)
+                                              1
+                                              (* n (f (- n 1))))))])
+                               (letrec ([fix
+                                         (lambda (f)
+                                           (f (lambda (n) ((fix f) n))))])
+                                 ((fix f) 5)))
+                             120)
                      (equal? (letrec ([a 12]
                                       [b (+ a 5)]
                                       [c (+ b a)])
@@ -720,5 +736,13 @@
                                                     #f)))]
                                         [c #t])
                                  b))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (let ()
+                                 (define b (ciao))
+                                 (define (ciao)
+                                   123)
+                                 #t))
                              'raised)))
               ))))

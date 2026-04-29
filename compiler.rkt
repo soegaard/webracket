@@ -4841,9 +4841,19 @@
                      (if blocked?
                          (set-union prior-seq-refs expanded-refs)
                          prior-seq-refs))]
-            [(cons (list 'lambda _xs _rhs) _refs)
-             (values (cons clause+refs normalized-rev)
-                     prior-seq-refs)]
+            [(cons (list 'lambda xs rhs) refs)
+             (define blocked?
+               (for/or ([x (in-list xs)])
+                 (set-in? x prior-seq-refs)))
+             (define expanded-refs
+               (expand-refs refs))
+             (values (cons (if blocked?
+                               (cons (list 'complex xs rhs) refs)
+                               clause+refs)
+                           normalized-rev)
+                     (if blocked?
+                         (set-union prior-seq-refs expanded-refs)
+                         prior-seq-refs))]
             [(cons _clause refs)
              (define expanded-refs
                (expand-refs refs))
@@ -4891,9 +4901,19 @@
                      (if blocked?
                          (set-union prior-seq-refs expanded-refs)
                          prior-seq-refs))]
-            [(list 'lambda _xs _rhs)
-             (values (cons clause normalized-rev)
-                     prior-seq-refs)]
+            [(list 'lambda xs rhs)
+             (define blocked?
+               (for/or ([x (in-list xs)])
+                 (set-in? x prior-seq-refs)))
+             (define expanded-refs
+               (expand-refs (lfe2+-referenced-vars rhs)))
+             (values (cons (if blocked?
+                               (list 'complex xs rhs)
+                               clause)
+                           normalized-rev)
+                     (if blocked?
+                         (set-union prior-seq-refs expanded-refs)
+                         prior-seq-refs))]
             [(list _kind _xs rhs)
              (define expanded-refs
                (expand-refs (lfe2+-referenced-vars rhs)))
