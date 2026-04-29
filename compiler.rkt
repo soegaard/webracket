@@ -4591,6 +4591,9 @@
                  (Loop (cdr pending)
                        (cons (list kind xs rhs) classified))])])]))
       (Loop clauses '()))
+    (define (classified-has-unreferenced? classified)
+      (for/or ([clause (in-list classified)])
+        (eq? (first clause) 'unreferenced)))
     (define (binding-vars-set xss)
       (for/fold ([xs empty-set]) ([x* (in-list xss)])
         (for/fold ([xs xs]) ([x (in-list x*)])
@@ -4751,6 +4754,20 @@
                           (set-union body-referenced
                                      (letrec-scc-component-all-refs component))))
       (classify-clauses x e lhs-set referenced assigned))
+    (define (Reclassify-singleton-scc binding body-referenced assigned)
+      (define xs
+        (letrec-scc-binding-xs binding))
+      (define rhs
+        (letrec-scc-binding-rhs binding))
+      (define lhs-set
+        (letrec-binding-groups-vars-set (list xs)))
+      (define referenced
+        (set-intersection lhs-set
+                          (set-union body-referenced
+                                     (letrec-scc-binding-all-refs binding))))
+      (list (list (classify-clause xs rhs lhs-set referenced assigned)
+                  xs
+                  rhs)))
     (define (Lower-scc s x e e0)
       (define lhs-set (binding-vars-set x))
       (define referenced (all-referenced-vars e0 e))
@@ -4759,25 +4776,42 @@
       (define classified
         (classify-clauses x e lhs-set referenced assigned))
       (define components
-        (letrec-scc-components classified))
+        (for/list ([component (in-list (letrec-scc-components classified))])
+          (cons component
+                (Reclassify-scc component empty-set assigned))))
       (define initial-state
         (cons e0 (referenced-vars e0)))
       (car
        (for/fold ([state initial-state])
                  ([component (in-list (reverse components))])
+        (define metadata
+          (car component))
+        (define default-classified
+          (cdr component))
         (define body
           (car state))
         (define body-referenced
           (cdr state))
         (define sorted-scc
-          (letrec-scc-component-bindings component))
-        (define local-classified
-          (Reclassify-scc component body-referenced assigned))
+          (letrec-scc-component-bindings metadata))
         (define body-uses-scc?
-          (for/or ([x (in-list (letrec-scc-component-flat-xs component))])
+          (for/or ([x (in-list (letrec-scc-component-flat-xs metadata))])
             (set-in? x body-referenced)))
+        (define local-classified
+          (cond
+            [(not body-uses-scc?)
+             default-classified]
+            [(not (classified-has-unreferenced? default-classified))
+             default-classified]
+            [(and (= (length sorted-scc) 1)
+                  (= (length default-classified) 1))
+             (Reclassify-singleton-scc (first sorted-scc)
+                                       body-referenced
+                                       assigned)]
+            [else
+             (Reclassify-scc metadata body-referenced assigned)]))
         (define scc-all-refs
-          (letrec-scc-component-all-refs component))
+          (letrec-scc-component-all-refs metadata))
         (define next-body
           (match sorted-scc
           [(list binding)
