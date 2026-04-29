@@ -4256,6 +4256,8 @@
 (define-pass lower-letrec-values : LFE2+ (T) -> LFE2+ ()
   (definitions
     (define h #'lower-letrec-values)
+    (define current-letrec-ambient-lhs-set
+      (make-parameter empty-set))
     (define (referenced-vars e)
       (define (Expr* es)
         (for/fold ([xs empty-set]) ([e (in-list es)])
@@ -4313,7 +4315,9 @@
           [(app ,s ,e0 ,e1 ...)     (Expr* (cons e0 e1))]))
       (Expr e))
     (define (lhs-free? e lhs-set)
-      (set-empty? (set-intersection lhs-set (referenced-vars e))))
+      (set-empty? (set-intersection (set-union lhs-set
+                                               (current-letrec-ambient-lhs-set))
+                                    (referenced-vars e))))
     (define (effect-free-simple-kind e lhs-set)
       (define (join-simple-kinds k1 k2)
         (cond
@@ -5301,12 +5305,10 @@
                                                         assigned)]
                       [kind kind]))
                   (define dead-pure-singleton?
-                    (let ([local-lhs-set
-                           (letrec-binding-groups-vars-set (list xs))])
-                      (or (eq? (effect-free-simple-kind rhs local-lhs-set) 'pure)
-                          (eq? (simple-values-kind xs rhs local-lhs-set assigned) 'pure)
-                          (and (split-lambda-values-clause xs rhs assigned) #t)
-                          (lambda-clause? xs rhs))))
+                    (or (eq? (effect-free-simple-kind rhs lhs-set) 'pure)
+                        (eq? (simple-values-kind xs rhs lhs-set assigned) 'pure)
+                        (and (split-lambda-values-clause xs rhs assigned) #t)
+                        (lambda-clause? xs rhs)))
                   (hash-set! ht xs
                              (letrec-scc-binding-facts
                               (letrec-scc-binding-self-recursive? binding)
@@ -5499,11 +5501,23 @@
   (GeneralTopLevelForm : GeneralTopLevelForm (G) -> GeneralTopLevelForm ())
   (Formals             : Formals             (F) -> Formals             ())
   (Expr : Expr (E) -> Expr ()
-    [(letrec-values ,s ([(,x ...) ,[e]] ...) ,[e0])
+    [(letrec-values ,s ([(,x ...) ,e] ...) ,e0)
+     (define cluster-lhs-set
+       (binding-vars-set x))
+     (define lowered-rhss
+       (parameterize ([current-letrec-ambient-lhs-set
+                       (set-union (current-letrec-ambient-lhs-set)
+                                  cluster-lhs-set)])
+         (map Expr e)))
+     (define lowered-body
+       (parameterize ([current-letrec-ambient-lhs-set
+                       (set-union (current-letrec-ambient-lhs-set)
+                                  cluster-lhs-set)])
+         (Expr e0)))
      (case (current-letrec-strategy)
-       [(basic)   (Lower-basic s x e e0)]
-       [(waddell) (Lower-waddell s x e e0)]
-       [(scc)     (Lower-scc s x e e0)]
+       [(basic)   (Lower-basic s x lowered-rhss lowered-body)]
+       [(waddell) (Lower-waddell s x lowered-rhss lowered-body)]
+       [(scc)     (Lower-scc s x lowered-rhss lowered-body)]
        [else
         (error 'lower-letrec-values
                "unknown letrec strategy: ~a"

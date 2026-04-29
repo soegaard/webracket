@@ -640,6 +640,31 @@
                              'raised)
                      (equal? (with-handlers ([exn:fail:contract:variable?
                                               (lambda (_ex) 'raised)])
+                               (letrec ([a (lambda () c)]
+                                        [b (if #t (a) a)]
+                                        [c (cons 1 2)])
+                                 b))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (letrec ([a (letrec ([b (lambda () c)]
+                                                    [d (b)]
+                                                    [c (cons 1 2)])
+                                             d)])
+                                 a))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
+                               (letrec ([a (letrec ([b (lambda () c)]
+                                                    [d c])
+                                             b)]
+                                        [c (cons 1 2)])
+                                 (letrec ([m (lambda () n)]
+                                          [n (cons 3 4)])
+                                   (cons (m) n))))
+                             'raised)
+                     (equal? (with-handlers ([exn:fail:contract:variable?
+                                              (lambda (_ex) 'raised)])
                                (letrec ([a (lambda (n) (n 0))]
                                         [b (a (lambda (x)
                                                 (if (zero? x)
