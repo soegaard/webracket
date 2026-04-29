@@ -346,4 +346,36 @@
                                                            (eq? x y))])
                                  (list z (reverse events))))
                              '(#t (x y z)))))
+              (list "letrec begin and checked-but-ok"
+                    (and
+                     (equal? (procedure?
+                              (letrec ([x (begin (lambda () y)
+                                                  (lambda () z))]
+                                       [y 5]
+                                       [z 6])
+                                x))
+                             #t)
+                     (equal? (procedure?
+                              (letrec ([y (lambda () (letrec ([x x]) x))])
+                                y))
+                             #t)
+                     (equal? (let-values (((_tri)
+                                           (letrec-values (((all-types) 1))
+                                             (lambda (x) all-types))))
+                               (letrec-values (((quad-super-type) _tri)
+                                               ((offsets)
+                                                (map quad-super-type
+                                                     (list 1))))
+                                 offsets))
+                             '(1))
+                     (equal? (let ([save #f])
+                               (let ([indirect (lambda (f) (set! save f))]
+                                     [also-indirect (lambda () 8)])
+                                 (letrec ([x (indirect
+                                              (lambda ()
+                                                (set! x (also-indirect))
+                                                x))])
+                                   'ok)
+                                 (save)))
+                             8)))
               ))))

@@ -4809,7 +4809,7 @@
       (define lambda-lhs-set
         (binding-vars-set (map first lambda-clauses*)))
       (define (simple-pure-after-lambda? all-refs)
-        (for/and ([x (in-set lambda-lhs-set)])
+        (for/and ([x (in-list (id-set->list lambda-lhs-set))])
           (not (set-in? x all-refs))))
       (define seq-exprs
         (for/list ([clause (in-list classified)]
@@ -4878,7 +4878,7 @@
       (define lambda-lhs-set
         (binding-vars-set (map first lambda-clauses*)))
       (define (simple-pure-after-lambda? all-refs)
-        (for/and ([x (in-set lambda-lhs-set)])
+        (for/and ([x (in-list (id-set->list lambda-lhs-set))])
           (not (set-in? x all-refs))))
       (define seq-exprs
         (for/list ([clause+refs (in-list classified+refs)]
