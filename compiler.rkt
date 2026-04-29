@@ -46,6 +46,10 @@
 (require "expander.rkt"       ; provides topexpand
          "assembler.rkt"
          "priminfo.rkt"       ; information on Racket primitives
+         (only-in "primitives-db.rkt"
+                  primitive-db
+                  primitive-info-name
+                  primitive-info-properties)
          "runtime-wasm.rkt"   ;
          "define-foreign.rkt"
          "parameters.rkt"
@@ -356,7 +360,10 @@
 ;;; Quick and dirty sets of variables represented as free-id sets
 (define (variable=? x y) (free-identifier=? (variable-id x) (variable-id y)))
 
-(struct id-set (ids entries) #:transparent)
+(struct id-set
+  (ids                    ; insertion-order list of variables
+   entries)               ; free-id-set for fast membership
+  #:transparent)
 
 (define empty-set (id-set '() (immutable-free-id-set)))
 (define (id-set->list s) (id-set-ids s))
@@ -405,7 +412,11 @@
 ;;; Environment for the α-renaming pass
 ;;;
 
-(struct rename-env (lexical by-name fallback) #:transparent)
+(struct rename-env
+  (lexical                ; exact lexical-id -> renamed variable
+   by-name                ; printed-name occupancy map
+   fallback)              ; non-lexical printed-name -> renamed variable
+  #:transparent)
 
 ;; rename-env-variable : (or/c variable? identifier?) -> variable?
 ;;   Normalize alpha-rename lookup inputs to variables.
@@ -593,7 +604,9 @@
 ; Constants are literals ("selfquoting").
 ; Parse will introduce explicit quotes for constants.
 
-(struct datum (stx value)
+(struct datum
+  (stx                    ; source syntax for the quoted datum
+   value)                 ; plain Racket value carried through the compiler
   #:transparent
   #:methods gen:custom-write
   [(define (write-proc d port mode)
@@ -748,7 +761,12 @@
 ;;;
 
 (struct primitive-inline-spec
-  (name kind min max rest-start default)
+  (name                   ; primitive name
+   kind                   ; inline calling convention / shape tag
+   min                    ; minimum accepted argument count
+   max                    ; maximum accepted argument count, or #f
+   rest-start             ; first position collected into the rest argument
+   default)               ; default filler values for omitted optional args
   #:transparent)
 
 ;; primitive-inline-spec-accepted-counts : primitive-inline-spec? -> (listof exact-nonnegative-integer?)
@@ -3906,8 +3924,13 @@
 ;; Note: When `lower-letrec-values` needs to insert `set!` it needs to
 ;;       update the table, so `box-mutable` gets uptodate information.
 
-(struct var-info        (assigned?) #:transparent)
-(struct assigned-analysis (assigned)  #:transparent)
+(struct var-info
+  (assigned?)             ; whether the variable is assigned anywhere
+  #:transparent)
+
+(struct assigned-analysis
+  (assigned)              ; hasheq: variable -> var-info
+  #:transparent)
 ; where
 ;  assigned is a hashtable from identifier to var-info
 
@@ -4017,21 +4040,236 @@
   (TopLevelForm T empty-set))
 
 
-(struct letrec-scc-binding (pos xs rhs kind refs all-refs self-recursive?)
+;;;
+;;; HELPERS FOR LOWER LETREC VALUES
+;;;
+
+;; The next pass is all about lowering `letrec`.
+;;
+;; In plain language:
+;;
+;; - `letrec-scc-binding`
+;;   One original letrec clause, together with the facts we compute from
+;;   its right-hand side.
+;;
+;; - `letrec-scc-binding-facts`
+;;   Extra cached facts derived from one binding. These are the facts the
+;;   lowering step consults over and over again.
+;;
+;; - `letrec-scc-component`
+;;   One strongly connected component (SCC): a group of letrec clauses that
+;;   depend on each other and therefore must be lowered together.
+;;
+;; - `letrec-classified-plan`
+;;   The concrete lowering plan for one component: which clauses become
+;;   placeholders, which stay as direct lambda bindings, and which
+;;   expressions must run in sequence.
+;;
+;; - `letrec-scc-node`
+;;   A graph node used only while computing SCCs with Tarjan's algorithm.
+;;
+;; Simple examples:
+;;
+;; 1. A non-recursive dependency chain:
+;;
+;;      (letrec ([x 1]
+;;               [y (+ x 2)])
+;;        y)
+;;
+;;    We get two `letrec-scc-binding`s:
+;;      - binding for `x`, whose rhs is `1`
+;;      - binding for `y`, whose rhs references `x`
+;;
+;;    Since `x` does not depend on `y`, they end up in two separate
+;;    `letrec-scc-component`s. That lets the SCC lowering treat them
+;;    independently.
+;;
+;; 2. A mutually recursive pair:
+;;
+;;      (letrec ([even? (lambda (n) (if (= n 0) #t (odd? (- n 1))))]
+;;               [odd?  (lambda (n) (if (= n 0) #f (even? (- n 1))))])
+;;        even?)
+;;
+;;    Here there are again two `letrec-scc-binding`s, but each rhs refers to
+;;    the other binding. So both bindings land in the same
+;;    `letrec-scc-component`.
+;;
+;;    The corresponding `letrec-classified-plan` will usually say:
+;;      - no placeholders are needed
+;;      - both clauses can stay as direct lambda bindings
+;;      - there are no extra sequential initialization expressions
+;;
+;; 3. A mixed component:
+;;
+;;      (letrec ([f (lambda () x)]
+;;               [x (box 1)])
+;;        (f))
+;;
+;;    The SCC may need a plan where:
+;;      - `f` is kept as a direct lambda binding
+;;      - `x` is initialized through the sequential path
+;;      - placeholder / sequencing data are stored in the
+;;        `letrec-classified-plan`
+;;
+;; So the flow is:
+;;   original letrec clauses
+;;   -> `letrec-scc-binding`
+;;   -> SCC grouping as `letrec-scc-component`
+;;   -> lowering recipe as `letrec-classified-plan`
+;;   -> final rewritten let/letrec/set! form
+
+
+(struct letrec-scc-binding
+  (pos                      ; original clause position within the letrec group
+   xs                       ; variables bound by this clause
+   rhs                      ; lowered RHS expression for the clause
+   kind                     ; whole-group clause classification at discovery time
+   refs                     ; letrec-local references used for SCC edges
+   all-refs                 ; all referenced vars, including non-local ones
+   self-recursive?)         ; whether rhs refers to one of xs
   #:transparent)
 
-(struct letrec-scc-binding-facts (self-recursive? default-kind fallback-kind dead-pure-singleton?)
+;; Terms:
+;;   clause:     one `[(x ...) rhs]` entry from a `letrec-values`
+;;   rhs:        the right-hand side expression of that clause
+;;   xs:         the variables bound by that clause
+;;   local refs: references from this rhs to vars bound in the same letrec group
+;;   kind:       one of:
+;;                 - `unreferenced`     : clause is dead unless the body later uses it
+;;                 - `simple-pure`      : simple effect-free clause
+;;                 - `simple-allocates` : simple clause that allocates or otherwise must run
+;;                 - `lambda`           : clause whose rhs is a lambda / case-lambda
+;;                 - `complex`          : clause that needs the general sequential path
+
+;; Field types:
+;;   pos             : exact-nonnegative-integer?
+;;   xs              : (listof variable?)
+;;   rhs             : Expr?
+;;   kind            : a symbol, one of:
+;;                     unreferenced simple-pure simple-allocates lambda complex
+;;   refs            : id-set?
+;;   all-refs        : id-set?
+;;   self-recursive? : boolean?
+
+(struct letrec-scc-binding-facts
+  (self-recursive?          ; cached copy of the binding's self-recursive status
+   default-kind             ; SCC-local clause kind before body-driven adjustment
+   fallback-kind            ; non-unreferenced kind to use once the body needs it
+   dead-pure-singleton?)    ; drop-safe when this is the only binding in its SCC
   #:transparent)
 
-(struct letrec-scc-component (bindings x e lhs-set flat-xs all-refs binding+facts binding-facts has-unreferenced? unreferenced-xss unreferenced-set dead-when-unused? default-plan single-used-xs single-used-classified single-used-plan)
+;; Terms:
+;;   self-recursive? : `[(x ...) rhs]` there is a references in `rhs` to one of the `xs`.
+;;   default-kind:     the clause kind assuming the enclosing body does not use it
+;;   fallback-kind:    the kind to switch to if body use means it is not dead
+;;   singleton:        an SCC containing exactly one binding
+;;   default-kind:     one of:
+;;                       - `unreferenced`     : dead unless the body later uses it
+;;                       - `simple-pure`      : simple effect-free clause
+;;                       - `simple-allocates` : simple clause that allocates or otherwise must run
+;;                       - `lambda`           : lambda / case-lambda clause
+;;                       - `complex`          : clause that needs the general sequential path
+;;   fallback-kind:    one of:
+;;                       - `simple-pure`      : simple effect-free clause
+;;                       - `simple-allocates` : simple clause that allocates or otherwise must run
+;;                       - `lambda`           : lambda / case-lambda clause
+;;                       - `complex`          : clause that needs the general sequential path
+
+;; Field types:
+;;   self-recursive?     : boolean?
+;;   default-kind        : a symbol, one of:
+;;                         unreferenced simple-pure simple-allocates lambda complex
+;;   fallback-kind       : a symbol, one of:
+;;                         simple-pure simple-allocates lambda complex
+;;   dead-pure-singleton?: boolean?
+
+(struct letrec-scc-component
+  (bindings                 ; bindings in source / dependency order for this SCC
+   x                        ; grouped binding variable lists, one per clause
+   e                        ; grouped RHS expressions, one per clause
+   lhs-set                  ; id-set of all variables bound in the SCC
+   flat-xs                  ; flattened list of all bound variables
+   all-refs                 ; union of all binding all-refs sets
+   binding+facts            ; cached (binding . facts) pairs
+   binding-facts            ; cached facts keyed by binding
+   has-unreferenced?        ; whether default classification contains dead clauses
+   unreferenced-xss         ; grouped vars for default unreferenced clauses
+   unreferenced-set         ; flattened id-set for fast body-use checks
+   dead-when-unused?        ; whole component can be dropped if body never uses it
+   default-plan             ; lowering plan for the default SCC-local classification
+   single-used-xs           ; vars in the one-used fast-path clause, if any
+   single-used-classified   ; classified shape for the one-used fast path
+   single-used-plan)        ; lowering plan for the one-used fast path
   #:transparent)
 
-(struct letrec-classified-plan (placeholder-clauses lambda-bindings seq-exprs pure-after-clauses pure-before-clauses)
+;; Terms:
+;;   SCC:                   a strongly connected component in the letrec dependency graph
+;;   grouped:               one entry per original letrec clause
+;;   default plan:          the lowering plan when no extra body-driven reclassification is needed
+;;   single-used fast path: cached plan for the common case where one previously dead
+;;                          clause becomes needed by the body
+
+;; Field types:
+;;   bindings             : (listof letrec-scc-binding?)
+;;   x                    : (listof (listof variable?))
+;;   e                    : (listof Expr?)
+;;   lhs-set              : id-set?
+;;   flat-xs              : (listof variable?)
+;;   all-refs             : id-set?
+;;   binding+facts        : (listof (cons/c letrec-scc-binding? letrec-scc-binding-facts?))
+;;   binding-facts        : hash?
+;;   has-unreferenced?    : boolean?
+;;   unreferenced-xss     : (listof (listof variable?))
+;;   unreferenced-set     : id-set?
+;;   dead-when-unused?    : boolean?
+;;   default-plan         : letrec-classified-plan?
+;;   single-used-xs       : (or/c #f (listof variable?))
+;;   single-used-classified : (or/c #f (listof list?))
+;;   single-used-plan     : (or/c #f letrec-classified-plan?)
+
+(struct letrec-classified-plan
+  (placeholder-clauses      ; bindings that need placeholder allocation
+   lambda-bindings          ; direct letrec-bindable lambda clauses
+   seq-exprs                ; initialization/evaluation sequence expressions
+   pure-after-clauses       ; pure clauses that can be placed after lambdas
+   pure-before-clauses)     ; pure clauses that must remain before lambdas
   #:transparent)
 
-(struct letrec-scc-node (binding edges index lowlink on-stack? done?)
+;; Terms:
+;;   placeholder clause: binding that must first be allocated as undefined, then initialized
+;;   lambda binding:     clause that can remain as a direct recursive lambda binding
+;;   seq expr:           expression that must run in order during lowering
+;;   pure clause:        clause with no effect that can sometimes move
+
+;; Field types:
+;;   placeholder-clauses : (listof list?)
+;;   lambda-bindings     : (listof list?)
+;;   seq-exprs           : (listof Expr?)
+;;   pure-after-clauses  : (listof list?)
+;;   pure-before-clauses : (listof list?)
+
+(struct letrec-scc-node
+  (binding                  ; letrec-scc-binding payload
+   edges                    ; successor nodes in the SCC dependency graph
+   index                    ; Tarjan discovery index, or #f
+   lowlink                  ; Tarjan lowlink value
+   on-stack?                ; whether the node is on Tarjan's stack
+   done?)                   ; whether SCC extraction has finalized this node
   #:mutable
   #:transparent)
+
+;; Terms:
+;;   Tarjan:        the SCC algorithm used to partition the dependency graph
+;;   index/lowlink: Tarjan's per-node numbers for SCC discovery
+;;   edge:          dependency from one binding to another
+
+;; Field types:
+;;   binding   : letrec-scc-binding?
+;;   edges     : (listof letrec-scc-node?)
+;;   index     : (or/c #f exact-nonnegative-integer?)
+;;   lowlink   : exact-nonnegative-integer?
+;;   on-stack? : boolean?
+;;   done?     : boolean?
 
 ;; lfe2+-referenced-vars : LFE2+ Expr -> id-set?
 ;;   Compute referenced variables for an LFE2+ expression.
@@ -4055,13 +4293,13 @@
        (Expr* (cons e0 e))]
       [(letrec-values ,s ([(,x ...) ,e] ...) ,e0)
        (Expr* (cons e0 e))]
-      [(set! ,s ,x ,e0)         (Expr e0)]
-      [(top ,s ,x)              empty-set]
+      [(set! ,s ,x ,e0)             (Expr e0)]
+      [(top ,s ,x)                  empty-set]
       [(variable-reference ,s ,vrx) empty-set]
-      [(quote ,s ,d)            empty-set]
-      [(quote-syntax ,s ,d)     empty-set]
-      [(wcm ,s ,e0 ,e1 ,e2)     (Expr* (list e0 e1 e2))]
-      [(app ,s ,e0 ,e1 ...)     (Expr* (cons e0 e1))]))
+      [(quote ,s ,d)                empty-set]
+      [(quote-syntax ,s ,d)         empty-set]
+      [(wcm ,s ,e0 ,e1 ,e2)         (Expr* (list e0 e1 e2))]
+      [(app ,s ,e0 ,e1 ...)         (Expr* (cons e0 e1))]))
   (Expr e))
 
 ;; lfe2+-assigned-vars : LFE2+ Expr -> id-set?
@@ -4086,13 +4324,13 @@
        (Expr* (cons e0 e))]
       [(letrec-values ,s ([(,x ...) ,e] ...) ,e0)
        (Expr* (cons e0 e))]
-      [(set! ,s ,x ,e0)         (set-add (Expr e0) x)]
-      [(top ,s ,x)              empty-set]
+      [(set! ,s ,x ,e0)             (set-add (Expr e0) x)]
+      [(top ,s ,x)                  empty-set]
       [(variable-reference ,s ,vrx) empty-set]
-      [(quote ,s ,d)            empty-set]
-      [(quote-syntax ,s ,d)     empty-set]
-      [(wcm ,s ,e0 ,e1 ,e2)     (Expr* (list e0 e1 e2))]
-      [(app ,s ,e0 ,e1 ...)     (Expr* (cons e0 e1))]))
+      [(quote ,s ,d)                empty-set]
+      [(quote-syntax ,s ,d)         empty-set]
+      [(wcm ,s ,e0 ,e1 ,e2)         (Expr* (list e0 e1 e2))]
+      [(app ,s ,e0 ,e1 ...)         (Expr* (cons e0 e1))]))
   (Expr e))
 
 ;; letrec-classified-clause-vars-set : (listof (list symbol? (listof variable?) any)) -> id-set?
@@ -4258,6 +4496,7 @@
     (define h #'lower-letrec-values)
     (define current-letrec-ambient-lhs-set
       (make-parameter empty-set))
+
     (define (referenced-vars e)
       (define (Expr* es)
         (for/fold ([xs empty-set]) ([e (in-list es)])
@@ -4286,6 +4525,7 @@
           [(wcm ,s ,e0 ,e1 ,e2)     (Expr* (list e0 e1 e2))]
           [(app ,s ,e0 ,e1 ...)     (Expr* (cons e0 e1))]))
       (Expr e))
+    
     (define (assigned-vars e)
       (define (Expr* es)
         (for/fold ([xs empty-set]) ([e (in-list es)])
@@ -4314,10 +4554,12 @@
           [(wcm ,s ,e0 ,e1 ,e2)     (Expr* (list e0 e1 e2))]
           [(app ,s ,e0 ,e1 ...)     (Expr* (cons e0 e1))]))
       (Expr e))
+    
     (define (lhs-free? e lhs-set)
       (set-empty? (set-intersection (set-union lhs-set
                                                (current-letrec-ambient-lhs-set))
                                     (referenced-vars e))))
+    
     (define (effect-free-simple-kind e lhs-set)
       (define (join-simple-kinds k1 k2)
         (cond
@@ -4330,73 +4572,27 @@
       (define (Expr* es)
         (for/fold ([kind 'pure]) ([e (in-list es)])
           (join-simple-kinds kind (Expr e))))
-      (define letrec-primitive-order-classes
+      (define primitive-info-by-name
         (let ([ht (make-hasheq)])
-          (for ([x (in-list
-                    '(+ - * / = < > <= >=
-                      zero? add1 sub1 abs max min
-                      not boolean? boolean=? false? xor immutable?
-                      number? number->string string->number real? inexact-real?
-                      inexact? inexact->exact exact->inexact real->double-flonum
-                      nan? infinite? positive-integer? negative-integer?
-                      nonpositive-integer? nonnegative-integer? natural?
-                      sqr sqrt integer-sqrt integer-sqrt/remainder expt exp log
-                      sin cos tan asin acos atan sinh cosh tanh asinh acosh atanh
-                      bitwise-ior bitwise-and bitwise-xor bitwise-not
-                      bitwise-bit-set? bitwise-first-bit-set bitwise-bit-field
-                      arithmetic-shift integer-length
-                      flonum? double-flonum? single-flonum? single-flonum-available?
-                      fl+ fl- fl* fl/ fl= fl< fl> fl<= fl>= flabs flround flfloor
-                      flceiling fltruncate flsingle flbit-field flsin flcos fltan
-                      flasin flacos flatan flsinh flcosh fltanh flasinh flacosh
-                      flatanh fllog flexp flsqrt flmin flmax flexpt
-                      fixnum? fxzero? fx+ fx- fx* fx= fx> fx< fx<= fx>= fxquotient
-                      unsafe-fxquotient fxremainder fxmodulo fxabs fxand fxior fxxor
-                      fxnot fxlshift fxrshift fxpopcount fxpopcount32 fxpopcount16
-                      fx+/wraparound fx-/wraparound fx*/wraparound
-                      fxlshift/wraparound fxrshift/logical fxmin fxmax
-                      fx->fl ->fl fl->fx fl->exact-integer
-                      string? string-length string-ref string=?
-                      string<? string>? string<=? string>=?
-                      string-ci=? string-ci<? string-ci<=? string-ci>? string-ci>=?
-                      string->immutable-string string->list list->string
-                      bytes? bytes-length bytes-ref bytes=? bytes<? bytes>?
-                      bytes->immutable-bytes byte?
-                      char? char->integer integer->char char-utf-8-length
-                      char=? char<? char<=? char>? char>=? char-alphabetic?
-                      char-lower-case? char-upper-case? char-title-case?
-                      char-numeric? char-symbolic? char-punctuation? char-graphic?
-                      char-whitespace? char-grapheme-break-property char-grapheme-step
-                      char-general-category char-blank? char-iso-control?
-                      char-extended-pictographic? char-upcase char-downcase
-                      char-titlecase char-foldcase char-ci=? char-ci<?
-                      char-ci<=? char-ci>? char-ci>=?
-                      symbol? symbol=? symbol-interned? symbol<?
-                      keyword? keyword<? cons? empty? first rest second third fourth
-                      fifth sixth seventh eighth ninth tenth eleventh twelfth
-                      thirteenth fourteenth fifteenth last last-pair list-ref
-                      list-tail member memq memv memw memf findf assq assv assw
-                      assoc assf argmax argmin vector? vector-length
-                      unsafe-vector-length unsafe-vector-ref vector-empty?
-                      hash-eq? hash-eqv? hash-equal? hash-equal-always? hash-empty?
-                      hash-count procedure? procedure-arity arity-at-least?
-                      arity-at-least-value eof-object? port? input-port? output-port?
-                      port-closed? string-port? srcloc? srcloc-source srcloc-line
-                      srcloc-column srcloc-position srcloc-span object-name
-                      path? path-for-some-system? path-string? path<?
-                      file-exists? directory-exists? link-exists?
-                      file-or-directory-type file-size
-                      values))])
-            (hash-set! ht x 'pure))
-          (for ([x (in-list '(box box-immutable cons hasheq hasheqv list vector))])
-            (hash-set! ht x 'allocates))
-          (for ([x (in-list '(unsafe-car unsafe-cdr))])
-            (hash-set! ht x 'ordered))
+          (for ([info (in-list primitive-db)])
+            (hash-set! ht (primitive-info-name info) info))
           ht))
       (define (letrec-primitive-order-class x)
-        (hash-ref letrec-primitive-order-classes
-                  (syntax-e (variable-id x))
-                  #f))
+        (define info
+          (hash-ref primitive-info-by-name
+                    (syntax-e (variable-id x))
+                    #f))
+        (and info
+             (let ([props (primitive-info-properties info)])
+               (cond
+                 [(and (memq 'allocates props)
+                       (not (memq 'restricted props)))
+                  'allocates]
+                 [(and (memq 'pure props)
+                       (not (memq 'restricted props)))
+                  'pure]
+                 [else
+                  #f]))))
       (define (letrec-simple-primitive-application? rator rands)
         (and (variable? rator)
              (primitive? (variable-id rator))
@@ -4419,12 +4615,14 @@
           [else                     #f]))
       (and (lhs-free? e lhs-set)
            (Expr e)))
+    
     (define (lambda-clause? xs e)
       (and (= (length xs) 1)
            (nanopass-case (LFE2+ Expr) e
              [(λ ,s ,f ,e0) #t]
              [(case-lambda ,s ,ab ...) #t]
              [else #f])))
+    
     (define (split-lambda-values-clause xs rhs assigned)
       (and (all-unassigned-bindings? xs assigned)
            (nanopass-case (LFE2+ Expr) rhs
@@ -4442,11 +4640,12 @@
                      (list 'lambda (list x) e)))]
              [else
               #f])))
+    
     (define (fresh-variable-like x)
-      (new-var x))
+      (new-var x))    
     (define (Unsafe-Undefined)
       (with-output-language (LFE2+ Expr)
-        `(quote ,h ,(datum h datum:unsafe-undefined))))
+        `(quote ,h ,(datum h datum:unsafe-undefined))))    
     (define (Zero)
       (with-output-language (LFE2+ Expr)
         `(quote ,h ,(datum h 0))))
@@ -5516,6 +5715,7 @@
                 (Lower-waddell/plan s local-plan body)])]))
         (cons next-body
               (set-union body-referenced scc-all-refs))))))
+  
   (TopLevelForm        : TopLevelForm        (T) -> TopLevelForm        ())
   (ModuleLevelForm     : ModuleLevelForm     (M) -> ModuleLevelForm     ())
   (GeneralTopLevelForm : GeneralTopLevelForm (G) -> GeneralTopLevelForm ())
@@ -5535,9 +5735,9 @@
                                   cluster-lhs-set)])
          (Expr e0)))
      (case (current-letrec-strategy)
-       [(basic)   (Lower-basic s x lowered-rhss lowered-body)]
+       [(basic)   (Lower-basic   s x lowered-rhss lowered-body)]
        [(waddell) (Lower-waddell s x lowered-rhss lowered-body)]
-       [(scc)     (Lower-scc s x lowered-rhss lowered-body)]
+       [(scc)     (Lower-scc     s x lowered-rhss lowered-body)]
        [else
         (error 'lower-letrec-values
                "unknown letrec strategy: ~a"
