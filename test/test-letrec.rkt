@@ -764,5 +764,19 @@
                                       (define x (lambda () y))))))
                                (a one 1)
                                (one))
-                             1)))
+                             1)
+                     (equal? (with-handlers ([exn:fail? (lambda (_ex) 'raised)])
+                               (let ()
+                                 (define-syntax a
+                                   (syntax-rules ()
+                                     ((_ var exp)
+                                      (begin
+                                        (define secret exp)
+                                        (define var
+                                          (lambda ()
+                                            (set! secret (+ secret 17))
+                                            secret))))))
+                                 (a x 0)
+                                 secret))
+                             'raised)))
               ))))

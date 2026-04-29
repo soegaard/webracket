@@ -7703,9 +7703,12 @@
      ; Note: Until namespaces are implemented we represented top-level variables as using `$Boxed`.
      ;       Note that if x is present in a top-level define-values
      ;       then (top x) will become x anyway.
-     ; Note: What is missing here: is error handling for an undefined top-level-variable.
      #;(displayln (list 'top (variable-id x)) (current-error-port))
-     (Reference x)
+     (if (top-variable? x)
+         (Reference x)
+         `(block (result (ref eq))
+            (call $raise-unbound-variable-reference
+                  ,(top-reference-symbol-expr x))))
      #;`(app ,#'namespace-variable-value (app ,#'string->symbol ',(symbol->string (syntax-e (variable-id x)))))
      ; ',#f ; use-mapping? TODO: this should be #t but that isn't implemented yet in runtime
      ]
