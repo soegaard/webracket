@@ -3065,8 +3065,71 @@
 
 ;; simplify-LFE : LFE -> LFE
 ;;   Simplify parsed LFE before subsequent normalization passes.
-(define-pass simplify-LFE : LFE (T) -> LFE ()
+(define (simplify-LFE T)
+  (letv ((T κ) (simplify-LFE/pass1 T '()))
+    T))
+
+(define-pass simplify-LFE/pass1 : LFE (T κ) -> LFE (κ)
   (definitions
+    (define blocked-constant-binding '#:blocked)
+    ;; κ-ref : (listof (cons/c variable? any/c)) variable? -> (or/c LFE Expr #f)
+    ;;   Look up a constant binding for x. A blocked binding stops the search.
+    (define (κ-ref κ x)
+      (cond
+        [(null? κ) #f]
+        [else
+         (define binding (car κ))
+         (define y (car binding))
+         (define v (cdr binding))
+         (cond
+           [(id=? x y)
+            (if (eq? v blocked-constant-binding) #f v)]
+           [else
+            (κ-ref (cdr κ) x)])]))
+    ;; κ-bind : κ variable? LFE Expr -> κ
+    ;;   Extend κ with a known constant binding.
+    (define (κ-bind κ x e)
+      (cons (cons x e) κ))
+    ;; κ-block : κ variable? -> κ
+    ;;   Shadow x so it is no longer treated as a known constant.
+    (define (κ-block κ x)
+      (cons (cons x blocked-constant-binding) κ))
+    ;; κ-block* : κ (listof variable?) -> κ
+    ;;   Shadow each variable in xs.
+    (define (κ-block* κ xs)
+      (for/fold ([κ κ]) ([x (in-list xs)])
+        (κ-block κ x)))
+    ;; κ-pop* : κ (listof variable?) -> κ
+    ;;   Remove all bindings in κ for variables in xs.
+    (define (κ-pop* κ xs)
+      (define (bound-here? x)
+        (ormap (λ (y) (id=? x y)) xs))
+      (filter (λ (binding) (not (bound-here? (car binding)))) κ))
+    ;; κ-intersect : κ κ -> κ
+    ;;   Keep only constant bindings present with equal values in both envs.
+    (define (κ-intersect κ1 κ2)
+      (for/fold ([acc '()]) ([binding (in-list κ1)])
+        (define x (car binding))
+        (define e (cdr binding))
+        (cond
+          [(eq? e blocked-constant-binding)
+           acc]
+          [else
+           (define e2 (κ-ref κ2 x))
+           (if (and e2 (equal? e e2))
+               (cons binding acc)
+               acc)])))
+    ;; bindings->variables : (listof (listof variable?)) -> (listof variable?)
+    ;;   Flatten bound variables from let-values clauses.
+    (define (bindings->variables xss)
+      (append* xss))
+    ;; formals->variables : LFE Formals -> (listof variable?)
+    ;;   Return the variables bound by formals.
+    (define (formals->variables f)
+      (nanopass-case (LFE Formals) f
+        [(formals (,x ...))            x]
+        [(formals (,x0 ,x1 ... . ,xd)) (cons x0 (append x1 (list xd)))]
+        [(formals ,x)                  (list x)]))
     ;; constant-expression? : LFE Expr -> boolean?
     ;;   Recognize constant expressions that are safe to propagate.
     (define (constant-expression? e)
@@ -3107,59 +3170,256 @@
                                              "primitive" sym
                                              "values" vs)])))
              (with-output-language (LFE Expr)
-               `(quote ,s ,(datum s result)))))))
-  
-  (TopLevelForm        : TopLevelForm        (T) -> TopLevelForm ())
-  (ModuleLevelForm     : ModuleLevelForm     (M) -> ModuleLevelForm ())
-  (GeneralTopLevelForm : GeneralTopLevelForm (G) -> GeneralTopLevelForm ())
+               `(quote ,s ,(datum s result))))))
+    ;; constant-binding : variable? LFE Expr -> (or/c (cons/c variable? LFE Expr) #f)
+    ;;   Return a constant binding for a single-variable clause when possible.
+    (define (constant-binding x e)
+      (and (constant-expression? e)
+           (cons x e)))
+    ;; extend-κ/let-values : κ (listof (listof variable?)) (listof LFE Expr) -> κ
+    ;;   Shadow bound variables and add constant bindings for simple clauses.
+    (define (extend-κ/let-values κ xss es)
+      (define κ* (κ-block* κ (bindings->variables xss)))
+      (for/fold ([κ κ*]) ([xs (in-list xss)]
+                          [e  (in-list es)])
+        (match xs
+          [(list x)
+           (define binding (constant-binding x e))
+           (if binding
+               (κ-bind κ (car binding) (cdr binding))
+               κ)]
+          [_ κ])))
+    ;; Expr* : (listof LFE Expr) κ -> (values (listof LFE Expr) κ)
+    ;;   Rewrite expressions left-to-right, threading κ.
+    (define (Expr* es κ)
+      (if (null? es)
+          (values '() κ)
+          (letv ((e  κ) (Expr (car es) κ))
+            (letv ((es κ) (Expr* (cdr es) κ))
+              (values (cons e es) κ)))))
+    ;; TopLevelForm* : (listof TopLevelForm) κ -> (values (listof TopLevelForm) κ)
+    ;;   Rewrite top-level forms left-to-right, threading κ.
+    (define (TopLevelForm* ts κ)
+      (if (null? ts)
+          (values '() κ)
+          (letv ((t  κ) (TopLevelForm (car ts) κ))
+            (letv ((ts κ) (TopLevelForm* (cdr ts) κ))
+              (values (cons t ts) κ)))))
+    ;; ModuleLevelForm* : (listof ModuleLevelForm) κ -> (values (listof ModuleLevelForm) κ)
+    ;;   Rewrite module-level forms left-to-right, threading κ.
+    (define (ModuleLevelForm* ms κ)
+      (if (null? ms)
+          (values '() κ)
+          (letv ((m  κ) (ModuleLevelForm (car ms) κ))
+            (letv ((ms κ) (ModuleLevelForm* (cdr ms) κ))
+              (values (cons m ms) κ)))))
+    ;; CaseClause* : (listof Formals) (listof (listof LFE Expr)) κ
+    ;;   Rewrite case-lambda clauses under shadowed environments.
+    (define (CaseClause* fs ess κ)
+      (if (null? fs)
+          (values '() κ)
+          (let* ([f (car fs)]
+                 [es (car ess)]
+                 [κ-body (κ-block* κ (formals->variables f))])
+            (letv ((es-body ignored-κ) (Expr* es κ-body))
+              (letv ((rest κ) (CaseClause* (cdr fs) (cdr ess) κ))
+                (values (cons (cons f es-body) rest) κ)))))))
 
-  (Expr : Expr (E) -> Expr ()
+  (TopLevelForm : TopLevelForm (T κ) -> TopLevelForm (κ)
+    [(topbegin ,s ,t ...)
+     (letv ((t κ) (TopLevelForm* t κ))
+       (values `(topbegin ,s ,t ...) κ))]
+    [(#%expression ,s ,e)
+     (letv ((e κ) (Expr e κ))
+       (values `(#%expression ,s ,e) κ))]
+    [(topmodule ,s ,mn ,mp ,mf ...)
+     (letv ((mf ignored-κ) (ModuleLevelForm* mf κ))
+       (values `(topmodule ,s ,mn ,mp ,mf ...) κ))]
+    [,g
+     (letv ((g κ) (GeneralTopLevelForm g κ))
+       (values `,g κ))])
+
+  (ModuleLevelForm : ModuleLevelForm (M κ) -> ModuleLevelForm (κ)
+    [(#%provide ,rps ...)
+     (values `(#%provide ,rps ...) κ)]
+    [,g
+     (letv ((g κ) (GeneralTopLevelForm g κ))
+       (values `,g κ))])
+
+  (GeneralTopLevelForm : GeneralTopLevelForm (G κ) -> GeneralTopLevelForm (κ)
+    [,e
+     (letv ((e κ) (Expr e κ))
+       (values `,e κ))]
+    [(define-values ,s (,x ...) ,e)
+     (letv ((e κ) (Expr e κ))
+       (define κ*
+         (let ([κ0 (κ-block* κ x)])
+           (match x
+             [(list x0)
+              (if (constant-expression? e)
+                  (κ-bind κ0 x0 e)
+                  κ0)]
+             [_ κ0])))
+       (values `(define-values ,s (,x ...) ,e) κ*))]
+    [(define-syntaxes ,s (,x ...) ,e)
+     (values `(define-syntaxes ,s (,x ...) ,e) κ)]
+    [(#%require ,s ,rrs ...)
+     (values `(#%require ,s ,rrs ...) κ)])
+
+  (Expr : Expr (E κ) -> Expr (κ)
+    [,x
+     (values (or (κ-ref κ x) x) κ)]
+    [(quote ,s ,d)
+     (values `(quote ,s ,d) κ)]
+    [(quote-syntax ,s ,d)
+     (values `(quote-syntax ,s ,d) κ)]
+    [(top ,s ,x)
+     (values (or (κ-ref κ x) `(top ,s ,x)) κ)]
     ;; Conditional Simplification
-    [(if ,s ,[e0] ,[e1] ,[e2])
-     (case (constant-truthiness e0)
-       [(#t) e1]
-       [(#f) e2]
-       [else `(if ,s ,e0 ,e1 ,e2)])]
+    [(if ,s ,e0 ,e1 ,e2)
+     (letv ((e0 κ) (Expr e0 κ))
+       (case (constant-truthiness e0)
+         [(#t)
+          (Expr e1 κ)]
+         [(#f)
+          (Expr e2 κ)]
+         [else
+          (letv ((e1 κ1) (Expr e1 κ))
+            (letv ((e2 κ2) (Expr e2 κ))
+              (values `(if ,s ,e0 ,e1 ,e2)
+                      (κ-intersect κ1 κ2))))]))]
 
     ;; Empty Binding Elimination
-    [(let-values ,s () ,[e0])
-     e0]
+    [(let-values ,s () ,e0 ,e1 ...)
+     (letv ((es κ) (Expr* (cons e0 e1) κ))
+       (match es
+         [(list e)
+          (values e κ)]
+         [(cons e0 e1)
+          (values `(let-values ,s () ,e0 ,e1 ...) κ)]))]
 
     ;; Trivial Let Simplification
-    [(let-values ,s ([(,x) ,[e]]) ,[e0])
-     (nanopass-case (LFE Expr) e0
-       [,xd
-        (guard (id=? x xd))
-        e]
-       [else
-        `(let-values ,s ([(,x) ,e]) ,e0)])]
+    [(let-values ,s ([(,x) ,e]) ,xd)
+     (guard (id=? x xd))
+     (letv ((e κ) (Expr e κ))
+       (values e κ))]
+
+    [(let-values ,s ([(,x) ,e]) ,e0)
+     (letv ((e  κ) (Expr e κ))
+       (letv ((e0 κ-body) (Expr e0 (extend-κ/let-values κ (list (list x)) (list e))))
+         (define κ-out
+           (κ-pop* κ-body (list x)))
+         (cond
+           [(and (constant-expression? e)
+                 (constant-expression? e0))
+            (values e0 κ-out)]
+           [else
+            (nanopass-case (LFE Expr) e0
+              [,xd
+               (if (id=? x xd)
+                   (values e κ-out)
+                   (values `(let-values ,s ([(,x) ,e]) ,e0) κ-out))]
+              [else
+               (values `(let-values ,s ([(,x) ,e]) ,e0) κ-out)])])))]
+
+    [(let-values ,s ([(,x* ...) ,e*] ...) ,e0 ,e1 ...)
+     (letv ((e* κ-rhs) (Expr* e* κ))
+       (define κ-body-start
+         (extend-κ/let-values κ-rhs x* e*))
+       (letv ((body κ-body-end) (Expr* (cons e0 e1) κ-body-start))
+         (define κ-out
+           (κ-pop* κ-body-end (bindings->variables x*)))
+         (match body
+           [(cons e0 e1)
+            (values `(let-values ,s ([(,x* ...) ,e*] ...) ,e0 ,e1 ...) κ-out)])))]
+
+    [(letrec-values ,s ([(,x* ...) ,e*] ...) ,e0 ,e1 ...)
+     (define xs (bindings->variables x*))
+     (define κ-rec (κ-block* κ xs))
+     (letv ((e* ignored-κ) (Expr* e* κ-rec))
+       (letv ((body κ-body-end) (Expr* (cons e0 e1) κ-rec))
+         (define κ-out
+           (κ-pop* κ-body-end xs))
+         (match body
+           [(cons e0 e1)
+            (values `(letrec-values ,s ([(,x* ...) ,e*] ...) ,e0 ,e1 ...) κ-out)])))]
 
     ;; Foldable Applications
-    [(app ,s ,x ,[e*] ...)
-     (define folded
-       (and (foldable? x)
-            (andmap constant-expression? e*)
-            (fold-primitive-application s x (quoted-values e*))))
-     (or folded
-         `(app ,s ,x ,e* ...))]
+    [(app ,s ,e0 ,e1 ...)
+     (letv ((e0 κ) (Expr e0 κ))
+       (letv ((e1 κ) (Expr* e1 κ))
+         (define folded
+           (and (variable? e0)
+                (foldable? e0)
+                (andmap constant-expression? e1)
+                (fold-primitive-application s e0 (quoted-values e1))))
+         (values (or folded
+                     `(app ,s ,e0 ,e1 ...))
+                 κ)))]
 
-    ;; Constant Propagation
-    [(let-values ,s ([(,x) ,[e]]) ,[e0])
-     (nanopass-case (LFE Expr) e0
-       [,xd
-        (guard (and (id=? x xd)
-                    (constant-expression? e)))
-        e]
-       [else
-        `(let-values ,s ([(,x) ,e]) ,e0)])])
-  (Formals : Formals (F) -> Formals ())
-  (RawRequireSpec : RawRequireSpec (RRS) -> RawRequireSpec ())
-  (RawRootModulePath : RawRootModulePath (RRMP) -> RawRootModulePath ())
-  (RawProvideSpec : RawProvideSpec (RPS) -> RawProvideSpec ())
-  (PhaselessSpec : PhaselessSpec (PS) -> PhaselessSpec ())
-  (SpacelessSpec : SpacelessSpec (SS) -> SpacelessSpec ())
-  (PhaseLevel : PhaseLevel (PL) -> PhaseLevel ())
-  (Space : Space (S) -> Space ()))
+    [(set! ,s ,x ,e)
+     (letv ((e κ) (Expr e κ))
+       (values `(set! ,s ,x ,e)
+               (κ-block κ x)))]
+
+    [(begin ,s ,e0 ,e1 ...)
+     (letv ((es κ) (Expr* (cons e0 e1) κ))
+       (match es
+         [(cons e0 e1)
+          (values `(begin ,s ,e0 ,e1 ...) κ)]))]
+
+    [(begin0 ,s ,e0 ,e1 ...)
+     (letv ((e0 κ) (Expr e0 κ))
+       (letv ((e1 κ) (Expr* e1 κ))
+         (values `(begin0 ,s ,e0 ,e1 ...) κ)))]
+
+    [(wcm ,s ,e0 ,e1 ,e2)
+     (letv ((e0 κ) (Expr e0 κ))
+       (letv ((e1 κ) (Expr e1 κ))
+         (letv ((e2 κ) (Expr e2 κ))
+           (values `(wcm ,s ,e0 ,e1 ,e2) κ))))]
+
+    [(λ ,s ,f ,e0 ,e1 ...)
+     (define κ-body (κ-block* κ (formals->variables f)))
+     (letv ((es ignored-κ) (Expr* (cons e0 e1) κ-body))
+       (match es
+         [(cons e0 e1)
+          (values `(λ ,s ,f ,e0 ,e1 ...) κ)]))]
+
+    [(case-lambda ,s (,f ,e0 ,e1 ...) ...)
+     (values `(case-lambda ,s (,f ,e0 ,e1 ...) ...)
+             κ)]
+
+    [(variable-reference ,s ,vrx)
+     (values `(variable-reference ,s ,vrx) κ)])
+
+  (Formals : Formals (F κ) -> Formals (κ)
+    [else
+     (values F κ)])
+  (RawRequireSpec : RawRequireSpec (RRS κ) -> RawRequireSpec (κ)
+    [else
+     (values RRS κ)])
+  (RawRootModulePath : RawRootModulePath (RRMP κ) -> RawRootModulePath (κ)
+    [else
+     (values RRMP κ)])
+  (RawProvideSpec : RawProvideSpec (RPS κ) -> RawProvideSpec (κ)
+    [else
+     (values RPS κ)])
+  (PhaselessSpec : PhaselessSpec (PS κ) -> PhaselessSpec (κ)
+    [else
+     (values PS κ)])
+  (SpacelessSpec : SpacelessSpec (SS κ) -> SpacelessSpec (κ)
+    [else
+     (values SS κ)])
+  (PhaseLevel : PhaseLevel (PL κ) -> PhaseLevel (κ)
+    [else
+     (values PL κ)])
+  (Space : Space (S κ) -> Space (κ)
+    [else
+     (values S κ)])
+
+  (letv ((T κ) (TopLevelForm T κ))
+    (values T κ)))
 
 (module+ test
   (let ([test (λ (stx)
@@ -3185,8 +3445,10 @@
                   ''#f)
     (check-equal? (test #'(let-values ([(x) '5]) x))
                   ''5)
+    (check-equal? (test #'(let-values ([(x) '#f]) (if x 1 2)))
+                  ''2)
     (check-equal? (test #'(let-values ([(x) '5]) (begin x x)))
-                  '(let-values (((x) '5)) x x))
+                  '(let-values (((x) '5)) '5 '5))
     (check-equal? (test #'(let-values ([(x) (#%plain-app values '5)]) x))
                   '(values '5))))
 
