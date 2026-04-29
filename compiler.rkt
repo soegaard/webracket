@@ -4601,6 +4601,23 @@
     (define (classified-dead-when-unused? classified)
       (for/and ([clause (in-list classified)])
         (memq (first clause) '(simple-pure lambda))))
+    (define (Default-classified-scc component assigned)
+      (define scc-all-refs
+        (letrec-scc-component-all-refs component))
+      (for/list ([binding (in-list (letrec-scc-component-bindings component))])
+        (define xs
+          (letrec-scc-binding-xs binding))
+        (define rhs
+          (letrec-scc-binding-rhs binding))
+        (define kind
+          (letrec-scc-binding-kind binding))
+        (define default-kind
+          (if (and (all-unassigned-bindings? xs assigned)
+                   (for/and ([x (in-list xs)])
+                     (not (set-in? x scc-all-refs))))
+              'unreferenced
+              kind))
+        (list default-kind xs rhs)))
     (define (binding-vars-set xss)
       (for/fold ([xs empty-set]) ([x* (in-list xss)])
         (for/fold ([xs xs]) ([x (in-list x*)])
@@ -4749,18 +4766,6 @@
       (define classified
         (classify-clauses x e lhs-set referenced assigned))
       (Lower-waddell/classified s classified e0))
-    (define (Reclassify-scc component body-referenced assigned)
-      (define x
-        (letrec-scc-component-x component))
-      (define e
-        (letrec-scc-component-e component))
-      (define lhs-set
-        (letrec-scc-component-lhs-set component))
-      (define referenced
-        (set-intersection lhs-set
-                          (set-union body-referenced
-                                     (letrec-scc-component-all-refs component))))
-      (classify-clauses x e lhs-set referenced assigned))
     (define (Reclassify-classified-scc component classified body-referenced assigned)
       (define reclassifiable
         (letrec-scc-component-reclassifiable component))
@@ -4788,16 +4793,22 @@
       (define components
         (for/list ([component (in-list (letrec-scc-components classified))])
           (define default-classified
-            (Reclassify-scc component empty-set assigned))
+            (Default-classified-scc component assigned))
           (define reclassifiable
             (let ([ht (make-hasheq)])
               (for ([clause (in-list default-classified)])
                 (match clause
                   [(list 'unreferenced xs rhs)
-                   (hash-set! ht xs (list (classify-nonunreferenced-clause xs rhs
-                                                                           (letrec-scc-component-lhs-set component)
-                                                                           assigned)
-                                          rhs))]
+                   (define fallback-kind
+                     (match (for/first ([binding (in-list (letrec-scc-component-bindings component))]
+                                        #:when (equal? xs (letrec-scc-binding-xs binding)))
+                              (letrec-scc-binding-kind binding))
+                       ['unreferenced
+                        (classify-nonunreferenced-clause xs rhs
+                                                         (letrec-scc-component-lhs-set component)
+                                                         assigned)]
+                       [kind kind]))
+                   (hash-set! ht xs (list fallback-kind rhs))]
                   [_ (void)]))
               ht))
           (cons (struct-copy letrec-scc-component component
