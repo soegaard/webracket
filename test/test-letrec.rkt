@@ -460,6 +460,11 @@
                      (equal? (letrec ([a (lambda () b)]
                                       [b (lambda () c)]
                                       [c (a)])
+                               (procedure? c))
+                             #t)
+                     (equal? (letrec ([a (lambda () b)]
+                                      [b (lambda () c)]
+                                      [c (a)])
                                (eq? (c) c))
                              #t)
                      (equal? (letrec ([b 3]
