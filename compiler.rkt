@@ -3689,6 +3689,12 @@
     (define (partial-fold-primitive-application s x e*)
       (define sym (syntax-e (variable-id x)))
       (match (list sym e*)
+        [(list 'list '())
+         ; (list) => '()
+         (Quote s '())]
+        [(list 'append '())
+         ; (append) => '()
+         (Quote s '())]
         [(list '+ (list e0))
          ; (+ x) => x
          (keep-valued obviously-number-valued-expression? e0)]
@@ -4158,6 +4164,10 @@
                   ''2)
     (check-equal? (test #'((lambda (x . y) y) 1 2 3))
                   '((λ (x y) y) '1 (list '2 '3)))
+    (check-equal? (test #'(list))
+                  ''())
+    (check-equal? (test #'(append))
+                  ''())
     (check-equal? (test #'(if x 1 1))
                   '(begin (#%top . x) '1))
     (check-equal? (test #'(let-values ([(x) '0])
