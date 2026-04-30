@@ -3550,6 +3550,16 @@
              no-partial-fold)]
         [else
          no-partial-fold]))
+    ;; quoted-list-tail : LFE Expr exact-nonnegative-integer? -> any/c
+    ;;   Return the tail after `i` cdr steps of a quoted pair/list, or the no-partial-fold sentinel.
+    (define (quoted-list-tail e i)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (define v (datum-value d))
+         (with-handlers ([exn:fail? (λ (_exn) no-partial-fold)])
+           (list-tail v i))]
+        [else
+         no-partial-fold]))
     ;; quoted-vector-length : LFE Expr -> (or/c exact-nonnegative-integer? symbol?)
     ;;   Return the length of a quoted vector, or the no-partial-fold sentinel.
     (define (quoted-vector-length e)
@@ -3620,6 +3630,92 @@
       (let-values*-bind s e*
         (λ (x*)
           (Quote s v))))
+    ;; nested-pair-access-result : syntax? LFE Expr (listof LFE Expr) symbol? -> (or/c LFE Expr #f)
+    ;;   Access the `car` or `cdr` of the first pair produced by `e`, while still evaluating `trailing-e*`.
+    (define (nested-pair-access-result s e trailing-e* which)
+      (define (build-list-tail-body x*)
+        (define tail (drop x* 1))
+        (if (null? tail)
+            (Quote s '())
+            (with-output-language (LFE Expr)
+              `(app ,s ,(PrimitiveVar 'list) ,tail ...))))
+      (define (build-list*-tail-body x*)
+        (define tail (drop x* 1))
+        (match tail
+          ['()
+           (Quote s '())]
+          [(list x)
+           x]
+          [_ 
+           (with-output-language (LFE Expr)
+             `(app ,s ,(PrimitiveVar 'list*) ,tail ...))]))
+      (define (pair-access-result e trailing-e* which)
+        (define (quote-tail v)
+          (sequence-then-quote s trailing-e* v obviously-single-valued-expression?))
+        (define (bind-then e* build-body)
+          (let-values*-bind s (append e* trailing-e*)
+            (λ (x*)
+              (build-body (take x* (length e*))))))
+        (nanopass-case (LFE Expr) e
+          [(quote ,s0 ,d0)
+           (define v (datum-value d0))
+           (and (pair? v)
+                (quote-tail (case which
+                              [(car) (car v)]
+                              [(cdr) (cdr v)])))]
+          [else
+           (or (match (primitive-application-arguments e 'cons)
+                 [(list a d)
+                  (bind-then (list a d)
+                             (λ (x*)
+                               (case which
+                                 [(car) (first x*)]
+                                 [(cdr) (second x*)])))]
+                 [_ #f])
+               (match (primitive-application-arguments e 'list)
+                 [#f #f]
+                 [es
+                  (and (pair? es)
+                       (bind-then es
+                                  (λ (x*)
+                                    (case which
+                                      [(car) (first x*)]
+                                      [(cdr) (build-list-tail-body x*)]))))])
+               (match (primitive-application-arguments e 'list*)
+                 [#f #f]
+                 [es
+                  (and (>= (length es) 2)
+                       (bind-then es
+                                  (λ (x*)
+                                    (case which
+                                      [(car) (first x*)]
+                                      [(cdr) (build-list*-tail-body x*)]))))])
+               #f)]))
+      (define (quote-tail v)
+        (sequence-then-quote s trailing-e* v obviously-single-valued-expression?))
+      (define (recur e trailing-e*)
+        (nanopass-case (LFE Expr) e
+          [(quote ,s0 ,d0)
+           (define v (datum-value d0))
+           (and (pair? v)
+                (pair-access-result (Quote s (car v)) trailing-e* which))]
+          [else
+           (or (match (primitive-application-arguments e 'cons)
+                 [(list a d)
+                  (pair-access-result a (append (list d) trailing-e*) which)]
+                 [_ #f])
+               (match (primitive-application-arguments e 'list)
+                 [#f #f]
+                 [(cons a ds)
+                  (and (pair? ds)
+                       (pair-access-result a (append ds trailing-e*) which))])
+               (match (primitive-application-arguments e 'list*)
+                 [#f #f]
+                 [(cons a ds)
+                  (and (pair? ds)
+                       (pair-access-result a (append ds trailing-e*) which))])
+               #f)]))
+      (recur e trailing-e*))
     ;; quoted-zero? : LFE Expr -> boolean?
     ;;   Recognize the quoted numeric zero constant.
     (define (quoted-zero? e)
@@ -4204,6 +4300,12 @@
                [#f #f]
                [es (and (>= (length es) 2)
                         (constructor-access-result s es 0))]))]
+        [(list 'caar (list e0))
+         ; (caar '((a . b) . d)) => 'a
+         ; (caar (cons (cons a b) d)) => a
+         ; (caar (list (cons a b) ...)) => a
+         ; (caar (list* (cons a b) ...)) => a
+         (nested-pair-access-result s e0 '() 'car)]
         [(list 'cdr (list e0))
          ; (cdr '(a . d)) => 'd
          ; (cdr (cons x y)) => y
@@ -4221,6 +4323,12 @@
                [#f #f]
                [es (and (>= (length es) 2)
                         (constructor-list*-tail-result s es 1))]))]
+        [(list 'cdar (list e0))
+         ; (cdar '((a . b) . d)) => 'b
+         ; (cdar (cons (cons a b) d)) => b
+         ; (cdar (list (cons a b) ...)) => b
+         ; (cdar (list* (cons a b) ...)) => b
+         (nested-pair-access-result s e0 '() 'cdr)]
         [(list 'cadr (list e0))
          ; (cadr '(a b ...)) => 'b
          ; (cadr (list a b ...)) => b
@@ -4233,6 +4341,58 @@
                [#f #f]
                [es (and (>= (length es) 3)
                         (constructor-access-result s es 1))]))]
+        [(list 'caddr (list e0))
+         ; (caddr '(a b c ...)) => 'c
+         ; (caddr (list a b c ...)) => c
+         ; (caddr (list* a b c d ...)) => c
+         (or (quote-when-found s (quoted-list-element e0 2))
+             (match (primitive-application-arguments e0 'list)
+               [#f #f]
+               [es (and (>= (length es) 3)
+                        (constructor-access-result s es 2))])
+             (match (primitive-application-arguments e0 'list*)
+               [#f #f]
+               [es (and (>= (length es) 4)
+                        (constructor-access-result s es 2))]))]
+        [(list 'cddr (list e0))
+         ; (cddr '(a b . d)) => 'd
+         ; (cddr (list a b ...)) => (list ...)
+         ; (cddr (list* a b c ...)) => (list* c ...)
+         (or (quote-when-found s (quoted-list-tail e0 2))
+             (match (primitive-application-arguments e0 'list)
+               [#f #f]
+               [es (and (>= (length es) 2)
+                        (constructor-list-tail-result s es 2))])
+             (match (primitive-application-arguments e0 'list*)
+               [#f #f]
+               [es (and (>= (length es) 3)
+                        (constructor-list*-tail-result s es 2))]))]
+        [(list 'cadddr (list e0))
+         ; (cadddr '(a b c d ...)) => 'd
+         ; (cadddr (list a b c d ...)) => d
+         ; (cadddr (list* a b c d e ...)) => d
+         (or (quote-when-found s (quoted-list-element e0 3))
+             (match (primitive-application-arguments e0 'list)
+               [#f #f]
+               [es (and (>= (length es) 4)
+                        (constructor-access-result s es 3))])
+             (match (primitive-application-arguments e0 'list*)
+               [#f #f]
+               [es (and (>= (length es) 5)
+                        (constructor-access-result s es 3))]))]
+        [(list 'cdddr (list e0))
+         ; (cdddr '(a b c . d)) => 'd
+         ; (cdddr (list a b c ...)) => (list ...)
+         ; (cdddr (list* a b c d ...)) => (list* d ...)
+         (or (quote-when-found s (quoted-list-tail e0 3))
+             (match (primitive-application-arguments e0 'list)
+               [#f #f]
+               [es (and (>= (length es) 3)
+                        (constructor-list-tail-result s es 3))])
+             (match (primitive-application-arguments e0 'list*)
+               [#f #f]
+               [es (and (>= (length es) 4)
+                        (constructor-list*-tail-result s es 3))]))]
         [(list 'vector-length (list e0))
          ; (vector-length '#(...)) => 'n
          ; (vector-length (vector ...)) => 'n
@@ -4855,6 +5015,10 @@
                   ''1)
     (check-equal? (test #'(cdr '(1 . 2)))
                   ''2)
+    (check-equal? (test #'(caar '((1 . 2) . 3)))
+                  ''1)
+    (check-equal? (test #'(cdar '((1 . 2) . 3)))
+                  ''2)
     (check-equal? (test #'(car (cons 1 2)))
                   '(let-values (((pf0) '1))
                      (let-values (((pf1) '2))
@@ -4863,6 +5027,16 @@
                   '(let-values (((pf0) '1))
                      (let-values (((pf1) '2))
                        pf1)))
+    (check-equal? (test #'(caar (cons (cons 1 2) 3)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       (let-values (((pf2) '3))
+                         pf0))))
+    (check-equal? (test #'(cdar (cons (cons 1 2) 3)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       (let-values (((pf2) '3))
+                         pf1))))
     (check-equal? (test #'(car (list 1 2 3)))
                   '(let-values (((pf0) '1))
                      (let-values (((pf1) '2))
@@ -4880,6 +5054,56 @@
                      (let-values (((pf1) '2))
                        (let-values (((pf2) '3))
                          pf1))))
+    (check-equal? (test #'(caar (list (cons 1 2) 3 4)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       (let-values (((pf2) '3))
+                         (let-values (((pf3) '4))
+                           pf0)))))
+    (check-equal? (test #'(cdar (list (cons 1 2) 3 4)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       (let-values (((pf2) '3))
+                         (let-values (((pf3) '4))
+                           pf1)))))
+    (check-equal? (test #'(caddr '(1 2 3 4)))
+                  ''3)
+    (check-equal? (test #'(caddr (list 1 2 3 4)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       (let-values (((pf2) '3))
+                         (let-values (((pf3) '4))
+                           pf2)))))
+    (check-equal? (test #'(cddr '(1 2 3 4)))
+                  ''(3 4))
+    (check-equal? (test #'(cddr '(1 2 . 3)))
+                  ''3)
+    (check-equal? (test #'(cddr (list 1 2 3 4)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       (let-values (((pf2) '3))
+                         (let-values (((pf3) '4))
+                           (list pf2 pf3))))))
+    (check-equal? (test #'(cadddr '(1 2 3 4 5)))
+                  ''4)
+    (check-equal? (test #'(cdddr '(1 2 3 4 5)))
+                  ''(4 5))
+    (check-equal? (test #'(cdddr '(1 2 3 . 4)))
+                  ''4)
+    (check-equal? (test #'(cadddr (list 1 2 3 4 5)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       (let-values (((pf2) '3))
+                         (let-values (((pf3) '4))
+                           (let-values (((pf4) '5))
+                             pf3))))))
+    (check-equal? (test #'(cdddr (list 1 2 3 4 5)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       (let-values (((pf2) '3))
+                         (let-values (((pf3) '4))
+                           (let-values (((pf4) '5))
+                             (list pf3 pf4)))))))
     (check-equal? (test #'(car (list* 1 2)))
                   '(let-values (((pf0) '1))
                      (let-values (((pf1) '2))
@@ -4898,6 +5122,44 @@
                      (let-values (((pf1) '2))
                        (let-values (((pf2) '3))
                          pf1))))
+    (check-equal? (test #'(caar (list* (cons 1 2) 3 4)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       (let-values (((pf2) '3))
+                         (let-values (((pf3) '4))
+                           pf0)))))
+    (check-equal? (test #'(cdar (list* (cons 1 2) 3 4)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       (let-values (((pf2) '3))
+                         (let-values (((pf3) '4))
+                           pf1)))))
+    (check-equal? (test #'(caddr (list* 1 2 3 4)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       (let-values (((pf2) '3))
+                         (let-values (((pf3) '4))
+                           pf2)))))
+    (check-equal? (test #'(cddr (list* 1 2 3 4)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       (let-values (((pf2) '3))
+                         (let-values (((pf3) '4))
+                           (list* pf2 pf3))))))
+    (check-equal? (test #'(cadddr (list* 1 2 3 4 5)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       (let-values (((pf2) '3))
+                         (let-values (((pf3) '4))
+                           (let-values (((pf4) '5))
+                             pf3))))))
+    (check-equal? (test #'(cdddr (list* 1 2 3 4 5)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       (let-values (((pf2) '3))
+                         (let-values (((pf3) '4))
+                           (let-values (((pf4) '5))
+                             (list* pf3 pf4)))))))
     (check-equal? (test #'(vector-length '#(1 2 3)))
                   ''3)
     (check-equal? (test #'(vector-length (vector 1 2 3)))
