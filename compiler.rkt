@@ -3105,6 +3105,11 @@
       (define (bound-here? x)
         (ormap (λ (y) (id=? x y)) xs))
       (filter (λ (binding) (not (bound-here? (car binding)))) κ))
+    ;; κ-block-all : κ -> κ
+    ;;   Block all currently known constant bindings.
+    (define (κ-block-all κ)
+      (for/fold ([κ* κ]) ([binding (in-list κ)])
+        (κ-block κ* (car binding))))
     ;; κ-intersect : κ κ -> κ
     ;;   Keep only constant bindings present with equal values in both envs.
     (define (κ-intersect κ1 κ2)
@@ -3137,6 +3142,25 @@
         [(quote ,s ,d)        #t]
         [(quote-syntax ,s ,d) #t]
         [else                 #f]))
+    ;; duplicable-constant-value? : any/c -> boolean?
+    ;;   Recognize constant values that are safe to duplicate during propagation.
+    (define (duplicable-constant-value? v)
+      (or (boolean? v)
+          (char? v)
+          (eof-object? v)
+          (null? v)
+          (number? v)
+          (keyword? v)
+          (symbol? v)
+          (void? v)))
+    ;; duplicable-constant-expression? : LFE Expr -> boolean?
+    ;;   Recognize constant expressions whose value identity is safe to duplicate.
+    (define (duplicable-constant-expression? e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (duplicable-constant-value? (datum-value d))]
+        [else
+         #f]))
     ;; same-expression? : LFE Expr LFE Expr -> boolean?
     ;;   Compare expressions while ignoring syntax-object identity details.
     (define (same-expression? e1 e2)
@@ -3181,6 +3205,14 @@
     ;;   Extract values from quoted constant expressions.
     (define (quoted-values e*)
       (map quoted-constant-value e*))
+    ;; normalize-folded-constant-value : any/c -> any/c
+    ;;   Normalize folded constants the same way later quotation conversion does.
+    (define (normalize-folded-constant-value v)
+      (if (and (number? v)
+               (not (or (wr-fixnum? v)
+                        (flonum? v))))
+          (* 1.0 v)
+          v))
     ;; begin-expressions : LFE Expr -> (listof LFE Expr)
     ;;   Return the flattened expression sequence for a begin-like expression.
     (define (begin-expressions e)
@@ -3236,11 +3268,11 @@
                                              "primitive" sym
                                              "values" vs)])))
              (with-output-language (LFE Expr)
-               `(quote ,s ,(datum s result))))))
+               `(quote ,s ,(datum s (normalize-folded-constant-value result)))))))
     ;; constant-binding : variable? LFE Expr -> (or/c (cons/c variable? LFE Expr) #f)
     ;;   Return a constant binding for a single-variable clause when possible.
     (define (constant-binding x e)
-      (and (constant-expression? e)
+      (and (duplicable-constant-expression? e)
            (cons x e)))
     ;; extend-κ/let-values : κ (listof (listof variable?)) (listof LFE Expr) -> κ
     ;;   Shadow bound variables and add constant bindings for simple clauses.
@@ -3415,8 +3447,8 @@
     [(letrec-values ,s ([(,x* ...) ,e*] ...) ,e0 ,e1 ...)
      (define xs (bindings->variables x*))
      (define κ-rec (κ-block* κ xs))
-     (letv ((e* ignored-κ) (Expr* e* κ-rec))
-       (letv ((body κ-body-end) (Expr* (cons e0 e1) κ-rec))
+     (letv ((e* κ-rhs) (Expr* e* κ-rec))
+       (letv ((body κ-body-end) (Expr* (cons e0 e1) κ-rhs))
          (define κ-out
            (κ-pop* κ-body-end xs))
          (match body
@@ -3465,15 +3497,16 @@
            (values `(wcm ,s ,e0 ,e1 ,e2) κ))))]
 
     [(λ ,s ,f ,e0 ,e1 ...)
-     (define κ-body (κ-block* κ (formals->variables f)))
+     (define κ-body (κ-block* (κ-block-all κ) (formals->variables f)))
      (letv ((es ignored-κ) (Expr* (cons e0 e1) κ-body))
        (match es
          [(cons e0 e1)
-          (values `(λ ,s ,f ,e0 ,e1 ...) κ)]))]
+          (values `(λ ,s ,f ,e0 ,e1 ...)
+                  (κ-block-all κ))]))]
 
     [(case-lambda ,s (,f ,e0 ,e1 ...) ...)
      (values `(case-lambda ,s (,f ,e0 ,e1 ...) ...)
-             κ)]
+             (κ-block-all κ))]
 
     [(variable-reference ,s ,vrx)
      (values `(variable-reference ,s ,vrx) κ)])
@@ -3580,6 +3613,12 @@
                      x))
     (check-equal? (test #'(let-values ([(x) '5]) (begin x x)))
                   '(let-values (((x) '5)) '5 '5))
+    (check-equal? (test #'(let-values ([(ys) '(y)])
+                            (let-values ([(zs) (append '(x) ys)])
+                              (eq? (cdr zs) ys))))
+                  '(let-values (((ys) '(y)))
+                     (let-values (((zs) (append '(x) ys)))
+                       (eq? (cdr zs) ys))))
     (check-equal? (test #'(let-values ([(x) (#%plain-app values '5)]) x))
                   '(values '5))))
 
@@ -10179,8 +10218,11 @@
   
 (define (comp-- stx)
   (reset-counter!)
-  (define p   (parse (unexpand (topexpand stx))))
-  (define ft  (flatten-topbegin p))
+  (define p0  (parse (unexpand (topexpand stx))))
+  (define s0  (if (current-enable-simplify?)
+                  (simplify-LFE p0)
+                  p0))
+  (define ft  (flatten-topbegin s0))
   (define in  (infer-names ft))
   (define cq  (convert-quotations in))
   (define eb  (explicit-begin cq))
@@ -10197,8 +10239,11 @@
 
 (define (comp--- stx)
   (reset-counter!)
-  (define p   (parse (unexpand (topexpand stx))))
-  (define ft  (flatten-topbegin p))
+  (define p0  (parse (unexpand (topexpand stx))))
+  (define s0  (if (current-enable-simplify?)
+                  (simplify-LFE p0)
+                  p0))
+  (define ft  (flatten-topbegin s0))
   (define in  (infer-names ft))
   (define cq  (convert-quotations in))
   (define eb  (explicit-begin cq))
@@ -10214,8 +10259,11 @@
 
 (define (test stx)
   (reset-counter!)
-  (define p   (parse (unexpand (topexpand stx))))
-  (define ft  (flatten-topbegin p))
+  (define p0  (parse (unexpand (topexpand stx))))
+  (define s0  (if (current-enable-simplify?)
+                  (simplify-LFE p0)
+                  p0))
+  (define ft  (flatten-topbegin s0))
   (define in  (infer-names ft))
   (define cq  (convert-quotations in))
   (define eb  (explicit-begin cq))
@@ -10237,8 +10285,11 @@
 
 (define (test- stx)
   (reset-counter!)
-  (define p   (parse (unexpand (topexpand stx))))
-  (define ft  (flatten-topbegin p))
+  (define p0  (parse (unexpand (topexpand stx))))
+  (define s0  (if (current-enable-simplify?)
+                  (simplify-LFE p0)
+                  p0))
+  (define ft  (flatten-topbegin s0))
   (define in  (infer-names ft))
   (define cq  (convert-quotations in))
   (define eb  (explicit-begin cq))
