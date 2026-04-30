@@ -3626,13 +3626,6 @@
     (define (quoted-exact-integer e)
       (define v (quoted-constant-value e))
       (and (exact-integer? v) v))
-    ;; quoted-exact-number : LFE Expr -> (or/c exact-number? #f)
-    ;;   Extract an exact number constant, if present.
-    (define (quoted-exact-number e)
-      (define v (quoted-constant-value e))
-      (and (number? v)
-           (exact? v)
-           v))
     ;; quoted-exact-nonnegative-integer : LFE Expr -> (or/c exact-nonnegative-integer? #f)
     ;;   Extract an exact nonnegative integer constant, if present.
     (define (quoted-exact-nonnegative-integer e)
@@ -4036,30 +4029,30 @@
              (and (valued? (car e*^))
                   (car e*^))
              (primitive-application s x e*^))]))
-    ;; fold-left-associative-exact-number-runs : syntax? variable? (listof LFE Expr)
-    ;;                                         (exact-number? exact-number? -> exact-number?)
-    ;;                                         (exact-number? exact-number? -> exact-number?)
+    ;; fold-left-associative-exact-integer-runs : syntax? variable? (listof LFE Expr)
+    ;;                                          (exact-integer? exact-integer? -> exact-integer?)
+    ;;                                          (exact-integer? exact-integer? -> exact-integer?)
     ;;                                         any/c
     ;;                                         (LFE Expr -> boolean?)
     ;;                                      -> (or/c LFE Expr #f)
-    ;;   Fold exact-number runs for left-associative primitives like `-` and `/`.
-    (define (fold-left-associative-exact-number-runs s x e* head-op tail-op tail-ident valued?)
+    ;;   Fold exact-integer runs for left-associative primitives like `-` and `/`.
+    (define (fold-left-associative-exact-integer-runs s x e* head-op tail-op tail-ident valued?)
       (define (run-prefix es)
         (for/fold ([prefix '()] [rest es] #:result (values prefix rest))
                   ([e (in-list es)]
-                   #:break (not (quoted-exact-number e)))
+                   #:break (not (quoted-exact-integer e)))
           (values (append prefix (list e))
                   (cdr rest))))
       (define (run->constant run start?)
         (cond
           [start?
-           (for/fold ([acc (quoted-exact-number (car run))])
+           (for/fold ([acc (quoted-exact-integer (car run))])
                      ([e (in-list (cdr run))])
-             (head-op acc (quoted-exact-number e)))]
+             (head-op acc (quoted-exact-integer e)))]
           [else
            (for/fold ([acc tail-ident])
                      ([e (in-list run)])
-             (tail-op acc (quoted-exact-number e)))]))
+             (tail-op acc (quoted-exact-integer e)))]))
       (let loop ([remaining e*] [start? #t] [acc '()] [changed? #f])
         (cond
           [(null? remaining)
@@ -4073,7 +4066,7 @@
               (primitive-application s x acc)])]
           [else
            (define e0 (car remaining))
-           (define q0 (quoted-exact-number e0))
+           (define q0 (quoted-exact-integer e0))
            (cond
              [(not (eq? q0 #f))
               (define-values (run rest) (run-prefix remaining))
@@ -4336,16 +4329,16 @@
          (or (and (= (length e*) 2)
                   (quoted-zero? (second e*))
                   (keep-valued obviously-number-valued-expression? (first e*)))
-             (fold-left-associative-exact-number-runs s x e* - + 0
-                                                      obviously-number-valued-expression?))]
+             (fold-left-associative-exact-integer-runs s x e* - + 0
+                                                       obviously-number-valued-expression?))]
         [(list '/ _)
          ; (/ x 1) => x
          ; (/ c1 c2 ... x ... c3 c4 ...) => (/ c x ... c)
          (or (and (= (length e*) 2)
                   (quoted-one? (second e*))
                   (keep-valued obviously-number-valued-expression? (first e*)))
-             (fold-left-associative-exact-number-runs s x e* / * 1
-                                                      obviously-number-valued-expression?))]
+             (fold-left-associative-exact-integer-runs s x e* / * 1
+                                                       obviously-number-valued-expression?))]
         [_ #f]))
     ;; constant-binding : variable? LFE Expr -> (or/c (cons/c variable? LFE Expr) #f)
     ;;   Return a constant binding for a single-variable clause when possible.
