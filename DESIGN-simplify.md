@@ -478,12 +478,3 @@ in a later pass with richer binding/use analysis.
   This is attractive, but moving `begin` outward through application
   position deserves more careful evaluation-order reasoning than we
   currently want in `simplify-LFE`.
-
-### Rules Better Served by a Dedicated Pass
-
-- CASE-specific clause collection, duplicate removal, and type
-  partitioning.
-
-  Twobit’s CASE preprocessing is more specialized than the current
-  mission of `simplify-LFE`, and would likely be clearer as a separate
-  optimization pass.
