@@ -3611,6 +3611,57 @@
              no-partial-fold)]
         [else
          no-partial-fold]))
+    ;; quoted-null? : LFE Expr -> (or/c boolean? symbol?)
+    ;;   Return whether a quoted datum is null, or the no-partial-fold sentinel.
+    (define (quoted-null? e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (null? (datum-value d))]
+        [else
+         no-partial-fold]))
+    ;; quoted-pair? : LFE Expr -> (or/c boolean? symbol?)
+    ;;   Return whether a quoted datum is a pair, or the no-partial-fold sentinel.
+    (define (quoted-pair? e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (pair? (datum-value d))]
+        [else
+         no-partial-fold]))
+    ;; quoted-list? : LFE Expr -> (or/c boolean? symbol?)
+    ;;   Return whether a quoted datum is a proper list, or the no-partial-fold sentinel.
+    (define (quoted-list? e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (list? (datum-value d))]
+        [else
+         no-partial-fold]))
+    ;; quoted-vector? : LFE Expr -> (or/c boolean? symbol?)
+    ;;   Return whether a quoted datum is a vector, or the no-partial-fold sentinel.
+    (define (quoted-vector? e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (vector? (datum-value d))]
+        [else
+         no-partial-fold]))
+    ;; known-proper-list-result? : LFE Expr -> (or/c boolean? symbol?)
+    ;;   Return whether `e` is locally recognizable as producing a proper list.
+    (define (known-proper-list-result? e)
+      (match (quoted-list? e)
+        [#:no-partial-fold
+         (or (match (primitive-application-arguments e 'list)
+               [#f #f]
+               [_ #t])
+             (match (primitive-application-arguments e 'cons)
+               [(list _a d)
+                (known-proper-list-result? d)]
+               [_ #f])
+             (match (primitive-application-arguments e 'list*)
+               [#f #f]
+               [es (and (pair? es)
+                        (known-proper-list-result? (last es)))])
+             no-partial-fold)]
+        [b
+         b]))
     ;; constructor-access-result : syntax? (listof LFE Expr) exact-nonnegative-integer? -> (or/c LFE Expr #f)
     ;;   Evaluate constructor operands left-to-right and return the selected bound value.
     (define (constructor-access-result s e* i)
@@ -4273,11 +4324,85 @@
                [else
                 #f]))]
         [(list 'pair? (list e0))
+         ; (pair? '(a . d)) => #t/#f
          ; (pair? (cons x y)) => #t
-         (match (primitive-application-arguments e0 'cons)
-           [(list a d)
-            (constructor-constant-result s (list a d) #t)]
-           [_ #f])]
+         ; (pair? (list x ...)) => #t/#f
+         ; (pair? (list* x y ...)) => #t
+         (or (match (quoted-pair? e0)
+               [#:no-partial-fold #f]
+               [b (Quote s b)])
+             (match (primitive-application-arguments e0 'cons)
+               [(list a d)
+                (constructor-constant-result s (list a d) #t)]
+               [_ #f])
+             (match (primitive-application-arguments e0 'list)
+               [#f #f]
+               [es (constructor-constant-result s es (pair? es))])
+             (match (primitive-application-arguments e0 'list*)
+               [#f #f]
+               [es (and (>= (length es) 2)
+                        (constructor-constant-result s es #t))]))]
+        [(list 'null? (list e0))
+         ; (null? '()) => #t/#f
+         ; (null? (list ...)) => #t/#f
+         ; (null? (cons x y)) => #f
+         ; (null? (list* x y ...)) => #f
+         (or (match (quoted-null? e0)
+               [#:no-partial-fold #f]
+               [b (Quote s b)])
+             (match (primitive-application-arguments e0 'list)
+               [#f #f]
+               [es (constructor-constant-result s es (null? es))])
+             (match (primitive-application-arguments e0 'cons)
+               [(list a d)
+                (constructor-constant-result s (list a d) #f)]
+               [_ #f])
+             (match (primitive-application-arguments e0 'list*)
+               [#f #f]
+               [es (and (>= (length es) 2)
+                        (constructor-constant-result s es #f))]))]
+        [(list 'empty? (list e0))
+         ; (empty? '()) => #t/#f
+         ; (empty? (list ...)) => #t/#f
+         ; (empty? (cons x y)) => #f
+         ; (empty? (list* x y ...)) => #f
+         (or (match (quoted-null? e0)
+               [#:no-partial-fold #f]
+               [b (Quote s b)])
+             (match (primitive-application-arguments e0 'list)
+               [#f #f]
+               [es (constructor-constant-result s es (null? es))])
+             (match (primitive-application-arguments e0 'cons)
+               [(list a d)
+                (constructor-constant-result s (list a d) #f)]
+               [_ #f])
+             (match (primitive-application-arguments e0 'list*)
+               [#f #f]
+               [es (and (>= (length es) 2)
+                        (constructor-constant-result s es #f))]))]
+        [(list 'list? (list e0))
+         ; (list? '(...)) => #t/#f
+         ; (list? (list ...)) => #t
+         ; (list? (cons x y)) => #t/#f when y is locally recognizable
+         ; (list? (list* ... z)) => #t/#f when z is locally recognizable
+         (or (match (quoted-list? e0)
+               [#:no-partial-fold #f]
+               [b (Quote s b)])
+             (match (primitive-application-arguments e0 'list)
+               [#f #f]
+               [es (constructor-constant-result s es #t)])
+             (match (primitive-application-arguments e0 'cons)
+               [(list a d)
+                (match (known-proper-list-result? d)
+                  [#:no-partial-fold #f]
+                  [b (constructor-constant-result s (list a d) b)])]
+               [_ #f])
+             (match (primitive-application-arguments e0 'list*)
+               [#f #f]
+               [es (and (pair? es)
+                        (match (known-proper-list-result? (last es))
+                          [#:no-partial-fold #f]
+                          [b (constructor-constant-result s es b)]))]))]
         [(list 'box? (list e0))
          ; (box? (box x)) => #t
          ; (box? (box-immutable x)) => #t
@@ -4290,10 +4415,14 @@
                 (constructor-constant-result s (list a) #t)]
                [_ #f]))]
         [(list 'vector? (list e0))
+         ; (vector? '#(...)) => #t/#f
          ; (vector? (vector ...)) => #t
-         (match (primitive-application-arguments e0 'vector)
-           [#f #f]
-           [es (constructor-constant-result s es #t)])]
+         (or (match (quoted-vector? e0)
+               [#:no-partial-fold #f]
+               [b (Quote s b)])
+             (match (primitive-application-arguments e0 'vector)
+               [#f #f]
+               [es (constructor-constant-result s es #t)]))]
         [(list 'unbox (list e0))
          ; (unbox (box x)) => x
          ; (unbox (box-immutable x)) => x
@@ -5146,9 +5275,77 @@
                   '(let-values (((pf0) '1))
                      (let-values (((pf1) '2))
                        '#t)))
+    (check-equal? (test #'(pair? '(1 . 2)))
+                  ''#t)
+    (check-equal? (test #'(pair? '(1 2)))
+                  ''#t)
+    (check-equal? (test #'(pair? (list)))
+                  ''#f)
+    (check-equal? (test #'(pair? (list 1 2)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       '#t)))
+    (check-equal? (test #'(pair? (list* 1 2)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       '#t)))
+    (check-equal? (test #'(null? '()))
+                  ''#t)
+    (check-equal? (test #'(null? '(1 2)))
+                  ''#f)
+    (check-equal? (test #'(null? (list)))
+                  ''#t)
+    (check-equal? (test #'(null? (list 1 2)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       '#f)))
+    (check-equal? (test #'(empty? '()))
+                  ''#t)
+    (check-equal? (test #'(empty? '(1 2)))
+                  ''#f)
+    (check-equal? (test #'(empty? (list)))
+                  ''#t)
+    (check-equal? (test #'(empty? (list 1 2)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       '#f)))
+    (check-equal? (test #'(list? '()))
+                  ''#t)
+    (check-equal? (test #'(list? '(1 2)))
+                  ''#t)
+    (check-equal? (test #'(list? '(1 . 2)))
+                  ''#f)
+    (check-equal? (test #'(list? (list)))
+                  ''#t)
+    (check-equal? (test #'(list? (list 1 2)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       '#t)))
+    (check-equal? (test #'(list? (cons 1 '())))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '()))
+                       '#t)))
+    (check-equal? (test #'(list? (cons 1 2)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       '#f)))
+    (check-equal? (test #'(list? (list* 1 2 '())))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       (let-values (((pf2) '()))
+                         '#t))))
+    (check-equal? (test #'(list? (list* 1 2 3)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       (let-values (((pf2) '3))
+                         '#f))))
     (check-equal? (test #'(box? (box 1)))
                   '(let-values (((pf0) '1))
                      '#t))
+    (check-equal? (test #'(vector? '#(1 2)))
+                  ''#t)
+    (check-equal? (test #'(vector? '(1 2)))
+                  ''#f)
     (check-equal? (test #'(vector? (vector 1 2)))
                   '(let-values (((pf0) '1))
                      (let-values (((pf1) '2))
