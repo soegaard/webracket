@@ -3137,6 +3137,16 @@
         [(quote ,s ,d)        #t]
         [(quote-syntax ,s ,d) #t]
         [else                 #f]))
+    ;; same-expression? : LFE Expr LFE Expr -> boolean?
+    ;;   Compare expressions while ignoring syntax-object identity details.
+    (define (same-expression? e1 e2)
+      (equal? (unparse-all (unparse-LFE e1))
+              (unparse-all (unparse-LFE e2))))
+    ;; formals-bind-variable? : LFE Formals variable? -> boolean?
+    ;;   Check whether formals bind x.
+    (define (formals-bind-variable? f x)
+      (ormap (λ (y) (id=? x y))
+             (formals->variables f)))
     ;; pure-expression? : LFE Expr -> boolean?
     ;;   Recognize obviously effect-free expressions for dead-code pruning.
     (define (pure-expression? e)
@@ -3338,7 +3348,9 @@
          [else
           (letv ((e1 κ1) (Expr e1 κ))
             (letv ((e2 κ2) (Expr e2 κ))
-              (values `(if ,s ,e0 ,e1 ,e2)
+              (values (if (same-expression? e1 e2)
+                          (Begin s (list e0 e1))
+                          `(if ,s ,e0 ,e1 ,e2))
                       (κ-intersect κ1 κ2))))]))]
 
     ;; Empty Binding Elimination
@@ -3358,21 +3370,32 @@
 
     [(let-values ,s ([(,x) ,e]) ,e0)
      (letv ((e  κ) (Expr e κ))
-       (letv ((e0 κ-body) (Expr e0 (extend-κ/let-values κ (list (list x)) (list e))))
+       (define e*
+         (nanopass-case (LFE Expr) e
+           [(app ,s0 ,e0 ,e1 ...)
+            (if (and (variable? e0)
+                     (primitive? (variable-id e0))
+                     (eq? 'values (syntax-e (variable-id e0)))
+                     (= 1 (length e1)))
+                (car e1)
+                e)]
+           [else
+            e]))
+       (letv ((e0 κ-body) (Expr e0 (extend-κ/let-values κ (list (list x)) (list e*))))
          (define κ-out
            (κ-pop* κ-body (list x)))
          (cond
-           [(and (constant-expression? e)
+           [(and (constant-expression? e*)
                  (constant-expression? e0))
-            (values e0 κ-out)]
+             (values e0 κ-out)]
            [else
-            (nanopass-case (LFE Expr) e0
-              [,xd
-               (if (id=? x xd)
-                   (values e κ-out)
-                   (values `(let-values ,s ([(,x) ,e]) ,e0) κ-out))]
-              [else
-               (values `(let-values ,s ([(,x) ,e]) ,e0) κ-out)])])))]
+             (nanopass-case (LFE Expr) e0
+               [,xd
+                (if (id=? x xd)
+                   (values e* κ-out)
+                   (values `(let-values ,s ([(,x) ,e*]) ,e0) κ-out))]
+               [else
+               (values `(let-values ,s ([(,x) ,e*]) ,e0) κ-out)])])))]
 
     [(let-values ,s ([(,x* ...) ,e*] ...) ,e0 ,e1 ...)
      (letv ((e* κ-rhs) (Expr* e* κ))
@@ -3489,6 +3512,12 @@
                   ''1)
     (check-equal? (test #'(if (pair? '()) 1 2))
                   ''2)
+    (check-equal? (test #'(if x 1 1))
+                  '(begin (#%top . x) '1))
+    (check-equal? (test #'(let-values ([(x) '0])
+                            (if x (set! x '1) (set! x '1))))
+                  '(let-values (((x) '0))
+                     (set! x '1)))
     (check-equal? (test #'(not #f))
                   ''#t)
     (check-equal? (test #'(eq? '5 '5))
@@ -3499,6 +3528,8 @@
                   ''5)
     (check-equal? (test #'(let-values ([(x) '#f]) (if x 1 2)))
                   ''2)
+    (check-equal? (test #'(let-values ([(x) (#%plain-app values '5)]) y))
+                  '(let-values (((x) '5)) (#%top . y)))
     (check-equal? (test #'(if #t (begin 1) 2))
                   ''1)
     (check-equal? (test #'(if #t (begin 1 (begin 2 3)) 4))
