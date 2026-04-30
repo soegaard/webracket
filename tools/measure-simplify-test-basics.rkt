@@ -14,6 +14,11 @@
 (struct mode-result (name compile-ok? compile-ms wat-size run-ok? saw-#f? stdout stderr dest-dir)
   #:transparent)
 
+;; suite-config : string? path? path? (listof string?) boolean? -> suite-config?
+;;   Benchmark configuration for one source program.
+(struct suite-config (name source-file cwd compile-args run-under-node?)
+  #:transparent)
+
 ;; repo-dir : path?
 ;;   Absolute path to the repository root.
 (define-runtime-path repo-dir "..")
@@ -24,6 +29,11 @@
 ;;   Construct the absolute path to a test suite in `test/`.
 (define (make-suite-path name)
   (build-path repo-root "test" name))
+
+;; make-example-path : string? string? -> path?
+;;   Construct the absolute path to an example source file.
+(define (make-example-path dir name)
+  (build-path repo-root "examples" dir name))
 
 ;; ensure-executable : string? -> path?
 ;;   Resolve an executable from PATH or fail with a helpful error.
@@ -61,23 +71,25 @@
             "unknown simplify mode: ~a"
             mode)]))
 
-;; compile-mode : path? symbol? path? path? path? -> mode-result?
-;;   Compile and run one suite for one simplify mode in `dest-dir`.
-(define (compile-mode source-file mode racket-exe node-exe dest-dir)
+;; compile-mode : suite-config? symbol? path? path? path? -> mode-result?
+;;   Compile and optionally run one benchmark under one simplify mode in `dest-dir`.
+(define (compile-mode suite mode racket-exe node-exe dest-dir)
   (when (directory-exists? dest-dir)
     (delete-directory/files dest-dir))
   (make-directory* dest-dir)
+  (define source-file
+    (suite-config-source-file suite))
   (define source-base
     (file-name-from-path source-file))
   (define compile-args
-    (append (list "webracket.rkt"
-                  "--no-stdlib")
+    (append (list (path->string (build-path repo-root "webracket.rkt")))
+            (suite-config-compile-args suite)
             (mode-flag mode)
             (list "--dest"
                   (path->string dest-dir)
                   (path->string source-file))))
   (define-values (compile-ok? compile-stdout compile-stderr compile-ms)
-    (apply run-command/capture repo-root racket-exe compile-args))
+    (apply run-command/capture (suite-config-cwd suite) racket-exe compile-args))
   (define wat-path
     (build-path dest-dir
                 (path-replace-extension source-base ".wat")))
@@ -91,9 +103,11 @@
   (cond
     [compile-ok?
      (define-values (run-ok? run-stdout run-stderr _run-ms)
-       (run-command/capture dest-dir
-                            node-exe
-                            (path->string js-path)))
+       (if (suite-config-run-under-node? suite)
+           (run-command/capture dest-dir
+                                node-exe
+                                (path->string js-path))
+           (values #t "" "" 0.0)))
      (mode-result mode
                   #t
                   compile-ms
@@ -114,13 +128,13 @@
                   compile-stderr
                   dest-dir)]))
 
-;; run-mode-in-thread : path? symbol? path? path? path? box? -> thread?
+;; run-mode-in-thread : suite-config? symbol? path? path? path? box? -> thread?
 ;;   Start one simplify mode measurement in a thread and store the result in `result-box`.
-(define (run-mode-in-thread source-file mode racket-exe node-exe dest-dir result-box)
+(define (run-mode-in-thread suite mode racket-exe node-exe dest-dir result-box)
   (thread
    (lambda ()
      (set-box! result-box
-               (compile-mode source-file mode racket-exe node-exe dest-dir)))))
+               (compile-mode suite mode racket-exe node-exe dest-dir)))))
 
 ;; result-status : mode-result? -> string?
 ;;   Short textual status for a mode result.
@@ -209,11 +223,15 @@
 (define (mode-dest-dir suite-stem mode)
   (build-path repo-root "tmp" (format "measure-~a-~a" suite-stem mode)))
 
-;; measure-suite : path? string? -> boolean?
+;; measure-suite : suite-config? -> boolean?
 ;;   Measure one suite under all configured simplify modes; return #t when all succeed.
-(define (measure-suite source-file suite-name)
+(define (measure-suite suite)
   (define racket-exe (ensure-executable "racket"))
   (define node-exe   (ensure-executable "node"))
+  (define source-file
+    (suite-config-source-file suite))
+  (define suite-name
+    (suite-config-name suite))
   (define suite-stem
     (path->string (path-replace-extension (file-name-from-path source-file) "")))
   (define result-boxes
@@ -222,7 +240,7 @@
   (define threads
     (for/list ([mode (in-list mode-order)]
                [entry (in-list result-boxes)])
-      (run-mode-in-thread source-file
+      (run-mode-in-thread suite
                           mode
                           racket-exe
                           node-exe
@@ -266,12 +284,32 @@
 ;; main : -> void?
 ;;   Run the focused suite first, then measure `test-basics.rkt` if it passes.
 (define (main)
+  (define test-letrec-suite
+    (suite-config "test-letrec.rkt"
+                  (make-suite-path "test-letrec.rkt")
+                  repo-root
+                  '("--no-stdlib")
+                  #t))
+  (define test-basics-suite
+    (suite-config "test-basics.rkt"
+                  (make-suite-path "test-basics.rkt")
+                  repo-root
+                  '("--no-stdlib")
+                  #t))
+  (define pict-suite
+    (suite-config "examples/pict/pict.rkt"
+                  (make-example-path "pict" "pict.rkt")
+                  (build-path repo-root "examples" "pict")
+                  '("--browser" "--ffi" "dom" "--ffi" "standard")
+                  #f))
   (define simplify-ok?
-    (measure-suite (make-suite-path "test-letrec.rkt")
-                   "test-letrec.rkt"))
+    (measure-suite test-letrec-suite))
   (unless simplify-ok?
     (exit 1))
-  (measure-suite (make-suite-path "test-basics.rkt")
-                 "test-basics.rkt"))
+  (define basics-ok?
+    (measure-suite test-basics-suite))
+  (unless basics-ok?
+    (exit 1))
+  (measure-suite pict-suite))
 
 (main)

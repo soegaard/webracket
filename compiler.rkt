@@ -3103,65 +3103,52 @@
 
 ;; simplify-LFE : LFE -> LFE
 ;;   Simplify parsed LFE before subsequent normalization passes.
+;; make-empty-constant-env : -> free-id-table?
+;;   Construct an empty constant-propagation environment.
+(define (make-empty-constant-env)
+  (make-immutable-free-id-table))
+
 (define (simplify-LFE T)
-  (letv ((T κ) (simplify-LFE/pass1 T '()))
+  (letv ((T κ) (simplify-LFE/pass1 T (make-empty-constant-env)))
     T))
 
 (define-pass simplify-LFE/pass1 : LFE (T κ) -> LFE (κ)
   (definitions
     (define blocked-constant-binding '#:blocked)
-    ;; κ-ref : (listof (cons/c variable? any/c)) variable? -> (or/c LFE Expr #f)
+    ;; κ-empty : -> free-id-table?
+    ;;   Construct an empty constant-propagation environment.
+    (define κ-empty
+      (make-empty-constant-env))
+    ;; κ-ref : free-id-table? variable? -> (or/c LFE Expr #f)
     ;;   Look up a constant binding for x. A blocked binding stops the search.
     (define (κ-ref κ x)
-      (cond
-        [(null? κ) #f]
-        [else
-         (define binding (car κ))
-         (define y (car binding))
-         (define v (cdr binding))
-         (cond
-           [(id=? x y)
-            (if (eq? v blocked-constant-binding) #f v)]
-           [else
-            (κ-ref (cdr κ) x)])]))
-    ;; κ-bind : κ variable? LFE Expr -> κ
+      (define v (free-id-table-ref κ (variable-id x) #f))
+      (if (eq? v blocked-constant-binding) #f v))
+    ;; κ-bind : free-id-table? variable? LFE Expr -> free-id-table?
     ;;   Extend κ with a known constant binding.
     (define (κ-bind κ x e)
-      (cons (cons x e) κ))
-    ;; κ-block : κ variable? -> κ
+      (free-id-table-set κ (variable-id x) e))
+    ;; κ-block : free-id-table? variable? -> free-id-table?
     ;;   Shadow x so it is no longer treated as a known constant.
     (define (κ-block κ x)
-      (cons (cons x blocked-constant-binding) κ))
-    ;; κ-block* : κ (listof variable?) -> κ
+      (free-id-table-set κ (variable-id x) blocked-constant-binding))
+    ;; κ-block* : free-id-table? (listof variable?) -> free-id-table?
     ;;   Shadow each variable in xs.
     (define (κ-block* κ xs)
       (for/fold ([κ κ]) ([x (in-list xs)])
         (κ-block κ x)))
-    ;; κ-pop* : κ (listof variable?) -> κ
-    ;;   Remove all bindings in κ for variables in xs.
+    ;; κ-pop* : free-id-table? (listof variable?) -> free-id-table?
+    ;;   Shadow each variable in xs when leaving a local scope.
     (define (κ-pop* κ xs)
-      (define (bound-here? x)
-        (ormap (λ (y) (id=? x y)) xs))
-      (filter (λ (binding) (not (bound-here? (car binding)))) κ))
-    ;; κ-block-all : κ -> κ
-    ;;   Block all currently known constant bindings.
+      (κ-block* κ xs))
+    ;; κ-block-all : free-id-table? -> free-id-table?
+    ;;   Drop all known constant bindings at a control-flow boundary.
     (define (κ-block-all κ)
-      (for/fold ([κ* κ]) ([binding (in-list κ)])
-        (κ-block κ* (car binding))))
-    ;; κ-intersect : κ κ -> κ
-    ;;   Keep only constant bindings present with equal values in both envs.
+      κ-empty)
+    ;; κ-intersect : free-id-table? free-id-table? -> free-id-table?
+    ;;   Drop branch-derived constant bindings conservatively after conditionals.
     (define (κ-intersect κ1 κ2)
-      (for/fold ([acc '()]) ([binding (in-list κ1)])
-        (define x (car binding))
-        (define e (cdr binding))
-        (cond
-          [(eq? e blocked-constant-binding)
-           acc]
-          [else
-           (define e2 (κ-ref κ2 x))
-           (if (and e2 (equal? e e2))
-               (cons binding acc)
-               acc)])))
+      κ-empty)
     ;; bindings->variables : (listof (listof variable?)) -> (listof variable?)
     ;;   Flatten bound variables from let-values clauses.
     (define (bindings->variables xss)
@@ -3558,14 +3545,10 @@
        (values `,e κ))]
     [(define-values ,s (,x ...) ,e)
      (letv ((e κ) (Expr e κ))
-       (define κ*
-         (let ([κ0 (κ-block* κ x)])
-           (match x
-             [(list x0)
-              (if (constant-expression? e)
-                  (κ-bind κ0 x0 e)
-                  κ0)]
-             [_ κ0])))
+       ;; Do not propagate constants across top-level definitions.
+       ;; On large expanded programs, especially with the stdlib prepended,
+       ;; a growing top-level environment makes κ-ref effectively quadratic.
+       (define κ* (κ-block* κ x))
        (values `(define-values ,s (,x ...) ,e) κ*))]
     [(define-syntaxes ,s (,x ...) ,e)
      (values `(define-syntaxes ,s (,x ...) ,e) κ)]
@@ -3574,7 +3557,8 @@
 
   (Expr : Expr (E κ) -> Expr (κ)
     [,x
-     (values (or (κ-ref κ x) x) κ)]
+     (let ([e (κ-ref κ x)])
+       (values (or e x) κ))]
     [(quote ,s ,d)
      (values `(quote ,s ,d) κ)]
     [(quote-syntax ,s ,d)
