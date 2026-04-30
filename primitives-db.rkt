@@ -507,7 +507,7 @@
 (define-primitive linklet-name                              1                   (ordered))
 (define-primitive linklet?                                  1                   (pure))
 (define-primitive list                                      at-least-0          (allocates partial-foldable))
-(define-primitive list*                                     at-least-1          (allocates))
+(define-primitive list*                                     at-least-1          (allocates partial-foldable))
 (define-primitive list->bytes                               1                   (allocates))
 (define-primitive list->string                              1                   (allocates))
 (define-primitive list->vector                              1                   (allocates))

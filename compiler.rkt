@@ -4242,6 +4242,9 @@
         [(list 'append (list e0))
          ; (append x) => x
          (keep-valued obviously-single-valued-expression? e0)]
+        [(list 'list* (list e0))
+         ; (list* x) => x
+         (keep-valued obviously-single-valued-expression? e0)]
         [(list (? (λ (sym) (memq sym '(member assoc assq assv memq memv))))
                (list e0 e1))
          ; (member x '()) => #f
@@ -4761,6 +4764,10 @@
                   '(#%top . x))
     (check-equal? (test #'(append (values 1 2)))
                   '(append (values '1 '2)))
+    (check-equal? (test #'(list* x))
+                  '(#%top . x))
+    (check-equal? (test #'(list* (values 1 2)))
+                  '(list* (values '1 '2)))
     (check-equal? (test #'(procedure? (lambda (x) x)))
                   ''#t)
     (check-equal? (test #'(eq? x #f))
