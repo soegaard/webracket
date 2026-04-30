@@ -464,7 +464,7 @@
   (cond
     [lexical lexical]
     [else
-     (define key    (rename-env-name-key v))
+     (define key (rename-env-name-key v))
      (define bucket (if key
                         (hash-ref (rename-env-by-name ρ) key '())
                         '()))
@@ -4787,7 +4787,8 @@
     ; to the collected top-level binding so forward and non-forward refs
     ; share one variable path.
     [(top ,s ,x)                              (cond
-                                                [(and (variable? x) (ρ-ref ρ x))
+                                                [(and (variable? x)
+                                                      (ρ-ref ρ x))
                                                  => (λ (x*)
                                                       (when (and (top-binding? x*)
                                                                  (not (seen-top-binding? x*)))
@@ -4799,9 +4800,12 @@
 
   (VariableReferenceId : VariableReferenceId (VRX ρ) -> VariableReferenceId ()
     [(anonymous ,s)       `(anonymous ,s)]
-    [(top ,s ,x)          `(top ,s ,(or (and (variable? x) (ρ-ref ρ x)) x))]
+    [(top ,s ,x)          `(top ,s ,(or (and (variable? x)
+                                                  (ρ-ref ρ x))
+                                             x))]
     [(non-top ,s ,x)      (cond
-                            [(and (variable? x) (lookup ρ x))
+                            [(and (variable? x)
+                                  (lookup ρ x))
                              => (λ (x*)
                                   (if (top-binding? x*)
                                       `(top ,s ,x*)
@@ -10372,17 +10376,21 @@
   (define ecl (time-pass "explicit-case-lambda" (λ () (explicit-case-lambda eb))
                          (λ (v) (count-unparsed unparse-LFE2 v))
                          (λ (v) (unparse-all (unparse-LFE2 v)))))
-  (define ar1+ρ
-    (time-pass "α-rename/pass1"
-               (λ () (call-with-values (λ () (α-rename/prepare ecl)) list))
-               (λ (vρ) (count-unparsed unparse-LFE2 (car vρ)))
-               (λ (vρ) (unparse-all (unparse-LFE2 (car vρ))))))
-  (define ar1 (car ar1+ρ))
-  (define ar-ρ (cadr ar1+ρ))
-  (define ar
-    (time-pass "α-rename/pass2"       (λ () (α-rename/finish ar1 ar-ρ))
-               (λ (v) (count-unparsed unparse-LFE2+ v))
-               (λ (v) (unparse-all (unparse-LFE2+ v)))))
+  (define ar+ρ
+    (let ()
+      (define ar1+ρ
+        (time-pass "α-rename/pass1"
+                   (λ () (call-with-values (λ () (α-rename/prepare ecl)) list))
+                   (λ (vρ) (count-unparsed unparse-LFE2 (car vρ)))
+                   (λ (vρ) (unparse-all (unparse-LFE2 (car vρ))))))
+      (define ar1 (car ar1+ρ))
+      (define ar-ρ (cadr ar1+ρ))
+      (define ar
+        (time-pass "α-rename/pass2"       (λ () (α-rename/finish ar1 ar-ρ))
+                   (λ (v) (count-unparsed unparse-LFE2+ v))
+                   (λ (v) (unparse-all (unparse-LFE2+ v)))))
+      (cons ar ar-ρ)))
+  (define ar (car ar+ρ))
   (define ua  (time-pass "uncover-assigned!"    (λ () (uncover-assigned! ar))))
   (define lr  (time-pass "lower-letrec-values"  (λ () (parameterize ([current-assigned-analysis ua])
                                                             (lower-letrec-values ar)))
