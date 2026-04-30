@@ -3374,10 +3374,18 @@
     ;;   Recognize the quoted numeric zero constant.
     (define (quoted-zero? e)
       (equal? (quoted-constant-value e) 0))
+    ;; quoted-exact-zero? : LFE Expr -> boolean?
+    ;;   Recognize the quoted exact integer zero constant.
+    (define (quoted-exact-zero? e)
+      (equal? (quoted-exact-integer e) 0))
     ;; quoted-one? : LFE Expr -> boolean?
     ;;   Recognize the quoted numeric one constant.
     (define (quoted-one? e)
       (equal? (quoted-constant-value e) 1))
+    ;; quoted-neg-one? : LFE Expr -> boolean?
+    ;;   Recognize the quoted exact integer -1 constant.
+    (define (quoted-neg-one? e)
+      (equal? (quoted-constant-value e) -1))
     ;; quoted-exact-integer : LFE Expr -> (or/c exact-integer? #f)
     ;;   Extract an exact integer constant, if present.
     (define (quoted-exact-integer e)
@@ -3555,32 +3563,40 @@
               (car kept))]
         [else
          (primitive-application s x kept)]))
+    ;; sequence-then-quote : syntax? (listof LFE Expr) any/c -> (or/c LFE Expr #f)
+    ;;   Evaluate `e*` in order and then return the quoted constant `v`.
+    (define (sequence-then-quote s e* v)
+      (and (andmap obviously-single-valued-expression? e*)
+           (Begin s (append e* (list (Quote s v))))))
+    ;; annihilate-on-exact-zero : syntax? (listof LFE Expr) -> (or/c LFE Expr #f)
+    ;;   Rewrite `(* ... 0 ... )` to an ordered sequence ending in exact zero.
+    (define (annihilate-on-exact-zero s e*)
+      (define kept (filter-not quoted-exact-zero? e*))
+      (and (< (length kept) (length e*))
+           (sequence-then-quote s kept 0)))
     ;; fold-exact-integer-subset : syntax? variable? (listof LFE Expr) (exact-integer? exact-integer? -> exact-integer?) any/c
     ;;                          -> (or/c LFE Expr #f)
     ;;   Combine exact integer constants inside an n-ary primitive application.
     (define (fold-exact-integer-subset s x e* op ident)
-      (define-values (acc kept changed?)
-        (for/fold ([acc ident] [kept '()] [changed? #f])
+      (define-values (acc prefix suffix seen-const? changed?)
+        (for/fold ([acc ident] [prefix '()] [suffix '()] [seen-const? #f] [changed? #f])
                   ([e (in-list e*)])
           (match (quoted-exact-integer e)
             [#f
-             (values acc (append kept (list e)) changed?)]
+             (if seen-const?
+                 (values acc prefix (append suffix (list e)) seen-const? changed?)
+                 (values acc (append prefix (list e)) suffix seen-const? changed?))]
             [n
-             (values (op acc n) kept #t)])))
+             (values (op acc n) prefix suffix #t #t)])))
       (cond
         [(not changed?)
          #f]
-        [(equal? acc ident)
-         (cond
-           [(null? kept)
-            (Quote s ident)]
-           [(null? (cdr kept))
-            (and (obviously-single-valued-expression? (car kept))
-                 (car kept))]
-           [else
-            (primitive-application s x kept)])]
         [else
-         (define e*^ (append (list (Quote s acc)) kept))
+         (define middle
+           (if (equal? acc ident)
+               '()
+               (list (Quote s acc))))
+         (define e*^ (append prefix middle suffix))
          (if (null? (cdr e*^))
              (and (obviously-single-valued-expression? (car e*^))
                   (car e*^))
@@ -3594,8 +3610,19 @@
          (or (fold-exact-integer-subset s x e* + 0)         ; (+ c1 ... x ... c2 ...) => (+ c x ...)
              (drop-identity-arguments s x e* quoted-zero? 0))] ; (+ ... 0 ...) => (+ ...)
         [(list '* _)
-         (or (fold-exact-integer-subset s x e* * 1)         ; (* c1 ... x ... c2 ...) => (* c x ...)
+         (or (annihilate-on-exact-zero s e*)                ; (* ... 0 ...) => (begin ... 0)
+             (fold-exact-integer-subset s x e* * 1)         ; (* c1 ... x ... c2 ...) => (* c x ...)
              (drop-identity-arguments s x e* quoted-one? 1))] ; (* ... 1 ...) => (* ...)
+        [(list 'bitwise-ior _)
+         (or (fold-exact-integer-subset s x e* bitwise-ior 0) ; (bitwise-ior c1 ... x ... c2 ...) => (bitwise-ior c x ...)
+             (drop-identity-arguments s x e* quoted-zero? 0))] ; (bitwise-ior ... 0 ...) => (bitwise-ior ...)
+        [(list 'bitwise-xor _)
+         (or (fold-exact-integer-subset s x e* bitwise-xor 0) ; (bitwise-xor c1 ... x ... c2 ...) => (bitwise-xor c x ...)
+             (drop-identity-arguments s x e* quoted-zero? 0))] ; (bitwise-xor ... 0 ...) => (bitwise-xor ...)
+        [(list 'bitwise-and _)
+         (or (annihilate-on-exact-zero s e*)                   ; (bitwise-and ... 0 ...) => (begin ... 0)
+             (fold-exact-integer-subset s x e* bitwise-and -1) ; (bitwise-and c1 ... x ... c2 ...) => (bitwise-and c x ...)
+             (drop-identity-arguments s x e* quoted-neg-one? -1))] ; (bitwise-and ... -1 ...) => (bitwise-and ...)
         [(list '- (list e0 e1))
          (cond
            [(quoted-zero? e1)
@@ -4059,6 +4086,28 @@
                   '(#%top . x))
     (check-equal? (test #'(* 2 3 x 4))
                   '(* '24 (#%top . x)))
+    (check-equal? (test #'(* x 0 y))
+                  '(begin (#%top . x) (#%top . y) '0))
+    (check-equal? (test #'(* (add1 x) 0))
+                  '(begin (add1 (#%top . x)) '0))
+    (check-equal? (test #'(* (values 1 2) 0))
+                  '(* (values '1 '2) '0))
+    (check-equal? (test #'(bitwise-ior x 0 y))
+                  '(bitwise-ior (#%top . x) (#%top . y)))
+    (check-equal? (test #'(bitwise-ior 1 2 x 4))
+                  '(bitwise-ior '7 (#%top . x)))
+    (check-equal? (test #'(bitwise-xor 1 2 x 3))
+                  '(#%top . x))
+    (check-equal? (test #'(bitwise-and -1 x -1))
+                  '(#%top . x))
+    (check-equal? (test #'(bitwise-and x 0 y))
+                  '(begin (#%top . x) (#%top . y) '0))
+    (check-equal? (test #'(bitwise-and (add1 x) 0))
+                  '(begin (add1 (#%top . x)) '0))
+    (check-equal? (test #'(bitwise-and (values 1 2) 0))
+                  '(bitwise-and (values '1 '2) '0))
+    (check-equal? (test #'(bitwise-and 7 3 x))
+                  '(bitwise-and '3 (#%top . x)))
     (check-equal? (test #'(/ 8 2))
                   ''4)
     (check-equal? (test #'(/ x 1))
