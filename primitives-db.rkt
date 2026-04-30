@@ -915,7 +915,7 @@
 (define-primitive unsafe-vector-length                      1                   (pure))
 (define-primitive unsafe-vector-ref                         2                   (pure restricted))
 (define-primitive unsafe-vector-set!                        3                   (ordered))
-(define-primitive values                                    at-least-0          (pure multi))
+(define-primitive values                                    at-least-0          (pure multi partial-foldable))
 (define-primitive variable-reference-constant?              1                   (pure))
 (define-primitive variable-reference-from-unsafe?           1                   (pure))
 (define-primitive vector                                    at-least-0          (allocates))
