@@ -3209,6 +3209,12 @@
     (define (formals-bind-variable? f x)
       (ormap (λ (y) (id=? x y))
              (formals->variables f)))
+    ;; nullary-formals? : LFE Formals -> boolean?
+    ;;   Recognize a nullary formals list.
+    (define (nullary-formals? f)
+      (nanopass-case (LFE Formals) f
+        [(formals ()) #t]
+        [else         #f]))
     ;; pure-expression? : LFE Expr -> boolean?
     ;;   Recognize obviously effect-free expressions for dead-code pruning.
     (define (pure-expression? e)
@@ -3305,6 +3311,17 @@
     ;;   Recognize quoted constants that are known truthy.
     (define (truthy-constant-expression? e)
       (eq? (constant-truthiness e) #t))
+    ;; booleanized-test : LFE Expr -> (or/c LFE Expr #f)
+    ;;   If `e` is `(if b #t #f)`, return `b`; otherwise return `#f`.
+    (define (booleanized-test e)
+      (nanopass-case (LFE Expr) e
+        [(if ,s ,e0 ,e1 ,e2)
+         (if (and (truthy-constant-expression? e1)
+                  (false-constant-expression? e2))
+             e0
+             #f)]
+        [else
+         #f]))
     ;; the-not-primitive? : LFE Expr -> boolean?
     ;;   Recognize the primitive `not`.
     (define (the-not-primitive? e)
@@ -3468,6 +3485,18 @@
                  (false-constant-expression? e4)))
      (Expr (Begin s (list e0 e2)) κ)]
 
+    ;   (if (if e0 (if e3 #t #f) e4) e1 e2) => (if (if e0 e3 e4) e1 e2)
+    [(if ,s (if ,s0 ,e0 ,e3 ,e4) ,e1 ,e2)
+     (guard (booleanized-test e3))
+     (let ([e3* (booleanized-test e3)])
+       (Expr `(if ,s (if ,s0 ,e0 ,e3* ,e4) ,e1 ,e2) κ))]
+
+    ;   (if (if e0 e3 (if e4 #t #f)) e1 e2) => (if (if e0 e3 e4) e1 e2)
+    [(if ,s (if ,s0 ,e0 ,e3 ,e4) ,e1 ,e2)
+     (guard (booleanized-test e4))
+     (let ([e4* (booleanized-test e4)])
+       (Expr `(if ,s (if ,s0 ,e0 ,e3 ,e4*) ,e1 ,e2) κ))]
+
     ;   (if (if e0 e3 e4) e1 e2) => (begin e0 e1)   where e3 and e4 are truthy constants
     [(if ,s (if ,s0 ,e0 ,e3 ,e4) ,e1 ,e2)
      (guard (and (truthy-constant-expression? e3)
@@ -3564,13 +3593,19 @@
     [(letrec-values ,s ([(,x* ...) ,e*] ...) ,e0 ,e1 ...)
      (define xs (bindings->variables x*))
      (define κ-rec (κ-block* κ xs))
-     (letv ((e* κ-rhs) (Expr* e* κ-rec))
-       (letv ((body κ-body-end) (Expr* (cons e0 e1) κ-rhs))
+      (letv ((e* κ-rhs) (Expr* e* κ-rec))
+        (letv ((body κ-body-end) (Expr* (cons e0 e1) κ-rhs))
          (define κ-out
            (κ-pop* κ-body-end xs))
          (match body
            [(cons e0 e1)
             (values `(letrec-values ,s ([(,x* ...) ,e*] ...) ,e0 ,e1 ...) κ-out)])))]
+
+    ;; Nullary Beta Reduction
+    ;   ((lambda () e)) => e
+    [(app ,s (λ ,s0 ,f ,e0) )
+     (guard (nullary-formals? f))
+     (Expr e0 κ)]
 
     ;; Foldable Applications
     [(app ,s ,e0 ,e1 ...)
@@ -3681,6 +3716,10 @@
                   ''1)
     (check-equal? (test #'(if (if x #f #f) 2 3))
                   ''3)
+    (check-equal? (test #'(if (if x (if y #t #f) z) 2 3))
+                  '(if (if (#%top . x) (#%top . y) (#%top . z)) '2 '3))
+    (check-equal? (test #'(if (if x y (if z #t #f)) 2 3))
+                  '(if (if (#%top . x) (#%top . y) (#%top . z)) '2 '3))
     (check-equal? (test #'(let-values ([(x) '0])
                             (if (if (begin (set! x '1) x) 1 2) 3 4)))
                   '(let-values (((x) '0))
@@ -3690,6 +3729,8 @@
                   '(if (#%top . x) '2 '3))
     (check-equal? (test #'(if (if x #f 1) 2 3))
                   '(if (#%top . x) '3 '2))
+    (check-equal? (test #'((lambda () 5)))
+                  ''5)
     (check-equal? (test #'(if x 1 1))
                   '(begin (#%top . x) '1))
     (check-equal? (test #'(let-values ([(x) '0])
