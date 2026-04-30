@@ -3320,6 +3320,10 @@
     (define (Quote s v)
       (with-output-language (LFE Expr)
         `(quote ,s ,(datum s v))))
+    ;; PrimitiveVar : symbol? -> variable?
+    ;;   Build a variable reference to primitive `sym`.
+    (define (PrimitiveVar sym)
+      (variable (datum->syntax #f sym)))
     ;; same-variable-expression? : LFE Expr LFE Expr -> boolean?
     ;;   Check whether both expressions are the same variable reference.
     (define (same-variable-expression? e1 e2)
@@ -3330,6 +3334,12 @@
            [else #f])]
         [else
          #f]))
+    ;; variable-expression=? : variable? LFE Expr -> boolean?
+    ;;   Check whether `e` is the same variable reference as `x`.
+    (define (variable-expression=? x e)
+      (nanopass-case (LFE Expr) e
+        [,xd (id=? x xd)]
+        [else #f]))
     ;; booleanized-test : LFE Expr -> (or/c LFE Expr #f)
     ;;   If `e` is `(if b #t #f)`, return `b`; otherwise return `#f`.
     (define (booleanized-test e)
@@ -3341,6 +3351,86 @@
              #f)]
         [else
          #f]))
+    ;; booleanize-expression : syntax? LFE Expr -> LFE Expr
+    ;;   Rebuild `e` as `(if e #t #f)`.
+    (define (booleanize-expression s e)
+      (with-output-language (LFE Expr)
+        `(if ,s ,e ,(Quote s #t) ,(Quote s #f))))
+    ;; unary-formal-variable : LFE Formals -> (or/c variable? #f)
+    ;;   Return the single bound variable when the formals are unary.
+    (define (unary-formal-variable f)
+      (nanopass-case (LFE Formals) f
+        [(formals (,x)) x]
+        [else           #f]))
+    ;; rest-formals-parts : LFE Formals -> (or/c (cons/c (listof variable?) variable?) #f)
+    ;;   Split dotted formals into fixed variables and the rest variable.
+    (define (rest-formals-parts f)
+      (nanopass-case (LFE Formals) f
+        [(formals (,x0 ,x1 ... . ,xd))
+         (cons (cons x0 x1) xd)]
+        [else
+         #f]))
+    ;; rest-normalizable-application? : LFE Formals (listof LFE Expr) -> boolean?
+    ;;   Check whether dotted formals receive at least one rest argument.
+    (define (rest-normalizable-application? f es)
+      (match (rest-formals-parts f)
+        [#f
+         #f]
+        [(cons fixed xd)
+         (> (length es) (length fixed))]))
+    ;; fixed+rest-formals : (listof variable?) variable? -> LFE Formals
+    ;;   Build formals with fixed arguments followed by one final argument.
+    (define (fixed+rest-formals fixed xd)
+      (with-output-language (LFE Formals)
+        (match fixed
+          [(list x ...) `(formals (,x ... ,xd))])))
+    ;; Lambda : syntax? LFE Formals (listof LFE Expr) -> LFE Expr
+    ;;   Build a lambda expression from formals and body expressions.
+    (define (Lambda s f body)
+      (with-output-language (LFE Expr)
+        (match body
+          [(list e ...) `(λ ,s ,f ,e ...)])))
+    ;; App : syntax? LFE Expr (listof LFE Expr) -> LFE Expr
+    ;;   Build an application expression from rator and argument expressions.
+    (define (App s e0 e1)
+      (with-output-language (LFE Expr)
+        (match e1
+          [(list e ...) `(app ,s ,e0 ,e ...)])))
+    ;; self-test-lambda? : LFE Formals LFE Expr -> boolean?
+    ;;   Check whether `e` has the form `(if x x e2)` for the unary formal `x`.
+    ;;   Note: This shape originates from `or`.
+    (define (self-test-lambda? f e)
+      (define x (unary-formal-variable f))
+      (and x
+           (nanopass-case (LFE Expr) e
+             [(if ,s0 ,e0 ,e1 ,e2)
+              (and (variable-expression=? x e0)
+                   (variable-expression=? x e1))]
+             [else
+              #f])))
+    ;; rewrite-self-test-lambda : syntax? LFE Formals LFE Expr -> LFE Expr
+    ;;   Rewrite `(lambda (x) (if x x e2))` to `(lambda (x) (if x #t (if e2 #t #f)))`.
+    (define (rewrite-self-test-lambda s f e)
+      (nanopass-case (LFE Expr) e
+        [(if ,s0 ,e0 ,e1 ,e2)
+         (with-output-language (LFE Expr)
+           `(λ ,s ,f (if ,s0 ,e0 ,(Quote s0 #t) ,(booleanize-expression s0 e2))))]))
+    ;; normalize-rest-application : syntax? syntax? LFE Formals (listof LFE Expr) (listof LFE Expr)
+    ;;                           -> (or/c LFE Expr #f)
+    ;;   Rewrite a dotted-formals lambda application to pass a constructed list to the rest argument.
+    (define (normalize-rest-application s s0 f es body)
+      (match (rest-formals-parts f)
+        [#f
+         #f]
+        [(cons fixed xd)
+         (define k (length fixed))
+         (and (> (length es) k)
+              (let ([fixed-args (take es k)]
+                    [rest-args  (drop es k)])
+                (App s
+                     (Lambda s0 (fixed+rest-formals fixed xd) body)
+                     (append fixed-args
+                             (list (App s (PrimitiveVar 'list) rest-args))))))]))
     ;; the-not-primitive? : LFE Expr -> boolean?
     ;;   Recognize the primitive `not`.
     (define (the-not-primitive? e)
@@ -3549,6 +3639,13 @@
      (guard (the-not-primitive? x))
      (Expr `(if ,s ,e0 ,e2 ,e1) κ)]
 
+    ;   (if ((lambda (x) (if x x e0)) e1) e2 e3)
+    ;      => (if ((lambda (x) (if x #t (if e0 #t #f))) e1) e2 e3)
+    [(if ,s (app ,s0 (λ ,s1 ,f ,e0) ,e1) ,e2 ,e3)
+     (guard (self-test-lambda? f e0))
+     (let ([lam* (rewrite-self-test-lambda s1 f e0)])
+       (Expr `(if ,s (app ,s0 ,lam* ,e1) ,e2 ,e3) κ))]
+
     [(if ,s ,e0 ,e1 ,e2)
      (letv ((e0 κ) (Expr e0 κ))
        (case (constant-truthiness e0)
@@ -3635,6 +3732,19 @@
     [(app ,s (λ ,s0 ,f ,e0 ,e1 ...) )
      (guard (nullary-formals? f))
      (Expr (lambda-body s0 e0 e1) κ)]
+
+    ;; Unary λ-normalization
+    ;   ((lambda (x) body) e) => (let-values ([(x) e]) body)
+    [(app ,s (λ ,s0 (formals (,x)) ,e0 ,e1 ...) ,e2)
+     (Expr `(let-values ,s ([(,x) ,e2]) ,e0 ,e1 ...)
+           κ)]
+
+    ;; Rest-argument λ-normalization
+    ;   ((lambda (x1 ... xk . xr) body) e1 ... ek ek+1 ...)
+    ;      => ((lambda (x1 ... xk xr) body) e1 ... ek (list ek+1 ...))
+    [(app ,s (λ ,s0 ,f ,e0 ,e1 ...) ,e2 ...)
+     (guard (rest-normalizable-application? f e2))
+     (Expr (normalize-rest-application s s0 f e2 (cons e0 e1)) κ)]
 
     ;; Foldable Applications
     [(app ,s ,e0 ,e1 ...)
@@ -3749,6 +3859,11 @@
                   '(if (if (#%top . x) (#%top . y) (#%top . z)) '2 '3))
     (check-equal? (test #'(if (if x y (if z #t #f)) 2 3))
                   '(if (if (#%top . x) (#%top . y) (#%top . z)) '2 '3))
+    (check-equal? (test #'(if ((lambda (x) (if x x y)) z) 2 3))
+                  '(if (let-values (((x) (#%top . z)))
+                         (if x '#t (if (#%top . y) '#t '#f)))
+                       '2
+                       '3))
     (check-equal? (test #'(lambda (x y) (if (if x x y) 2 3)))
                   '(#%expression
                     (λ (x y)
@@ -3770,6 +3885,8 @@
                   ''5)
     (check-equal? (test #'((lambda () 1 2)))
                   ''2)
+    (check-equal? (test #'((lambda (x . y) y) 1 2 3))
+                  '((λ (x y) y) '1 (list '2 '3)))
     (check-equal? (test #'(if x 1 1))
                   '(begin (#%top . x) '1))
     (check-equal? (test #'(let-values ([(x) '0])
@@ -3843,6 +3960,10 @@
                   '(let-values (((ys) '(y)))
                      (let-values (((zs) (append '(x) ys)))
                        (eq? (cdr zs) ys))))
+    (check-equal? (test #'((lambda (x y) y) 1 2))
+                  '((λ (x y) y) '1 '2))
+    (check-equal? (test #'((lambda (x) x) 1))
+                  ''1)
     (check-equal? (test #'(let-values ([(x) (#%plain-app values '5)]) x))
                   '(values '5))))
 
