@@ -3462,6 +3462,18 @@
      (guard (begin-sequence e0))
      (Expr (if-test-begin s e0 e1 e2) κ)]
 
+    ;   (if (if e0 #f #f) e1 e2) => (begin e0 e2)
+    [(if ,s (if ,s0 ,e0 ,e3 ,e4) ,e1 ,e2)
+     (guard (and (false-constant-expression? e3)
+                 (false-constant-expression? e4)))
+     (Expr (Begin s (list e0 e2)) κ)]
+
+    ;   (if (if e0 e3 e4) e1 e2) => (begin e0 e1)   where e3 and e4 are truthy constants
+    [(if ,s (if ,s0 ,e0 ,e3 ,e4) ,e1 ,e2)
+     (guard (and (truthy-constant-expression? e3)
+                 (truthy-constant-expression? e4)))
+     (Expr (Begin s (list e0 e1)) κ)]
+
     ;   (if (if e0 e3 #f) e1 e2) => (if e0 e1 e2)   where e3 is a truthy constant
     [(if ,s (if ,s0 ,e0 ,e3 ,e4) ,e1 ,e2)
      (guard (and (truthy-constant-expression? e3)
@@ -3667,6 +3679,13 @@
                   ''2)
     (check-equal? (test #'(if (not #f) 1 2))
                   ''1)
+    (check-equal? (test #'(if (if x #f #f) 2 3))
+                  ''3)
+    (check-equal? (test #'(let-values ([(x) '0])
+                            (if (if (begin (set! x '1) x) 1 2) 3 4)))
+                  '(let-values (((x) '0))
+                     (begin (set! x '1)
+                            '3)))
     (check-equal? (test #'(if (if x 1 #f) 2 3))
                   '(if (#%top . x) '2 '3))
     (check-equal? (test #'(if (if x #f 1) 2 3))
