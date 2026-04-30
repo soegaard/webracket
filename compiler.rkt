@@ -4091,14 +4091,15 @@
     (define (partial-fold-primitive-application s x e*)
       (define sym (syntax-e (variable-id x)))
       (match (list sym e*)
-        [(list (? (λ (sym) (memq sym '(eq? eqv? equal?))))
+        [(list (? (λ (sym) (memq sym '(eq? eqv? equal? equal-always?))))
                (list e0 e1))
          ; (eq? x x) => #t
          ; (eqv? x x) => #t
          ; (equal? x x) => #t
+         ; (equal-always? x x) => #t
          ; (eq? x #f) => (if x #f #t)
          ; (eq? #f x) => (if x #f #t)
-         ; same for eqv? and equal?
+         ; same for eqv?, equal?, and equal-always?
          (or (and (same-reference-expression? e0 e1)
                   (constructor-constant-result s (list e0 e1) #t))
              (and (false-constant-expression? e0)
@@ -4769,6 +4770,20 @@
     (check-equal? (test #'(eqv? x x))
                   '(let-values (((pf0) (#%top . x)))
                      (let-values (((pf1) (#%top . x)))
+                       '#t)))
+    (check-equal? (test #'(equal-always? x x))
+                  '(let-values (((pf0) (#%top . x)))
+                     (let-values (((pf1) (#%top . x)))
+                       '#t)))
+    (check-equal? (test #'(boolean=? (if b #t #f)
+                                     (if b #t #f)))
+                  '(let-values (((pf0) (if (#%top . b) '#t '#f)))
+                     (let-values (((pf1) (if (#%top . b) '#t '#f)))
+                       '#t)))
+    (check-equal? (test #'(symbol=? (string->symbol s)
+                                    (string->symbol s)))
+                  '(let-values (((pf0) (string->symbol (#%top . s))))
+                     (let-values (((pf1) (string->symbol (#%top . s))))
                        '#t)))
     (check-equal? (test #'(char=? (string-ref s 0)
                                   (string-ref s 0)))
