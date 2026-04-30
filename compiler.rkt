@@ -448,9 +448,19 @@
 
 ;; ρ-ref : rename-env? variable? -> (or/c variable? #f)
 ;;   Look up x in rho using lexical identity first and fallback name matching second.
+(define (ρ-ref/lexical ρ x)
+  (define v (rename-env-variable x))
+  (free-id-table-ref (rename-env-lexical ρ) (variable-id v) #f))
+
+;; lexical-bound-variable? : (or/c variable? identifier?) -> boolean?
+;;   Check whether x is a lexical identifier.
+(define (lexical-bound-variable? x)
+  (eq? (identifier-binding (variable-id (rename-env-variable x)))
+       'lexical))
+
 (define (ρ-ref ρ x)
   (define v       (rename-env-variable x))
-  (define lexical (free-id-table-ref (rename-env-lexical ρ) (variable-id v) #f))
+  (define lexical (ρ-ref/lexical ρ v))
   (cond
     [lexical lexical]
     [else
@@ -4516,7 +4526,7 @@
 ; Someday, when the test cases are rewritten, we can remove the simple mode.
 
 ; α-rename : LFE2 -> LFE2+
-(define (α-rename T)
+(define (α-rename/prepare T)
   (define top-bindings (collect-top-level-bindings T))
   (current-top-symbols-needing-defined-check (make-hasheq))
   (current-console-bridge-top-binding-names
@@ -4524,10 +4534,16 @@
               #:do [(define sym (syntax-e (variable-id x)))]
               #:when (symbol? sym))
      sym))
-  (letv ((T ρ) (α-rename/pass1 T top-bindings))
-    ; pass 2 patches the `provide` form to hold both variables
-    ; before and after renaming.
-    (α-rename/pass2 T ρ)))
+  (α-rename/pass1 T top-bindings))
+
+(define (α-rename/finish T ρ)
+  ; pass 2 patches the `provide` form to hold both variables
+  ; before and after renaming.
+  (α-rename/pass2 T ρ))
+
+(define (α-rename T)
+  (letv ((T ρ) (α-rename/prepare T))
+    (α-rename/finish T ρ)))
 
 (define-pass α-rename/pass2 : LFE2 (T ρ) -> LFE2+ ()
   (definitions
@@ -4568,6 +4584,13 @@
     (define (lookup ρ x)
       (or (ρ-ref ρ x)
           (initial-binding x)))
+    (define (lookup/lexical ρ x)
+      (or (ρ-ref/lexical ρ x)
+          (initial-binding x)))
+    (define (lookup/expr ρ x)
+      (if (lexical-bound-variable? x)
+          (lookup/lexical ρ x)
+          (lookup ρ x)))
     (define (initial-ρ)
       (ρ-set* (ρ-empty) top-bindings))
     (define (fresh/simple x ρ [orig-x x])
@@ -4671,7 +4694,7 @@
                                                                   (Expr e ρ)))
                                                       (values `(λ ,s ,f ,e) ρ-orig))))])
   (Expr : Expr (E ρ) -> Expr (ρ)
-    [,x                                         (let ([ρx (lookup ρ x)])
+    [,x                                         (let ([ρx (lookup/expr ρ x)])
                                                   (cond
                                                     [ρx
                                                      ;; A top-level read before the binding is seen must check
@@ -10349,9 +10372,17 @@
   (define ecl (time-pass "explicit-case-lambda" (λ () (explicit-case-lambda eb))
                          (λ (v) (count-unparsed unparse-LFE2 v))
                          (λ (v) (unparse-all (unparse-LFE2 v)))))
-  (define ar  (time-pass "α-rename"             (λ () (α-rename ecl))
-                         (λ (v) (count-unparsed unparse-LFE2+ v))
-                         (λ (v) (unparse-all (unparse-LFE2+ v)))))
+  (define ar1+ρ
+    (time-pass "α-rename/pass1"
+               (λ () (call-with-values (λ () (α-rename/prepare ecl)) list))
+               (λ (vρ) (count-unparsed unparse-LFE2 (car vρ)))
+               (λ (vρ) (unparse-all (unparse-LFE2 (car vρ))))))
+  (define ar1 (car ar1+ρ))
+  (define ar-ρ (cadr ar1+ρ))
+  (define ar
+    (time-pass "α-rename/pass2"       (λ () (α-rename/finish ar1 ar-ρ))
+               (λ (v) (count-unparsed unparse-LFE2+ v))
+               (λ (v) (unparse-all (unparse-LFE2+ v)))))
   (define ua  (time-pass "uncover-assigned!"    (λ () (uncover-assigned! ar))))
   (define lr  (time-pass "lower-letrec-values"  (λ () (parameterize ([current-assigned-analysis ua])
                                                             (lower-letrec-values ar)))
