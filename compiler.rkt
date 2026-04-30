@@ -3311,6 +3311,21 @@
     ;;   Recognize quoted constants that are known truthy.
     (define (truthy-constant-expression? e)
       (eq? (constant-truthiness e) #t))
+    ;; Quote : syntax? any/c -> LFE Expr
+    ;;   Build a quoted constant expression.
+    (define (Quote s v)
+      (with-output-language (LFE Expr)
+        `(quote ,s ,(datum s v))))
+    ;; same-variable-expression? : LFE Expr LFE Expr -> boolean?
+    ;;   Check whether both expressions are the same variable reference.
+    (define (same-variable-expression? e1 e2)
+      (nanopass-case (LFE Expr) e1
+        [,x
+         (nanopass-case (LFE Expr) e2
+           [,xd (id=? x xd)]
+           [else #f])]
+        [else
+         #f]))
     ;; booleanized-test : LFE Expr -> (or/c LFE Expr #f)
     ;;   If `e` is `(if b #t #f)`, return `b`; otherwise return `#f`.
     (define (booleanized-test e)
@@ -3496,6 +3511,16 @@
      (guard (booleanized-test e4))
      (let ([e4* (booleanized-test e4)])
        (Expr `(if ,s (if ,s0 ,e0 ,e3 ,e4*) ,e1 ,e2) κ))]
+
+    ;   (if (if x x e4) e1 e2) => (if (if x #t e4) e1 e2)   where x is a variable
+    [(if ,s (if ,s0 ,e0 ,e3 ,e4) ,e1 ,e2)
+     (guard (same-variable-expression? e0 e3))
+     (Expr `(if ,s (if ,s0 ,e0 ,(Quote s0 #t) ,e4) ,e1 ,e2) κ)]
+
+    ;   (if (if x e3 x) e1 e2) => (if (if x e3 #f) e1 e2)   where x is a variable
+    [(if ,s (if ,s0 ,e0 ,e3 ,e4) ,e1 ,e2)
+     (guard (same-variable-expression? e0 e4))
+     (Expr `(if ,s (if ,s0 ,e0 ,e3 ,(Quote s0 #f)) ,e1 ,e2) κ)]
 
     ;   (if (if e0 e3 e4) e1 e2) => (begin e0 e1)   where e3 and e4 are truthy constants
     [(if ,s (if ,s0 ,e0 ,e3 ,e4) ,e1 ,e2)
@@ -3720,6 +3745,14 @@
                   '(if (if (#%top . x) (#%top . y) (#%top . z)) '2 '3))
     (check-equal? (test #'(if (if x y (if z #t #f)) 2 3))
                   '(if (if (#%top . x) (#%top . y) (#%top . z)) '2 '3))
+    (check-equal? (test #'(lambda (x y) (if (if x x y) 2 3)))
+                  '(#%expression
+                    (λ (x y)
+                      (if (if x '#t y) '2 '3))))
+    (check-equal? (test #'(lambda (x y) (if (if x y x) 2 3)))
+                  '(#%expression
+                    (λ (x y)
+                      (if (if x y '#f) '2 '3))))
     (check-equal? (test #'(let-values ([(x) '0])
                             (if (if (begin (set! x '1) x) 1 2) 3 4)))
                   '(let-values (((x) '0))
