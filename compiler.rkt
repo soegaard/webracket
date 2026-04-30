@@ -3297,6 +3297,14 @@
       (nanopass-case (LFE Expr) e
         [(quote ,s ,d) (if (eq? (datum-value d) #f) #f #t)]
         [else          'unknown]))
+    ;; false-constant-expression? : LFE Expr -> boolean?
+    ;;   Recognize the quoted false constant.
+    (define (false-constant-expression? e)
+      (eq? (constant-truthiness e) #f))
+    ;; truthy-constant-expression? : LFE Expr -> boolean?
+    ;;   Recognize quoted constants that are known truthy.
+    (define (truthy-constant-expression? e)
+      (eq? (constant-truthiness e) #t))
     ;; the-not-primitive? : LFE Expr -> boolean?
     ;;   Recognize the primitive `not`.
     (define (the-not-primitive? e)
@@ -3453,6 +3461,18 @@
     [(if ,s ,e0 ,e1 ,e2)
      (guard (begin-sequence e0))
      (Expr (if-test-begin s e0 e1 e2) κ)]
+
+    ;   (if (if e0 e3 #f) e1 e2) => (if e0 e1 e2)   where e3 is a truthy constant
+    [(if ,s (if ,s0 ,e0 ,e3 ,e4) ,e1 ,e2)
+     (guard (and (truthy-constant-expression? e3)
+                 (false-constant-expression? e4)))
+     (Expr `(if ,s ,e0 ,e1 ,e2) κ)]
+
+    ;   (if (if e0 #f e3) e1 e2) => (if e0 e2 e1)   where e3 is a truthy constant
+    [(if ,s (if ,s0 ,e0 ,e3 ,e4) ,e1 ,e2)
+     (guard (and (false-constant-expression? e3)
+                 (truthy-constant-expression? e4)))
+     (Expr `(if ,s ,e0 ,e2 ,e1) κ)]
 
     ;   (if (not e0) e1 e2) => (if e0 e2 e1)
     [(if ,s (app ,s0 ,x ,e0) ,e1 ,e2)
@@ -3647,6 +3667,10 @@
                   ''2)
     (check-equal? (test #'(if (not #f) 1 2))
                   ''1)
+    (check-equal? (test #'(if (if x 1 #f) 2 3))
+                  '(if (#%top . x) '2 '3))
+    (check-equal? (test #'(if (if x #f 1) 2 3))
+                  '(if (#%top . x) '3 '2))
     (check-equal? (test #'(if x 1 1))
                   '(begin (#%top . x) '1))
     (check-equal? (test #'(let-values ([(x) '0])
