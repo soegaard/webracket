@@ -3274,6 +3274,10 @@
            e]
           [(cons e0 e1)
            `(begin ,s ,e0 ,e1 ...)])))
+    ;; lambda-body : syntax? LFE Expr * -> LFE Expr
+    ;;   Rebuild a lambda body as a single expression.
+    (define (lambda-body s e0 e1)
+      (Begin s (cons e0 e1)))
     ;; begin-sequence : LFE Expr -> (or/c (listof LFE Expr) #f)
     ;;   Return the immediate sequence of a begin expression, if any.
     (define (begin-sequence e)
@@ -3628,9 +3632,9 @@
 
     ;; Nullary Beta Reduction
     ;   ((lambda () e)) => e
-    [(app ,s (λ ,s0 ,f ,e0) )
+    [(app ,s (λ ,s0 ,f ,e0 ,e1 ...) )
      (guard (nullary-formals? f))
-     (Expr e0 κ)]
+     (Expr (lambda-body s0 e0 e1) κ)]
 
     ;; Foldable Applications
     [(app ,s ,e0 ,e1 ...)
@@ -3764,6 +3768,8 @@
                   '(if (#%top . x) '3 '2))
     (check-equal? (test #'((lambda () 5)))
                   ''5)
+    (check-equal? (test #'((lambda () 1 2)))
+                  ''2)
     (check-equal? (test #'(if x 1 1))
                   '(begin (#%top . x) '1))
     (check-equal? (test #'(let-values ([(x) '0])
