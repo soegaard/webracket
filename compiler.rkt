@@ -3651,6 +3651,47 @@
     (define (sequence-then-quote s e* v valued?)
       (and (andmap valued? e*)
            (Begin s (append e* (list (Quote s v))))))
+    ;; sequence-then-expression : syntax? (listof LFE Expr) LFE Expr (LFE Expr -> boolean?) (LFE Expr -> boolean?)
+    ;;                         -> (or/c LFE Expr #f)
+    ;;   Evaluate `e*` in order and then return `tail`.
+    (define (sequence-then-expression s e* tail prefix-valued? tail-valued?)
+      (and (andmap prefix-valued? e*)
+           (tail-valued? tail)
+           (Begin s (append e* (list tail)))))
+    ;; any-quoted-null? : (listof LFE Expr) -> boolean?
+    ;;   Check whether some expression is the quoted empty list.
+    (define (any-quoted-null? e*)
+      (ormap (λ (e)
+               (define v (quoted-constant-value e))
+               (and v (null? v)))
+             e*))
+    ;; null-search-result : syntax? LFE Expr LFE Expr -> (or/c LFE Expr #f)
+    ;;   Evaluate `x` and `ls`, then return `#f` when `ls` is known empty.
+    (define (null-search-result s x ls)
+      (and (quoted-constant-value ls)
+           (null? (quoted-constant-value ls))
+           (sequence-then-quote s (list x ls) #f obviously-single-valued-expression?)))
+    ;; null-remove-result : syntax? LFE Expr LFE Expr -> (or/c LFE Expr #f)
+    ;;   Evaluate `x` and `ls`, then return `'()` when `ls` is known empty.
+    (define (null-remove-result s x ls)
+      (and (quoted-constant-value ls)
+           (null? (quoted-constant-value ls))
+           (sequence-then-quote s (list x ls) '() obviously-single-valued-expression?)))
+    ;; any-null-search-result : syntax? (listof LFE Expr) -> (or/c LFE Expr #f)
+    ;;   Evaluate arguments and return `#f` when some list argument is empty.
+    (define (any-null-search-result s e*)
+      (and (any-quoted-null? e*)
+           (sequence-then-quote s e* #f obviously-single-valued-expression?)))
+    ;; any-null-quote-result : syntax? (listof LFE Expr) any/c -> (or/c LFE Expr #f)
+    ;;   Evaluate arguments and return the quoted constant `v` when some list argument is empty.
+    (define (any-null-quote-result s e* v)
+      (and (any-quoted-null? e*)
+           (sequence-then-quote s e* v obviously-single-valued-expression?)))
+    ;; any-null-remove-result : syntax? (listof LFE Expr) -> (or/c LFE Expr #f)
+    ;;   Evaluate arguments and return `'()` when some list argument is empty.
+    (define (any-null-remove-result s e*)
+      (and (any-quoted-null? e*)
+           (sequence-then-quote s e* '() obviously-single-valued-expression?)))
     ;; annihilate-on-exact-zero : syntax? (listof LFE Expr) (LFE Expr -> boolean?) -> (or/c LFE Expr #f)
     ;;   Rewrite `(* ... 0 ... )` to an ordered sequence ending in exact zero.
     (define (annihilate-on-exact-zero s e* valued?)
@@ -3695,6 +3736,38 @@
         [(list 'append (list e0))
          ; (append x) => x
          (keep-valued obviously-single-valued-expression? e0)]
+        [(list (? (λ (sym) (memq sym '(member assoc assq assv memq memv))))
+               (list e0 e1))
+         ; (member x '()) => #f
+         ; (assoc x '()) => #f
+         ; (assq x '()) => #f
+         ; (assv x '()) => #f
+         ; (memq x '()) => #f
+         ; (memv x '()) => #f
+         (null-search-result s e0 e1)]
+        [(list (? (λ (sym) (memq sym '(memf assf findf))))
+               (list e0 e1))
+         ; (memf p '()) => #f
+         ; (assf p '()) => #f
+         ; (findf p '()) => #f
+         (null-search-result s e0 e1)]
+        [(list (? (λ (sym) (memq sym '(remove remq remv))))
+               (list e0 e1))
+         ; (remove x '()) => '()
+         ; (remq x '()) => '()
+         ; (remv x '()) => '()
+         (null-remove-result s e0 e1)]
+        [(list (? (λ (sym) (memq sym '(remf filter))))
+               (list e0 e1))
+         ; (remf p '()) => '()
+         ; (filter p '()) => '()
+         (null-remove-result s e0 e1)]
+        [(list 'andmap (cons e0 e1))
+         ; (andmap p ... '() ...) => #t
+         (any-null-quote-result s (cons e0 e1) #t)]
+        [(list 'ormap (cons e0 e1))
+         ; (ormap p ... '() ...) => #f
+         (any-null-search-result s (cons e0 e1))]
         [(list 'list '())
          ; (list) => '()
          (Quote s '())]
@@ -4178,6 +4251,38 @@
                   '(#%top . x))
     (check-equal? (test #'(append (values 1 2)))
                   '(append (values '1 '2)))
+    (check-equal? (test #'(memq x '()))
+                  '(begin (#%top . x) '() '#f))
+    (check-equal? (test #'(memv x '()))
+                  '(begin (#%top . x) '() '#f))
+    (check-equal? (test #'(member x '()))
+                  '(begin (#%top . x) '() '#f))
+    (check-equal? (test #'(assq x '()))
+                  '(begin (#%top . x) '() '#f))
+    (check-equal? (test #'(assv x '()))
+                  '(begin (#%top . x) '() '#f))
+    (check-equal? (test #'(assoc x '()))
+                  '(begin (#%top . x) '() '#f))
+    (check-equal? (test #'(remq x '()))
+                  '(begin (#%top . x) '() '()))
+    (check-equal? (test #'(remv x '()))
+                  '(begin (#%top . x) '() '()))
+    (check-equal? (test #'(remove x '()))
+                  '(begin (#%top . x) '() '()))
+    (check-equal? (test #'(memf p '()))
+                  '(begin (#%top . p) '() '#f))
+    (check-equal? (test #'(assf p '()))
+                  '(begin (#%top . p) '() '#f))
+    (check-equal? (test #'(findf p '()))
+                  '(begin (#%top . p) '() '#f))
+    (check-equal? (test #'(remf p '()))
+                  '(begin (#%top . p) '() '()))
+    (check-equal? (test #'(filter p '()))
+                  '(begin (#%top . p) '() '()))
+    (check-equal? (test #'(andmap p '()))
+                  '(begin (#%top . p) '() '#t))
+    (check-equal? (test #'(ormap p '()))
+                  '(begin (#%top . p) '() '#f))
     (check-equal? (test #'(values (if b 1 2)))
                   '(if (#%top . b) '1 '2))
     (check-equal? (test #'(values x))
