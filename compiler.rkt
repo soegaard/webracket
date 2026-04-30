@@ -3268,6 +3268,14 @@
            e]
           [(cons e0 e1)
            `(begin ,s ,e0 ,e1 ...)])))
+    ;; begin-sequence : LFE Expr -> (or/c (listof LFE Expr) #f)
+    ;;   Return the immediate sequence of a begin expression, if any.
+    (define (begin-sequence e)
+      (nanopass-case (LFE Expr) e
+        [(begin ,s ,e0 ,e1 ...)
+         (cons e0 e1)]
+        [else
+         #f]))
     ;; live-begin-expressions : (listof LFE Expr) -> (listof LFE Expr)
     ;;   Drop pure non-final expressions from a begin sequence.
     (define (live-begin-expressions es)
@@ -3289,6 +3297,23 @@
       (nanopass-case (LFE Expr) e
         [(quote ,s ,d) (if (eq? (datum-value d) #f) #f #t)]
         [else          'unknown]))
+    ;; the-not-primitive? : LFE Expr -> boolean?
+    ;;   Recognize the primitive `not`.
+    (define (the-not-primitive? e)
+      (and (variable? e)
+           (primitive? (variable-id e))
+           (eq? 'not (syntax-e (variable-id e)))))
+    ;; set!-rhs-begin : syntax? variable? LFE Expr -> (or/c LFE Expr #f)
+    ;;   If `e` is `(begin ... e0)`, rewrite `(set! x e)` as `(begin ... (set! x e0))`.
+    ;;   Used for the rule:
+    ;;     (set! x (begin ... e)) => (begin ... (set! x e))
+    (define (set!-rhs-begin s x e)
+      (match (begin-sequence e)
+        [#f  #f]
+        [es  (with-output-language (LFE Expr)
+               (Begin s
+                      (append (drop-right es 1)
+                              (list `(set! ,s ,x ,(last es))))))]))
     ;; fold-primitive-application : syntax? variable? (listof any/c) -> LFE Expr or #f
     ;;   Fold a single-valued primitive application on constant arguments.
     (define (fold-primitive-application s x vals)
@@ -3411,7 +3436,13 @@
      (values `(quote-syntax ,s ,d) κ)]
     [(top ,s ,x)
      (values (or (κ-ref κ x) `(top ,s ,x)) κ)]
+
     ;; Conditional Simplification
+    ;   (if (not e0) e1 e2) => (if e0 e2 e1)
+    [(if ,s (app ,s0 ,x ,e0) ,e1 ,e2)
+     (guard (the-not-primitive? x))
+     (Expr `(if ,s ,e0 ,e2 ,e1) κ)]
+
     [(if ,s ,e0 ,e1 ,e2)
      (letv ((e0 κ) (Expr e0 κ))
        (case (constant-truthiness e0)
@@ -3506,6 +3537,11 @@
                      `(app ,s ,e0 ,e1 ...))
                  κ)))]
 
+    ;   (set! x (begin ... e)) => (begin ... (set! x e))
+    [(set! ,s ,x ,e)
+     (guard (begin-sequence e))
+     (Expr (set!-rhs-begin s x e) κ)]
+
     [(set! ,s ,x ,e)
      (letv ((e κ) (Expr e κ))
        (values `(set! ,s ,x ,e)
@@ -3593,6 +3629,8 @@
                   ''1)
     (check-equal? (test #'(if (pair? '()) 1 2))
                   ''2)
+    (check-equal? (test #'(if (not #f) 1 2))
+                  ''1)
     (check-equal? (test #'(if x 1 1))
                   '(begin (#%top . x) '1))
     (check-equal? (test #'(let-values ([(x) '0])
@@ -3643,6 +3681,10 @@
                   ''2)
     (check-equal? (test #'(if #t (begin (not '#f) 2) 3))
                   ''2)
+    (check-equal? (test #'(let-values ([(x) '0])
+                            (set! x (begin '1 '2))))
+                  '(let-values (((x) '0))
+                     (set! x '2)))
     (check-equal? (test #'(let-values ([(x) '0])
                             (begin (begin (set! x '1) x) x)))
                   '(let-values (((x) '0))
