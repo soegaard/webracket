@@ -3442,6 +3442,38 @@
     ;;   Recognize quoted constants that are known truthy.
     (define (truthy-constant-expression? e)
       (eq? (constant-truthiness e) #t))
+    ;; constant-boolean? : LFE Expr -> boolean?
+    ;;   Check whether `e` is a quoted boolean constant.
+    (define (constant-boolean? e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (boolean? (datum-value d))]
+        [else
+         #f]))
+    ;; constant-char? : LFE Expr -> boolean?
+    ;;   Check whether `e` is a quoted character constant.
+    (define (constant-char? e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (char? (datum-value d))]
+        [else
+         #f]))
+    ;; constant-string? : LFE Expr -> boolean?
+    ;;   Check whether `e` is a quoted string constant.
+    (define (constant-string? e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (string? (datum-value d))]
+        [else
+         #f]))
+    ;; constant-symbol? : LFE Expr -> boolean?
+    ;;   Check whether `e` is a quoted symbol constant.
+    (define (constant-symbol? e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (symbol? (datum-value d))]
+        [else
+         #f]))
     ;; Quote : syntax? any/c -> LFE Expr
     ;;   Build a quoted constant expression.
     (define (Quote s v)
@@ -3613,6 +3645,30 @@
            [else #f])]
         [else
          #f]))
+    ;; same-reference-expression? : LFE Expr LFE Expr -> boolean?
+    ;;   Check whether both expressions are the same local or top-level reference.
+    (define (same-reference-expression? e1 e2)
+      (or (same-variable-expression? e1 e2)
+          (nanopass-case (LFE Expr) e1
+            [(top ,s1 ,x1)
+             (nanopass-case (LFE Expr) e2
+               [(top ,s2 ,x2)
+                (id=? x1 x2)]
+               [else
+                #f])]
+            [else
+             #f])))
+    ;; all-same-expression? : (listof LFE Expr) -> boolean?
+    ;;   Check whether all expressions have the same simplified shape.
+    (define (all-same-expression? e*)
+      (match e*
+        [(list)
+         #f]
+        [(list _)
+         #t]
+        [(cons e0 e1)
+         (andmap (λ (e) (same-expression? e0 e))
+                 e1)]))
     ;; variable-expression=? : variable? LFE Expr -> boolean?
     ;;   Check whether `e` is the same variable reference as `x`.
     (define (variable-expression=? x e)
@@ -3635,6 +3691,128 @@
     (define (booleanize-expression s e)
       (with-output-language (LFE Expr)
         `(if ,s ,e ,(Quote s #t) ,(Quote s #f))))
+    ;; negate-truthiness-expression : syntax? LFE Expr -> LFE Expr
+    ;;   Rebuild `e` as `(if e #f #t)`.
+    (define (negate-truthiness-expression s e)
+      (with-output-language (LFE Expr)
+        `(if ,s ,e ,(Quote s #f) ,(Quote s #t))))
+    ;; obviously-boolean-valued-expression? : LFE Expr -> boolean?
+    ;;   Recognize expressions that obviously produce exactly one boolean value.
+    (define (obviously-boolean-valued-expression? e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (boolean? (datum-value d))]
+        [(if ,s ,e0 ,e1 ,e2)
+         (and (obviously-single-valued-expression? e0)
+              (obviously-boolean-valued-expression? e1)
+              (obviously-boolean-valued-expression? e2))]
+        [(begin ,s ,e0 ,e1 ...)
+         (let-values ([(prefix tail) (begin-prefix+tail e0 e1)])
+           (and (andmap obviously-single-valued-expression? prefix)
+                (obviously-boolean-valued-expression? tail)))]
+        [(begin0 ,s ,e0 ,e1 ...)
+         (and (obviously-boolean-valued-expression? e0)
+              (andmap obviously-single-valued-expression? e1))]
+        [(let-values ,s ([(,x* ...) ,e*] ...) ,e0 ,e1 ...)
+         (and (andmap (λ (xs) (= (length xs) 1)) x*)
+              (andmap obviously-single-valued-expression? e*)
+              (let-values ([(prefix tail) (begin-prefix+tail e0 e1)])
+                (and (andmap obviously-single-valued-expression? prefix)
+                     (obviously-boolean-valued-expression? tail))))]
+        [else
+         #f]))
+    ;; obviously-char-valued-expression? : LFE Expr -> boolean?
+    ;;   Recognize expressions that obviously produce exactly one character value.
+    (define (obviously-char-valued-expression? e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (char? (datum-value d))]
+        [(if ,s ,e0 ,e1 ,e2)
+         (and (obviously-single-valued-expression? e0)
+              (obviously-char-valued-expression? e1)
+              (obviously-char-valued-expression? e2))]
+        [(begin ,s ,e0 ,e1 ...)
+         (let-values ([(prefix tail) (begin-prefix+tail e0 e1)])
+           (and (andmap obviously-single-valued-expression? prefix)
+                (obviously-char-valued-expression? tail)))]
+        [(begin0 ,s ,e0 ,e1 ...)
+         (and (obviously-char-valued-expression? e0)
+              (andmap obviously-single-valued-expression? e1))]
+        [(let-values ,s ([(,x* ...) ,e*] ...) ,e0 ,e1 ...)
+         (and (andmap (λ (xs) (= (length xs) 1)) x*)
+              (andmap obviously-single-valued-expression? e*)
+              (let-values ([(prefix tail) (begin-prefix+tail e0 e1)])
+                (and (andmap obviously-single-valued-expression? prefix)
+                     (obviously-char-valued-expression? tail))))]
+        [(app ,s ,e0 ,e1 ...)
+         (and (variable? e0)
+              (memq (syntax-e (variable-id e0))
+                    '(string-ref integer->char char-upcase char-downcase
+                                 char-foldcase char-titlecase))
+              (andmap obviously-single-valued-expression? e1))]
+        [else
+         #f]))
+    ;; obviously-string-valued-expression? : LFE Expr -> boolean?
+    ;;   Recognize expressions that obviously produce exactly one string value.
+    (define (obviously-string-valued-expression? e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (string? (datum-value d))]
+        [(if ,s ,e0 ,e1 ,e2)
+         (and (obviously-single-valued-expression? e0)
+              (obviously-string-valued-expression? e1)
+              (obviously-string-valued-expression? e2))]
+        [(begin ,s ,e0 ,e1 ...)
+         (let-values ([(prefix tail) (begin-prefix+tail e0 e1)])
+           (and (andmap obviously-single-valued-expression? prefix)
+                (obviously-string-valued-expression? tail)))]
+        [(begin0 ,s ,e0 ,e1 ...)
+         (and (obviously-string-valued-expression? e0)
+              (andmap obviously-single-valued-expression? e1))]
+        [(let-values ,s ([(,x* ...) ,e*] ...) ,e0 ,e1 ...)
+         (and (andmap (λ (xs) (= (length xs) 1)) x*)
+              (andmap obviously-single-valued-expression? e*)
+              (let-values ([(prefix tail) (begin-prefix+tail e0 e1)])
+                (and (andmap obviously-single-valued-expression? prefix)
+                     (obviously-string-valued-expression? tail))))]
+        [(app ,s ,e0 ,e1 ...)
+         (and (variable? e0)
+              (memq (syntax-e (variable-id e0))
+                    '(string string-append string-append-immutable
+                             string-copy string->immutable-string))
+              (andmap obviously-single-valued-expression? e1))]
+        [else
+         #f]))
+    ;; obviously-symbol-valued-expression? : LFE Expr -> boolean?
+    ;;   Recognize expressions that obviously produce exactly one symbol value.
+    (define (obviously-symbol-valued-expression? e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (symbol? (datum-value d))]
+        [(if ,s ,e0 ,e1 ,e2)
+         (and (obviously-single-valued-expression? e0)
+              (obviously-symbol-valued-expression? e1)
+              (obviously-symbol-valued-expression? e2))]
+        [(begin ,s ,e0 ,e1 ...)
+         (let-values ([(prefix tail) (begin-prefix+tail e0 e1)])
+           (and (andmap obviously-single-valued-expression? prefix)
+                (obviously-symbol-valued-expression? tail)))]
+        [(begin0 ,s ,e0 ,e1 ...)
+         (and (obviously-symbol-valued-expression? e0)
+              (andmap obviously-single-valued-expression? e1))]
+        [(let-values ,s ([(,x* ...) ,e*] ...) ,e0 ,e1 ...)
+         (and (andmap (λ (xs) (= (length xs) 1)) x*)
+              (andmap obviously-single-valued-expression? e*)
+              (let-values ([(prefix tail) (begin-prefix+tail e0 e1)])
+                (and (andmap obviously-single-valued-expression? prefix)
+                     (obviously-symbol-valued-expression? tail))))]
+        [(app ,s ,e0 ,e1 ...)
+         (and (variable? e0)
+              (memq (syntax-e (variable-id e0))
+                    '(string->symbol))
+              (andmap obviously-single-valued-expression? e1))]
+        [else
+         #f]))
     ;; unary-formal-variable : LFE Formals -> (or/c variable? #f)
     ;;   Return the single bound variable when the formals are unary.
     (define (unary-formal-variable f)
@@ -3856,6 +4034,40 @@
     (define (partial-fold-primitive-application s x e*)
       (define sym (syntax-e (variable-id x)))
       (match (list sym e*)
+        [(list (? (λ (sym) (memq sym '(eq? eqv? equal?))))
+               (list e0 e1))
+         ; (eq? x x) => #t
+         ; (eqv? x x) => #t
+         ; (equal? x x) => #t
+         ; (eq? x #f) => (if x #f #t)
+         ; (eq? #f x) => (if x #f #t)
+         ; same for eqv? and equal?
+         (or (and (same-reference-expression? e0 e1)
+                  (constructor-constant-result s (list e0 e1) #t))
+             (and (false-constant-expression? e0)
+                  (negate-truthiness-expression s e1))
+             (and (false-constant-expression? e1)
+                  (negate-truthiness-expression s e0)))]
+        [(list 'boolean=? e*)
+         ; (boolean=? b ... b) => #t
+         (and (all-same-expression? e*)
+              (andmap obviously-boolean-valued-expression? e*)
+              (constructor-constant-result s e* #t))]
+        [(list 'char=? e*)
+         ; (char=? c ... c) => #t
+         (and (all-same-expression? e*)
+              (andmap obviously-char-valued-expression? e*)
+              (constructor-constant-result s e* #t))]
+        [(list 'string=? e*)
+         ; (string=? s ... s) => #t
+         (and (all-same-expression? e*)
+              (andmap obviously-string-valued-expression? e*)
+              (constructor-constant-result s e* #t))]
+        [(list 'symbol=? e*)
+         ; (symbol=? s ... s) => #t
+         (and (all-same-expression? e*)
+              (andmap obviously-symbol-valued-expression? e*)
+              (constructor-constant-result s e* #t))]
         [(list 'procedure? (list e0))
          ; (procedure? (lambda (...) ...)) => #t
          (or (nanopass-case (LFE Expr) e0
@@ -4432,7 +4644,7 @@
                 (unparse-all
                  (unparse-LFE
                   (simplify-LFE
-                   (parse (expand-syntax stx))))))])
+                   (parse (unexpand (topexpand stx)))))))])
     (check-equal? (test #'(let-values ([(x) (+ 1 2)]) x))
                   ''3)
     (check-equal? (test #'(let-values () 1))
@@ -4489,6 +4701,24 @@
                   '(append (values '1 '2)))
     (check-equal? (test #'(procedure? (lambda (x) x)))
                   ''#t)
+    (check-equal? (test #'(eq? x #f))
+                  '(if (#%top . x) '#f '#t))
+    (check-equal? (test #'(equal? #f x))
+                  '(if (#%top . x) '#f '#t))
+    (check-equal? (test #'(eqv? x x))
+                  '(let-values (((pf0) (#%top . x)))
+                     (let-values (((pf1) (#%top . x)))
+                       '#t)))
+    (check-equal? (test #'(char=? (string-ref s 0)
+                                  (string-ref s 0)))
+                  '(let-values (((pf0) (string-ref (#%top . s) '0)))
+                     (let-values (((pf1) (string-ref (#%top . s) '0)))
+                       '#t)))
+    (check-equal? (test #'(string=? (string-append "a" s)
+                                    (string-append "a" s)))
+                  '(let-values (((pf0) (string-append '"a" (#%top . s))))
+                     (let-values (((pf1) (string-append '"a" (#%top . s))))
+                       '#t)))
     (check-equal? (test #'(pair? (cons 1 2)))
                   '(let-values (((pf0) '1))
                      (let-values (((pf1) '2))
