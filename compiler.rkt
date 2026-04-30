@@ -3599,6 +3599,21 @@
                    (Quote s '())
                    (with-output-language (LFE Expr)
                      `(app ,s ,(PrimitiveVar 'list) ,tail ...)))))))
+    ;; constructor-list*-tail-result : syntax? (listof LFE Expr) exact-nonnegative-integer? -> (or/c LFE Expr #f)
+    ;;   Evaluate constructor operands left-to-right and return the `list*` tail from position `i`.
+    (define (constructor-list*-tail-result s e* i)
+      (and (<= i (length e*))
+           (let-values*-bind s e*
+             (λ (x*)
+               (define tail (drop x* i))
+               (match tail
+                 ['()
+                  (Quote s '())]
+                 [(list x)
+                  x]
+                 [_ 
+                  (with-output-language (LFE Expr)
+                    `(app ,s ,(PrimitiveVar 'list*) ,tail ...))])))))
     ;; constructor-constant-result : syntax? (listof LFE Expr) any/c -> LFE Expr
     ;;   Evaluate constructor operands left-to-right and then return the quoted constant `v`.
     (define (constructor-constant-result s e* v)
@@ -4176,6 +4191,7 @@
          ; (car '(a . d)) => 'a
          ; (car (cons x y)) => x
          ; (car (list x ...)) => x
+         ; (car (list* x y ...)) => x
          (or (quote-when-found s (quoted-pair-car e0))
              (match (primitive-application-arguments e0 'cons)
                [(list a d)
@@ -4183,11 +4199,16 @@
                [_ #f])
              (match (primitive-application-arguments e0 'list)
                [#f #f]
-               [es (constructor-access-result s es 0)]))]
+               [es (constructor-access-result s es 0)])
+             (match (primitive-application-arguments e0 'list*)
+               [#f #f]
+               [es (and (>= (length es) 2)
+                        (constructor-access-result s es 0))]))]
         [(list 'cdr (list e0))
          ; (cdr '(a . d)) => 'd
          ; (cdr (cons x y)) => y
          ; (cdr (list x ...)) => (list ...)
+         ; (cdr (list* x y ...)) => (list* y ...)
          (or (quote-when-found s (quoted-pair-cdr e0))
              (match (primitive-application-arguments e0 'cons)
                [(list a d)
@@ -4195,14 +4216,23 @@
                [_ #f])
              (match (primitive-application-arguments e0 'list)
                [#f #f]
-               [es (constructor-list-tail-result s es 1)]))]
+               [es (constructor-list-tail-result s es 1)])
+             (match (primitive-application-arguments e0 'list*)
+               [#f #f]
+               [es (and (>= (length es) 2)
+                        (constructor-list*-tail-result s es 1))]))]
         [(list 'cadr (list e0))
          ; (cadr '(a b ...)) => 'b
          ; (cadr (list a b ...)) => b
+         ; (cadr (list* a b c ...)) => b
          (or (quote-when-found s (quoted-list-element e0 1))
              (match (primitive-application-arguments e0 'list)
                [#f #f]
-               [es (constructor-access-result s es 1)]))]
+               [es (constructor-access-result s es 1)])
+             (match (primitive-application-arguments e0 'list*)
+               [#f #f]
+               [es (and (>= (length es) 3)
+                        (constructor-access-result s es 1))]))]
         [(list 'vector-length (list e0))
          ; (vector-length '#(...)) => 'n
          ; (vector-length (vector ...)) => 'n
@@ -4229,13 +4259,18 @@
         [(list 'list-ref (list e0 e1))
          ; (list-ref '(...) i) => 'v
          ; (list-ref (list ...) i) => v
+         ; (list-ref (list* ...) i) => v
          (match (quoted-exact-nonnegative-integer e1)
            [#f #f]
            [i
             (or (quote-when-found s (quoted-list-element e0 i))
                 (match (primitive-application-arguments e0 'list)
                   [#f #f]
-                  [es (constructor-access-result s es i)]))])]
+                  [es (constructor-access-result s es i)])
+                (match (primitive-application-arguments e0 'list*)
+                  [#f #f]
+                  [es (and (< i (sub1 (length es)))
+                           (constructor-access-result s es i))]))])]
         [(list 'values (list e0))
          ; (values x) => x
          (keep-valued obviously-single-valued-expression? e0)]
@@ -4845,6 +4880,24 @@
                      (let-values (((pf1) '2))
                        (let-values (((pf2) '3))
                          pf1))))
+    (check-equal? (test #'(car (list* 1 2)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       pf0)))
+    (check-equal? (test #'(cdr (list* 1 2)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       pf1)))
+    (check-equal? (test #'(cdr (list* 1 2 3)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       (let-values (((pf2) '3))
+                         (list* pf1 pf2)))))
+    (check-equal? (test #'(cadr (list* 1 2 3)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       (let-values (((pf2) '3))
+                         pf1))))
     (check-equal? (test #'(vector-length '#(1 2 3)))
                   ''3)
     (check-equal? (test #'(vector-length (vector 1 2 3)))
@@ -4868,6 +4921,13 @@
                      (let-values (((pf1) '20))
                        (let-values (((pf2) '30))
                          pf1))))
+    (check-equal? (test #'(list-ref (list* 10 20 30) 1))
+                  '(let-values (((pf0) '10))
+                     (let-values (((pf1) '20))
+                       (let-values (((pf2) '30))
+                         pf1))))
+    (check-equal? (test #'(list-ref (list* 10 20) 1))
+                  '(list-ref (list* '10 '20) '1))
     (check-equal? (test #'(memq x '()))
                   '(begin (#%top . x) '() '#f))
     (check-equal? (test #'(memv x '()))
