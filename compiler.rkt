@@ -3209,6 +3209,10 @@
          (if (pure-expression? e0)
              rest
              (cons e0 rest))]))
+    ;; live-begin0-tail-expressions : (listof LFE Expr) -> (listof LFE Expr)
+    ;;   Drop pure trailing expressions from a begin0 tail.
+    (define (live-begin0-tail-expressions es)
+      (filter-not pure-expression? es))
     ;; constant-truthiness : LFE Expr -> (or/c #t #f 'unknown)
     ;;   Determine the truthiness of a quoted constant expression.
     (define (constant-truthiness e)
@@ -3446,7 +3450,13 @@
     [(begin0 ,s ,e0 ,e1 ...)
      (letv ((e0 κ) (Expr e0 κ))
        (letv ((e1 κ) (Expr* e1 κ))
-         (values `(begin0 ,s ,e0 ,e1 ...) κ)))]
+         (define e1*
+           (live-begin0-tail-expressions e1))
+         (values (match e1*
+                   ['()
+                    e0]
+                   [_ `(begin0 ,s ,e0 ,e1* ...)])
+                 κ)))]
 
     [(wcm ,s ,e0 ,e1 ,e2)
      (letv ((e0 κ) (Expr e0 κ))
@@ -3532,6 +3542,14 @@
                   '(let-values (((x) '5)) (#%top . y)))
     (check-equal? (test #'(if #t (begin 1) 2))
                   ''1)
+    (check-equal? (test #'(if #t (begin0 1) 2))
+                  ''1)
+    (check-equal? (test #'(if #t (begin0 1 '2 (not '#f)) 3))
+                  ''1)
+    (check-equal? (test #'(let-values ([(x) '0])
+                            (begin0 x '2 (set! x '1))))
+                  '(let-values (((x) '0))
+                     (begin0 '0 (set! x '1))))
     (check-equal? (test #'(if #t (begin 1 (begin 2 3)) 4))
                   ''3)
     (check-equal? (test #'(if #t (begin '1 '2) 3))
