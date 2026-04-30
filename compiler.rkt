@@ -3689,33 +3689,47 @@
       (define sym (syntax-e (variable-id x)))
       (match (list sym e*)
         [(list '+ _)
-         (or (fold-exact-integer-subset s x e* + 0 obviously-number-valued-expression?) ; (+ c1 ... x ... c2 ...) => (+ c x ...)
-             (drop-identity-arguments s x e* quoted-zero? 0 obviously-number-valued-expression?))] ; (+ ... 0 ...) => (+ ...)
+         ; (+ c1 ... x ... c2 ...) => (+ c x ...)
+         ; (+ ... 0 ...) => (+ ...)
+         (or (fold-exact-integer-subset s x e* + 0 obviously-number-valued-expression?)
+             (drop-identity-arguments s x e* quoted-zero? 0 obviously-number-valued-expression?))]
         [(list '* _)
-         (or (annihilate-on-exact-zero s e* obviously-number-valued-expression?) ; (* ... 0 ...) => (begin ... 0)
-             (fold-exact-integer-subset s x e* * 1 obviously-number-valued-expression?) ; (* c1 ... x ... c2 ...) => (* c x ...)
-             (drop-identity-arguments s x e* quoted-one? 1 obviously-number-valued-expression?))] ; (* ... 1 ...) => (* ...)
+         ; (* ... 0 ...) => (begin ... 0)
+         ; (* c1 ... x ... c2 ...) => (* c x ...)
+         ; (* ... 1 ...) => (* ...)
+         (or (annihilate-on-exact-zero s e* obviously-number-valued-expression?)
+             (fold-exact-integer-subset s x e* * 1 obviously-number-valued-expression?)
+             (drop-identity-arguments s x e* quoted-one? 1 obviously-number-valued-expression?))]
         [(list 'bitwise-ior _)
-         (or (fold-exact-integer-subset s x e* bitwise-ior 0 obviously-exact-integer-valued-expression?) ; (bitwise-ior c1 ... x ... c2 ...) => (bitwise-ior c x ...)
-             (drop-identity-arguments s x e* quoted-zero? 0 obviously-exact-integer-valued-expression?))] ; (bitwise-ior ... 0 ...) => (bitwise-ior ...)
+         ; (bitwise-ior c1 ... x ... c2 ...) => (bitwise-ior c x ...)
+         ; (bitwise-ior ... 0 ...) => (bitwise-ior ...)
+         (or (fold-exact-integer-subset s x e* bitwise-ior 0 obviously-exact-integer-valued-expression?)
+             (drop-identity-arguments s x e* quoted-zero? 0 obviously-exact-integer-valued-expression?))]
         [(list 'bitwise-xor _)
-         (or (fold-exact-integer-subset s x e* bitwise-xor 0 obviously-exact-integer-valued-expression?) ; (bitwise-xor c1 ... x ... c2 ...) => (bitwise-xor c x ...)
-             (drop-identity-arguments s x e* quoted-zero? 0 obviously-exact-integer-valued-expression?))] ; (bitwise-xor ... 0 ...) => (bitwise-xor ...)
+         ; (bitwise-xor c1 ... x ... c2 ...) => (bitwise-xor c x ...)
+         ; (bitwise-xor ... 0 ...) => (bitwise-xor ...)
+         (or (fold-exact-integer-subset s x e* bitwise-xor 0 obviously-exact-integer-valued-expression?)
+             (drop-identity-arguments s x e* quoted-zero? 0 obviously-exact-integer-valued-expression?))]
         [(list 'bitwise-and _)
-         (or (annihilate-on-exact-zero s e* obviously-exact-integer-valued-expression?) ; (bitwise-and ... 0 ...) => (begin ... 0)
-             (fold-exact-integer-subset s x e* bitwise-and -1 obviously-exact-integer-valued-expression?) ; (bitwise-and c1 ... x ... c2 ...) => (bitwise-and c x ...)
-             (drop-identity-arguments s x e* quoted-neg-one? -1 obviously-exact-integer-valued-expression?))] ; (bitwise-and ... -1 ...) => (bitwise-and ...)
+         ; (bitwise-and ... 0 ...) => (begin ... 0)
+         ; (bitwise-and c1 ... x ... c2 ...) => (bitwise-and c x ...)
+         ; (bitwise-and ... -1 ...) => (bitwise-and ...)
+         (or (annihilate-on-exact-zero s e* obviously-exact-integer-valued-expression?)
+             (fold-exact-integer-subset s x e* bitwise-and -1 obviously-exact-integer-valued-expression?)
+             (drop-identity-arguments s x e* quoted-neg-one? -1 obviously-exact-integer-valued-expression?))]
         [(list '- (list e0 e1))
          (cond
+           ; (- x 0) => x
            [(quoted-zero? e1)
             (and (obviously-number-valued-expression? e0)
-                 e0)] ; (- x 0) => x
+                 e0)]
            [else #f])]
         [(list '/ (list e0 e1))
          (cond
+           ; (/ x 1) => x
            [(quoted-one? e1)
             (and (obviously-number-valued-expression? e0)
-                 e0)] ; (/ x 1) => x
+                 e0)]
            [else #f])]
         [_ #f]))
     ;; constant-binding : variable? LFE Expr -> (or/c (cons/c variable? LFE Expr) #f)
