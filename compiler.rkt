@@ -4624,13 +4624,23 @@
                [es (and (>= (length es) 10)
                         (constructor-access-result s es 9))]))]
         [(list 'rest (list e0))
-         ; (rest '(a b ...)) => '(b ...)
+         ; (rest '(a . d)) => 'd
+         ; (rest (cons x y)) => y
          ; (rest (list a b ...)) => (list b ...)
+         ; (rest (list* a b ...)) => (list* b ...)
          (or (quote-when-found s (quoted-list-tail e0 1))
+             (match (primitive-application-arguments e0 'cons)
+               [(list a d)
+                (constructor-access-result s (list a d) 1)]
+               [_ #f])
              (match (primitive-application-arguments e0 'list)
                [#f #f]
                [es (and (pair? es)
-                        (constructor-list-tail-result s es 1))]))]
+                        (constructor-list-tail-result s es 1))])
+             (match (primitive-application-arguments e0 'list*)
+               [#f #f]
+               [es (and (>= (length es) 2)
+                        (constructor-list*-tail-result s es 1))]))]
         [(list 'vector-length (list e0))
          ; (vector-length '#(...)) => 'n
          ; (vector-length (vector ...)) => 'n
@@ -5602,8 +5612,14 @@
                                        pf9)))))))))))
     (check-equal? (test #'(rest '(10 20 30)))
                   ''(20 30))
+    (check-equal? (test #'(rest '(10 . 20)))
+                  ''20)
     (check-equal? (test #'(rest '(10)))
                   ''())
+    (check-equal? (test #'(rest (cons 10 20)))
+                  '(let-values (((pf0) '10))
+                     (let-values (((pf1) '20))
+                       pf1)))
     (check-equal? (test #'(rest (list 10 20 30)))
                   '(let-values (((pf0) '10))
                      (let-values (((pf1) '20))
@@ -5612,6 +5628,15 @@
     (check-equal? (test #'(rest (list 10)))
                   '(let-values (((pf0) '10))
                      '()))
+    (check-equal? (test #'(rest (list* 10 20)))
+                  '(let-values (((pf0) '10))
+                     (let-values (((pf1) '20))
+                       pf1)))
+    (check-equal? (test #'(rest (list* 10 20 30)))
+                  '(let-values (((pf0) '10))
+                     (let-values (((pf1) '20))
+                       (let-values (((pf2) '30))
+                         (list* pf1 pf2)))))
     (check-equal? (test #'(vector-length '#(1 2 3)))
                   ''3)
     (check-equal? (test #'(vector-length (vector 1 2 3)))
