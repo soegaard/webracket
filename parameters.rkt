@@ -4,6 +4,7 @@
          current-ffi-funcs-wat
          current-browser?
          current-console-bridge?
+         current-enable-simplify?
          current-letrec-strategy
          current-tree-shake?
          current-runtime-primitive-report-path
@@ -17,6 +18,7 @@
 (define current-ffi-funcs-wat   (make-parameter '())) ; list of s-exprs
 (define current-browser?        (make-parameter #f))  ; boolean? browser mode flag
 (define current-console-bridge? (make-parameter #f))  ; boolean? install browser console bridge
+(define current-enable-simplify? (make-parameter #f)) ; boolean? run early simplify-LFE pass
 (define current-letrec-strategy (make-parameter 'scc)) ; 'basic, 'waddell, or 'scc
 (define current-tree-shake?     (make-parameter #t))  ; boolean? tree shake runtime primitives
 (define current-runtime-primitive-report-path

@@ -9955,7 +9955,9 @@
   (define p0  (time-pass "parse"                (λ () (parse u))
                          (λ (v) (count-unparsed unparse-LFE v))
                          (λ (v) (unparse-all (unparse-LFE v)))))
-  (define s0  (time-pass "simplify-LFE"         (λ () (simplify-LFE p0))
+  (define s0  (time-pass "simplify-LFE"         (λ () (if (current-enable-simplify?)
+                                                          (simplify-LFE p0)
+                                                          p0))
                          (λ (v) (count-unparsed unparse-LFE v))
                          (λ (v) (unparse-all (unparse-LFE v)))))
   (define p   (time-pass "print-top-level-results"

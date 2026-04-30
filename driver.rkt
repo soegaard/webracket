@@ -43,6 +43,7 @@
                                     current-ffi-funcs-wat
                                     current-browser?
                                     current-console-bridge?
+                                    current-enable-simplify?
                                     current-letrec-strategy
                                     current-tree-shake?
                                     current-runtime-primitive-report-path)
@@ -278,6 +279,7 @@
          ;; Compiler strategy
          #:letrec-strategy   letrec-strategy
          ;; Optimization
+         #:enable-simplify?  enable-simplify?
          #:tree-shake?       tree-shake?        ; remove dead code from the wat-file
          #:tree-shake-report tree-shake-report
          ;; Program Debug
@@ -422,6 +424,7 @@
                                         (~a "compile failed: " (exn-message e))))])
       (parameterize ([current-browser? browser?]
                      [current-letrec-strategy letrec-strategy]
+                     [current-enable-simplify? enable-simplify?]
                      [current-print-top-level-results? print-top-level-results?])
         (comp stx-with-stdlib))))
   (define t-compile-end (now-ms))
