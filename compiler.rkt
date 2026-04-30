@@ -3626,6 +3626,13 @@
     (define (quoted-exact-integer e)
       (define v (quoted-constant-value e))
       (and (exact-integer? v) v))
+    ;; quoted-exact-number : LFE Expr -> (or/c exact-number? #f)
+    ;;   Extract an exact number constant, if present.
+    (define (quoted-exact-number e)
+      (define v (quoted-constant-value e))
+      (and (number? v)
+           (exact? v)
+           v))
     ;; quoted-exact-nonnegative-integer : LFE Expr -> (or/c exact-nonnegative-integer? #f)
     ;;   Extract an exact nonnegative integer constant, if present.
     (define (quoted-exact-nonnegative-integer e)
@@ -4029,6 +4036,63 @@
              (and (valued? (car e*^))
                   (car e*^))
              (primitive-application s x e*^))]))
+    ;; fold-left-associative-exact-number-runs : syntax? variable? (listof LFE Expr)
+    ;;                                         (exact-number? exact-number? -> exact-number?)
+    ;;                                         (exact-number? exact-number? -> exact-number?)
+    ;;                                         any/c
+    ;;                                         (LFE Expr -> boolean?)
+    ;;                                      -> (or/c LFE Expr #f)
+    ;;   Fold exact-number runs for left-associative primitives like `-` and `/`.
+    (define (fold-left-associative-exact-number-runs s x e* head-op tail-op tail-ident valued?)
+      (define (run-prefix es)
+        (for/fold ([prefix '()] [rest es] #:result (values prefix rest))
+                  ([e (in-list es)]
+                   #:break (not (quoted-exact-number e)))
+          (values (append prefix (list e))
+                  (cdr rest))))
+      (define (run->constant run start?)
+        (cond
+          [start?
+           (for/fold ([acc (quoted-exact-number (car run))])
+                     ([e (in-list (cdr run))])
+             (head-op acc (quoted-exact-number e)))]
+          [else
+           (for/fold ([acc tail-ident])
+                     ([e (in-list run)])
+             (tail-op acc (quoted-exact-number e)))]))
+      (let loop ([remaining e*] [start? #t] [acc '()] [changed? #f])
+        (cond
+          [(null? remaining)
+           (cond
+             [(not changed?)
+              #f]
+             [(null? (cdr acc))
+              (and (valued? (car acc))
+                   (car acc))]
+             [else
+              (primitive-application s x acc)])]
+          [else
+           (define e0 (car remaining))
+           (define q0 (quoted-exact-number e0))
+           (cond
+             [(not (eq? q0 #f))
+              (define-values (run rest) (run-prefix remaining))
+              (define n (run->constant run start?))
+              (define changed?* (or changed?
+                                    (> (length run) 1)
+                                    (and (not start?)
+                                         (equal? n tail-ident))))
+              (define acc*
+                (cond
+                  [(and (not start?) (equal? n tail-ident))
+                   acc]
+                  [(> (length run) 1)
+                   (append acc (list (Quote s n)))]
+                  [else
+                   (append acc (list (car run)))]))
+              (loop rest #f acc* changed?*)]
+             [else
+              (loop (cdr remaining) #f (append acc (list e0)) changed?)])])))
     ;; partial-fold-primitive-application : syntax? variable? (listof LFE Expr) -> (or/c LFE Expr #f)
     ;;   Apply cheap local algebraic simplifications for selected primitives.
     (define (partial-fold-primitive-application s x e*)
@@ -4266,18 +4330,22 @@
              (annihilate-on-exact-zero s e* obviously-exact-integer-valued-expression?)
              (fold-exact-integer-subset s x e* bitwise-and -1 obviously-exact-integer-valued-expression?)
              (drop-identity-arguments s x e* quoted-neg-one? -1 obviously-exact-integer-valued-expression?))]
-        [(list '- (list e0 e1))
-         (cond
-           ; (- x 0) => x
-           [(quoted-zero? e1)
-            (keep-valued obviously-number-valued-expression? e0)]
-           [else #f])]
-        [(list '/ (list e0 e1))
-         (cond
-           ; (/ x 1) => x
-           [(quoted-one? e1)
-            (keep-valued obviously-number-valued-expression? e0)]
-           [else #f])]
+        [(list '- _)
+         ; (- x 0) => x
+         ; (- c1 c2 ... x ... c3 c4 ...) => (- c x ... c)
+         (or (and (= (length e*) 2)
+                  (quoted-zero? (second e*))
+                  (keep-valued obviously-number-valued-expression? (first e*)))
+             (fold-left-associative-exact-number-runs s x e* - + 0
+                                                      obviously-number-valued-expression?))]
+        [(list '/ _)
+         ; (/ x 1) => x
+         ; (/ c1 c2 ... x ... c3 c4 ...) => (/ c x ... c)
+         (or (and (= (length e*) 2)
+                  (quoted-one? (second e*))
+                  (keep-valued obviously-number-valued-expression? (first e*)))
+             (fold-left-associative-exact-number-runs s x e* / * 1
+                                                      obviously-number-valued-expression?))]
         [_ #f]))
     ;; constant-binding : variable? LFE Expr -> (or/c (cons/c variable? LFE Expr) #f)
     ;;   Return a constant binding for a single-variable clause when possible.
@@ -4872,6 +4940,10 @@
                   ''7)
     (check-equal? (test #'(- x 0))
                   '(- (#%top . x) '0))
+    (check-equal? (test #'(- (if b 1 2) 0 0))
+                  '(if (#%top . b) '1 '2))
+    (check-equal? (test #'(- 10 2 x 3 4))
+                  '(- '8 (#%top . x) '7))
     (check-equal? (test #'(* 2 4))
                   ''8)
     (check-equal? (test #'(* (if b 1 2)))
@@ -4922,6 +4994,10 @@
                   ''4)
     (check-equal? (test #'(/ x 1))
                   '(/ (#%top . x) '1))
+    (check-equal? (test #'(/ (if b 2 4) 1 1))
+                  '(if (#%top . b) '2 '4))
+    (check-equal? (test #'(/ 12 2 x 3 4))
+                  '(/ '6 (#%top . x) '12))
     (check-equal? (test #'(+ (values 1 2) 0))
                   '(+ (values '1 '2) '0))
     (check-equal? (test #'(< 1 2))
