@@ -2899,6 +2899,16 @@
   ; start parsing
   (TopLevelForm stx))
 
+;;; 
+;;; Print Top Level Results
+;;;
+
+;; --print-top-level-results
+;;     Print each top-level expression result with print; useful for script-style tests
+
+;; If this option is present, each top-level expression is wrapped
+;; so the result is printed
+
 ;; print-top-level-results : LFE -> LFE
 ;;   Wrap parsed user top-level expressions so `-r` prints results like Racket.
 ;;   The driver inserts a sentinel before user code, and this pass wraps only
@@ -3062,6 +3072,32 @@
                   '(module test webracket (#%plain-module-begin '11)))
     (check-equal? (test #'(module test webracket (fx+ 11 22)))
                   '(module test webracket (#%plain-module-begin (fx+ '11 '22))))))
+
+
+;;; 
+;;; Simplify LFE
+;;;
+
+;; This early simplification pass is in place to reduce the amount of
+;; the rest of the compiler has to deal with.
+
+;; ## Design Principles
+
+;; 1. **Local reasoning only**
+;;    Each transformation depends only on the current expression and its
+;;    immediate subexpressions.
+
+;; 2. **Preserve evaluation order**
+;;    Side effects must not be reordered or duplicated.
+
+;; 3. **Respect multiple values**
+;;    Transformations must not change arity behavior.
+
+;; 4. **Be conservative about purity**
+;;    Only obviously pure expressions are dropped or duplicated.
+
+;; See DESIGN-simplify.md for an explanation of the individual transformations.
+
 
 ;; simplify-LFE : LFE -> LFE
 ;;   Simplify parsed LFE before subsequent normalization passes.
