@@ -3600,6 +3600,14 @@
          (if (bytes? v) (bytes-length v) no-partial-fold)]
         [else
          no-partial-fold]))
+    ;; quoted-bytes? : LFE Expr -> (or/c boolean? symbol?)
+    ;;   Return whether a quoted datum is bytes, or the no-partial-fold sentinel.
+    (define (quoted-bytes? e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (bytes? (datum-value d))]
+        [else
+         no-partial-fold]))
     ;; quoted-bytes-element : LFE Expr exact-nonnegative-integer? -> any/c
     ;;   Return the indexed byte of a quoted bytes value, or the no-partial-fold sentinel.
     (define (quoted-bytes-element e i)
@@ -3641,6 +3649,34 @@
       (nanopass-case (LFE Expr) e
         [(quote ,s ,d)
          (vector? (datum-value d))]
+        [else
+         no-partial-fold]))
+    ;; quoted-string? : LFE Expr -> (or/c boolean? symbol?)
+    ;;   Return whether a quoted datum is a string, or the no-partial-fold sentinel.
+    (define (quoted-string? e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (string? (datum-value d))]
+        [else
+         no-partial-fold]))
+    ;; quoted-box? : LFE Expr -> (or/c boolean? symbol?)
+    ;;   Return whether a quoted datum is a box, or the no-partial-fold sentinel.
+    (define (quoted-box? e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (box? (datum-value d))]
+        [else
+         no-partial-fold]))
+    ;; quoted-immutable? : LFE Expr -> (or/c boolean? symbol?)
+    ;;   Return whether a quoted datum is immutable according to WebRacket's local runtime notion.
+    (define (quoted-immutable? e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (define v (datum-value d))
+         (or (string? v)
+             (bytes? v)
+             (vector? v)
+             (box? v))]
         [else
          no-partial-fold]))
     ;; known-proper-list-result? : LFE Expr -> (or/c boolean? symbol?)
@@ -4323,6 +4359,82 @@
                      (Quote s #t))]
                [else
                 #f]))]
+        [(list 'immutable? (list e0))
+         ; (immutable? 'v) => #t/#f for recognized quoted heap literals
+         ; (immutable? (box x)) => #f
+         ; (immutable? (box-immutable x)) => #t
+         ; (immutable? (vector ...)) => #f
+         ; (immutable? (vector-immutable ...)) => #t
+         ; (immutable? (vector->immutable-vector v)) => #t
+         ; (immutable? (bytes ...)) => #f
+         ; (immutable? (make-bytes ...)) => #f
+         ; (immutable? (bytes->immutable-bytes bs)) => #t
+         ; (immutable? (string ...)) => #f
+         ; (immutable? (make-string ...)) => #f
+         ; (immutable? (string-copy s)) => #f
+         ; (immutable? (string->immutable-string s)) => #t
+         ; (immutable? (string-append-immutable ...)) => #t
+         ; (immutable? (symbol->immutable-string s)) => #t
+         ; (immutable? (keyword->immutable-string k)) => #t
+         (or (match (quoted-immutable? e0)
+               [#:no-partial-fold #f]
+               [b (Quote s b)])
+             (match (primitive-application-arguments e0 'box)
+               [(list a)
+                (constructor-constant-result s (list a) #f)]
+               [_ #f])
+             (match (primitive-application-arguments e0 'box-immutable)
+               [(list a)
+                (constructor-constant-result s (list a) #t)]
+               [_ #f])
+             (match (primitive-application-arguments e0 'vector)
+               [#f #f]
+               [es (constructor-constant-result s es #f)])
+             (match (primitive-application-arguments e0 'vector-immutable)
+               [#f #f]
+               [es (constructor-constant-result s es #t)])
+             (match (primitive-application-arguments e0 'vector->immutable-vector)
+               [(list e1)
+                (constructor-constant-result s (list e1) #t)]
+               [_ #f])
+             (match (primitive-application-arguments e0 'make-vector)
+               [#f #f]
+               [es (constructor-constant-result s es #f)])
+             (match (primitive-application-arguments e0 'bytes)
+               [#f #f]
+               [es (constructor-constant-result s es #f)])
+             (match (primitive-application-arguments e0 'make-bytes)
+               [#f #f]
+               [es (constructor-constant-result s es #f)])
+             (match (primitive-application-arguments e0 'bytes->immutable-bytes)
+               [(list e1)
+                (constructor-constant-result s (list e1) #t)]
+               [_ #f])
+             (match (primitive-application-arguments e0 'string)
+               [#f #f]
+               [es (constructor-constant-result s es #f)])
+             (match (primitive-application-arguments e0 'make-string)
+               [#f #f]
+               [es (constructor-constant-result s es #f)])
+             (match (primitive-application-arguments e0 'string-copy)
+               [(list e1)
+                (constructor-constant-result s (list e1) #f)]
+               [_ #f])
+             (match (primitive-application-arguments e0 'string->immutable-string)
+               [(list e1)
+                (constructor-constant-result s (list e1) #t)]
+               [_ #f])
+             (match (primitive-application-arguments e0 'string-append-immutable)
+               [#f #f]
+               [es (constructor-constant-result s es #t)])
+             (match (primitive-application-arguments e0 'symbol->immutable-string)
+               [(list e1)
+                (constructor-constant-result s (list e1) #t)]
+               [_ #f])
+             (match (primitive-application-arguments e0 'keyword->immutable-string)
+               [(list e1)
+                (constructor-constant-result s (list e1) #t)]
+               [_ #f]))]
         [(list 'pair? (list e0))
          ; (pair? '(a . d)) => #t/#f
          ; (pair? (cons x y)) => #t
@@ -4406,13 +4518,48 @@
         [(list 'box? (list e0))
          ; (box? (box x)) => #t
          ; (box? (box-immutable x)) => #t
-         (or (match (primitive-application-arguments e0 'box)
+         (or (match (quoted-box? e0)
+               [#:no-partial-fold #f]
+               [b (Quote s b)])
+             (match (primitive-application-arguments e0 'box)
                [(list a)
                 (constructor-constant-result s (list a) #t)]
                [_ #f])
              (match (primitive-application-arguments e0 'box-immutable)
                [(list a)
                 (constructor-constant-result s (list a) #t)]
+               [_ #f]))]
+        [(list 'immutable-box? (list e0))
+         ; (immutable-box? 'v) => #t/#f
+         ; (immutable-box? (box x)) => #f
+         ; (immutable-box? (box-immutable x)) => #t
+         (or (match (quoted-box? e0)
+               [#:no-partial-fold #f]
+               [b (Quote s b)])
+             (match (primitive-application-arguments e0 'box)
+               [(list a)
+                (constructor-constant-result s (list a) #f)]
+               [_ #f])
+             (match (primitive-application-arguments e0 'box-immutable)
+               [(list a)
+                (constructor-constant-result s (list a) #t)]
+               [_ #f]))]
+        [(list 'mutable-box? (list e0))
+         ; (mutable-box? 'v) => #f
+         ; (mutable-box? (box x)) => #t
+         ; (mutable-box? (box-immutable x)) => #f
+         (or (nanopass-case (LFE Expr) e0
+               [(quote ,s0 ,d0)
+                (Quote s #f)]
+               [else
+                #f])
+             (match (primitive-application-arguments e0 'box)
+               [(list a)
+                (constructor-constant-result s (list a) #t)]
+               [_ #f])
+             (match (primitive-application-arguments e0 'box-immutable)
+               [(list a)
+                (constructor-constant-result s (list a) #f)]
                [_ #f]))]
         [(list 'vector? (list e0))
          ; (vector? '#(...)) => #t/#f
@@ -4423,6 +4570,74 @@
              (match (primitive-application-arguments e0 'vector)
                [#f #f]
                [es (constructor-constant-result s es #t)]))]
+        [(list 'immutable-vector? (list e0))
+         ; (immutable-vector? '#(...)) => #t/#f
+         ; (immutable-vector? (vector ...)) => #f
+         (or (match (quoted-vector? e0)
+               [#:no-partial-fold #f]
+               [b (Quote s b)])
+             (match (primitive-application-arguments e0 'vector)
+               [#f #f]
+               [es (constructor-constant-result s es #f)]))]
+        [(list 'mutable-vector? (list e0))
+         ; (mutable-vector? 'v) => #f
+         ; (mutable-vector? (vector ...)) => #t
+         (or (nanopass-case (LFE Expr) e0
+               [(quote ,s0 ,d0)
+                (Quote s #f)]
+               [else
+                #f])
+             (match (primitive-application-arguments e0 'vector)
+               [#f #f]
+               [es (constructor-constant-result s es #t)]))]
+        [(list 'immutable-string? (list e0))
+         ; (immutable-string? 'v) => #t/#f
+         ; (immutable-string? (string ...)) => #f
+         ; (immutable-string? (make-string ...)) => #f
+         ; (immutable-string? (string-copy s)) => #f
+         ; (immutable-string? (string->immutable-string s)) => #t
+         (or (match (quoted-string? e0)
+               [#:no-partial-fold #f]
+               [b (Quote s b)])
+             (match (primitive-application-arguments e0 'string)
+               [#f #f]
+               [es (constructor-constant-result s es #f)])
+             (match (primitive-application-arguments e0 'make-string)
+               [#f #f]
+               [es (constructor-constant-result s es #f)])
+             (match (primitive-application-arguments e0 'string-copy)
+               [(list e1)
+                (constructor-constant-result s (list e1) #f)]
+               [_ #f])
+             (match (primitive-application-arguments e0 'string->immutable-string)
+               [(list e1)
+                (constructor-constant-result s (list e1) #t)]
+               [_ #f]))]
+        [(list 'mutable-string? (list e0))
+         ; (mutable-string? 'v) => #f
+         ; (mutable-string? (string ...)) => #t
+         ; (mutable-string? (make-string ...)) => #t
+         ; (mutable-string? (string-copy s)) => #t
+         ; (mutable-string? (string->immutable-string s)) => #f
+         (or (nanopass-case (LFE Expr) e0
+               [(quote ,s0 ,d0)
+                (Quote s #f)]
+               [else
+                #f])
+             (match (primitive-application-arguments e0 'string)
+               [#f #f]
+               [es (constructor-constant-result s es #t)])
+             (match (primitive-application-arguments e0 'make-string)
+               [#f #f]
+               [es (constructor-constant-result s es #t)])
+             (match (primitive-application-arguments e0 'string-copy)
+               [(list e1)
+                (constructor-constant-result s (list e1) #t)]
+               [_ #f])
+             (match (primitive-application-arguments e0 'string->immutable-string)
+               [(list e1)
+                (constructor-constant-result s (list e1) #f)]
+               [_ #f]))]
         [(list 'unbox (list e0))
          ; (unbox (box x)) => x
          ; (unbox (box-immutable x)) => x
@@ -4691,6 +4906,26 @@
                  (Quote s #t))]
            [else
             #f])]
+        [(list 'immutable-bytes? (list e0))
+         ; (immutable-bytes? 'v) => #t/#f
+         ; (immutable-bytes? (bytes ...)) => #f
+         (or (match (quoted-bytes? e0)
+               [#:no-partial-fold #f]
+               [b (Quote s b)])
+             (match (primitive-application-arguments e0 'bytes)
+               [#f #f]
+               [es (constructor-constant-result s es #f)]))]
+        [(list 'mutable-bytes? (list e0))
+         ; (mutable-bytes? 'v) => #f
+         ; (mutable-bytes? (bytes ...)) => #t
+         (or (nanopass-case (LFE Expr) e0
+               [(quote ,s0 ,d0)
+                (Quote s #f)]
+               [else
+                #f])
+             (match (primitive-application-arguments e0 'bytes)
+               [#f #f]
+               [es (constructor-constant-result s es #t)]))]
         [(list 'bytes-length (list e0))
          ; (bytes-length #"...") => 'n
          (quote-when-found s (quoted-bytes-length e0))]
@@ -5249,6 +5484,45 @@
                   '(list* (values '1 '2)))
     (check-equal? (test #'(procedure? (lambda (x) x)))
                   ''#t)
+    (check-equal? (test #'(immutable? "a"))
+                  ''#t)
+    (check-equal? (test #'(immutable? '#(1 2)))
+                  ''#t)
+    (check-equal? (test #'(immutable? '#&1))
+                  ''#t)
+    (check-equal? (test #'(immutable? '(1 2)))
+                  ''#f)
+    (check-equal? (test #'(immutable? (string-copy "a")))
+                  '(let-values (((pf0) '"a"))
+                     '#f))
+    (check-equal? (test #'(immutable? (string->immutable-string s)))
+                  '(let-values (((pf0) (#%top . s)))
+                     '#t))
+    (check-equal? (test #'(immutable? (string-append-immutable "a" s)))
+                  '(let-values (((pf0) '"a"))
+                     (let-values (((pf1) (#%top . s)))
+                       '#t)))
+    (check-equal? (test #'(immutable? (bytes 1 2)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       '#f)))
+    (check-equal? (test #'(immutable? (bytes->immutable-bytes bs)))
+                  '(let-values (((pf0) (#%top . bs)))
+                     '#t))
+    (check-equal? (test #'(immutable? (vector 1 2)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       '#f)))
+    (check-equal? (test #'(immutable? (vector-immutable 1 2)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       '#t)))
+    (check-equal? (test #'(immutable? (box 1)))
+                  '(let-values (((pf0) '1))
+                     '#f))
+    (check-equal? (test #'(immutable? (box-immutable 1)))
+                  '(let-values (((pf0) '1))
+                     '#t))
     (check-equal? (test #'(eq? x #f))
                   '(if (#%top . x) '#f '#t))
     (check-equal? (test #'(equal? #f x))
@@ -5352,6 +5626,28 @@
     (check-equal? (test #'(box? (box 1)))
                   '(let-values (((pf0) '1))
                      '#t))
+    (check-equal? (test #'(box? '#&1))
+                  ''#t)
+    (check-equal? (test #'(immutable-box? '#&1))
+                  ''#t)
+    (check-equal? (test #'(immutable-box? '1))
+                  ''#f)
+    (check-equal? (test #'(immutable-box? (box 1)))
+                  '(let-values (((pf0) '1))
+                     '#f))
+    (check-equal? (test #'(immutable-box? (box-immutable 1)))
+                  '(let-values (((pf0) '1))
+                     '#t))
+    (check-equal? (test #'(mutable-box? '#&1))
+                  ''#f)
+    (check-equal? (test #'(mutable-box? '1))
+                  ''#f)
+    (check-equal? (test #'(mutable-box? (box 1)))
+                  '(let-values (((pf0) '1))
+                     '#t))
+    (check-equal? (test #'(mutable-box? (box-immutable 1)))
+                  '(let-values (((pf0) '1))
+                     '#f))
     (check-equal? (test #'(vector? '#(1 2)))
                   ''#t)
     (check-equal? (test #'(vector? '(1 2)))
@@ -5360,6 +5656,58 @@
                   '(let-values (((pf0) '1))
                      (let-values (((pf1) '2))
                        '#t)))
+    (check-equal? (test #'(immutable-vector? '#(1 2)))
+                  ''#t)
+    (check-equal? (test #'(immutable-vector? '(1 2)))
+                  ''#f)
+    (check-equal? (test #'(immutable-vector? (vector 1 2)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       '#f)))
+    (check-equal? (test #'(mutable-vector? '#(1 2)))
+                  ''#f)
+    (check-equal? (test #'(mutable-vector? '(1 2)))
+                  ''#f)
+    (check-equal? (test #'(mutable-vector? (vector 1 2)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       '#t)))
+    (check-equal? (test #'(immutable-string? "hi"))
+                  ''#t)
+    (check-equal? (test #'(immutable-string? 'hi))
+                  ''#f)
+    (check-equal? (test #'(immutable-string? (string #\h #\i)))
+                  '(let-values (((pf0) '#\h))
+                     (let-values (((pf1) '#\i))
+                       '#f)))
+    (check-equal? (test #'(immutable-string? (make-string 2 #\h)))
+                  '(let-values (((pf0) '2))
+                     (let-values (((pf1) '#\h))
+                       '#f)))
+    (check-equal? (test #'(immutable-string? (string-copy "hi")))
+                  '(let-values (((pf0) '"hi"))
+                     '#f))
+    (check-equal? (test #'(immutable-string? (string->immutable-string s)))
+                  '(let-values (((pf0) (#%top . s)))
+                     '#t))
+    (check-equal? (test #'(mutable-string? "hi"))
+                  ''#f)
+    (check-equal? (test #'(mutable-string? 'hi))
+                  ''#f)
+    (check-equal? (test #'(mutable-string? (string #\h #\i)))
+                  '(let-values (((pf0) '#\h))
+                     (let-values (((pf1) '#\i))
+                       '#t)))
+    (check-equal? (test #'(mutable-string? (make-string 2 #\h)))
+                  '(let-values (((pf0) '2))
+                     (let-values (((pf1) '#\h))
+                       '#t)))
+    (check-equal? (test #'(mutable-string? (string-copy "hi")))
+                  '(let-values (((pf0) '"hi"))
+                     '#t))
+    (check-equal? (test #'(mutable-string? (string->immutable-string s)))
+                  '(let-values (((pf0) (#%top . s)))
+                     '#f))
     (check-equal? (test #'(unbox (box 1)))
                   '(let-values (((pf0) '1))
                      pf0))
@@ -5666,6 +6014,22 @@
                   ''3)
     (check-equal? (test #'(bytes? #"abc"))
                   ''#t)
+    (check-equal? (test #'(immutable-bytes? #"abc"))
+                  ''#t)
+    (check-equal? (test #'(immutable-bytes? 'abc))
+                  ''#f)
+    (check-equal? (test #'(immutable-bytes? (bytes 1 2)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       '#f)))
+    (check-equal? (test #'(mutable-bytes? #"abc"))
+                  ''#f)
+    (check-equal? (test #'(mutable-bytes? 'abc))
+                  ''#f)
+    (check-equal? (test #'(mutable-bytes? (bytes 1 2)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       '#t)))
     (check-equal? (test #'(bytes-length #"abc"))
                   ''3)
     (check-equal? (test #'(bytes-ref #"abc" 1))
