@@ -3081,6 +3081,8 @@
 ;; This early simplification pass is in place to reduce the amount of
 ;; the rest of the compiler has to deal with.
 
+;; Currenly, use --enable-simplify to enable the simplification pass.
+
 ;; ## Design Principles
 
 ;; 1. **Local reasoning only**
