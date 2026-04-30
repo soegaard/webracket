@@ -3540,21 +3540,21 @@
       (match (list sym e*)
         [(list '+ (list e0 e1))
          (cond
-           [(quoted-zero? e0) (keep e1)]
-           [(quoted-zero? e1) (keep e0)]
+           [(quoted-zero? e0) (keep e1)] ; (+ 0 x) => x
+           [(quoted-zero? e1) (keep e0)] ; (+ x 0) => x
            [else #f])]
         [(list '* (list e0 e1))
          (cond
-           [(quoted-one? e0) (keep e1)]
-           [(quoted-one? e1) (keep e0)]
+           [(quoted-one? e0) (keep e1)] ; (* 1 x) => x
+           [(quoted-one? e1) (keep e0)] ; (* x 1) => x
            [else #f])]
         [(list '- (list e0 e1))
          (cond
-           [(quoted-zero? e1) (keep e0)]
+           [(quoted-zero? e1) (keep e0)] ; (- x 0) => x
            [else #f])]
         [(list '/ (list e0 e1))
          (cond
-           [(quoted-one? e1) (keep e0)]
+           [(quoted-one? e1) (keep e0)] ; (/ x 1) => x
            [else #f])]
         [_ #f]))
     ;; constant-binding : variable? LFE Expr -> (or/c (cons/c variable? LFE Expr) #f)
