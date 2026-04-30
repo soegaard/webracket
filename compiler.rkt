@@ -3365,6 +3365,11 @@
     (define (Quote s v)
       (with-output-language (LFE Expr)
         `(quote ,s ,(datum s v))))
+    ;; primitive-application : syntax? variable? (listof LFE Expr) -> LFE Expr
+    ;;   Build a primitive application from a primitive variable and arguments.
+    (define (primitive-application s x e*)
+      (with-output-language (LFE Expr)
+        `(app ,s ,x ,e* ...)))
     ;; quoted-zero? : LFE Expr -> boolean?
     ;;   Recognize the quoted numeric zero constant.
     (define (quoted-zero? e)
@@ -3373,6 +3378,11 @@
     ;;   Recognize the quoted numeric one constant.
     (define (quoted-one? e)
       (equal? (quoted-constant-value e) 1))
+    ;; quoted-exact-integer : LFE Expr -> (or/c exact-integer? #f)
+    ;;   Extract an exact integer constant, if present.
+    (define (quoted-exact-integer e)
+      (define v (quoted-constant-value e))
+      (and (exact-integer? v) v))
     ;; PrimitiveVar : symbol? -> variable?
     ;;   Build a variable reference to primitive `sym`.
     (define (PrimitiveVar sym)
@@ -3530,31 +3540,73 @@
                                              "values" vs)])))
              (with-output-language (LFE Expr)
                `(quote ,s ,(datum s (normalize-folded-constant-value result)))))))
+    ;; drop-identity-arguments : syntax? variable? (listof LFE Expr) (LFE Expr -> boolean?) any/c
+    ;;                        -> (or/c LFE Expr #f)
+    ;;   Drop identity constants from an n-ary primitive application.
+    (define (drop-identity-arguments s x e* identity? ident)
+      (define kept (filter-not identity? e*))
+      (cond
+        [(= (length kept) (length e*))
+         #f]
+        [(null? kept)
+         (Quote s ident)]
+        [(null? (cdr kept))
+         (and (obviously-single-valued-expression? (car kept))
+              (car kept))]
+        [else
+         (primitive-application s x kept)]))
+    ;; fold-exact-integer-subset : syntax? variable? (listof LFE Expr) (exact-integer? exact-integer? -> exact-integer?) any/c
+    ;;                          -> (or/c LFE Expr #f)
+    ;;   Combine exact integer constants inside an n-ary primitive application.
+    (define (fold-exact-integer-subset s x e* op ident)
+      (define-values (acc kept changed?)
+        (for/fold ([acc ident] [kept '()] [changed? #f])
+                  ([e (in-list e*)])
+          (match (quoted-exact-integer e)
+            [#f
+             (values acc (append kept (list e)) changed?)]
+            [n
+             (values (op acc n) kept #t)])))
+      (cond
+        [(not changed?)
+         #f]
+        [(equal? acc ident)
+         (cond
+           [(null? kept)
+            (Quote s ident)]
+           [(null? (cdr kept))
+            (and (obviously-single-valued-expression? (car kept))
+                 (car kept))]
+           [else
+            (primitive-application s x kept)])]
+        [else
+         (define e*^ (append (list (Quote s acc)) kept))
+         (if (null? (cdr e*^))
+             (and (obviously-single-valued-expression? (car e*^))
+                  (car e*^))
+             (primitive-application s x e*^))]))
     ;; partial-fold-primitive-application : syntax? variable? (listof LFE Expr) -> (or/c LFE Expr #f)
     ;;   Apply cheap local algebraic simplifications for selected primitives.
     (define (partial-fold-primitive-application s x e*)
       (define sym (syntax-e (variable-id x)))
-      (define (keep e)
-        (and (obviously-single-valued-expression? e)
-             e))
       (match (list sym e*)
-        [(list '+ (list e0 e1))
-         (cond
-           [(quoted-zero? e0) (keep e1)] ; (+ 0 x) => x
-           [(quoted-zero? e1) (keep e0)] ; (+ x 0) => x
-           [else #f])]
-        [(list '* (list e0 e1))
-         (cond
-           [(quoted-one? e0) (keep e1)] ; (* 1 x) => x
-           [(quoted-one? e1) (keep e0)] ; (* x 1) => x
-           [else #f])]
+        [(list '+ _)
+         (or (fold-exact-integer-subset s x e* + 0)         ; (+ c1 ... x ... c2 ...) => (+ c x ...)
+             (drop-identity-arguments s x e* quoted-zero? 0))] ; (+ ... 0 ...) => (+ ...)
+        [(list '* _)
+         (or (fold-exact-integer-subset s x e* * 1)         ; (* c1 ... x ... c2 ...) => (* c x ...)
+             (drop-identity-arguments s x e* quoted-one? 1))] ; (* ... 1 ...) => (* ...)
         [(list '- (list e0 e1))
          (cond
-           [(quoted-zero? e1) (keep e0)] ; (- x 0) => x
+           [(quoted-zero? e1)
+            (and (obviously-single-valued-expression? e0)
+                 e0)] ; (- x 0) => x
            [else #f])]
         [(list '/ (list e0 e1))
          (cond
-           [(quoted-one? e1) (keep e0)] ; (/ x 1) => x
+           [(quoted-one? e1)
+            (and (obviously-single-valued-expression? e0)
+                 e0)] ; (/ x 1) => x
            [else #f])]
         [_ #f]))
     ;; constant-binding : variable? LFE Expr -> (or/c (cons/c variable? LFE Expr) #f)
@@ -3985,6 +4037,12 @@
                   '(#%top . x))
     (check-equal? (test #'(+ (add1 x) 0))
                   '(add1 (#%top . x)))
+    (check-equal? (test #'(+ x 0 y))
+                  '(+ (#%top . x) (#%top . y)))
+    (check-equal? (test #'(+ 0 x 0))
+                  '(#%top . x))
+    (check-equal? (test #'(+ 1 2 x 3))
+                  '(+ '6 (#%top . x)))
     (check-equal? (test #'(- 10 3))
                   ''7)
     (check-equal? (test #'(- x 0))
@@ -3995,6 +4053,12 @@
                   '(#%top . x))
     (check-equal? (test #'(* 1 x))
                   '(#%top . x))
+    (check-equal? (test #'(* x 1 y))
+                  '(* (#%top . x) (#%top . y)))
+    (check-equal? (test #'(* 1 x 1))
+                  '(#%top . x))
+    (check-equal? (test #'(* 2 3 x 4))
+                  '(* '24 (#%top . x)))
     (check-equal? (test #'(/ 8 2))
                   ''4)
     (check-equal? (test #'(/ x 1))
