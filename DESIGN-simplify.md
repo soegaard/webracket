@@ -427,6 +427,153 @@ or in a slightly adapted form that better fits the current `LFE`.
   serves the same goal of reducing application overhead while keeping
   value-count behavior explicit.
 
+## Chez-Style Partial Folding Used
+
+After the Twobit-style control-flow and sequencing rewrites were in
+place, `simplify-LFE` also gained a small Chez-inspired partial-folding
+layer.
+
+This layer is deliberately separate from ordinary constant folding:
+
+- `foldable`
+  means an application may be evaluated immediately when all arguments
+  are known constants.
+
+- `partial-foldable`
+  means an application may be simplified algebraically even when only
+  some arguments are constants.
+
+- `multi`
+  marks the exceptional primitives that may produce multiple values.
+  Primitive applications are otherwise treated as single-valued by
+  default when used by the local value-count predicates.
+
+The current partial folders are intentionally small and local. They are
+implemented directly in `simplify-LFE` rather than through a more
+general `define-inline`-style registration framework like Chez uses in
+`cp0`.
+
+### Arithmetic Families
+
+The following arithmetic rewrites are currently implemented.
+
+- `(+ ... 0 ...) => (+ ... ...)`
+  Zero arguments are dropped from `+`.
+
+- `(* ... 1 ...) => (* ... ...)`
+  One arguments are dropped from `*`.
+
+- `(- X 0) => X`
+
+- `(/ X 1) => X`
+
+- `(+ X) => X`
+
+- `(* X) => X`
+
+- `(+ C1 ... X ... C2 ...) => (+ C X ...)`
+  Exact-integer constants in `+` are combined conservatively.
+
+- `(* C1 ... X ... C2 ...) => (* C X ...)`
+  Exact-integer constants in `*` are combined conservatively.
+
+- `(* E0 ... 0 ... En) => (begin E0 ... En 0)`
+  This is only used when the surviving expressions are obviously
+  numeric and obviously single-valued, so the primitive’s type checks
+  are not silently erased.
+
+### Bitwise Families
+
+The following bitwise rewrites are currently implemented.
+
+- `(bitwise-ior ... 0 ...) => (bitwise-ior ... ...)`
+
+- `(bitwise-xor ... 0 ...) => (bitwise-xor ... ...)`
+
+- `(bitwise-and ... -1 ...) => (bitwise-and ... ...)`
+
+- `(bitwise-ior X) => X`
+
+- `(bitwise-xor X) => X`
+
+- `(bitwise-and X) => X`
+
+- `(bitwise-ior C1 ... X ... C2 ...) => (bitwise-ior C X ...)`
+
+- `(bitwise-xor C1 ... X ... C2 ...) => (bitwise-xor C X ...)`
+
+- `(bitwise-and C1 ... X ... C2 ...) => (bitwise-and C X ...)`
+
+- `(bitwise-and E0 ... 0 ... En) => (begin E0 ... En 0)`
+  As with `*`, this only applies when the surviving expressions are
+  obviously exact-integer-valued and obviously single-valued.
+
+### Sequence/List Families
+
+The following small sequence/list rewrites are currently implemented.
+
+- `(list) => '()`
+
+- `(append) => '()`
+
+- `(append X) => X`
+
+- `(values X) => X`
+
+- `(member X '()) => (begin X '() #f)`
+
+- `(memq X '()) => (begin X '() #f)`
+
+- `(memv X '()) => (begin X '() #f)`
+
+- `(assoc X '()) => (begin X '() #f)`
+
+- `(assq X '()) => (begin X '() #f)`
+
+- `(assv X '()) => (begin X '() #f)`
+
+- `(memf P '()) => (begin P '() #f)`
+
+- `(assf P '()) => (begin P '() #f)`
+
+- `(findf P '()) => (begin P '() #f)`
+
+- `(remove X '()) => (begin X '() '())`
+
+- `(remq X '()) => (begin X '() '())`
+
+- `(remv X '()) => (begin X '() '())`
+
+- `(remf P '()) => (begin P '() '())`
+
+- `(filter P '()) => (begin P '() '())`
+
+- `(andmap P '()) => (begin P '() #t)`
+
+- `(ormap P '()) => (begin P '() #f)`
+
+### Guardrails
+
+The partial-folding layer is intentionally constrained by a few rules.
+
+- Primitive type checks must not be erased.
+  For example, `(+ 'x 0)` must not simplify to `'x`, because the
+  original program signals an error.
+
+- Type-preserving rewrites therefore rely on small local predicates
+  such as:
+  - `obviously-number-valued-expression?`
+  - `obviously-exact-integer-valued-expression?`
+  - `obviously-single-valued-expression?`
+
+- `obviously-single-valued-expression?` is intentionally shallow.
+  It is useful as a cheap local guard, but it is not meant to grow into
+  a general value-count analysis.
+
+- Sequencing is always preserved explicitly.
+  When a primitive result is known from an annihilator such as `0`,
+  remaining operands are still evaluated through `begin`.
+
 ## Future Optimizations For a Later Pass
 
 Some Twobit-style optimizations were intentionally not added to
@@ -478,3 +625,22 @@ in a later pass with richer binding/use analysis.
   This is attractive, but moving `begin` outward through application
   position deserves more careful evaluation-order reasoning than we
   currently want in `simplify-LFE`.
+
+### Rules That Need Richer Value and Numeric Analysis
+
+- More aggressive partial folds that rely on proving type properties of
+  arbitrary expressions.
+
+  The current partial folders use shallow local predicates such as
+  `obviously-number-valued-expression?` and
+  `obviously-exact-integer-valued-expression?`. This is enough for the
+  current identity, subset-folding, and annihilator rules, but a later
+  pass would be a better place for deeper type/value reasoning.
+
+- Richer multi-value reasoning.
+
+  The current pass uses `multi` metadata and a cheap local
+  single-valued heuristic. If future optimizations want stronger
+  guarantees about result arity, they should use a later pass with
+  explicit value-count information instead of growing the local
+  heuristic much further.
