@@ -3633,6 +3633,8 @@
     ;; drop-identity-arguments : syntax? variable? (listof LFE Expr) (LFE Expr -> boolean?) any/c (LFE Expr -> boolean?)
     ;;                        -> (or/c LFE Expr #f)
     ;;   Drop identity constants from an n-ary primitive application.
+    (define (keep-valued valued? e)
+      (and (valued? e) e))
     (define (drop-identity-arguments s x e* identity? ident valued?)
       (define kept (filter-not identity? e*))
       (cond
@@ -3641,8 +3643,7 @@
         [(null? kept)
          (Quote s ident)]
         [(null? (cdr kept))
-         (and (valued? (car kept))
-              (car kept))]
+         (keep-valued valued? (car kept))]
         [else
          (primitive-application s x kept)]))
     ;; sequence-then-quote : syntax? (listof LFE Expr) any/c (LFE Expr -> boolean?) -> (or/c LFE Expr #f)
@@ -3688,11 +3689,17 @@
     (define (partial-fold-primitive-application s x e*)
       (define sym (syntax-e (variable-id x)))
       (match (list sym e*)
+        [(list '+ (list e0))
+         ; (+ x) => x
+         (keep-valued obviously-number-valued-expression? e0)]
         [(list '+ _)
          ; (+ c1 ... x ... c2 ...) => (+ c x ...)
          ; (+ ... 0 ...) => (+ ...)
          (or (fold-exact-integer-subset s x e* + 0 obviously-number-valued-expression?)
              (drop-identity-arguments s x e* quoted-zero? 0 obviously-number-valued-expression?))]
+        [(list '* (list e0))
+         ; (* x) => x
+         (keep-valued obviously-number-valued-expression? e0)]
         [(list '* _)
          ; (* ... 0 ...) => (begin ... 0)
          ; (* c1 ... x ... c2 ...) => (* c x ...)
@@ -3721,15 +3728,13 @@
          (cond
            ; (- x 0) => x
            [(quoted-zero? e1)
-            (and (obviously-number-valued-expression? e0)
-                 e0)]
+            (keep-valued obviously-number-valued-expression? e0)]
            [else #f])]
         [(list '/ (list e0 e1))
          (cond
            ; (/ x 1) => x
            [(quoted-one? e1)
-            (and (obviously-number-valued-expression? e0)
-                 e0)]
+            (keep-valued obviously-number-valued-expression? e0)]
            [else #f])]
         [_ #f]))
     ;; constant-binding : variable? LFE Expr -> (or/c (cons/c variable? LFE Expr) #f)
@@ -4162,6 +4167,10 @@
                   '(+ 'x '0))
     (check-equal? (test #'(+ (add1 x) 0))
                   '(+ (add1 (#%top . x)) '0))
+    (check-equal? (test #'(+ (if b 1 2)))
+                  '(if (#%top . b) '1 '2))
+    (check-equal? (test #'(+ x))
+                  '(+ (#%top . x)))
     (check-equal? (test #'(+ (if b 1 2) 0))
                   '(if (#%top . b) '1 '2))
     (check-equal? (test #'(+ (begin (add1 x)) 0))
@@ -4191,6 +4200,10 @@
                   '(- (#%top . x) '0))
     (check-equal? (test #'(* 2 4))
                   ''8)
+    (check-equal? (test #'(* (if b 1 2)))
+                  '(if (#%top . b) '1 '2))
+    (check-equal? (test #'(* x))
+                  '(* (#%top . x)))
     (check-equal? (test #'(* x 1))
                   '(* (#%top . x) '1))
     (check-equal? (test #'(* 1 x))
