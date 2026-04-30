@@ -3314,6 +3314,17 @@
                (Begin s
                       (append (drop-right es 1)
                               (list `(set! ,s ,x ,(last es))))))]))
+    ;; if-test-begin : syntax? LFE Expr LFE Expr LFE Expr -> (or/c LFE Expr #f)
+    ;;   If `e0` is `(begin ... b0)`, rewrite `(if e0 e1 e2)` as `(begin ... (if b0 e1 e2))`.
+    ;;   Used for the rule:
+    ;;     (if (begin ... e0) e1 e2) => (begin ... (if e0 e1 e2))
+    (define (if-test-begin s e0 e1 e2)
+      (match (begin-sequence e0)
+        [#f #f]
+        [es (with-output-language (LFE Expr)
+              (Begin s
+                     (append (drop-right es 1)
+                             (list `(if ,s ,(last es) ,e1 ,e2)))))]))
     ;; fold-primitive-application : syntax? variable? (listof any/c) -> LFE Expr or #f
     ;;   Fold a single-valued primitive application on constant arguments.
     (define (fold-primitive-application s x vals)
@@ -3438,6 +3449,11 @@
      (values (or (κ-ref κ x) `(top ,s ,x)) κ)]
 
     ;; Conditional Simplification
+    ;   (if (begin ... e0) e1 e2) => (begin ... (if e0 e1 e2))
+    [(if ,s ,e0 ,e1 ,e2)
+     (guard (begin-sequence e0))
+     (Expr (if-test-begin s e0 e1 e2) κ)]
+
     ;   (if (not e0) e1 e2) => (if e0 e2 e1)
     [(if ,s (app ,s0 ,x ,e0) ,e1 ,e2)
      (guard (the-not-primitive? x))
@@ -3681,6 +3697,11 @@
                   ''2)
     (check-equal? (test #'(if #t (begin (not '#f) 2) 3))
                   ''2)
+    (check-equal? (test #'(let-values ([(x) '0])
+                            (if (begin (set! x '1) x) 2 3)))
+                  '(let-values (((x) '0))
+                     (begin (set! x '1)
+                            (if x '2 '3))))
     (check-equal? (test #'(let-values ([(x) '0])
                             (set! x (begin '1 '2))))
                   '(let-values (((x) '0))
