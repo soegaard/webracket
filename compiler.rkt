@@ -3286,6 +3286,10 @@
          (andmap obviously-single-valued-expression? (cons e0 e1))]
         [(begin0 ,s ,e0 ,e1 ...)
          (andmap obviously-single-valued-expression? (cons e0 e1))]
+        [(let-values ,s ([(,x* ...) ,e*] ...) ,e0 ,e1 ...)
+         (and (andmap (λ (xs) (= (length xs) 1)) x*)
+              (andmap obviously-single-valued-expression? e*)
+              (andmap obviously-single-valued-expression? (cons e0 e1)))]
         [(app ,s ,e0 ,e1 ...)
          (and (variable? e0)
               (single-valued-primitive? e0)
@@ -4078,6 +4082,11 @@
                   '(add1 (#%top . x)))
     (check-equal? (test #'(+ (begin0 (add1 x)) 0))
                   '(add1 (#%top . x)))
+    (check-equal? (test #'(+ (let-values ([(x) (add1 y)])
+                              (if x 1 2))
+                            0))
+                  '(let-values (((x) (add1 (#%top . y))))
+                     (if x '1 '2)))
     (check-equal? (test #'(+ x 0 y))
                   '(+ (#%top . x) (#%top . y)))
     (check-equal? (test #'(+ 0 x 0))
