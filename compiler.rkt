@@ -3692,6 +3692,9 @@
         [(list 'values (list e0))
          ; (values x) => x
          (keep-valued obviously-single-valued-expression? e0)]
+        [(list 'append (list e0))
+         ; (append x) => x
+         (keep-valued obviously-single-valued-expression? e0)]
         [(list 'list '())
          ; (list) => '()
          (Quote s '())]
@@ -4171,6 +4174,10 @@
                   ''())
     (check-equal? (test #'(append))
                   ''())
+    (check-equal? (test #'(append x))
+                  '(#%top . x))
+    (check-equal? (test #'(append (values 1 2)))
+                  '(append (values '1 '2)))
     (check-equal? (test #'(values (if b 1 2)))
                   '(if (#%top . b) '1 '2))
     (check-equal? (test #'(values x))
