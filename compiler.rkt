@@ -3278,6 +3278,14 @@
          #t]
         [(λ ,s ,f ,e0 ,e1 ...)
          #t]
+        [(if ,s ,e0 ,e1 ,e2)
+         (and (obviously-single-valued-expression? e0)
+              (obviously-single-valued-expression? e1)
+              (obviously-single-valued-expression? e2))]
+        [(begin ,s ,e0 ,e1 ...)
+         (andmap obviously-single-valued-expression? (cons e0 e1))]
+        [(begin0 ,s ,e0 ,e1 ...)
+         (andmap obviously-single-valued-expression? (cons e0 e1))]
         [(app ,s ,e0 ,e1 ...)
          (and (variable? e0)
               (single-valued-primitive? e0)
@@ -4063,6 +4071,12 @@
     (check-equal? (test #'(+ 0 x))
                   '(#%top . x))
     (check-equal? (test #'(+ (add1 x) 0))
+                  '(add1 (#%top . x)))
+    (check-equal? (test #'(+ (if b 1 2) 0))
+                  '(if (#%top . b) '1 '2))
+    (check-equal? (test #'(+ (begin (add1 x)) 0))
+                  '(add1 (#%top . x)))
+    (check-equal? (test #'(+ (begin0 (add1 x)) 0))
                   '(add1 (#%top . x)))
     (check-equal? (test #'(+ x 0 y))
                   '(+ (#%top . x) (#%top . y)))
