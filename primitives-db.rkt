@@ -45,6 +45,17 @@
 ;;   arguments are compile-time constants and the primitive returns a single
 ;;   value. This property is intended for early local simplification and is
 ;;   separate from motion-oriented properties like `pure` or `restricted`.
+;;
+;;   `partial-foldable`
+;;   A `partial-foldable` primitive supports local algebraic simplification
+;;   even when not all arguments are constants. This property is intended for
+;;   cheap shape-based rewrites like arithmetic identity elimination and is
+;;   separate from full constant evaluation via `foldable`.
+;;
+;;   `multi`
+;;   A `multi` primitive may return more than one value. Early local
+;;   simplification assumes primitives are single-valued unless they are
+;;   marked `multi`, so this property is used only for the exceptional cases.
 
 (provide primitive-db
          define-primitive
@@ -59,11 +70,11 @@
         (cons (primitive-info 'name 'arity 'properties)
               primitive-db)))
 
-(define-primitive *                                         at-least-0          (pure foldable))
-(define-primitive +                                         at-least-0          (pure foldable))
-(define-primitive -                                         at-least-1          (pure foldable))
+(define-primitive *                                         at-least-0          (pure foldable partial-foldable))
+(define-primitive +                                         at-least-0          (pure foldable partial-foldable))
+(define-primitive -                                         at-least-1          (pure foldable partial-foldable))
 (define-primitive ->fl                                      1                   (pure))
-(define-primitive /                                         at-least-1          (pure foldable))
+(define-primitive /                                         at-least-1          (pure foldable partial-foldable))
 (define-primitive <                                         at-least-1          (pure foldable))
 (define-primitive <=                                        at-least-1          (pure foldable))
 (define-primitive =                                         at-least-1          (pure foldable))
@@ -154,7 +165,7 @@
 (define-primitive call-with-output-file                     [2 3 4]             (ordered))
 (define-primitive call-with-output-file*                    [2 3 4]             (ordered))
 (define-primitive call-with-output-string                   1                   (ordered))
-(define-primitive call-with-values                          2                   (ordered))
+(define-primitive call-with-values                          2                   (ordered multi))
 (define-primitive car                                       1                   (pure restricted))
 (define-primitive cartesian-product                         at-least-0          (ordered))
 (define-primitive catch                                     3                   (ordered))
@@ -432,7 +443,7 @@
 (define-primitive hash-eqv?                                 1                   (pure))
 (define-primitive hash-filter                               2                   (ordered))
 (define-primitive hash-filter-keys                          2                   (ordered))
-(define-primitive hash-filter-values                        2                   (ordered))
+(define-primitive hash-filter-values                        2                   (ordered multi))
 (define-primitive hash-for-each                             [2 3]               (ordered))
 (define-primitive hash-has-key?                             2                   (pure))
 (define-primitive hash-keys                                 [1 2]               (ordered))
@@ -443,7 +454,7 @@
 (define-primitive hash-remove!                              2                   (ordered))
 (define-primitive hash-set!                                 3                   (ordered))
 (define-primitive hash-update!                              [3 4]               (ordered))
-(define-primitive hash-values                               [1 2]               (ordered))
+(define-primitive hash-values                               [1 2]               (ordered multi))
 (define-primitive hash?                                     1                   (pure))
 (define-primitive identifier?                               1                   (pure))
 (define-primitive immutable-box?                            1                   (pure))
@@ -612,7 +623,7 @@
 (define-primitive ormap                                     at-least-2          (ordered))
 (define-primitive output-port?                              1                   (pure))
 (define-primitive pair?                                     1                   (pure foldable))
-(define-primitive partition                                 2                   (ordered))
+(define-primitive partition                                 2                   (ordered multi))
 (define-primitive path->bytes                               1                   (allocates))
 (define-primitive path->complete-path                       [1 2]               (ordered))
 (define-primitive path->directory-path                      1                   (ordered))
@@ -660,7 +671,7 @@
 (define-primitive procedure?                                1                   (pure foldable))
 (define-primitive progress-evt?                             [1 2]               (pure))
 (define-primitive quotient                                  2                   (ordered))
-(define-primitive quotient/remainder                        2                   (ordered))
+(define-primitive quotient/remainder                        2                   (ordered multi))
 (define-primitive radians->degrees                          1                   (ordered))
 (define-primitive raise                                     [1 2]               (ordered))
 (define-primitive raise-read-eof-error                      [6 7]               (ordered))
@@ -719,8 +730,8 @@
 (define-primitive sixth                                     1                   (pure restricted))
 (define-primitive some-system-path->string                  1                   (ordered))
 (define-primitive sort                                      2                   (ordered))
-(define-primitive split-at                                  2                   (ordered))
-(define-primitive split-at-right                            2                   (ordered))
+(define-primitive split-at                                  2                   (ordered multi))
+(define-primitive split-at-right                            2                   (ordered multi))
 (define-primitive split-common-prefix                       [2 3]               (ordered))
 (define-primitive split-path                                1                   (ordered))
 (define-primitive splitf-at                                 2                   (ordered))
@@ -904,13 +915,13 @@
 (define-primitive unsafe-vector-length                      1                   (pure))
 (define-primitive unsafe-vector-ref                         2                   (pure restricted))
 (define-primitive unsafe-vector-set!                        3                   (ordered))
-(define-primitive values                                    at-least-0          (pure))
+(define-primitive values                                    at-least-0          (pure multi))
 (define-primitive variable-reference-constant?              1                   (pure))
 (define-primitive variable-reference-from-unsafe?           1                   (pure))
 (define-primitive vector                                    at-least-0          (allocates))
 (define-primitive vector->immutable-vector                  1                   (allocates))
 (define-primitive vector->list                              1                   (allocates))
-(define-primitive vector->values                            [1 2 3]             (ordered))
+(define-primitive vector->values                            [1 2 3]             (ordered multi))
 (define-primitive vector-append                             at-least-0          (allocates))
 (define-primitive vector-argmax                             2                   (ordered))
 (define-primitive vector-argmin                             2                   (ordered))
@@ -936,8 +947,8 @@
 (define-primitive vector-set/copy                           3                   (ordered))
 (define-primitive vector-sort                               [2 3 4]             (ordered))
 (define-primitive vector-sort!                              [2 3 4]             (ordered))
-(define-primitive vector-split-at                           2                   (ordered))
-(define-primitive vector-split-at-right                     2                   (ordered))
+(define-primitive vector-split-at                           2                   (ordered multi))
+(define-primitive vector-split-at-right                     2                   (ordered multi))
 (define-primitive vector-take                               2                   (ordered))
 (define-primitive vector-take-right                         2                   (ordered))
 (define-primitive vector?                                   1                   (pure foldable))

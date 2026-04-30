@@ -780,6 +780,34 @@
      (and (primitive? v)
           (primitive-has-property? v 'foldable))]))
 
+;; partial-foldable? : (or/c syntax? variable? symbol?) -> boolean?
+;;   Check whether `v` names a primitive with local algebraic folds.
+(define (partial-foldable? v)
+  (cond
+    [(syntax? v)
+     (and (primitive? v)
+          (primitive-has-property? (syntax-e v) 'partial-foldable))]
+    [(variable? v)
+     (and (primitive? v)
+          (primitive-has-property? (syntax-e (variable-id v)) 'partial-foldable))]
+    [else
+     (and (primitive? v)
+          (primitive-has-property? v 'partial-foldable))]))
+
+;; single-valued-primitive? : (or/c syntax? variable? symbol?) -> boolean?
+;;   Check whether `v` names a primitive not marked as multi-valued.
+(define (single-valued-primitive? v)
+  (cond
+    [(syntax? v)
+     (and (primitive? v)
+          (not (primitive-has-property? (syntax-e v) 'multi)))]
+    [(variable? v)
+     (and (primitive? v)
+          (not (primitive-has-property? (syntax-e (variable-id v)) 'multi)))]
+    [else
+     (and (primitive? v)
+          (not (primitive-has-property? v 'multi)))]))
+
 ;; primitive-value/ref : symbol? -> any/c
 ;;   Look up the host Racket binding for primitive `sym`.
 (define (primitive-value/ref sym)
@@ -3236,6 +3264,26 @@
               (andmap pure-expression? e1))]
         [else
          #f]))
+    ;; obviously-single-valued-expression? : LFE Expr -> boolean?
+    ;;   Recognize expressions that obviously produce exactly one value.
+    (define (obviously-single-valued-expression? e)
+      (nanopass-case (LFE Expr) e
+        [,x
+         #t]
+        [(quote ,s ,d)
+         #t]
+        [(quote-syntax ,s ,d)
+         #t]
+        [(top ,s ,x)
+         #t]
+        [(λ ,s ,f ,e0 ,e1 ...)
+         #t]
+        [(app ,s ,e0 ,e1 ...)
+         (and (variable? e0)
+              (single-valued-primitive? e0)
+              (andmap obviously-single-valued-expression? e1))]
+        [else
+         #f]))
     ;; quoted-constant-value : LFE Expr -> any/c or #f
     ;;   Extract the value from a quoted constant expression.
     (define (quoted-constant-value e)
@@ -3317,6 +3365,14 @@
     (define (Quote s v)
       (with-output-language (LFE Expr)
         `(quote ,s ,(datum s v))))
+    ;; quoted-zero? : LFE Expr -> boolean?
+    ;;   Recognize the quoted numeric zero constant.
+    (define (quoted-zero? e)
+      (equal? (quoted-constant-value e) 0))
+    ;; quoted-one? : LFE Expr -> boolean?
+    ;;   Recognize the quoted numeric one constant.
+    (define (quoted-one? e)
+      (equal? (quoted-constant-value e) 1))
     ;; PrimitiveVar : symbol? -> variable?
     ;;   Build a variable reference to primitive `sym`.
     (define (PrimitiveVar sym)
@@ -3474,6 +3530,33 @@
                                              "values" vs)])))
              (with-output-language (LFE Expr)
                `(quote ,s ,(datum s (normalize-folded-constant-value result)))))))
+    ;; partial-fold-primitive-application : syntax? variable? (listof LFE Expr) -> (or/c LFE Expr #f)
+    ;;   Apply cheap local algebraic simplifications for selected primitives.
+    (define (partial-fold-primitive-application s x e*)
+      (define sym (syntax-e (variable-id x)))
+      (define (keep e)
+        (and (obviously-single-valued-expression? e)
+             e))
+      (match (list sym e*)
+        [(list '+ (list e0 e1))
+         (cond
+           [(quoted-zero? e0) (keep e1)]
+           [(quoted-zero? e1) (keep e0)]
+           [else #f])]
+        [(list '* (list e0 e1))
+         (cond
+           [(quoted-one? e0) (keep e1)]
+           [(quoted-one? e1) (keep e0)]
+           [else #f])]
+        [(list '- (list e0 e1))
+         (cond
+           [(quoted-zero? e1) (keep e0)]
+           [else #f])]
+        [(list '/ (list e0 e1))
+         (cond
+           [(quoted-one? e1) (keep e0)]
+           [else #f])]
+        [_ #f]))
     ;; constant-binding : variable? LFE Expr -> (or/c (cons/c variable? LFE Expr) #f)
     ;;   Return a constant binding for a single-variable clause when possible.
     (define (constant-binding x e)
@@ -3749,7 +3832,12 @@
                 (foldable? e0)
                 (andmap constant-expression? e1)
                 (fold-primitive-application s e0 (quoted-values e1))))
+         (define partially-folded
+           (and (variable? e0)
+                (partial-foldable? e0)
+                (partial-fold-primitive-application s e0 e1)))
          (values (or folded
+                     partially-folded
                      `(app ,s ,e0 ,e1 ...))
                  κ)))]
 
@@ -3891,12 +3979,28 @@
                   ''#t)
     (check-equal? (test #'(+ 1 2 3))
                   ''6)
+    (check-equal? (test #'(+ x 0))
+                  '(#%top . x))
+    (check-equal? (test #'(+ 0 x))
+                  '(#%top . x))
+    (check-equal? (test #'(+ (add1 x) 0))
+                  '(add1 (#%top . x)))
     (check-equal? (test #'(- 10 3))
                   ''7)
+    (check-equal? (test #'(- x 0))
+                  '(#%top . x))
     (check-equal? (test #'(* 2 4))
                   ''8)
+    (check-equal? (test #'(* x 1))
+                  '(#%top . x))
+    (check-equal? (test #'(* 1 x))
+                  '(#%top . x))
     (check-equal? (test #'(/ 8 2))
                   ''4)
+    (check-equal? (test #'(/ x 1))
+                  '(#%top . x))
+    (check-equal? (test #'(+ (values 1 2) 0))
+                  '(+ (values '1 '2) '0))
     (check-equal? (test #'(< 1 2))
                   ''#t)
     (check-equal? (test #'(string? "hello"))
