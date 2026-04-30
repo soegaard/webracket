@@ -3447,11 +3447,132 @@
     (define (Quote s v)
       (with-output-language (LFE Expr)
         `(quote ,s ,(datum s v))))
+    ;; TempVar : symbol? exact-nonnegative-integer? -> variable?
+    ;;   Build a fresh temporary variable for local rewrite scaffolding.
+    (define (TempVar prefix i)
+      (variable (datum->syntax #f
+                               (string->symbol
+                                (format "~a~a" prefix i)))))
+    ;; Let1 : syntax? variable? LFE Expr LFE Expr -> LFE Expr
+    ;;   Build a single-binding `let-values` expression.
+    (define (Let1 s x rhs body)
+      (with-output-language (LFE Expr)
+        `(let-values ,s ([(,x) ,rhs]) ,body)))
+    ;; let-values*-bind : syntax? (listof LFE Expr) ((listof variable?) -> LFE Expr) -> LFE Expr
+    ;;   Bind `e*` left-to-right via nested single-binding `let-values`.
+    (define (let-values*-bind s e* build-body)
+      (define x* (for/list ([e (in-list e*)]
+                            [i (in-naturals)])
+                   (TempVar 'pf i)))
+      (for/fold ([body (build-body x*)])
+                ([x (in-list (reverse x*))]
+                 [e (in-list (reverse e*))])
+        (Let1 s x e body)))
     ;; primitive-application : syntax? variable? (listof LFE Expr) -> LFE Expr
     ;;   Build a primitive application from a primitive variable and arguments.
     (define (primitive-application s x e*)
       (with-output-language (LFE Expr)
         `(app ,s ,x ,e* ...)))
+    (define no-partial-fold '#:no-partial-fold)
+    ;; quote-when-found : syntax? any/c -> (or/c LFE Expr #f)
+    ;;   Quote `v` unless it is the no-partial-fold sentinel.
+    (define (quote-when-found s v)
+      (and (not (eq? v no-partial-fold))
+           (Quote s v)))
+    ;; primitive-application-arguments : LFE Expr symbol? -> (or/c (listof LFE Expr) #f)
+    ;;   Extract primitive application arguments when `e` is an application of `sym`.
+    (define (primitive-application-arguments e sym)
+      (nanopass-case (LFE Expr) e
+        [(app ,s ,e0 ,e1 ...)
+         (and (variable? e0)
+              (eq? sym (syntax-e (variable-id e0)))
+              e1)]
+        [else
+         #f]))
+    ;; quoted-pair-car : LFE Expr -> any/c
+    ;;   Return the car of a quoted pair, or the no-partial-fold sentinel.
+    (define (quoted-pair-car e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (define v (datum-value d))
+         (if (pair? v) (car v) no-partial-fold)]
+        [else
+         no-partial-fold]))
+    ;; quoted-pair-cdr : LFE Expr -> any/c
+    ;;   Return the cdr of a quoted pair, or the no-partial-fold sentinel.
+    (define (quoted-pair-cdr e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (define v (datum-value d))
+         (if (pair? v) (cdr v) no-partial-fold)]
+        [else
+         no-partial-fold]))
+    ;; quoted-list-element : LFE Expr exact-nonnegative-integer? -> any/c
+    ;;   Return the indexed element of a quoted proper list, or the no-partial-fold sentinel.
+    (define (quoted-list-element e i)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (define v (datum-value d))
+         (if (and (list? v) (< i (length v)))
+             (list-ref v i)
+             no-partial-fold)]
+        [else
+         no-partial-fold]))
+    ;; quoted-vector-length : LFE Expr -> (or/c exact-nonnegative-integer? symbol?)
+    ;;   Return the length of a quoted vector, or the no-partial-fold sentinel.
+    (define (quoted-vector-length e)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (define v (datum-value d))
+         (if (vector? v) (vector-length v) no-partial-fold)]
+        [else
+         no-partial-fold]))
+    ;; quoted-vector-element : LFE Expr exact-nonnegative-integer? -> any/c
+    ;;   Return the indexed element of a quoted vector, or the no-partial-fold sentinel.
+    (define (quoted-vector-element e i)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (define v (datum-value d))
+         (if (and (vector? v) (< i (vector-length v)))
+             (vector-ref v i)
+             no-partial-fold)]
+        [else
+         no-partial-fold]))
+    ;; quoted-string-character : LFE Expr exact-nonnegative-integer? -> any/c
+    ;;   Return the indexed character of a quoted string, or the no-partial-fold sentinel.
+    (define (quoted-string-character e i)
+      (nanopass-case (LFE Expr) e
+        [(quote ,s ,d)
+         (define v (datum-value d))
+         (if (and (string? v) (< i (string-length v)))
+             (string-ref v i)
+             no-partial-fold)]
+        [else
+         no-partial-fold]))
+    ;; constructor-access-result : syntax? (listof LFE Expr) exact-nonnegative-integer? -> (or/c LFE Expr #f)
+    ;;   Evaluate constructor operands left-to-right and return the selected bound value.
+    (define (constructor-access-result s e* i)
+      (and (< i (length e*))
+           (let-values*-bind s e*
+             (λ (x*)
+               (list-ref x* i)))))
+    ;; constructor-list-tail-result : syntax? (listof LFE Expr) exact-nonnegative-integer? -> (or/c LFE Expr #f)
+    ;;   Evaluate constructor operands left-to-right and return the proper-list tail from position `i`.
+    (define (constructor-list-tail-result s e* i)
+      (and (<= i (length e*))
+           (let-values*-bind s e*
+             (λ (x*)
+               (define tail (drop x* i))
+               (if (null? tail)
+                   (Quote s '())
+                   (with-output-language (LFE Expr)
+                     `(app ,s ,(PrimitiveVar 'list) ,tail ...)))))))
+    ;; constructor-constant-result : syntax? (listof LFE Expr) any/c -> LFE Expr
+    ;;   Evaluate constructor operands left-to-right and then return the quoted constant `v`.
+    (define (constructor-constant-result s e* v)
+      (let-values*-bind s e*
+        (λ (x*)
+          (Quote s v))))
     ;; quoted-zero? : LFE Expr -> boolean?
     ;;   Recognize the quoted numeric zero constant.
     (define (quoted-zero? e)
@@ -3473,6 +3594,11 @@
     (define (quoted-exact-integer e)
       (define v (quoted-constant-value e))
       (and (exact-integer? v) v))
+    ;; quoted-exact-nonnegative-integer : LFE Expr -> (or/c exact-nonnegative-integer? #f)
+    ;;   Extract an exact nonnegative integer constant, if present.
+    (define (quoted-exact-nonnegative-integer e)
+      (define v (quoted-constant-value e))
+      (and (exact-nonnegative-integer? v) v))
     ;; PrimitiveVar : symbol? -> variable?
     ;;   Build a variable reference to primitive `sym`.
     (define (PrimitiveVar sym)
@@ -3730,6 +3856,116 @@
     (define (partial-fold-primitive-application s x e*)
       (define sym (syntax-e (variable-id x)))
       (match (list sym e*)
+        [(list 'procedure? (list e0))
+         ; (procedure? (lambda (...) ...)) => #t
+         (or (nanopass-case (LFE Expr) e0
+               [(λ ,s0 ,f ,e0 ,e1 ...)
+                (Quote s #t)]
+               [else
+                #f])
+             (nanopass-case (LFE Expr) e0
+               [,x0
+                (and (primitive? (variable-id x0))
+                     (Quote s #t))]
+               [else
+                #f]))]
+        [(list 'pair? (list e0))
+         ; (pair? (cons x y)) => #t
+         (match (primitive-application-arguments e0 'cons)
+           [(list a d)
+            (constructor-constant-result s (list a d) #t)]
+           [_ #f])]
+        [(list 'box? (list e0))
+         ; (box? (box x)) => #t
+         ; (box? (box-immutable x)) => #t
+         (or (match (primitive-application-arguments e0 'box)
+               [(list a)
+                (constructor-constant-result s (list a) #t)]
+               [_ #f])
+             (match (primitive-application-arguments e0 'box-immutable)
+               [(list a)
+                (constructor-constant-result s (list a) #t)]
+               [_ #f]))]
+        [(list 'vector? (list e0))
+         ; (vector? (vector ...)) => #t
+         (match (primitive-application-arguments e0 'vector)
+           [#f #f]
+           [es (constructor-constant-result s es #t)])]
+        [(list 'unbox (list e0))
+         ; (unbox (box x)) => x
+         ; (unbox (box-immutable x)) => x
+         (or (match (primitive-application-arguments e0 'box)
+               [(list a)
+                (constructor-access-result s (list a) 0)]
+               [_ #f])
+             (match (primitive-application-arguments e0 'box-immutable)
+               [(list a)
+                (constructor-access-result s (list a) 0)]
+               [_ #f]))]
+        [(list 'car (list e0))
+         ; (car '(a . d)) => 'a
+         ; (car (cons x y)) => x
+         ; (car (list x ...)) => x
+         (or (quote-when-found s (quoted-pair-car e0))
+             (match (primitive-application-arguments e0 'cons)
+               [(list a d)
+                (constructor-access-result s (list a d) 0)]
+               [_ #f])
+             (match (primitive-application-arguments e0 'list)
+               [#f #f]
+               [es (constructor-access-result s es 0)]))]
+        [(list 'cdr (list e0))
+         ; (cdr '(a . d)) => 'd
+         ; (cdr (cons x y)) => y
+         ; (cdr (list x ...)) => (list ...)
+         (or (quote-when-found s (quoted-pair-cdr e0))
+             (match (primitive-application-arguments e0 'cons)
+               [(list a d)
+                (constructor-access-result s (list a d) 1)]
+               [_ #f])
+             (match (primitive-application-arguments e0 'list)
+               [#f #f]
+               [es (constructor-list-tail-result s es 1)]))]
+        [(list 'cadr (list e0))
+         ; (cadr '(a b ...)) => 'b
+         ; (cadr (list a b ...)) => b
+         (or (quote-when-found s (quoted-list-element e0 1))
+             (match (primitive-application-arguments e0 'list)
+               [#f #f]
+               [es (constructor-access-result s es 1)]))]
+        [(list 'vector-length (list e0))
+         ; (vector-length '#(...)) => 'n
+         ; (vector-length (vector ...)) => 'n
+         (or (quote-when-found s (quoted-vector-length e0))
+             (match (primitive-application-arguments e0 'vector)
+               [#f #f]
+               [es (constructor-constant-result s es (length es))]))]
+        [(list 'vector-ref (list e0 e1))
+         ; (vector-ref '#(...) i) => 'v
+         ; (vector-ref (vector ...) i) => v
+         (match (quoted-exact-nonnegative-integer e1)
+           [#f #f]
+           [i
+            (or (quote-when-found s (quoted-vector-element e0 i))
+                (match (primitive-application-arguments e0 'vector)
+                  [#f #f]
+                  [es (constructor-access-result s es i)]))])]
+        [(list 'string-ref (list e0 e1))
+         ; (string-ref "..." i) => '#\c
+         (match (quoted-exact-nonnegative-integer e1)
+           [#f #f]
+           [i
+            (quote-when-found s (quoted-string-character e0 i))])]
+        [(list 'list-ref (list e0 e1))
+         ; (list-ref '(...) i) => 'v
+         ; (list-ref (list ...) i) => v
+         (match (quoted-exact-nonnegative-integer e1)
+           [#f #f]
+           [i
+            (or (quote-when-found s (quoted-list-element e0 i))
+                (match (primitive-application-arguments e0 'list)
+                  [#f #f]
+                  [es (constructor-access-result s es i)]))])]
         [(list 'values (list e0))
          ; (values x) => x
          (keep-valued obviously-single-valued-expression? e0)]
@@ -4251,6 +4487,74 @@
                   '(#%top . x))
     (check-equal? (test #'(append (values 1 2)))
                   '(append (values '1 '2)))
+    (check-equal? (test #'(procedure? (lambda (x) x)))
+                  ''#t)
+    (check-equal? (test #'(pair? (cons 1 2)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       '#t)))
+    (check-equal? (test #'(box? (box 1)))
+                  '(let-values (((pf0) '1))
+                     '#t))
+    (check-equal? (test #'(vector? (vector 1 2)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       '#t)))
+    (check-equal? (test #'(unbox (box 1)))
+                  '(let-values (((pf0) '1))
+                     pf0))
+    (check-equal? (test #'(car '(1 . 2)))
+                  ''1)
+    (check-equal? (test #'(cdr '(1 . 2)))
+                  ''2)
+    (check-equal? (test #'(car (cons 1 2)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       pf0)))
+    (check-equal? (test #'(cdr (cons 1 2)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       pf1)))
+    (check-equal? (test #'(car (list 1 2 3)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       (let-values (((pf2) '3))
+                         pf0))))
+    (check-equal? (test #'(cdr (list 1 2 3)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       (let-values (((pf2) '3))
+                         (list pf1 pf2)))))
+    (check-equal? (test #'(cadr '(1 2 3)))
+                  ''2)
+    (check-equal? (test #'(cadr (list 1 2 3)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       (let-values (((pf2) '3))
+                         pf1))))
+    (check-equal? (test #'(vector-length '#(1 2 3)))
+                  ''3)
+    (check-equal? (test #'(vector-length (vector 1 2 3)))
+                  '(let-values (((pf0) '1))
+                     (let-values (((pf1) '2))
+                       (let-values (((pf2) '3))
+                         '3))))
+    (check-equal? (test #'(vector-ref '#(10 20 30) 1))
+                  ''20)
+    (check-equal? (test #'(vector-ref (vector 10 20 30) 1))
+                  '(let-values (((pf0) '10))
+                     (let-values (((pf1) '20))
+                       (let-values (((pf2) '30))
+                         pf1))))
+    (check-equal? (test #'(string-ref "abc" 1))
+                  ''#\b)
+    (check-equal? (test #'(list-ref '(10 20 30) 1))
+                  ''20)
+    (check-equal? (test #'(list-ref (list 10 20 30) 1))
+                  '(let-values (((pf0) '10))
+                     (let-values (((pf1) '20))
+                       (let-values (((pf2) '30))
+                         pf1))))
     (check-equal? (test #'(memq x '()))
                   '(begin (#%top . x) '() '#f))
     (check-equal? (test #'(memv x '()))
