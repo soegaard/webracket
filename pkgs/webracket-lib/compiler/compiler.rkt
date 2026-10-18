@@ -3145,6 +3145,7 @@
   regexp
   regexp?
   regexp-match
+  regexp-match-positions
   regexp-match?
   regexp-replace
   regexp-replace*

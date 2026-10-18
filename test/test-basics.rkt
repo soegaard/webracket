@@ -3261,6 +3261,27 @@
                                  (list "8,1" "8" "1"))
                          (equal? (regexp-match #px"^([1-8]),([1-8])$" "2,9") #f)
                          (equal? (regexp-match #px"^([1-8]),([1-8])$" "22") #f)))
+              (list "regexp-match-positions matrix-environment bootstrap"
+                    (and (equal?
+                          (regexp-match-positions
+                           #px"\\\\begin\\{(array|matrix|pmatrix|bmatrix|Bmatrix|vmatrix|Vmatrix|smallmatrix|cases)\\}"
+                           "\\begin{matrix}")
+                          (list (cons 0 14) (cons 7 13)))
+                         (equal?
+                          (regexp-match-positions
+                           #px"\\\\begin\\{(array|matrix|pmatrix|bmatrix|Bmatrix|vmatrix|Vmatrix|smallmatrix|cases)\\}"
+                           "x\\begin{pmatrix}")
+                          (list (cons 1 16) (cons 8 15)))
+                         (equal?
+                          (regexp-match-positions
+                           #px"\\\\begin\\{(array|matrix|pmatrix|bmatrix|Bmatrix|vmatrix|Vmatrix|smallmatrix|cases)\\}"
+                           "\\begin{Bmatrix}")
+                          (list (cons 0 15) (cons 7 14)))
+                         (equal?
+                          (regexp-match-positions
+                           #px"\\\\begin\\{(array|matrix|pmatrix|bmatrix|Bmatrix|vmatrix|Vmatrix|smallmatrix|cases)\\}"
+                           "\\begin{not-a-matrix}")
+                          #f)))
               (list "regexp-replace bootstrap subset"
                     (and (equal? (regexp-replace #rx"\n" "a\nb" " ") "a b")
                          (equal? (regexp-replace* #rx"-" "a-b-c" "_") "a_b_c")

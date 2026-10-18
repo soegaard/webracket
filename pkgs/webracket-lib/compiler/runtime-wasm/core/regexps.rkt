@@ -17,6 +17,17 @@
     (rx-dot-zo-end      "[.]zo$")
     (rx-id-colon-or-end "^id(:|$)")
     (rx-bounded-pair    "^([1-8]),([1-8])$")
+    (rx-matrix-environment "\\\\begin\\{(array|matrix|pmatrix|bmatrix|Bmatrix|vmatrix|Vmatrix|smallmatrix|cases)\\}")
+    (matrix-environment-prefix "\\begin{")
+    (matrix-environment:array "array}")
+    (matrix-environment:matrix "matrix}")
+    (matrix-environment:pmatrix "pmatrix}")
+    (matrix-environment:bmatrix "bmatrix}")
+    (matrix-environment:Bmatrix "Bmatrix}")
+    (matrix-environment:vmatrix "vmatrix}")
+    (matrix-environment:Vmatrix "Vmatrix}")
+    (matrix-environment:smallmatrix "smallmatrix}")
+    (matrix-environment:cases "cases}")
     (dot                ".")
     (dot-zo             ".zo")
     (id                 "id")
@@ -48,6 +59,7 @@
     byte-regexp
     byte-pregexp
     regexp-match
+    regexp-match-positions
     regexp-match?
     regexp-replace
     regexp-replace*))
@@ -646,6 +658,168 @@
                                  (local.get $right)
                                  (global.get $null)))))
 
+         ;; string-prefix-at?/checked : string? string? exact-nonnegative-integer? -> boolean?
+         ;;   Check whether prefix occurs in s at the validated character index.
+         (func $string-prefix-at?/checked
+               (param $s      (ref $String)) ;; input string
+               (param $prefix (ref $String)) ;; candidate prefix
+               (param $start  i32)           ;; character index
+               (result        i32)
+               (local $s-length      i32)
+               (local $prefix-length i32)
+               (local $i             i32)
+
+               (local.set $s-length (call $string-length/checked/i32 (local.get $s)))
+               (local.set $prefix-length
+                          (call $string-length/checked/i32 (local.get $prefix)))
+               (if (i32.gt_u (local.get $start) (local.get $s-length))
+                   (then (return (i32.const 0))))
+               (if (i32.gt_u (local.get $prefix-length)
+                             (i32.sub (local.get $s-length) (local.get $start)))
+                   (then (return (i32.const 0))))
+               (local.set $i (i32.const 0))
+               (block $done
+                      (loop $loop
+                            (br_if $done
+                                   (i32.ge_u (local.get $i)
+                                             (local.get $prefix-length)))
+                            (if (i32.ne
+                                 (call $string-ref/checked/i32
+                                       (local.get $s)
+                                       (i32.add (local.get $start) (local.get $i)))
+                                 (call $string-ref/checked/i32
+                                       (local.get $prefix)
+                                       (local.get $i)))
+                                (then (return (i32.const 0))))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $loop)))
+               (i32.const 1))
+
+         ;; regexp-match-positions/matrix-environment-string : regexp? string? -> (or/c list? #f)
+         ;;   Return positions for the bootstrap Matrix-environment detector pattern.
+         (func $regexp-match-positions/matrix-environment-string
+               (param $rx (ref $Regexp)) ;; character regexp value
+               (param $s  (ref $String)) ;; input string
+               (result    (ref eq))
+               (local $source         (ref eq))
+               (local $pattern        (ref $String))
+               (local $input-length   i32)
+               (local $i              i32)
+               (local $capture-start  i32)
+               (local $capture-length i32)
+               (local $full-end       i32)
+
+               (local.set $source (struct.get $Regexp $source (local.get $rx)))
+               (if (i32.eqz (ref.test (ref $String) (local.get $source)))
+                   (then (return (global.get $false))))
+               (local.set $pattern (ref.cast (ref $String) (local.get $source)))
+               (if (i32.eqz
+                    (call $string=?/i32/checked
+                          (local.get $pattern)
+                          (ref.cast (ref $String)
+                                    (global.get $string:rx-matrix-environment))))
+                   (then (return (global.get $false))))
+               (local.set $input-length
+                          (call $string-length/checked/i32 (local.get $s)))
+               (local.set $i (i32.const 0))
+               (local.set $capture-start (i32.const 0))
+               (local.set $capture-length (i32.const -1))
+               (block $search-done
+                      (loop $search
+                            (br_if $search-done
+                                   (i32.ge_u (local.get $i) (local.get $input-length)))
+                            (local.set $capture-length (i32.const -1))
+                            (if (call $string-prefix-at?/checked
+                                      (local.get $s)
+                                      (ref.cast (ref $String)
+                                                (global.get $string:matrix-environment-prefix))
+                                      (local.get $i))
+                                (then
+                                 (local.set $capture-start
+                                            (i32.add (local.get $i) (i32.const 7)))
+                                 (if (call $string-prefix-at?/checked
+                                           (local.get $s)
+                                           (ref.cast (ref $String)
+                                                     (global.get $string:matrix-environment:array))
+                                           (local.get $capture-start))
+                                     (then (local.set $capture-length (i32.const 5))))
+                                 (if (call $string-prefix-at?/checked
+                                           (local.get $s)
+                                           (ref.cast (ref $String)
+                                                     (global.get $string:matrix-environment:matrix))
+                                           (local.get $capture-start))
+                                     (then (local.set $capture-length (i32.const 6))))
+                                 (if (call $string-prefix-at?/checked
+                                           (local.get $s)
+                                           (ref.cast (ref $String)
+                                                     (global.get $string:matrix-environment:pmatrix))
+                                           (local.get $capture-start))
+                                     (then (local.set $capture-length (i32.const 7))))
+                                 (if (call $string-prefix-at?/checked
+                                           (local.get $s)
+                                           (ref.cast (ref $String)
+                                                     (global.get $string:matrix-environment:bmatrix))
+                                           (local.get $capture-start))
+                                     (then (local.set $capture-length (i32.const 7))))
+                                 (if (call $string-prefix-at?/checked
+                                           (local.get $s)
+                                           (ref.cast (ref $String)
+                                                     (global.get $string:matrix-environment:Bmatrix))
+                                           (local.get $capture-start))
+                                     (then (local.set $capture-length (i32.const 7))))
+                                 (if (call $string-prefix-at?/checked
+                                           (local.get $s)
+                                           (ref.cast (ref $String)
+                                                     (global.get $string:matrix-environment:vmatrix))
+                                           (local.get $capture-start))
+                                     (then (local.set $capture-length (i32.const 7))))
+                                 (if (call $string-prefix-at?/checked
+                                           (local.get $s)
+                                           (ref.cast (ref $String)
+                                                     (global.get $string:matrix-environment:Vmatrix))
+                                           (local.get $capture-start))
+                                     (then (local.set $capture-length (i32.const 7))))
+                                 (if (call $string-prefix-at?/checked
+                                           (local.get $s)
+                                           (ref.cast (ref $String)
+                                                     (global.get $string:matrix-environment:smallmatrix))
+                                           (local.get $capture-start))
+                                     (then (local.set $capture-length (i32.const 11))))
+                                 (if (call $string-prefix-at?/checked
+                                           (local.get $s)
+                                           (ref.cast (ref $String)
+                                                     (global.get $string:matrix-environment:cases))
+                                           (local.get $capture-start))
+                                     (then (local.set $capture-length (i32.const 5))))
+                                 (if (i32.ge_s (local.get $capture-length) (i32.const 0))
+                                     (then
+                                      (local.set $full-end
+                                                 (i32.add
+                                                  (i32.add (local.get $capture-start)
+                                                           (local.get $capture-length))
+                                                  (i32.const 1)))
+                                      (return
+                                       (call $cons
+                                             (call $cons
+                                                   (ref.i31
+                                                    (i32.shl (local.get $i) (i32.const 1)))
+                                                   (ref.i31
+                                                    (i32.shl (local.get $full-end) (i32.const 1))))
+                                             (call $cons
+                                                   (call $cons
+                                                         (ref.i31
+                                                          (i32.shl (local.get $capture-start)
+                                                                   (i32.const 1)))
+                                                         (ref.i31
+                                                          (i32.shl
+                                                           (i32.add (local.get $capture-start)
+                                                                    (local.get $capture-length))
+                                                           (i32.const 1))))
+                                                   (global.get $null))))))))
+                            (local.set $i (i32.add (local.get $i) (i32.const 1)))
+                            (br $search)))
+               (global.get $false))
+
          ;; regexp-match : regexp? (or/c string? bytes?) -> (or/c list? #f)
          ;;   Return bootstrap capture lists for supported string and byte patterns.
          (func $regexp-match (type $Prim2)
@@ -669,6 +843,29 @@
                                (local.get $s-raw))
                          (unreachable)))
                (return_call $regexp-match/bounded-pair-string
+                            (ref.cast (ref $Regexp) (local.get $rx-raw))
+                            (ref.cast (ref $String) (local.get $s-raw))))
+
+         ;; regexp-match-positions : regexp? string? -> (or/c list? #f)
+         ;;   Bootstrap subset for the Matrix-environment detector; optional
+         ;;   start-pos, end-pos, output-port, and input-prefix are unsupported.
+         (func $regexp-match-positions (type $Prim2)
+               (param $rx-raw (ref eq)) ;; regexp?
+               (param $s-raw  (ref eq)) ;; string? for the bootstrap subset
+               (result        (ref eq))
+               (if (i32.eqz (ref.test (ref $Regexp) (local.get $rx-raw)))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:regexp-match-positions)
+                               (global.get $string:regexp-replace:pattern-contract)
+                               (local.get $rx-raw))
+                         (unreachable)))
+               (if (i32.eqz (ref.test (ref $String) (local.get $s-raw)))
+                   (then (call $raise-argument-error1
+                               (global.get $symbol:regexp-match-positions)
+                               (global.get $string:regexp-match:input-contract)
+                               (local.get $s-raw))
+                         (unreachable)))
+               (return_call $regexp-match-positions/matrix-environment-string
                             (ref.cast (ref $Regexp) (local.get $rx-raw))
                             (ref.cast (ref $String) (local.get $s-raw))))
 

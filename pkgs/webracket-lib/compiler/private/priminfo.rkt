@@ -111,6 +111,7 @@
         'pregexp 1
         'regexp 1
         'regexp-match 2
+        'regexp-match-positions 2
         'regexp-match? 2
         'regexp-replace* (arity-at-least 3)
         'vector-member '(2 3)))
