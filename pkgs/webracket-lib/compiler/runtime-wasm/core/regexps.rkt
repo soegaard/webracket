@@ -17,6 +17,7 @@
     (rx-dot-zo-end      "[.]zo$")
     (rx-id-colon-or-end "^id(:|$)")
     (rx-bounded-pair    "^([1-8]),([1-8])$")
+    (rx-single-bounded  "^[1-8]$")
     (rx-matrix-environment "\\\\begin\\{(array|matrix|pmatrix|bmatrix|Bmatrix|vmatrix|Vmatrix|smallmatrix|cases)\\}")
     (matrix-environment-prefix "\\begin{")
     (matrix-environment:array "array}")
@@ -313,6 +314,27 @@
                                       (i32.const 58))
                               (then (global.get $true))
                               (else (global.get $false))))))))
+
+               (if (call $string=?/i32/checked
+                         (local.get $pattern)
+                         (ref.cast (ref $String) (global.get $string:rx-single-bounded)))
+                   (then
+                    (local.set $len (call $string-length/checked/i32 (local.get $s)))
+                    (if (i32.ne (local.get $len) (i32.const 1))
+                        (then (return (global.get $false))))
+                    (local.set $arr (struct.get $String $codepoints (local.get $s)))
+                    (return
+                     (if (result (ref eq))
+                         (i32.and (i32.ge_u (array.get $I32Array
+                                                       (local.get $arr)
+                                                       (i32.const 0))
+                                             (i32.const 49))
+                                  (i32.le_u (array.get $I32Array
+                                                       (local.get $arr)
+                                                       (i32.const 0))
+                                             (i32.const 56)))
+                         (then (global.get $true))
+                         (else (global.get $false))))))
 
                (return_call $string-contains?
                             (ref.cast (ref eq) (local.get $s))

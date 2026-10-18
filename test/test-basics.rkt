@@ -3236,6 +3236,10 @@
                          (equal? (regexp-match? #rx"[.]zo$" "x.zot") #f)
                          (equal? (regexp-match? #rx"^id(:|$)" "id:rest") #t)
                          (equal? (regexp-match? #rx"^id(:|$)" "idea") #f)))
+              (list "regexp-match? bounded single-digit pregexp"
+                    (and (equal? (regexp-match? #px"^[1-8]$" "2") #t)
+                         (equal? (regexp-match? #px"^[1-8]$" "2.0") #f)
+                         (equal? (regexp-match? #px"^[1-8]$" "09") #f)))
               (list "byte-regexp bootstrap subset"
                     (and (byte-regexp? (byte-regexp #"a"))
                          (byte-pregexp? (byte-pregexp #"a"))
