@@ -70,6 +70,10 @@
   (define angle-path (build-path applet-dir "angle-bisector.rkt"))
   (define flat-bisector-path (build-path src-dir "flat-perpendicular-bisector.rkt"))
   (define flat-angle-path (build-path src-dir "flat-angle-bisector.rkt"))
+  (define nested-dir (build-path src-dir "nested"))
+  (define nested-helper-path (build-path nested-dir "helper.rktl"))
+  (define nested-wrapper-path (build-path nested-dir "wrapper.rktl"))
+  (define nested-main-path (build-path src-dir "main-nested-rktl.rkt"))
   (define file-main-path (build-path src-dir "main-file.rkt"))
   (define subdir-main-path (build-path src-dir "main-subdir-string.rkt"))
   (define prefix-main-path (build-path src-dir "main-prefix-duplicate.rkt"))
@@ -78,6 +82,7 @@
     void
     (lambda ()
       (make-directory* applet-dir)
+      (make-directory* nested-dir)
       (make-directory* compiled-root)
       (make-directory* cache-dir)
       (write-file! geometry-path
@@ -90,6 +95,12 @@
                    "#lang webracket/base\n(provide applet-title applet-success?)\n(define applet-title 301)\n(define applet-success? #t)\n")
       (write-file! flat-angle-path
                    "#lang webracket/base\n(provide applet-title applet-success?)\n(define applet-title 302)\n(define applet-success? #f)\n")
+      (write-file! nested-helper-path
+                   "#lang webracket/base\n(provide nested-value)\n(define nested-value 17)\n")
+      (write-file! nested-wrapper-path
+                   "#lang webracket/base\n(require \"helper.rktl\")\n(provide wrapped-value)\n(define wrapped-value (+ nested-value 1))\n")
+      (write-file! nested-main-path
+                   "#lang webracket/base\n(require \"nested/wrapper.rktl\")\nwrapped-value\n")
       (write-file! file-main-path
                    "#lang webracket/base\n(require (file \"construction-geometry.rkt\"))\nconstruction-value\n")
       (write-file! subdir-main-path
@@ -148,6 +159,9 @@
           (display "(assert-local 'flat-prefix-duplicate-exports " out)
           (write (path->string flat-prefix-main-path) out)
           (display " '(flat-perpendicular-bisector flat-perpendicular-bisector.rkt flat-angle-bisector flat-angle-bisector.rkt))\n" out)
+          (display "(assert-local 'nested-rktl-require " out)
+          (write (path->string nested-main-path) out)
+          (display " '(nested/wrapper.rktl helper.rktl))\n" out)
           (display "(unless (null? failures)\n" out)
           (display "  (raise-arguments-error 'module-bridge-local-paths-and-prefix\n" out)
           (display "                         \"local module path/prefix reproductions failed\"\n" out)

@@ -6444,10 +6444,10 @@
 (define (candidate-module-symbol->relative-rkt-path candidate)
   (and (symbol? candidate)
        (let ([name (symbol->string candidate)])
-         (string->path
-          (if (regexp-match? #rx"[.]rkt$" name)
-              name
-              (string-append name ".rkt"))))))
+         (define path (string->path name))
+         (if (path-get-extension path)
+             path
+             (string->path (string-append name ".rkt"))))))
 
 ;; local-require-spec-paths : any/c path? -> (listof path?)
 ;;   Discover source-visible local files before expanded metadata is available.
@@ -6502,7 +6502,9 @@
                    specs))]
     [_ '()]))
 
-(define (webracket/base-report-local-dependency-paths report source-dir)
+;; webracket/base-report-local-dependencies : report path? -> (listof pair?)
+;;   Find local source files and the exact provider names requested by one report.
+(define (webracket/base-report-local-dependencies report source-dir)
   (define import-map (webify-module-report-import-map report))
   (define self-name (webify-module-report-name report))
   (remove-duplicates
@@ -6518,11 +6520,39 @@
                             (if (absolute-path? relative-path)
                                 relative-path
                                 (build-path source-dir relative-path)))))]
-              #:when (and path
+              #:when (and (symbol? module-name)
+                          path
                           (not (eq? module-name self-name))
                           (file-exists? path)))
-     path)
+     (cons module-name path))
    equal?))
+
+;; webracket/base-report-local-dependency-name : report path? -> (or/c symbol? #f)
+;;   Recover one unique report provider name for a source-visible local path.
+(define (webracket/base-report-local-dependency-name report source-path)
+  (define import-map (webify-module-report-import-map report))
+  (define source-name (file-name-from-path source-path))
+  (define matching-names
+    (remove-duplicates
+     (for/list
+         ([candidate (in-list (webify-module-import-map-required-module-candidates
+                               import-map))]
+          #:when (= 0 (car candidate))
+          #:do [(define module-name (cadr candidate))
+                (define candidate-path
+                  (candidate-module-symbol->relative-rkt-path module-name))]
+          #:when (and (symbol? module-name)
+                      candidate-path
+                      (equal? source-name (file-name-from-path candidate-path))))
+       module-name)
+     eq?))
+  (and (= (length matching-names) 1)
+       (car matching-names)))
+
+;; webracket/base-report-local-dependency-paths : report path? -> (listof path?)
+;;   Find the local source files named by one extracted report.
+(define (webracket/base-report-local-dependency-paths report source-dir)
+  (map cdr (webracket/base-report-local-dependencies report source-dir)))
 
 (define (simple-defined-symbols forms)
   (append-map stdlib-definition-form-symbols forms))
@@ -7238,6 +7268,7 @@
   (define (provider-module-name-resolver/ref)
     (shared-webify-contract-erasing-module-name-resolver/ref))
   (define compile-stub-names '())
+  (define local-report-names (make-hash))
   (define (module-name-resolver module-path source syntax load?)
     (define stub-name (module-path-compile-stub-name module-path))
     (cond
@@ -7304,14 +7335,67 @@
               (append (provider-compile-stub-exports-public-exports stub-exports)
                       (provider-compile-stub-exports-phase0-exports stub-exports)))
              (set! compile-stub-names (cons name compile-stub-names))))))))
+  ;; local-dependency-pairs : report path? (listof path?) -> (listof pair?)
+  ;;   Pair discovered local source files with their required provider names.
+  (define (local-dependency-pairs report source-dir source-dependency-paths)
+    (define report-dependencies
+      (webracket/base-report-local-dependencies report source-dir))
+    (define fallback-dependencies
+      (for/list ([path (in-list source-dependency-paths)]
+                 #:unless (member path (map cdr report-dependencies) equal?))
+        (cons (or (webracket/base-report-local-dependency-name report path)
+                  (local-source-path->provider-name root-source-dir path))
+              path)))
+    (remove-duplicates
+     (append report-dependencies fallback-dependencies)
+     equal?))
+  ;; register-local-report! : path? report symbol? -> symbol?
+  ;;   Register one requested alias for a previously extracted local source module.
+  (define (register-local-report! path report module-name)
+    (define names (hash-ref local-report-names path '()))
+    (unless (memq module-name names)
+      (set! reports-reverse
+            (cons (webify-module-report/rename report module-name)
+                  reports-reverse))
+      (hash-set! local-report-names path (cons module-name names)))
+    module-name)
+  ;; source-path-matches-provider-name? : path? symbol? -> boolean?
+  ;;   Recognize an unresolved local alias by the complete discovered file suffix.
+  (define (source-path-matches-provider-name? source-path provider-name)
+    (and (symbol? provider-name)
+         (string-suffix? (path->string source-path)
+                         (string-append "/" (symbol->string provider-name)))))
+  ;; register-external-local-aliases! : void? -> boolean?
+  ;;   Add aliases only for unresolved names that identify one discovered local file.
+  (define (register-external-local-aliases!)
+    (define reports (reverse reports-reverse))
+    (define changed? #f)
+    (for ([provider-name (in-list (webracket/base-external-provider-names reports))])
+      (define matching-paths
+        (for/list ([source-path (in-list (hash-keys permanent))]
+                   #:when (source-path-matches-provider-name? source-path provider-name))
+          source-path))
+      (when (= (length matching-paths) 1)
+        (define source-path (car matching-paths))
+        (unless (memq provider-name (hash-ref local-report-names source-path '()))
+          (set! changed? #t)
+          (register-local-report! source-path
+                                  (hash-ref permanent source-path)
+                                  provider-name))))
+    changed?)
   (define visiting (make-hash))
   (define permanent (make-hash))
   (define reports-reverse '())
-  (define (visit path)
+  (define (visit path [requested-name #f])
     (define resolved (simplify-path (path->complete-path path)))
     (cond
       [(hash-ref permanent resolved #f)
-       => (lambda (name) name)]
+       => (lambda (report)
+            (register-local-report!
+             resolved
+             report
+             (or requested-name
+                 (local-source-path->provider-name root-source-dir resolved))))]
       [(hash-ref visiting resolved #f)
        (raise-arguments-error
         'read-top-level-from-file
@@ -7324,7 +7408,7 @@
           'local-module-report-cache-lookup
           (lambda ()
             (read-local-module-report-cache resolved))))
-       (define-values (report dependency-paths)
+       (define-values (report dependencies)
          (cond
            [cached
             (provider-cache-log "#lang webracket/base local module report hit: ~a"
@@ -7332,8 +7416,12 @@
             (with-module-bridge-timing
              'local-module-report-cache-hit
              (lambda ()
-               (values (vector-ref cached 0)
-                       (vector-ref cached 1))))]
+               (define report (vector-ref cached 0))
+               (define source-dir (or (path-only resolved) (current-directory)))
+               (values report
+                       (local-dependency-pairs report
+                                               source-dir
+                                               (vector-ref cached 1)))))]
            [else
             (provider-cache-log "#lang webracket/base local module report miss: ~a"
                                 resolved)
@@ -7358,25 +7446,27 @@
                                 [`(module ,_name ,_language ,forms ...) forms]
                                 [_ '()]))
                   equal?))
-               (define report-dependency-paths
-                 (webracket/base-report-local-dependency-paths report source-dir))
-               (define dependency-paths
-                 (remove-duplicates
-                  (append report-dependency-paths source-dependency-paths)
-                  equal?))
-               (write-local-module-report-cache! resolved report dependency-paths)
-               (values report dependency-paths)))]))
+               (define dependencies
+                 (local-dependency-pairs report source-dir source-dependency-paths))
+               (write-local-module-report-cache! resolved report (map cdr dependencies))
+               (values report dependencies)))]))
        (define module-name
-         (local-source-path->provider-name root-source-dir resolved))
-       (define local-report
-         (webify-module-report/rename report module-name))
-       (for ([dep-path (in-list dependency-paths)])
-         (visit dep-path))
-       (set! reports-reverse (cons local-report reports-reverse))
+         (or requested-name
+             (local-source-path->provider-name root-source-dir resolved)))
+       (for ([dependency (in-list dependencies)])
+         (visit (cdr dependency) (car dependency)))
        (hash-remove! visiting resolved)
-       (hash-set! permanent resolved module-name)
-       module-name]))
+       (hash-set! permanent resolved report)
+       (register-local-report! resolved report module-name)]))
   (define root (visit filename))
+  (let loop ([remaining (add1 (length (hash-keys permanent)))])
+    (when (register-external-local-aliases!)
+      (when (zero? remaining)
+        (raise-arguments-error
+         'webracket/base-file->local-module-reports
+         "local provider aliases did not reach a bounded fixed point"
+         "local source paths" (hash-keys permanent)))
+      (loop (sub1 remaining))))
   (define local-source-paths
     (sort (hash-keys permanent)
           string<?
