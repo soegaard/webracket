@@ -92,26 +92,18 @@
 (define (js-promise/surface? v)
   (js-promise-thenable? v))
 
-;; js-promise-callback-cache : hash?
-;;   Reuse stable external callbacks for Promise handlers.
-(define js-promise-callback-cache (make-hasheq))
-
 ;; js-promise-handler->external : symbol? (or/c procedure? external?) -> external?
-;;   Convert a handler to a stable external callback.
+;;   Convert a handler to the callback retained by the native Promise.
 (define (js-promise-handler->external who handler)
   (cond
     [(external? handler) handler]
     [(procedure? handler)
-     (define cached (hash-ref js-promise-callback-cache handler #f))
-     (cond
-       [cached cached]
-       [else
-        (define external
-          (procedure->external
-           (lambda args
-             (apply handler args))))
-        (hash-set! js-promise-callback-cache handler external)
-        external])]
+     ;; A Promise has no removal operation. Its pending reaction owns this
+     ;; bridge until settlement, so a module-global cache would retain
+     ;; completed handlers forever.
+     (procedure->external
+      (lambda args
+        (apply handler args)))]
     [else
      (raise-argument-error who "(or/c procedure? external?)" handler)]))
 

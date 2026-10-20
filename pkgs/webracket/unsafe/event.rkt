@@ -8,6 +8,7 @@
 (provide
  js-add-event-listener!
  js-event-new
+ js-event-new/extern
  js-event?
  js-event-type
  js-event-target
@@ -56,9 +57,23 @@
  js-keyboard-event-meta-key
  js-keyboard-event-shift-key
  js-keyboard-event-repeat
+ js-keyboard-event-is-composing
+ js-keyboard-event-get-modifier-state
  js-pointer-event?
+ js-pointer-event-id
+ js-pointer-event-type
+ js-pointer-event-is-primary
  js-focus-event?
+ js-focus-event-related-target
  js-input-event?
+ js-input-event-input-type
+ js-input-event-data
+ js-input-event-is-composing
+ js-input-event-data-transfer
+ js-composition-event?
+ js-composition-event-data
+ js-clipboard-event?
+ js-clipboard-event-data
  js-submit-event?
  js-wheel-event?
  js-touch-event?
@@ -84,6 +99,10 @@
 ;; js-event-new : ffi (string value) -> (extern/raw)
 ;;   Raw binding generated for webracket/unsafe/event.
 (define js-event-new (unsafe-ffi-primitive 'js-event-new))
+
+;; js-event-new/extern : ffi (string extern) -> (extern/raw)
+;;   Raw binding generated for webracket/unsafe/event.
+(define js-event-new/extern (unsafe-ffi-primitive 'js-event-new/extern))
 
 ;; js-event? : ffi (extern) -> (boolean)
 ;;   Raw binding generated for webracket/unsafe/event.
@@ -277,17 +296,73 @@
 ;;   Raw binding generated for webracket/unsafe/event.
 (define js-keyboard-event-repeat (unsafe-ffi-primitive 'js-keyboard-event-repeat))
 
+;; js-keyboard-event-is-composing : ffi (extern) -> (i32)
+;;   Raw binding generated for webracket/unsafe/event.
+(define js-keyboard-event-is-composing (unsafe-ffi-primitive 'js-keyboard-event-is-composing))
+
+;; js-keyboard-event-get-modifier-state : ffi (extern string) -> (i32)
+;;   Raw binding generated for webracket/unsafe/event.
+(define js-keyboard-event-get-modifier-state (unsafe-ffi-primitive 'js-keyboard-event-get-modifier-state))
+
 ;; js-pointer-event? : ffi (extern) -> (boolean)
 ;;   Raw binding generated for webracket/unsafe/event.
 (define js-pointer-event? (unsafe-ffi-primitive 'js-pointer-event?))
+
+;; js-pointer-event-id : ffi (extern) -> (u32)
+;;   Raw binding generated for webracket/unsafe/event.
+(define js-pointer-event-id (unsafe-ffi-primitive 'js-pointer-event-id))
+
+;; js-pointer-event-type : ffi (extern) -> (string)
+;;   Raw binding generated for webracket/unsafe/event.
+(define js-pointer-event-type (unsafe-ffi-primitive 'js-pointer-event-type))
+
+;; js-pointer-event-is-primary : ffi (extern) -> (i32)
+;;   Raw binding generated for webracket/unsafe/event.
+(define js-pointer-event-is-primary (unsafe-ffi-primitive 'js-pointer-event-is-primary))
 
 ;; js-focus-event? : ffi (extern) -> (boolean)
 ;;   Raw binding generated for webracket/unsafe/event.
 (define js-focus-event? (unsafe-ffi-primitive 'js-focus-event?))
 
+;; js-focus-event-related-target : ffi (extern) -> (extern)
+;;   Raw binding generated for webracket/unsafe/event.
+(define js-focus-event-related-target (unsafe-ffi-primitive 'js-focus-event-related-target))
+
 ;; js-input-event? : ffi (extern) -> (boolean)
 ;;   Raw binding generated for webracket/unsafe/event.
 (define js-input-event? (unsafe-ffi-primitive 'js-input-event?))
+
+;; js-input-event-input-type : ffi (extern) -> (string)
+;;   Raw binding generated for webracket/unsafe/event.
+(define js-input-event-input-type (unsafe-ffi-primitive 'js-input-event-input-type))
+
+;; js-input-event-data : ffi (extern) -> (value)
+;;   Raw binding generated for webracket/unsafe/event.
+(define js-input-event-data (unsafe-ffi-primitive 'js-input-event-data))
+
+;; js-input-event-is-composing : ffi (extern) -> (i32)
+;;   Raw binding generated for webracket/unsafe/event.
+(define js-input-event-is-composing (unsafe-ffi-primitive 'js-input-event-is-composing))
+
+;; js-input-event-data-transfer : ffi (extern) -> (extern)
+;;   Raw binding generated for webracket/unsafe/event.
+(define js-input-event-data-transfer (unsafe-ffi-primitive 'js-input-event-data-transfer))
+
+;; js-composition-event? : ffi (extern) -> (boolean)
+;;   Raw binding generated for webracket/unsafe/event.
+(define js-composition-event? (unsafe-ffi-primitive 'js-composition-event?))
+
+;; js-composition-event-data : ffi (extern) -> (string)
+;;   Raw binding generated for webracket/unsafe/event.
+(define js-composition-event-data (unsafe-ffi-primitive 'js-composition-event-data))
+
+;; js-clipboard-event? : ffi (extern) -> (boolean)
+;;   Raw binding generated for webracket/unsafe/event.
+(define js-clipboard-event? (unsafe-ffi-primitive 'js-clipboard-event?))
+
+;; js-clipboard-event-data : ffi (extern) -> (extern)
+;;   Raw binding generated for webracket/unsafe/event.
+(define js-clipboard-event-data (unsafe-ffi-primitive 'js-clipboard-event-data))
 
 ;; js-submit-event? : ffi (extern) -> (boolean)
 ;;   Raw binding generated for webracket/unsafe/event.

@@ -126,6 +126,11 @@ These are the MDN-style browser APIs that WebRacket wraps.
   @item{@racket[(include-lib canvas)]}
   @item{@racket[(include-lib console)]}
   @item{@racket[(require clipboard)]}
+  @item{@racket[(require browser/abort)]}
+  @item{@racket[(require browser/event-target)]}
+  @item{@racket[(require browser/font)]}
+  @item{@racket[(require browser/range)]}
+  @item{@racket[(require browser/segmenter)]}
   @item{@racket[(require compression-streams)]}
   @item{@racket[(include-lib document)]}
   @item{@racket[(require device-orientation)]}
@@ -199,6 +204,10 @@ See their respective documentation pages.
 @;-------------------------------------------------------------------
 
 @include-section["lib-event.scrbl"]
+
+@;-------------------------------------------------------------------
+
+@include-section["lib-browser-binding-foundation.scrbl"]
 
 @;-------------------------------------------------------------------
 

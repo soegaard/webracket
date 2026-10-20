@@ -1,9 +1,16 @@
 #lang racket/base
 
 (require browser/element
-         (only-in webracket/unsafe/array
-                  js-object)
-         webracket/unsafe/window)
+         webracket/unsafe/window
+         (only-in webracket/unsafe/standard
+                  js-object
+                  js-ref
+                  js-ref/extern
+                  js-send/value
+                  js-typeof)
+         (only-in webracket/primitives
+                  external?
+                  procedure->external))
 
 (provide (except-out (struct-out dom-window) dom-window?)
          (except-out (struct-out window-document-info) window-document-info?)
@@ -47,6 +54,11 @@
          window-custom-elements
          window-history
          window-visual-viewport
+         window-visual-viewport-width
+         window-visual-viewport-height
+         window-visual-viewport-offset-left
+         window-visual-viewport-offset-top
+         window-visual-viewport-scale
          window-navigator
          window-screen
          window-performance
@@ -57,6 +69,7 @@
          window-speech-synthesis
          window-style-media
          window-crypto
+         window-random-uuid
          window-set-location!
          window-closed?
          window-length
@@ -98,6 +111,7 @@
          window-clear-interval
          window-request-animation-frame
          window-cancel-animation-frame
+         window-queue-microtask
          window-request-idle-callback
          window-cancel-idle-callback
          window-get-selection
@@ -124,6 +138,19 @@
   (unless (real? v)
     (raise-argument-error who "real?" v))
   (exact->inexact v))
+
+;; window-callback->external : symbol? (or/c procedure? external?) -> external?
+;;   Convert a callback without retaining it after its native owner releases it.
+(define (window-callback->external who callback)
+  (cond
+    [(external? callback) callback]
+    [(procedure? callback)
+     (procedure->external
+      (lambda args
+        (apply callback args)
+        (void)))]
+    [else
+     (raise-argument-error who "(or/c procedure? external?)" callback)]))
 
 ;; window-stringish->string : symbol? any/c -> string?
 ;;   Normalize a string-like wrapper argument to a browser string.
@@ -488,6 +515,43 @@
   (and (not (eq? value #f))
        (window-visual-viewport-info value)))
 
+;; window-visual-viewport-number : symbol? window-visual-viewport-info? string? -> real?
+;;   Read one finite numeric VisualViewport property.
+(define (window-visual-viewport-number who viewport property-name)
+  (unless (window-visual-viewport-info/surface? viewport)
+    (raise-argument-error who "window-visual-viewport-info?" viewport))
+  (define value (js-ref (window-visual-viewport-info-raw viewport) property-name))
+  (unless (real? value)
+    (raise-arguments-error who
+                           (string-append "VisualViewport." property-name
+                                          " did not return a number")))
+  value)
+
+;; window-visual-viewport-width : window-visual-viewport-info? -> real?
+;;   Read the visual viewport width in CSS pixels.
+(define (window-visual-viewport-width viewport)
+  (window-visual-viewport-number 'window-visual-viewport-width viewport "width"))
+
+;; window-visual-viewport-height : window-visual-viewport-info? -> real?
+;;   Read the visual viewport height in CSS pixels.
+(define (window-visual-viewport-height viewport)
+  (window-visual-viewport-number 'window-visual-viewport-height viewport "height"))
+
+;; window-visual-viewport-offset-left : window-visual-viewport-info? -> real?
+;;   Read the visual viewport horizontal layout offset in CSS pixels.
+(define (window-visual-viewport-offset-left viewport)
+  (window-visual-viewport-number 'window-visual-viewport-offset-left viewport "offsetLeft"))
+
+;; window-visual-viewport-offset-top : window-visual-viewport-info? -> real?
+;;   Read the visual viewport vertical layout offset in CSS pixels.
+(define (window-visual-viewport-offset-top viewport)
+  (window-visual-viewport-number 'window-visual-viewport-offset-top viewport "offsetTop"))
+
+;; window-visual-viewport-scale : window-visual-viewport-info? -> real?
+;;   Read the current visual viewport scale factor.
+(define (window-visual-viewport-scale viewport)
+  (window-visual-viewport-number 'window-visual-viewport-scale viewport "scale"))
+
 ;; window-navigator : -> window-navigator-info?
 ;;   Read the browser Navigator object.
 (define (window-navigator)
@@ -577,6 +641,22 @@
                               (js-window-crypto)
                               window-crypto-info
                               window-crypto-info/surface?))
+
+;; window-random-uuid : -> string?
+;;   Generate a native, cryptographically strong UUID when supported.
+(define (window-random-uuid)
+  (define crypto (window-crypto))
+  (define raw (window-crypto-info-raw crypto))
+  (define method (js-ref/extern raw "randomUUID"))
+  (unless (and (external? method)
+               (string=? (js-typeof method) "function"))
+    (raise-arguments-error 'window-random-uuid
+                           "Crypto.randomUUID is not available"))
+  (define value (js-send/value raw "randomUUID" (vector)))
+  (unless (string? value)
+    (raise-arguments-error 'window-random-uuid
+                           "Crypto.randomUUID did not return a string"))
+  value)
 
 ;; window-set-location! : any/c -> void?
 ;;   Navigate the window to a new URL or Location.
@@ -813,16 +893,17 @@
                      (window-real->flonum 'window-move-by y))
   (void))
 
-;; window-set-timeout : external? -> u32?
+;; window-set-timeout : (or/c procedure? external?) -> u32?
 ;;   Schedule a one-shot timer callback.
 (define (window-set-timeout callback)
-  (js-window-set-timeout callback))
+  (js-window-set-timeout
+   (window-callback->external 'window-set-timeout callback)))
 
-;; window-set-timeout/delay : external? real? -> u32?
+;; window-set-timeout/delay : (or/c procedure? external?) real? -> u32?
 ;;   Schedule a one-shot timer callback with an explicit delay.
 (define (window-set-timeout/delay callback delay)
   (js-window-set-timeout/delay
-   callback
+   (window-callback->external 'window-set-timeout/delay callback)
    (window-real->flonum 'window-set-timeout/delay delay)))
 
 ;; window-clear-timeout : exact-integer? -> void?
@@ -831,11 +912,11 @@
   (js-window-clear-timeout id)
   (void))
 
-;; window-set-interval : external? real? -> u32?
+;; window-set-interval : (or/c procedure? external?) real? -> u32?
 ;;   Schedule a repeated timer callback.
 (define (window-set-interval callback delay)
   (js-window-set-interval
-   callback
+   (window-callback->external 'window-set-interval callback)
    (window-real->flonum 'window-set-interval delay)))
 
 ;; window-clear-interval : exact-integer? -> void?
@@ -844,15 +925,23 @@
   (js-window-clear-interval id)
   (void))
 
-;; window-request-animation-frame : external? -> u32?
+;; window-request-animation-frame : (or/c procedure? external?) -> u32?
 ;;   Schedule a repaint callback.
 (define (window-request-animation-frame callback)
-  (js-window-request-animation-frame callback))
+  (js-window-request-animation-frame
+   (window-callback->external 'window-request-animation-frame callback)))
 
 ;; window-cancel-animation-frame : exact-integer? -> void?
 ;;   Cancel a repaint callback.
 (define (window-cancel-animation-frame id)
   (js-window-cancel-animation-frame id)
+  (void))
+
+;; window-queue-microtask : (or/c procedure? external?) -> void?
+;;   Schedule callback at the browser microtask checkpoint.
+(define (window-queue-microtask callback)
+  (js-window-queue-microtask
+   (window-callback->external 'window-queue-microtask callback))
   (void))
 
 ;; window-request-idle-callback : external? [any/c #f] -> u32?

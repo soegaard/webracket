@@ -1,6 +1,8 @@
 #lang racket/base
 
 (require webracket/unsafe/event
+         (only-in webracket/unsafe/standard
+                  js-object)
          (only-in webracket/primitives external?))
 
 (provide event?
@@ -16,6 +18,7 @@
          wheel-event?
          touch-list?
          touch?
+         event-new
          event-type
          message-event-data
          message-event-origin
@@ -27,6 +30,9 @@
          close-event-reason
          event-target
          event-current-target
+         event-cancelable?
+         event-default-prevented?
+         event-is-trusted?
          prevent-default!
          stop-propagation!
          stop-immediate-propagation!
@@ -51,6 +57,20 @@
          keyboard-event-meta-key?
          keyboard-event-shift-key?
          keyboard-event-repeat?
+         keyboard-event-is-composing?
+         keyboard-event-modifier-state?
+         input-event-input-type
+         input-event-data
+         input-event-is-composing?
+         input-event-data-transfer
+         composition-event?
+         composition-event-data
+         clipboard-event?
+         clipboard-event-data-transfer
+         focus-event-related-target
+         pointer-event-id
+         pointer-event-type
+         pointer-event-primary?
          touch-event-touches
          touch-event-target-touches
          touch-event-changed-touches
@@ -152,6 +172,7 @@
    wheel-event?
    touch-list?
    touch?
+   event-new
    event-type
    message-event-data
    message-event-origin
@@ -163,6 +184,9 @@
    close-event-reason
    event-target
    event-current-target
+   event-cancelable?
+   event-default-prevented?
+   event-is-trusted?
    prevent-default!
    stop-propagation!
    stop-immediate-propagation!
@@ -235,6 +259,27 @@
     (define (check-event who evt)
       (unless (event? evt)
         (raise-argument-error who "event?" evt)))
+
+    ;; event-stringish->string : symbol? any/c -> string?
+    ;;   Normalize an event name for the browser.
+    (define (event-stringish->string who value)
+      (cond
+        [(string? value) value]
+        [(symbol? value) (symbol->string value)]
+        [else (raise-argument-error who "(or/c string? symbol?)" value)]))
+
+    ;; event-new : (or/c string? symbol?) [boolean?] [boolean?] -> external?
+    ;;   Create an Event; bubbles? and cancelable? both default to #f.
+    (define (event-new type [bubbles? #f] [cancelable? #f])
+      (unless (boolean? bubbles?)
+        (raise-argument-error 'event-new "boolean?" bubbles?))
+      (unless (boolean? cancelable?)
+        (raise-argument-error 'event-new "boolean?" cancelable?))
+      (js-event-new/extern
+       (event-stringish->string 'event-new type)
+       (js-object
+        (vector (vector "bubbles" bubbles?)
+                (vector "cancelable" cancelable?)))))
 
     ;; check-message-event : symbol? any/c -> void?
     ;;   Ensure evt is a DOM MessageEvent object.
@@ -422,6 +467,24 @@
     (define (event-current-target evt)
       (check-event 'event-current-target evt)
       (js-event-current-target evt))
+
+    ;; event-cancelable? : any/c -> boolean?
+    ;;   Report whether preventDefault can cancel evt.
+    (define (event-cancelable? evt)
+      (check-event 'event-cancelable? evt)
+      (js-flag->boolean/internal (js-event-cancelable evt)))
+
+    ;; event-default-prevented? : any/c -> boolean?
+    ;;   Report whether a listener has canceled evt.
+    (define (event-default-prevented? evt)
+      (check-event 'event-default-prevented? evt)
+      (js-flag->boolean/internal (js-event-default-prevented evt)))
+
+    ;; event-is-trusted? : any/c -> boolean?
+    ;;   Report whether evt originated with the user agent.
+    (define (event-is-trusted? evt)
+      (check-event 'event-is-trusted? evt)
+      (js-flag->boolean/internal (js-event-is-trusted evt)))
 
     ;; prevent-default! : any/c -> void?
     ;;   Prevent the default browser action for evt.
@@ -643,6 +706,7 @@
             wheel-event?
             touch-list?
             touch?
+            event-new
             event-type
             message-event-data
             message-event-origin
@@ -654,6 +718,9 @@
             close-event-reason
             event-target
             event-current-target
+            event-cancelable?
+            event-default-prevented?
+            event-is-trusted?
             prevent-default!
             stop-propagation!
             stop-immediate-propagation!
@@ -690,3 +757,110 @@
             touch-page-y
             touch-screen-x
             touch-screen-y)))
+
+;; event-require-kind : symbol? (any/c -> boolean?) string? any/c -> void?
+;;   Check that an event has the DOM subclass required by an accessor.
+(define (event-require-kind who kind? kind-name evt)
+  (unless (kind? evt)
+    (raise-argument-error who kind-name evt)))
+
+;; event-i32->boolean : integer? -> boolean?
+;;   Convert a raw browser boolean flag to a Racket boolean.
+(define (event-i32->boolean value)
+  (not (zero? value)))
+
+;; keyboard-event-is-composing? : keyboard-event? -> boolean?
+;;   Report whether a key event belongs to an IME composition.
+(define (keyboard-event-is-composing? evt)
+  (event-require-kind 'keyboard-event-is-composing? keyboard-event? "keyboard-event?" evt)
+  (event-i32->boolean (js-keyboard-event-is-composing evt)))
+
+;; keyboard-event-modifier-state? : keyboard-event? (or/c string? symbol?) -> boolean?
+;;   Read a named native modifier state, such as AltGraph.
+(define (keyboard-event-modifier-state? evt modifier)
+  (event-require-kind 'keyboard-event-modifier-state? keyboard-event? "keyboard-event?" evt)
+  (unless (or (string? modifier) (symbol? modifier))
+    (raise-argument-error 'keyboard-event-modifier-state? "(or/c string? symbol?)" modifier))
+  (event-i32->boolean
+   (js-keyboard-event-get-modifier-state
+    evt
+    (if (symbol? modifier) (symbol->string modifier) modifier))))
+
+;; input-event-input-type : input-event? -> string?
+;;   Return the native inputType string without applying editor policy.
+(define (input-event-input-type evt)
+  (event-require-kind 'input-event-input-type input-event? "input-event?" evt)
+  (js-input-event-input-type evt))
+
+;; input-event-data : input-event? -> (or/c #f string?)
+;;   Return nullable native input data, preserving an empty string.
+(define (input-event-data evt)
+  (event-require-kind 'input-event-data input-event? "input-event?" evt)
+  (define value (js-input-event-data evt))
+  (unless (or (not value) (string? value))
+    (raise-arguments-error 'input-event-data
+                           "InputEvent.data did not return a string or null"))
+  value)
+
+;; input-event-is-composing? : input-event? -> boolean?
+;;   Report whether an input event belongs to an IME composition.
+(define (input-event-is-composing? evt)
+  (event-require-kind 'input-event-is-composing? input-event? "input-event?" evt)
+  (event-i32->boolean (js-input-event-is-composing evt)))
+
+;; input-event-data-transfer : input-event? -> (or/c #f external?)
+;;   Return the nullable native DataTransfer object for an input event.
+(define (input-event-data-transfer evt)
+  (event-require-kind 'input-event-data-transfer input-event? "input-event?" evt)
+  (js-input-event-data-transfer evt))
+
+;; composition-event? : any/c -> boolean?
+;;   Report whether value is a DOM CompositionEvent.
+(define (composition-event? value)
+  (and (external? value)
+       (js-composition-event? value)))
+
+;; composition-event-data : composition-event? -> string?
+;;   Return the native composition data string.
+(define (composition-event-data evt)
+  (event-require-kind 'composition-event-data composition-event? "composition-event?" evt)
+  (js-composition-event-data evt))
+
+;; clipboard-event? : any/c -> boolean?
+;;   Report whether value is a DOM ClipboardEvent.
+(define (clipboard-event? value)
+  (and (external? value)
+       (js-clipboard-event? value)))
+
+;; clipboard-event-data-transfer : clipboard-event? -> (or/c #f external?)
+;;   Return the nullable synchronous ClipboardEvent DataTransfer object.
+(define (clipboard-event-data-transfer evt)
+  (event-require-kind 'clipboard-event-data-transfer
+                      clipboard-event?
+                      "clipboard-event?"
+                      evt)
+  (js-clipboard-event-data evt))
+
+;; focus-event-related-target : focus-event? -> (or/c #f external?)
+;;   Return the nullable focus transition target.
+(define (focus-event-related-target evt)
+  (event-require-kind 'focus-event-related-target focus-event? "focus-event?" evt)
+  (js-focus-event-related-target evt))
+
+;; pointer-event-id : pointer-event? -> exact-nonnegative-integer?
+;;   Return the browser pointer identifier.
+(define (pointer-event-id evt)
+  (event-require-kind 'pointer-event-id pointer-event? "pointer-event?" evt)
+  (js-pointer-event-id evt))
+
+;; pointer-event-type : pointer-event? -> string?
+;;   Return the browser pointer device type.
+(define (pointer-event-type evt)
+  (event-require-kind 'pointer-event-type pointer-event? "pointer-event?" evt)
+  (js-pointer-event-type evt))
+
+;; pointer-event-primary? : pointer-event? -> boolean?
+;;   Report whether the pointer is the primary pointer.
+(define (pointer-event-primary? evt)
+  (event-require-kind 'pointer-event-primary? pointer-event? "pointer-event?" evt)
+  (event-i32->boolean (js-pointer-event-is-primary evt)))

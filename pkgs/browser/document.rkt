@@ -1,7 +1,9 @@
 #lang racket/base
 
 (require browser/element
-         webracket/unsafe/document)
+         webracket/unsafe/document
+         (only-in webracket/unsafe/standard
+                  js-ref/extern))
 
 (provide (except-out (all-defined-out) dom-document?)
          (rename-out [dom-document/surface? dom-document?])
@@ -49,11 +51,25 @@
 (define (document-element)
   (element-wrap (js-document-element)))
 
+;; document-active-element : -> (or/c #f element?)
+;;   Read the focused element, if the document has one.
+(define (document-active-element)
+  (element-wrap (js-ref/extern (js-document) "activeElement")))
+
 ;; document-create-element : (or/c string? symbol?) -> element?
 ;;   Create an element for a tag name.
 (define (document-create-element tag)
   (define tag* (document-stringish->string 'document-create-element tag))
   (element-wrap (js-create-element tag*)))
+
+;; document-create-element-ns : (or/c string? symbol?) (or/c string? symbol?) -> element?
+;;   Create an element with name in the namespace identified by namespace-uri.
+(define (document-create-element-ns namespace-uri name)
+  (define namespace-uri*
+    (document-stringish->string 'document-create-element-ns namespace-uri))
+  (define name*
+    (document-stringish->string 'document-create-element-ns name))
+  (element-wrap (js-create-element-ns namespace-uri* name*)))
 
 ;; document-create-attribute : (or/c string? symbol?) -> dom-attr?
 ;;   Create an attribute node for a name.

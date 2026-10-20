@@ -44,6 +44,14 @@ The most common pattern is:
   @item{optionally attach error cleanup with @racket[js-promise-catch] or @racket[js-promise-finally]}
 ]
 
+@section{Callback lifetime}
+
+Each handler attachment creates one native callback bridge. The JavaScript
+Promise retains that bridge until the corresponding handler settles; the
+library has no permanent global callback cache. When a handler performs
+side effects only, return @racket[(void)] so the browser callback does not
+need to marshal an unintended Racket result.
+
 @defstruct[js-promise ([raw external/raw])]{
 Wraps a JavaScript Promise-like value.
 }
@@ -73,7 +81,7 @@ Creates an already-rejected JavaScript Promise.
                           [on-rejected (or/c #f procedure? external?) #f])
          js-promise?]{
 Attaches fulfillment and optional rejection handlers and returns the chained
-JavaScript Promise.
+JavaScript Promise. The optional rejection handler defaults to @racket[#f].
 }
 
 @defproc[(js-promise-catch [promise js-promise?]

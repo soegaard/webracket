@@ -582,6 +582,7 @@
     js/standard
     js/temp
     browser/audio
+    browser/abort
     browser/canvas
     browser/document
     browser/dom
@@ -589,8 +590,12 @@
     browser/sxml
     browser/element
     browser/event
+    browser/event-target
+    browser/font
     browser/image
     browser/media
+    browser/range
+    browser/segmenter
     browser/websocket
     browser/window
     web-easy

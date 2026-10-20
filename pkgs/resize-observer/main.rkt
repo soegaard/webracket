@@ -153,8 +153,6 @@
        #()
        (vector (vector "box" (if (symbol? box) (symbol->string box) box))))))
 
-(define resize-observer-callback-cache (make-hasheq))
-
 (define (resize-entries->vector entries)
   (cond
     ;; JS callback arguments are FASL-decoded by the host bridge; a plain
@@ -181,18 +179,13 @@
   (cond
     [(external? callback) callback]
     [(procedure? callback)
-     (define cached (hash-ref resize-observer-callback-cache callback #f))
-     (cond
-       [cached cached]
-       [else
-        (define external
-          (procedure->external
-           (lambda (entries raw-observer)
-             (callback (resize-entries->vector entries)
-                       (resize-observer raw-observer))
-             (void))))
-        (hash-set! resize-observer-callback-cache callback external)
-        external])]
+     ;; The native observer retains this bridge while it is live. A global
+     ;; cache would retain callbacks after an observer is disconnected.
+     (procedure->external
+      (lambda (entries raw-observer)
+        (callback (resize-entries->vector entries)
+                  (resize-observer raw-observer))
+        (void)))]
     [else
      (raise-argument-error who "(or/c procedure? external?)" callback)]))
 

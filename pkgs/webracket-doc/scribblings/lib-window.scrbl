@@ -190,6 +190,36 @@ Wraps the browser @tt{VisualViewport} object.
 Returns the browser visual viewport when present.
 }
 
+@defproc[(window-visual-viewport-width [viewport window-visual-viewport-info?]) real?]{
+@(mdn-bar "VisualViewport: width property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/VisualViewport/width")
+Returns the visual viewport width in CSS pixels.
+}
+
+@defproc[(window-visual-viewport-height [viewport window-visual-viewport-info?]) real?]{
+@(mdn-bar "VisualViewport: height property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/VisualViewport/height")
+Returns the visual viewport height in CSS pixels.
+}
+
+@defproc[(window-visual-viewport-offset-left [viewport window-visual-viewport-info?]) real?]{
+@(mdn-bar "VisualViewport: offsetLeft property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/VisualViewport/offsetLeft")
+Returns the visual viewport horizontal layout offset in CSS pixels.
+}
+
+@defproc[(window-visual-viewport-offset-top [viewport window-visual-viewport-info?]) real?]{
+@(mdn-bar "VisualViewport: offsetTop property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/VisualViewport/offsetTop")
+Returns the visual viewport vertical layout offset in CSS pixels.
+}
+
+@defproc[(window-visual-viewport-scale [viewport window-visual-viewport-info?]) real?]{
+@(mdn-bar "VisualViewport: scale property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/VisualViewport/scale")
+Returns the current visual viewport scale.
+}
+
 @defstruct[window-navigator-info ([raw external/raw])]{
 Wraps the browser @tt{Navigator} object.
 }
@@ -268,6 +298,12 @@ Wraps the browser @tt{Crypto} object.
 
 @defproc[(window-crypto) window-crypto-info?]{
 Returns the browser crypto object wrapped in a checked struct.
+}
+
+@defproc[(window-random-uuid) string?]{
+@(mdn-bar "Crypto: randomUUID() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Crypto/randomUUID")
+Returns a native cryptographically strong UUID, or raises when the browser does not expose @tt{Crypto.randomUUID()}.
 }
 
 @section{Window Properties}
@@ -490,11 +526,30 @@ arguments and returns either @racket[#f] or a @racket[window-scroll-options]
 value. Use @racket[#f] to omit the options argument.
 }
 
-@defproc[(window-set-timeout [callback external?]) exact-nonnegative-integer?]{
+@defproc[(window-set-timeout [callback (or/c procedure? external?)]) exact-nonnegative-integer?]{
 @(mdn-bar "Window: setTimeout() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Window/setTimeout")
-The raw @racket[callback] argument should be a browser JavaScript
-function value.
+Schedules a one-shot timer callback. A Racket procedure is bridged to one
+native callback and retained by the browser only until that timer fires or is
+cleared; this library keeps no permanent callback cache.
+}
 
-Schedules a one-shot timer callback.
+@defproc[(window-set-interval [callback (or/c procedure? external?)] [delay real?])
+         exact-nonnegative-integer?]{
+@(mdn-bar "Window: setInterval() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Window/setInterval")
+Schedules a repeated callback; call @racket[window-clear-interval] to release the native registration.
+}
+
+@defproc[(window-request-animation-frame [callback (or/c procedure? external?)])
+         exact-nonnegative-integer?]{
+@(mdn-bar "Window: requestAnimationFrame() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame")
+Schedules a repaint callback and returns its cancelable browser request identifier.
+}
+
+@defproc[(window-queue-microtask [callback (or/c procedure? external?)]) void?]{
+@(mdn-bar "Window: queueMicrotask() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Window/queueMicrotask")
+Queues one callback at the microtask checkpoint; the native queue owns its bridge until it runs.
 }

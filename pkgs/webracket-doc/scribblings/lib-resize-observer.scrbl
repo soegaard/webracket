@@ -62,7 +62,10 @@ Creates options for @tt{ResizeObserver.observe()}.
 
 @defproc[(make-resize-observer [callback (or/c procedure? external?)]) resize-observer?]{
 Creates a wrapped browser observer. The callback receives a vector of
-@racket[resize-observer-entry?] values and the wrapped observer.
+@racket[resize-observer-entry?] values and the wrapped observer. The native
+observer owns the callback bridge while it remains connected; this library
+does not keep a permanent callback cache, and @racket[resize-observer-disconnect!]
+ends observation.
 }
 
 @defproc[(resize-observer-observe! [observer resize-observer?]

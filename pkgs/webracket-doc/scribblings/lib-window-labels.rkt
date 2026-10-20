@@ -31,6 +31,11 @@
   window-custom-elements
   window-history
   window-visual-viewport
+  window-visual-viewport-width
+  window-visual-viewport-height
+  window-visual-viewport-offset-left
+  window-visual-viewport-offset-top
+  window-visual-viewport-scale
   window-navigator
   window-screen
   window-performance
@@ -41,6 +46,7 @@
   window-speech-synthesis
   window-style-media
   window-crypto
+  window-random-uuid
   window-set-location!
   window-open
   window-fetch
@@ -82,6 +88,7 @@
   window-clear-interval
   window-request-animation-frame
   window-cancel-animation-frame
+  window-queue-microtask
   window-request-idle-callback
   window-cancel-idle-callback
   window-match-media
@@ -119,6 +126,11 @@
 (define window-custom-elements any/c)
 (define window-history any/c)
 (define window-visual-viewport any/c)
+(define window-visual-viewport-width any/c)
+(define window-visual-viewport-height any/c)
+(define window-visual-viewport-offset-left any/c)
+(define window-visual-viewport-offset-top any/c)
+(define window-visual-viewport-scale any/c)
 (define window-navigator any/c)
 (define window-screen any/c)
 (define window-performance any/c)
@@ -129,6 +141,7 @@
 (define window-speech-synthesis any/c)
 (define window-style-media any/c)
 (define window-crypto any/c)
+(define window-random-uuid any/c)
 (define window-set-location! any/c)
 (define window-open any/c)
 (define window-fetch any/c)
@@ -170,6 +183,7 @@
 (define window-clear-interval any/c)
 (define window-request-animation-frame any/c)
 (define window-cancel-animation-frame any/c)
+(define window-queue-microtask any/c)
 (define window-request-idle-callback any/c)
 (define window-cancel-idle-callback any/c)
 (define window-match-media any/c)

@@ -219,8 +219,12 @@
     [else value]))
 
 ;; element-event-listener-cache : hash?
-;;   Reuse stable external callbacks for event listeners.
+;;   Keep bridges only while at least one legacy listener registration remains.
 (define element-event-listener-cache (make-hasheq))
+
+;; element-listener-entry : external? hash? -> element-listener-entry?
+;;   Associate one Racket listener with its native bridge and active registrations.
+(struct element-listener-entry (external registrations) #:transparent)
 
 ;; element-event-name->string : symbol? any/c -> string?
 ;;   Normalize a DOM event name to a browser string.
@@ -230,25 +234,54 @@
     [(symbol? event-name) (symbol->string event-name)]
     [else (raise-argument-error who "(or/c string? symbol?)" event-name)]))
 
-;; element-event-listener->external : symbol? any/c -> external?
-;;   Convert a listener to a stable external callback.
-(define (element-event-listener->external who listener)
+;; element-event-listener-entry : symbol? any/c -> element-listener-entry?
+;;   Return the bridge entry for listener, allocating it only while it is installed.
+(define (element-event-listener-entry who listener)
   (cond
-    [(external? listener) listener]
+    [(external? listener) (element-listener-entry listener #f)]
     [(procedure? listener)
      (define cached (hash-ref element-event-listener-cache listener #f))
      (cond
        [cached cached]
        [else
-        (define external
-          (procedure->external
-           (lambda args
-             (apply listener args)
-             (void))))
-        (hash-set! element-event-listener-cache listener external)
-        external])]
+        (define entry
+          (element-listener-entry
+           (procedure->external
+            (lambda args
+              (apply listener args)
+              (void)))
+           ;; Equal keys preserve the same raw target, event name and options
+           ;; across the later matching remove call.
+           (make-hash)))
+        (hash-set! element-event-listener-cache listener entry)
+        entry])]
     [else
      (raise-argument-error who "(or/c procedure? external?)" listener)]))
+
+;; element-listener-registration-key : external/raw string? any/c -> list?
+;;   Identify an EventTarget registration for bounded legacy callback retention.
+(define (element-listener-registration-key raw event-name options)
+  (list raw (string->symbol event-name) options))
+
+;; element-listener-entry-register! : element-listener-entry? external/raw string? any/c -> void?
+;;   Record an active legacy listener registration.
+(define (element-listener-entry-register! entry raw event-name options)
+  (when (element-listener-entry-registrations entry)
+    (hash-set! (element-listener-entry-registrations entry)
+               (element-listener-registration-key raw event-name options)
+               #t))
+  (void))
+
+;; element-listener-entry-unregister! : any/c element-listener-entry? external/raw string? any/c -> void?
+;;   Remove a legacy registration and release the bridge when the last one ends.
+(define (element-listener-entry-unregister! listener entry raw event-name options)
+  (when (element-listener-entry-registrations entry)
+    (define registrations (element-listener-entry-registrations entry))
+    (hash-remove! registrations (element-listener-registration-key raw event-name options))
+    (when (and (procedure? listener)
+               (zero? (hash-count registrations)))
+      (hash-remove! element-event-listener-cache listener)))
+  (void))
 
 ;; element-event-listener-option? : any/c -> boolean?
 ;;   Check whether a listener option is acceptable for add/removeEventListener.
@@ -261,18 +294,20 @@
 (define (element-add-event-listener! element event-name listener . options)
   (define raw (element-unwrap element))
   (define event-name* (element-event-name->string 'element-add-event-listener! event-name))
-  (define listener* (element-event-listener->external 'element-add-event-listener! listener))
   (for-each
    (lambda (option)
      (unless (element-event-listener-option? option)
        (raise-argument-error 'element-add-event-listener! "(or/c boolean? external?)" option)))
    options)
+  (define entry (element-event-listener-entry 'element-add-event-listener! listener))
+  (define listener* (element-listener-entry-external entry))
   (define args
     (if (null? options)
         (vector event-name* listener*)
         (list->vector (list* event-name* listener* options))))
   (check-element-host-method 'element-add-event-listener! raw "EventTarget" "addEventListener")
   (js-send/extern/nullish raw "addEventListener" args)
+  (element-listener-entry-register! entry raw event-name* options)
   listener*)
 
 ;; element-remove-event-listener! : element? (or/c string? symbol?) (or/c procedure? external?) (or/c boolean? external?) ... -> void?
@@ -280,19 +315,42 @@
 (define (element-remove-event-listener! element event-name listener . options)
   (define raw (element-unwrap element))
   (define event-name* (element-event-name->string 'element-remove-event-listener! event-name))
-  (define listener* (element-event-listener->external 'element-remove-event-listener! listener))
   (for-each
    (lambda (option)
      (unless (element-event-listener-option? option)
        (raise-argument-error 'element-remove-event-listener! "(or/c boolean? external?)" option)))
    options)
-  (define args
-    (if (null? options)
-        (vector event-name* listener*)
-        (list->vector (list* event-name* listener* options))))
-  (check-element-host-method 'element-remove-event-listener! raw "EventTarget" "removeEventListener")
-  (js-send/extern/nullish raw "removeEventListener" args)
+  (define entry
+    (cond
+      [(external? listener) (element-listener-entry listener #f)]
+      [(procedure? listener) (hash-ref element-event-listener-cache listener #f)]
+      [else
+       (raise-argument-error 'element-remove-event-listener!
+                             "(or/c procedure? external?)"
+                             listener)]))
+  ;; An unregistered Racket procedure cannot identify a native callback, so
+  ;; removal is a no-op, just as the browser treats an absent registration.
+  (unless entry
+    (void))
+  (when entry
+    (define listener* (element-listener-entry-external entry))
+    (define args
+      (if (null? options)
+          (vector event-name* listener*)
+          (list->vector (list* event-name* listener* options))))
+    (check-element-host-method 'element-remove-event-listener! raw "EventTarget" "removeEventListener")
+    (js-send/extern/nullish raw "removeEventListener" args)
+    (element-listener-entry-unregister! listener entry raw event-name* options))
   (void))
+
+;; element-dispatch-event! : element? external? -> boolean?
+;;   Dispatch event synchronously and report whether no listener canceled it.
+(define (element-dispatch-event! element event)
+  (unless (external? event)
+    (raise-argument-error 'element-dispatch-event! "external?" event))
+  (define raw (element-unwrap element))
+  (check-element-host-method 'element-dispatch-event! raw "EventTarget" "dispatchEvent")
+  (js-send/boolean raw "dispatchEvent" (vector event)))
 
 ;; element-id : element? -> (or/c #f string?)
 ;;   Read an element id.
@@ -327,11 +385,15 @@
 
 ;; element-namespace-uri : element? -> (or/c #f string?)
 ;;   Read the element namespace URI.
-(define-element-getter element-namespace-uri js-element-namespace-uri)
+(define (element-namespace-uri element)
+  (js-ref (element-raw/checked 'element-namespace-uri element)
+          "namespaceURI"))
 
 ;; element-prefix : element? -> (or/c #f string?)
 ;;   Read the element namespace prefix.
-(define-element-getter element-prefix js-element-prefix)
+(define (element-prefix element)
+  (js-ref (element-raw/checked 'element-prefix element)
+          "prefix"))
 
 ;; element-is-connected? : element? -> boolean?
 ;;   Report whether the element is connected to a document.
@@ -341,9 +403,161 @@
 ;; append-child! : external? external? -> void?
 ;;   Append a child node.
 (define (append-child! parent child)
-  (js-append-child! (element-unwrap parent)
+  (define raw (dom-node-unwrap parent))
+  (unless (shared-dom-raw-host-value? raw)
+    (raise-argument-error 'append-child! "dom-node?" parent))
+  (js-append-child! raw
                     (element-nodeish->value 'append-child! child))
   (void))
+
+;; dom-node-type : dom-node? -> exact-nonnegative-integer?
+;;   Read the native nodeType of node.
+(define (dom-node-type node)
+  (define raw (dom-node-unwrap node))
+  (check-shared-dom-host-property 'dom-node-type raw "Node" "nodeType")
+  (define value (js-ref raw "nodeType"))
+  (unless (exact-nonnegative-integer? value)
+    (raise-arguments-error 'dom-node-type "Node.nodeType did not return an exact nonnegative integer"))
+  value)
+
+;; dom-node-value : dom-node? -> (or/c #f string?)
+;;   Read nodeValue, preserving JavaScript null as #f.
+(define (dom-node-value node)
+  (define raw (dom-node-unwrap node))
+  (check-shared-dom-host-nullable-property 'dom-node-value raw "Node" "nodeValue")
+  (define value (js-ref raw "nodeValue"))
+  (unless (or (not value) (string? value))
+    (raise-arguments-error 'dom-node-value "Node.nodeValue did not return a string or null"))
+  value)
+
+;; dom-node-set-value! : dom-node? (or/c #f string? symbol?) -> void?
+;;   Set nodeValue; #f writes JavaScript null.
+(define (dom-node-set-value! node value)
+  (define raw (dom-node-unwrap node))
+  (check-shared-dom-host-nullable-property 'dom-node-set-value! raw "Node" "nodeValue")
+  (unless (or (not value) (string? value) (symbol? value))
+    (raise-argument-error 'dom-node-set-value! "(or/c #f string? symbol?)" value))
+  (js-set! raw "nodeValue"
+           (cond
+             [(not value) (js-null)]
+             [(symbol? value) (symbol->string value)]
+             [else value]))
+  (void))
+
+;; dom-node-text-content : dom-node? -> (or/c #f string?)
+;;   Read textContent, preserving JavaScript null as #f.
+(define (dom-node-text-content node)
+  (define raw (dom-node-unwrap node))
+  (check-shared-dom-host-nullable-property 'dom-node-text-content raw "Node" "textContent")
+  (define value (js-ref raw "textContent"))
+  (unless (or (not value) (string? value))
+    (raise-arguments-error 'dom-node-text-content "Node.textContent did not return a string or null"))
+  value)
+
+;; dom-node-set-text-content! : dom-node? (or/c #f string? symbol?) -> void?
+;;   Set textContent without parsing markup; #f writes JavaScript null.
+(define (dom-node-set-text-content! node value)
+  (define raw (dom-node-unwrap node))
+  (check-shared-dom-host-nullable-property
+   'dom-node-set-text-content! raw "Node" "textContent")
+  (unless (or (not value) (string? value) (symbol? value))
+    (raise-argument-error 'dom-node-set-text-content! "(or/c #f string? symbol?)" value))
+  (js-set! raw "textContent"
+           (cond
+             [(not value) (js-null)]
+             [(symbol? value) (symbol->string value)]
+             [else value]))
+  (void))
+
+;; dom-node-parent : dom-node? -> (or/c #f dom-node?)
+;;   Read the parent node, if node is attached.
+(define (dom-node-parent node)
+  (define raw (dom-node-unwrap node))
+  (check-shared-dom-host-nullable-property 'dom-node-parent raw "Node" "parentNode")
+  (dom-node-wrap (js-ref/extern raw "parentNode")))
+
+;; dom-node-first-child : dom-node? -> (or/c #f dom-node?)
+;;   Read the first child node, if any.
+(define (dom-node-first-child node)
+  (define raw (dom-node-unwrap node))
+  (check-shared-dom-host-nullable-property 'dom-node-first-child raw "Node" "firstChild")
+  (dom-node-wrap (js-ref/extern raw "firstChild")))
+
+;; dom-node-last-child : dom-node? -> (or/c #f dom-node?)
+;;   Read the last child node, if any.
+(define (dom-node-last-child node)
+  (define raw (dom-node-unwrap node))
+  (check-shared-dom-host-nullable-property 'dom-node-last-child raw "Node" "lastChild")
+  (dom-node-wrap (js-ref/extern raw "lastChild")))
+
+;; dom-node-next-sibling : dom-node? -> (or/c #f dom-node?)
+;;   Read the following sibling node, if any.
+(define (dom-node-next-sibling node)
+  (define raw (dom-node-unwrap node))
+  (check-shared-dom-host-nullable-property 'dom-node-next-sibling raw "Node" "nextSibling")
+  (dom-node-wrap (js-ref/extern raw "nextSibling")))
+
+;; dom-node-previous-sibling : dom-node? -> (or/c #f dom-node?)
+;;   Read the preceding sibling node, if any.
+(define (dom-node-previous-sibling node)
+  (define raw (dom-node-unwrap node))
+  (check-shared-dom-host-nullable-property 'dom-node-previous-sibling raw "Node" "previousSibling")
+  (dom-node-wrap (js-ref/extern raw "previousSibling")))
+
+;; dom-node-child-nodes : dom-node? -> node-list?
+;;   Read the live child NodeList for node.
+(define (dom-node-child-nodes node)
+  (define raw (dom-node-unwrap node))
+  (check-shared-dom-host-property 'dom-node-child-nodes raw "Node" "childNodes")
+  (node-list-wrap (js-ref/extern raw "childNodes")))
+
+;; dom-node-is-connected? : dom-node? -> boolean?
+;;   Report whether node is connected to a document.
+(define (dom-node-is-connected? node)
+  (define raw (dom-node-unwrap node))
+  (check-shared-dom-host-property 'dom-node-is-connected? raw "Node" "isConnected")
+  (define value (js-ref raw "isConnected"))
+  (unless (boolean? value)
+    (raise-arguments-error 'dom-node-is-connected? "Node.isConnected did not return a boolean"))
+  value)
+
+;; dom-node-contains? : dom-node? dom-node? -> boolean?
+;;   Report whether ancestor contains descendant (or is the same node).
+(define (dom-node-contains? ancestor descendant)
+  (define ancestor-raw (dom-node-unwrap ancestor))
+  (define descendant-raw (dom-node-unwrap descendant))
+  (check-shared-dom-host-method 'dom-node-contains? ancestor-raw "Node" "contains")
+  (unless (shared-dom-raw-host-value? descendant-raw)
+    (raise-argument-error 'dom-node-contains? "dom-node?" descendant))
+  (js-send/boolean ancestor-raw "contains" (vector descendant-raw)))
+
+;; dom-node-remove-child! : dom-node? dom-node? -> dom-node?
+;;   Remove child from parent and return the removed node.
+(define (dom-node-remove-child! parent child)
+  (define parent-raw (dom-node-unwrap parent))
+  (define child-raw (dom-node-unwrap child))
+  (check-shared-dom-host-method 'dom-node-remove-child! parent-raw "Node" "removeChild")
+  (unless (shared-dom-raw-host-value? child-raw)
+    (raise-argument-error 'dom-node-remove-child! "dom-node?" child))
+  (dom-node-wrap
+   (js-send/extern parent-raw "removeChild" (vector child-raw))))
+
+;; dom-node-insert-before! : dom-node? dom-node? (or/c #f dom-node?) -> dom-node?
+;;   Insert new-child before reference-child, or append it when reference-child is #f.
+(define (dom-node-insert-before! parent new-child reference-child)
+  (define parent-raw (dom-node-unwrap parent))
+  (define new-child-raw (dom-node-unwrap new-child))
+  (define reference-child-raw
+    (if reference-child (dom-node-unwrap reference-child) (js-null)))
+  (check-shared-dom-host-method 'dom-node-insert-before! parent-raw "Node" "insertBefore")
+  (unless (shared-dom-raw-host-value? new-child-raw)
+    (raise-argument-error 'dom-node-insert-before! "dom-node?" new-child))
+  (unless (or (not reference-child)
+              (shared-dom-raw-host-value? reference-child-raw))
+    (raise-argument-error 'dom-node-insert-before! "(or/c #f dom-node?)" reference-child))
+  (dom-node-wrap
+   (js-send/extern parent-raw "insertBefore"
+                   (vector new-child-raw reference-child-raw))))
 
 ;; element-append! : element? any/c -> void?
 ;;   Append a node or text to an element.
@@ -733,6 +947,130 @@
   (define raw (element-unwrap element))
   (check-shared-dom-host-property 'element-set-value! raw "Element" "value")
   (js-set! raw "value" (element-stringish->string 'element-set-value! value))
+  (void))
+
+;; element-selection-offset : symbol? element? string? -> exact-nonnegative-integer?
+;;   Read a native UTF-16 text-control selection offset.
+(define (element-selection-offset who element property-name)
+  (define raw (element-unwrap element))
+  (check-shared-dom-host-nullable-property who raw "HTMLTextAreaElement" property-name)
+  (define value (js-ref raw property-name))
+  (unless (exact-nonnegative-integer? value)
+    (raise-arguments-error who
+                           (string-append "HTMLTextAreaElement."
+                                          property-name
+                                          " did not return a UTF-16 offset")))
+  value)
+
+;; element-selection-start : element? -> exact-nonnegative-integer?
+;;   Read the native selection start in UTF-16 code units.
+(define (element-selection-start element)
+  (element-selection-offset 'element-selection-start element "selectionStart"))
+
+;; element-selection-end : element? -> exact-nonnegative-integer?
+;;   Read the native selection end in UTF-16 code units.
+(define (element-selection-end element)
+  (element-selection-offset 'element-selection-end element "selectionEnd"))
+
+;; element-selection-direction : element? -> string?
+;;   Read the native selection direction.
+(define (element-selection-direction element)
+  (define raw (element-unwrap element))
+  (check-shared-dom-host-nullable-property
+   'element-selection-direction raw "HTMLTextAreaElement" "selectionDirection")
+  (define value (js-ref raw "selectionDirection"))
+  (unless (string? value)
+    (raise-arguments-error 'element-selection-direction
+                           "HTMLTextAreaElement.selectionDirection did not return a string"))
+  value)
+
+;; element-set-selection-range! : element? exact-nonnegative-integer? exact-nonnegative-integer? [(or/c string? symbol?) #f] -> void?
+;;   Set a text-control selection in UTF-16 code units; direction defaults to the browser's "none".
+(define (element-set-selection-range! element start end [direction #f])
+  (unless (exact-nonnegative-integer? start)
+    (raise-argument-error 'element-set-selection-range! "exact-nonnegative-integer?" start))
+  (unless (exact-nonnegative-integer? end)
+    (raise-argument-error 'element-set-selection-range! "exact-nonnegative-integer?" end))
+  (unless (or (not direction) (string? direction) (symbol? direction))
+    (raise-argument-error 'element-set-selection-range!
+                          "(or/c #f string? symbol?)"
+                          direction))
+  (define raw (element-unwrap element))
+  (check-shared-dom-host-method
+   'element-set-selection-range! raw "HTMLTextAreaElement" "setSelectionRange")
+  (js-send/extern/nullish
+   raw
+   "setSelectionRange"
+   (if direction
+       (vector start end (element-stringish->string 'element-set-selection-range! direction))
+       (vector start end)))
+  (void))
+
+;; element-read-only? : element? -> boolean?
+;;   Report a text control's readOnly state.
+(define (element-read-only? element)
+  (define raw (element-unwrap element))
+  (check-shared-dom-host-property 'element-read-only? raw "HTMLTextAreaElement" "readOnly")
+  (define value (js-ref raw "readOnly"))
+  (unless (boolean? value)
+    (raise-arguments-error 'element-read-only?
+                           "HTMLTextAreaElement.readOnly did not return a boolean"))
+  value)
+
+;; element-set-read-only! : element? boolean? -> void?
+;;   Set a text control's readOnly state.
+(define (element-set-read-only! element value)
+  (unless (boolean? value)
+    (raise-argument-error 'element-set-read-only! "boolean?" value))
+  (define raw (element-unwrap element))
+  (check-shared-dom-host-property
+   'element-set-read-only! raw "HTMLTextAreaElement" "readOnly")
+  (js-set! raw "readOnly" value)
+  (void))
+
+;; element-disabled? : element? -> boolean?
+;;   Report a form control's disabled state.
+(define (element-disabled? element)
+  (define raw (element-unwrap element))
+  (check-shared-dom-host-property 'element-disabled? raw "HTMLTextAreaElement" "disabled")
+  (define value (js-ref raw "disabled"))
+  (unless (boolean? value)
+    (raise-arguments-error 'element-disabled?
+                           "HTMLTextAreaElement.disabled did not return a boolean"))
+  value)
+
+;; element-set-disabled! : element? boolean? -> void?
+;;   Set a form control's disabled state.
+(define (element-set-disabled! element value)
+  (unless (boolean? value)
+    (raise-argument-error 'element-set-disabled! "boolean?" value))
+  (define raw (element-unwrap element))
+  (check-shared-dom-host-property
+   'element-set-disabled! raw "HTMLTextAreaElement" "disabled")
+  (js-set! raw "disabled" value)
+  (void))
+
+;; element-focus! : element? [boolean?] -> void?
+;;   Focus element; prevent-scroll? defaults to #f and omits the native option.
+(define (element-focus! element [prevent-scroll? #f])
+  (unless (boolean? prevent-scroll?)
+    (raise-argument-error 'element-focus! "boolean?" prevent-scroll?))
+  (define raw (element-unwrap element))
+  (check-shared-dom-host-method 'element-focus! raw "HTMLElement" "focus")
+  (js-send/extern/nullish
+   raw
+   "focus"
+   (if prevent-scroll?
+       (vector (js-object (vector (vector "preventScroll" #t))))
+       (vector)))
+  (void))
+
+;; element-blur! : element? -> void?
+;;   Remove focus from element.
+(define (element-blur! element)
+  (define raw (element-unwrap element))
+  (check-shared-dom-host-method 'element-blur! raw "HTMLElement" "blur")
+  (js-send/extern/nullish raw "blur" (vector))
   (void))
 
 ;; element-computed-style-map : element? -> external/raw

@@ -38,6 +38,14 @@
   ;; Pass `(void)` for missing optional arguments; it becomes JS `undefined`.
   (-> (string value) (extern/raw)))
 
+(define-foreign js-event-new/extern
+  #:module "event"
+  #:name   "new/extern"
+  #:doc    "Creates a new Event object from a JavaScript EventInit dictionary."
+  #:mdn    "Event/Event"
+  ;; The EventInit dictionary is already a JavaScript object, not a FASL value.
+  (-> (string extern) (extern/raw)))
+
 ;; Predicates
 (define-foreign js-event?
   #:module "event"
@@ -419,6 +427,20 @@
   #:mdn    "KeyboardEvent/repeat"
   (-> (extern) (i32)))
 
+(define-foreign js-keyboard-event-is-composing
+  #:module "event"
+  #:name   "keyboard-is-composing"
+  #:doc    "Reports whether a keyboard event is part of an IME composition."
+  #:mdn    "KeyboardEvent/isComposing"
+  (-> (extern) (i32)))
+
+(define-foreign js-keyboard-event-get-modifier-state
+  #:module "event"
+  #:name   "keyboard-get-modifier-state"
+  #:doc    "Reports the state of a named keyboard modifier."
+  #:mdn    "KeyboardEvent/getModifierState"
+  (-> (extern string) (i32)))
+
 
 ;;;
 ;;; PointerEvent
@@ -435,6 +457,27 @@
   #:doc    "Reports whether the external value is a JavaScript PointerEvent object."
   #:mdn    "PointerEvent"
   (-> (extern) (boolean)))
+
+(define-foreign js-pointer-event-id
+  #:module "event"
+  #:name   "pointer-id"
+  #:doc    "Returns the pointer identifier."
+  #:mdn    "PointerEvent/pointerId"
+  (-> (extern) (u32)))
+
+(define-foreign js-pointer-event-type
+  #:module "event"
+  #:name   "pointer-type"
+  #:doc    "Returns the pointer device type."
+  #:mdn    "PointerEvent/pointerType"
+  (-> (extern) (string)))
+
+(define-foreign js-pointer-event-is-primary
+  #:module "event"
+  #:name   "pointer-is-primary"
+  #:doc    "Reports whether the pointer is the primary pointer."
+  #:mdn    "PointerEvent/isPrimary"
+  (-> (extern) (i32)))
 
 
 ;;;
@@ -453,6 +496,13 @@
   #:mdn    "FocusEvent"
   (-> (extern) (boolean)))
 
+(define-foreign js-focus-event-related-target
+  #:module "event"
+  #:name   "focus-related-target"
+  #:doc    "Returns the related event target, or null."
+  #:mdn    "FocusEvent/relatedTarget"
+  (-> (extern) (extern)))
+
 
 ;;;
 ;;; InputEvent
@@ -469,6 +519,62 @@
   #:doc    "Reports whether the external value is a JavaScript InputEvent object."
   #:mdn    "InputEvent"
   (-> (extern) (boolean)))
+
+(define-foreign js-input-event-input-type
+  #:module "event"
+  #:name   "input-type"
+  #:doc    "Returns the browser inputType string."
+  #:mdn    "InputEvent/inputType"
+  (-> (extern) (string)))
+
+(define-foreign js-input-event-data
+  #:module "event"
+  #:name   "input-data"
+  #:doc    "Returns inserted input data, or null."
+  #:mdn    "InputEvent/data"
+  (-> (extern) (value)))
+
+(define-foreign js-input-event-is-composing
+  #:module "event"
+  #:name   "input-is-composing"
+  #:doc    "Reports whether an input event is part of an IME composition."
+  #:mdn    "InputEvent/isComposing"
+  (-> (extern) (i32)))
+
+(define-foreign js-input-event-data-transfer
+  #:module "event"
+  #:name   "input-data-transfer"
+  #:doc    "Returns input event transfer data, or null."
+  #:mdn    "InputEvent/dataTransfer"
+  (-> (extern) (extern)))
+
+(define-foreign js-composition-event?
+  #:module "event"
+  #:name   "composition-event?"
+  #:doc    "Reports whether the external value is a JavaScript CompositionEvent object."
+  #:mdn    "CompositionEvent"
+  (-> (extern) (boolean)))
+
+(define-foreign js-composition-event-data
+  #:module "event"
+  #:name   "composition-data"
+  #:doc    "Returns the composition data string."
+  #:mdn    "CompositionEvent/data"
+  (-> (extern) (string)))
+
+(define-foreign js-clipboard-event?
+  #:module "event"
+  #:name   "clipboard-event?"
+  #:doc    "Reports whether the external value is a JavaScript ClipboardEvent object."
+  #:mdn    "ClipboardEvent"
+  (-> (extern) (boolean)))
+
+(define-foreign js-clipboard-event-data
+  #:module "event"
+  #:name   "clipboard-data"
+  #:doc    "Returns the nullable ClipboardEvent clipboardData object."
+  #:mdn    "ClipboardEvent/clipboardData"
+  (-> (extern) (extern)))
 
 
 ;;;
