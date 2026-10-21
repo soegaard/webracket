@@ -279,6 +279,13 @@ async function runPageProbe(page, testPage, consoleMessages) {
     return true;
   }
 
+  if (testPage === "test-web-pict-rational-coordinates.html" ||
+      testPage === "test-web-pict-rational-coordinates-legacy.html") {
+    await page.waitForFunction(() =>
+      document.body?.getAttribute("data-state") === "loaded");
+    return true;
+  }
+
   if (testPage === "test-racket-port-call-with-output-string.html") {
     await page.waitForFunction(() =>
       ["loaded", "error"].includes(document.body?.getAttribute("data-state")));
