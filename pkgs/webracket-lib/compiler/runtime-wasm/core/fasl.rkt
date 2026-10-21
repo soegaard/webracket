@@ -318,13 +318,14 @@
                                                            (else
                                                             (if (ref.test (ref $External) (local.get $v))
                                                                 (then
+                                                                 ;; `$External` also represents JavaScript null.
+                                                                 ;; Preserve the nullable externref in the FASL registry.
                                                                  (drop (call $write-byte (global.get $fasl-external) (local.get $out)))
                                                                  (call $fasl:write-u32
                                                                        (call $js-register-external
-                                                                             (ref.as_non_null
-                                                                              (struct.get $External $v
-                                                                                          (ref.cast (ref $External)
-                                                                                                    (local.get $v)))))
+                                                                             (struct.get $External $v
+                                                                                         (ref.cast (ref $External)
+                                                                                                   (local.get $v))))
                                                                        (local.get $out)))
                                                                 (else
                                                                  (call $raise-s-exp->fasl:unsupported-value

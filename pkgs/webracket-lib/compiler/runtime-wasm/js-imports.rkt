@@ -265,7 +265,7 @@
 
          (func $js-register-external
                (import "primitives" "register_external")
-               (param (ref extern))
+               (param (ref null extern))
                (result i32))
 
         (func $js-lookup-external

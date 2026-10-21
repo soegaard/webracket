@@ -99,6 +99,28 @@
               ; todo (?) - we don't support lists here
               #;(let ([obj (js-object (list (list "a" 1)))])
                 (equal? (js-ref obj "a") 1)))
+        (list "js-object/nested-external-null"
+              (let ([obj
+                     (js-object
+                      (vector
+                       (vector "field" "semantic-fixture")
+                       (vector
+                        "providerKey"
+                        (js-object
+                         (vector
+                          (vector "kind" "reference")
+                          (vector
+                           "facts"
+                           (vector
+                            (js-object
+                             (vector
+                              (vector "key" "identifier:z")
+                              (vector "derivativeCapability" (js-null)))))))))
+                       (vector
+                        "context"
+                        (js-object
+                         (vector (vector "direction" "forward"))))))])
+                (equal? (js-typeof obj) "object")))
         (list "js-new"
               ; The current time:
               #;(external-string->string (js-new (js-Date) (vector))) 
