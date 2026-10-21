@@ -2600,6 +2600,67 @@
             '(max 9007199254740993 2.0)
             #:gate? #t
             #:note "Generic max returns inexact when a flonum participates.")
+   (nt-case 'rational-minmax-singleton
+            'integer-ordering
+            '(list (min 1/2) (max -1/2))
+            #:gate? #t
+            #:note "Single-argument min and max preserve exact rationals.")
+   (nt-case 'rational-minmax-exact-integer
+            'integer-ordering
+            '(list (min 1 1/2) (min 3/2 1)
+                   (max 1 3/2) (max 3/2 1))
+            #:gate? #t
+            #:note "Exact rational/integer pairs work in either argument order.")
+   (nt-case 'rational-min-exact-precision
+            'integer-ordering
+            '(min 1/2 576460752303423489/1152921504606846976)
+            #:gate? #t
+            #:note "Exact rational min distinguishes values that round to the same flonum.")
+   (nt-case 'rational-max-exact-precision
+            'integer-ordering
+            '(max 576460752303423489/1152921504606846976 1/2)
+            #:gate? #t
+            #:note "Exact rational max preserves the larger rational without rounding.")
+   (nt-case 'rational-min-bignum-precision
+            'integer-ordering
+            '(min 18014398509481985/2 9007199254740993)
+            #:gate? #t
+            #:note "Rational/bignum min compares exactly past the f64 precision boundary.")
+   (nt-case 'rational-max-bignum-precision
+            'integer-ordering
+            '(max 18014398509481985/2 9007199254740992)
+            #:gate? #t
+            #:note "Rational/bignum max compares exactly past the f64 precision boundary.")
+   (nt-case 'rational-min-mixed-flonum
+            'integer-ordering
+            '(list (min 1/2 0.75) (min 0.75 1/2)
+                   (min 1/2 0.25) (min 0.25 1/2))
+            #:gate? #t
+            #:note "Mixed rational/flonum min returns the inexact minimum in either order.")
+   (nt-case 'rational-max-mixed-flonum
+            'integer-ordering
+            '(list (max 1/2 0.25) (max 0.25 1/2)
+                   (max 1/2 0.75) (max 0.75 1/2))
+            #:gate? #t
+            #:note "Mixed rational/flonum max returns the inexact maximum in either order.")
+   (nt-case 'rational-minmax-variadic
+            'integer-ordering
+            '(list (min 3/2 4/3 1.0 1/2)
+                   (max -3/2 -4/3 -1.0 -1/2))
+            #:gate? #t
+            #:note "Variadic min and max fold rational and flonum arguments together.")
+   (nt-case 'rational-minmax-infinities
+            'integer-ordering
+            '(list (min 1/2 +inf.0) (min -inf.0 1/2)
+                   (max 1/2 -inf.0) (max +inf.0 1/2))
+            #:gate? #t
+            #:note "Mixed rational min and max preserve infinite ordering.")
+   (nt-case 'rational-minmax-nan
+            'integer-ordering
+            '(list (nan? (min 1/2 +nan.0)) (nan? (min +nan.0 1/2))
+                   (nan? (max 1/2 +nan.0)) (nan? (max +nan.0 1/2)))
+            #:gate? #t
+            #:note "Mixed rational min and max propagate NaN in either argument order.")
    (nt-case 'mixed-min-signed-zero-tie
             'integer-ordering
             '(eqv? (min -0.0 0) 0.0)

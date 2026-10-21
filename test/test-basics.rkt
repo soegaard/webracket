@@ -893,11 +893,19 @@
                     (list "max"
                           (and (equal? (max 1 3 2) 3)
                                (equal? (max 1 3 2.0) 3.0)
+                               (equal? (max 1/2) 1/2)
+                               (equal? (max 1/2 3/2 1) 3/2)
+                               (equal? (max 1/2 0.25) 0.5)
+                               (equal? (max 0.25 1/2) 0.5)
                                (eqv? (max -0.0 0.0) 0.0)
                                (nan? (max 1.0 +nan.0))))
                     (list "min"
                           (and (equal? (min 1 3 2) 1)
                                (equal? (min 1 3 2.0) 1.0)
+                               (equal? (min 1/2) 1/2)
+                               (equal? (min 1/2 -3/2 -1) -3/2)
+                               (equal? (min 1/2 0.75) 0.5)
+                               (equal? (min 0.75 1/2) 0.5)
                                (eqv? (min -0.0 0.0) -0.0)
                                (nan? (min 1.0 +nan.0))))
                     (list "round"
