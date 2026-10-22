@@ -6449,6 +6449,40 @@
              path
              (string->path (string-append name ".rkt"))))))
 
+;; path-within? : path-string? path-string? -> boolean?
+;;   Check whether child is contained in parent after complete-path normalization.
+(define (path-within? parent child)
+  (define normalized-parent
+    (simplify-path (path->complete-path parent)))
+  (define normalized-child
+    (simplify-path (path->complete-path child)))
+  (define relative
+    (find-relative-path normalized-parent normalized-child))
+  (not (member 'up (explode-path relative))))
+
+;; configured-local-collection-root : -> (or/c path? #f)
+;;   Return the explicit highest-precedence collection root, when configured.
+(define (configured-local-collection-root)
+  (and (getenv "PLTCOLLECTS")
+       (pair? (current-library-collection-paths))
+       (car (current-library-collection-paths))))
+
+;; collection-module->local-source-path : symbol? -> (or/c path? #f)
+;;   Resolve a collection name only when it names source under the explicit local root.
+(define (collection-module->local-source-path module-name)
+  (define collection-root (configured-local-collection-root))
+  (and collection-root
+       (symbol? module-name)
+       (with-handlers ([exn:fail? (lambda (_exn) #f)])
+         (define resolved
+           (module-path-index-resolve
+            (module-path-index-join module-name #f)))
+         (define source-path (resolved-module-path-name resolved))
+         (and (path? source-path)
+              (file-exists? source-path)
+              (path-within? collection-root source-path)
+              (simplify-path source-path)))))
+
 ;; local-require-spec-paths : any/c path? -> (listof path?)
 ;;   Discover source-visible local files before expanded metadata is available.
 (define (local-require-spec-paths spec source-dir)
@@ -6462,6 +6496,9 @@
        (relative-path->complete path base-dir)]
       [_ #f]))
   (match spec
+    [(? symbol? module-name)
+     (define source-path (collection-module->local-source-path module-name))
+     (if source-path (list source-path) '())]
     [(? string?)
      (list (relative-path->complete spec source-dir))]
     [`(file ,(? string? path))
@@ -6512,14 +6549,17 @@
                                     import-map))]
               #:when (= 0 (car candidate))
               #:do [(define module-name (cadr candidate))
+                    (define local-collection-path
+                      (collection-module->local-source-path module-name))
                     (define relative-path
                       (candidate-module-symbol->relative-rkt-path module-name))
                     (define path
-                      (and relative-path
-                           (simplify-path
-                            (if (absolute-path? relative-path)
-                                relative-path
-                                (build-path source-dir relative-path)))))]
+                      (or local-collection-path
+                          (and relative-path
+                               (simplify-path
+                                (if (absolute-path? relative-path)
+                                    relative-path
+                                    (build-path source-dir relative-path))))))]
               #:when (and (symbol? module-name)
                           path
                           (not (eq? module-name self-name))
@@ -6539,11 +6579,17 @@
                                import-map))]
           #:when (= 0 (car candidate))
           #:do [(define module-name (cadr candidate))
+                (define local-collection-path
+                  (collection-module->local-source-path module-name))
                 (define candidate-path
                   (candidate-module-symbol->relative-rkt-path module-name))]
           #:when (and (symbol? module-name)
-                      candidate-path
-                      (equal? source-name (file-name-from-path candidate-path))))
+                      (or (and local-collection-path
+                               (equal? (simplify-path source-path)
+                                       local-collection-path))
+                          (and candidate-path
+                               (equal? source-name
+                                       (file-name-from-path candidate-path))))))
        module-name)
      eq?))
   (and (= (length matching-names) 1)

@@ -2,6 +2,7 @@
 
 (require racket/file
          racket/path
+         racket/string
          racket/system)
 
 ;; find-repo-root : path? -> path?
@@ -30,17 +31,19 @@
          (error 'test-module-bridge-local-paths-and-prefix
                 "could not find a racket executable"))]))
 
-;; env-with-collections : path? path? -> environment-variables?
+;; env-with-collections : path? path? (or/c path? #f) -> environment-variables?
 ;;   Build a subprocess environment for the package-root collection layout.
-(define (env-with-collections repo-root compiled-root)
+(define (env-with-collections repo-root compiled-root [local-collection-root #f])
   (define env (environment-variables-copy (current-environment-variables)))
   (define racket-collects
     (build-path repo-root ".." "racket" "racket" "collects"))
+  (define collection-paths
+    (append (if local-collection-root
+                (list local-collection-root)
+                '())
+            (list (build-path repo-root "pkgs") racket-collects)))
   (define collects
-    (string-append
-     (path->string (build-path repo-root "pkgs"))
-     ":"
-     (path->string racket-collects)))
+    (string-join (map path->string collection-paths) ":"))
   (environment-variables-set! env #"PLTCOLLECTS" (string->bytes/utf-8 collects))
   (environment-variables-set! env
                               #"PLTCOMPILEDROOTS"
@@ -83,6 +86,9 @@
   (define direct-api-path (build-path api-dir "direct.rkt"))
   (define public-main-path (build-path public-dir "main.rkt"))
   (define public-main-repro-path (build-path repro-dir "public-main.rkt"))
+  (define collection-dir (build-path src-dir "math-editor"))
+  (define collection-main-path (build-path collection-dir "main.rkt"))
+  (define collection-repro-path (build-path repro-dir "collection-main.rkt"))
   (define file-main-path (build-path src-dir "main-file.rkt"))
   (define subdir-main-path (build-path src-dir "main-subdir-string.rkt"))
   (define prefix-main-path (build-path src-dir "main-prefix-duplicate.rkt"))
@@ -96,6 +102,7 @@
       (make-directory* browser-dir)
       (make-directory* public-dir)
       (make-directory* repro-dir)
+      (make-directory* collection-dir)
       (make-directory* compiled-root)
       (make-directory* cache-dir)
       (write-file! geometry-path
@@ -124,6 +131,10 @@
                    "#lang webracket/base\n(require \"../api/direct.rkt\")\n(provide direct-keybinding-value)\n")
       (write-file! public-main-repro-path
                    "#lang webracket/base\n(require \"../public/main.rkt\")\ndirect-keybinding-value\n")
+      (write-file! collection-main-path
+                   "#lang webracket/base\n(require \"../api/direct.rkt\")\n(provide direct-keybinding-value)\n")
+      (write-file! collection-repro-path
+                   "#lang webracket/base\n(require math-editor)\ndirect-keybinding-value\n")
       (write-file! file-main-path
                    "#lang webracket/base\n(require (file \"construction-geometry.rkt\"))\nconstruction-value\n")
       (write-file! subdir-main-path
@@ -188,6 +199,9 @@
           (display "(assert-local 'public-main-keybinding-aliases " out)
           (write (path->string public-main-repro-path) out)
           (display " '(api/keybindings api/keybindings.rkt browser/keybindings browser/keybindings.rkt))\n" out)
+          (display "(assert-local 'local-collection-import " out)
+          (write (path->string collection-repro-path) out)
+          (display " '(math-editor math-editor.rkt))\n" out)
           (display "(unless (null? failures)\n" out)
           (display "  (raise-arguments-error 'module-bridge-local-paths-and-prefix\n" out)
           (display "                         \"local module path/prefix reproductions failed\"\n" out)
@@ -200,7 +214,8 @@
         (parameterize ([current-directory repo-root]
                        [current-output-port stdout]
                        [current-error-port stderr]
-                       [current-environment-variables (env-with-collections repo-root compiled-root)])
+                       [current-environment-variables
+                        (env-with-collections repo-root compiled-root src-dir)])
           (system*/exit-code racket-exe "-y" (path->string script-path))))
       (define output
         (string-append (get-output-string stdout)
