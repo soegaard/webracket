@@ -74,6 +74,15 @@
   (define nested-helper-path (build-path nested-dir "helper.rktl"))
   (define nested-wrapper-path (build-path nested-dir "wrapper.rktl"))
   (define nested-main-path (build-path src-dir "main-nested-rktl.rkt"))
+  (define api-dir (build-path src-dir "api"))
+  (define browser-dir (build-path src-dir "browser"))
+  (define public-dir (build-path src-dir "public"))
+  (define repro-dir (build-path src-dir "repro"))
+  (define api-keybindings-path (build-path api-dir "keybindings.rkt"))
+  (define browser-keybindings-path (build-path browser-dir "keybindings.rkt"))
+  (define direct-api-path (build-path api-dir "direct.rkt"))
+  (define public-main-path (build-path public-dir "main.rkt"))
+  (define public-main-repro-path (build-path repro-dir "public-main.rkt"))
   (define file-main-path (build-path src-dir "main-file.rkt"))
   (define subdir-main-path (build-path src-dir "main-subdir-string.rkt"))
   (define prefix-main-path (build-path src-dir "main-prefix-duplicate.rkt"))
@@ -83,6 +92,10 @@
     (lambda ()
       (make-directory* applet-dir)
       (make-directory* nested-dir)
+      (make-directory* api-dir)
+      (make-directory* browser-dir)
+      (make-directory* public-dir)
+      (make-directory* repro-dir)
       (make-directory* compiled-root)
       (make-directory* cache-dir)
       (write-file! geometry-path
@@ -101,6 +114,16 @@
                    "#lang webracket/base\n(require \"helper.rktl\")\n(provide wrapped-value)\n(define wrapped-value (+ nested-value 1))\n")
       (write-file! nested-main-path
                    "#lang webracket/base\n(require \"nested/wrapper.rktl\")\nwrapped-value\n")
+      (write-file! api-keybindings-path
+                   "#lang webracket/base\n(provide api-keybinding)\n(define api-keybinding 11)\n")
+      (write-file! browser-keybindings-path
+                   "#lang webracket/base\n(provide browser-keybinding)\n(define browser-keybinding 31)\n")
+      (write-file! direct-api-path
+                   "#lang webracket/base\n(require \"keybindings.rkt\"\n         \"../browser/keybindings.rkt\")\n(provide direct-keybinding-value)\n(define direct-keybinding-value (+ api-keybinding browser-keybinding))\n")
+      (write-file! public-main-path
+                   "#lang webracket/base\n(require \"../api/direct.rkt\")\n(provide direct-keybinding-value)\n")
+      (write-file! public-main-repro-path
+                   "#lang webracket/base\n(require \"../public/main.rkt\")\ndirect-keybinding-value\n")
       (write-file! file-main-path
                    "#lang webracket/base\n(require (file \"construction-geometry.rkt\"))\nconstruction-value\n")
       (write-file! subdir-main-path
@@ -162,6 +185,9 @@
           (display "(assert-local 'nested-rktl-require " out)
           (write (path->string nested-main-path) out)
           (display " '(nested/wrapper.rktl helper.rktl))\n" out)
+          (display "(assert-local 'public-main-keybinding-aliases " out)
+          (write (path->string public-main-repro-path) out)
+          (display " '(api/keybindings api/keybindings.rkt browser/keybindings browser/keybindings.rkt))\n" out)
           (display "(unless (null? failures)\n" out)
           (display "  (raise-arguments-error 'module-bridge-local-paths-and-prefix\n" out)
           (display "                         \"local module path/prefix reproductions failed\"\n" out)

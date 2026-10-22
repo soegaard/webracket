@@ -7360,11 +7360,14 @@
       (hash-set! local-report-names path (cons module-name names)))
     module-name)
   ;; source-path-matches-provider-name? : path? symbol? -> boolean?
-  ;;   Recognize an unresolved local alias by the complete discovered file suffix.
+  ;;   Recognize an unresolved local alias by its complete discovered source-file suffix.
   (define (source-path-matches-provider-name? source-path provider-name)
-    (and (symbol? provider-name)
+    (define candidate-path
+      (candidate-module-symbol->relative-rkt-path provider-name))
+    (and (local-looking-provider-name? provider-name)
+         candidate-path
          (string-suffix? (path->string source-path)
-                         (string-append "/" (symbol->string provider-name)))))
+                         (string-append "/" (path->string candidate-path)))))
   ;; register-external-local-aliases! : void? -> boolean?
   ;;   Add aliases only for unresolved names that identify one discovered local file.
   (define (register-external-local-aliases!)
