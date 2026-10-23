@@ -56,6 +56,8 @@
     (make-temporary-file "webracket-launcher-collection-paths-~a" 'directory))
   (define source-path (build-path base "minimal.rkt"))
   (define compiled-root (build-path base "compiled"))
+  (define provider-cache-dir (build-path base "provider-cache"))
+  (define runtime-provider-cache-dir (build-path base "runtime-provider-cache"))
   (define output-dir (build-path base "output"))
   (define launcher-path (build-path repo-root "webracket.rkt"))
   (dynamic-wind
@@ -79,6 +81,10 @@
                   "--browser"
                   "--ffi"
                   "standard.ffi"
+                  "--provider-cache-dir"
+                  (path->string provider-cache-dir)
+                  "--runtime-provider-cache-dir"
+                  (path->string runtime-provider-cache-dir)
                   "--dest"
                   (path->string output-dir)
                   (path->string source-path)))

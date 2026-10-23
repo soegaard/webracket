@@ -2595,6 +2595,14 @@
                     version
                     (source-paths-with-textual-includes source-paths)))
 
+;; collection-paths-fingerprint : -> (listof string?)
+;;   Record the module-resolution roots that affect extracted provider reports.
+(define (collection-paths-fingerprint)
+  (for/list ([collection-path (in-list (current-library-collection-paths))])
+    (path->string
+     (simplify-path
+      (path->complete-path collection-path)))))
+
 ;; provider-module-source-fingerprint : symbol? -> any/c
 ;;   Include provider source metadata in the disk cache key when available.
 (define (provider-module-source-fingerprint name)
@@ -2736,8 +2744,9 @@
 ;;   Fingerprint extracted local-module graphs using source files and bridge code.
 (define (local-module-graph-fingerprint local-source-paths)
   `(local-module-graph-cache
-    2
+    3
     ,(version)
+    ,(collection-paths-fingerprint)
     ,(source-path-fingerprint 'local-module-graph-source 2 local-source-paths)
     ,(local-module-graph-extractor-fingerprint)))
 
@@ -2828,10 +2837,11 @@
 ;;   Fingerprint a composed bridge result using source, provider, and policy state.
 (define (module-bridge-result-fingerprint local-source-paths module-kinds)
   `(module-bridge-result-cache
-    6
+    7
     ,(version)
     ,(current-webracket/base-provider-substitutions?)
     ,(current-module-bridge-elide-public-cells?)
+    ,(collection-paths-fingerprint)
     ,(current-provider-owned-primitive-alias-fingerprint)
     ,(local-module-graph-extractor-fingerprint)
     ,(source-path-fingerprint
@@ -2948,6 +2958,19 @@
 
 (module+ test
   (require rackunit)
+
+  ;; local-report-fingerprint/collections : (listof path?) -> any/c
+  ;;   Evaluate a local-report cache key under one collection search path.
+  (define (local-report-fingerprint/collections collection-paths)
+    (parameterize ([current-library-collection-paths collection-paths])
+      (local-module-report-fingerprint (build-path webify-root "module-input.rkt"))))
+  (define collection-root-a
+    (build-path (find-system-path 'temp-dir) "webracket-collections-a"))
+  (define collection-root-b
+    (build-path (find-system-path 'temp-dir) "webracket-collections-b"))
+  (check-not-equal?
+   (local-report-fingerprint/collections (list collection-root-a))
+   (local-report-fingerprint/collections (list collection-root-b)))
 
   (define sample-fragment-manifest
     (list (hasheq 'module-name 'user/main
@@ -3230,9 +3253,10 @@
 (define (local-module-report-fingerprint filename)
   (define resolved (simplify-path (path->complete-path filename)))
   `(local-module-report-cache
-    2
+    3
     ,(version)
     ,(current-webracket/base-provider-substitutions?)
+    ,(collection-paths-fingerprint)
     ,(source-path-fingerprint 'local-module-report-source 2 (list resolved))
     ,(local-module-graph-extractor-fingerprint)))
 
@@ -3294,9 +3318,10 @@
      (string-append (provider-cache-symbol-segment name) ".rktd")))
   (define fingerprint
     `(installed-provider-report-cache
-      9
+      10
       ,name
       ,(version)
+      ,(collection-paths-fingerprint)
       ,(provider-module-source-fingerprint name)
       ,(provider-report-extractor-fingerprint)))
   (define cached
@@ -3352,6 +3377,7 @@
                demand-slice?
                module-protocol-dependency
                racket-version
+               collection-paths
                extractor-fingerprint
                local-source-fingerprint
                support-provider-fingerprints))
@@ -3485,11 +3511,12 @@
                                                demand-slice?
                                                module-protocol-dependency)
   `(discovered-provider-graph-cache
-    2
+    3
     ,root
     ,demand-slice?
     ,module-protocol-dependency
     ,(version)
+    ,(collection-paths-fingerprint)
     ,(provider-report-extractor-fingerprint)
     ,(source-path-fingerprint
       'discovered-provider-graph-local-sources
@@ -7104,11 +7131,12 @@
 ;;   Fingerprint provider compile-stub exports using source and extractor code.
 (define (provider-stub-exports-fingerprint name substitute-name)
   `(provider-stub-exports-cache
-    1
+    2
     ,name
     ,substitute-name
     ,(version)
     ,(current-webracket/base-provider-substitutions?)
+    ,(collection-paths-fingerprint)
     ,(provider-module-source-fingerprint substitute-name)
     ,(provider-report-extractor-fingerprint)))
 
