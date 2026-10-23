@@ -3,6 +3,7 @@
 (require browser/element
          webracket/unsafe/document
          (only-in webracket/unsafe/standard
+                  js-ref
                   js-ref/extern))
 
 (provide (except-out (all-defined-out) dom-document?)
@@ -145,7 +146,7 @@
 ;; document-hidden? : -> boolean?
 ;;   Report whether the browser has hidden the current document.
 (define (document-hidden?)
-  (define value (js-ref/extern (js-document) "hidden"))
+  (define value (js-ref (js-document) "hidden"))
   (unless (boolean? value)
     (raise-arguments-error 'document-hidden?
                            "Document.hidden did not return a boolean"))

@@ -272,6 +272,7 @@
          (check-true (dom-document? doc) "document wrapper")
          (check-true (external? (dom-document-raw doc)) "document wrapper raw")
          (check-true (dom-element? body) "document body wrapper")
+         (check-false (document-hidden?) "document hidden on visible page")
          (js-eval
           "globalThis.__wrDocumentHiddenDescriptor =
              Object.getOwnPropertyDescriptor(document, 'hidden');
