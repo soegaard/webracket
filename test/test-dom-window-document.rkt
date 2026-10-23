@@ -272,6 +272,35 @@
          (check-true (dom-document? doc) "document wrapper")
          (check-true (external? (dom-document-raw doc)) "document wrapper raw")
          (check-true (dom-element? body) "document body wrapper")
+         (js-eval
+          "globalThis.__wrDocumentHiddenDescriptor =
+             Object.getOwnPropertyDescriptor(document, 'hidden');
+           Object.defineProperty(document, 'hidden', {
+             value: true,
+             configurable: true
+           });")
+         (check-true (document-hidden?) "document hidden true")
+         (js-eval
+          "Object.defineProperty(document, 'hidden', {
+             value: false,
+             configurable: true
+           });")
+         (check-false (document-hidden?) "document hidden false")
+         (js-eval
+          "Object.defineProperty(document, 'hidden', {
+             value: 'not-a-boolean',
+             configurable: true
+           });")
+         (check-true (expect-error (lambda () (document-hidden?)))
+                     "document hidden type validation")
+         (js-eval
+          "const saved = globalThis.__wrDocumentHiddenDescriptor;
+           if (saved) {
+             Object.defineProperty(document, 'hidden', saved);
+           } else {
+             delete document.hidden;
+           }
+           delete globalThis.__wrDocumentHiddenDescriptor;")
          (check-true (dom-element? host) "document create-element wrapper")
          (check-true (dom-element? child) "document child wrapper")
          (check-true (dom-text? leaf) "document create-text-node wrapper")

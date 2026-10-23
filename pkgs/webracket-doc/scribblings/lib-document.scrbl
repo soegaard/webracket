@@ -267,6 +267,12 @@ Returns the current selection as a wrapped @racket[dom-selection] value.
 Reports whether the document has focus.
 }
 
+@defproc[(document-hidden?) boolean?]{
+@(mdn-bar "Document: hidden property"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Document/hidden")
+Returns the browser document's current visibility-hidden state.
+}
+
 @defproc[(document-element) element?]{
 @(mdn-bar "Document: documentElement property"
           "https://developer.mozilla.org/en-US/docs/Web/API/Document/documentElement")

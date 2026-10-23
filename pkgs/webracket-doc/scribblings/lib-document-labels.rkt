@@ -25,6 +25,7 @@
   document-query-selector
   document-query-selector-all
   document-has-focus?
+  document-hidden?
   document-get-selection
   document-close
   document-open
@@ -62,6 +63,7 @@
 (define document-query-selector any/c)
 (define document-query-selector-all any/c)
 (define document-has-focus? any/c)
+(define document-hidden? any/c)
 (define document-get-selection any/c)
 (define document-close any/c)
 (define document-open any/c)

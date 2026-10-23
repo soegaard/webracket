@@ -142,6 +142,15 @@
 (define (document-has-focus?)
   (not (zero? (js-has-focus))))
 
+;; document-hidden? : -> boolean?
+;;   Report whether the browser has hidden the current document.
+(define (document-hidden?)
+  (define value (js-ref/extern (js-document) "hidden"))
+  (unless (boolean? value)
+    (raise-arguments-error 'document-hidden?
+                           "Document.hidden did not return a boolean"))
+  value)
+
 ;; document-get-selection : -> (or/c #f dom-selection?)
 ;;   Read the current selection.
 (define (document-get-selection)
