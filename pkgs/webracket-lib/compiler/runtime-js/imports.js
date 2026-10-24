@@ -153,6 +153,13 @@ function is_ffi_exception_bridge_module(moduleName) {
   return !ffiExceptionBridgeSkipModules.has(moduleName);
 }
 
+function ffi_import_preserves_host_exception(moduleName, importName) {
+  // `standard:throw` is the explicit JavaScript escape hatch. Its argument
+  // must cross a procedure->external callback as the original thrown value,
+  // rather than being converted into a WebRacket exception.
+  return moduleName === 'standard' && importName === 'throw';
+}
+
 function install_ffi_exception_bridge(imports) {
   // IMPORTANT:
   // Wrap only user FFI modules here (the modules loaded from `.ffi` files).
@@ -174,7 +181,9 @@ function install_ffi_exception_bridge(imports) {
     for (const key of hostObject.keys(table)) {
       const value = table[key];
       if (typeof value === 'function') {
-        table[key] = wrap_ffi_host_exceptions(value);
+        table[key] = ffi_import_preserves_host_exception(moduleName, key)
+          ? value
+          : wrap_ffi_host_exceptions(value);
       }
     }
   }

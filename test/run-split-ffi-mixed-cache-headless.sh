@@ -402,6 +402,8 @@ compile_root_case test-standard-send-missing-host-ffi.html test/test-standard-se
   --ffi "$ROOT_DIR/pkgs/webracket-lib/compiler/ffi/standard.ffi"
 compile_root_case test-standard-property-missing-host-ffi.html test/test-standard-property-missing-host-ffi.rkt \
   --ffi "$ROOT_DIR/pkgs/webracket-lib/compiler/ffi/standard.ffi"
+compile_root_case test-js-throw-external-callback.html test/test-js-throw-external-callback.rkt \
+  --ffi "$ROOT_DIR/pkgs/webracket-lib/compiler/ffi/standard.ffi"
 compile_root_case test-js-standard-global-missing-host-ffi.html test/test-js-standard-global-missing-host-ffi.rkt \
   --ffi "$ROOT_DIR/pkgs/webracket-lib/compiler/ffi/standard.ffi"
 compile_root_case test-js-standard-function-missing-host-ffi.html test/test-js-standard-function-missing-host-ffi.rkt \
