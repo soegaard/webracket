@@ -4435,18 +4435,19 @@
 (define default-compilation-output-cache-max-entries 12)
 
 ;; compilation-output-cache-compiler-fingerprint : -> any/c
-;;   Fingerprint compiler sources so development edits invalidate output bundles.
+;;   Fingerprint compiler and generated-host sources so development edits
+;;   invalidate output bundles.
 (define (compilation-output-cache-compiler-fingerprint)
-  (define (racket-source-file? path)
+  (define (compiler-source-file? path)
     (and (file-exists? path)
-         (member (path-get-extension path) '(#".rkt" #".rktl"))))
+         (member (path-get-extension path) '(#".rkt" #".rktl" #".js"))))
   (path-fingerprint
    'compilation-output-cache-compiler
    1
    (append
-    (find-files racket-source-file?
+    (find-files compiler-source-file?
                 (build-path webracket-root "pkgs" "webracket-lib"))
-    (find-files racket-source-file?
+    (find-files compiler-source-file?
                 (build-path webracket-root "pkgs" "webracket")))))
 
 ;; compilation-output-cache-key-fingerprint : any/c -> string?

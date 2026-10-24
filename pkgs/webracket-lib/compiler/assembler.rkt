@@ -13,9 +13,18 @@
          "private/fasl.rkt"
          "private/get-env-path.rkt"
          "private/wat-identifiers.rkt"
-         racket/runtime-path)
+         racket/runtime-path
+         (for-syntax compiler/cm-accomplice
+                     racket/runtime-path))
 
 (define-runtime-path runtime-js-imports-path "runtime-js/imports.js")
+
+;; Register the generated-host source with Racket's compilation manager, so a
+;; normal `raco make` rebuilds this assembler whenever the injected JavaScript
+;; changes.
+(begin-for-syntax
+  (define-runtime-path runtime-js-imports-path "runtime-js/imports.js")
+  (register-external-file runtime-js-imports-path))
 
 ;; runtime-js-imports : string?
 ;;   JavaScript host imports spliced into generated Node/browser runtimes.
