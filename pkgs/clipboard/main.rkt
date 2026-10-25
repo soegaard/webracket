@@ -325,6 +325,50 @@
               (vector (clipboard-stringish->string 'make-clipboard-item mime-type)
                       (blob-raw value))))))))
 
+;; clipboard-flavors->native-fields : (listof (cons/c string? blob?)) -> vector?
+;;   Validate ordered MIME/Blob flavors and turn them into JavaScript object fields.
+(define (clipboard-flavors->native-fields flavors)
+  (unless (pair? flavors)
+    (raise-argument-error 'make-clipboard-item/flavors
+                          "(and/c pair? (listof (cons/c string? blob?)))"
+                          flavors))
+  (unless (list? flavors)
+    (raise-argument-error 'make-clipboard-item/flavors
+                          "(listof (cons/c string? blob?))"
+                          flavors))
+  (let loop ([remaining flavors] [seen '()] [fields '()])
+    (cond [(null? remaining)
+           (list->vector (reverse fields))]
+          [else
+           (define flavor    (car remaining))
+           (unless (pair? flavor)
+             (raise-argument-error 'make-clipboard-item/flavors
+                                   "(cons/c string? blob?)"
+                                   flavor))
+           (define mime-type (car flavor))
+           (define value     (cdr flavor))
+           (unless (string? mime-type)
+             (raise-argument-error 'make-clipboard-item/flavors "string?" mime-type))
+           (unless (blob? value)
+             (raise-argument-error 'make-clipboard-item/flavors "blob?" value))
+           (when (member mime-type seen)
+             (raise-arguments-error 'make-clipboard-item/flavors
+                                    "duplicate MIME type"
+                                    "mime-type" mime-type))
+           (loop (cdr remaining)
+                 (cons mime-type seen)
+                 (cons (vector mime-type (blob-raw value)) fields))])))
+
+;; make-clipboard-item/flavors : (listof (cons/c string? blob?)) -> clipboard-item?
+;;   Construct one ClipboardItem whose MIME/Blob entries retain the supplied order.
+(define (make-clipboard-item/flavors flavors)
+  (define fields (clipboard-flavors->native-fields flavors))
+  (unless (clipboard-item-supported?)
+    (raise-arguments-error 'make-clipboard-item/flavors "ClipboardItem is not available"))
+  (clipboard-item-info
+   (js-new (js-var "ClipboardItem")
+           (vector (js-object fields)))))
+
 ;; clipboard-item-types : clipboard-item? -> vector?
 ;;   Return MIME types in their native ClipboardItem order.
 (define (clipboard-item-types item)
@@ -357,6 +401,40 @@
    "read"
    (js-send/extern (clipboard-raw value) "read" (vector))
    "Clipboard"))
+
+;; clipboard-read-items->vector : any/c -> (vectorof clipboard-item?)
+;;   Wrap a native ClipboardItem array-like result without changing its order.
+(define (clipboard-read-items->vector raw-items)
+  (define (wrap raw-item)
+    (define item (clipboard-item-wrap raw-item))
+    (unless (clipboard-item? item)
+      (raise-arguments-error 'clipboard-read-items
+                             "Clipboard.read result contains an invalid ClipboardItem"))
+    item)
+  (cond [(vector? raw-items)
+         (let loop ([index 0] [items '()])
+           (if (= index (vector-length raw-items))
+               (list->vector (reverse items))
+               (loop (add1 index)
+                     (cons (wrap (vector-ref raw-items index)) items))))]
+        [(clipboard-raw-host-value? raw-items)
+         (define length (js-ref raw-items "length"))
+         (unless (exact-nonnegative-integer? length)
+           (raise-arguments-error 'clipboard-read-items
+                                  "Clipboard.read result is not array-like"))
+         (let loop ([index 0] [items '()])
+           (if (= index length)
+               (list->vector (reverse items))
+               (loop (add1 index)
+                     (cons (wrap (js-index raw-items index)) items))))]
+        [else
+         (raise-argument-error 'clipboard-read-items "ClipboardItem array-like value" raw-items)]))
+
+;; clipboard-read-items : clipboard? -> js-promise?
+;;   Start a ClipboardItem read whose fulfillment value is a vector of wrapped items.
+(define (clipboard-read-items value)
+  (js-promise-map-fulfilled (clipboard-read value)
+                            clipboard-read-items->vector))
 
 ;; clipboard-write! : clipboard-info? vector? -> js-promise?
 ;;   Start an activation-sensitive ClipboardItem write in the current native callback.

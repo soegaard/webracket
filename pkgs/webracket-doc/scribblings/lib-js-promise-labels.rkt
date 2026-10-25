@@ -9,6 +9,7 @@
   js-promise-wrap
   js-promise-unwrap
   js-promise-thenable?
+  js-promise-map-fulfilled
   js-promise-resolved
   js-promise-rejected
   js-promise-then
@@ -21,6 +22,7 @@
 (define js-promise-wrap any/c)
 (define js-promise-unwrap any/c)
 (define js-promise-thenable? any/c)
+(define js-promise-map-fulfilled any/c)
 (define js-promise-resolved any/c)
 (define js-promise-rejected any/c)
 (define js-promise-then any/c)

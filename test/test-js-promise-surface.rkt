@@ -13,6 +13,7 @@
  js-promise-wrap
  js-promise-unwrap
  js-promise-thenable?
+ js-promise-map-fulfilled
  js-promise-resolved
  js-promise-rejected
  js-promise-then
@@ -26,6 +27,9 @@
             "js-promise-resolved returns a wrapped promise")
 (check-true (js-promise? rejected-promise)
             "js-promise-rejected returns a wrapped promise")
+(check-true (js-promise? (js-promise-map-fulfilled resolved-promise
+                                                     (lambda (value) value)))
+            "js-promise-map-fulfilled returns a wrapped promise")
 (check-true (js-promise? (js-promise-then resolved-promise
                                           (lambda (value) value)))
             "js-promise-then returns a wrapped promise")

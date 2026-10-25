@@ -11,6 +11,7 @@
          js-promise-wrap-result
          js-promise-unwrap
          js-promise-thenable?
+         js-promise-map-fulfilled
          js-promise-resolved
          js-promise-rejected
          js-promise-then
@@ -23,7 +24,10 @@
 
 ;; js-promise : external/raw -> js-promise?
 ;;   Wrap a JavaScript Promise-like value.
-(struct js-promise (raw) #:transparent)
+(struct js-promise (raw [fulfillment-transform #:auto])
+  #:transparent
+  #:mutable
+  #:auto-value #f)
 
 ;; js-promise-raw-host-value? : any/c -> boolean?
 ;;   Report whether raw is a non-nullish external host value.
@@ -92,6 +96,23 @@
 (define (js-promise/surface? v)
   (js-promise-thenable? v))
 
+;; js-promise-map-fulfilled : js-promise? procedure? -> js-promise?
+;;   Return a wrapper that transforms fulfilled values before Racket handlers receive them.
+(define (js-promise-map-fulfilled promise transform)
+  (unless (js-promise-thenable? promise)
+    (raise-argument-error 'js-promise-map-fulfilled "js-promise?" promise))
+  (unless (procedure? transform)
+    (raise-argument-error 'js-promise-map-fulfilled "procedure?" transform))
+  (define prior-transform (js-promise-fulfillment-transform promise))
+  (define mapped (js-promise (js-promise-unwrap promise)))
+  (set-js-promise-fulfillment-transform!
+   mapped
+   (if prior-transform
+       (lambda (value)
+         (transform (prior-transform value)))
+       transform))
+  mapped)
+
 ;; js-promise-handler->external : symbol? (or/c procedure? external?) -> external?
 ;;   Convert a handler to the callback retained by the native Promise.
 (define (js-promise-handler->external who handler)
@@ -130,7 +151,19 @@
 (define (js-promise-then promise on-fulfilled [on-rejected #f])
   (unless (js-promise-thenable? promise)
     (raise-argument-error 'js-promise-then "js-promise?" promise))
-  (define on-fulfilled* (js-promise-handler->external 'js-promise-then on-fulfilled))
+  (define transform (js-promise-fulfillment-transform promise))
+  (define on-fulfilled*
+    (js-promise-handler->external
+     'js-promise-then
+     (if (and transform (procedure? on-fulfilled))
+         (lambda args
+           (cond [(null? args)
+                  (on-fulfilled)]
+                 [else
+                  (apply on-fulfilled
+                         (cons (transform (car args))
+                               (cdr args)))]))
+         on-fulfilled)))
   (js-promise-wrap-result
    'js-promise-then
    "then"

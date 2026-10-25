@@ -68,6 +68,15 @@ Wraps a Promise-like browser value.
 Returns the wrapped raw Promise-like value.
 }
 
+@defproc[(js-promise-map-fulfilled [promise js-promise?]
+                                   [transform procedure?])
+         js-promise?]{
+Returns a wrapper that applies @racket[transform] to a fulfilled value before a
+Racket procedure supplied to @racket[js-promise-then] receives it. The raw
+browser Promise and its rejection behavior are unchanged. JavaScript handlers
+passed as @racket[external?] values continue to receive the raw value.
+}
+
 @defproc[(js-promise-resolved [value any/c]) js-promise?]{
 Creates an already-resolved JavaScript Promise.
 }

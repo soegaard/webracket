@@ -187,6 +187,17 @@ Reports whether the browser provides a constructible @tt{ClipboardItem}.
 Creates one MIME ClipboardItem containing @racket[value].
 }
 
+@defproc[(make-clipboard-item/flavors
+          [flavors (and/c pair? (listof (cons/c string? blob?)))])
+         clipboard-item?]{
+@(mdn-bar "ClipboardItem: ClipboardItem() constructor"
+          "https://developer.mozilla.org/en-US/docs/Web/API/ClipboardItem/ClipboardItem")
+Creates one ClipboardItem containing every supplied MIME/Blob pair. The pairs
+are retained in the supplied order, which is returned by
+@racket[clipboard-item-types]. The list must be non-empty, use string MIME
+types, contain @racket[blob?] values, and not repeat a MIME type.
+}
+
 @defproc[(clipboard-item-types [item clipboard-item?]) vector?]{
 @(mdn-bar "ClipboardItem: types property"
           "https://developer.mozilla.org/en-US/docs/Web/API/ClipboardItem/types")
@@ -207,6 +218,15 @@ Starts an asynchronous MIME lookup whose fulfillment value is a native Blob.
 @(mdn-bar "Clipboard: read() method"
           "https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/read")
 Starts asynchronous ClipboardItem enumeration; permission and activation failures reject the Promise.
+}
+
+@defproc[(clipboard-read-items [value clipboard?]) js-promise?]{
+@(mdn-bar "Clipboard: read() method"
+          "https://developer.mozilla.org/en-US/docs/Web/API/Clipboard/read")
+Starts asynchronous ClipboardItem enumeration. The fulfilled value is a vector
+of @racket[clipboard-item?] values in browser order, so it can be passed
+directly to @racket[clipboard-item-types] and @racket[clipboard-item-get-type].
+Browser rejection behavior is preserved.
 }
 
 @defproc[(clipboard-write! [value clipboard?] [items vector?]) js-promise?]{

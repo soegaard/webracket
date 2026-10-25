@@ -10,4 +10,8 @@
  clipboard-read-text
  clipboard-write-text!)
 
+(void
+ make-clipboard-item/flavors
+ clipboard-read-items)
+
 #t

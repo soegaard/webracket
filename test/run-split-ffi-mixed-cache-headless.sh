@@ -500,6 +500,9 @@ compile_root_case test-clipboard-surface.html test/test-clipboard-surface.rkt \
 compile_root_case test-clipboard-mock.html test/test-clipboard-mock.rkt \
   --ffi "$ROOT_DIR/pkgs/webracket-lib/compiler/ffi/standard.ffi" \
   --ffi "$ROOT_DIR/pkgs/webracket-lib/compiler/ffi/dom.ffi"
+compile_root_case test-clipboard-multi-mime.html test/test-clipboard-multi-mime.rkt \
+  --ffi "$ROOT_DIR/pkgs/webracket-lib/compiler/ffi/standard.ffi" \
+  --ffi "$ROOT_DIR/pkgs/webracket-lib/compiler/ffi/dom.ffi"
 compile_root_case test-clipboard-method-missing-host-ffi.html test/test-clipboard-method-missing-host-ffi.rkt \
   --ffi "$ROOT_DIR/pkgs/webracket-lib/compiler/ffi/standard.ffi" \
   --ffi "$ROOT_DIR/pkgs/webracket-lib/compiler/ffi/dom.ffi"

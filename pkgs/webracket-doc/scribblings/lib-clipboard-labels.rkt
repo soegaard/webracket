@@ -30,9 +30,11 @@
   clipboard-item?
   clipboard-item-raw
   make-clipboard-item
+  make-clipboard-item/flavors
   clipboard-item-types
   clipboard-item-get-type
   clipboard-read
+  clipboard-read-items
   clipboard-write!
   (for-label (all-defined-out)))
 
@@ -61,7 +63,9 @@
 (define clipboard-item? any/c)
 (define clipboard-item-raw any/c)
 (define make-clipboard-item any/c)
+(define make-clipboard-item/flavors any/c)
 (define clipboard-item-types any/c)
 (define clipboard-item-get-type any/c)
 (define clipboard-read any/c)
+(define clipboard-read-items any/c)
 (define clipboard-write! any/c)
