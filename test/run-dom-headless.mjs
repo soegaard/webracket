@@ -145,6 +145,19 @@ async function reportFailure({
 
 // Return the page-specific smoke probe for browser fixtures that need one.
 async function runPageProbe(page, testPage, consoleMessages) {
+  if (testPage === "test-regexp-posix-character-class-split.html") {
+    for (let i = 0; i < 30; i++) {
+      if (consoleMessages.some((text) =>
+        text.includes("regexp-posix-character-class-split-ok"))) {
+        return true;
+      }
+      await page.waitForTimeout(100);
+    }
+    throw new Error(
+      `Expected POSIX character-class regexp split output not observed. Console: ${JSON.stringify(consoleMessages)}`
+    );
+  }
+
   if (testPage === "test-vfs-tgz-browser.html") {
     for (let i = 0; i < 30; i++) {
       if (consoleMessages.some((text) => text.includes("hello from browser tgz"))) {

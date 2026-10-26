@@ -483,6 +483,52 @@
       (with-handlers ([exn:fail:filesystem? void])
         (delete-directory/files base)))))
 
+;; run-racket-math-nan-provider-extraction-smoke : path? path? -> void?
+;;   Assert that a provider compile stub retains an already-mapped re-export.
+(define (run-racket-math-nan-provider-extraction-smoke repo-root racket-exe)
+  (define base (make-temporary-file "webracket-racket-math-nan-provider-~a" 'directory))
+  (define script-path (build-path base "bridge-extract-racket-math-nan.rkt"))
+  (define compiled-root (build-path base "compiled"))
+  (dynamic-wind
+    void
+    (lambda ()
+      (make-directory* compiled-root)
+      (call-with-output-file script-path
+        (lambda (out)
+          (display "#lang racket/base\n" out)
+          (display "(require (file \"" out)
+          (display (path->string (build-path repo-root "pkgs" "webracket-lib" "compiler" "driver.rkt")) out)
+          (display "\")\n" out)
+          (display "         (file \"" out)
+          (display (path->string (build-path repo-root "pkgs" "webracket-lib" "compiler" "webify" "module-extractor.rkt")) out)
+          (display "\"))\n" out)
+          (display "(define namespace (make-webify-contract-erasing-namespace))\n" out)
+          (display "(define resolver (make-webify-contract-erasing-module-name-resolver))\n" out)
+          (display "(unless (memq 'nan?\n" out)
+          (display "              (provider-public-export-symbols 'racket/math namespace resolver))\n" out)
+          (display "  (error 'racket-math-nan-provider \"missing provider export: nan?\"))\n" out)
+          (display "(write 'nan?)\n" out)
+          (display "(newline)\n" out))
+        #:exists 'truncate/replace)
+      (define stdout (open-output-string))
+      (define stderr (open-output-string))
+      (define status
+        (parameterize ([current-directory repo-root]
+                       [current-output-port stdout]
+                       [current-error-port stderr]
+                       [current-environment-variables (env-with-collections repo-root compiled-root)])
+          (system*/exit-code racket-exe (path->string script-path))))
+      (define output
+        (string-append (get-output-string stdout)
+                       (get-output-string stderr)))
+      (unless (zero? status)
+        (error 'test-module-bridge-extraction
+               (format "racket/math nan? provider extraction failed (~a): ~a"
+                       status output))))
+    (lambda ()
+      (with-handlers ([exn:fail:filesystem? void])
+        (delete-directory/files base)))))
+
 (module+ main
   (define repo-root
     (find-repo-root (or (current-load-relative-directory)
@@ -490,6 +536,7 @@
   (define racket-exe (repo-racket-executable repo-root))
   (run-bridge-extraction-smoke repo-root racket-exe)
   (run-imported-binding-extraction-smoke repo-root racket-exe)
+  (run-racket-math-nan-provider-extraction-smoke repo-root racket-exe)
   (run-local-sibling-module-extraction-smoke repo-root racket-exe)
   (run-browser-dom-no-io-format-support-smoke repo-root racket-exe)
   (run-browser-canvas-unsafe-undefined-smoke repo-root racket-exe)

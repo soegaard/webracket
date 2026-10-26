@@ -7,6 +7,7 @@
          webify-regexp-export-symbols
          webify-regexp-provider-owned-symbols
          webify-regexp-bootstrap-helper-symbols
+         webify-regexp-demand-symbols
          webify-regexp-default-cache-root
          webify-regexp-cache-paths
          webify-regexp-lowered-provider-cache-path
@@ -80,6 +81,13 @@
     webracket-literal-byte-regexp
     webracket-literal-pregexp
     webracket-literal-regexp))
+
+;; The private string helpers use the staged regexp provider without being
+;; provider-owned exports themselves.
+(define webify-regexp-demand-symbols
+  (append webify-regexp-export-symbols
+          webify-regexp-bootstrap-helper-symbols
+          '(regexp-split)))
 
 (define webify-regexp-default-cache-root
   (build-path (find-system-path 'temp-dir) "webracket-regexp-provider-cache"))

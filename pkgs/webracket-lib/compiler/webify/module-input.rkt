@@ -1037,12 +1037,28 @@
           #:when (eq? dependency explicit)
           hinted-export]
          [_ external]))
-     (list explicit
-           (validate-provider-export! who
-                                      dependency-exports
-                                      explicit
-                                      (dependency-export-ref who explicit exports provider-export))
-           'resolved-by-explicit-dependency)]
+     (cond
+       [(and (not (for/or ([export (in-list exports)])
+                    (symbolic-name=? export provider-export)))
+             ;; Some Racket providers (such as racket/math) re-export a
+             ;; runtime primitive without allocating a linklet export cell.
+             ;; Preserve the source-level provider surface, but route that
+             ;; imported binding to the supported runtime primitive.
+             (module-phase0-exported? explicit provider-export)
+             (webify-primitive-name? provider-export))
+        (list '#%kernel
+              (validate-provider-export! who
+                                         dependency-exports
+                                         '#%kernel
+                                         provider-export)
+              'resolved-by-explicit-reexported-runtime-primitive)]
+       [else
+        (list explicit
+              (validate-provider-export! who
+                                         dependency-exports
+                                         explicit
+                                         (dependency-export-ref who explicit exports provider-export))
+              'resolved-by-explicit-dependency)])]
     [hint
      (match-define (list dependency provider-export) hint)
      (list dependency

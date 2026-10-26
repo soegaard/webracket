@@ -190,7 +190,7 @@
                   webify-io-print-public-alias-forms)
          (only-in "webify/regexp-provider.rkt"
                   webify-regexp-default-cache-root
-                  webify-regexp-bootstrap-helper-symbols
+                  webify-regexp-demand-symbols
                   webify-regexp-export-symbols
                   webify-regexp-lowered-provider-cache-path
                   webify-regexp-linklet
@@ -276,7 +276,8 @@
                   webify-module-report-phase0-imports
                   webify-module-report-phase0-linklet-datum
                   webify-module-report-required-provider-names
-                  webify-module-reports->resolved-linklet-inputs)
+                  webify-module-reports->resolved-linklet-inputs
+                  webify-normalize-linklet-exports)
          (only-in "webify/module-protocol.rkt"
                   webify-module-protocol-name
                   webify-module-protocol-input
@@ -545,8 +546,7 @@
 ;;   Detect whether the composed bridge datum refers to staged regexp bindings.
 (define (module-bridge-datum-needs-regexp-provider? datum)
   (define target-symbols
-    (for/hasheq ([sym (in-list (append webify-regexp-export-symbols
-                                       webify-regexp-bootstrap-helper-symbols))])
+    (for/hasheq ([sym (in-list webify-regexp-demand-symbols)])
       (values sym #t)))
   (define found? #f)
   (define visited-pairs (make-weak-hasheq))
@@ -2837,7 +2837,7 @@
 ;;   Fingerprint a composed bridge result using source, provider, and policy state.
 (define (module-bridge-result-fingerprint local-source-paths module-kinds)
   `(module-bridge-result-cache
-    7
+    8
     ,(version)
     ,(current-webracket/base-provider-substitutions?)
     ,(current-module-bridge-elide-public-cells?)
@@ -4078,6 +4078,30 @@
                   '())))
            (write-provider-cache! cache-path fingerprint forms)
            forms])))]))
+
+;; regexp-provider-report : -> webify-module-report?
+;;   Present the flattened staged regexp provider as one bridge module.
+(define (regexp-provider-report)
+  (define linklet
+    (webify-regexp-linklet #:cache-root (current-runtime-cache-dir)
+                           #:force? (current-provider-cache-force?)
+                           #:verbose? (current-provider-cache-verbose?)))
+  (match linklet
+    [`(linklet ,imports ,exports . ,_body)
+     (webify-module-report
+      'regexp
+      '(#f)
+      '(0)
+      (list (webify-module-bundle-entry 0 'linklet imports exports linklet #f))
+      imports
+      (webify-normalize-linklet-exports exports)
+      linklet
+      #t
+      '("flattened staged regexp provider"))]
+    [_
+     (error 'regexp-provider-report
+            "expected flattened regexp linklet, got: ~e"
+            linklet)]))
 
 ;; add-io-format-provider : syntax? #:regexp-provider? boolean? #:expander-read-provider? boolean? #:expander-read-syntax-provider? boolean? -> syntax?
 ;;   Prepend only the staged io/format provider, without the old stdlib root.
@@ -7132,7 +7156,7 @@
 ;;   Fingerprint provider compile-stub exports using source and extractor code.
 (define (provider-stub-exports-fingerprint name substitute-name)
   `(provider-stub-exports-cache
-    2
+    3
     ,name
     ,substitute-name
     ,(version)
@@ -7223,9 +7247,22 @@
                    [current-module-name-resolver module-name-resolver])
       (namespace-require name)
       (define after (namespace-mapped-symbols namespace))
-      (for/list ([sym (in-list after)]
-                 #:unless (memq sym before))
-        sym))))
+      ;; A provider may re-export a binding already mapped by the language
+      ;; namespace (for example, racket/math re-exports nan?).  The mapped
+      ;; name delta alone would then omit a required provider export.
+      (define-values (value-exports _syntax-exports) (module->exports name))
+      (define phase-0-value-exports
+        (let ([phase-0 (assoc 0 value-exports)])
+          (if phase-0
+              (for/list ([entry (in-list (cdr phase-0))]
+                         #:when (symbol? (car entry)))
+                (car entry))
+              '())))
+      (remove-duplicates
+       (append phase-0-value-exports
+               (for/list ([sym (in-list after)]
+                          #:unless (memq sym before))
+                 sym))))))
 
 ;; shared-webify-contract-erasing-namespace/ref : -> namespace?
 ;;   Reuse one erased-contract extraction namespace per driver process.
@@ -7822,6 +7859,15 @@
        (module-reports-import-expander-read-alias? bridge-reports))))
   (current-module-bridge-needs-expander-read-provider?
    needs-expander-read-support?)
+  (define needs-regexp-support?
+    (with-module-bridge-timing
+     'module-graph-regexp-support-demand
+     (lambda ()
+       (for/or ([report (in-list bridge-reports)])
+         (module-bridge-datum-needs-regexp-provider?
+          (webify-module-report-phase0-linklet-datum report))))))
+  (current-module-bridge-needs-regexp-provider?
+   needs-regexp-support?)
   (define needs-io-format-support?
     (with-module-bridge-timing
      'module-graph-io-format-support-demand
@@ -7844,6 +7890,7 @@
     (cond
      [(or (webracket/base-reports-demand-external-providers? bridge-reports)
           needs-expander-read-support?
+          needs-regexp-support?
           needs-io-print-support?)
        (with-module-bridge-timing
         'module-graph-check-provider-allowlist
@@ -8183,6 +8230,13 @@
                       'racket-src/io/print/main-web
                       'io/print)
                 '()))))
+       (define regexp-support-report-names
+         (with-module-bridge-timing
+          'module-graph-regexp-support-report-names
+          (lambda ()
+            (if needs-regexp-support?
+                '(regexp)
+                '()))))
        (set! support-report-names
              (with-module-bridge-timing
               'module-graph-support-report-name-assembly
@@ -8198,6 +8252,7 @@
                      '())
                  ffi-support-report-names
                  expander-read-support-report-names
+                 regexp-support-report-names
                  io-format-support-report-names
                  io-print-support-report-names))))
        (define (unit-support-reports)
@@ -8310,6 +8365,9 @@
                       ;; through racket-src/expander/common/prefab.
                       (list (webify-module-provider-cache-ref provider-cache
                                                               'racket/prefab)))
+                     '())
+                 (if needs-regexp-support?
+                     (list (regexp-provider-report))
                      '())
                  (if needs-io-format-closure?
                      (io-format-provider-reports)
@@ -8524,8 +8582,15 @@
                            (module-composer-primitive-overrides)])
              (webify-compose-module-registry/roots/composition
               (webracket/base-local-module-graph-registry graph)
-              (list (webracket/base-local-module-graph-root graph))
-              #:define-export-aliases? #f
+              (append
+               (if (current-module-bridge-needs-regexp-provider?)
+                   '(regexp)
+                   '())
+               (list (webracket/base-local-module-graph-root graph)))
+              #:define-export-aliases?
+              (lambda (module-name export)
+                (and (eq? module-name 'regexp)
+                     (memq export webify-regexp-export-symbols)))
               #:serializable?-box     #f
               #:datum-intern?         #f
               #:target                #f
@@ -8630,8 +8695,15 @@
                            (module-composer-primitive-overrides)])
              (webify-compose-module-registry/roots/composition
               (webracket/base-local-module-graph-registry graph)
-              (list (webracket/base-local-module-graph-root graph))
-              #:define-export-aliases? #f
+              (append
+               (if (current-module-bridge-needs-regexp-provider?)
+                   '(regexp)
+                   '())
+               (list (webracket/base-local-module-graph-root graph)))
+              #:define-export-aliases?
+              (lambda (module-name export)
+                (and (eq? module-name 'regexp)
+                     (memq export webify-regexp-export-symbols)))
               #:serializable?-box     #f
               #:datum-intern?         #f
               #:target                #f

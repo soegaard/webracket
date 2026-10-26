@@ -1784,12 +1784,17 @@
                            candidate-specs
                            entry-map))
 
-;; export-alias-enabled? : any/c symbol? -> boolean?
-;;   Decide whether to define a top-level alias for an exported cell.
-(define (export-alias-enabled? mode export)
+;; export-alias-enabled? : any/c (or/c symbol? #f) symbol? -> boolean?
+;;   Decide whether to define a top-level alias for one module export.
+(define (export-alias-enabled? mode module-name export)
   (cond
-    [(procedure? mode) (and (mode export) #t)]
-    [else             (and mode #t)]))
+    [(procedure? mode)
+     (and (if (procedure-arity-includes? mode 2)
+              (mode module-name export)
+              (mode export))
+          #t)]
+    [else
+     (and mode #t)]))
 
 ;; first-slice->top-level-datum : any/c (listof symbol?) -> any/c
 ;;   Wrap a lowered import-free first-slice lambda in top-level forms.
@@ -1993,7 +1998,9 @@
                       `(define ,value-id (module-variable-ref ,(bridge-export-entry-binding entry))))))
      ,@(for/list ([export  (in-list exports)]
                   [value-id (in-list value-ids)]
-                  #:when (export-alias-enabled? define-export-aliases? export))
+                  #:when (export-alias-enabled? define-export-aliases?
+                                                  module-name
+                                                  export))
          `(define ,export ,value-id))
      (void)))
 
