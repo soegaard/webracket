@@ -144,7 +144,26 @@ async function reportFailure({
 }
 
 // Return the page-specific smoke probe for browser fixtures that need one.
-async function runPageProbe(page, testPage, consoleMessages) {
+async function runPageProbe(page, testPage, consoleMessages, timeoutMs) {
+  const directFieldMarkers = {
+    "wr-direct-field-one-mount-control.html": "wr-direct-field-one-mount-control: success",
+    "wr-direct-field-second-mount-illegal-cast.html": "wr-direct-field-second-mount: success",
+  };
+  const directFieldMarker = directFieldMarkers[testPage];
+
+  if (directFieldMarker) {
+    const deadline = Date.now() + timeoutMs;
+    while (Date.now() < deadline) {
+      if (consoleMessages.some((text) => text.includes(directFieldMarker))) {
+        return true;
+      }
+      await page.waitForTimeout(100);
+    }
+    throw new Error(
+      `Expected direct-field completion not observed. Console: ${JSON.stringify(consoleMessages)}`
+    );
+  }
+
   if (testPage === "test-regexp-posix-character-class-split.html") {
     for (let i = 0; i < 30; i++) {
       if (consoleMessages.some((text) =>
@@ -560,7 +579,7 @@ async function main() {
             throw pageErrors[0];
           }
 
-          const handled = await runPageProbe(page, testPage, consoleMessages);
+          const handled = await runPageProbe(page, testPage, consoleMessages, perTestTimeoutMs);
 
           if (!handled) {
             await waitForGenericCompletion(page, testPage, consoleMessages, perTestTimeoutMs);

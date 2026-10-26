@@ -300,7 +300,9 @@
 ;;   Primitives whose reflected arity is a finite optional range, but whose
 ;;   runtime entry point uses mandatory arguments plus one rest-list argument.
 (define primitive-finite-rest-list-wrappers
-  '((bytes-convert 2 7 32)))
+  '((bytes-convert 2 7 32)
+    (peek-bytes-avail! 2 6 33)
+    (peek-bytes-avail!* 2 6 33)))
 
 ;; primitive-finite-rest-list-shape : symbol? any/c -> (or/c exact-nonnegative-integer? #f)
 ;;   Return the specialized finite-arity rest-list invoker shape, if any.
@@ -313,7 +315,7 @@
 ;; primitive-shapes : (listof exact-nonnegative-integer?)
 ;;   Enumerate primitive invoker shapes emitted by the runtime.
 (define primitive-shapes
-  '(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32))
+  '(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 32 33))
 
 ;; primitive-arity->shape : symbol? any/c -> (or/c exact-nonnegative-integer? #f)
 ;;   Select the primitive invoker shape for a primitive name and arity.
@@ -365,6 +367,7 @@
     [30 'primitive-invoke:shape-30]
     [31 'primitive-invoke:shape-31]
     [32 'primitive-invoke:shape-32]
+    [33 'primitive-invoke:shape-33]
     [_  'primitive-invoke]))
 
 ;; procedure-primitive-global-forms : (listof symbol?) -> (listof datum?)
@@ -1049,6 +1052,24 @@
                                   (local.get $a1)
                                   (local.get $rest)
                                   (ref.cast (ref $Prim>=2) (local.get $code))))
+           (else (return (call $raise-code-type-mismatch (local.get $pproc)))))
+       (unreachable))]
+    [33 ; between 2 and 6 arguments, rest arguments as list after the first
+     `((if (i32.lt_u (local.get $argc) (i32.const 2))
+           (then (return (call $primitive-invoke:raise-arity-error
+                               (local.get $pproc) (local.get $argc)))))
+       (if (i32.gt_u (local.get $argc) (i32.const 6))
+           (then (return (call $primitive-invoke:raise-arity-error
+                               (local.get $pproc) (local.get $argc)))))
+       (if (ref.test (ref $Prim>=1) (local.get $code))
+           (then (local.set $rest
+                            (call $rest-arguments->list
+                                  (local.get $args)
+                                  (i32.const 1)))
+                 (return_call_ref $Prim>=1
+                                  (local.get $a0)
+                                  (local.get $rest)
+                                  (ref.cast (ref $Prim>=1) (local.get $code))))
            (else (return (call $raise-code-type-mismatch (local.get $pproc)))))
        (unreachable))]
     [_ (error 'primitive-invoker-tail "unknown shape: ~a" shape)]))
@@ -4624,8 +4645,11 @@
   (check-equal? (primitive-arity->shape 'apply (arity-at-least 0)) 6)
   (check-equal? (primitive-arity->shape 'void (arity-at-least 4)) 31)
   (check-equal? (primitive-arity->shape 'bytes-convert '(2 3 4 5 6 7)) 32)
+  (check-equal? (primitive-arity->shape 'peek-bytes-avail! '(2 3 4 5 6)) 33)
+  (check-equal? (primitive-arity->shape 'peek-bytes-avail!* '(2 3 4 5 6)) 33)
   (check-equal? (shape->invoker 31) 'primitive-invoke:shape-31)
   (check-equal? (shape->invoker 32) 'primitive-invoke:shape-32)
+  (check-equal? (shape->invoker 33) 'primitive-invoke:shape-33)
   (check-equal? (arity->procedure-field-expr 2) (Imm 2))
   (check-equal? (arity->procedure-field-expr '(0 2))
                 '(ref.cast (ref eq)
@@ -4645,6 +4669,12 @@
   (check-equal? (second primitive-init) '$prim:foo)
   (check-true (tree-member? '(ref.func $primitive-invoke:shape-2) primitive-init))
   (check-true (tree-member? '(ref.func $foo) primitive-init))
+
+  (define peek-bytes-avail-init
+    (first (procedure-primitive-initializer-forms
+            (list (list 'peek-bytes-avail! '(2 3 4 5 6) 1)))))
+  (check-true (tree-member? '(ref.func $primitive-invoke:shape-33)
+                            peek-bytes-avail-init))
 
   (define ffi-init
     (first (procedure-ffi-primitive-initializer-forms

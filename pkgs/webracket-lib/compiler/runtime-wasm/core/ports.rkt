@@ -336,7 +336,8 @@
 ;; port-peek-bytes-bang-runtime-only-helper-names : (listof symbol?)
 ;;   Preserve the runtime emission order for mutating byte peek helpers.
 (define port-peek-bytes-bang-runtime-only-helper-names
-  '($peek-bytes!/who
+  '($peek-bytes!/custom
+    $peek-bytes!/who
     $peek-bytes!
     $peek-bytes-avail!:progress-not-supported
     $peek-bytes-avail!/who
@@ -3484,6 +3485,91 @@
   (function-forms->runtime-helpers
    'port-peek-bytes-runtime-only-helpers
    '(
+     ;; $peek-bytes!/custom : symbol? bytes? exact-nonnegative-integer? custom-input-port? exact-nonnegative-integer? exact-nonnegative-integer? -> exact-nonnegative-integer? or eof?
+     ;;   Peek through a custom input port's synchronous peek procedure.
+     (func $peek-bytes!/custom
+           (param $who   (ref eq))
+           (param $bstr  (ref eq)) ;; bytes?
+           (param $skip  (ref eq)) ;; exact-nonnegative-integer?
+           (param $port  (ref $CustomInputPort))
+           (param $from  i32)
+           (param $to    i32)
+           (result       (ref eq))
+
+           (local $delegate  (ref eq))
+           (local $proc      (ref $Procedure))
+           (local $inv       (ref $ProcedureInvoker))
+           (local $args      (ref $Args))
+           (local $scratch   (ref eq))
+           (local $result    (ref eq))
+           (local $raw-count i32)
+           (local $count     i32)
+           (local $capacity  i32)
+
+           (if (struct.get $CustomInputPort $closed (local.get $port))
+               (then (call $raise-input-port-closed
+                           (global.get $string:peek-byte:input-port-closed))
+                     (unreachable)))
+
+           (local.set $delegate
+                      (struct.get $CustomInputPort $peek-proc (local.get $port)))
+           ;; A port delegate preserves the destination range directly.
+           (if (ref.test (ref $InputPort) (local.get $delegate))
+               (then (return
+                      (call $peek-bytes!/who
+                            (local.get $who)
+                            (local.get $bstr)
+                            (local.get $skip)
+                            (local.get $delegate)
+                            (ref.i31 (i32.shl (local.get $from) (i32.const 1)))
+                            (ref.i31 (i32.shl (local.get $to) (i32.const 1)))))))
+           ;; A custom port without a peek procedure is not ready for peeking.
+           (if (ref.eq (local.get $delegate) (global.get $false))
+               (then (return (global.get $false))))
+           (if (i32.eqz (ref.test (ref $Procedure) (local.get $delegate)))
+               (then (return (global.get $false))))
+
+           ;; The callback receives a buffer for exactly the selected range.
+           ;; Copy a successful result back into the caller's byte string.
+           (local.set $capacity (i32.sub (local.get $to) (local.get $from)))
+           (local.set $scratch
+                      (call $make-bytes
+                            (ref.i31 (i32.shl (local.get $capacity) (i32.const 1)))
+                            (global.get $missing)))
+           (local.set $proc (ref.cast (ref $Procedure) (local.get $delegate)))
+           (local.set $inv  (struct.get $Procedure $invoke (local.get $proc)))
+           (local.set $args (array.new_fixed $Args 3
+                                              (local.get $scratch)
+                                              (local.get $skip)
+                                              (global.get $false)))
+           (local.set $result
+                      (call_ref $ProcedureInvoker
+                                (local.get $proc)
+                                (local.get $args)
+                                (local.get $inv)))
+           (if (ref.eq (local.get $result) (global.get $false))
+               (then (return (global.get $false))))
+           (if (ref.eq (local.get $result) (global.get $eof))
+               (then (return (global.get $eof))))
+           (if (i32.eqz (ref.test (ref i31) (local.get $result)))
+               (then (return (global.get $false))))
+           (local.set $raw-count (i31.get_s (ref.cast (ref i31) (local.get $result))))
+           (if (i32.and (local.get $raw-count) (i32.const 1))
+               (then (return (global.get $false))))
+           (local.set $count (i32.shr_s (local.get $raw-count) (i32.const 1)))
+           (if (i32.or (i32.lt_s (local.get $count) (i32.const 0))
+                       (i32.gt_u (local.get $count) (local.get $capacity)))
+               (then (return (global.get $false))))
+           (drop (call $bytes-copy!
+                       (local.get $bstr)
+                       (ref.i31 (i32.shl (local.get $from) (i32.const 1)))
+                       (local.get $scratch)
+                       (ref.i31 (i32.const 0))
+                       (ref.i31 (i32.shl (local.get $count) (i32.const 1)))))
+           (local.get $result))
+
+     ;; $peek-bytes!/who : symbol? bytes? exact-nonnegative-integer? input-port? exact-nonnegative-integer? exact-nonnegative-integer? -> exact-nonnegative-integer? or eof?
+     ;;   Peek bytes without consuming a supported input port.
      (func $peek-bytes!/who
            (param $who   (ref eq))
            (param $bstr  (ref eq)) ;; bytes?
@@ -3542,13 +3628,6 @@
                            (global.get $string:input-port?)
                            (local.get $in))
                      (unreachable)))
-           (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
-               (then (call $raise-check-string-port
-                           (local.get $who)
-                           (local.get $in))
-                     (unreachable)))
-           (local.set $sp (ref.cast (ref $InputStringPort) (local.get $in)))
-
            ;; --- Decode optional start index ---
            (if (ref.eq (local.get $start) (global.get $missing))
                (then (local.set $from (i32.const 0)))
@@ -3590,6 +3669,22 @@
            (local.set $count (i32.sub (local.get $to) (local.get $from)))
            (if (i32.eqz (local.get $count))
                (then (return (ref.i31 (i32.const 0)))))
+
+           (if (ref.test (ref $CustomInputPort) (local.get $in))
+               (then (return
+                      (call $peek-bytes!/custom
+                            (local.get $who)
+                            (local.get $bstr)
+                            (local.get $skip)
+                            (ref.cast (ref $CustomInputPort) (local.get $in))
+                            (local.get $from)
+                            (local.get $to)))))
+           (if (i32.eqz (ref.test (ref $InputStringPort) (local.get $in)))
+               (then (call $raise-check-string-port
+                           (local.get $who)
+                           (local.get $in))
+                     (unreachable)))
+           (local.set $sp (ref.cast (ref $InputStringPort) (local.get $in)))
 
            ;; --- Determine peek window ---
            (local.set $idx       (struct.get $InputStringPort $idx (local.get $sp)))
@@ -3650,7 +3745,7 @@
                  (local.get $progress))
            (unreachable))
 
-     ;; NOTE: Like Racket's peek-bytes-avail!, but currently only string ports are supported
+     ;; NOTE: Like Racket's peek-bytes-avail!, but progress events are not supported
      ;;       and the progress argument must be #f.
      ;;       Takes at least 1 argument and at most 6.
      ;;       Instead of introducing a new shaped ($Prim16) we reuse $Prim>=1
@@ -3744,7 +3839,7 @@
                  (local.get $bstr)
                  (local.get $rest)))
 
-     ;; NOTE: Like Racket's peek-bytes-avail!*, but currently only string ports are supported
+     ;; NOTE: Like Racket's peek-bytes-avail!*, but progress events are not supported
      ;;       and the progress argument must be #f.
      ;;       Takes at least 1 argument and at most 6.
      (func $peek-bytes-avail!* (type $Prim>=1)

@@ -41,6 +41,7 @@ compile_test test-keyword-fasl-bridge.rkt
 compile_test test-webracket-base-format.rkt
 compile_test test-racket-port-call-with-output-string.rkt
 compile_test test-regexp-posix-character-class-split.rkt
+compile_test test-peek-bytes-avail-apply-browser.rkt
 compile_test test-browser-canvas-draw-image-integers.rkt
 compile_test test-web-pict-text-binding.rkt
 compile_test test-console-bridge-smoke.rkt --console-bridge
@@ -106,5 +107,5 @@ fi
 SMOKE_BASE_URL="$BASE_URL" \
 SMOKE_NODE_MODULES="$LOCAL_NODE_MODULES" \
 SMOKE_CHROME_EXECUTABLE="$CHROME_EXECUTABLE" \
-SMOKE_TESTS="test-dom-window-document.html,test-dom-canvas-media-image.html,test-dom-event.html,test-js-string-symbol-ffi.html,test-keyword-fasl-bridge.html,test-webracket-base-format.html,test-racket-port-call-with-output-string.html,test-regexp-posix-character-class-split.html,test-browser-canvas-draw-image-integers.html,test-web-pict-text-binding.html,test-console-bridge-smoke.html,test-console-bridge-module-smoke.html,test-vfs-tgz-browser.html" \
+SMOKE_TESTS="test-dom-window-document.html,test-dom-canvas-media-image.html,test-dom-event.html,test-js-string-symbol-ffi.html,test-keyword-fasl-bridge.html,test-webracket-base-format.html,test-racket-port-call-with-output-string.html,test-regexp-posix-character-class-split.html,test-peek-bytes-avail-apply-browser.html,test-browser-canvas-draw-image-integers.html,test-web-pict-text-binding.html,test-console-bridge-smoke.html,test-console-bridge-module-smoke.html,test-vfs-tgz-browser.html" \
 node "$SCRIPT_DIR/run-dom-headless.mjs"
