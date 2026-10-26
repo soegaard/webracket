@@ -1667,6 +1667,9 @@
          ;;   Implemented in runtime-wasm/core/ffi.rkt.
          ,@(ffi-core-runtime-helper-forms core-runtime-helper-index)
          ,@(ffi-runtime-only-helper-forms console-bridge-bindings)
+         ,@(if console-bridge-enabled?
+               (ffi-console-bridge-helper-forms console-bridge-bindings)
+               '())
 
          ;;;
          ;;; 5. STRUCTURES

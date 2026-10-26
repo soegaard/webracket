@@ -241,15 +241,6 @@
     $callback-name
     $callback-debug-id))
 
-;; ffi-runtime-only-helper-names : (listof symbol?)
-;;   Preserve the program/runtime-local FFI helper emission order.
-(define ffi-runtime-only-helper-names
-  (let ([core-name-set (for/hasheq ([name (in-list ffi-core-runtime-helper-names)])
-                         (values name #t))])
-    (for/list ([name (in-list ffi-helper-names)]
-               #:unless (hash-ref core-name-set name #f))
-      name)))
-
 ;; ffi-console-bridge-helper-names : (listof symbol?)
 ;;   Name the program-specific console bridge helpers.
 (define ffi-console-bridge-helper-names
@@ -273,6 +264,20 @@
     $wr-names
     $wr-names-detailed
     $wr-format))
+
+;; ffi-runtime-only-helper-names : (listof symbol?)
+;;   Preserve the program/runtime-local FFI helper emission order.
+(define ffi-runtime-only-helper-names
+  (let ([core-name-set
+         (for/hasheq ([name (in-list ffi-core-runtime-helper-names)])
+           (values name #t))]
+        [console-bridge-name-set
+         (for/hasheq ([name (in-list ffi-console-bridge-helper-names)])
+           (values name #t))])
+    (for/list ([name (in-list ffi-helper-names)]
+               #:unless (or (hash-ref core-name-set name #f)
+                            (hash-ref console-bridge-name-set name #f)))
+      name)))
 
 ;; external-value-all-runtime-helper-names : (listof symbol?)
 ;;   Preserve the full runtime emission order for external host value helpers.
@@ -1789,7 +1794,7 @@
 ;;   Enumerate FFI helpers that remain program/runtime-local.
 (define ffi-runtime-only-helpers
   (append external-value-runtime-only-helpers
-          (remove-runtime-helpers ffi-helpers ffi-core-runtime-helper-names)))
+          (select-runtime-helpers ffi-helpers ffi-runtime-only-helper-names)))
 
 (module+ test
   (require rackunit)
@@ -1830,6 +1835,24 @@
   (check-false
    (member '$webracket-debug-allocation-counters
            (map form-name (ffi-runtime-only-helper-forms '()))))
+
+  ;; Console bridge helpers are program-owned in split output.  Keeping them
+  ;; out of the general runtime-only group prevents the monolithic source
+  ;; module from contributing a second definition before split classification.
+  (check-false
+   (member '$wr-bridge-error-message ffi-runtime-only-helper-names))
+
+  (check-false
+   (member '$wr-bridge-error-message
+           (map form-name (ffi-runtime-only-helper-forms '()))))
+
+  (check-equal?
+   (map form-name (ffi-console-bridge-helper-forms '()))
+   ffi-console-bridge-helper-names)
+
+  (check-false
+   (member '$wr-bridge-error-message
+           (map core-runtime-helper-name ffi-runtime-only-helpers)))
 
   (check-equal?
    (map form-name (external-value-runtime-helper-forms ffi-helper-index))
