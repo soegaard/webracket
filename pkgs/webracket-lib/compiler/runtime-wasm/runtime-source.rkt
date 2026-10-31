@@ -243,6 +243,7 @@
   (check-true (contains-path-suffix? fingerprint "split-runtime.rkt"))
   (check-true (contains-path-suffix? fingerprint "split-runtime-cache.rkt"))
   (check-true (contains-path-suffix? fingerprint "entry-support.rkt"))
+  (check-true (contains-path-suffix? fingerprint "initializer-batches.rkt"))
   (check-true (contains-path-suffix? fingerprint "js-imports.rkt"))
   (check-true (contains-path-suffix? fingerprint "runtime-ffi.rkt"))
   (check-true (contains-path-suffix? fingerprint "runtime-metrics.rkt"))

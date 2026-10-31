@@ -57,6 +57,10 @@
                   primitive-info-name
                   primitive-info-properties)
          "runtime-wasm.rkt"   ;
+         (only-in "runtime-wasm/initializer-batches.rkt"
+                  top-level-initializer
+                  batch-top-level-initializers
+                  initializer-batch-function-forms)
          "private/define-foreign.rkt"
          (only-in "private/parameters.rkt"
                   current-ffi-foreigns
@@ -19024,6 +19028,32 @@
   `(wasm-label-map ,@(reverse (current-label-map))))
   
 
+;;;
+;;; BATCHED TOP-LEVEL INITIALIZATION
+;;;
+
+;; A large program can have thousands of top-level initializers. Each one needs
+;; temporary locals, for example to check the number of values from a definition.
+;; Putting all of these locals in $entry makes its Wasm compilation expensive:
+;; the browser must compile many calls in one function with a very large frame.
+;;
+;; We generate each complete initializer with its own *locals* accumulator, then
+;; place adjacent initializers in small helper functions. The usual limits are
+;; 128 forms, 256 locals and 8000 folded expressions per helper. A single larger
+;; initializer stays whole, so letrec allocation and multiple-value unpacking
+;; cannot be separated. The helpers have no arguments or results; top-level
+;; bindings still use their existing global boxes and module export cells.
+;;
+;; $entry calls the helpers in source order inside its existing exception handler.
+;; Bootstrap runs first, and the last source form still stores its value in $result.
+;; Each helper initializes only its own temporary locals. Those initial values
+;; are compiler constants such as undefined and the dummy procedure; they do not
+;; run user code. An exception leaves the call sequence before any later helper.
+;;
+;; The helpers join the generated program function list. This keeps them on the
+;; program side of a split runtime and makes their dependencies visible to the
+;; runtime analysis. No Racket closures or argument arrays are needed to call them.
+
 (define-pass generate-code : LANF+closure (T) -> * ()
   (definitions
     (define current-inline-small-closure-arity
@@ -19309,7 +19339,8 @@
     ;; a local variable, will use `emit-local`. After the body is
     ;; compiled, the locals are added to the `func`.
 
-    ;; The local variables needed at the top-level end up in `$entry`.
+    ;; Top-level initializers use the same mechanism, with a fresh accumulator
+    ;; for each form. Their locals belong to the generated initializer helpers.
     (define *locals* (make-parameter '()))
     (define (emit-local x [type '(ref eq)] [init #f])
       (*locals* (cons (if init
@@ -21461,29 +21492,24 @@
        (define-values (dls ts1) (partition define-label? t))
        (define-values (tms ts)  (partition topmodule?    ts1))
 
-       ; (displayln (list 'topbegin 'dd dd))
-
-       (values
-        ; A `define-label` form becomes a function declaration in Web Assembly.
-        (flatten-func-forms (TopLevelForm* dls dd))
-        ; A `topmodule` becomes ...
-        (TopLevelForm* tms dd)
-        ; The expressions and general top-level form becomes
-        ; part of the body of the `entry` function called from the host language.
-        (match ts
-          [(list)
-           ; (displayln "HERE2")
-           ; No expressions at the top-level: simply return void
-           `(global.set $result (global.get $void))]
-          [(list t0 ... tn)
-           ; (displayln "HERE")
-           (define (non-nop? x) (not (equal? x '(nop))))
-           (let ([t0s (filter non-nop?
-                              (TopLevelForm* t0 <effect>))]
-                 [tn  (TopLevelForm  tn dd)])
-             (if (null? t0s)
-                 tn
-                 `(block ,@t0s ,tn)))])))])
+       (define label-functions (flatten-func-forms (TopLevelForm* dls dd)))
+       (define modules (TopLevelForm* tms dd))
+       (define last-index (sub1 (length ts)))
+       (define initializers
+         (for/list ([form (in-list ts)] [i (in-naturals)]
+                    #:do [(define-values (body locals)
+                            (parameterize ([*locals* '()])
+                              (define body (TopLevelForm form (if (= i last-index) dd <effect>)))
+                              (values body (*locals*))))]
+                    #:unless (and (< i last-index) (equal? body '(nop))))
+           (top-level-initializer body locals)))
+       (define-values (initializer-functions initializer-calls)
+         (initializer-batch-function-forms (batch-top-level-initializers initializers)))
+       (values (append label-functions initializer-functions)
+               modules
+               (if (null? initializer-calls)
+                   `(global.set $result (global.get $void))
+                   `(block ,@initializer-calls))))])
 
         #;(let ([ts (TopLevelForm* ts dd)])
           (match ts
@@ -21681,8 +21707,8 @@
                       "internal error: console bridge symbol without runtime binding: ~s"
                       sym)])))))
 
-  ; variables bound by let-values and others at the top-level
-  ; are represented in the runtime as local variables of a function `entry`.
+  ;; Ordinary top-level forms now own their locals through initializer helpers.
+  ;; Retain any locals emitted outside that path for the enclosing entry.
   (define entry-locals (*locals*))
 
   (define primitives-also-declared-as-variables-at-top-level
@@ -21712,7 +21738,7 @@
                         (and (current-pass-timings?) '())])
           (define mod
             (generate-runtime
-             dls                              ; define-labels
+             dls                              ; lifted procedures and initializer helpers
              tms                              ; top modules
              entry-body                       ; expressions and general top-level forms
              result                           ; variable that holds the result (in $entry)
