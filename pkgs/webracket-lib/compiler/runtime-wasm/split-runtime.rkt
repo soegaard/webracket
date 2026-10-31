@@ -85,11 +85,11 @@
     [_ #f]))
 
 ;; strip-split-runtime-entry-init-form : any/c -> any/c
-;;   Remove runtime-owned initializer calls from a generated program entry.
+;;   Remove loader-owned calls from the bootstrap helper or an older inline entry.
 (define (strip-split-runtime-entry-init-form form)
   (match form
-    [`(func $entry ,parts ...)
-     `(func $entry ,@(filter-not split-runtime-entry-init-form? parts))]
+    [`(func ,(and name (or '$entry '$entry-bootstrap)) ,parts ...)
+     `(func ,name ,@(filter-not split-runtime-entry-init-form? parts))]
     [_ form]))
 
 ;; strip-split-runtime-program-entry-init : datum? -> datum?
@@ -2198,6 +2198,35 @@
            (export "entry")
            (result i32)
            (global.set $string:program (call $make-program-string))
+           (block $entry-done (br $entry-done))
+           (i32.const 0))))
+
+  ;; Loader-owned initialization now lives in the generated bootstrap helper.
+  ;; Keep program constants and the entry-to-bootstrap call in their order.
+  (check-equal?
+   (strip-split-runtime-program-entry-init
+    '(module
+      (func $entry-bootstrap
+            (call $initialize-split-runtime-before-constants!)
+            (call $initialize-split-runtime-constants!)
+            (global.set $string:program (call $make-program-string))
+            (call $initialize-split-runtime-after-constants!)
+            (drop (call $reset-current-input-port!))
+            (drop (call $reset-current-output-port!))
+            (drop (call $reset-current-error-port!))
+            (call $initialize-unsafe-ffi-primitive-table)
+            (call $initialize-split-runtime-after-ffi!)
+            (call $initialize-program-namespace!))
+      (func $entry (export "entry") (result i32)
+            (call $entry-bootstrap)
+            (block $entry-done (br $entry-done))
+            (i32.const 0))))
+   '(module
+     (func $entry-bootstrap
+           (global.set $string:program (call $make-program-string))
+           (call $initialize-program-namespace!))
+     (func $entry (export "entry") (result i32)
+           (call $entry-bootstrap)
            (block $entry-done (br $entry-done))
            (i32.const 0))))
 

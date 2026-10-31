@@ -3,7 +3,7 @@
 (provide entry-local-declaration-forms
          entry-local-initializer-forms
          entry-result-copy-forms
-         entry-function-form
+         entry-function-forms
          entry-result-global-forms
          entry-run-body-form
          entry-support-forms
@@ -123,7 +123,7 @@
     (call $copy-bytes-to-memory ; copy and return length as i32
           (global.get $result-bytes) (i32.const 0))))
 
-;; entry-function-form :
+;; entry-function-forms :
 ;;   (listof list?) datum? symbol? #:flonum-initializer-forms list?
 ;;   #:runtime-constant-initializer-forms list? #:parameterization-initializer-forms list?
 ;;   #:random-current-initializer-forms list? #:thread-current-initializer-forms list?
@@ -138,9 +138,13 @@
 ;;   #:print-read-parameter-late-initializer-forms list?
 ;;   #:io-handler-default-port-late-initializer-forms list?
 ;;   #:error-syntax-handler-late-initializer-forms list? #:top-vars (listof variable?)
-;;   #:exception-struct-type-initializer-forms list? #:namespace-initializer-forms list? -> datum?
-;;   Build the exported WebRacket entry function.
-(define (entry-function-form
+;;   #:exception-struct-type-initializer-forms list? #:namespace-initializer-forms list? -> (listof datum?)
+;;   Build a zero-local bootstrap helper followed by the exported program entry.
+;; The many constant-initialization calls must not share the application's large
+;; local frame: that combination makes browser baseline compilation expensive.
+;; Keep the bootstrap phases in execution order, before local initialization and
+;; outside the application's exception handler.
+(define (entry-function-forms
          entry-locals
          entry-body
          result
@@ -177,11 +181,7 @@
          #:top-vars top-vars
          #:exception-struct-type-initializer-forms exception-struct-type-initializer-forms
          #:namespace-initializer-forms namespace-initializer-forms)
-  `(func $entry (export "entry") (result i32)
-         ; Declare local variables (bound by let-values and letrec-values)
-         (local $entry-exn (ref eq))
-         ,@(entry-local-declaration-forms entry-locals)
-
+  `((func $entry-bootstrap
          ;; Initialize global constants
          ,@flonum-initializer-forms
 
@@ -228,7 +228,14 @@
          ,@exception-struct-type-initializer-forms
 
          ;; Initialize the top-level namespace
-         ,@namespace-initializer-forms
+         ,@namespace-initializer-forms)
+
+    (func $entry (export "entry") (result i32)
+         ; Declare local variables (bound by let-values and letrec-values)
+         (local $entry-exn (ref eq))
+         ,@(entry-local-declaration-forms entry-locals)
+
+         (call $entry-bootstrap)
 
          ; Initialize local variables
          ,@(entry-local-initializer-forms entry-locals)
@@ -239,20 +246,12 @@
          ,(entry-run-body-form entry-body)
 
          ; Return the result
-         ,@(entry-result-copy-forms result)))
+         ,@(entry-result-copy-forms result))))
 
 (module+ test
   (require rackunit
            racket/list
            "../private/structs.rkt")
-
-  ;; form-index : list? any/c -> exact-nonnegative-integer?
-  ;;   Return the position of a top-level form inside a generated form.
-  (define (form-index forms target)
-    (for/first ([form (in-list forms)]
-                [i (in-naturals)]
-                #:when (equal? form target))
-      i))
 
   (define top-var (variable #'top))
 
@@ -301,8 +300,8 @@
                   (call $copy-bytes-to-memory
                         (global.get $result-bytes) (i32.const 0))))
 
-  (define sample-entry-form
-    (entry-function-form
+  (define sample-entry-forms
+    (entry-function-forms
      '((x (ref eq)))
      '(call $program)
      '$result
@@ -330,25 +329,52 @@
      #:exception-struct-type-initializer-forms '((call $init-exception-structs))
      #:namespace-initializer-forms '((call $init-namespace))))
 
-  (check-equal? (take sample-entry-form 6)
-                '(func $entry
-                       (export "entry")
-                       (result i32)
-                       (local $entry-exn (ref eq))
-                       (local x (ref eq))))
-  (check-not-false (member '(call $initialize-the-symbol-table) sample-entry-form))
-  (check-true (< (form-index sample-entry-form '(call $init-runtime-constants))
-                 (form-index sample-entry-form '(call $init-parameterization))))
-  (check-true (< (form-index sample-entry-form '(call $init-primitives))
-                 (form-index sample-entry-form '(call $initialize-unsafe-ffi-primitive-table))))
-  (check-true (< (form-index sample-entry-form
-                             '(global.set $$top
-                                          (struct.new $Boxed
-                                                      (global.get $undefined))))
-                 (form-index sample-entry-form '(call $init-exception-structs))))
-  (check-not-false (member (entry-run-body-form '(call $program))
-                           sample-entry-form))
-  (check-not-false (member '(call $copy-bytes-to-memory
-                                  (global.get $result-bytes)
-                                  (i32.const 0))
-                           sample-entry-form)))
+  ;; All bootstrap phases are emitted directly in order, with no application
+  ;; locals in the helper. In particular, interning precedes constants, primitive
+  ;; setup precedes unsafe FFI lookup, and top-level boxes precede their values.
+  (check-equal? (length sample-entry-forms) 2)
+  (check-equal?
+   (first sample-entry-forms)
+   '(func $entry-bootstrap
+          (call $init-flonum)
+          (call $initialize-the-symbol-table)
+          (call $initialize-the-keyword-table)
+          (call $initialize-primitive-table-user-installed)
+          (call $initialize-prefab-struct-type-registry)
+          (call $init-runtime-constants)
+          (call $init-parameterization)
+          (call $init-random)
+          (call $init-thread)
+          (call $init-logger)
+          (call $init-custodian)
+          (call $init-event)
+          (call $init-struct-property)
+          (call $init-path)
+          (call $init-environment)
+          (drop (call $reset-current-input-port!))
+          (drop (call $reset-current-output-port!))
+          (drop (call $reset-current-error-port!))
+          (call $init-char-category)
+          (call $init-realm)
+          (call $init-primitives)
+          (call $init-ffi-primitives)
+          (call $initialize-unsafe-ffi-primitive-table)
+          (call $init-security-guard)
+          (call $init-error-value-handler)
+          (call $init-print-read)
+          (call $init-default-ports)
+          (call $init-error-syntax-handler)
+          (global.set $$top (struct.new $Boxed (global.get $undefined)))
+          (call $init-exception-structs)
+          (call $init-namespace)))
+  ;; Bootstrap completes before locals are initialized and the application's
+  ;; exception handler is installed; result copying stays after the run block.
+  (check-equal?
+   (second sample-entry-forms)
+   `(func $entry (export "entry") (result i32)
+          (local $entry-exn (ref eq))
+          (local x (ref eq))
+          (call $entry-bootstrap)
+          (local.set x ,(Undefined))
+          ,(entry-run-body-form '(call $program))
+          ,@(entry-result-copy-forms '$result))))

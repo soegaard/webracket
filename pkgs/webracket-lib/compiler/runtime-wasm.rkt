@@ -25,7 +25,7 @@
                   $
                   prim:)
          (only-in "runtime-wasm/entry-support.rkt"
-                  entry-function-form
+                  entry-function-forms
                   entry-result-global-forms
                   entry-support-forms)
          (only-in "runtime-wasm/function-declarations.rkt"
@@ -787,11 +787,11 @@
            (runtime-ffi-state-primitive-initializer-forms ffi-state)
            '())))
 
-    ;; build-entry-function-form : [#:program-only? boolean?] -> datum?
-    ;;   Build the program entry function using the current split/monolithic
+    ;; build-entry-function-forms : [#:program-only? boolean?] -> (listof datum?)
+    ;;   Build the bootstrap helper and entry using the current split/monolithic
     ;;   initializer choices.
-    (define (build-entry-function-form #:program-only? [program-only? #f])
-      (entry-function-form
+    (define (build-entry-function-forms #:program-only? [program-only? #f])
+      (entry-function-forms
        entry-locals
        entry-body
        result
@@ -871,7 +871,7 @@
        (for/list ([form (in-list entry-support-forms)]
                   #:when (split-program-entry-support-form? form))
          form)
-       (list (build-entry-function-form #:program-only? #t))))
+       (build-entry-function-forms #:program-only? #t)))
 
     ;;;
     ;;; WEB-ASSEMBLY
@@ -2123,7 +2123,7 @@
                ,@split-runtime-constant-initializer-helper-forms
                ,@split-runtime-entry-initializer-helper-forms
 
-               ,(build-entry-function-form)
+               ,@(build-entry-function-forms)
 
                ))
 

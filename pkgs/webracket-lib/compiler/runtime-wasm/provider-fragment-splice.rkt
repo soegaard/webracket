@@ -208,13 +208,20 @@
     [_ (values #f '())]))
 
 ;; replace-entry-function :
-;;   (listof any/c) symbol? symbol? -> (values (listof any/c) (listof any/c))
-;;   Replace the generated full entry with a body function and collect init forms.
-(define (replace-entry-function forms entry-name who)
+;;   (listof any/c) symbol? symbol? symbol? -> (values (listof any/c) (listof any/c))
+;;   Collect the generated bootstrap and leave local/application work in the entry.
+(define (replace-entry-function forms entry-name bootstrap-name who)
   (define found? #f)
   (define init-forms '())
+  (define bootstrap-form
+    (findf (lambda (form)
+             (match form
+               [`(func ,(== bootstrap-name eq?) ,_ ...) #t]
+               [_ #f]))
+           forms))
   (define replaced-forms
-    (for/list ([form (in-list forms)])
+    (for/list ([form (in-list forms)]
+               #:unless (eq? form bootstrap-form))
       (define-values (replacement replacement-init-forms)
         (extract-entry-function form entry-name who))
       (cond
@@ -227,7 +234,18 @@
     (raise-arguments-error who
                            "could not find generated entry function"
                            "entry name" entry-name))
-  (values replaced-forms init-forms))
+  ;; Older inline entries are still accepted. New entries call a generated
+  ;; zero-local helper: merge its instructions at that exact point, so shared
+  ;; runtime initialization is deduplicated across provider and program.
+  (define expanded-init-forms
+    (if bootstrap-form
+        (append-map (lambda (form)
+                      (if (equal? form `(call ,bootstrap-name))
+                          (cddr bootstrap-form)
+                          (list form)))
+                    init-forms)
+        init-forms))
+  (values replaced-forms expanded-init-forms))
 
 ;; append-unique-forms : (listof any/c) ... -> (listof any/c)
 ;;   Append form lists while preserving first occurrence.
@@ -292,9 +310,11 @@
       (remove-entry-export (rewrite-symbols form program-renames)
                            program-entry-name)))
   (define-values (provider-body-entry-forms provider-init-forms)
-    (replace-entry-function provider-forms provider-entry-name who))
+    (replace-entry-function provider-forms provider-entry-name '$entry-bootstrap who))
   (define-values (program-body-entry-forms program-init-forms)
-    (replace-entry-function program-forms program-entry-name who))
+    (replace-entry-function program-forms program-entry-name
+                            (hash-ref program-renames '$entry-bootstrap '$entry-bootstrap)
+                            who))
   (define-values (provider-prefix provider-body)
     (split-body provider-body-entry-forms))
   (define-values (program-prefix program-body)
@@ -303,7 +323,7 @@
     `(func $entry
            (export "entry")
            (result i32)
-           ,@(append-unique-forms provider-init-forms program-init-forms)
+           (call $entry-bootstrap)
            (drop (call ,provider-entry-name))
            (call ,program-entry-name)))
   (define spliced-module
@@ -311,6 +331,8 @@
       ,@(append-unique-forms provider-prefix program-prefix)
       ,@provider-body
       ,@program-body
+      (func $entry-bootstrap
+            ,@(append-unique-forms provider-init-forms program-init-forms))
       ,wrapper-entry-form))
   (values spliced-module
           (provider-fragment-splice-info
@@ -371,10 +393,14 @@
                 '($entry-uncaught-exception))
   (check-not-false
    (member '(func $entry (export "entry") (result i32)
-                  (global.set $provider-value (i32.const 1))
-                  (global.set $program-value (i32.const 2))
+                  (call $entry-bootstrap)
                   (drop (call $provider-fragment:entry))
                   (call $program-fragment:entry))
+           (cdr sample-spliced)))
+  (check-not-false
+   (member '(func $entry-bootstrap
+                  (global.set $provider-value (i32.const 1))
+                  (global.set $program-value (i32.const 2)))
            (cdr sample-spliced)))
   (check-false
    (for/or ([form (in-list (cdr sample-spliced))])
@@ -384,4 +410,52 @@
                       (mut i32)))))
   (check-not-false
    (member '(func $program-fragment:entry-uncaught-exception (param $e i32))
-           (cdr sample-spliced))))
+           (cdr sample-spliced)))
+
+  (define helper-provider-module
+    '(module
+      (func $shared-init (import "core" "init"))
+      (func $provider-init)
+      (func $entry-bootstrap (call $shared-init) (call $provider-init))
+      (func $entry (export "entry") (result i32) (local $x i32)
+            (call $entry-bootstrap)
+            (local.set $x (i32.const 1))
+            (block $entry-done (br $entry-done))
+            (local.get $x))))
+  (define helper-program-module
+    '(module
+      (func $shared-init (import "core" "init"))
+      (func $program-init)
+      (func $entry-bootstrap (call $shared-init) (call $program-init))
+      (func $entry (export "entry") (result i32) (local $x i32)
+            (call $entry-bootstrap)
+            (local.set $x (i32.const 2))
+            (block $entry-done (br $entry-done))
+            (local.get $x))))
+  (define-values (helper-spliced helper-info)
+    (splice-provider+program-modules helper-provider-module helper-program-module))
+  ;; Both fragments generate the same helper name. Renaming must still allow
+  ;; their shared initializer to run once, before either fragment's application.
+  ;; Local initialization stays in each body, outside the merged bootstrap.
+  (check-equal?
+   helper-spliced
+   '(module
+     (func $shared-init (import "core" "init"))
+     (func $provider-init)
+     (func $provider-fragment:entry (result i32) (local $x i32)
+           (local.set $x (i32.const 1))
+           (block $entry-done (br $entry-done))
+           (local.get $x))
+     (func $program-init)
+     (func $program-fragment:entry (result i32) (local $x i32)
+           (local.set $x (i32.const 2))
+           (block $entry-done (br $entry-done))
+           (local.get $x))
+     (func $entry-bootstrap
+           (call $shared-init) (call $provider-init) (call $program-init))
+     (func $entry (export "entry") (result i32)
+           (call $entry-bootstrap)
+           (drop (call $provider-fragment:entry))
+           (call $program-fragment:entry))))
+  (check-equal? (provider-fragment-splice-info-provider-init-form-count helper-info) 2)
+  (check-equal? (provider-fragment-splice-info-program-init-form-count helper-info) 2))
