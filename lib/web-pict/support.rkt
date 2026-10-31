@@ -761,10 +761,12 @@
       [(external? x) x]
       [else          (error 'to-string "got: ~a" x)]))
   
+  ;; to-real : real? -> flonum?
+  ;;   Convert real canvas arguments, including exact fractions, to flonums.
   (define (to-real x)
     (cond
       [(flonum? x) x]
-      [(fixnum? x) (exact->inexact x)]
+      [(real? x) (exact->inexact x)]
       [else        (error 'to-real "got: ~a" x)]))
   
   (define (to-real-01 x)

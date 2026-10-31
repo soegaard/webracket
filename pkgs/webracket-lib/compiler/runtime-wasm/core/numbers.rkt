@@ -6509,20 +6509,25 @@
 
                       (local $x/is-fx i32)
                       (local $x/is-big i32)
+                      (local $x/is-rat i32)
                       (local $x/is-fl i32)
 
                       (local $y/is-fx i32)
                       (local $y/is-big i32)
+                      (local $y/is-rat i32)
                       (local $y/is-fl i32)
                       (local $cmp/i32 i32)
 
                       ;; Type check $x
                       (local.set $x/is-fx (call $fx?/i32 (local.get $x)))
                       (local.set $x/is-big (ref.test (ref $Bignum) (local.get $x)))
+                      (local.set $x/is-rat (ref.test (ref $Rational) (local.get $x)))
                       (local.set $x/is-fl (ref.test (ref $Flonum) (local.get $x)))
                       (if (i32.eqz
                            (i32.or
-                            (i32.or (local.get $x/is-fx) (local.get $x/is-big))
+                            (i32.or
+                             (i32.or (local.get $x/is-fx) (local.get $x/is-big))
+                             (local.get $x/is-rat))
                             (local.get $x/is-fl)))
                           (then (call $raise-expected-real
                                       (global.get ,$who)
@@ -6532,10 +6537,13 @@
                       ;; Type check $y
                       (local.set $y/is-fx (call $fx?/i32 (local.get $y)))
                       (local.set $y/is-big (ref.test (ref $Bignum) (local.get $y)))
+                      (local.set $y/is-rat (ref.test (ref $Rational) (local.get $y)))
                       (local.set $y/is-fl (ref.test (ref $Flonum) (local.get $y)))
                       (if (i32.eqz
                            (i32.or
-                            (i32.or (local.get $y/is-fx) (local.get $y/is-big))
+                            (i32.or
+                             (i32.or (local.get $y/is-fx) (local.get $y/is-big))
+                             (local.get $y/is-rat))
                             (local.get $y/is-fl)))
                           (then (call $raise-expected-real
                                       (global.get ,$who)
@@ -6551,6 +6559,20 @@
                           (then
                            (local.set $cmp/i32
                                       (call $integer-compare/i32
+                                            (local.get $x)
+                                            (local.get $y)))
+                           (return
+                            (if (result (ref eq))
+                                ,exact-x-wins?
+                                (then (local.get $x))
+                                (else (local.get $y))))))
+
+                      ;; Remaining exact pairs contain at least one rational.
+                      (if (i32.and (i32.eqz (local.get $x/is-fl))
+                                   (i32.eqz (local.get $y/is-fl)))
+                          (then
+                           (local.set $cmp/i32
+                                      (call $exact-rational-compare/i32
                                             (local.get $x)
                                             (local.get $y)))
                            (return
@@ -6603,6 +6625,34 @@
                                  (struct.new $Flonum
                                              (i32.const 0)
                                              (call $integer->f64 (local.get $y))))))))
+
+                      (if (i32.and (local.get $x/is-rat) (local.get $y/is-fl))
+                          (then
+                           (local.set $cmp/i32
+                                      (call $exact-rational-flonum-compare/i32
+                                            (local.get $x)
+                                            (ref.cast (ref $Flonum) (local.get $y))))
+                           (if (i32.eq (local.get $cmp/i32) (i32.const 2))
+                               (then (return (local.get $y))))
+                           (return
+                            (if (result (ref eq))
+                                ,exact-x-wins?
+                                (then (call $exact->inexact (local.get $x)))
+                                (else (local.get $y))))))
+
+                      (if (i32.and (local.get $x/is-fl) (local.get $y/is-rat))
+                          (then
+                           (local.set $cmp/i32
+                                      (call $exact-rational-flonum-compare/i32
+                                            (local.get $y)
+                                            (ref.cast (ref $Flonum) (local.get $x))))
+                           (if (i32.eq (local.get $cmp/i32) (i32.const 2))
+                               (then (return (local.get $x))))
+                           (return
+                            (if (result (ref eq))
+                                ,fl-exact-x-wins?
+                                (then (local.get $x))
+                                (else (call $exact->inexact (local.get $y)))))))
 
                       (unreachable))
 
